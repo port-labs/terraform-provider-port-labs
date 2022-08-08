@@ -9,7 +9,7 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 
 ### Docs
 * [Provider Docs](https://registry.terraform.io/providers/port-labs/port/latest/docs)
-* [Port Docs](https://docs.api.getport.io/)
+* [Port Docs](https://docs.getport.io/)
 
 ## Installation
 

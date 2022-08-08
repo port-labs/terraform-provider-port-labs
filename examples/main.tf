@@ -11,7 +11,6 @@ provider "port" {}
 resource "port_entity" "microservice" {
   title = "monolith"
   blueprint = "microservice_blueprint"
-  relations = {}
   properties {
     name = "microservice_name"
     value = "golang_monolith"

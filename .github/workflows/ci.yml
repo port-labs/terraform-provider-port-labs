@@ -1,0 +1,50 @@
+name: Continuous Integration
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+env:
+  GO_VERSION: "1.17"
+  PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+  PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.48.0
+      - uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.2.6
+          terraform_wrapper: false
+      - name: Setup tools
+        run: make setup
+  
+  acctest:
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        go: ['1.17', '1.18']
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
+        with:
+          go-version: ${{ matrix.go }}
+      - uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Run dialect tests
+        run: make acctest

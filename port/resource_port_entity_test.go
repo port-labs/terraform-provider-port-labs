@@ -9,7 +9,7 @@ import (
 
 func TestAccPortEntityUpdateProp(t *testing.T) {
 	var testAccActionConfigCreate = `
-	provider "port" {}
+	provider "port-labs" {}
 	resource "port-labs_entity" "microservice" {
 		title = "monolith"
 		blueprint = "tf-provider-test-bp"
@@ -21,7 +21,7 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 	}
 `
 	var testAccActionConfigUpdate = `
-	provider "port" {}
+	provider "port-labs" {}
 	resource "port-labs_entity" "microservice" {
 		title = "monolith"
 		blueprint = "tf-provider-test-bp"
@@ -34,7 +34,7 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 `
 	resource.Test(t, resource.TestCase{
 		Providers: map[string]*schema.Provider{
-			"port": Provider(),
+			"port-lab": Provider(),
 		},
 		Steps: []resource.TestStep{
 			{
@@ -50,7 +50,7 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 
 func TestAccPortEntity(t *testing.T) {
 	var testAccActionConfigCreate = `
-	provider "port" {}
+	provider "port-labs" {}
 	resource "port-labs_entity" "microservice" {
 		title = "monolith"
 		blueprint = "tf-provider-test-bp"
@@ -95,7 +95,7 @@ func TestAccPortEntity(t *testing.T) {
 
 func TestAccPortEntitiesRelation(t *testing.T) {
 	var testAccActionConfigCreate = `
-	provider "port" {}
+	provider "port-labs" {}
 	resource "port-labs_entity" "microservice" {
 		title = "monolith"
 		blueprint = "tf-provider-test-bp"
@@ -121,7 +121,7 @@ func TestAccPortEntitiesRelation(t *testing.T) {
 `
 	resource.Test(t, resource.TestCase{
 		Providers: map[string]*schema.Provider{
-			"port": Provider(),
+			"port-labs": Provider(),
 		},
 		Steps: []resource.TestStep{
 			{

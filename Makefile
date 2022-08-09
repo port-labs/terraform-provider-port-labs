@@ -1,8 +1,8 @@
 HOSTNAME=github.com
 NAMESPACE=port-labs
-NAME=port
+NAME=port-labs
 BINARY=terraform-provider-${NAME}
-VERSION=0.0.12
+VERSION=0.0.13
 OS=$(shell go env GOOS)
 ARCH=$(shell go env GOARCH)
 OS_ARCH=${OS}_${ARCH}

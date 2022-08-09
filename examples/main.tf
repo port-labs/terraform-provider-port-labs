@@ -1,12 +1,12 @@
 terraform {
   required_providers {
     port = {
-      source  = "port-labs/port"
+      source  = "port-labs/port-labs"
       version = "~> 0.0.1"
     }
   }
 }
-provider "port" {}
+provider "port-labs" {}
 
 resource "port-labs_entity" "microservice" {
   title     = "monolith"

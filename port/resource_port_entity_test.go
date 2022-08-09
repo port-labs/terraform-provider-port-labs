@@ -34,7 +34,7 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 `
 	resource.Test(t, resource.TestCase{
 		Providers: map[string]*schema.Provider{
-			"port-lab": Provider(),
+			"port-labs": Provider(),
 		},
 		Steps: []resource.TestStep{
 			{
@@ -83,7 +83,7 @@ func TestAccPortEntity(t *testing.T) {
 `
 	resource.Test(t, resource.TestCase{
 		Providers: map[string]*schema.Provider{
-			"port": Provider(),
+			"port-labs": Provider(),
 		},
 		Steps: []resource.TestStep{
 			{

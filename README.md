@@ -4,12 +4,12 @@
 
 [![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://join.slack.com/t/devex-community/shared_invite/zt-1bmf5621e-GGfuJdMPK2D8UN58qL4E_g)
 
-
 Port is the Developer Platform meant to supercharge your DevOps and Developers, and allow you to regain control of your environment.
 
 ### Docs
-* [Provider Docs](https://registry.terraform.io/providers/port-labs/port/latest/docs)
-* [Port Docs](https://docs.getport.io/)
+
+- [Provider Docs](https://registry.terraform.io/providers/port-labs/port/latest/docs)
+- [Port Docs](https://docs.getport.io/)
 
 ## Installation
 
@@ -24,7 +24,7 @@ terraform {
 }
 provider "port" {}
 
-resource "port_entity" "microservice" {
+resource "port-labs_entity" "microservice" {
   title     = "monolith"
   blueprint = "microservice_blueprint"
   properties {

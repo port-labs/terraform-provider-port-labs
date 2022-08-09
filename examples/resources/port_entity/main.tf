@@ -1,9 +1,9 @@
-resource "port_entity" "microservice" {
+resource "port-labs_entity" "microservice" {
   title     = "monolith"
   blueprint = "microservice_blueprint"
   relations {
     name       = "tf-relation"
-    identifier = port_entity.prod_env.id
+    identifier = port-labs_entity.prod_env.id
   }
   properties {
     name  = "microservice_name"
@@ -12,7 +12,7 @@ resource "port_entity" "microservice" {
   }
 }
 
-resource "port_entity" "prod_env" {
+resource "port-labs_entity" "prod_env" {
   title     = "production"
   blueprint = "environments"
   properties {

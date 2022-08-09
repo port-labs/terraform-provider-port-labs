@@ -11,7 +11,7 @@ type Entity struct {
 	UpdatedBy  string                 `json:"updatedBy"`
 	Properties map[string]interface{} `json:"properties"`
 
-	// TODO: add the rest of the fields
+	// TODO: add the rest of the fields.
 }
 
 type PortBody struct {

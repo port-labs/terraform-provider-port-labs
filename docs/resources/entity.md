@@ -6,7 +6,7 @@ description: |-
   Port entity
 ---
 
-# port-labs (Resource)
+# port-labs_entity (Resource)
 
 Port entity
 

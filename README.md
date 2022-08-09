@@ -17,7 +17,7 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 terraform {
   required_providers {
     port = {
-      source  = "port-labs/port"
+      source  = "port-labs/port-labs"
       version = "~> 0.0.1"
     }
   }

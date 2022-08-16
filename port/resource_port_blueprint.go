@@ -10,6 +10,8 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/port/cli"
 )
 
+var ICONS = []string{"Actions", "Airflow", "Ansible", "Argo", "AuditLog", "Aws", "Azure", "Blueprint", "Bucket", "Cloud", "Cluster", "CPU", "Customer", "Datadog", "Day2Operation", "DefaultEntity", "DefaultProperty", "DeployedAt", "Deployment", "DevopsTool", "Docs", "Environment", "Git", "Github", "GitVersion", "GoogleCloud", "GPU", "Grafana", "Infinity", "Jenkins", "Lambda", "Link", "Lock", "Microservice", "Moon", "Node", "Okta", "Package", "Permission", "Relic", "Server", "Service", "Team", "Terraform", "User"}
+
 func newBlueprintResource() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Port blueprint",
@@ -37,7 +39,7 @@ func newBlueprintResource() *schema.Resource {
 			"icon": {
 				Type:         schema.TypeString,
 				Description:  "The icon of the blueprint",
-				ValidateFunc: validation.StringInSlice([]string{"Actions", "Airflow", "Ansible", "Argo", "AuditLog", "Aws", "Azure", "Blueprint", "Bucket", "Cloud", "Cluster", "CPU", "Customer", "Datadog", "Day2Operation", "DefaultEntity", "DefaultProperty", "DeployedAt", "Deployment", "DevopsTool", "Docs", "Environment", "Git", "Github", "GitVersion", "GoogleCloud", "GPU", "Grafana", "Infinity", "Jenkins", "Lambda", "Link", "Lock", "Microservice", "Moon", "Node", "Okta", "Package", "Permission", "Relic", "Server", "Service", "Team", "Terraform", "User"}, false),
+				ValidateFunc: validation.StringInSlice(ICONS, false),
 				Required:     true,
 			},
 			"relations": {

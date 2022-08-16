@@ -16,15 +16,13 @@ func (c *PortClient) CreatePermissions(ctx context.Context, clientID string, sco
 		SetBody(map[string]interface{}{
 			"permissions": scopes,
 		}).
-		SetResult(&responseBody).
+		SetResult(responseBody).
 		Post(url)
 	if err != nil {
 		return err
 	}
-	if statusOK, ok := responseBody["ok"].(bool); ok && !statusOK {
+	if !responseBody["ok"].(bool) {
 		return fmt.Errorf("failed to create permissions: %s", resp.Body())
-	} else if !ok {
-		return fmt.Errorf("failed to create permissionz: %s", resp.Body())
 	}
 	return nil
 }

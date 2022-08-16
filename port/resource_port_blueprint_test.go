@@ -106,3 +106,78 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortBlueprintUpdate(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	provider "port-labs" {}
+	resource "port-labs_blueprint" "microservice1" {
+		title = "TF Provider Test BP2"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+	}
+`, identifier)
+	var testAccActionConfigUpdate = fmt.Sprintf(`
+	provider "port-labs" {}
+	resource "port-labs_blueprint" "microservice1" {
+		title = "TF Provider Test BP2"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+		properties {
+			identifier = "number"
+			type = "number"
+			title = "num"
+		}
+	}
+`, identifier)
+	var testAccActionConfigUpdateAgain = fmt.Sprintf(`
+	provider "port-labs" {}
+	resource "port-labs_blueprint" "microservice1" {
+		title = "TF Provider Test BP2"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "number"
+			type = "number"
+			title = "num"
+		}
+	}
+`, identifier)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.title", "text"),
+				),
+			},
+			{
+				Config: testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.title", "num"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.1.title", "text"),
+				),
+			},
+			{
+				Config: testAccActionConfigUpdateAgain,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.title", "num"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.#", "1"),
+				),
+			},
+		},
+	})
+}

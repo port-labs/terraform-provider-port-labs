@@ -30,8 +30,28 @@ func (c *PortClient) CreateBlueprint(ctx context.Context, b *Blueprint) (*Bluepr
 	resp, err := c.Client.R().
 		SetBody(b).
 		SetContext(ctx).
-		SetQueryParam("upsert", "true").
 		Post(url)
+	if err != nil {
+		return nil, err
+	}
+	var pb PortBody
+	err = json.Unmarshal(resp.Body(), &pb)
+	if err != nil {
+		return nil, err
+	}
+	if !pb.OK {
+		return nil, fmt.Errorf("failed to create blueprint, got: %s", resp.Body())
+	}
+	return &pb.Blueprint, nil
+}
+
+func (c *PortClient) UpdateBlueprint(ctx context.Context, b *Blueprint, id string) (*Blueprint, error) {
+	url := "v0.1/blueprints/{identifier}"
+	resp, err := c.Client.R().
+		SetBody(b).
+		SetContext(ctx).
+		SetPathParam("identifier", id).
+		Put(url)
 	if err != nil {
 		return nil, err
 	}

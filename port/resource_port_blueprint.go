@@ -241,6 +241,11 @@ func patchBlueprintDeletePermission(ctx context.Context, client *cli.PortClient,
 	return client.CreatePermissions(ctx, client.ClientID, fmt.Sprintf("delete:blueprints:%s", bpID))
 }
 
+// patchBlueprintDeletePermission is a workaround for a bug where the creator of a blueprint does not have the permission to delete it.
+func patchBlueprintUpdatePermission(ctx context.Context, client *cli.PortClient, bpID string) error {
+	return client.CreatePermissions(ctx, client.ClientID, fmt.Sprintf("update:blueprints:%s", bpID))
+}
+
 func deleteBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
@@ -291,7 +296,16 @@ func createBlueprint(ctx context.Context, d *schema.ResourceData, m interface{})
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	bp, err := c.CreateBlueprint(ctx, b)
+	var bp *cli.Blueprint
+	if d.Id() != "" {
+		err = patchBlueprintUpdatePermission(ctx, c, d.Id())
+		if err != nil {
+			return diag.FromErr(err)
+		}
+		bp, err = c.UpdateBlueprint(ctx, b, d.Id())
+	} else {
+		bp, err = c.CreateBlueprint(ctx, b)
+	}
 	if err != nil {
 		return diag.FromErr(err)
 	}

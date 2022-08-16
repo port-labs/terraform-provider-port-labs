@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/go-resty/resty/v2"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/port-labs/terraform-provider-port-labs/port/cli"
 )
 
 func newEntityResource() *schema.Resource {
@@ -68,7 +68,7 @@ func newEntityResource() *schema.Resource {
 							Type:         schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"number", "string", "boolean", "array", "object"}, false),
 							Required:     true,
-							Description:  "The type of the properrty",
+							Description:  "The type of the property",
 						},
 						"value": {
 							Type:        schema.TypeString,
@@ -109,22 +109,10 @@ func newEntityResource() *schema.Resource {
 
 func deleteEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	client := m.(*resty.Client)
-	url := "v0.1/entities/{identifier}"
-	resp, err := client.R().
-		SetHeader("Accept", "application/json").
-		SetPathParam("identifier", d.Id()).
-		Delete(url)
+	c := m.(*cli.PortClient)
+	err := c.DeleteEntity(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
-	}
-	responseBody := make(map[string]interface{})
-	err = json.Unmarshal(resp.Body(), &responseBody)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if !(responseBody["ok"].(bool)) {
-		return diag.FromErr(fmt.Errorf("failed to delete entity. got:\n%s", string(resp.Body())))
 	}
 	return diags
 }
@@ -147,44 +135,39 @@ func convert(prop map[string]interface{}) (interface{}, error) {
 	return "", fmt.Errorf("unsupported type %s", valType)
 }
 
-func entityResourceToBody(d *schema.ResourceData) (map[string]interface{}, error) {
-	body := make(map[string]interface{})
+func entityResourceToBody(d *schema.ResourceData) (*cli.Entity, error) {
+	e := &cli.Entity{}
 	if identifier, ok := d.GetOk("identifier"); ok {
-		body["identifier"] = identifier
+		e.Identifier = identifier.(string)
 	}
 	id := d.Id()
 	if id != "" {
-		body["identifier"] = id
+		e.Identifier = id
 	}
-	body["title"] = d.Get("title").(string)
-	body["blueprint"] = d.Get("blueprint").(string)
-	body["blueprintIdentifier"] = d.Get("blueprint").(string)
+	e.Title = d.Get("title").(string)
+	e.Blueprint = d.Get("blueprint").(string)
 	rels := d.Get("relations").(*schema.Set)
 	relations := make(map[string]string)
 	for _, rel := range rels.List() {
 		r := rel.(map[string]interface{})
-		bpName := r["name"].(string)
-		relID := r["identifier"].(string)
-		relations[bpName] = relID
+		relations[r["name"].(string)] = r["identifier"].(string)
 	}
-	body["relations"] = relations
+	e.Relations = relations
 	props := d.Get("properties").(*schema.Set)
-	properties := map[string]interface{}{}
+	properties := make(map[string]interface{}, props.Len())
 	for _, prop := range props.List() {
 		p := prop.(map[string]interface{})
-		var propValue interface{}
-		var err error
-		propValue, err = convert(p)
+		propValue, err := convert(p)
 		if err != nil {
 			return nil, err
 		}
 		properties[p["name"].(string)] = propValue
 	}
-	body["properties"] = properties
-	return body, nil
+	e.Properties = properties
+	return e, nil
 }
 
-func writeEntityComputedFieldsToResource(d *schema.ResourceData, e Entity) {
+func writeEntityComputedFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
 	d.SetId(e.Identifier)
 	d.Set("created_at", e.CreatedAt.String())
 	d.Set("created_by", e.CreatedBy)
@@ -192,7 +175,7 @@ func writeEntityComputedFieldsToResource(d *schema.ResourceData, e Entity) {
 	d.Set("updated_by", e.UpdatedBy)
 }
 
-func writeEntityFieldsToResource(d *schema.ResourceData, e Entity) {
+func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
 	d.SetId(e.Identifier)
 	d.Set("title", e.Title)
 	d.Set("created_at", e.CreatedAt.String())
@@ -240,49 +223,26 @@ func writeEntityFieldsToResource(d *schema.ResourceData, e Entity) {
 
 func createEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	client := m.(*resty.Client)
-	url := "v0.1/entities"
-	body, err := entityResourceToBody(d)
+	c := m.(*cli.PortClient)
+	e, err := entityResourceToBody(d)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	resp, err := client.R().
-		SetBody(body).
-		SetQueryParam("upsert", "true").
-		Post(url)
+	en, err := c.CreateEntity(ctx, e)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	var pb PortBody
-	err = json.Unmarshal(resp.Body(), &pb)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	if !pb.OK {
-		return diag.FromErr(fmt.Errorf("failed to create entity, got: %s", resp.Body()))
-	}
-	writeEntityComputedFieldsToResource(d, pb.Entity)
+	writeEntityComputedFieldsToResource(d, en)
 	return diags
 }
 
 func readEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
-	client := m.(*resty.Client)
-	url := "v0.1/entities/{identifier}"
-	resp, err := client.R().
-		SetHeader("Accept", "application/json").
-		SetQueryParam("exclude_mirror_properties", "true").
-		SetPathParam("identifier", d.Id()).
-		Get(url)
+	c := m.(*cli.PortClient)
+	e, err := c.ReadEntity(ctx, d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	var pb PortBody
-	err = json.Unmarshal(resp.Body(), &pb)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	e := pb.Entity
 	writeEntityFieldsToResource(d, e)
 	if err != nil {
 		return diag.FromErr(err)

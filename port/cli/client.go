@@ -20,7 +20,8 @@ func New(baseURL string, opts ...Option) (*PortClient, error) {
 	c := &PortClient{
 		Client: resty.New().
 			SetBaseURL(baseURL).
-			SetRetryCount(3).
+			SetRetryCount(5).
+			SetRetryWaitTime(300).
 			// retry when create permission fails because scopes are created async-ly and sometimes (mainly in tests) the scope doesn't exist yet.
 			AddRetryCondition(func(r *resty.Response, err error) bool {
 				if err != nil {
@@ -31,13 +32,7 @@ func New(baseURL string, opts ...Option) (*PortClient, error) {
 				}
 				b := make(map[string]interface{})
 				err = json.Unmarshal(r.Body(), &b)
-				if err != nil {
-					return true
-				}
-				if b["ok"] != true {
-					return true
-				}
-				return false
+				return err != nil || b["ok"] != true
 			}),
 	}
 	for _, opt := range opts {

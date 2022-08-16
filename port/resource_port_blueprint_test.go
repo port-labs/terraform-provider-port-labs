@@ -1,19 +1,30 @@
 package port
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
+func genID() string {
+	id, err := uuid.GenerateUUID()
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("t-%s", id[:18])
+}
+
 func TestAccPortBlueprint(t *testing.T) {
-	var testAccActionConfigCreate = `
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
 	provider "port-labs" {}
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test BP0"
 		icon = "Terraform"
-		identifier = "tf-test-bp0"
+		identifier = "%s"
 		properties {
 			identifier = "text"
 			type = "string"
@@ -40,7 +51,7 @@ func TestAccPortBlueprint(t *testing.T) {
 			title = "array"
 		}
 	}
-`
+`, identifier)
 	resource.Test(t, resource.TestCase{
 		Providers: map[string]*schema.Provider{
 			"port-labs": Provider(),
@@ -54,12 +65,14 @@ func TestAccPortBlueprint(t *testing.T) {
 }
 
 func TestAccPortBlueprintWithRelation(t *testing.T) {
-	var testAccActionConfigCreate = `
+	identifier1 := genID()
+	identifier2 := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
 	provider "port-labs" {}
 	resource "port-labs_blueprint" "microservice1" {
 		title = "TF Provider Test BP2"
 		icon = "Terraform"
-		identifier = "tf-provider-bp2"
+		identifier = "%s"
 		properties {
 			identifier = "text"
 			type = "string"
@@ -69,7 +82,7 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 	resource "port-labs_blueprint" "microservice2" {
 		title = "TF Provider Test BP3"
 		icon = "Terraform"
-		identifier = "tf-provider-bp3"
+		identifier = "%s"
 		properties {
 			identifier = "text"
 			type = "string"
@@ -81,7 +94,7 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 			target = port-labs_blueprint.microservice1.identifier
 		}
 	}
-`
+`, identifier1, identifier2)
 	resource.Test(t, resource.TestCase{
 		Providers: map[string]*schema.Provider{
 			"port-labs": Provider(),

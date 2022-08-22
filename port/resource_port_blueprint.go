@@ -34,6 +34,7 @@ func newBlueprintResource() *schema.Resource {
 				Description: "The data source for entities of this blueprint",
 				Default:     "Port",
 				Optional:    true,
+				Deprecated:  "Data source is ignored",
 			},
 			"icon": {
 				Type:         schema.TypeString,
@@ -172,7 +173,6 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	d.SetId(b.Identifier)
 	d.Set("title", b.Title)
 	d.Set("icon", b.Icon)
-	d.Set("data_source", b.DataSource)
 	d.Set("created_at", b.CreatedAt.String())
 	d.Set("created_by", b.CreatedBy)
 	d.Set("updated_at", b.UpdatedAt.String())
@@ -206,9 +206,6 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 
 	b.Title = d.Get("title").(string)
 	b.Icon = d.Get("icon").(string)
-	if ds, ok := d.GetOk("data_source"); ok {
-		b.DataSource = ds.(string)
-	}
 
 	props := d.Get("properties").(*schema.Set)
 	properties := make(map[string]cli.BlueprintProperty, props.Len())

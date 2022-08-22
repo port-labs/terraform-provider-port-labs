@@ -45,7 +45,6 @@ type (
 		Identifier string          `json:"identifier,omitempty"`
 		Title      string          `json:"title"`
 		Icon       string          `json:"icon"`
-		DataSource string          `json:"dataSource"`
 		Schema     BlueprintSchema `json:"schema"`
 		// TODO: relations
 	}

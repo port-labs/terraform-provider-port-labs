@@ -14,6 +14,5 @@ resource "port-labs_entity" "microservice" {
   properties {
     name  = "microservice_name"
     value = "golang_monolith"
-    type  = "string"
   }
 }

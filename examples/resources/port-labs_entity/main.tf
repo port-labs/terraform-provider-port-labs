@@ -8,7 +8,6 @@ resource "port-labs_entity" "microservice" {
   properties {
     name  = "microservice_name"
     value = "golang_monolith"
-    type  = "string"
   }
 }
 
@@ -18,6 +17,5 @@ resource "port-labs_entity" "prod_env" {
   properties {
     name  = "name"
     value = "production-env"
-    type  = "string"
   }
 }

@@ -16,7 +16,6 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 		properties {
 			name = "text"
 			value = "hedwig"
-			type = "string"
 		}
 	}
 `
@@ -28,7 +27,6 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 		properties {
 			name = "text"
 			value = "hedwig2"
-			type = "string"
 		}
 	}
 `
@@ -57,27 +55,22 @@ func TestAccPortEntity(t *testing.T) {
 		properties {
 			name = "text"
 			value = "hedwig"
-			type = "string"
 		}
 		properties {
 			name = "bool"
 			value = "true"
-			type = "boolean"
 		}
 		properties {
 			name = "num"
 			value = 123
-			type = "number"
 		}
 		properties {
 			name = "arr"
 			items = [1,2,3]
-			type = "array"
 		}
 		properties {
 			name = "obj"
 			value = jsonencode({"a":"b"})
-			type = "object"
 		}
 	}
 `
@@ -106,7 +99,6 @@ func TestAccPortEntitiesRelation(t *testing.T) {
 		properties {
 			name = "text"
 			value = "test-relation"
-			type = "string"
 		}
 	}
 	resource "port-labs_entity" "microservice2" {
@@ -115,7 +107,6 @@ func TestAccPortEntitiesRelation(t *testing.T) {
 		properties {
 			name = "str"
 			value = "test-relation"
-			type = "string"
 		}
 	}
 `

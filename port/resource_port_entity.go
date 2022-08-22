@@ -67,7 +67,8 @@ func newEntityResource() *schema.Resource {
 						"type": {
 							Type:         schema.TypeString,
 							ValidateFunc: validation.StringInSlice([]string{"number", "string", "boolean", "array", "object"}, false),
-							Required:     true,
+							Optional:     true,
+							Deprecated:   "property type is not required anymore",
 							Description:  "The type of the property",
 						},
 						"value": {
@@ -117,8 +118,15 @@ func deleteEntity(ctx context.Context, d *schema.ResourceData, m interface{}) di
 	return diags
 }
 
-func convert(prop map[string]interface{}) (interface{}, error) {
+func convert(prop map[string]interface{}, bp *cli.Blueprint) (interface{}, error) {
 	valType := prop["type"].(string)
+	if valType == "" {
+		if p, ok := bp.Schema.Properties[prop["name"].(string)]; ok {
+			valType = p.Type
+		} else {
+			return nil, fmt.Errorf("no type found for property %s", prop["name"])
+		}
+	}
 	switch valType {
 	case "string", "number", "boolean":
 		return prop["value"], nil
@@ -135,7 +143,7 @@ func convert(prop map[string]interface{}) (interface{}, error) {
 	return "", fmt.Errorf("unsupported type %s", valType)
 }
 
-func entityResourceToBody(d *schema.ResourceData) (*cli.Entity, error) {
+func entityResourceToBody(d *schema.ResourceData, bp *cli.Blueprint) (*cli.Entity, error) {
 	e := &cli.Entity{}
 	if identifier, ok := d.GetOk("identifier"); ok {
 		e.Identifier = identifier.(string)
@@ -157,7 +165,7 @@ func entityResourceToBody(d *schema.ResourceData) (*cli.Entity, error) {
 	properties := make(map[string]interface{}, props.Len())
 	for _, prop := range props.List() {
 		p := prop.(map[string]interface{})
-		propValue, err := convert(p)
+		propValue, err := convert(p, bp)
 		if err != nil {
 			return nil, err
 		}
@@ -194,23 +202,17 @@ func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
 		p["name"] = k
 		switch t := v.(type) {
 		case map[string]interface{}:
-			p["type"] = "object"
 			js, _ := json.Marshal(&t)
 			p["value"] = string(js)
 		case []interface{}:
-			p["type"] = "array"
 			p["items"] = t
 		case float64:
-			p["type"] = "number"
 			p["value"] = strconv.FormatFloat(t, 'f', -1, 64)
 		case int:
-			p["type"] = "number"
 			p["value"] = strconv.Itoa(t)
 		case string:
-			p["type"] = "string"
 			p["value"] = t
 		case bool:
-			p["type"] = "boolean"
 			p["value"] = "false"
 			if t {
 				p["value"] = "true"
@@ -224,7 +226,11 @@ func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
 func createEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	e, err := entityResourceToBody(d)
+	bp, err := c.ReadBlueprint(ctx, d.Get("blueprint").(string))
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	e, err := entityResourceToBody(d, bp)
 	if err != nil {
 		return diag.FromErr(err)
 	}

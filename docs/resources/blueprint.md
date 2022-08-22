@@ -24,7 +24,7 @@ Port blueprint
 
 ### Optional
 
-- `data_source` (String) The data source for entities of this blueprint
+- `data_source` (String, Deprecated) The data source for entities of this blueprint
 - `relations` (Block Set) The blueprints that are connected to this blueprint (see [below for nested schema](#nestedblock--relations))
 
 ### Read-Only

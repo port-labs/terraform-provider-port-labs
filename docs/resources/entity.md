@@ -40,11 +40,11 @@ Port entity
 Required:
 
 - `name` (String) The name of this property
-- `type` (String) The type of the property
 
 Optional:
 
 - `items` (List of String) The list of items, in case the type of this property is a list
+- `type` (String, Deprecated) The type of the property
 - `value` (String) The value for this property
 
 

@@ -29,9 +29,9 @@ func Provider() *schema.Provider {
 				Optional:  true,
 			},
 			"base_url": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Default:  "https://api.getport.io",
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("PORT_BASE_URL", "https://api.getport.io"),
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{

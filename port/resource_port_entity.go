@@ -111,7 +111,7 @@ func newEntityResource() *schema.Resource {
 func deleteEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	err := c.DeleteEntity(ctx, d.Id())
+	err := c.DeleteEntity(ctx, d.Id(), d.Get("blueprint").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -245,7 +245,7 @@ func createEntity(ctx context.Context, d *schema.ResourceData, m interface{}) di
 func readEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	e, err := c.ReadEntity(ctx, d.Id())
+	e, err := c.ReadEntity(ctx, d.Id(), d.Get("blueprint").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}

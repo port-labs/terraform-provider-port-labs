@@ -8,11 +8,11 @@ import (
 
 func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, error) {
 	pb := &PortBody{}
-	url := "v0.1/blueprints/{identifier}"
+	url := "v1/blueprints/{identifier}"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
-		SetQueryParam("exclude_mirror_properties", "true").
+		SetQueryParam("exclude_calculated_properties", "true").
 		SetResult(pb).
 		SetPathParam("identifier", id).
 		Get(url)
@@ -26,7 +26,7 @@ func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, 
 }
 
 func (c *PortClient) CreateBlueprint(ctx context.Context, b *Blueprint) (*Blueprint, error) {
-	url := "v0.1/blueprints"
+	url := "v1/blueprints"
 	resp, err := c.Client.R().
 		SetBody(b).
 		SetContext(ctx).
@@ -46,7 +46,7 @@ func (c *PortClient) CreateBlueprint(ctx context.Context, b *Blueprint) (*Bluepr
 }
 
 func (c *PortClient) UpdateBlueprint(ctx context.Context, b *Blueprint, id string) (*Blueprint, error) {
-	url := "v0.1/blueprints/{identifier}"
+	url := "v1/blueprints/{identifier}"
 	resp, err := c.Client.R().
 		SetBody(b).
 		SetContext(ctx).
@@ -67,7 +67,7 @@ func (c *PortClient) UpdateBlueprint(ctx context.Context, b *Blueprint, id strin
 }
 
 func (c *PortClient) DeleteBlueprint(ctx context.Context, id string) error {
-	url := "v0.1/blueprints/{identifier}"
+	url := "v1/blueprints/{identifier}"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").

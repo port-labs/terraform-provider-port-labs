@@ -7,7 +7,7 @@ import (
 )
 
 func (c *PortClient) CreatePermissions(ctx context.Context, clientID string, scopes ...string) error {
-	url := "v0.1/apps/{app_id}/permissions"
+	url := "v1/apps/{app_id}/permissions"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").

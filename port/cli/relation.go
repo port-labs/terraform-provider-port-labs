@@ -6,7 +6,7 @@ import (
 )
 
 func (c *PortClient) CreateRelation(ctx context.Context, bpID string, r *Relation) (string, error) {
-	url := "v0.1/blueprints/{identifier}/relations"
+	url := "v1/blueprints/{identifier}/relations"
 	result := map[string]interface{}{}
 	resp, err := c.Client.R().
 		SetBody(r).
@@ -24,7 +24,7 @@ func (c *PortClient) CreateRelation(ctx context.Context, bpID string, r *Relatio
 }
 
 func (c *PortClient) ReadRelations(ctx context.Context, blueprintID string) ([]*Relation, error) {
-	url := "v0.1/relations"
+	url := "v1/relations"
 	result := map[string]interface{}{}
 	resp, err := c.Client.R().
 		SetContext(ctx).

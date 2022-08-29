@@ -6,11 +6,12 @@ import (
 	"fmt"
 )
 
-func (c *PortClient) ReadEntity(ctx context.Context, id string) (*Entity, error) {
-	url := "v0.1/entities/{identifier}"
+func (c *PortClient) ReadEntity(ctx context.Context, id string, blueprint string) (*Entity, error) {
+	url := "v1/blueprints/{blueprint}/entities/{identifier}"
 	resp, err := c.Client.R().
 		SetHeader("Accept", "application/json").
-		SetQueryParam("exclude_mirror_properties", "true").
+		SetQueryParam("exclude_calculated_properties", "true").
+		SetPathParam(("blueprint"), blueprint).
 		SetPathParam("identifier", id).
 		Get(url)
 	if err != nil {
@@ -25,10 +26,11 @@ func (c *PortClient) ReadEntity(ctx context.Context, id string) (*Entity, error)
 }
 
 func (c *PortClient) CreateEntity(ctx context.Context, e *Entity) (*Entity, error) {
-	url := "v0.1/entities"
+	url := "v1/blueprints/{blueprint}/entities"
 	pb := &PortBody{}
 	resp, err := c.Client.R().
 		SetBody(e).
+		SetPathParam(("blueprint"), e.Blueprint).
 		SetQueryParam("upsert", "true").
 		SetResult(&pb).
 		Post(url)
@@ -41,11 +43,12 @@ func (c *PortClient) CreateEntity(ctx context.Context, e *Entity) (*Entity, erro
 	return &pb.Entity, nil
 }
 
-func (c *PortClient) DeleteEntity(ctx context.Context, id string) error {
-	url := "v0.1/entities/{identifier}"
+func (c *PortClient) DeleteEntity(ctx context.Context, id string, blueprint string) error {
+	url := "v1/blueprints/{blueprint}/entities/{identifier}"
 	pb := &PortBody{}
 	resp, err := c.Client.R().
 		SetHeader("Accept", "application/json").
+		SetPathParam("blueprint", blueprint).
 		SetPathParam("identifier", id).
 		SetResult(pb).
 		Delete(url)

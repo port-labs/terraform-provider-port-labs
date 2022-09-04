@@ -370,7 +370,10 @@ func updateBlueprint(ctx context.Context, d *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 	writeBlueprintComputedFieldsToResource(d, bp)
-	patchDeleteDeprecatedRelations(ctx, d, m)
+	err = patchDeleteDeprecatedRelations(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	err = createRelations(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)

@@ -62,7 +62,8 @@ Required:
 Optional:
 
 - `identifier` (String) The identifier of the relation
-- `many` (Boolean) Whether or not the relation is many
+- `many` (Boolean) Unsupported ATM.
+Whether or not the relation is many
 - `required` (Boolean) Whether or not the relation is required
 
 

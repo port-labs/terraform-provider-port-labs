@@ -37,6 +37,7 @@ func Provider() *schema.Provider {
 		ResourcesMap: map[string]*schema.Resource{
 			"port-labs_entity":    newEntityResource(),
 			"port-labs_blueprint": newBlueprintResource(),
+			"port-labs_action":    newActionResource(),
 		},
 		DataSourcesMap:       map[string]*schema.Resource{},
 		ConfigureContextFunc: providerConfigure,

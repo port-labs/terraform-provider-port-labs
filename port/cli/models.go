@@ -34,11 +34,15 @@ type (
 		Default     string `json:"default,omitempty"`
 		Format      string `json:"format,omitempty"`
 		Description string `json:"description,omitempty"`
+		Pattern     string `json:"pattern,omitempty"`
 	}
 
 	BlueprintSchema struct {
 		Properties map[string]BlueprintProperty `json:"properties"`
+		Required   []string                     `json:"required,omitempty"`
 	}
+
+	ActionUserInputs = BlueprintSchema
 
 	Blueprint struct {
 		Meta
@@ -46,7 +50,17 @@ type (
 		Title      string          `json:"title"`
 		Icon       string          `json:"icon"`
 		Schema     BlueprintSchema `json:"schema"`
-		// TODO: relations
+	}
+
+	Action struct {
+		ID               string           `json:"id,omitempty"`
+		Identifier       string           `json:"identifier,omitempty"`
+		Description      string           `json:"description,omitempty"`
+		Title            string           `json:"title,omitempty"`
+		Icon             string           `json:"icon,omitempty"`
+		UserInputs       ActionUserInputs `json:"userInputs"`
+		Trigger          string           `json:"trigger"`
+		InvocationMethod string           `json:"invocationMethod"`
 	}
 
 	Relation struct {
@@ -62,4 +76,5 @@ type PortBody struct {
 	OK        bool      `json:"ok"`
 	Entity    Entity    `json:"entity"`
 	Blueprint Blueprint `json:"blueprint"`
+	Action    Action    `json:"action"`
 }

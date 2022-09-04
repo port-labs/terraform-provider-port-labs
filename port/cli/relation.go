@@ -17,7 +17,7 @@ func (c *PortClient) CreateRelation(ctx context.Context, bpID string, r *Relatio
 	if err != nil {
 		return "", err
 	}
-	if !result["ok"].(bool) {
+	if resp.StatusCode() > 299 || resp.StatusCode() < 200 || !result["ok"].(bool) {
 		return "", fmt.Errorf("failed to create relation, got: %s", resp.Body())
 	}
 	return result["identifier"].(string), nil
@@ -52,4 +52,22 @@ func (c *PortClient) ReadRelations(ctx context.Context, blueprintID string) ([]*
 		})
 	}
 	return bpRelations, nil
+}
+
+func (c *PortClient) DeleteRelation(ctx context.Context, blueprintID, relationID string) error {
+	url := "v1/blueprints/{blueprint_identifier}/relations/{relation_identifier}"
+	result := map[string]interface{}{}
+	resp, err := c.Client.R().
+		SetContext(ctx).
+		SetResult(&result).
+		SetPathParam("blueprint_identifier", blueprintID).
+		SetPathParam("relation_identifier", relationID).
+		Delete(url)
+	if err != nil {
+		return err
+	}
+	if !result["ok"].(bool) {
+		return fmt.Errorf("failed to delete relation, got: %s", resp.Body())
+	}
+	return nil
 }

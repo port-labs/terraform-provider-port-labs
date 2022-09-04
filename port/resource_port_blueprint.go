@@ -3,6 +3,7 @@ package port
 import (
 	"context"
 
+	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -15,7 +16,7 @@ func newBlueprintResource() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Port blueprint",
 		CreateContext: createBlueprint,
-		UpdateContext: createBlueprint,
+		UpdateContext: updateBlueprint,
 		ReadContext:   readBlueprint,
 		DeleteContext: deleteBlueprint,
 		Schema: map[string]*schema.Schema{
@@ -68,9 +69,15 @@ func newBlueprintResource() *schema.Resource {
 							Description: "Whether or not the relation is required",
 						},
 						"many": {
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Description: "Whether or not the relation is many",
+							Type:     schema.TypeBool,
+							Optional: true,
+							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
+								if i.(bool) {
+									return diag.Errorf("Many relations are not supported")
+								}
+								return nil
+							},
+							Description: "Unsupported ATM.\nWhether or not the relation is many",
 						},
 					},
 				},
@@ -244,8 +251,7 @@ func deleteBlueprint(ctx context.Context, d *schema.ResourceData, m interface{})
 	return diags
 }
 
-func createRelations(ctx context.Context, d *schema.ResourceData, m interface{}) error {
-	c := m.(*cli.PortClient)
+func getRelations(d *schema.ResourceData) (rel []*cli.Relation) {
 	relations, ok := d.GetOk("relations")
 	if !ok {
 		return nil
@@ -265,7 +271,57 @@ func createRelations(ctx context.Context, d *schema.ResourceData, m interface{})
 		if req, ok := relation["required"]; ok {
 			r.Required = req.(bool)
 		}
+		if m, ok := relation["many"]; ok {
+			r.Many = m.(bool)
+		}
+		rel = append(rel, r)
+	}
+	return
+}
+
+func createRelations(ctx context.Context, d *schema.ResourceData, m interface{}) error {
+	c := m.(*cli.PortClient)
+	rels := getRelations(d)
+	for _, r := range rels {
 		_, err := c.CreateRelation(ctx, d.Id(), r)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
+// patchDeleteDeprecatedRelations deletes relations that are no longer present in the resource.
+// This is necessary because we bundled relations inside the blueprint resource.
+// In the future, the API of blueprints should support getting the relations and then we can delete this patch.
+func patchDeleteDeprecatedRelations(ctx context.Context, d *schema.ResourceData, m interface{}) error {
+	c := m.(*cli.PortClient)
+	rels := getRelations(d)
+	ids := make([]string, len(rels))
+	for i, r := range rels {
+		ids[i] = r.Identifier
+	}
+	remoteRelations, err := c.ReadRelations(ctx, d.Id())
+	if err != nil {
+		return err
+	}
+	toDel := make([]*cli.Relation, 0)
+	for _, r := range remoteRelations {
+		if !contains(ids, r.Identifier) {
+			toDel = append(toDel, r)
+		}
+	}
+	for _, r := range toDel {
+		err := c.DeleteRelation(ctx, d.Id(), r.Identifier)
 		if err != nil {
 			return err
 		}
@@ -290,6 +346,31 @@ func createBlueprint(ctx context.Context, d *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 	writeBlueprintComputedFieldsToResource(d, bp)
+	err = createRelations(ctx, d, m)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return diags
+}
+
+func updateBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
+	var diags diag.Diagnostics
+	c := m.(*cli.PortClient)
+	b, err := blueprintResourceToBody(d)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	var bp *cli.Blueprint
+	if d.Id() != "" {
+		bp, err = c.UpdateBlueprint(ctx, b, d.Id())
+	} else {
+		bp, err = c.CreateBlueprint(ctx, b)
+	}
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	writeBlueprintComputedFieldsToResource(d, bp)
+	patchDeleteDeprecatedRelations(ctx, d, m)
 	err = createRelations(ctx, d, m)
 	if err != nil {
 		return diag.FromErr(err)

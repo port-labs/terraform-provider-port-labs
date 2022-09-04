@@ -181,3 +181,89 @@ func TestAccPortBlueprintUpdate(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortBlueprintUpdateRelation(t *testing.T) {
+	envID := genID()
+	vmID := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	provider "port-labs" {}
+	resource "port-labs_blueprint" "Environment" {
+		title = "Environment"
+		icon = "Environment"
+		identifier = "%s"
+		properties {
+			identifier = "env_name"
+			type = "string"
+			title = "Name"
+		}
+	}
+	resource "port-labs_blueprint" "vm" {
+		title = "Virtual Machine"
+		icon = "Azure"
+		identifier = "%s"
+		properties {
+			identifier = "image"
+			type = "string"
+			title = "Image"
+		}
+		relations {
+			identifier = "vm-to-environment"
+			title = "Related Environment"
+			target = port-labs_blueprint.Environment.identifier
+		}
+	}
+`, envID, vmID)
+	var testAccActionConfigUpdate = fmt.Sprintf(`
+	provider "port-labs" {}
+	resource "port-labs_blueprint" "Environment" {
+		title = "Environment"
+		icon = "Environment"
+		identifier = "%s"
+		properties {
+			identifier = "env_name"
+			type = "string"
+			title = "Name"
+		}
+	}
+	resource "port-labs_blueprint" "vm" {
+		title = "Virtual Machine"
+		icon = "Azure"
+		identifier = "%s"
+		properties {
+			identifier = "image"
+			type = "string"
+			title = "Image"
+		}
+		relations {
+			identifier = "environment"
+			title = "Related Environment"
+			target = port-labs_blueprint.Environment.identifier
+		}
+	}
+`, envID, vmID)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.#", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.title", "Related Environment"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.target", envID),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.identifier", "vm-to-environment"),
+				),
+			},
+			{
+				Config: testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.#", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.title", "Related Environment"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.target", envID),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.identifier", "environment"),
+				),
+			},
+		},
+	})
+}

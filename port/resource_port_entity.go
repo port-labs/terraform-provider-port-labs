@@ -30,6 +30,11 @@ func newEntityResource() *schema.Resource {
 				Description: "The display name of the entity",
 				Required:    true,
 			},
+			"team": {
+				Type:        schema.TypeString,
+				Description: "The display name of the entity",
+				Required:    true,
+			},
 			"blueprint": {
 				Type:        schema.TypeString,
 				Description: "The blueprint identifier the entity relates to",

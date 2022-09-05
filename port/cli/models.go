@@ -22,6 +22,7 @@ type (
 		Identifier string                 `json:"identifier,omitempty"`
 		Title      string                 `json:"title"`
 		Blueprint  string                 `json:"blueprint"`
+		Team       string                 `json:"team,omitempty"`
 		Properties map[string]interface{} `json:"properties"`
 		Relations  map[string]string      `json:"relations"`
 		// TODO: add the rest of the fields.

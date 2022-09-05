@@ -25,6 +25,7 @@ Port entity
 
 - `identifier` (String) The identifier of the entity
 - `relations` (Block Set) The other entities that are connected (see [below for nested schema](#nestedblock--relations))
+- `team` (String) The team related to the entity
 
 ### Read-Only
 

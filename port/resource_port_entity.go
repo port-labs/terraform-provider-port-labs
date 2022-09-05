@@ -30,6 +30,11 @@ func newEntityResource() *schema.Resource {
 				Description: "The display name of the entity",
 				Required:    true,
 			},
+			"team": {
+				Type:        schema.TypeString,
+				Description: "The team related to the entity",
+				Optional:    true,
+			},
 			"blueprint": {
 				Type:        schema.TypeString,
 				Description: "The blueprint identifier the entity relates to",
@@ -154,6 +159,9 @@ func entityResourceToBody(d *schema.ResourceData, bp *cli.Blueprint) (*cli.Entit
 	}
 	e.Title = d.Get("title").(string)
 	e.Blueprint = d.Get("blueprint").(string)
+	if team, ok := d.GetOk("team"); ok {
+		e.Team = team.(string)
+	}
 	rels := d.Get("relations").(*schema.Set)
 	relations := make(map[string]string)
 	for _, rel := range rels.List() {
@@ -186,6 +194,7 @@ func writeEntityComputedFieldsToResource(d *schema.ResourceData, e *cli.Entity) 
 func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
 	d.SetId(e.Identifier)
 	d.Set("title", e.Title)
+	d.Set("team", e.Team)
 	d.Set("created_at", e.CreatedAt.String())
 	d.Set("created_by", e.CreatedBy)
 	d.Set("updated_at", e.UpdatedAt.String())

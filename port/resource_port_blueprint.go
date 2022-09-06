@@ -269,43 +269,6 @@ func deleteBlueprint(ctx context.Context, d *schema.ResourceData, m interface{})
 	return diags
 }
 
-func getRelations(d *schema.ResourceData) (rel []*cli.Relation) {
-	relations, ok := d.GetOk("relations")
-	if !ok {
-		return nil
-	}
-	for _, relation := range relations.(*schema.Set).List() {
-		relation := relation.(map[string]interface{})
-		r := &cli.Relation{}
-		if t, ok := relation["title"]; ok {
-			r.Title = t.(string)
-		}
-		if t, ok := relation["target"]; ok {
-			r.Target = t.(string)
-		}
-		if i, ok := relation["identifier"]; ok {
-			r.Identifier = i.(string)
-		}
-		if req, ok := relation["required"]; ok {
-			r.Required = req.(bool)
-		}
-		if m, ok := relation["many"]; ok {
-			r.Many = m.(bool)
-		}
-		rel = append(rel, r)
-	}
-	return
-}
-
-func contains(s []string, e string) bool {
-	for _, a := range s {
-		if a == e {
-			return true
-		}
-	}
-	return false
-}
-
 func createBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)

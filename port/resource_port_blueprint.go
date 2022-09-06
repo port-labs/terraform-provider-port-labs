@@ -150,11 +150,7 @@ func readBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) d
 		return diag.FromErr(err)
 	}
 	writeBlueprintFieldsToResource(d, b)
-	relations, err := c.ReadRelations(ctx, d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	writeBlueprintRelationsToResource(d, relations)
+
 	return diags
 }
 
@@ -237,7 +233,29 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		properties[p["identifier"].(string)] = propFields
 	}
 
+	rels := d.Get("relations").(*schema.Set)
+	relations := make(map[string]cli.Relation, props.Len())
+	for _, rel := range rels.List() {
+		p := rel.(map[string]interface{})
+		relationFields := cli.Relation{}
+		if t, ok := p["required"]; ok && t != "" {
+			relationFields.Required = t.(bool)
+		}
+		if t, ok := p["many"]; ok && t != "" {
+			relationFields.Many = t.(bool)
+		}
+		if d, ok := p["title"]; ok && d != "" {
+			relationFields.Title = d.(string)
+		}
+		if d, ok := p["target"]; ok && d != "" {
+			relationFields.Target = d.(string)
+		}
+
+		relations[p["identifier"].(string)] = relationFields
+	}
+
 	b.Schema = cli.BlueprintSchema{Properties: properties}
+	b.Relations = relations
 	return b, nil
 }
 
@@ -279,18 +297,6 @@ func getRelations(d *schema.ResourceData) (rel []*cli.Relation) {
 	return
 }
 
-func createRelations(ctx context.Context, d *schema.ResourceData, m interface{}) error {
-	c := m.(*cli.PortClient)
-	rels := getRelations(d)
-	for _, r := range rels {
-		_, err := c.CreateRelation(ctx, d.Id(), r)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
 func contains(s []string, e string) bool {
 	for _, a := range s {
 		if a == e {
@@ -298,35 +304,6 @@ func contains(s []string, e string) bool {
 		}
 	}
 	return false
-}
-
-// patchDeleteDeprecatedRelations deletes relations that are no longer present in the resource.
-// This is necessary because we bundled relations inside the blueprint resource.
-// In the future, the API of blueprints should support getting the relations and then we can delete this patch.
-func patchDeleteDeprecatedRelations(ctx context.Context, d *schema.ResourceData, m interface{}) error {
-	c := m.(*cli.PortClient)
-	rels := getRelations(d)
-	ids := make([]string, len(rels))
-	for i, r := range rels {
-		ids[i] = r.Identifier
-	}
-	remoteRelations, err := c.ReadRelations(ctx, d.Id())
-	if err != nil {
-		return err
-	}
-	toDel := make([]*cli.Relation, 0)
-	for _, r := range remoteRelations {
-		if !contains(ids, r.Identifier) {
-			toDel = append(toDel, r)
-		}
-	}
-	for _, r := range toDel {
-		err := c.DeleteRelation(ctx, d.Id(), r.Identifier)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func createBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -346,10 +323,7 @@ func createBlueprint(ctx context.Context, d *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 	writeBlueprintComputedFieldsToResource(d, bp)
-	err = createRelations(ctx, d, m)
-	if err != nil {
-		return diag.FromErr(err)
-	}
+
 	return diags
 }
 
@@ -370,14 +344,6 @@ func updateBlueprint(ctx context.Context, d *schema.ResourceData, m interface{})
 		return diag.FromErr(err)
 	}
 	writeBlueprintComputedFieldsToResource(d, bp)
-	err = patchDeleteDeprecatedRelations(ctx, d, m)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	err = createRelations(ctx, d, m)
-	if err != nil {
-		return diag.FromErr(err)
-	}
 	return diags
 }
 

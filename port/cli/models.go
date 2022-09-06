@@ -47,10 +47,11 @@ type (
 
 	Blueprint struct {
 		Meta
-		Identifier string          `json:"identifier,omitempty"`
-		Title      string          `json:"title"`
-		Icon       string          `json:"icon"`
-		Schema     BlueprintSchema `json:"schema"`
+		Identifier string              `json:"identifier,omitempty"`
+		Title      string              `json:"title"`
+		Icon       string              `json:"icon"`
+		Schema     BlueprintSchema     `json:"schema"`
+		Relations  map[string]Relation `json:"relations"`
 	}
 
 	Action struct {

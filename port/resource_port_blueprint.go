@@ -154,24 +154,6 @@ func readBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) d
 	return diags
 }
 
-func writeBlueprintRelationsToResource(d *schema.ResourceData, relations []*cli.Relation) {
-	rels := schema.Set{F: func(i interface{}) int {
-		id := (i.(map[string]interface{}))["identifier"].(string)
-		return schema.HashString(id)
-	}}
-	for _, v := range relations {
-		r := map[string]interface{}{
-			"identifier": v.Identifier,
-			"title":      v.Title,
-			"target":     v.Target,
-			"required":   v.Required,
-			"many":       v.Many,
-		}
-		rels.Add(r)
-	}
-	d.Set("relations", &rels)
-}
-
 func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	d.SetId(b.Identifier)
 	d.Set("title", b.Title)

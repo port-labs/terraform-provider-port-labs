@@ -25,13 +25,14 @@ func (c *PortClient) ReadEntity(ctx context.Context, id string, blueprint string
 	return &pb.Entity, nil
 }
 
-func (c *PortClient) CreateEntity(ctx context.Context, e *Entity) (*Entity, error) {
+func (c *PortClient) CreateEntity(ctx context.Context, e *Entity, runID string) (*Entity, error) {
 	url := "v1/blueprints/{blueprint}/entities"
 	pb := &PortBody{}
 	resp, err := c.Client.R().
 		SetBody(e).
 		SetPathParam(("blueprint"), e.Blueprint).
 		SetQueryParam("upsert", "true").
+		SetQueryParam("run_id", runID).
 		SetResult(&pb).
 		Post(url)
 	if err != nil {

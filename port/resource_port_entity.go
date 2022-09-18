@@ -30,6 +30,11 @@ func newEntityResource() *schema.Resource {
 				Description: "The display name of the entity",
 				Required:    true,
 			},
+			"run_id": {
+				Type:        schema.TypeString,
+				Description: "The runID of the action run that created the entity",
+				Optional:    true,
+			},
 			"team": {
 				Type:        schema.TypeString,
 				Description: "The team related to the entity",
@@ -243,7 +248,11 @@ func createEntity(ctx context.Context, d *schema.ResourceData, m interface{}) di
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	en, err := c.CreateEntity(ctx, e)
+	runID := ""
+	if rid, ok := d.GetOk("run_id"); ok {
+		runID = rid.(string)
+	}
+	en, err := c.CreateEntity(ctx, e, runID)
 	if err != nil {
 		return diag.FromErr(err)
 	}

@@ -24,6 +24,7 @@ Port blueprint
 
 ### Optional
 
+- `changelog_destination` (Block List, Max: 1) Blueprints changelog destination, Supports WEBHOOK and KAFKA (see [below for nested schema](#nestedblock--changelog_destination))
 - `data_source` (String, Deprecated) The data source for entities of this blueprint
 - `relations` (Block Set) The blueprints that are connected to this blueprint (see [below for nested schema](#nestedblock--relations))
 
@@ -49,6 +50,18 @@ Optional:
 - `default` (String) The default value of the property
 - `description` (String) The description of the property
 - `format` (String) The format of the Property
+
+
+<a id="nestedblock--changelog_destination"></a>
+### Nested Schema for `changelog_destination`
+
+Required:
+
+- `type` (String) Changelog's destination one of WEBHOOK or KAFKA
+
+Optional:
+
+- `url` (String) Required when selecting type WEBHOOK. The URL to which the changelog is dispatched
 
 
 <a id="nestedblock--relations"></a>

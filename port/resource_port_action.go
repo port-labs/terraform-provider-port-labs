@@ -96,7 +96,9 @@ func newActionResource() *schema.Resource {
 				},
 			},
 			"invocation_method": {
-				Type:        schema.TypeSet,
+				Type:        schema.TypeList,
+				MinItems:    1,
+				MaxItems:    1,
 				Description: "The methods the action is dispatched in, Supports WEBHOOK and KAFKA",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -141,7 +143,10 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 	d.Set("title", action.Title)
 	d.Set("icon", action.Icon)
 	d.Set("description", action.Description)
-	d.Set("invocation_method", action.InvocationMethod)
+	d.Set("invocation_method", []any{map[string]any{
+		"type": action.InvocationMethod.Type,
+		"url":  action.InvocationMethod.Url,
+	}})
 	d.Set("trigger", action.Trigger)
 	properties := schema.Set{F: func(i interface{}) int {
 		id := (i.(map[string]interface{}))["identifier"].(string)
@@ -175,8 +180,8 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 			action.InvocationMethod = &cli.InvocationMethod{}
 		}
 
-		action.InvocationMethod.Type = invocationMethod.(*schema.Set).List()[0].(map[string]interface{})["type"].(string)
-		action.InvocationMethod.Url = invocationMethod.(*schema.Set).List()[0].(map[string]interface{})["url"].(string)
+		action.InvocationMethod.Type = invocationMethod.([]any)[0].(map[string]interface{})["type"].(string)
+		action.InvocationMethod.Url = invocationMethod.([]any)[0].(map[string]interface{})["url"].(string)
 	}
 	action.Trigger = d.Get("trigger").(string)
 

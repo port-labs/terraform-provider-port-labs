@@ -64,6 +64,41 @@ func TestAccPortBlueprint(t *testing.T) {
 	})
 }
 
+func TestAccBlueprintWithChangelogDestination(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	provider "port-labs" {}
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+		changelog_destination {
+			type = "WEBHOOK"
+			url = "https://google.com"
+		}
+	}
+`, identifier)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.0.type", "WEBHOOK"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.0.url", "https://google.com"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortBlueprintWithRelation(t *testing.T) {
 	identifier1 := genID()
 	identifier2 := genID()

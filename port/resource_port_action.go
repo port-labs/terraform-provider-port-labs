@@ -96,10 +96,26 @@ func newActionResource() *schema.Resource {
 				},
 			},
 			"invocation_method": {
-				Type:         schema.TypeString,
-				Description:  "The methods the action is dispatched in, currently only supports KAFKA",
-				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"KAFKA"}, false),
+				Type:        schema.TypeList,
+				MinItems:    1,
+				MaxItems:    1,
+				Description: "The methods the action is dispatched in, Supports WEBHOOK and KAFKA",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "How to invoke the action using WEBHOOK or KAFKA",
+							ValidateFunc: validation.StringInSlice([]string{"WEBHOOK", "KAFKA"}, false),
+						},
+						"url": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Required when selecting type WEBHOOK. The URL to which the action is dispatched",
+						},
+					},
+				},
+				Required: true,
 			},
 			"trigger": {
 				Type:         schema.TypeString,
@@ -127,7 +143,10 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 	d.Set("title", action.Title)
 	d.Set("icon", action.Icon)
 	d.Set("description", action.Description)
-	d.Set("invocation_method", action.InvocationMethod)
+	d.Set("invocation_method", []any{map[string]any{
+		"type": action.InvocationMethod.Type,
+		"url":  action.InvocationMethod.Url,
+	}})
 	d.Set("trigger", action.Trigger)
 	properties := schema.Set{F: func(i interface{}) int {
 		id := (i.(map[string]interface{}))["identifier"].(string)
@@ -156,7 +175,14 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 	action.Title = d.Get("title").(string)
 	action.Icon = d.Get("icon").(string)
 	action.Description = d.Get("description").(string)
-	action.InvocationMethod = d.Get("invocation_method").(string)
+	if invocationMethod, ok := d.GetOk("invocation_method"); ok {
+		if action.InvocationMethod == nil {
+			action.InvocationMethod = &cli.InvocationMethod{}
+		}
+
+		action.InvocationMethod.Type = invocationMethod.([]any)[0].(map[string]interface{})["type"].(string)
+		action.InvocationMethod.Url = invocationMethod.([]any)[0].(map[string]interface{})["url"].(string)
+	}
 	action.Trigger = d.Get("trigger").(string)
 
 	props := d.Get("user_properties").(*schema.Set)

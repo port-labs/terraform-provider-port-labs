@@ -122,6 +122,28 @@ func newBlueprintResource() *schema.Resource {
 				},
 				Required: true,
 			},
+			"changelog_destination": {
+				Type:        schema.TypeList,
+				MinItems:    1,
+				MaxItems:    1,
+				Description: "Blueprints changelog destination, Supports WEBHOOK and KAFKA",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "Changelog's destination one of WEBHOOK or KAFKA",
+							ValidateFunc: validation.StringInSlice([]string{"WEBHOOK", "KAFKA"}, false),
+						},
+						"url": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Required when selecting type WEBHOOK. The URL to which the changelog is dispatched",
+						},
+					},
+				},
+				Optional: true,
+			},
 			"created_at": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -162,6 +184,12 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	d.Set("created_by", b.CreatedBy)
 	d.Set("updated_at", b.UpdatedAt.String())
 	d.Set("updated_by", b.UpdatedBy)
+	if b.ChangelogDestination != nil {
+		d.Set("changelog_destination", []any{map[string]any{
+			"type": b.ChangelogDestination.Type,
+			"url":  b.ChangelogDestination.Url,
+		}})
+	}
 	properties := schema.Set{F: func(i interface{}) int {
 		id := (i.(map[string]interface{}))["identifier"].(string)
 		return schema.HashString(id)
@@ -191,8 +219,16 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 
 	b.Title = d.Get("title").(string)
 	b.Icon = d.Get("icon").(string)
-
 	props := d.Get("properties").(*schema.Set)
+
+	if changelogDestination, ok := d.GetOk("changelog_destination"); ok {
+		if b.ChangelogDestination == nil {
+			b.ChangelogDestination = &cli.ChangelogDestination{}
+		}
+		b.ChangelogDestination.Type = changelogDestination.([]any)[0].(map[string]interface{})["type"].(string)
+		b.ChangelogDestination.Url = changelogDestination.([]any)[0].(map[string]interface{})["url"].(string)
+	}
+
 	properties := make(map[string]cli.BlueprintProperty, props.Len())
 	for _, prop := range props.List() {
 		p := prop.(map[string]interface{})

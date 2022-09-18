@@ -208,10 +208,6 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 		if p, ok := p["pattern"]; ok && p != "" {
 			propFields.Pattern = p.(string)
 		}
-		invocationMethod := []any{map[string]any{
-			"method": action.InvocationMethod,
-		}}
-		(invocationMethod.([]interface{})[0]).(*schema.Resource).(map[string]interface{})["type"].(string)
 		properties[p["identifier"].(string)] = propFields
 	}
 	var required []string

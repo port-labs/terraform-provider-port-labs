@@ -170,13 +170,13 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 	action.Title = d.Get("title").(string)
 	action.Icon = d.Get("icon").(string)
 	action.Description = d.Get("description").(string)
-	if invocation_method, ok := d.GetOk("invocation_method"); ok {
+	if invocationMethod, ok := d.GetOk("invocation_method"); ok {
 		if action.InvocationMethod == nil {
-			action.InvocationMethod = &cli.ActionInvocationMethod{}
+			action.InvocationMethod = &cli.InvocationMethod{}
 		}
 
-		action.InvocationMethod.Type = invocation_method.(*schema.Set).List()[0].(map[string]interface{})["type"].(string)
-		action.InvocationMethod.Url = invocation_method.(*schema.Set).List()[0].(map[string]interface{})["url"].(string)
+		action.InvocationMethod.Type = invocationMethod.(*schema.Set).List()[0].(map[string]interface{})["type"].(string)
+		action.InvocationMethod.Url = invocationMethod.(*schema.Set).List()[0].(map[string]interface{})["url"].(string)
 	}
 	action.Trigger = d.Get("trigger").(string)
 

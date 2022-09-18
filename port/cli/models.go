@@ -43,12 +43,12 @@ type (
 		Required   []string                     `json:"required,omitempty"`
 	}
 
-	ActionInvocationMethod struct {
+	InvocationMethod struct {
 		Type string `json:"type,omitempty"`
 		Url  string `json:"url,omitempty"`
 	}
 
-	BlueprintChangelogDesintaion struct {
+	ChangelogDestination struct {
 		Type string `json:"type,omitempty"`
 		Url  string `json:"url,omitempty"`
 	}
@@ -57,23 +57,23 @@ type (
 
 	Blueprint struct {
 		Meta
-		Identifier           string                        `json:"identifier,omitempty"`
-		Title                string                        `json:"title"`
-		Icon                 string                        `json:"icon"`
-		Schema               BlueprintSchema               `json:"schema"`
-		ChangelogDestination *BlueprintChangelogDesintaion `json:"changelogDestination,omitempty"`
-		Relations            map[string]Relation           `json:"relations"`
+		Identifier           string                `json:"identifier,omitempty"`
+		Title                string                `json:"title"`
+		Icon                 string                `json:"icon"`
+		Schema               BlueprintSchema       `json:"schema"`
+		ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
+		Relations            map[string]Relation   `json:"relations"`
 	}
 
 	Action struct {
-		ID               string                  `json:"id,omitempty"`
-		Identifier       string                  `json:"identifier,omitempty"`
-		Description      string                  `json:"description,omitempty"`
-		Title            string                  `json:"title,omitempty"`
-		Icon             string                  `json:"icon,omitempty"`
-		UserInputs       ActionUserInputs        `json:"userInputs"`
-		Trigger          string                  `json:"trigger"`
-		InvocationMethod *ActionInvocationMethod `json:"invocationMethod,omitempty"`
+		ID               string            `json:"id,omitempty"`
+		Identifier       string            `json:"identifier,omitempty"`
+		Description      string            `json:"description,omitempty"`
+		Title            string            `json:"title,omitempty"`
+		Icon             string            `json:"icon,omitempty"`
+		UserInputs       ActionUserInputs  `json:"userInputs"`
+		Trigger          string            `json:"trigger"`
+		InvocationMethod *InvocationMethod `json:"invocationMethod,omitempty"`
 	}
 
 	Relation struct {

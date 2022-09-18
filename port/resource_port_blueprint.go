@@ -213,13 +213,13 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 	b.Icon = d.Get("icon").(string)
 	props := d.Get("properties").(*schema.Set)
 
-	if changelog_destination, ok := d.GetOk("changelog_destination"); ok {
+	if changelogDestination, ok := d.GetOk("changelog_destination"); ok {
 		if b.ChangelogDestination == nil {
-			b.ChangelogDestination = &cli.BlueprintChangelogDesintaion{}
+			b.ChangelogDestination = &cli.ChangelogDestination{}
 		}
 
-		b.ChangelogDestination.Type = changelog_destination.(*schema.Set).List()[0].(map[string]interface{})["type"].(string)
-		b.ChangelogDestination.Url = changelog_destination.(*schema.Set).List()[0].(map[string]interface{})["url"].(string)
+		b.ChangelogDestination.Type = changelogDestination.(*schema.Set).List()[0].(map[string]interface{})["type"].(string)
+		b.ChangelogDestination.Url = changelogDestination.(*schema.Set).List()[0].(map[string]interface{})["url"].(string)
 	}
 
 	properties := make(map[string]cli.BlueprintProperty, props.Len())

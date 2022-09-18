@@ -17,14 +17,6 @@ func newActionResource() *schema.Resource {
 		ReadContext:   readAction,
 		DeleteContext: deleteAction,
 		Schema: map[string]*schema.Schema{
-			"invocation_method": {
-				Type:        schema.TypeMap,
-				Description: "The methods the action is dispatched in, Supports WEBHOOK and KAFKA",
-				Elem: &schema.Schema {
-					Elem: ,
-				},
-				Required: true,
-			},
 			"identifier": {
 				Type:        schema.TypeString,
 				Description: "The identifier of the action",

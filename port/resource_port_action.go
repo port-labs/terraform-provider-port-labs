@@ -17,6 +17,14 @@ func newActionResource() *schema.Resource {
 		ReadContext:   readAction,
 		DeleteContext: deleteAction,
 		Schema: map[string]*schema.Schema{
+			"invocation_method": {
+				Type:        schema.TypeMap,
+				Description: "The methods the action is dispatched in, Supports WEBHOOK and KAFKA",
+				Elem: &schema.Schema {
+					Elem: ,
+				},
+				Required: true,
+			},
 			"identifier": {
 				Type:        schema.TypeString,
 				Description: "The identifier of the action",
@@ -182,6 +190,10 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 		if p, ok := p["pattern"]; ok && p != "" {
 			propFields.Pattern = p.(string)
 		}
+		invocationMethod := []any{map[string]any{
+			"method": action.InvocationMethod,
+		}}
+		(invocationMethod.([]interface{})[0]).(*schema.Resource).(map[string]interface{})["type"].(string)
 		properties[p["identifier"].(string)] = propFields
 	}
 	var required []string

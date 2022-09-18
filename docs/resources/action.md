@@ -19,7 +19,7 @@ Port action
 
 - `blueprint_identifier` (String) The identifier of the blueprint
 - `identifier` (String) The identifier of the action
-- `invocation_method` (String) The methods the action is dispatched in, currently only supports KAFKA
+- `invocation_method` (Block List, Min: 1, Max: 1) The methods the action is dispatched in, Supports WEBHOOK and KAFKA (see [below for nested schema](#nestedblock--invocation_method))
 - `title` (String) The display name of the action
 - `trigger` (String) The type of the action, one of CREATE, DAY-2, DELETE
 
@@ -33,6 +33,18 @@ Port action
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+<a id="nestedblock--invocation_method"></a>
+### Nested Schema for `invocation_method`
+
+Required:
+
+- `type` (String) How to invoke the action using WEBHOOK or KAFKA
+
+Optional:
+
+- `url` (String) Required when selecting type WEBHOOK. The URL to which the action is dispatched
+
 
 <a id="nestedblock--user_properties"></a>
 ### Nested Schema for `user_properties`

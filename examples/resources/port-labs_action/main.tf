@@ -4,7 +4,10 @@ resource "port-labs_action" "restart_microservice" {
 		identifier = "restart-micrservice"
 		blueprint_identifier = port-labs_blueprint.microservice.identifier
 		trigger = "DAY-2"
-		invocation_method = "KAFKA"
+		invocation_method = {
+			"type" = "WEBHOOK"
+			"url" = "https://app.getport.io"
+		}
 		user_properties {
 			identifier = "webhook_url"
 			type = "string"

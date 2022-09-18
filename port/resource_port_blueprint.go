@@ -122,6 +122,26 @@ func newBlueprintResource() *schema.Resource {
 				},
 				Required: true,
 			},
+			"changelog_destination": {
+				Type:        schema.TypeSet,
+				Description: "The methods the action is dispatched in, Supports WEBHOOK and KAFKA",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"type": {
+							Type:         schema.TypeString,
+							Required:     true,
+							Description:  "How to invoke the action using WEBHOOK or KAFKA",
+							ValidateFunc: validation.StringInSlice([]string{"WEBHOOK", "KAFKA"}, false),
+						},
+						"url": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "Required when selecting type WEBHOOK. The URL to which the action is dispatched",
+						},
+					},
+				},
+				Optional: true,
+			},
 			"created_at": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -191,8 +211,21 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 
 	b.Title = d.Get("title").(string)
 	b.Icon = d.Get("icon").(string)
-
 	props := d.Get("properties").(*schema.Set)
+	if changelog_destination_type, ok := d.GetOk("changelog_destination.type"); ok {
+		if b.ChangelogDestination == nil {
+			b.ChangelogDestination = &cli.BlueprintChangelogDesintaion{}
+		}
+		b.ChangelogDestination.Type = changelog_destination_type.(string)
+	}
+
+	if changelog_destination_url, ok := d.GetOk("changelog_destination.url"); ok {
+		if b.ChangelogDestination == nil {
+			b.ChangelogDestination = &cli.BlueprintChangelogDesintaion{}
+		}
+		b.ChangelogDestination.Url = changelog_destination_url.(string)
+	}
+
 	properties := make(map[string]cli.BlueprintProperty, props.Len())
 	for _, prop := range props.List() {
 		p := prop.(map[string]interface{})

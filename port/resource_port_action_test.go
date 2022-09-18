@@ -29,7 +29,9 @@ func TestAccPortAction(t *testing.T) {
 		identifier = "%s"
 		blueprint_identifier = port-labs_blueprint.microservice.identifier
 		trigger = "DAY-2"
-		invocation_method = "KAFKA"
+		invocation_method {
+			type = "KAFKA"
+		}
 		user_properties {
 			identifier = "clear_cache"
 			type = "boolean"
@@ -55,7 +57,9 @@ func TestAccPortAction(t *testing.T) {
 		identifier = "%s"
 		blueprint_identifier = port-labs_blueprint.microservice.identifier
 		trigger = "DAY-2"
-		invocation_method = "KAFKA"
+		invocation_method {
+			type = "KAFKA"
+		}
 		user_properties {
 			identifier = "clear_cache"
 			type = "string"
@@ -82,7 +86,7 @@ func TestAccPortAction(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "blueprint_identifier", identifier),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "trigger", "DAY-2"),
-					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method", "KAFKA"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.type", "KAFKA"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.#", "1"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.identifier", "clear_cache"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.type", "boolean"),
@@ -97,7 +101,7 @@ func TestAccPortAction(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "blueprint_identifier", identifier),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "trigger", "DAY-2"),
-					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method", "KAFKA"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.type", "KAFKA"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.#", "2"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.identifier", "clear_cache"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.type", "string"),
@@ -132,7 +136,9 @@ func TestAccPortActionPropMeta(t *testing.T) {
 		identifier = "%s"
 		blueprint_identifier = port-labs_blueprint.microservice.identifier
 		trigger = "DAY-2"
-		invocation_method = "KAFKA"
+		invocation_method {
+			type = "KAFKA"
+		}
 		user_properties {
 			identifier = "webhook_url"
 			type = "string"
@@ -158,7 +164,7 @@ func TestAccPortActionPropMeta(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "blueprint_identifier", identifier),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "trigger", "DAY-2"),
-					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method", "KAFKA"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.type", "KAFKA"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.#", "1"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.identifier", "webhook_url"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.type", "string"),

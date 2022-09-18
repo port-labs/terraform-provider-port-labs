@@ -206,6 +206,10 @@ func TestAccPortBlueprintUpdateRelation(t *testing.T) {
 			type = "string"
 			title = "Image"
 		}
+		changelog_destination {
+			type = "WEBHOOK"
+			url = "https://mywebhookblueprint.com"
+		} 
 		relations {
 			identifier = "vm-to-environment"
 			title = "Related Environment"

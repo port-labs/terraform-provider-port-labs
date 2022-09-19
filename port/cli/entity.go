@@ -22,6 +22,9 @@ func (c *PortClient) ReadEntity(ctx context.Context, id string, blueprint string
 	if err != nil {
 		return nil, err
 	}
+	if !pb.OK {
+		return nil, fmt.Errorf("failed to read entity, got: %s", resp.Body())
+	}
 	return &pb.Entity, nil
 }
 

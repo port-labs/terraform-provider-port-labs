@@ -161,7 +161,7 @@ func newBlueprintResource() *schema.Resource {
 						},
 					},
 				},
-				Required: false,
+				Optional: true,
 			},
 			"formula_properties": {
 				Type:        schema.TypeSet,
@@ -185,7 +185,7 @@ func newBlueprintResource() *schema.Resource {
 						},
 					},
 				},
-				Required: false,
+				Optional: true,
 			},
 			"changelog_destination": {
 				Type:        schema.TypeList,

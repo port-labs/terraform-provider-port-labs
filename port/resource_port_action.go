@@ -78,22 +78,32 @@ func newActionResource() *schema.Resource {
 							Optional:    true,
 							Description: "A specific data format to pair with some of the available types",
 						},
+						"blueprint": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "When selecting format 'entity', the identifier of the target blueprint",
+						},
 						"pattern": {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "A regular expression (regex) pattern to specify the set of allowed values for the property",
 						},
+						"required": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Whether the property is required or not",
+						},
+						"enum": {
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+							Description: "A list of allowed values for the property",
+						},
 					},
 				},
 				Optional: true,
-			},
-			"required_properties": {
-				Description: "The required properties of the action",
-				Type:        schema.TypeSet,
-				Optional:    true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
 			},
 			"invocation_method": {
 				Type:        schema.TypeList,
@@ -147,6 +157,7 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 		"type": action.InvocationMethod.Type,
 		"url":  action.InvocationMethod.Url,
 	}})
+
 	d.Set("trigger", action.Trigger)
 	properties := schema.Set{F: func(i interface{}) int {
 		id := (i.(map[string]interface{}))["identifier"].(string)
@@ -161,6 +172,11 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 		p["default"] = v.Default
 		p["format"] = v.Format
 		p["pattern"] = v.Pattern
+		p["blueprint"] = v.Blueprint
+		p["enum"] = v.Enum
+		if contains(action.UserInputs.Required, k) {
+			p["required"] = true
+		}
 		properties.Add(p)
 	}
 	d.Set("user_properties", &properties)
@@ -187,6 +203,8 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 
 	props := d.Get("user_properties").(*schema.Set)
 	properties := make(map[string]cli.BlueprintProperty, props.Len())
+	var required []string
+
 	for _, prop := range props.List() {
 		p := prop.(map[string]interface{})
 		propFields := cli.BlueprintProperty{}
@@ -208,15 +226,20 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 		if p, ok := p["pattern"]; ok && p != "" {
 			propFields.Pattern = p.(string)
 		}
-		properties[p["identifier"].(string)] = propFields
-	}
-	var required []string
-	if rp, ok := d.GetOk("required"); ok {
-		requiredProps := rp.(*schema.Set)
-		required = make([]string, requiredProps.Len())
-		for _, p := range requiredProps.List() {
-			required = append(required, p.(string))
+		if r, ok := p["required"]; ok && r.(bool) {
+			required = append(required, p["identifier"].(string))
 		}
+		var enum []string
+		if e, ok := p["enum"]; ok {
+			enumProps := e.(*schema.Set)
+			enum = make([]string, enumProps.Len())
+			for _, enumProp := range enumProps.List() {
+				enum = append(enum, enumProp.(string))
+			}
+
+			propFields.Enum = enum
+		}
+		properties[p["identifier"].(string)] = propFields
 	}
 
 	action.UserInputs = cli.ActionUserInputs{Properties: properties, Required: required}

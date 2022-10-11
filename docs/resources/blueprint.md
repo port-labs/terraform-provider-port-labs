@@ -26,6 +26,9 @@ Port blueprint
 
 - `changelog_destination` (Block List, Max: 1) Blueprints changelog destination, Supports WEBHOOK and KAFKA (see [below for nested schema](#nestedblock--changelog_destination))
 - `data_source` (String, Deprecated) The data source for entities of this blueprint
+- `description` (String) The description of the blueprint
+- `formula_properties` (Block Set) A property that is calculated by a formula (see [below for nested schema](#nestedblock--formula_properties))
+- `mirror_properties` (Block Set) The properties that are mirrored from the using the path to the target property (see [below for nested schema](#nestedblock--mirror_properties))
 - `relations` (Block Set) The blueprints that are connected to this blueprint (see [below for nested schema](#nestedblock--relations))
 
 ### Read-Only
@@ -49,7 +52,11 @@ Optional:
 
 - `default` (String) The default value of the property
 - `description` (String) The description of the property
+- `enum` (List of String) A list of allowed values for the property
+- `enum_colors` (Map of String) A map of colors for the enum values
 - `format` (String) The format of the Property
+- `icon` (String) The icon of the property
+- `required` (Boolean) Whether or not the property is required
 
 
 <a id="nestedblock--changelog_destination"></a>
@@ -64,6 +71,32 @@ Optional:
 - `url` (String) Required when selecting type WEBHOOK. The URL to which the changelog is dispatched
 
 
+<a id="nestedblock--formula_properties"></a>
+### Nested Schema for `formula_properties`
+
+Required:
+
+- `formula` (String) The path of the realtions towards the property
+- `identifier` (String) The identifier of the property
+
+Optional:
+
+- `title` (String) The name of this property
+
+
+<a id="nestedblock--mirror_properties"></a>
+### Nested Schema for `mirror_properties`
+
+Required:
+
+- `identifier` (String) The identifier of the property
+- `path` (String) The path of the realtions towards the property
+
+Optional:
+
+- `title` (String) The name of this property
+
+
 <a id="nestedblock--relations"></a>
 ### Nested Schema for `relations`
 
@@ -75,8 +108,7 @@ Required:
 Optional:
 
 - `identifier` (String) The identifier of the relation
-- `many` (Boolean) Unsupported ATM.
-Whether or not the relation is many
+- `many` (Boolean) Whether or not the relation is many
 - `required` (Boolean) Whether or not the relation is required
 
 

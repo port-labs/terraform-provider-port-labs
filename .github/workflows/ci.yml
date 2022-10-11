@@ -30,6 +30,10 @@ jobs:
           terraform_wrapper: false
       - name: Setup tools
         run: make setup
+      - name: generate docs
+        run: make gen-docs
+      - name: Verify Changed files
+        uses: tj-actions/verify-changed-files@v11.1
   
   acctest:
     runs-on: ubuntu-20.04

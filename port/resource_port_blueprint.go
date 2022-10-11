@@ -123,12 +123,20 @@ func newBlueprintResource() *schema.Resource {
 							Description: "The format of the Property",
 						},
 						"enum": {
-							Type:     schema.TypeSet,
-							Optional: true,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
+							Type:        schema.TypeList,
+							Optional:    true,
 							Description: "A list of allowed values for the property",
+						},
+						"enum_colors": {
+							Type: schema.TypeMap,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+							Optional:    true,
+							Description: "A map of colors for the enum values",
 						},
 						"required": {
 							Type:        schema.TypeBool,
@@ -277,10 +285,12 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["default"] = v.Default
 		p["format"] = v.Format
 		p["icon"] = v.Icon
-		p["blueprint"] = v.Blueprint
 		p["enum"] = v.Enum
+		p["enum_colors"] = v.EnumColors
 		if contains(b.Schema.Required, k) {
 			p["required"] = true
+		} else {
+			p["required"] = false
 		}
 		properties.Add(p)
 	}
@@ -291,6 +301,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["title"] = v.Title
 		p["path"] = v.Path
 		mirror_properties.Add(p)
+
 	}
 
 	for k, v := range b.FormulaProperties {
@@ -357,16 +368,20 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		if r, ok := p["required"]; ok && r.(bool) {
 			required = append(required, p["identifier"].(string))
 		}
-		var enum []string
-		if e, ok := p["enum"]; ok {
-			enumProps := e.(*schema.Set)
-			enum = make([]string, enumProps.Len())
-			for _, enumProp := range enumProps.List() {
-				enum = append(enum, enumProp.(string))
+		if e, ok := p["enum"]; ok && e != nil {
+			for _, v := range e.([]interface{}) {
+				propFields.Enum = append(propFields.Enum, v.(string))
 			}
-
-			propFields.Enum = enum
 		}
+		if e, ok := p["enum_colors"]; ok && e != nil {
+			enumColors := make(map[string]string)
+
+			for key, value := range e.(map[string]interface{}) {
+				enumColors[key] = value.(string)
+			}
+			propFields.EnumColors = enumColors
+		}
+
 		properties[p["identifier"].(string)] = propFields
 	}
 

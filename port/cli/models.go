@@ -29,17 +29,17 @@ type (
 	}
 
 	BlueprintProperty struct {
-		Type        string   `json:"type,omitempty"`
-		Title       string   `json:"title,omitempty"`
-		Identifier  string   `json:"identifier,omitempty"`
-		Default     string   `json:"default,omitempty"`
-		Icon        string   `json:"icon,omitempty"`
-		Format      string   `json:"format,omitempty"`
-		Description string   `json:"description,omitempty"`
-		Blueprint   string   `json:"blueprint,omitempty"`
-		Pattern     string   `json:"pattern,omitempty"`
-		Enum        []string `json:"enum,omitempty"`
-		EnumColors  []string `json:"enumColors,omitempty"`
+		Type        string            `json:"type,omitempty"`
+		Title       string            `json:"title,omitempty"`
+		Identifier  string            `json:"identifier,omitempty"`
+		Default     string            `json:"default,omitempty"`
+		Icon        string            `json:"icon,omitempty"`
+		Format      string            `json:"format,omitempty"`
+		Description string            `json:"description,omitempty"`
+		Blueprint   string            `json:"blueprint,omitempty"`
+		Pattern     string            `json:"pattern,omitempty"`
+		Enum        []string          `json:"enum,omitempty"`
+		EnumColors  map[string]string `json:"enumColors,omitempty"`
 	}
 
 	BlueprintMirrorProperty struct {

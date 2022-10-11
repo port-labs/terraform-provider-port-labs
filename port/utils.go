@@ -1,11 +1,7 @@
 package port
 
-func contains(s []string, str string) bool {
-	for _, v := range s {
-		if v == str {
-			return true
-		}
-	}
+import "github.com/samber/lo"
 
-	return false
+func contains(s []string, str string) bool {
+	return lo.Contains(s, str)
 }

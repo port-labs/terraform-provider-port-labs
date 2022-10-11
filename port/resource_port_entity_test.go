@@ -119,7 +119,7 @@ func TestAccPortEntity(t *testing.T) {
 	}
 	resource "port-labs_entity" "microservice" {
 		title = "monolith"
-		blueprint = "tf-provider-test-bp"
+		blueprint = "${port-labs_blueprint.microservice.identifier}"
 		properties {
 			name = "text"
 			value = "hedwig"

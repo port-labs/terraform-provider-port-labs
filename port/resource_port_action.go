@@ -94,7 +94,7 @@ func newActionResource() *schema.Resource {
 							Description: "Whether the property is required or not",
 						},
 						"enum": {
-							Type:     schema.TypeSet,
+							Type:     schema.TypeList,
 							Optional: true,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
@@ -176,6 +176,8 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 		p["enum"] = v.Enum
 		if contains(action.UserInputs.Required, k) {
 			p["required"] = true
+		} else {
+			p["required"] = false
 		}
 		properties.Add(p)
 	}

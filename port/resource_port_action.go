@@ -94,11 +94,11 @@ func newActionResource() *schema.Resource {
 							Description: "Whether the property is required or not",
 						},
 						"enum": {
-							Type:     schema.TypeList,
-							Optional: true,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
+							Type:        schema.TypeList,
+							Optional:    true,
 							Description: "A list of allowed values for the property",
 						},
 					},
@@ -225,21 +225,19 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 		if f, ok := p["format"]; ok && f != "" {
 			propFields.Format = f.(string)
 		}
+		if b, ok := p["blueprint"]; ok && b != "" {
+			propFields.Blueprint = b.(string)
+		}
 		if p, ok := p["pattern"]; ok && p != "" {
 			propFields.Pattern = p.(string)
 		}
 		if r, ok := p["required"]; ok && r.(bool) {
 			required = append(required, p["identifier"].(string))
 		}
-		var enum []string
-		if e, ok := p["enum"]; ok {
-			enumProps := e.(*schema.Set)
-			enum = make([]string, enumProps.Len())
-			for _, enumProp := range enumProps.List() {
-				enum = append(enum, enumProp.(string))
+		if e, ok := p["enum"]; ok && e != nil {
+			for _, v := range e.([]interface{}) {
+				propFields.Enum = append(propFields.Enum, v.(string))
 			}
-
-			propFields.Enum = enum
 		}
 		properties[p["identifier"].(string)] = propFields
 	}

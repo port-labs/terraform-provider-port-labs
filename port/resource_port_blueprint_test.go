@@ -17,146 +17,142 @@ func genID() string {
 	return fmt.Sprintf("t-%s", id[:18])
 }
 
-// func TestAccPortBlueprint(t *testing.T) {
-// 	identifier := genID()
-// 	var testAccActionConfigCreate = fmt.Sprintf(`
-// 	provider "port-labs" {}
-// 	resource "port-labs_blueprint" "microservice" {
-// 		title = "TF Provider Test BP0"
-// 		icon = "Terraform"
-// 		identifier = "%s"
-// 		properties {
-// 			identifier = "bool"
-// 			type = "boolean"
-// 			title = "boolean"
-// 		}
-// 		properties {
-// 			identifier = "number"
-// 			type = "number"
-// 			title = "number"
-// 		}
-// 		properties {
-// 			identifier = "obj"
-// 			type = "object"
-// 			title = "object"
-// 		}
-// 		properties {
-// 			identifier = "array"
-// 			type = "array"
-// 			title = "array"
-// 		}
-// 		properties {
-// 			identifier = "text"
-// 			type = "string"
-// 			title = "text"
-// 			icon = "Terraform"
-// 			enum = ["a", "b", "c"]
-// 			enum_colors = {
-// 				a = "red"
-// 				b = "blue"
-// 			}
-// 		}
-// 	}
-// `, identifier)
-// 	resource.Test(t, resource.TestCase{
-// 		Providers: map[string]*schema.Provider{
-// 			"port-labs": Provider(),
-// 		},
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccActionConfigCreate,
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.identifier", "text"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.enum.0", "a"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.enum_colors.a", "red"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+func TestAccPortBlueprint(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "bool"
+			type = "boolean"
+			title = "boolean"
+		}
+		properties {
+			identifier = "number"
+			type = "number"
+			title = "number"
+		}
+		properties {
+			identifier = "obj"
+			type = "object"
+			title = "object"
+		}
+		properties {
+			identifier = "array"
+			type = "array"
+			title = "array"
+		}
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+			icon = "Terraform"
+			enum = ["a", "b", "c"]
+			enum_colors = {
+				a = "red"
+				b = "blue"
+			}
+		}
+	}
+`, identifier)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.identifier", "text"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.enum.0", "a"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.enum_colors.a", "red"),
+				),
+			},
+		},
+	})
+}
 
-// func TestAccBlueprintWithChangelogDestination(t *testing.T) {
-// 	identifier := genID()
-// 	var testAccActionConfigCreate = fmt.Sprintf(`
-// 	provider "port-labs" {}
-// 	resource "port-labs_blueprint" "microservice" {
-// 		title = "TF Provider Test BP0"
-// 		icon = "Terraform"
-// 		identifier = "%s"
-// 		properties {
-// 			identifier = "text"
-// 			type = "string"
-// 			title = "text"
-// 		}
-// 		changelog_destination {
-// 			type = "WEBHOOK"
-// 			url = "https://google.com"
-// 		}
-// 	}
-// `, identifier)
-// 	resource.Test(t, resource.TestCase{
-// 		Providers: map[string]*schema.Provider{
-// 			"port-labs": Provider(),
-// 		},
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccActionConfigCreate,
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.0.type", "WEBHOOK"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.0.url", "https://google.com"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+func TestAccBlueprintWithChangelogDestination(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+		changelog_destination {
+			type = "WEBHOOK"
+			url = "https://google.com"
+		}
+	}
+`, identifier)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.0.type", "WEBHOOK"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.0.url", "https://google.com"),
+				),
+			},
+		},
+	})
+}
 
-// func TestAccPortBlueprintWithRelation(t *testing.T) {
-// 	identifier1 := genID()
-// 	identifier2 := genID()
-// 	var testAccActionConfigCreate = fmt.Sprintf(`
-// 	provider "port-labs" {}
-// 	resource "port-labs_blueprint" "microservice1" {
-// 		title = "TF Provider Test BP2"
-// 		icon = "Terraform"
-// 		identifier = "%s"
-// 		properties {
-// 			identifier = "text"
-// 			type = "string"
-// 			title = "text"
-// 		}
-// 	}
-// 	resource "port-labs_blueprint" "microservice2" {
-// 		title = "TF Provider Test BP3"
-// 		icon = "Terraform"
-// 		identifier = "%s"
-// 		properties {
-// 			identifier = "text"
-// 			type = "string"
-// 			title = "text"
-// 		}
-// 		relations {
-// 			identifier = "test-rel"
-// 			title = "Test Relation"
-// 			target = port-labs_blueprint.microservice1.identifier
-// 		}
-// 	}
-// `, identifier1, identifier2)
-// 	resource.Test(t, resource.TestCase{
-// 		Providers: map[string]*schema.Provider{
-// 			"port-labs": Provider(),
-// 		},
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccActionConfigCreate,
-// 			},
-// 		},
-// 	})
-// }
+func TestAccPortBlueprintWithRelation(t *testing.T) {
+	identifier1 := genID()
+	identifier2 := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice1" {
+		title = "TF Provider Test BP2"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+	}
+	resource "port-labs_blueprint" "microservice2" {
+		title = "TF Provider Test BP3"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+		relations {
+			identifier = "test-rel"
+			title = "Test Relation"
+			target = port-labs_blueprint.microservice1.identifier
+		}
+	}
+`, identifier1, identifier2)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+			},
+		},
+	})
+}
 
 func TestAccPortBlueprintUpdate(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
-	provider "port-labs" {}
 	resource "port-labs_blueprint" "microservice1" {
 		description = "Test Description"
 		title = "TF Provider Test BP2"
@@ -174,10 +170,13 @@ func TestAccPortBlueprintUpdate(t *testing.T) {
 				b = "blue"
 			}
 		}
+		formula_properties {
+			identifier = "formula_id"
+			formula = "{{$identifier}}formula"
+		}
 	}
 `, identifier)
 	var testAccActionConfigUpdate = fmt.Sprintf(`
-	provider "port-labs" {}
 	resource "port-labs_blueprint" "microservice1" {
 		title = "TF Provider Test BP2"
 		icon = "Terraform"
@@ -193,10 +192,13 @@ func TestAccPortBlueprintUpdate(t *testing.T) {
 			type = "number"
 			title = "num"
 		}
+		formula_properties {
+			identifier = "formula_id"
+			formula = "{{$identifier}}formula-updated"
+		}
 	}
 `, identifier)
 	var testAccActionConfigUpdateAgain = fmt.Sprintf(`
-	provider "port-labs" {}
 	resource "port-labs_blueprint" "microservice1" {
 		title = "TF Provider Test BP2"
 		icon = "Terraform"
@@ -220,6 +222,7 @@ func TestAccPortBlueprintUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.title", "text"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.required", "true"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "formula_properties.0.formula", "{{$identifier}}formula"),
 				),
 			},
 			{
@@ -229,6 +232,7 @@ func TestAccPortBlueprintUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.title", "num"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.1.title", "text"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.1.required", "false"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "formula_properties.0.formula", "{{$identifier}}formula-updated"),
 				),
 			},
 			{
@@ -242,88 +246,225 @@ func TestAccPortBlueprintUpdate(t *testing.T) {
 	})
 }
 
-// func TestAccPortBlueprintUpdateRelation(t *testing.T) {
-// 	envID := genID()
-// 	vmID := genID()
-// 	var testAccActionConfigCreate = fmt.Sprintf(`
-// 	provider "port-labs" {}
-// 	resource "port-labs_blueprint" "Environment" {
-// 		title = "Environment"
-// 		icon = "Environment"
-// 		identifier = "%s"
-// 		properties {
-// 			identifier = "env_name"
-// 			type = "string"
-// 			title = "Name"
-// 		}
-// 	}
-// 	resource "port-labs_blueprint" "vm" {
-// 		title = "Virtual Machine"
-// 		icon = "Azure"
-// 		identifier = "%s"
-// 		properties {
-// 			identifier = "image"
-// 			type = "string"
-// 			title = "Image"
-// 		}
-// 		relations {
-// 			identifier = "vm-to-environment"
-// 			title = "Related Environment"
-// 			target = port-labs_blueprint.Environment.identifier
-// 		}
-// 	}
-// `, envID, vmID)
-// 	var testAccActionConfigUpdate = fmt.Sprintf(`
-// 	provider "port-labs" {}
-// 	resource "port-labs_blueprint" "Environment" {
-// 		title = "Environment"
-// 		icon = "Environment"
-// 		identifier = "%s"
-// 		properties {
-// 			identifier = "env_name"
-// 			type = "string"
-// 			title = "Name"
-// 		}
-// 	}
-// 	resource "port-labs_blueprint" "vm" {
-// 		title = "Virtual Machine"
-// 		icon = "Azure"
-// 		identifier = "%s"
-// 		properties {
-// 			identifier = "image"
-// 			type = "string"
-// 			title = "Image"
-// 		}
-// 		relations {
-// 			identifier = "environment"
-// 			title = "Related Environment"
-// 			target = port-labs_blueprint.Environment.identifier
-// 		}
-// 	}
-// `, envID, vmID)
-// 	resource.Test(t, resource.TestCase{
-// 		Providers: map[string]*schema.Provider{
-// 			"port-labs": Provider(),
-// 		},
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccActionConfigCreate,
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.#", "1"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.title", "Related Environment"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.target", envID),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.identifier", "vm-to-environment"),
-// 				),
-// 			},
-// 			{
-// 				Config: testAccActionConfigUpdate,
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.#", "1"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.title", "Related Environment"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.target", envID),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.identifier", "environment"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+func TestAccPortBlueprintUpdateRelation(t *testing.T) {
+	envID := genID()
+	vmID := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "Environment" {
+		title = "Environment"
+		icon = "Environment"
+		identifier = "%s"
+		properties {
+			identifier = "env_name"
+			type = "string"
+			title = "Name"
+		}
+	}
+	resource "port-labs_blueprint" "vm" {
+		title = "Virtual Machine"
+		icon = "Azure"
+		identifier = "%s"
+		properties {
+			identifier = "image"
+			type = "string"
+			title = "Image"
+		}
+		relations {
+			identifier = "vm-to-environment"
+			title = "Related Environment"
+			target = port-labs_blueprint.Environment.identifier
+		}
+	}
+`, envID, vmID)
+	var testAccActionConfigUpdate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "Environment" {
+		title = "Environment"
+		icon = "Environment"
+		identifier = "%s"
+		properties {
+			identifier = "env_name"
+			type = "string"
+			title = "Name"
+		}
+	}
+	resource "port-labs_blueprint" "vm" {
+		title = "Virtual Machine"
+		icon = "Azure"
+		identifier = "%s"
+		properties {
+			identifier = "image"
+			type = "string"
+			title = "Image"
+		}
+		relations {
+			identifier = "environment"
+			title = "Related Environment"
+			target = port-labs_blueprint.Environment.identifier
+		}
+	}
+`, envID, vmID)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.#", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.title", "Related Environment"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.target", envID),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.identifier", "vm-to-environment"),
+				),
+			},
+			{
+				Config: testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.#", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.title", "Related Environment"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.target", envID),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "relations.0.identifier", "environment"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortBlueprintWithMirrorProperty(t *testing.T) {
+	identifier1 := genID()
+	identifier2 := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice1" {
+		title = "TF Provider Test BP2"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+	}
+	resource "port-labs_blueprint" "microservice2" {
+		title = "TF Provider Test BP3"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+		mirror_properties {
+			identifier = "mirror-for-microservice1"
+			title = "Mirror for microservice1"
+			path = "test-rel.$identifier"
+		}
+		relations {
+			identifier = "test-rel"
+			title = "Test Relation"
+			target = port-labs_blueprint.microservice1.identifier
+		}
+	}
+`, identifier1, identifier2)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+			},
+		},
+	})
+}
+
+func TestAccPortBlueprintUpdateMirrorProperty(t *testing.T) {
+	envID := genID()
+	vmID := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "Environment" {
+		title = "Environment"
+		icon = "Environment"
+		identifier = "%s"
+		properties {
+			identifier = "env_name"
+			type = "string"
+			title = "Name"
+		}
+	}
+	resource "port-labs_blueprint" "vm" {
+		title = "Virtual Machine"
+		icon = "Azure"
+		identifier = "%s"
+		properties {
+			identifier = "image"
+			type = "string"
+			title = "Image"
+		}
+		mirror_properties {
+			identifier = "mirror-for-environment"
+			title = "Mirror for environment"
+			path = "vm-to-environment.$identifier"
+		}
+		relations {
+			identifier = "vm-to-environment"
+			title = "Related Environment"
+			target = port-labs_blueprint.Environment.identifier
+		}
+	}
+`, envID, vmID)
+	var testAccActionConfigUpdate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "Environment" {
+		title = "Environment"
+		icon = "Environment"
+		identifier = "%s"
+		properties {
+			identifier = "env_name"
+			type = "string"
+			title = "Name"
+		}
+	}
+	resource "port-labs_blueprint" "vm" {
+		title = "Virtual Machine"
+		icon = "Azure"
+		identifier = "%s"
+		properties {
+			identifier = "image"
+			type = "string"
+			title = "Image"
+		}
+		mirror_properties {
+			identifier = "mirror-for-environment"
+			title = "Mirror for environment2"
+			path = "environment.$identifier"
+		}
+		relations {
+			identifier = "environment"
+			title = "Related Environment"
+			target = port-labs_blueprint.Environment.identifier
+		}
+	}
+`, envID, vmID)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "mirror_properties.#", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "mirror_properties.0.title", "Mirror for environment"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "mirror_properties.0.identifier", "mirror-for-environment"),
+				),
+			},
+			{
+				Config: testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "mirror_properties.#", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "mirror_properties.0.title", "Mirror for environment2"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.vm", "mirror_properties.0.identifier", "mirror-for-environment"),
+				),
+			},
+		},
+	})
+}

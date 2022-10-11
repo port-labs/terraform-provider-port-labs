@@ -266,7 +266,8 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	}
 	properties := schema.Set{F: func(i interface{}) int {
 		id := (i.(map[string]interface{}))["identifier"].(string)
-		return schema.HashString(id)
+		h := schema.HashString(id)
+		return h
 	}}
 	formula_properties := schema.Set{F: func(i interface{}) int {
 		id := (i.(map[string]interface{}))["identifier"].(string)
@@ -325,6 +326,7 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 	id := d.Id()
 	if id != "" {
 		b.Identifier = id
+
 	}
 
 	b.Title = d.Get("title").(string)
@@ -381,8 +383,10 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 			}
 			propFields.EnumColors = enumColors
 		}
-
-		properties[p["identifier"].(string)] = propFields
+		// TODO: removed the if statement when this issues is solved, https://github.com/hashicorp/terraform-plugin-sdk/pull/1042/files
+		if p["identifier"] != "" {
+			properties[p["identifier"].(string)] = propFields
+		}
 	}
 
 	mirror_properties := make(map[string]cli.BlueprintMirrorProperty, mirror_props.Len())

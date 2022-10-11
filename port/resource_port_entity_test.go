@@ -11,7 +11,6 @@ import (
 func TestAccPortEntityUpdateProp(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
-	provider "port-labs" {}
 	resource "port-labs_blueprint" "tf_bp" {
 		title = "TF Provider Test"
 		icon = "Terraform"
@@ -33,7 +32,6 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 	}
 `, identifier)
 	var testAccActionConfigUpdate = fmt.Sprintf(`
-	provider "port-labs" {}
 	resource "port-labs_blueprint" "tf_bp" {
 		title = "TF Provider Test"
 		icon = "Terraform"
@@ -86,7 +84,6 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 func TestAccPortEntity(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
-	provider "port-labs" {}
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test BP0"
 		icon = "Terraform"
@@ -158,7 +155,6 @@ func TestAccPortEntitiesRelation(t *testing.T) {
 	identifier1 := genID()
 	identifier2 := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
-	provider "port-labs" {}
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test BP0"
 		icon = "Terraform"

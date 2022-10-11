@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/port-labs/terraform-provider-port-labs/port/cli"
+	"github.com/samber/lo"
 )
 
 var ICONS = []string{"Actions", "Airflow", "Ansible", "Argo", "AuditLog", "Aws", "Azure", "Blueprint", "Bucket", "Cloud", "Cluster", "CPU", "Customer", "Datadog", "Day2Operation", "DefaultEntity", "DefaultProperty", "DeployedAt", "Deployment", "DevopsTool", "Docs", "Environment", "Git", "Github", "GitVersion", "GoogleCloud", "GPU", "Grafana", "Infinity", "Jenkins", "Lambda", "Link", "Lock", "Microservice", "Moon", "Node", "Okta", "Package", "Permission", "Relic", "Server", "Service", "Team", "Terraform", "User"}
@@ -149,7 +150,7 @@ func newBlueprintResource() *schema.Resource {
 			},
 			"mirror_properties": {
 				Type:        schema.TypeSet,
-				Description: "The properties that are mirrored from the using the path to the target property",
+				Description: "When two Blueprints are connected via a Relation, a new set of properties becomes available to Entities in the source Blueprint.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"identifier": {
@@ -266,8 +267,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	}
 	properties := schema.Set{F: func(i interface{}) int {
 		id := (i.(map[string]interface{}))["identifier"].(string)
-		h := schema.HashString(id)
-		return h
+		return schema.HashString(id)
 	}}
 	formula_properties := schema.Set{F: func(i interface{}) int {
 		id := (i.(map[string]interface{}))["identifier"].(string)
@@ -288,7 +288,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["icon"] = v.Icon
 		p["enum"] = v.Enum
 		p["enum_colors"] = v.EnumColors
-		if contains(b.Schema.Required, k) {
+		if lo.Contains(b.Schema.Required, k) {
 			p["required"] = true
 		} else {
 			p["required"] = false
@@ -302,7 +302,6 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["title"] = v.Title
 		p["path"] = v.Path
 		mirror_properties.Add(p)
-
 	}
 
 	for k, v := range b.FormulaProperties {
@@ -326,7 +325,6 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 	id := d.Id()
 	if id != "" {
 		b.Identifier = id
-
 	}
 
 	b.Title = d.Get("title").(string)
@@ -377,13 +375,12 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		}
 		if e, ok := p["enum_colors"]; ok && e != nil {
 			enumColors := make(map[string]string)
-
 			for key, value := range e.(map[string]interface{}) {
 				enumColors[key] = value.(string)
 			}
 			propFields.EnumColors = enumColors
 		}
-		// TODO: removed the if statement when this issues is solved, https://github.com/hashicorp/terraform-plugin-sdk/pull/1042/files
+		// TODO: remove the if statement when this issues is solved, https://github.com/hashicorp/terraform-plugin-sdk/pull/1042/files
 		if p["identifier"] != "" {
 			properties[p["identifier"].(string)] = propFields
 		}
@@ -393,14 +390,12 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 	for _, prop := range mirror_props.List() {
 		p := prop.(map[string]interface{})
 		propFields := cli.BlueprintMirrorProperty{}
-
 		if t, ok := p["title"]; ok && t != "" {
 			propFields.Title = t.(string)
 		}
 		if p, ok := p["path"]; ok && p != "" {
 			propFields.Path = p.(string)
 		}
-
 		mirror_properties[p["identifier"].(string)] = propFields
 	}
 
@@ -408,14 +403,12 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 	for _, prop := range formula_props.List() {
 		p := prop.(map[string]interface{})
 		propFields := cli.BlueprintFormulaProperty{}
-
 		if t, ok := p["title"]; ok && t != "" {
 			propFields.Title = t.(string)
 		}
 		if f, ok := p["formula"]; ok && f != "" {
 			propFields.Formula = f.(string)
 		}
-
 		formula_properties[p["identifier"].(string)] = propFields
 	}
 
@@ -444,7 +437,6 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 	b.Relations = relations
 	b.FormulaProperties = formula_properties
 	b.MirrorProperties = mirror_properties
-
 	return b, nil
 }
 

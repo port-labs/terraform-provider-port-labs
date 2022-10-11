@@ -121,7 +121,6 @@ func TestAccPortActionPropMeta(t *testing.T) {
 	identifier := genID()
 	actionIdentifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
-
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"
 		icon = "Terraform"
@@ -185,7 +184,6 @@ func TestAccPortActionWebhookInvocation(t *testing.T) {
 	identifier := genID()
 	actionIdentifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
-	
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"
 		icon = "Terraform"
@@ -236,7 +234,6 @@ func TestAccPortActionEntityMultiselect(t *testing.T) {
 	identifier := genID()
 	actionIdentifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
-	
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"
 		icon = "Terraform"

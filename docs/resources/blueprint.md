@@ -28,7 +28,7 @@ Port blueprint
 - `data_source` (String, Deprecated) The data source for entities of this blueprint
 - `description` (String) The description of the blueprint
 - `formula_properties` (Block Set) A property that is calculated by a formula (see [below for nested schema](#nestedblock--formula_properties))
-- `mirror_properties` (Block Set) The properties that are mirrored from the using the path to the target property (see [below for nested schema](#nestedblock--mirror_properties))
+- `mirror_properties` (Block Set) When two Blueprints are connected via a Relation, a new set of properties becomes available to Entities in the source Blueprint. (see [below for nested schema](#nestedblock--mirror_properties))
 - `relations` (Block Set) The blueprints that are connected to this blueprint (see [below for nested schema](#nestedblock--relations))
 
 ### Read-Only

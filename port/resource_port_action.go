@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/port-labs/terraform-provider-port-labs/port/cli"
+	"github.com/samber/lo"
 )
 
 func newActionResource() *schema.Resource {
@@ -174,7 +175,7 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 		p["pattern"] = v.Pattern
 		p["blueprint"] = v.Blueprint
 		p["enum"] = v.Enum
-		if contains(action.UserInputs.Required, k) {
+		if lo.Contains(action.UserInputs.Required, k) {
 			p["required"] = true
 		} else {
 			p["required"] = false

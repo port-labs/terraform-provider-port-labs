@@ -6,6 +6,8 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/port"
 )
 
+//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+
 func main() {
 	plugin.Serve(&plugin.ServeOpts{
 		ProviderFunc: func() *schema.Provider {

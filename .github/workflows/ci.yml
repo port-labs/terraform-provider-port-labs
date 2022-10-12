@@ -38,6 +38,7 @@ jobs:
       - name: Fail if files changed
         if: steps.verify-changed-files.outputs.files_changed == 'true'
         run: |
+          echo "Changed files: ${{ steps.verify-changed-files.outputs.changed_files }}"
           echo "Please run make gen-docs"
           exit 1
   

@@ -30,11 +30,6 @@ func newBlueprintResource() *schema.Resource {
 				Description: "The display name of the blueprint",
 				Required:    true,
 			},
-			"test_ci": {
-				Type:        schema.TypeString,
-				Description: "Test CI verify works",
-				Optional:    true,
-			},
 			"data_source": {
 				Type:        schema.TypeString,
 				Description: "The data source for entities of this blueprint",

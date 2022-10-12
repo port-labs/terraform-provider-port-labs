@@ -12,7 +12,6 @@ func TestAccPortAction(t *testing.T) {
 	identifier := genID()
 	actionIdentifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
-	provider "port-labs" {}
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"
 		icon = "Terraform"
@@ -40,7 +39,6 @@ func TestAccPortAction(t *testing.T) {
 	}
 `, identifier, actionIdentifier)
 	testAccActionConfigUpdate := fmt.Sprintf(`
-	provider "port-labs" {}
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"
 		icon = "Terraform"
@@ -63,7 +61,9 @@ func TestAccPortAction(t *testing.T) {
 		user_properties {
 			identifier = "clear_cache"
 			type = "string"
+			required = true
 			title = "Clear cache"
+			enum = ["yes", "no"]
 		}
 		user_properties {
 			identifier = "submit_report"
@@ -106,6 +106,8 @@ func TestAccPortAction(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.identifier", "clear_cache"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.type", "string"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.title", "Clear cache"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.enum.0", "yes"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.required", "true"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.1.identifier", "submit_report"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.1.type", "boolean"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.1.title", "Submit report"),
@@ -119,7 +121,6 @@ func TestAccPortActionPropMeta(t *testing.T) {
 	identifier := genID()
 	actionIdentifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
-	provider "port-labs" {}
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"
 		icon = "Terraform"
@@ -179,11 +180,60 @@ func TestAccPortActionPropMeta(t *testing.T) {
 	})
 }
 
-func TestAccPortActionWebhhokInvocation(t *testing.T) {
+func TestAccPortActionWebhookInvocation(t *testing.T) {
 	identifier := genID()
 	actionIdentifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
-	provider "port-labs" {}
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF test microservice"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+	}
+	resource "port-labs_action" "restart_microservice" {
+		title = "Restart service"
+		icon = "Terraform"
+		identifier = "%s"
+		blueprint_identifier = port-labs_blueprint.microservice.identifier
+		trigger = "DAY-2"
+		user_properties {
+			identifier = "multiselect"
+			type = "string"
+			title = "multiselect"
+			description = "multiselect"
+			format = "entity"
+			blueprint = port-labs_blueprint.microservice.identifier
+		}
+		invocation_method {
+			type = "KAFKA"
+		}
+	}
+`, identifier, actionIdentifier)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config:  testAccActionConfigCreate,
+				Destroy: false,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.blueprint", identifier),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.format", "entity"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionEntityMultiselect(t *testing.T) {
+	identifier := genID()
+	actionIdentifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"
 		icon = "Terraform"

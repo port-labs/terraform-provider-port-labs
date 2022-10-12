@@ -3,11 +3,11 @@ package port
 import (
 	"context"
 
-	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"github.com/port-labs/terraform-provider-port-labs/port/cli"
+	"github.com/samber/lo"
 )
 
 var ICONS = []string{"Actions", "Airflow", "Ansible", "Argo", "AuditLog", "Aws", "Azure", "Blueprint", "Bucket", "Cloud", "Cluster", "CPU", "Customer", "Datadog", "Day2Operation", "DefaultEntity", "DefaultProperty", "DeployedAt", "Deployment", "DevopsTool", "Docs", "Environment", "Git", "Github", "GitVersion", "GoogleCloud", "GPU", "Grafana", "Infinity", "Jenkins", "Lambda", "Link", "Lock", "Microservice", "Moon", "Node", "Okta", "Package", "Permission", "Relic", "Server", "Service", "Team", "Terraform", "User"}
@@ -43,6 +43,11 @@ func newBlueprintResource() *schema.Resource {
 				ValidateFunc: validation.StringInSlice(ICONS, false),
 				Required:     true,
 			},
+			"description": {
+				Type:        schema.TypeString,
+				Description: "The description of the blueprint",
+				Optional:    true,
+			},
 			"relations": {
 				Description: "The blueprints that are connected to this blueprint",
 				Type:        schema.TypeSet,
@@ -69,15 +74,9 @@ func newBlueprintResource() *schema.Resource {
 							Description: "Whether or not the relation is required",
 						},
 						"many": {
-							Type:     schema.TypeBool,
-							Optional: true,
-							ValidateDiagFunc: func(i interface{}, path cty.Path) diag.Diagnostics {
-								if i.(bool) {
-									return diag.Errorf("Many relations are not supported")
-								}
-								return nil
-							},
-							Description: "Unsupported ATM.\nWhether or not the relation is many",
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Whether or not the relation is many",
 						},
 					},
 				},
@@ -92,6 +91,12 @@ func newBlueprintResource() *schema.Resource {
 							Type:        schema.TypeString,
 							Required:    true,
 							Description: "The identifier of the property",
+						},
+						"icon": {
+							Type:         schema.TypeString,
+							ValidateFunc: validation.StringInSlice(ICONS, false),
+							Optional:     true,
+							Description:  "The icon of the property",
 						},
 						"title": {
 							Type:        schema.TypeString,
@@ -118,9 +123,78 @@ func newBlueprintResource() *schema.Resource {
 							Optional:    true,
 							Description: "The format of the Property",
 						},
+						"enum": {
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: "A list of allowed values for the property",
+						},
+						"enum_colors": {
+							Type: schema.TypeMap,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+							Optional:    true,
+							Description: "A map of colors for the enum values",
+						},
+						"required": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Whether or not the property is required",
+						},
 					},
 				},
 				Required: true,
+			},
+			"mirror_properties": {
+				Type:        schema.TypeSet,
+				Description: "When two Blueprints are connected via a Relation, a new set of properties becomes available to Entities in the source Blueprint.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"identifier": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The identifier of the property",
+						},
+						"title": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The name of this property",
+						},
+						"path": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The path of the realtions towards the property",
+						},
+					},
+				},
+				Optional: true,
+			},
+			"formula_properties": {
+				Type:        schema.TypeSet,
+				Description: "A property that is calculated by a formula",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"identifier": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The identifier of the property",
+						},
+						"title": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The name of this property",
+						},
+						"formula": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The path of the realtions towards the property",
+						},
+					},
+				},
+				Optional: true,
 			},
 			"changelog_destination": {
 				Type:        schema.TypeList,
@@ -180,6 +254,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	d.SetId(b.Identifier)
 	d.Set("title", b.Title)
 	d.Set("icon", b.Icon)
+	d.Set("description", b.Description)
 	d.Set("created_at", b.CreatedAt.String())
 	d.Set("created_by", b.CreatedBy)
 	d.Set("updated_at", b.UpdatedAt.String())
@@ -194,6 +269,14 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		id := (i.(map[string]interface{}))["identifier"].(string)
 		return schema.HashString(id)
 	}}
+	formula_properties := schema.Set{F: func(i interface{}) int {
+		id := (i.(map[string]interface{}))["identifier"].(string)
+		return schema.HashString(id)
+	}}
+	mirror_properties := schema.Set{F: func(i interface{}) int {
+		id := (i.(map[string]interface{}))["identifier"].(string)
+		return schema.HashString(id)
+	}}
 	for k, v := range b.Schema.Properties {
 		p := map[string]interface{}{}
 		p["identifier"] = k
@@ -202,9 +285,36 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["description"] = v.Description
 		p["default"] = v.Default
 		p["format"] = v.Format
+		p["icon"] = v.Icon
+		p["enum"] = v.Enum
+		p["enum_colors"] = v.EnumColors
+		if lo.Contains(b.Schema.Required, k) {
+			p["required"] = true
+		} else {
+			p["required"] = false
+		}
 		properties.Add(p)
 	}
+
+	for k, v := range b.MirrorProperties {
+		p := map[string]interface{}{}
+		p["identifier"] = k
+		p["title"] = v.Title
+		p["path"] = v.Path
+		mirror_properties.Add(p)
+	}
+
+	for k, v := range b.FormulaProperties {
+		p := map[string]interface{}{}
+		p["identifier"] = k
+		p["title"] = v.Title
+		p["formula"] = v.Formula
+		formula_properties.Add(p)
+	}
+
 	d.Set("properties", &properties)
+	d.Set("mirror_properties", &mirror_properties)
+	d.Set("formula_properties", &formula_properties)
 }
 
 func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
@@ -219,7 +329,10 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 
 	b.Title = d.Get("title").(string)
 	b.Icon = d.Get("icon").(string)
+	b.Description = d.Get("description").(string)
 	props := d.Get("properties").(*schema.Set)
+	mirror_props := d.Get("mirror_properties").(*schema.Set)
+	formula_props := d.Get("formula_properties").(*schema.Set)
 
 	if changelogDestination, ok := d.GetOk("changelog_destination"); ok {
 		if b.ChangelogDestination == nil {
@@ -230,6 +343,7 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 	}
 
 	properties := make(map[string]cli.BlueprintProperty, props.Len())
+	var required []string
 	for _, prop := range props.List() {
 		p := prop.(map[string]interface{})
 		propFields := cli.BlueprintProperty{}
@@ -248,7 +362,54 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		if f, ok := p["format"]; ok && f != "" {
 			propFields.Format = f.(string)
 		}
-		properties[p["identifier"].(string)] = propFields
+		if i, ok := p["icon"]; ok && i != "" {
+			propFields.Icon = i.(string)
+		}
+		if r, ok := p["required"]; ok && r.(bool) {
+			required = append(required, p["identifier"].(string))
+		}
+		if e, ok := p["enum"]; ok && e != nil {
+			for _, v := range e.([]interface{}) {
+				propFields.Enum = append(propFields.Enum, v.(string))
+			}
+		}
+		if e, ok := p["enum_colors"]; ok && e != nil {
+			enumColors := make(map[string]string)
+			for key, value := range e.(map[string]interface{}) {
+				enumColors[key] = value.(string)
+			}
+			propFields.EnumColors = enumColors
+		}
+		// TODO: remove the if statement when this issues is solved, https://github.com/hashicorp/terraform-plugin-sdk/pull/1042/files
+		if p["identifier"] != "" {
+			properties[p["identifier"].(string)] = propFields
+		}
+	}
+
+	mirror_properties := make(map[string]cli.BlueprintMirrorProperty, mirror_props.Len())
+	for _, prop := range mirror_props.List() {
+		p := prop.(map[string]interface{})
+		propFields := cli.BlueprintMirrorProperty{}
+		if t, ok := p["title"]; ok && t != "" {
+			propFields.Title = t.(string)
+		}
+		if p, ok := p["path"]; ok && p != "" {
+			propFields.Path = p.(string)
+		}
+		mirror_properties[p["identifier"].(string)] = propFields
+	}
+
+	formula_properties := make(map[string]cli.BlueprintFormulaProperty, formula_props.Len())
+	for _, prop := range formula_props.List() {
+		p := prop.(map[string]interface{})
+		propFields := cli.BlueprintFormulaProperty{}
+		if t, ok := p["title"]; ok && t != "" {
+			propFields.Title = t.(string)
+		}
+		if f, ok := p["formula"]; ok && f != "" {
+			propFields.Formula = f.(string)
+		}
+		formula_properties[p["identifier"].(string)] = propFields
 	}
 
 	rels := d.Get("relations").(*schema.Set)
@@ -272,8 +433,10 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		relations[p["identifier"].(string)] = relationFields
 	}
 
-	b.Schema = cli.BlueprintSchema{Properties: properties}
+	b.Schema = cli.BlueprintSchema{Properties: properties, Required: required}
 	b.Relations = relations
+	b.FormulaProperties = formula_properties
+	b.MirrorProperties = mirror_properties
 	return b, nil
 }
 

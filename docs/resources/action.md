@@ -27,7 +27,6 @@ Port action
 
 - `description` (String) The description of the action
 - `icon` (String) The icon of the action
-- `required_properties` (Set of String) The required properties of the action
 - `user_properties` (Block Set) The input properties of the action (see [below for nested schema](#nestedblock--user_properties))
 
 ### Read-Only
@@ -57,9 +56,12 @@ Required:
 
 Optional:
 
+- `blueprint` (String) When selecting format 'entity', the identifier of the target blueprint
 - `default` (String) A default value for this property in case an entity is created without explicitly providing a value.
 - `description` (String) A description of the property. This value is visible to users when hovering on the info icon in the UI. It provides detailed information about the use of a specific property.
+- `enum` (List of String) A list of allowed values for the property
 - `format` (String) A specific data format to pair with some of the available types
 - `pattern` (String) A regular expression (regex) pattern to specify the set of allowed values for the property
+- `required` (Boolean) Whether the property is required or not
 
 

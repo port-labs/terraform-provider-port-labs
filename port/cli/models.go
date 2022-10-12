@@ -29,13 +29,29 @@ type (
 	}
 
 	BlueprintProperty struct {
-		Type        string `json:"type,omitempty"`
-		Title       string `json:"title,omitempty"`
-		Identifier  string `json:"identifier,omitempty"`
-		Default     string `json:"default,omitempty"`
-		Format      string `json:"format,omitempty"`
-		Description string `json:"description,omitempty"`
-		Pattern     string `json:"pattern,omitempty"`
+		Type        string            `json:"type,omitempty"`
+		Title       string            `json:"title,omitempty"`
+		Identifier  string            `json:"identifier,omitempty"`
+		Default     string            `json:"default,omitempty"`
+		Icon        string            `json:"icon,omitempty"`
+		Format      string            `json:"format,omitempty"`
+		Description string            `json:"description,omitempty"`
+		Blueprint   string            `json:"blueprint,omitempty"`
+		Pattern     string            `json:"pattern,omitempty"`
+		Enum        []string          `json:"enum,omitempty"`
+		EnumColors  map[string]string `json:"enumColors,omitempty"`
+	}
+
+	BlueprintMirrorProperty struct {
+		Identifier string `json:"identifier,omitempty"`
+		Title      string `json:"title,omitempty"`
+		Path       string `json:"path,omitempty"`
+	}
+
+	BlueprintFormulaProperty struct {
+		Identifier string `json:"identifier,omitempty"`
+		Title      string `json:"title,omitempty"`
+		Formula    string `json:"formula,omitempty"`
 	}
 
 	BlueprintSchema struct {
@@ -57,12 +73,15 @@ type (
 
 	Blueprint struct {
 		Meta
-		Identifier           string                `json:"identifier,omitempty"`
-		Title                string                `json:"title"`
-		Icon                 string                `json:"icon"`
-		Schema               BlueprintSchema       `json:"schema"`
-		ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
-		Relations            map[string]Relation   `json:"relations"`
+		Identifier           string                              `json:"identifier,omitempty"`
+		Title                string                              `json:"title"`
+		Icon                 string                              `json:"icon"`
+		Description          string                              `json:"description"`
+		Schema               BlueprintSchema                     `json:"schema"`
+		FormulaProperties    map[string]BlueprintFormulaProperty `json:"formulaProperties"`
+		MirrorProperties     map[string]BlueprintMirrorProperty  `json:"mirrorProperties"`
+		ChangelogDestination *ChangelogDestination               `json:"changelogDestination,omitempty"`
+		Relations            map[string]Relation                 `json:"relations"`
 	}
 
 	Action struct {

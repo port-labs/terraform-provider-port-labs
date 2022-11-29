@@ -57,6 +57,7 @@ Required:
 Optional:
 
 - `blueprint` (String) When selecting format 'entity', the identifier of the target blueprint
+- `default_items` (List of String) The list of default items, in case the type of this property is a list
 - `default` (String) A default value for this property in case an entity is created without explicitly providing a value.
 - `description` (String) A description of the property. This value is visible to users when hovering on the info icon in the UI. It provides detailed information about the use of a specific property.
 - `enum` (List of String) A list of allowed values for the property

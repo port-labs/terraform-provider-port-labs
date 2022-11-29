@@ -2,6 +2,9 @@ package port
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -73,6 +76,14 @@ func newActionResource() *schema.Resource {
 							Type:        schema.TypeString,
 							Optional:    true,
 							Description: "A default value for this property in case an entity is created without explicitly providing a value.",
+						},
+						"default_items": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: "The list of items, in case the type of default property is a list",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 						},
 						"format": {
 							Type:        schema.TypeString,
@@ -170,7 +181,6 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 		p["title"] = v.Title
 		p["type"] = v.Type
 		p["description"] = v.Description
-		p["default"] = v.Default
 		p["format"] = v.Format
 		p["pattern"] = v.Pattern
 		p["blueprint"] = v.Blueprint
@@ -180,6 +190,25 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 		} else {
 			p["required"] = false
 		}
+		switch t := v.Default.(type) {
+		case map[string]interface{}:
+			js, _ := json.Marshal(&t)
+			p["default"] = string(js)
+		case []interface{}:
+			p["default_items"] = t
+		case float64:
+			p["default"] = strconv.FormatFloat(t, 'f', -1, 64)
+		case int:
+			p["default"] = strconv.Itoa(t)
+		case string:
+			p["default"] = t
+		case bool:
+			p["default"] = "false"
+			if t {
+				p["default"] = "true"
+			}
+		}
+
 		properties.Add(p)
 	}
 	d.Set("user_properties", &properties)
@@ -220,8 +249,20 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 		if d, ok := p["description"]; ok && d != "" {
 			propFields.Description = d.(string)
 		}
-		if d, ok := p["default"]; ok && d != "" {
-			propFields.Default = d.(string)
+		switch propFields.Type {
+		case "string", "number", "boolean":
+			propFields.Default = p["default"]
+		case "array":
+			propFields.Default = p["default_items"]
+		case "object":
+			obj := make(map[string]interface{})
+			err := json.Unmarshal([]byte(p["default"].(string)), &obj)
+			if err != nil {
+				return nil, err
+			}
+			propFields.Default = obj
+		default:
+			return nil, fmt.Errorf("unsupported type %s", propFields.Type)
 		}
 		if f, ok := p["format"]; ok && f != "" {
 			propFields.Format = f.(string)

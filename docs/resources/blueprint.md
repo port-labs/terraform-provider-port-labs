@@ -50,6 +50,7 @@ Required:
 
 Optional:
 
+- `default_items` (List of String) The list of default items, in case the type of this property is a list
 - `default` (String) The default value of the property
 - `description` (String) The description of the property
 - `enum` (List of String) A list of allowed values for the property

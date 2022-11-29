@@ -43,4 +43,4 @@ acctest:
 	TF_ACC=1 go test ./...
 
 gen-docs:
-	tfplugindocs
+	go generate

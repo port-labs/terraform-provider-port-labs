@@ -389,11 +389,11 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		switch propFields.Type {
 		case "string", "number", "boolean":
 			if d, ok := p["default"]; ok && d != "" {
-				propFields.Default = d.(interface{})
+				propFields.Default = d
 			}
 		case "array":
 			if d, ok := p["default_items"]; ok && d != "" {
-				propFields.Default = d.(interface{})
+				propFields.Default = d
 			}
 		case "object":
 			if d, ok := p["default"]; ok && d != "" {

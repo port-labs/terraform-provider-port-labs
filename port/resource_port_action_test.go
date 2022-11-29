@@ -35,6 +35,13 @@ func TestAccPortAction(t *testing.T) {
 			identifier = "clear_cache"
 			type = "boolean"
 			title = "Clear cache"
+			default = "true"
+		}
+		user_properties {
+			identifier = "services"
+			type = "array"
+			title = "Services"
+			default_items = ["api", "frontend"]
 		}
 	}
 `, identifier, actionIdentifier)
@@ -87,10 +94,13 @@ func TestAccPortAction(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "blueprint_identifier", identifier),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.type", "KAFKA"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "trigger", "DAY-2"),
-					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.#", "1"),
-					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.identifier", "clear_cache"),
-					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.type", "boolean"),
-					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.title", "Clear cache"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.#", "2"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.default_items.0", "api"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.default_items.#", "2"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.1.identifier", "clear_cache"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.1.type", "boolean"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.1.title", "Clear cache"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.1.default", "true"),
 				),
 			},
 			{

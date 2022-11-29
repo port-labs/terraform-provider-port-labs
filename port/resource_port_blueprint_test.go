@@ -28,21 +28,25 @@ func TestAccPortBlueprint(t *testing.T) {
 			identifier = "bool"
 			type = "boolean"
 			title = "boolean"
+			default = "true"
 		}
 		properties {
 			identifier = "number"
 			type = "number"
 			title = "number"
+			default = "1"
 		}
 		properties {
 			identifier = "obj"
 			type = "object"
 			title = "object"
+			default = jsonencode({"a":"b"})
 		}
 		properties {
 			identifier = "array"
 			type = "array"
 			title = "array"
+			default_items = [1, 2, 3]
 		}
 		properties {
 			identifier = "text"
@@ -54,6 +58,7 @@ func TestAccPortBlueprint(t *testing.T) {
 				a = "red"
 				b = "blue"
 			}
+			default = "a"
 		}
 	}
 `, identifier)
@@ -65,9 +70,15 @@ func TestAccPortBlueprint(t *testing.T) {
 			{
 				Config: testAccActionConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.identifier", "text"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.enum.0", "a"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.enum_colors.a", "red"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.default_items.0", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.default_items.#", "3"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.1.default", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.identifier", "text"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.enum.0", "a"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.enum_colors.a", "red"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.default", "a"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.3.default", "true"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.4.default", "{\"a\":\"b\"}"),
 				),
 			},
 		},

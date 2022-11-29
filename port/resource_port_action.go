@@ -251,22 +251,38 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 			propFields.Description = d.(string)
 		}
 		switch propFields.Type {
-		case "string", "number", "boolean":
-			if d, ok := p["default"]; ok && d != "" {
-				propFields.Default = d
+		case "string":
+			if d, ok := p["default"]; ok && d.(string) != "" {
+				propFields.Default = d.(string)
 			}
-		case "array":
-			if d, ok := p["default_items"]; ok && d != "" {
-				propFields.Default = d
-			}
-		case "object":
-			if d, ok := p["default"]; ok && d != "" {
-				obj := make(map[string]interface{})
-				err := json.Unmarshal([]byte(d.(string)), &obj)
+		case "number":
+			if d, ok := p["default"]; ok && d.(string) != "" {
+				defaultNum, err := strconv.ParseInt(d.(string), 10, 0)
 				if err != nil {
 					return nil, err
 				}
-				propFields.Default = obj
+				propFields.Default = defaultNum
+			}
+		case "boolean":
+			if d, ok := p["default"]; ok && d.(string) != "" {
+				defaultBool, err := strconv.ParseBool(d.(string))
+				if err != nil {
+					return nil, err
+				}
+				propFields.Default = defaultBool
+			}
+		case "array":
+			if d, ok := p["default_items"]; ok && d != nil {
+				propFields.Default = d
+			}
+		case "object":
+			if d, ok := p["default"]; ok && d.(string) != "" {
+				defaultObj := make(map[string]interface{})
+				err := json.Unmarshal([]byte(d.(string)), &defaultObj)
+				if err != nil {
+					return nil, err
+				}
+				propFields.Default = defaultObj
 			}
 		}
 		if f, ok := p["format"]; ok && f != "" {

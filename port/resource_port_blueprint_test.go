@@ -28,13 +28,13 @@ func TestAccPortBlueprint(t *testing.T) {
 			identifier = "bool"
 			type = "boolean"
 			title = "boolean"
-			default = "true"
+			default = true
 		}
 		properties {
 			identifier = "number"
 			type = "number"
 			title = "number"
-			default = "1"
+			default = 1
 		}
 		properties {
 			identifier = "obj"

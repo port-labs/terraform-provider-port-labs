@@ -181,10 +181,6 @@ func TestAccPortBlueprintUpdate(t *testing.T) {
 				b = "blue"
 			}
 		}
-		formula_properties {
-			identifier = "formula_id"
-			formula = "{{$identifier}}formula"
-		}
 	}
 `, identifier)
 	var testAccActionConfigUpdate = fmt.Sprintf(`
@@ -202,10 +198,6 @@ func TestAccPortBlueprintUpdate(t *testing.T) {
 			identifier = "number"
 			type = "number"
 			title = "num"
-		}
-		formula_properties {
-			identifier = "formula_id"
-			formula = "{{$identifier}}formula-updated"
 		}
 	}
 `, identifier)
@@ -233,7 +225,6 @@ func TestAccPortBlueprintUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.title", "text"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.required", "true"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.icon", "Terraform"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "formula_properties.0.formula", "{{$identifier}}formula"),
 				),
 			},
 			{
@@ -243,7 +234,6 @@ func TestAccPortBlueprintUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.title", "num"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.1.title", "text"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.1.required", "false"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "formula_properties.0.formula", "{{$identifier}}formula-updated"),
 				),
 			},
 			{

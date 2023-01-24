@@ -165,7 +165,8 @@ func entityResourceToBody(d *schema.ResourceData, bp *cli.Blueprint) (*cli.Entit
 	e.Title = d.Get("title").(string)
 	e.Blueprint = d.Get("blueprint").(string)
 	if team, ok := d.GetOk("team"); ok {
-		e.Team = team.(string)
+		teams := []string{team.(string)}
+		e.Team = teams
 	}
 	rels := d.Get("relations").(*schema.Set)
 	relations := make(map[string]string)
@@ -199,7 +200,9 @@ func writeEntityComputedFieldsToResource(d *schema.ResourceData, e *cli.Entity) 
 func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
 	d.SetId(e.Identifier)
 	d.Set("title", e.Title)
-	d.Set("team", e.Team)
+	if len(e.Team) > 0 {
+		d.Set("team", e.Team[0])
+	}
 	d.Set("created_at", e.CreatedAt.String())
 	d.Set("created_by", e.CreatedBy)
 	d.Set("updated_at", e.UpdatedAt.String())

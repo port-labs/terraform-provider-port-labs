@@ -27,7 +27,6 @@ Port blueprint
 - `changelog_destination` (Block List, Max: 1) Blueprints changelog destination, Supports WEBHOOK and KAFKA (see [below for nested schema](#nestedblock--changelog_destination))
 - `data_source` (String, Deprecated) The data source for entities of this blueprint
 - `description` (String) The description of the blueprint
-- `formula_properties` (Block Set) A property that is calculated by a formula (see [below for nested schema](#nestedblock--formula_properties))
 - `mirror_properties` (Block Set) When two Blueprints are connected via a Relation, a new set of properties becomes available to Entities in the source Blueprint. (see [below for nested schema](#nestedblock--mirror_properties))
 - `relations` (Block Set) The blueprints that are connected to this blueprint (see [below for nested schema](#nestedblock--relations))
 
@@ -70,20 +69,6 @@ Required:
 Optional:
 
 - `url` (String) Required when selecting type WEBHOOK. The URL to which the changelog is dispatched
-
-
-<a id="nestedblock--formula_properties"></a>
-### Nested Schema for `formula_properties`
-
-Required:
-
-- `formula` (String) The path of the realtions towards the property
-- `identifier` (String) The identifier of the property
-
-Optional:
-
-- `title` (String) The name of this property
-
 
 <a id="nestedblock--mirror_properties"></a>
 ### Nested Schema for `mirror_properties`

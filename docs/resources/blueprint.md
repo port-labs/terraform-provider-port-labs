@@ -49,8 +49,8 @@ Required:
 
 Optional:
 
-- `default_items` (List of String) The list of default items, in case the type of this property is a list
 - `default` (String) The default value of the property
+- `default_items` (List of String) The list of items, in case the type of default property is a list
 - `description` (String) The description of the property
 - `enum` (List of String) A list of allowed values for the property
 - `enum_colors` (Map of String) A map of colors for the enum values
@@ -69,6 +69,7 @@ Required:
 Optional:
 
 - `url` (String) Required when selecting type WEBHOOK. The URL to which the changelog is dispatched
+
 
 <a id="nestedblock--mirror_properties"></a>
 ### Nested Schema for `mirror_properties`

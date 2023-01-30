@@ -12,6 +12,9 @@ import (
 	"github.com/samber/lo"
 )
 
+var requiredGithubArguments = []string{"invocation_method.0.org", "invocation_method.0.repo", "invocation_method.0.workflow"}
+var requiredWebhookArguments = []string{"invocation_method.0.url"}
+
 func newActionResource() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Port action",
@@ -120,19 +123,63 @@ func newActionResource() *schema.Resource {
 				Type:        schema.TypeList,
 				MinItems:    1,
 				MaxItems:    1,
-				Description: "The methods the action is dispatched in, Supports WEBHOOK and KAFKA",
+				Description: "The methods the action is dispatched in, Supports WEBHOOK, KAFKA and GITHUB",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "How to invoke the action using WEBHOOK or KAFKA",
-							ValidateFunc: validation.StringInSlice([]string{"WEBHOOK", "KAFKA"}, false),
+							ValidateFunc: validation.StringInSlice([]string{"WEBHOOK", "KAFKA", "GITHUB"}, false),
 						},
 						"url": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: "Required when selecting type WEBHOOK. The URL to which the action is dispatched",
+							Type:          schema.TypeString,
+							Optional:      true,
+							Description:   "Required when selecting type WEBHOOK. The URL to which the action is dispatched",
+							ConflictsWith: []string{"invocation_method.0.org"},
+						},
+						"agent": {
+							Type:         schema.TypeBool,
+							Optional:     true,
+							Description:  "Relevant only when selecting type WEBHOOK. The flag that controls if the port execution agent will handle the action",
+							RequiredWith: requiredWebhookArguments,
+						},
+						"org": {
+							Type:          schema.TypeString,
+							Optional:      true,
+							Description:   "Required when selecting type GITHUB. The GitHub org that the workflow belongs to",
+							RequiredWith:  requiredGithubArguments,
+							ConflictsWith: []string{"invocation_method.0.url"},
+						},
+						"repo": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "Required when selecting type GITHUB. The GitHub repository that the workflow belongs to",
+							RequiredWith: requiredGithubArguments,
+						},
+						"workflow": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "Required when selecting type GITHUB. The GitHub workflow id or the workflow file name",
+							RequiredWith: requiredGithubArguments,
+						},
+						"omit_payload": {
+							Type:         schema.TypeBool,
+							Optional:     true,
+							Description:  "Relevant only when selecting type GITHUB. The flag that controls if to omit Port's payload from workflow's dispatch input",
+							RequiredWith: requiredGithubArguments,
+						},
+						"omit_user_inputs": {
+							Type:         schema.TypeBool,
+							Optional:     true,
+							Description:  "Relevant only when selecting type GITHUB. The flag that controls if to omit user inputs from workflow's dispatch input",
+							RequiredWith: requiredGithubArguments,
+						},
+						"report_workflow_status": {
+							Type:         schema.TypeBool,
+							Optional:     true,
+							Description:  "Relevant only when selecting type GITHUB. The flag that controls if to report the action status when the workflow completes",
+							RequiredWith: requiredGithubArguments,
 						},
 					},
 				},
@@ -165,8 +212,15 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 	d.Set("icon", action.Icon)
 	d.Set("description", action.Description)
 	d.Set("invocation_method", []any{map[string]any{
-		"type": action.InvocationMethod.Type,
-		"url":  action.InvocationMethod.Url,
+		"type":                   action.InvocationMethod.Type,
+		"url":                    action.InvocationMethod.Url,
+		"agent":                  action.InvocationMethod.Agent,
+		"org":                    action.InvocationMethod.Org,
+		"repo":                   action.InvocationMethod.Repo,
+		"workflow":               action.InvocationMethod.Workflow,
+		"omit_payload":           action.InvocationMethod.OmitPayload,
+		"omit_user_inputs":       action.InvocationMethod.OmitUserInputs,
+		"report_workflow_status": action.InvocationMethod.ReportWorkflowStatus,
 	}})
 
 	d.Set("trigger", action.Trigger)
@@ -231,6 +285,13 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 
 		action.InvocationMethod.Type = invocationMethod.([]any)[0].(map[string]interface{})["type"].(string)
 		action.InvocationMethod.Url = invocationMethod.([]any)[0].(map[string]interface{})["url"].(string)
+		action.InvocationMethod.Agent = invocationMethod.([]any)[0].(map[string]interface{})["agent"].(bool)
+		action.InvocationMethod.Org = invocationMethod.([]any)[0].(map[string]interface{})["org"].(string)
+		action.InvocationMethod.Repo = invocationMethod.([]any)[0].(map[string]interface{})["repo"].(string)
+		action.InvocationMethod.Workflow = invocationMethod.([]any)[0].(map[string]interface{})["workflow"].(string)
+		action.InvocationMethod.OmitPayload = invocationMethod.([]any)[0].(map[string]interface{})["omit_payload"].(bool)
+		action.InvocationMethod.OmitUserInputs = invocationMethod.([]any)[0].(map[string]interface{})["omit_user_inputs"].(bool)
+		action.InvocationMethod.ReportWorkflowStatus = invocationMethod.([]any)[0].(map[string]interface{})["report_workflow_status"].(bool)
 	}
 	action.Trigger = d.Get("trigger").(string)
 

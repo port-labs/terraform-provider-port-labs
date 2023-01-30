@@ -54,8 +54,15 @@ type (
 	}
 
 	InvocationMethod struct {
-		Type string `json:"type,omitempty"`
-		Url  string `json:"url,omitempty"`
+		Type                 string `json:"type,omitempty"`
+		Url                  string `json:"url,omitempty"`
+		Agent                bool   `json:"agent,omitempty"`
+		Org                  string `json:"org,omitempty"`
+		Repo                 string `json:"repo,omitempty"`
+		Workflow             string `json:"workflow,omitempty"`
+		OmitPayload          bool   `json:"omitPayload,omitempty"`
+		OmitUserInputs       bool   `json:"omitUserInputs,omitempty"`
+		ReportWorkflowStatus bool   `json:"reportWorkflowStatus,omitempty"`
 	}
 
 	ChangelogDestination struct {

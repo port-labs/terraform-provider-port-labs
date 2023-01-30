@@ -19,7 +19,7 @@ Port action
 
 - `blueprint_identifier` (String) The identifier of the blueprint
 - `identifier` (String) The identifier of the action
-- `invocation_method` (Block List, Min: 1, Max: 1) The methods the action is dispatched in, Supports WEBHOOK and KAFKA (see [below for nested schema](#nestedblock--invocation_method))
+- `invocation_method` (Block List, Min: 1, Max: 1) The methods the action is dispatched in, Supports WEBHOOK, KAFKA and GITHUB (see [below for nested schema](#nestedblock--invocation_method))
 - `title` (String) The display name of the action
 - `trigger` (String) The type of the action, one of CREATE, DAY-2, DELETE
 
@@ -42,7 +42,14 @@ Required:
 
 Optional:
 
+- `agent` (Boolean) Relevant only when selecting type WEBHOOK. The flag that controls if the port execution agent will handle the action
+- `omit_payload` (Boolean) Relevant only when selecting type GITHUB. The flag that controls if to omit Port's payload from workflow's dispatch input
+- `omit_user_inputs` (Boolean) Relevant only when selecting type GITHUB. The flag that controls if to omit user inputs from workflow's dispatch input
+- `org` (String) Required when selecting type GITHUB. The GitHub org that the workflow belongs to
+- `repo` (String) Required when selecting type GITHUB. The GitHub repository that the workflow belongs to
+- `report_workflow_status` (Boolean) Relevant only when selecting type GITHUB. The flag that controls if to report the action status when the workflow completes
 - `url` (String) Required when selecting type WEBHOOK. The URL to which the action is dispatched
+- `workflow` (String) Required when selecting type GITHUB. The GitHub workflow id or the workflow file name
 
 
 <a id="nestedblock--user_properties"></a>
@@ -57,8 +64,8 @@ Required:
 Optional:
 
 - `blueprint` (String) When selecting format 'entity', the identifier of the target blueprint
-- `default_items` (List of String) The list of default items, in case the type of this property is a list
 - `default` (String) A default value for this property in case an entity is created without explicitly providing a value.
+- `default_items` (List of String) The list of items, in case the type of default property is a list
 - `description` (String) A description of the property. This value is visible to users when hovering on the info icon in the UI. It provides detailed information about the use of a specific property.
 - `enum` (List of String) A list of allowed values for the property
 - `format` (String) A specific data format to pair with some of the available types

@@ -211,7 +211,7 @@ func TestAccPortActionPropMeta(t *testing.T) {
 	})
 }
 
-func TestAccPortActionWebhookInvocation(t *testing.T) {
+func TestAccPortActionEntityMultiselect(t *testing.T) {
 	identifier := genID()
 	actionIdentifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
@@ -261,7 +261,7 @@ func TestAccPortActionWebhookInvocation(t *testing.T) {
 	})
 }
 
-func TestAccPortActionEntityMultiselect(t *testing.T) {
+func TestAccPortActionWebhookInvocation(t *testing.T) {
 	identifier := genID()
 	actionIdentifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
@@ -284,6 +284,7 @@ func TestAccPortActionEntityMultiselect(t *testing.T) {
 		invocation_method {
 			type = "WEBHOOK"
 			url = "https://google.com"
+            agent = true
 		}
 	}
 `, identifier, actionIdentifier)
@@ -303,6 +304,65 @@ func TestAccPortActionEntityMultiselect(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "trigger", "DAY-2"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.type", "WEBHOOK"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.url", "https://google.com"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.agent", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionGithubInvocation(t *testing.T) {
+	identifier := genID()
+	actionIdentifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF test microservice"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+	}
+	resource "port-labs_action" "restart_microservice" {
+		title = "Restart service"
+		icon = "Terraform"
+		identifier = "%s"
+		blueprint_identifier = port-labs_blueprint.microservice.identifier
+		trigger = "DAY-2"
+		invocation_method {
+			type = "GITHUB"
+			org = "port-labs"
+            repo = "Port"
+            workflow = "deploy.yml"
+            omit_payload = false
+            omit_user_inputs = false
+            report_workflow_status = true
+		}
+	}
+`, identifier, actionIdentifier)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config:  testAccActionConfigCreate,
+				Destroy: false,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "title", "Restart service"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "blueprint_identifier", identifier),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.type", "GITHUB"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.org", "port-labs"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.repo", "Port"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.workflow", "deploy.yml"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.omit_payload", "false"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.omit_user_inputs", "false"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.report_workflow_status", "true"),
 				),
 			},
 		},

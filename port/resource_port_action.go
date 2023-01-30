@@ -123,13 +123,13 @@ func newActionResource() *schema.Resource {
 				Type:        schema.TypeList,
 				MinItems:    1,
 				MaxItems:    1,
-				Description: "The methods the action is dispatched in, Supports WEBHOOK, KAFKA and GITHUB",
+				Description: "The methods the action is dispatched in. Supports WEBHOOK, KAFKA and GITHUB",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
 							Type:         schema.TypeString,
 							Required:     true,
-							Description:  "How to invoke the action using WEBHOOK or KAFKA",
+							Description:  "One of WEBHOOK, KAFKA and GITHUB",
 							ValidateFunc: validation.StringInSlice([]string{"WEBHOOK", "KAFKA", "GITHUB"}, false),
 						},
 						"url": {

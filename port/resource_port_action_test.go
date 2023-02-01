@@ -338,7 +338,7 @@ func TestAccPortActionGithubInvocation(t *testing.T) {
             workflow = "deploy.yml"
             omit_payload = false
             omit_user_inputs = false
-            report_workflow_status = true
+            report_workflow_status = false
 		}
 	}
 `, identifier, actionIdentifier)
@@ -362,7 +362,7 @@ func TestAccPortActionGithubInvocation(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.workflow", "deploy.yml"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.omit_payload", "false"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.omit_user_inputs", "false"),
-					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.report_workflow_status", "true"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.report_workflow_status", "false"),
 				),
 			},
 		},

@@ -211,6 +211,11 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 	d.Set("title", action.Title)
 	d.Set("icon", action.Icon)
 	d.Set("description", action.Description)
+
+	reportWorkflowStatus := false
+	if action.InvocationMethod.ReportWorkflowStatus != nil {
+		reportWorkflowStatus = *action.InvocationMethod.ReportWorkflowStatus
+	}
 	d.Set("invocation_method", []any{map[string]any{
 		"type":                   action.InvocationMethod.Type,
 		"url":                    action.InvocationMethod.Url,
@@ -220,7 +225,7 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 		"workflow":               action.InvocationMethod.Workflow,
 		"omit_payload":           action.InvocationMethod.OmitPayload,
 		"omit_user_inputs":       action.InvocationMethod.OmitUserInputs,
-		"report_workflow_status": action.InvocationMethod.ReportWorkflowStatus,
+		"report_workflow_status": reportWorkflowStatus,
 	}})
 
 	d.Set("trigger", action.Trigger)
@@ -291,7 +296,13 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 		action.InvocationMethod.Workflow = invocationMethod.([]any)[0].(map[string]interface{})["workflow"].(string)
 		action.InvocationMethod.OmitPayload = invocationMethod.([]any)[0].(map[string]interface{})["omit_payload"].(bool)
 		action.InvocationMethod.OmitUserInputs = invocationMethod.([]any)[0].(map[string]interface{})["omit_user_inputs"].(bool)
-		action.InvocationMethod.ReportWorkflowStatus = invocationMethod.([]any)[0].(map[string]interface{})["report_workflow_status"].(bool)
+
+		if action.InvocationMethod.Type == "GITHUB" {
+			action.InvocationMethod.ReportWorkflowStatus = new(bool)
+			*action.InvocationMethod.ReportWorkflowStatus = invocationMethod.([]any)[0].(map[string]interface{})["report_workflow_status"].(bool)
+		} else {
+			action.InvocationMethod.ReportWorkflowStatus = nil
+		}
 	}
 	action.Trigger = d.Get("trigger").(string)
 

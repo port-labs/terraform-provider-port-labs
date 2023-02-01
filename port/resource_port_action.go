@@ -178,6 +178,7 @@ func newActionResource() *schema.Resource {
 						"report_workflow_status": {
 							Type:         schema.TypeBool,
 							Optional:     true,
+							Default:      true,
 							Description:  "Relevant only when selecting type GITHUB. The flag that controls if to report the action status when the workflow completes",
 							RequiredWith: requiredGithubArguments,
 						},
@@ -212,7 +213,7 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 	d.Set("icon", action.Icon)
 	d.Set("description", action.Description)
 
-	reportWorkflowStatus := false
+	reportWorkflowStatus := true
 	if action.InvocationMethod.ReportWorkflowStatus != nil {
 		reportWorkflowStatus = *action.InvocationMethod.ReportWorkflowStatus
 	}
@@ -297,11 +298,12 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 		action.InvocationMethod.OmitPayload = invocationMethod.([]any)[0].(map[string]interface{})["omit_payload"].(bool)
 		action.InvocationMethod.OmitUserInputs = invocationMethod.([]any)[0].(map[string]interface{})["omit_user_inputs"].(bool)
 
-		if action.InvocationMethod.Type == "GITHUB" {
-			action.InvocationMethod.ReportWorkflowStatus = new(bool)
-			*action.InvocationMethod.ReportWorkflowStatus = invocationMethod.([]any)[0].(map[string]interface{})["report_workflow_status"].(bool)
-		} else {
+		reportWorkflowStatus := invocationMethod.([]any)[0].(map[string]interface{})["report_workflow_status"].(bool)
+		if reportWorkflowStatus {
 			action.InvocationMethod.ReportWorkflowStatus = nil
+		} else {
+			action.InvocationMethod.ReportWorkflowStatus = new(bool)
+			*action.InvocationMethod.ReportWorkflowStatus = reportWorkflowStatus
 		}
 	}
 	action.Trigger = d.Get("trigger").(string)

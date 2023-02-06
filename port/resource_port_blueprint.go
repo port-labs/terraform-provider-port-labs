@@ -404,7 +404,7 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 	b.Description = d.Get("description").(string)
 	props := d.Get("properties").(*schema.Set)
 	mirror_props := d.Get("mirror_properties").(*schema.Set)
-	calc_props := d.Get("calculated_properties").(*schema.Set)
+	calc_props := d.Get("calculation_properties").(*schema.Set)
 
 	if changelogDestination, ok := d.GetOk("changelog_destination"); ok {
 		if b.ChangelogDestination == nil {

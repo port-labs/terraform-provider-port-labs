@@ -117,6 +117,7 @@ func TestAccPortEntity(t *testing.T) {
 	resource "port-labs_entity" "microservice" {
 		title = "monolith"
 		blueprint = "${port-labs_blueprint.microservice.identifier}"
+		teams = ["Everyone"]
 		properties {
 			name = "text"
 			value = "hedwig"
@@ -146,6 +147,9 @@ func TestAccPortEntity(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "teams.0", "Everyone"),
+				),
 			},
 		},
 	})

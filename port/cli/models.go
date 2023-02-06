@@ -42,6 +42,19 @@ type (
 		EnumColors  map[string]string `json:"enumColors,omitempty"`
 	}
 
+	BlueprintCalculationProperty struct {
+		Type        string            `json:"type,omitempty"`
+		Title       string            `json:"title,omitempty"`
+		Identifier  string            `json:"identifier,omitempty"`
+		Calculation string            `json:"calculation,omitempty"`
+		Default     interface{}       `json:"default,omitempty"`
+		Icon        string            `json:"icon,omitempty"`
+		Format      string            `json:"format,omitempty"`
+		Description string            `json:"description,omitempty"`
+		Colorized   bool              `json:"colorized,omitempty"`
+		Colors      map[string]string `json:"colors,omitempty"`
+	}
+
 	BlueprintMirrorProperty struct {
 		Identifier string `json:"identifier,omitempty"`
 		Title      string `json:"title,omitempty"`
@@ -74,14 +87,15 @@ type (
 
 	Blueprint struct {
 		Meta
-		Identifier           string                             `json:"identifier,omitempty"`
-		Title                string                             `json:"title"`
-		Icon                 string                             `json:"icon"`
-		Description          string                             `json:"description"`
-		Schema               BlueprintSchema                    `json:"schema"`
-		MirrorProperties     map[string]BlueprintMirrorProperty `json:"mirrorProperties"`
-		ChangelogDestination *ChangelogDestination              `json:"changelogDestination,omitempty"`
-		Relations            map[string]Relation                `json:"relations"`
+		Identifier            string                                  `json:"identifier,omitempty"`
+		Title                 string                                  `json:"title"`
+		Icon                  string                                  `json:"icon"`
+		Description           string                                  `json:"description"`
+		Schema                BlueprintSchema                         `json:"schema"`
+		MirrorProperties      map[string]BlueprintMirrorProperty      `json:"mirrorProperties"`
+		CalculationProperties map[string]BlueprintCalculationProperty `json:"calculationProperties"`
+		ChangelogDestination  *ChangelogDestination                   `json:"changelogDestination,omitempty"`
+		Relations             map[string]Relation                     `json:"relations"`
 	}
 
 	Action struct {

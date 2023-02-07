@@ -27,6 +27,7 @@ Port entity
 - `relations` (Block Set) The other entities that are connected (see [below for nested schema](#nestedblock--relations))
 - `run_id` (String) The runID of the action run that created the entity
 - `team` (String) The team related to the entity
+- `teams` (Set of String) The teams related to the entity
 
 ### Read-Only
 

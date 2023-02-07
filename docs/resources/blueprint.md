@@ -17,16 +17,17 @@ Port blueprint
 
 ### Required
 
-- `icon` (String) The icon of the blueprint
 - `identifier` (String) The identifier of the blueprint
 - `properties` (Block Set, Min: 1) The metadata of the entity (see [below for nested schema](#nestedblock--properties))
 - `title` (String) The display name of the blueprint
 
 ### Optional
 
+- `calculation_properties` (Block Set) A set of properties that are calculated upon Entitys regular properties. (see [below for nested schema](#nestedblock--calculation_properties))
 - `changelog_destination` (Block List, Max: 1) Blueprints changelog destination, Supports WEBHOOK and KAFKA (see [below for nested schema](#nestedblock--changelog_destination))
 - `data_source` (String, Deprecated) The data source for entities of this blueprint
 - `description` (String) The description of the blueprint
+- `icon` (String) The icon of the blueprint
 - `mirror_properties` (Block Set) When two Blueprints are connected via a Relation, a new set of properties becomes available to Entities in the source Blueprint. (see [below for nested schema](#nestedblock--mirror_properties))
 - `relations` (Block Set) The blueprints that are connected to this blueprint (see [below for nested schema](#nestedblock--relations))
 
@@ -57,6 +58,25 @@ Optional:
 - `format` (String) The format of the Property
 - `icon` (String) The icon of the property
 - `required` (Boolean) Whether or not the property is required
+
+
+<a id="nestedblock--calculation_properties"></a>
+### Nested Schema for `calculation_properties`
+
+Required:
+
+- `calculation` (String) A jq expression that calculates the value of the property, for instance "'https://grafana.' + .identifier"
+- `identifier` (String) The identifier of the property
+- `type` (String) The type of the property
+
+Optional:
+
+- `colorized` (Boolean) Whether or not the property is colorized
+- `colors` (Map of String) A map of colors for the property
+- `description` (String) The description of the property
+- `format` (String) The format of the Property
+- `icon` (String) The icon of the property
+- `title` (String) The name of this property
 
 
 <a id="nestedblock--changelog_destination"></a>

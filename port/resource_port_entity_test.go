@@ -81,6 +81,79 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 	})
 }
 
+func TestAccPortEntityUpdatePropWithTeamArray(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "tf_bp" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+	}
+	resource "port-labs_entity" "microservice" {
+		title = "monolith"
+		blueprint = port-labs_blueprint.tf_bp.id
+		teams = ["Everyone"]
+		properties {
+			name = "text"
+			value = "hedwig"
+		}
+	}
+`, identifier)
+	var testAccActionConfigUpdate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "tf_bp" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+	}
+	resource "port-labs_entity" "microservice" {
+		title = "monolith"
+		teams = ["Everyone"]
+		blueprint = port-labs_blueprint.tf_bp.id
+		properties {
+			name = "text"
+			value = "hedwig2"
+		}
+	}
+`, identifier)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "title", "monolith"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "teams.0", "Everyone"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.0.name", "text"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.0.value", "hedwig"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "blueprint", identifier),
+				),
+			},
+			{
+				Config: testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "title", "monolith"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "teams.0", "Everyone"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.0.name", "text"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.0.value", "hedwig2"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "blueprint", identifier),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortEntity(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
@@ -117,6 +190,7 @@ func TestAccPortEntity(t *testing.T) {
 	resource "port-labs_entity" "microservice" {
 		title = "monolith"
 		blueprint = "${port-labs_blueprint.microservice.identifier}"
+		teams = ["Everyone"]
 		properties {
 			name = "text"
 			value = "hedwig"
@@ -146,6 +220,9 @@ func TestAccPortEntity(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "teams.0", "Everyone"),
+				),
 			},
 		},
 	})

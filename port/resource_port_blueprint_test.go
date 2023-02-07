@@ -181,6 +181,18 @@ func TestAccPortBlueprintUpdate(t *testing.T) {
 				b = "blue"
 			}
 		}
+		calculation_properties {
+			identifier = "calc"
+			type = "number"
+			icon = "Terraform"
+			title = "calc"
+			calculation = "2"
+			colorized = true
+			colors = {
+				0 = "red"
+				1 = "blue"
+			}
+		}
 	}
 `, identifier)
 	var testAccActionConfigUpdate = fmt.Sprintf(`
@@ -225,6 +237,12 @@ func TestAccPortBlueprintUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.title", "text"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.required", "true"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "properties.0.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "calculation_properties.0.identifier", "calc"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "calculation_properties.0.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "calculation_properties.0.type", "number"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "calculation_properties.0.colorized", "true"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "calculation_properties.0.colors.0", "red"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "calculation_properties.0.colors.1", "blue"),
 				),
 			},
 			{

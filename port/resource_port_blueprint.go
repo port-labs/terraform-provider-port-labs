@@ -43,7 +43,7 @@ func newBlueprintResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Description:  "The icon of the blueprint",
 				ValidateFunc: validation.StringInSlice(ICONS, false),
-				Required:     true,
+				Optional:     true,
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -182,6 +182,64 @@ func newBlueprintResource() *schema.Resource {
 				},
 				Optional: true,
 			},
+			"calculation_properties": {
+				Type:        schema.TypeSet,
+				Description: "A set of properties that are calculated upon Entitys regular properties.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"identifier": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The identifier of the property",
+						},
+						"title": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The name of this property",
+						},
+						"calculation": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "A jq expression that calculates the value of the property, for instance \"'https://grafana.' + .identifier\"",
+						},
+						"icon": {
+							Type:         schema.TypeString,
+							ValidateFunc: validation.StringInSlice(ICONS, false),
+							Optional:     true,
+							Description:  "The icon of the property",
+						},
+						"type": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: "The type of the property",
+						},
+						"description": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The description of the property",
+						},
+						"format": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The format of the Property",
+						},
+						"colorized": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Whether or not the property is colorized",
+						},
+						"colors": {
+							Type: schema.TypeMap,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+							Optional:    true,
+							Description: "A map of colors for the property",
+						},
+					},
+				},
+				Optional: true,
+			},
 			"changelog_destination": {
 				Type:        schema.TypeList,
 				MinItems:    1,
@@ -256,7 +314,12 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		return schema.HashString(id)
 	}}
 
-	mirror_properties := schema.Set{F: func(i interface{}) int {
+	mirrorPoperties := schema.Set{F: func(i interface{}) int {
+		id := (i.(map[string]interface{}))["identifier"].(string)
+		return schema.HashString(id)
+	}}
+
+	calculationProperties := schema.Set{F: func(i interface{}) int {
 		id := (i.(map[string]interface{}))["identifier"].(string)
 		return schema.HashString(id)
 	}}
@@ -304,11 +367,27 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["identifier"] = k
 		p["title"] = v.Title
 		p["path"] = v.Path
-		mirror_properties.Add(p)
+		mirrorPoperties.Add(p)
+	}
+
+	for k, v := range b.CalculationProperties {
+		p := map[string]interface{}{}
+		p["identifier"] = k
+		p["title"] = v.Title
+		p["description"] = v.Description
+		p["icon"] = v.Icon
+		p["calculation"] = v.Calculation
+		p["type"] = v.Type
+		p["format"] = v.Format
+		p["colorized"] = v.Colorized
+		p["colors"] = v.Colors
+
+		calculationProperties.Add(p)
 	}
 
 	d.Set("properties", &properties)
-	d.Set("mirror_properties", &mirror_properties)
+	d.Set("mirror_properties", &mirrorPoperties)
+	d.Set("calculation_properties", &calculationProperties)
 }
 
 func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
@@ -325,7 +404,8 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 	b.Icon = d.Get("icon").(string)
 	b.Description = d.Get("description").(string)
 	props := d.Get("properties").(*schema.Set)
-	mirror_props := d.Get("mirror_properties").(*schema.Set)
+	mirrorProps := d.Get("mirror_properties").(*schema.Set)
+	calcProps := d.Get("calculation_properties").(*schema.Set)
 
 	if changelogDestination, ok := d.GetOk("changelog_destination"); ok {
 		if b.ChangelogDestination == nil {
@@ -411,8 +491,8 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		}
 	}
 
-	mirror_properties := make(map[string]cli.BlueprintMirrorProperty, mirror_props.Len())
-	for _, prop := range mirror_props.List() {
+	mirrorProperties := make(map[string]cli.BlueprintMirrorProperty, mirrorProps.Len())
+	for _, prop := range mirrorProps.List() {
 		p := prop.(map[string]interface{})
 		propFields := cli.BlueprintMirrorProperty{}
 		if t, ok := p["title"]; ok && t != "" {
@@ -421,7 +501,43 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		if p, ok := p["path"]; ok && p != "" {
 			propFields.Path = p.(string)
 		}
-		mirror_properties[p["identifier"].(string)] = propFields
+		mirrorProperties[p["identifier"].(string)] = propFields
+	}
+
+	calculationProperties := make(map[string]cli.BlueprintCalculationProperty, calcProps.Len())
+	for _, prop := range calcProps.List() {
+		p := prop.(map[string]interface{})
+		calcFields := cli.BlueprintCalculationProperty{}
+		if t, ok := p["type"]; ok && t != "" {
+			calcFields.Type = t.(string)
+		}
+		if t, ok := p["title"]; ok && t != "" {
+			calcFields.Title = t.(string)
+		}
+		if d, ok := p["description"]; ok && d != "" {
+			calcFields.Description = d.(string)
+		}
+		if f, ok := p["format"]; ok && f != "" {
+			calcFields.Format = f.(string)
+		}
+		if i, ok := p["icon"]; ok && i != "" {
+			calcFields.Icon = i.(string)
+		}
+		if r, ok := p["colorized"]; ok && r.(bool) {
+			calcFields.Colorized = r.(bool)
+		}
+		if e, ok := p["colors"]; ok && e != nil {
+			colors := make(map[string]string)
+			for key, value := range e.(map[string]interface{}) {
+				colors[key] = value.(string)
+			}
+			calcFields.Colors = colors
+		}
+		calcFields.Calculation = p["calculation"].(string)
+		// TODO: remove the if statement when this issues is solved, https://github.com/hashicorp/terraform-plugin-sdk/pull/1042/files
+		if p["identifier"] != "" {
+			calculationProperties[p["identifier"].(string)] = calcFields
+		}
 	}
 
 	rels := d.Get("relations").(*schema.Set)
@@ -447,7 +563,8 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 
 	b.Schema = cli.BlueprintSchema{Properties: properties, Required: required}
 	b.Relations = relations
-	b.MirrorProperties = mirror_properties
+	b.MirrorProperties = mirrorProperties
+	b.CalculationProperties = calculationProperties
 	return b, nil
 }
 

@@ -43,7 +43,7 @@ func newBlueprintResource() *schema.Resource {
 				Type:         schema.TypeString,
 				Description:  "The icon of the blueprint",
 				ValidateFunc: validation.StringInSlice(ICONS, false),
-				Required:     true,
+				Optional:     true,
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -314,12 +314,12 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		return schema.HashString(id)
 	}}
 
-	mirror_properties := schema.Set{F: func(i interface{}) int {
+	mirrorPoperties := schema.Set{F: func(i interface{}) int {
 		id := (i.(map[string]interface{}))["identifier"].(string)
 		return schema.HashString(id)
 	}}
 
-	calculation_properties := schema.Set{F: func(i interface{}) int {
+	calculationProperties := schema.Set{F: func(i interface{}) int {
 		id := (i.(map[string]interface{}))["identifier"].(string)
 		return schema.HashString(id)
 	}}
@@ -367,7 +367,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["identifier"] = k
 		p["title"] = v.Title
 		p["path"] = v.Path
-		mirror_properties.Add(p)
+		mirrorPoperties.Add(p)
 	}
 
 	for k, v := range b.CalculationProperties {
@@ -382,11 +382,12 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["colorized"] = v.Colorized
 		p["colors"] = v.Colors
 
-		calculation_properties.Add(p)
+		calculationProperties.Add(p)
 	}
 
 	d.Set("properties", &properties)
-	d.Set("mirror_properties", &mirror_properties)
+	d.Set("mirror_properties", &mirrorPoperties)
+	d.Set("calculation_properties", &calculationProperties)
 }
 
 func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
@@ -403,8 +404,8 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 	b.Icon = d.Get("icon").(string)
 	b.Description = d.Get("description").(string)
 	props := d.Get("properties").(*schema.Set)
-	mirror_props := d.Get("mirror_properties").(*schema.Set)
-	calc_props := d.Get("calculation_properties").(*schema.Set)
+	mirrorProps := d.Get("mirror_properties").(*schema.Set)
+	calcProps := d.Get("calculation_properties").(*schema.Set)
 
 	if changelogDestination, ok := d.GetOk("changelog_destination"); ok {
 		if b.ChangelogDestination == nil {
@@ -490,8 +491,8 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		}
 	}
 
-	mirrorProperties := make(map[string]cli.BlueprintMirrorProperty, mirror_props.Len())
-	for _, prop := range mirror_props.List() {
+	mirrorProperties := make(map[string]cli.BlueprintMirrorProperty, mirrorProps.Len())
+	for _, prop := range mirrorProps.List() {
 		p := prop.(map[string]interface{})
 		propFields := cli.BlueprintMirrorProperty{}
 		if t, ok := p["title"]; ok && t != "" {
@@ -503,8 +504,8 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		mirrorProperties[p["identifier"].(string)] = propFields
 	}
 
-	calculationProperties := make(map[string]cli.BlueprintCalculationProperty, calc_props.Len())
-	for _, prop := range calc_props.List() {
+	calculationProperties := make(map[string]cli.BlueprintCalculationProperty, calcProps.Len())
+	for _, prop := range calcProps.List() {
 		p := prop.(map[string]interface{})
 		calcFields := cli.BlueprintCalculationProperty{}
 		if t, ok := p["type"]; ok && t != "" {

@@ -36,9 +36,10 @@ func newEntityResource() *schema.Resource {
 				Optional:    true,
 			},
 			"team": {
-				Type:        schema.TypeString,
-				Description: "The team related to the entity",
-				Optional:    true,
+				Type:          schema.TypeString,
+				Description:   "The team related to the entity",
+				Optional:      true,
+				ConflictsWith: []string{"teams"},
 			},
 			"teams": {
 				Type:        schema.TypeSet,
@@ -46,7 +47,8 @@ func newEntityResource() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Optional: true,
+				Optional:      true,
+				ConflictsWith: []string{"team"},
 			},
 			"blueprint": {
 				Type:        schema.TypeString,
@@ -173,18 +175,19 @@ func entityResourceToBody(d *schema.ResourceData, bp *cli.Blueprint) (*cli.Entit
 	e.Title = d.Get("title").(string)
 	e.Blueprint = d.Get("blueprint").(string)
 
+	teams := []string{}
+
 	if team, ok := d.GetOk("team"); ok {
-		teams := []string{team.(string)}
-		e.Team = teams
+		teams = append(teams, team.(string))
+
 	}
 
 	if resourceTeams, ok := d.Get("teams").(*schema.Set); ok {
-		teams := []string{}
 		for _, team := range resourceTeams.List() {
 			teams = append(teams, team.(string))
 		}
-		e.Team = teams
 	}
+	e.Team = teams
 
 	rels := d.Get("relations").(*schema.Set)
 	relations := make(map[string]string)
@@ -218,7 +221,19 @@ func writeEntityComputedFieldsToResource(d *schema.ResourceData, e *cli.Entity) 
 func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
 	d.SetId(e.Identifier)
 	d.Set("title", e.Title)
-	d.Set("teams", e.Team)
+
+	team := d.Get("team")
+
+	if team != "" {
+		d.Set("team", e.Team[0])
+	}
+
+	teams := d.Get("teams").(*schema.Set)
+
+	if len(teams.List()) > 0 {
+		d.Set("teams", e.Team)
+	}
+
 	d.Set("created_at", e.CreatedAt.String())
 	d.Set("created_by", e.CreatedBy)
 	d.Set("updated_at", e.UpdatedAt.String())

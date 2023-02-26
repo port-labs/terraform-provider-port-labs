@@ -39,6 +39,7 @@ type (
 		Blueprint   string            `json:"blueprint,omitempty"`
 		Pattern     string            `json:"pattern,omitempty"`
 		Enum        []string          `json:"enum,omitempty"`
+		Spec        string            `json:"spec,omitempty"`
 		EnumColors  map[string]string `json:"enumColors,omitempty"`
 	}
 

@@ -85,6 +85,37 @@ func TestAccPortBlueprint(t *testing.T) {
 	})
 }
 
+func TestAccBlueprintWithSpecification(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			title = "text"
+			identifier = "text"
+			type = "string"
+			format = "url"
+			spec = "embedded-url"
+		}
+	}
+`, identifier)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.spec", "embedded-url"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccBlueprintWithChangelogDestination(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`

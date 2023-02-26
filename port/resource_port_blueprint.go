@@ -133,6 +133,12 @@ func newBlueprintResource() *schema.Resource {
 							Optional:    true,
 							Description: "The format of the Property",
 						},
+						"spec": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice([]string{"async-api", "open-api", "embedded-url"}, false),
+							Description:  "The specification of the property, one of \"async-api\", \"open-api\", \"embedded-url\"",
+						},
 						"enum": {
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
@@ -331,6 +337,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["description"] = v.Description
 		p["format"] = v.Format
 		p["icon"] = v.Icon
+		p["spec"] = v.Spec
 		p["enum"] = v.Enum
 		p["enum_colors"] = v.EnumColors
 		if lo.Contains(b.Schema.Required, k) {
@@ -470,6 +477,11 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		if i, ok := p["icon"]; ok && i != "" {
 			propFields.Icon = i.(string)
 		}
+
+		if s, ok := p["spec"]; ok && s != "" {
+			propFields.Spec = s.(string)
+		}
+
 		if r, ok := p["required"]; ok && r.(bool) {
 			required = append(required, p["identifier"].(string))
 		}

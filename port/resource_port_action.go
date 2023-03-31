@@ -14,6 +14,7 @@ import (
 
 var requiredGithubArguments = []string{"invocation_method.0.org", "invocation_method.0.repo", "invocation_method.0.workflow"}
 var requiredWebhookArguments = []string{"invocation_method.0.url"}
+var requiredAzureDevopsArguments = []string{"invocation_method.0.azure_org", "invocation_method.0.webhook"}
 
 func newActionResource() *schema.Resource {
 	return &schema.Resource{
@@ -123,14 +124,14 @@ func newActionResource() *schema.Resource {
 				Type:        schema.TypeList,
 				MinItems:    1,
 				MaxItems:    1,
-				Description: "The methods the action is dispatched in. Supports WEBHOOK, KAFKA and GITHUB",
+				Description: "The methods the action is dispatched in. Supports WEBHOOK, KAFKA, GITHUB and AZURE-DEVOPS",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
 							Type:         schema.TypeString,
 							Required:     true,
 							Description:  "One of WEBHOOK, KAFKA and GITHUB",
-							ValidateFunc: validation.StringInSlice([]string{"WEBHOOK", "KAFKA", "GITHUB"}, false),
+							ValidateFunc: validation.StringInSlice([]string{"WEBHOOK", "KAFKA", "GITHUB", "AZURE-DEVOPS"}, false),
 						},
 						"url": {
 							Type:          schema.TypeString,
@@ -149,6 +150,19 @@ func newActionResource() *schema.Resource {
 							Optional:      true,
 							Description:   "Required when selecting type GITHUB. The GitHub org that the workflow belongs to",
 							RequiredWith:  requiredGithubArguments,
+							ConflictsWith: []string{"invocation_method.0.url"},
+						},
+						"azure_org": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Description:  "Required when selecting type AZURE-DEVOPS. The Azure Devops org that the webhook belongs to",
+							RequiredWith: requiredAzureDevopsArguments,
+						},
+						"webhook": {
+							Type:          schema.TypeString,
+							Optional:      true,
+							Description:   "Required when selecting type AZURE-DEVOPS. The Azure Devops webhook id",
+							RequiredWith:  requiredAzureDevopsArguments,
 							ConflictsWith: []string{"invocation_method.0.url"},
 						},
 						"repo": {
@@ -217,13 +231,21 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 	if action.InvocationMethod.ReportWorkflowStatus != nil {
 		reportWorkflowStatus = *action.InvocationMethod.ReportWorkflowStatus
 	}
+
+	orgKey := "org"
+
+	if action.InvocationMethod.Type == "AZURE-DEVOPS" {
+		orgKey = "azure_org"
+	}
+
 	d.Set("invocation_method", []any{map[string]any{
 		"type":                   action.InvocationMethod.Type,
 		"url":                    action.InvocationMethod.Url,
 		"agent":                  action.InvocationMethod.Agent,
-		"org":                    action.InvocationMethod.Org,
+		orgKey:                   action.InvocationMethod.Org,
 		"repo":                   action.InvocationMethod.Repo,
 		"workflow":               action.InvocationMethod.Workflow,
+		"webhook":                action.InvocationMethod.Webhook,
 		"omit_payload":           action.InvocationMethod.OmitPayload,
 		"omit_user_inputs":       action.InvocationMethod.OmitUserInputs,
 		"report_workflow_status": reportWorkflowStatus,
@@ -290,21 +312,28 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 		}
 
 		action.InvocationMethod.Type = invocationMethod.([]any)[0].(map[string]interface{})["type"].(string)
-		action.InvocationMethod.Url = invocationMethod.([]any)[0].(map[string]interface{})["url"].(string)
-		action.InvocationMethod.Agent = invocationMethod.([]any)[0].(map[string]interface{})["agent"].(bool)
-		action.InvocationMethod.Org = invocationMethod.([]any)[0].(map[string]interface{})["org"].(string)
-		action.InvocationMethod.Repo = invocationMethod.([]any)[0].(map[string]interface{})["repo"].(string)
-		action.InvocationMethod.Workflow = invocationMethod.([]any)[0].(map[string]interface{})["workflow"].(string)
-		action.InvocationMethod.OmitPayload = invocationMethod.([]any)[0].(map[string]interface{})["omit_payload"].(bool)
-		action.InvocationMethod.OmitUserInputs = invocationMethod.([]any)[0].(map[string]interface{})["omit_user_inputs"].(bool)
 
-		reportWorkflowStatus := invocationMethod.([]any)[0].(map[string]interface{})["report_workflow_status"].(bool)
-		if reportWorkflowStatus {
-			action.InvocationMethod.ReportWorkflowStatus = nil
-		} else {
-			action.InvocationMethod.ReportWorkflowStatus = new(bool)
-			*action.InvocationMethod.ReportWorkflowStatus = reportWorkflowStatus
+		if action.InvocationMethod.Type == "GITHUB" {
+			action.InvocationMethod.Org = invocationMethod.([]any)[0].(map[string]interface{})["org"].(string)
+			action.InvocationMethod.Repo = invocationMethod.([]any)[0].(map[string]interface{})["repo"].(string)
+			action.InvocationMethod.Workflow = invocationMethod.([]any)[0].(map[string]interface{})["workflow"].(string)
+			action.InvocationMethod.OmitPayload = invocationMethod.([]any)[0].(map[string]interface{})["omit_payload"].(bool)
+			action.InvocationMethod.OmitUserInputs = invocationMethod.([]any)[0].(map[string]interface{})["omit_user_inputs"].(bool)
+			reportWorkflowStatus := invocationMethod.([]any)[0].(map[string]interface{})["report_workflow_status"].(bool)
+			if reportWorkflowStatus {
+				action.InvocationMethod.ReportWorkflowStatus = nil
+			} else {
+				action.InvocationMethod.ReportWorkflowStatus = new(bool)
+				*action.InvocationMethod.ReportWorkflowStatus = reportWorkflowStatus
+			}
+		} else if action.InvocationMethod.Type == "AZURE-DEVOPS" {
+			action.InvocationMethod.Org = invocationMethod.([]any)[0].(map[string]interface{})["azure_org"].(string)
+			action.InvocationMethod.Webhook = invocationMethod.([]any)[0].(map[string]interface{})["webhook"].(string)
+		} else if action.InvocationMethod.Type == "WEBHOOK" {
+			action.InvocationMethod.Url = invocationMethod.([]any)[0].(map[string]interface{})["url"].(string)
 		}
+		action.InvocationMethod.Agent = invocationMethod.([]any)[0].(map[string]interface{})["agent"].(bool)
+
 	}
 	action.Trigger = d.Get("trigger").(string)
 

@@ -73,6 +73,7 @@ type (
 		Agent                bool   `json:"agent,omitempty"`
 		Org                  string `json:"org,omitempty"`
 		Repo                 string `json:"repo,omitempty"`
+		Webhook              string `json:"webhook,omitempty"`
 		Workflow             string `json:"workflow,omitempty"`
 		OmitPayload          bool   `json:"omitPayload,omitempty"`
 		OmitUserInputs       bool   `json:"omitUserInputs,omitempty"`

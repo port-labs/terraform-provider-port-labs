@@ -12,8 +12,6 @@ import (
 	"github.com/samber/lo"
 )
 
-var ICONS = []string{"Actions", "Airflow", "Ansible", "Argo", "AuditLog", "Aws", "Azure", "Blueprint", "Bucket", "Cloud", "Cluster", "CPU", "Customer", "Datadog", "Day2Operation", "DefaultEntity", "DefaultProperty", "DeployedAt", "Deployment", "DevopsTool", "Docs", "Environment", "Git", "Github", "GitVersion", "GoogleCloud", "GPU", "Grafana", "Infinity", "Jenkins", "Lambda", "Link", "Lock", "Microservice", "Moon", "Node", "Okta", "Package", "Permission", "Relic", "Server", "Service", "Team", "Terraform", "User"}
-
 func newBlueprintResource() *schema.Resource {
 	return &schema.Resource{
 		Description:   "Port blueprint",
@@ -40,10 +38,9 @@ func newBlueprintResource() *schema.Resource {
 				Deprecated:  "Data source is ignored",
 			},
 			"icon": {
-				Type:         schema.TypeString,
-				Description:  "The icon of the blueprint",
-				ValidateFunc: validation.StringInSlice(ICONS, false),
-				Optional:     true,
+				Type:        schema.TypeString,
+				Description: "The icon of the blueprint",
+				Optional:    true,
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -95,10 +92,9 @@ func newBlueprintResource() *schema.Resource {
 							Description: "The identifier of the property",
 						},
 						"icon": {
-							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice(ICONS, false),
-							Optional:     true,
-							Description:  "The icon of the property",
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The icon of the property",
 						},
 						"title": {
 							Type:        schema.TypeString,
@@ -209,10 +205,9 @@ func newBlueprintResource() *schema.Resource {
 							Description: "A jq expression that calculates the value of the property, for instance \"'https://grafana.' + .identifier\"",
 						},
 						"icon": {
-							Type:         schema.TypeString,
-							ValidateFunc: validation.StringInSlice(ICONS, false),
-							Optional:     true,
-							Description:  "The icon of the property",
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: "The icon of the property",
 						},
 						"type": {
 							Type:        schema.TypeString,

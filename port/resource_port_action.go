@@ -45,10 +45,9 @@ func newActionResource() *schema.Resource {
 				Optional:    true,
 			},
 			"icon": {
-				Type:         schema.TypeString,
-				Description:  "The icon of the action",
-				ValidateFunc: validation.StringInSlice(ICONS, false),
-				Optional:     true,
+				Type:        schema.TypeString,
+				Description: "The icon of the action",
+				Optional:    true,
 			},
 			"user_properties": {
 				Description: "The input properties of the action",

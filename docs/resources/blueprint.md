@@ -58,6 +58,7 @@ Optional:
 - `format` (String) The format of the Property
 - `icon` (String) The icon of the property
 - `required` (Boolean) Whether or not the property is required
+- `spec` (String) The specification of the property, one of "async-api", "open-api", "embedded-url"
 
 
 <a id="nestedblock--calculation_properties"></a>

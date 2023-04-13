@@ -23,7 +23,7 @@ Port blueprint
 
 ### Optional
 
-- `calculation_properties` (Block Set) A set of properties that are calculated upon Entitys regular properties. (see [below for nested schema](#nestedblock--calculation_properties))
+- `calculation_properties` (Block Set) A set of properties that are calculated upon entity's regular properties. (see [below for nested schema](#nestedblock--calculation_properties))
 - `changelog_destination` (Block List, Max: 1) Blueprints changelog destination, Supports WEBHOOK and KAFKA (see [below for nested schema](#nestedblock--changelog_destination))
 - `data_source` (String, Deprecated) The data source for entities of this blueprint
 - `description` (String) The description of the blueprint
@@ -57,6 +57,7 @@ Optional:
 - `enum_colors` (Map of String) A map of colors for the enum values
 - `format` (String) The format of the Property
 - `icon` (String) The icon of the property
+- `items` (Map of String) A metadata of an array's items, in case the type is an array
 - `required` (Boolean) Whether or not the property is required
 - `spec` (String) The specification of the property, one of "async-api", "open-api", "embedded-url"
 

@@ -297,8 +297,13 @@ func createEntity(ctx context.Context, d *schema.ResourceData, m interface{}) di
 func readEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	e, err := c.ReadEntity(ctx, d.Id(), d.Get("blueprint").(string))
+	e, err, pe := c.ReadEntity(ctx, d.Id(), d.Get("blueprint").(string))
 	if err != nil {
+		if pe.Error == "not_found" {
+			d.SetId("")
+			return diags
+		}
+
 		return diag.FromErr(err)
 	}
 	writeEntityFieldsToResource(d, e)

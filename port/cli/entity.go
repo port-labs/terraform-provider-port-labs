@@ -6,26 +6,28 @@ import (
 	"fmt"
 )
 
-func (c *PortClient) ReadEntity(ctx context.Context, id string, blueprint string) (*Entity, error) {
+func (c *PortClient) ReadEntity(ctx context.Context, id string, blueprint string) (*Entity, error, *PortError) {
 	url := "v1/blueprints/{blueprint}/entities/{identifier}"
+	pe := &PortError{}
 	resp, err := c.Client.R().
 		SetHeader("Accept", "application/json").
 		SetQueryParam("exclude_calculated_properties", "true").
 		SetPathParam(("blueprint"), blueprint).
 		SetPathParam("identifier", id).
+		SetError(pe).
 		Get(url)
 	if err != nil {
-		return nil, err
+		return nil, err, pe
 	}
 	var pb PortBody
 	err = json.Unmarshal(resp.Body(), &pb)
 	if err != nil {
-		return nil, err
+		return nil, err, pe
 	}
 	if !pb.OK {
-		return nil, fmt.Errorf("failed to read entity, got: %s", resp.Body())
+		return nil, fmt.Errorf("failed to read entity, got: %s", resp.Body()), pe
 	}
-	return &pb.Entity, nil
+	return &pb.Entity, nil, pe
 }
 
 func (c *PortClient) CreateEntity(ctx context.Context, e *Entity, runID string) (*Entity, error) {

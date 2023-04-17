@@ -198,8 +198,13 @@ func newActionResource() *schema.Resource {
 func readAction(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	action, err := c.ReadAction(ctx, d.Get("blueprint_identifier").(string), d.Id())
+	action, err, pe := c.ReadAction(ctx, d.Get("blueprint_identifier").(string), d.Id())
 	if err != nil {
+		if pe.Error == "not_found" {
+			d.SetId("")
+			return diags
+		}
+
 		return diag.FromErr(err)
 	}
 	writeActionFieldsToResource(d, action)

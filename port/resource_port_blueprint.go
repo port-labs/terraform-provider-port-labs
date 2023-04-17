@@ -54,12 +54,12 @@ func newBlueprintResource() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"identifier": {
 							Type:        schema.TypeString,
-							Optional:    true,
+							Required:    true,
 							Description: "The identifier of the relation",
 						},
 						"title": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
 							Description: "The display name of the relation",
 						},
 						"target": {

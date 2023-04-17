@@ -274,11 +274,11 @@ func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
 func createEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	bp, err := c.ReadBlueprint(ctx, d.Get("blueprint").(string))
+	b, err, _ := c.ReadBlueprint(ctx, d.Get("blueprint").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	e, err := entityResourceToBody(d, bp)
+	e, err := entityResourceToBody(d, b)
 	if err != nil {
 		return diag.FromErr(err)
 	}

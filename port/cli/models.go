@@ -125,3 +125,10 @@ type PortBody struct {
 	Blueprint Blueprint `json:"blueprint"`
 	Action    Action    `json:"action"`
 }
+
+type PortError struct {
+	OK      bool              `json:"ok"`
+	Error   string            `json:"error"`
+	Message string            `json:"message"`
+	Details map[string]string `json:"details"`
+}

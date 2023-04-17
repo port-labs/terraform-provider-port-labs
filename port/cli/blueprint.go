@@ -6,23 +6,25 @@ import (
 	"fmt"
 )
 
-func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, error) {
+func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, error, *PortError) {
 	pb := &PortBody{}
+	pe := &PortError{}
 	url := "v1/blueprints/{identifier}"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
 		SetQueryParam("exclude_calculated_properties", "true").
 		SetResult(pb).
+		SetError(pe).
 		SetPathParam("identifier", id).
 		Get(url)
 	if err != nil {
-		return nil, err
+		return nil, err, pe
 	}
 	if !pb.OK {
-		return nil, fmt.Errorf("failed to read blueprint, got: %s", resp.Body())
+		return nil, fmt.Errorf("failed to read %+v, got: %s", pe, resp.Body()), pe
 	}
-	return &pb.Blueprint, nil
+	return &pb.Blueprint, nil, pe
 }
 
 func (c *PortClient) CreateBlueprint(ctx context.Context, b *Blueprint) (*Blueprint, error) {

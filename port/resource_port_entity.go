@@ -274,11 +274,11 @@ func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
 func createEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	b, err, _ := c.ReadBlueprint(ctx, d.Get("blueprint").(string))
+	bp, _, err := c.ReadBlueprint(ctx, d.Get("blueprint").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	e, err := entityResourceToBody(d, b)
+	e, err := entityResourceToBody(d, bp)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -297,9 +297,9 @@ func createEntity(ctx context.Context, d *schema.ResourceData, m interface{}) di
 func readEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	e, err, pe := c.ReadEntity(ctx, d.Id(), d.Get("blueprint").(string))
+	e, statusCode, err := c.ReadEntity(ctx, d.Id(), d.Get("blueprint").(string))
 	if err != nil {
-		if pe.Error == "not_found" {
+		if statusCode == 404 {
 			d.SetId("")
 			return diags
 		}

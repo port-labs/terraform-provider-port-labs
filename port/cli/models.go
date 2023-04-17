@@ -32,6 +32,7 @@ type (
 		Type        string            `json:"type,omitempty"`
 		Title       string            `json:"title,omitempty"`
 		Identifier  string            `json:"identifier,omitempty"`
+		Items       map[string]any    `json:"items,omitempty"`
 		Default     interface{}       `json:"default,omitempty"`
 		Icon        string            `json:"icon,omitempty"`
 		Format      string            `json:"format,omitempty"`
@@ -73,6 +74,7 @@ type (
 		Agent                bool   `json:"agent,omitempty"`
 		Org                  string `json:"org,omitempty"`
 		Repo                 string `json:"repo,omitempty"`
+		Webhook              string `json:"webhook,omitempty"`
 		Workflow             string `json:"workflow,omitempty"`
 		OmitPayload          bool   `json:"omitPayload,omitempty"`
 		OmitUserInputs       bool   `json:"omitUserInputs,omitempty"`

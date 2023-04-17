@@ -106,6 +106,11 @@ func newBlueprintResource() *schema.Resource {
 							Required:    true,
 							Description: "The type of the property",
 						},
+						"items": {
+							Type:        schema.TypeMap,
+							Optional:    true,
+							Description: "A metadata of an array's items, in case the type is an array",
+						},
 						"description": {
 							Type:        schema.TypeString,
 							Optional:    true,
@@ -186,7 +191,7 @@ func newBlueprintResource() *schema.Resource {
 			},
 			"calculation_properties": {
 				Type:        schema.TypeSet,
-				Description: "A set of properties that are calculated upon Entitys regular properties.",
+				Description: "A set of properties that are calculated upon entity's regular properties.",
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"identifier": {
@@ -335,6 +340,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["identifier"] = k
 		p["title"] = v.Title
 		p["type"] = v.Type
+		p["items"] = v.Items
 		p["description"] = v.Description
 		p["format"] = v.Format
 		p["icon"] = v.Icon
@@ -461,6 +467,13 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		case "array":
 			if d, ok := p["default_items"]; ok && d != nil {
 				propFields.Default = d
+			}
+			if i, ok := p["items"]; ok && i != nil {
+				items := make(map[string]any)
+				for key, value := range i.(map[string]any) {
+					items[key] = value.(string)
+				}
+				propFields.Items = items
 			}
 		case "object":
 			if d, ok := p["default"]; ok && d.(string) != "" {

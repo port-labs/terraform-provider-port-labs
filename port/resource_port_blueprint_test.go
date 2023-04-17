@@ -45,8 +45,12 @@ func TestAccPortBlueprint(t *testing.T) {
 		properties {
 			identifier = "array"
 			type = "array"
+			items = {
+				type = "string"
+				format = "url"
+			}
 			title = "array"
-			default_items = [1, 2, 3]
+			default_items = ["https://getport.io", "https://app.getport.io"]
 		}
 		properties {
 			identifier = "text"
@@ -70,8 +74,10 @@ func TestAccPortBlueprint(t *testing.T) {
 			{
 				Config: testAccActionConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.default_items.0", "1"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.default_items.#", "3"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.default_items.0", "https://getport.io"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.default_items.#", "2"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.items.type", "string"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.items.format", "url"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.1.default", "1"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.identifier", "text"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.enum.0", "a"),

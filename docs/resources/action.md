@@ -19,7 +19,7 @@ Port action
 
 - `blueprint_identifier` (String) The identifier of the blueprint
 - `identifier` (String) The identifier of the action
-- `invocation_method` (Block List, Min: 1, Max: 1) The methods the action is dispatched in. Supports WEBHOOK, KAFKA and GITHUB (see [below for nested schema](#nestedblock--invocation_method))
+- `invocation_method` (Block List, Min: 1, Max: 1) The methods the action is dispatched in. Supports WEBHOOK, KAFKA, GITHUB and AZURE-DEVOPS (see [below for nested schema](#nestedblock--invocation_method))
 - `title` (String) The display name of the action
 - `trigger` (String) The type of the action, one of CREATE, DAY-2, DELETE
 
@@ -43,12 +43,14 @@ Required:
 Optional:
 
 - `agent` (Boolean) Relevant only when selecting type WEBHOOK. The flag that controls if the port execution agent will handle the action
+- `azure_org` (String) Required when selecting type AZURE-DEVOPS. The Azure Devops org that the webhook belongs to
 - `omit_payload` (Boolean) Relevant only when selecting type GITHUB. The flag that controls if to omit Port's payload from workflow's dispatch input
 - `omit_user_inputs` (Boolean) Relevant only when selecting type GITHUB. The flag that controls if to omit user inputs from workflow's dispatch input
 - `org` (String) Required when selecting type GITHUB. The GitHub org that the workflow belongs to
 - `repo` (String) Required when selecting type GITHUB. The GitHub repository that the workflow belongs to
 - `report_workflow_status` (Boolean) Relevant only when selecting type GITHUB. The flag that controls if to report the action status when the workflow completes
 - `url` (String) Required when selecting type WEBHOOK. The URL to which the action is dispatched
+- `webhook` (String) Required when selecting type AZURE-DEVOPS. The Azure Devops webhook id
 - `workflow` (String) Required when selecting type GITHUB. The GitHub workflow id or the workflow file name
 
 

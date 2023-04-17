@@ -45,7 +45,7 @@ func (c *PortClient) Authenticate(ctx context.Context, clientID, clientSecret st
 	url := "v1/auth/access_token"
 	resp, err := c.Client.R().
 		SetBody(map[string]interface{}{
-			"clientId": clientID,
+			"clientId":     clientID,
 			"clientSecret": clientSecret,
 		}).
 		SetContext(ctx).

@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/port-labs/terraform-provider-port-labs/port/cli"
+	"github.com/port-labs/terraform-provider-port-labs/version"
 )
 
 func Provider() *schema.Provider {
@@ -52,7 +53,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 	// token := d.Get("token").(string)
 	baseURL := d.Get("base_url").(string)
 
-	c, err := cli.New(baseURL, cli.WithHeader("User-Agent", "terraform-provider-port-labs/0.1"), cli.WithClientID(clientID))
+	c, err := cli.New(baseURL, cli.WithHeader("User-Agent", version.ProviderVersion), cli.WithClientID(clientID))
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}

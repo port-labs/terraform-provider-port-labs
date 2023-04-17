@@ -1,3 +1,5 @@
 .vscode/
 .env
+local/
 __debug_bin
+terraform-provider-port-labs

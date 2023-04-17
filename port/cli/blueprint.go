@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, error) {
+func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, int, error) {
 	pb := &PortBody{}
 	url := "v1/blueprints/{identifier}"
 	resp, err := c.Client.R().
@@ -17,12 +17,12 @@ func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, 
 		SetPathParam("identifier", id).
 		Get(url)
 	if err != nil {
-		return nil, err
+		return nil, resp.StatusCode(), err
 	}
 	if !pb.OK {
-		return nil, fmt.Errorf("failed to read blueprint, got: %s", resp.Body())
+		return nil, resp.StatusCode(), fmt.Errorf("failed to read blueprint, got: %s", resp.Body())
 	}
-	return &pb.Blueprint, nil
+	return &pb.Blueprint, resp.StatusCode(), nil
 }
 
 func (c *PortClient) CreateBlueprint(ctx context.Context, b *Blueprint) (*Blueprint, error) {

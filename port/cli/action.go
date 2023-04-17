@@ -6,7 +6,7 @@ import (
 	"fmt"
 )
 
-func (c *PortClient) ReadAction(ctx context.Context, blueprintID, id string) (*Action, error) {
+func (c *PortClient) ReadAction(ctx context.Context, blueprintID, id string) (*Action, int, error) {
 	pb := &PortBody{}
 	url := "v1/blueprints/{blueprint_identifier}/actions/{action_identifier}"
 	resp, err := c.Client.R().
@@ -17,12 +17,12 @@ func (c *PortClient) ReadAction(ctx context.Context, blueprintID, id string) (*A
 		SetPathParam("action_identifier", id).
 		Get(url)
 	if err != nil {
-		return nil, err
+		return nil, resp.StatusCode(), err
 	}
 	if !pb.OK {
-		return nil, fmt.Errorf("failed to read action, got: %s", resp.Body())
+		return nil, resp.StatusCode(), fmt.Errorf("failed to read action, got: %s", resp.Body())
 	}
-	return &pb.Action, nil
+	return &pb.Action, resp.StatusCode(), nil
 }
 
 func (c *PortClient) CreateAction(ctx context.Context, blueprintID string, action *Action) (*Action, error) {

@@ -291,10 +291,16 @@ func newBlueprintResource() *schema.Resource {
 func readBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	b, err := c.ReadBlueprint(ctx, d.Id())
+	b, statusCode, err := c.ReadBlueprint(ctx, d.Id())
 	if err != nil {
+		if statusCode == 404 {
+			d.SetId("")
+			return diags
+		}
+
 		return diag.FromErr(err)
 	}
+
 	writeBlueprintFieldsToResource(d, b)
 
 	return diags

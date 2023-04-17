@@ -274,7 +274,7 @@ func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
 func createEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	bp, err := c.ReadBlueprint(ctx, d.Get("blueprint").(string))
+	bp, _, err := c.ReadBlueprint(ctx, d.Get("blueprint").(string))
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -297,8 +297,13 @@ func createEntity(ctx context.Context, d *schema.ResourceData, m interface{}) di
 func readEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	e, err := c.ReadEntity(ctx, d.Id(), d.Get("blueprint").(string))
+	e, statusCode, err := c.ReadEntity(ctx, d.Id(), d.Get("blueprint").(string))
 	if err != nil {
+		if statusCode == 404 {
+			d.SetId("")
+			return diags
+		}
+
 		return diag.FromErr(err)
 	}
 	writeEntityFieldsToResource(d, e)

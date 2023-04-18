@@ -54,12 +54,12 @@ func newBlueprintResource() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"identifier": {
 							Type:        schema.TypeString,
-							Optional:    true,
+							Required:    true,
 							Description: "The identifier of the relation",
 						},
 						"title": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
 							Description: "The display name of the relation",
 						},
 						"target": {
@@ -326,6 +326,11 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		return schema.HashString(id)
 	}}
 
+	relations := schema.Set{F: func(i interface{}) int {
+		id := (i.(map[string]interface{}))["identifier"].(string)
+		return schema.HashString(id)
+	}}
+
 	mirrorPoperties := schema.Set{F: func(i interface{}) int {
 		id := (i.(map[string]interface{}))["identifier"].(string)
 		return schema.HashString(id)
@@ -335,6 +340,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		id := (i.(map[string]interface{}))["identifier"].(string)
 		return schema.HashString(id)
 	}}
+
 	for k, v := range b.Schema.Properties {
 		p := map[string]interface{}{}
 		p["identifier"] = k
@@ -376,6 +382,16 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		properties.Add(p)
 	}
 
+	for k, v := range b.Relations {
+		p := map[string]interface{}{}
+		p["identifier"] = k
+		p["title"] = v.Title
+		p["target"] = v.Target
+		p["required"] = v.Required
+		p["many"] = v.Many
+		relations.Add(p)
+	}
+
 	for k, v := range b.MirrorProperties {
 		p := map[string]interface{}{}
 		p["identifier"] = k
@@ -402,6 +418,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	d.Set("properties", &properties)
 	d.Set("mirror_properties", &mirrorPoperties)
 	d.Set("calculation_properties", &calculationProperties)
+	d.Set("relations", &relations)
 }
 
 func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {

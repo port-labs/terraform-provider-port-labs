@@ -319,9 +319,10 @@ func readBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) d
 
 func getPropertyOk(identifier string, d *schema.ResourceData, propertyName string) bool {
 	properties := d.Get("properties").(*schema.Set)
-	for index, v := range properties.List() {
+	for _, v := range properties.List() {
 		if v.(map[string]interface{})["identifier"] == identifier {
-			_, ok := d.GetOk(fmt.Sprintf("properties.%d.%s", index, propertyName))
+			// _, ok := d.GetOk(fmt.Sprintf("properties.%d.%s", index, propertyName))
+			_, ok := v.(map[string]interface{})[propertyName]
 			return ok
 		}
 	}
@@ -425,35 +426,6 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 				}
 				p["default_value"] = mapDefault
 			}
-		}
-
-		if v.Default != nil {
-			mapDefault := make(map[string]string)
-			switch t := v.Default.(type) {
-			case map[string]interface{}:
-				js, _ := json.Marshal(&t)
-				p["default"] = string(js)
-				mapDefault["value"] = string(js)
-			case []interface{}:
-				p["default_items"] = t
-			case float64:
-				p["default"] = strconv.FormatFloat(t, 'f', -1, 64)
-				mapDefault["value"] = strconv.FormatFloat(t, 'f', -1, 64)
-			case int:
-				p["default"] = strconv.Itoa(t)
-				mapDefault["value"] = strconv.Itoa(t)
-			case string:
-				p["default"] = t
-				mapDefault["value"] = t
-			case bool:
-				p["default"] = "false"
-				mapDefault["value"] = "false"
-				if t {
-					p["default"] = "true"
-					mapDefault["value"] = "true"
-				}
-			}
-			p["default_value"] = mapDefault
 		}
 
 		properties.Add(p)
@@ -642,9 +614,6 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 				}
 			}
 		}
-
-		// if deprecatedValue, ok := p["value"]; ok && deprecatedValue != "" {
-		// 	switch propFields.Type {
 		// 	case "string":
 		// 		if d, ok := p["default"]; ok && d.(string) != "" {
 		// 			propFields.Default = d.(string)

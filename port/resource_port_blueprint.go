@@ -129,6 +129,7 @@ func newBlueprintResource() *schema.Resource {
 								Type: schema.TypeString,
 							},
 							Optional:    true,
+							Default:     nil,
 							Description: "The default value of the property",
 						},
 						"default_items": {
@@ -524,7 +525,7 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 
 	properties := make(map[string]cli.BlueprintProperty, props.Len())
 	var required []string
-	for index, prop := range props.List() {
+	for _, prop := range props.List() {
 		p := prop.(map[string]interface{})
 		propFields := cli.BlueprintProperty{}
 		if t, ok := p["type"]; ok && t != "" {
@@ -537,13 +538,15 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 			propFields.Description = d.(string)
 		}
 
-		_, defaultOk := d.GetOk(fmt.Sprintf("properties.%d.default", index))
-		_, defaultValueOk := d.GetOk(fmt.Sprintf("properties.%d.default_value", index))
-		if defaultOk && defaultValueOk {
+		d, defaultOk := p["default"]
+		dv, defaultValueOk := p["default_value"]
+		di, defaultItemsOk := p["default_items"]
+
+		if defaultOk && defaultValueOk && len(di.([]interface{})) != 0 && defaultItemsOk && len(dv.(map[string]interface{})) != 0 && d != "" {
 			return nil, fmt.Errorf("default or default_value must be set for property %s", p["identifier"].(string))
 		}
 
-		if defaultOk {
+		if defaultOk && d != "" {
 			if deprecatedValue, ok := p["default"]; ok && deprecatedValue != "" {
 				switch propFields.Type {
 				case "string":
@@ -589,7 +592,9 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 				}
 			}
 		} else {
-			if defaultValue, ok := p["default_value"].(map[string]interface{}); ok && len(defaultValue) != 0 {
+			if defaultItemsOk && len(di.([]interface{})) != 0 {
+				propFields.Default = di
+			} else if defaultValue, ok := p["default_value"].(map[string]interface{}); ok && len(defaultValue) != 0 {
 				if _, ok := defaultValue["value"]; !ok {
 					return nil, fmt.Errorf("default value for property %s is missing", p["identifier"].(string))
 				}
@@ -638,98 +643,98 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 			}
 		}
 
-		if deprecatedValue, ok := p["value"]; ok && deprecatedValue != "" {
-			switch propFields.Type {
-			case "string":
-				if d, ok := p["default"]; ok && d.(string) != "" {
-					propFields.Default = d.(string)
-				}
-			case "number":
-				if d, ok := p["default"]; ok && d.(string) != "" {
-					defaultNum, err := strconv.ParseInt(d.(string), 10, 0)
-					if err != nil {
-						return nil, err
-					}
-					propFields.Default = defaultNum
-				}
-			case "boolean":
-				if d, ok := p["default"]; ok && d.(string) != "" {
-					defaultBool, err := strconv.ParseBool(d.(string))
-					if err != nil {
-						return nil, err
-					}
-					propFields.Default = defaultBool
-				}
-			case "array":
-				if d, ok := p["default_items"]; ok && d != nil {
-					propFields.Default = d
-				}
-				if i, ok := p["items"]; ok && i != nil {
-					items := make(map[string]any)
-					for key, value := range i.(map[string]any) {
-						items[key] = value.(string)
-					}
-					propFields.Items = items
-				}
-			case "object":
-				if d, ok := p["default"]; ok && d.(string) != "" {
-					defaultObj := make(map[string]interface{})
-					err := json.Unmarshal([]byte(d.(string)), &defaultObj)
-					if err != nil {
-						return nil, err
-					}
-					propFields.Default = defaultObj
-				}
-			}
-		} else {
-			if defaultValue, ok := p["default_value"].(map[string]interface{}); ok && len(defaultValue) != 0 {
-				if _, ok := defaultValue["value"]; !ok {
-					return nil, fmt.Errorf("default value for property %s is missing", p["identifier"].(string))
-				}
-				switch propFields.Type {
-				case "string":
-					if d, ok := defaultValue["value"]; ok && d.(string) != "" {
-						propFields.Default = d.(string)
-					}
-				case "number":
-					if d, ok := defaultValue["value"]; ok && d.(string) != "" {
-						defaultNum, err := strconv.ParseInt(d.(string), 10, 0)
-						if err != nil {
-							return nil, err
-						}
-						propFields.Default = defaultNum
-					}
-				case "boolean":
-					if d, ok := defaultValue["value"]; ok && d.(string) != "" {
-						defaultBool, err := strconv.ParseBool(d.(string))
-						if err != nil {
-							return nil, err
-						}
-						propFields.Default = defaultBool
-					}
-				case "array":
-					if d, ok := p["default_items"]; ok && d != nil {
-						propFields.Default = d
-					}
-					if i, ok := p["items"]; ok && i != nil {
-						items := make(map[string]any)
-						for key, value := range i.(map[string]any) {
-							items[key] = value.(string)
-						}
-						propFields.Items = items
-					}
-				case "object":
-					if d, ok := defaultValue["value"]; ok && d.(string) != "" {
-						defaultObj := make(map[string]interface{})
-						err := json.Unmarshal([]byte(d.(string)), &defaultObj)
-						if err != nil {
-							return nil, err
-						}
-						propFields.Default = defaultObj
-					}
-				}
-			}
-		}
+		// if deprecatedValue, ok := p["value"]; ok && deprecatedValue != "" {
+		// 	switch propFields.Type {
+		// 	case "string":
+		// 		if d, ok := p["default"]; ok && d.(string) != "" {
+		// 			propFields.Default = d.(string)
+		// 		}
+		// 	case "number":
+		// 		if d, ok := p["default"]; ok && d.(string) != "" {
+		// 			defaultNum, err := strconv.ParseInt(d.(string), 10, 0)
+		// 			if err != nil {
+		// 				return nil, err
+		// 			}
+		// 			propFields.Default = defaultNum
+		// 		}
+		// 	case "boolean":
+		// 		if d, ok := p["default"]; ok && d.(string) != "" {
+		// 			defaultBool, err := strconv.ParseBool(d.(string))
+		// 			if err != nil {
+		// 				return nil, err
+		// 			}
+		// 			propFields.Default = defaultBool
+		// 		}
+		// 	case "array":
+		// 		if d, ok := p["default_items"]; ok && d != nil {
+		// 			propFields.Default = d
+		// 		}
+		// 		if i, ok := p["items"]; ok && i != nil {
+		// 			items := make(map[string]any)
+		// 			for key, value := range i.(map[string]any) {
+		// 				items[key] = value.(string)
+		// 			}
+		// 			propFields.Items = items
+		// 		}
+		// 	case "object":
+		// 		if d, ok := p["default"]; ok && d.(string) != "" {
+		// 			defaultObj := make(map[string]interface{})
+		// 			err := json.Unmarshal([]byte(d.(string)), &defaultObj)
+		// 			if err != nil {
+		// 				return nil, err
+		// 			}
+		// 			propFields.Default = defaultObj
+		// 		}
+		// 	}
+		// } else {
+		// 	if defaultValue, ok := p["default_value"].(map[string]interface{}); ok && len(defaultValue) != 0 {
+		// 		if _, ok := defaultValue["value"]; !ok {
+		// 			return nil, fmt.Errorf("default value for property %s is missing", p["identifier"].(string))
+		// 		}
+		// 		switch propFields.Type {
+		// 		case "string":
+		// 			if d, ok := defaultValue["value"]; ok && d.(string) != "" {
+		// 				propFields.Default = d.(string)
+		// 			}
+		// 		case "number":
+		// 			if d, ok := defaultValue["value"]; ok && d.(string) != "" {
+		// 				defaultNum, err := strconv.ParseInt(d.(string), 10, 0)
+		// 				if err != nil {
+		// 					return nil, err
+		// 				}
+		// 				propFields.Default = defaultNum
+		// 			}
+		// 		case "boolean":
+		// 			if d, ok := defaultValue["value"]; ok && d.(string) != "" {
+		// 				defaultBool, err := strconv.ParseBool(d.(string))
+		// 				if err != nil {
+		// 					return nil, err
+		// 				}
+		// 				propFields.Default = defaultBool
+		// 			}
+		// 		case "array":
+		// 			if d, ok := p["default_items"]; ok && d != nil {
+		// 				propFields.Default = d
+		// 			}
+		// 			if i, ok := p["items"]; ok && i != nil {
+		// 				items := make(map[string]any)
+		// 				for key, value := range i.(map[string]any) {
+		// 					items[key] = value.(string)
+		// 				}
+		// 				propFields.Items = items
+		// 			}
+		// 		case "object":
+		// 			if d, ok := defaultValue["value"]; ok && d.(string) != "" {
+		// 				defaultObj := make(map[string]interface{})
+		// 				err := json.Unmarshal([]byte(d.(string)), &defaultObj)
+		// 				if err != nil {
+		// 					return nil, err
+		// 				}
+		// 				propFields.Default = defaultObj
+		// 			}
+		// 		}
+		// 	}
+		// }
 
 		if f, ok := p["format"]; ok && f != "" {
 			propFields.Format = f.(string)

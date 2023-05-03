@@ -451,38 +451,39 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	d.Set("relations", &relations)
 }
 
-func setDefaultToBody(value string, propFields *cli.PropertyFields) error {
+func setDefaultToBody(value string, propFields *cli.BlueprintProperty) error {
+	if value == "" {
+		return nil
+	}
+
 	switch propFields.Type {
 	case "string":
-		if deprecatedValue.(string) != "" {
-			propFields.Default = deprecatedValue.(string)
-		}
+		propFields.Default = value
 	case "number":
-		if deprecatedValue.(string) != "" {
-			defaultNum, err := strconv.ParseInt(deprecatedValue.(string), 10, 0)
-			if err != nil {
-				return nil, err
-			}
-			propFields.Default = defaultNum
+		defaultNum, err := strconv.ParseInt(value, 10, 0)
+		if err != nil {
+			return err
 		}
+		propFields.Default = defaultNum
+
 	case "boolean":
-		if deprecatedValue.(string) != "" {
-			defaultBool, err := strconv.ParseBool(deprecatedValue.(string))
-			if err != nil {
-				return nil, err
-			}
-			propFields.Default = defaultBool
+
+		defaultBool, err := strconv.ParseBool(value)
+		if err != nil {
+			return err
 		}
+		propFields.Default = defaultBool
+
 	case "object":
-		if deprecatedValue.(string) != "" {
-			defaultObj := make(map[string]interface{})
-			err := json.Unmarshal([]byte(deprecatedValue.(string)), &defaultObj)
-			if err != nil {
-				return nil, err
-			}
-			propFields.Default = defaultObj
+		defaultObj := make(map[string]interface{})
+		err := json.Unmarshal([]byte(value), &defaultObj)
+		if err != nil {
+			return err
 		}
+		propFields.Default = defaultObj
+
 	}
+	return nil
 }
 
 func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
@@ -555,38 +556,40 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 				if _, ok := defaultValue["value"]; !ok {
 					return nil, fmt.Errorf("default value for property %s is missing", p["identifier"].(string))
 				}
-				setDefaultToBody(defaultValue.(string), &propFields)
+				setDefaultToBody(defaultValue["value"].(string), &propFields)
+			}
 		}
 
-	if f, ok := p["format"]; ok && f != "" {
-		propFields.Format = f.(string)
-	}
-	if i, ok := p["icon"]; ok && i != "" {
-		propFields.Icon = i.(string)
-	}
-
-	if s, ok := p["spec"]; ok && s != "" {
-		propFields.Spec = s.(string)
-	}
-
-	if r, ok := p["required"]; ok && r.(bool) {
-		required = append(required, p["identifier"].(string))
-	}
-	if e, ok := p["enum"]; ok && e != nil {
-		for _, v := range e.([]interface{}) {
-			propFields.Enum = append(propFields.Enum, v.(string))
+		if f, ok := p["format"]; ok && f != "" {
+			propFields.Format = f.(string)
 		}
-	}
-	if e, ok := p["enum_colors"]; ok && e != nil {
-		enumColors := make(map[string]string)
-		for key, value := range e.(map[string]interface{}) {
-			enumColors[key] = value.(string)
+		if i, ok := p["icon"]; ok && i != "" {
+			propFields.Icon = i.(string)
 		}
-		propFields.EnumColors = enumColors
-	}
-	// TODO: remove the if statement when this issues is solved, https://github.com/hashicorp/terraform-plugin-sdk/pull/1042/files
-	if p["identifier"] != "" {
-		properties[p["identifier"].(string)] = propFields
+
+		if s, ok := p["spec"]; ok && s != "" {
+			propFields.Spec = s.(string)
+		}
+
+		if r, ok := p["required"]; ok && r.(bool) {
+			required = append(required, p["identifier"].(string))
+		}
+		if e, ok := p["enum"]; ok && e != nil {
+			for _, v := range e.([]interface{}) {
+				propFields.Enum = append(propFields.Enum, v.(string))
+			}
+		}
+		if e, ok := p["enum_colors"]; ok && e != nil {
+			enumColors := make(map[string]string)
+			for key, value := range e.(map[string]interface{}) {
+				enumColors[key] = value.(string)
+			}
+			propFields.EnumColors = enumColors
+		}
+		// TODO: remove the if statement when this issues is solved, https://github.com/hashicorp/terraform-plugin-sdk/pull/1042/files
+		if p["identifier"] != "" {
+			properties[p["identifier"].(string)] = propFields
+		}
 	}
 
 	mirrorProperties := make(map[string]cli.BlueprintMirrorProperty, mirrorProps.Len())

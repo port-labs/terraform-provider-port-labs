@@ -91,6 +91,81 @@ func TestAccPortBlueprint(t *testing.T) {
 	})
 }
 
+func TestAccBlueprintWithDefaultValue(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "bool"
+			type = "boolean"
+			title = "boolean"
+			default_value = {"value": true}
+		}
+		properties {
+			identifier = "number"
+			type = "number"
+			title = "number"
+			default_value = {"value": 1}
+		}
+		properties {
+			identifier = "obj"
+			type = "object"
+			title = "object"
+			default_value = {"value": jsonencode({"a":"b"})}
+		}
+		properties {
+			identifier = "array"
+			type = "array"
+			items = {
+				type = "string"
+				format = "url"
+			}
+			title = "array"
+			default_items = ["https://getport.io", "https://app.getport.io"]
+		}
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+			icon = "Terraform"
+			enum = ["a", "b", "c"]
+			enum_colors = {
+				a = "red"
+				b = "blue"
+			}
+			default_value = {"value":"a"}
+		}
+	}
+`, identifier)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.default_items.0", "https://getport.io"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.default_items.#", "2"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.items.type", "string"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.items.format", "url"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.1.default_value.value", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.identifier", "text"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.enum.0", "a"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.enum_colors.a", "red"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.default_value.value", "a"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.3.default_value.value", "true"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.4.default_value.value", "{\"a\":\"b\"}"),
+				),
+			},
+		},
+	})
+
+}
+
 func TestAccBlueprintWithSpecification(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`

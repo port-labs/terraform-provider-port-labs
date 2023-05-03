@@ -317,7 +317,7 @@ func readBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) d
 	return diags
 }
 
-func getPropertyOk(identifier string, d *schema.ResourceData, propertyName string) bool {
+func isDeprecatedDefaultExists(identifier string, d *schema.ResourceData, propertyName string) bool {
 	properties := d.Get("properties").(*schema.Set)
 	for _, v := range properties.List() {
 		if v.(map[string]interface{})["identifier"] == identifier {
@@ -384,49 +384,28 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 			p["required"] = false
 		}
 
-		if ok := getPropertyOk(k, d, "default"); ok {
-			if v.Default != nil {
-				switch t := v.Default.(type) {
-				case map[string]interface{}:
-					js, _ := json.Marshal(&t)
-					p["default"] = string(js)
-				case []interface{}:
-					p["default_items"] = t
-				case float64:
-					p["default"] = strconv.FormatFloat(t, 'f', -1, 64)
-				case int:
-					p["default"] = strconv.Itoa(t)
-				case string:
-					p["default"] = t
-				case bool:
-					p["default"] = "false"
-					if t {
-						p["default"] = "true"
-					}
-				}
+		if v.Default != nil {
+			defaultKey := "default_value"
+			if ok := isDeprecatedDefaultExists(k, d, "default"); ok {
+				defaultKey = "default"
 			}
-		} else {
-			if v.Default != nil {
-				mapDefault := make(map[string]string)
-				switch t := v.Default.(type) {
-				case map[string]interface{}:
-					js, _ := json.Marshal(&t)
-					mapDefault["value"] = string(js)
-				case []interface{}:
-					p["default_items"] = t
-				case float64:
-					mapDefault["value"] = strconv.FormatFloat(t, 'f', -1, 64)
-				case int:
-					mapDefault["value"] = strconv.Itoa(t)
-				case string:
-					mapDefault["value"] = t
-				case bool:
-					mapDefault["value"] = "false"
-					if t {
-						mapDefault["value"] = "true"
-					}
+			switch t := v.Default.(type) {
+			case map[string]interface{}:
+				js, _ := json.Marshal(&t)
+				p[defaultKey] = string(js)
+			case []interface{}:
+				p[defaultKey] = t
+			case float64:
+				p[defaultKey] = strconv.FormatFloat(t, 'f', -1, 64)
+			case int:
+				p[defaultKey] = strconv.Itoa(t)
+			case string:
+				p[defaultKey] = t
+			case bool:
+				p[defaultKey] = "false"
+				if t {
+					p[defaultKey] = "true"
 				}
-				p["default_value"] = mapDefault
 			}
 		}
 
@@ -470,6 +449,40 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	d.Set("mirror_properties", &mirrorPoperties)
 	d.Set("calculation_properties", &calculationProperties)
 	d.Set("relations", &relations)
+}
+
+func setDefaultToBody(value string, propFields *cli.PropertyFields) error {
+	switch propFields.Type {
+	case "string":
+		if deprecatedValue.(string) != "" {
+			propFields.Default = deprecatedValue.(string)
+		}
+	case "number":
+		if deprecatedValue.(string) != "" {
+			defaultNum, err := strconv.ParseInt(deprecatedValue.(string), 10, 0)
+			if err != nil {
+				return nil, err
+			}
+			propFields.Default = defaultNum
+		}
+	case "boolean":
+		if deprecatedValue.(string) != "" {
+			defaultBool, err := strconv.ParseBool(deprecatedValue.(string))
+			if err != nil {
+				return nil, err
+			}
+			propFields.Default = defaultBool
+		}
+	case "object":
+		if deprecatedValue.(string) != "" {
+			defaultObj := make(map[string]interface{})
+			err := json.Unmarshal([]byte(deprecatedValue.(string)), &defaultObj)
+			if err != nil {
+				return nil, err
+			}
+			propFields.Default = defaultObj
+		}
+	}
 }
 
 func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
@@ -535,108 +548,45 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 
 		if defaultOk && df != "" {
 			if deprecatedValue, ok := p["default"]; ok && deprecatedValue != "" {
-				switch propFields.Type {
-				case "string":
-					if deprecatedValue.(string) != "" {
-						propFields.Default = deprecatedValue.(string)
-					}
-				case "number":
-					if deprecatedValue.(string) != "" {
-						defaultNum, err := strconv.ParseInt(deprecatedValue.(string), 10, 0)
-						if err != nil {
-							return nil, err
-						}
-						propFields.Default = defaultNum
-					}
-				case "boolean":
-					if deprecatedValue.(string) != "" {
-						defaultBool, err := strconv.ParseBool(deprecatedValue.(string))
-						if err != nil {
-							return nil, err
-						}
-						propFields.Default = defaultBool
-					}
-				case "object":
-					if deprecatedValue.(string) != "" {
-						defaultObj := make(map[string]interface{})
-						err := json.Unmarshal([]byte(deprecatedValue.(string)), &defaultObj)
-						if err != nil {
-							return nil, err
-						}
-						propFields.Default = defaultObj
-					}
-				}
+				setDefaultToBody(deprecatedValue.(string), &propFields)
 			}
 		} else {
 			if defaultValue, ok := p["default_value"].(map[string]interface{}); ok && len(defaultValue) != 0 {
 				if _, ok := defaultValue["value"]; !ok {
 					return nil, fmt.Errorf("default value for property %s is missing", p["identifier"].(string))
 				}
-				switch propFields.Type {
-				case "string":
-					if d, ok := defaultValue["value"]; ok && d.(string) != "" {
-						propFields.Default = d.(string)
-					}
-				case "number":
-					if d, ok := defaultValue["value"]; ok && d.(string) != "" {
-						defaultNum, err := strconv.ParseInt(d.(string), 10, 0)
-						if err != nil {
-							return nil, err
-						}
-						propFields.Default = defaultNum
-					}
-				case "boolean":
-					if d, ok := defaultValue["value"]; ok && d.(string) != "" {
-						defaultBool, err := strconv.ParseBool(d.(string))
-						if err != nil {
-							return nil, err
-						}
-						propFields.Default = defaultBool
-					}
-
-				case "object":
-					if d, ok := defaultValue["value"]; ok && d.(string) != "" {
-						defaultObj := make(map[string]interface{})
-						err := json.Unmarshal([]byte(d.(string)), &defaultObj)
-						if err != nil {
-							return nil, err
-						}
-						propFields.Default = defaultObj
-					}
-				}
-			}
+				setDefaultToBody(defaultValue.(string), &propFields)
 		}
 
-		if f, ok := p["format"]; ok && f != "" {
-			propFields.Format = f.(string)
-		}
-		if i, ok := p["icon"]; ok && i != "" {
-			propFields.Icon = i.(string)
-		}
+	if f, ok := p["format"]; ok && f != "" {
+		propFields.Format = f.(string)
+	}
+	if i, ok := p["icon"]; ok && i != "" {
+		propFields.Icon = i.(string)
+	}
 
-		if s, ok := p["spec"]; ok && s != "" {
-			propFields.Spec = s.(string)
-		}
+	if s, ok := p["spec"]; ok && s != "" {
+		propFields.Spec = s.(string)
+	}
 
-		if r, ok := p["required"]; ok && r.(bool) {
-			required = append(required, p["identifier"].(string))
+	if r, ok := p["required"]; ok && r.(bool) {
+		required = append(required, p["identifier"].(string))
+	}
+	if e, ok := p["enum"]; ok && e != nil {
+		for _, v := range e.([]interface{}) {
+			propFields.Enum = append(propFields.Enum, v.(string))
 		}
-		if e, ok := p["enum"]; ok && e != nil {
-			for _, v := range e.([]interface{}) {
-				propFields.Enum = append(propFields.Enum, v.(string))
-			}
+	}
+	if e, ok := p["enum_colors"]; ok && e != nil {
+		enumColors := make(map[string]string)
+		for key, value := range e.(map[string]interface{}) {
+			enumColors[key] = value.(string)
 		}
-		if e, ok := p["enum_colors"]; ok && e != nil {
-			enumColors := make(map[string]string)
-			for key, value := range e.(map[string]interface{}) {
-				enumColors[key] = value.(string)
-			}
-			propFields.EnumColors = enumColors
-		}
-		// TODO: remove the if statement when this issues is solved, https://github.com/hashicorp/terraform-plugin-sdk/pull/1042/files
-		if p["identifier"] != "" {
-			properties[p["identifier"].(string)] = propFields
-		}
+		propFields.EnumColors = enumColors
+	}
+	// TODO: remove the if statement when this issues is solved, https://github.com/hashicorp/terraform-plugin-sdk/pull/1042/files
+	if p["identifier"] != "" {
+		properties[p["identifier"].(string)] = propFields
 	}
 
 	mirrorProperties := make(map[string]cli.BlueprintMirrorProperty, mirrorProps.Len())

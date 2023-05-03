@@ -321,8 +321,11 @@ func getPropertyOk(identifier string, d *schema.ResourceData, propertyName strin
 	properties := d.Get("properties").(*schema.Set)
 	for _, v := range properties.List() {
 		if v.(map[string]interface{})["identifier"] == identifier {
-			_, ok := v.(map[string]interface{})[propertyName]
-			return ok
+			value, ok := v.(map[string]interface{})[propertyName]
+			if value.(string) != "" && ok {
+				return true
+			}
+			return false
 		}
 	}
 	return false

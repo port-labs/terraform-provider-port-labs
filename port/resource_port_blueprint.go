@@ -317,18 +317,45 @@ func readBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) d
 	return diags
 }
 
-func isDeprecatedDefaultExists(identifier string, d *schema.ResourceData, propertyName string) bool {
+func isDeprecatedDefaultExists(identifier string, d *schema.ResourceData) bool {
 	properties := d.Get("properties").(*schema.Set)
 	for _, v := range properties.List() {
 		if v.(map[string]interface{})["identifier"] == identifier {
-			value, ok := v.(map[string]interface{})[propertyName]
-			if value.(string) != "" && ok {
-				return true
-			}
-			return false
+			value, ok := v.(map[string]interface{})["default"]
+			return value.(string) != "" && ok
 		}
 	}
 	return false
+}
+
+func writeDefaultFieldToResource(v cli.BlueprintProperty, k string, d *schema.ResourceData, p map[string]interface{}) {
+	var value string
+	switch t := v.Default.(type) {
+	case map[string]interface{}:
+		js, _ := json.Marshal(&t)
+		value = string(js)
+	case []interface{}:
+		p["default_items"] = t
+	case float64:
+		value = strconv.FormatFloat(t, 'f', -1, 64)
+	case int:
+		value = strconv.Itoa(t)
+	case string:
+		value = t
+	case bool:
+		value = "false"
+		if t {
+			value = "true"
+		}
+	}
+
+	if ok := isDeprecatedDefaultExists(k, d); ok {
+		p["value"] = value
+	} else {
+		mapDefault := make(map[string]string)
+		mapDefault["value"] = value
+		p["default_value"] = mapDefault
+	}
 }
 
 func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
@@ -385,28 +412,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		}
 
 		if v.Default != nil {
-			defaultKey := "default_value"
-			if ok := isDeprecatedDefaultExists(k, d, "default"); ok {
-				defaultKey = "default"
-			}
-			switch t := v.Default.(type) {
-			case map[string]interface{}:
-				js, _ := json.Marshal(&t)
-				p[defaultKey] = string(js)
-			case []interface{}:
-				p[defaultKey] = t
-			case float64:
-				p[defaultKey] = strconv.FormatFloat(t, 'f', -1, 64)
-			case int:
-				p[defaultKey] = strconv.Itoa(t)
-			case string:
-				p[defaultKey] = t
-			case bool:
-				p[defaultKey] = "false"
-				if t {
-					p[defaultKey] = "true"
-				}
-			}
+			writeDefaultFieldToResource(v, k, d, p)
 		}
 
 		properties.Add(p)
@@ -451,7 +457,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	d.Set("relations", &relations)
 }
 
-func setDefaultToBody(value string, propFields *cli.BlueprintProperty) error {
+func defaultResourceToBody(value string, propFields *cli.BlueprintProperty) error {
 	if value == "" {
 		return nil
 	}
@@ -527,14 +533,23 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		}
 
 		df, defaultOk := p["default"]
-		dv, defaultValueOk := p["default_value"]
-		di, defaultItemsOk := p["default_items"]
+		dv, defaultValueOk := p["default_value"].(map[string]interface{})
+		di, defaultItemsOk := p["default_items"].([]interface{})
 
-		if defaultOk && defaultValueOk && len(di.([]interface{})) != 0 && defaultItemsOk && len(dv.(map[string]interface{})) != 0 && df != "" {
-			return nil, fmt.Errorf("default or default_value must be set for property %s", p["identifier"].(string))
+		if propFields.Type == "array" {
+			if (defaultValueOk && len(dv) != 0) || (defaultOk && df != "") {
+				return nil, fmt.Errorf("default or default_value can't be used when type is array for property %s", p["identifier"].(string))
+			}
+		} else {
+			if defaultItemsOk && len(di) != 0 {
+				return nil, fmt.Errorf("default_items can't be used when type is not array for property %s", p["identifier"].(string))
+			}
+			if (defaultValueOk && defaultOk) && (len(dv) != 0 && df != "") {
+				return nil, fmt.Errorf("default and default_value can't be used together for property %s", p["identifier"].(string))
+			}
 		}
 
-		if defaultItemsOk && len(di.([]interface{})) != 0 && propFields.Type == "array" {
+		if defaultItemsOk && len(di) != 0 && propFields.Type == "array" {
 			if d, ok := p["default_items"]; ok && d != nil {
 				propFields.Default = d
 			}
@@ -548,15 +563,13 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		}
 
 		if defaultOk && df != "" {
-			if deprecatedValue, ok := p["default"]; ok && deprecatedValue != "" {
-				setDefaultToBody(deprecatedValue.(string), &propFields)
-			}
+			defaultResourceToBody(df.(string), &propFields)
 		} else {
 			if defaultValue, ok := p["default_value"].(map[string]interface{}); ok && len(defaultValue) != 0 {
 				if _, ok := defaultValue["value"]; !ok {
 					return nil, fmt.Errorf("default value for property %s is missing", p["identifier"].(string))
 				}
-				setDefaultToBody(defaultValue["value"].(string), &propFields)
+				defaultResourceToBody(defaultValue["value"].(string), &propFields)
 			}
 		}
 

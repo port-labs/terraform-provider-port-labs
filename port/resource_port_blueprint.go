@@ -349,8 +349,12 @@ func writeDefaultFieldToResource(v cli.BlueprintProperty, k string, d *schema.Re
 		}
 	}
 
+	if p["default_items"] != nil {
+		return
+	}
+
 	if ok := isDeprecatedDefaultExists(k, d); ok {
-		p["value"] = value
+		p["default"] = value
 	} else {
 		mapDefault := make(map[string]string)
 		mapDefault["value"] = value
@@ -563,13 +567,19 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		}
 
 		if defaultOk && df != "" {
-			defaultResourceToBody(df.(string), &propFields)
+			err := defaultResourceToBody(df.(string), &propFields)
+			if err != nil {
+				return nil, err
+			}
 		} else {
 			if defaultValue, ok := p["default_value"].(map[string]interface{}); ok && len(defaultValue) != 0 {
 				if _, ok := defaultValue["value"]; !ok {
 					return nil, fmt.Errorf("default value for property %s is missing", p["identifier"].(string))
 				}
-				defaultResourceToBody(defaultValue["value"].(string), &propFields)
+				err := defaultResourceToBody(defaultValue["value"].(string), &propFields)
+				if err != nil {
+					return nil, err
+				}
 			}
 		}
 

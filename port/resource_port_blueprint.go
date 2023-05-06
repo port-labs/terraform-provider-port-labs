@@ -462,10 +462,6 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 }
 
 func defaultResourceToBody(value string, propFields *cli.BlueprintProperty) error {
-	if value == "" {
-		return nil
-	}
-
 	switch propFields.Type {
 	case "string":
 		propFields.Default = value
@@ -544,6 +540,20 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 			if (defaultValueOk && len(dv) != 0) || (defaultOk && df != "") {
 				return nil, fmt.Errorf("default or default_value can't be used when type is array for property %s", p["identifier"].(string))
 			}
+
+			if defaultItemsOk && len(di) != 0 {
+				if d, ok := p["default_items"]; ok && d != nil {
+					propFields.Default = d
+				}
+				if i, ok := p["items"]; ok && i != nil {
+					items := make(map[string]any)
+					for key, value := range i.(map[string]any) {
+						items[key] = value.(string)
+					}
+					propFields.Items = items
+				}
+			}
+
 		} else {
 			if defaultItemsOk && len(di) != 0 {
 				return nil, fmt.Errorf("default_items can't be used when type is not array for property %s", p["identifier"].(string))
@@ -551,18 +561,9 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 			if (defaultValueOk && defaultOk) && (len(dv) != 0 && df != "") {
 				return nil, fmt.Errorf("default and default_value can't be used together for property %s", p["identifier"].(string))
 			}
-		}
 
-		if defaultItemsOk && len(di) != 0 && propFields.Type == "array" {
-			if d, ok := p["default_items"]; ok && d != nil {
-				propFields.Default = d
-			}
-			if i, ok := p["items"]; ok && i != nil {
-				items := make(map[string]any)
-				for key, value := range i.(map[string]any) {
-					items[key] = value.(string)
-				}
-				propFields.Items = items
+			if _, ok := dv["value"]; !ok && defaultValueOk && len(dv) != 0 {
+				return nil, fmt.Errorf("default value for property %s is missing", p["identifier"].(string))
 			}
 		}
 
@@ -572,11 +573,8 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 				return nil, err
 			}
 		} else {
-			if defaultValue, ok := p["default_value"].(map[string]interface{}); ok && len(defaultValue) != 0 {
-				if _, ok := defaultValue["value"]; !ok {
-					return nil, fmt.Errorf("default value for property %s is missing", p["identifier"].(string))
-				}
-				err := defaultResourceToBody(defaultValue["value"].(string), &propFields)
+			if defaultValueOk && len(dv) != 0 {
+				err := defaultResourceToBody(dv["value"].(string), &propFields)
 				if err != nil {
 					return nil, err
 				}

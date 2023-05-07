@@ -3,6 +3,7 @@ package port
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -119,6 +120,16 @@ func newBlueprintResource() *schema.Resource {
 						"default": {
 							Type:        schema.TypeString,
 							Optional:    true,
+							Deprecated:  "Use default_value instead",
+							Description: "The default value of the property",
+						},
+						"default_value": {
+							Type: schema.TypeMap,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+							Optional:    true,
+							Default:     nil,
 							Description: "The default value of the property",
 						},
 						"default_items": {
@@ -306,6 +317,51 @@ func readBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) d
 	return diags
 }
 
+func isDeprecatedDefaultExists(identifier string, d *schema.ResourceData) bool {
+	properties := d.Get("properties").(*schema.Set)
+	for _, v := range properties.List() {
+		if v.(map[string]interface{})["identifier"] == identifier {
+			value, ok := v.(map[string]interface{})["default"]
+			return value.(string) != "" && ok
+		}
+	}
+	return false
+}
+
+func writeDefaultFieldToResource(v cli.BlueprintProperty, k string, d *schema.ResourceData, p map[string]interface{}) {
+	var value string
+	switch t := v.Default.(type) {
+	case map[string]interface{}:
+		js, _ := json.Marshal(&t)
+		value = string(js)
+	case []interface{}:
+		p["default_items"] = t
+	case float64:
+		value = strconv.FormatFloat(t, 'f', -1, 64)
+	case int:
+		value = strconv.Itoa(t)
+	case string:
+		value = t
+	case bool:
+		value = "false"
+		if t {
+			value = "true"
+		}
+	}
+
+	if p["default_items"] != nil {
+		return
+	}
+
+	if ok := isDeprecatedDefaultExists(k, d); ok {
+		p["default"] = value
+	} else {
+		mapDefault := make(map[string]string)
+		mapDefault["value"] = value
+		p["default_value"] = mapDefault
+	}
+}
+
 func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	d.SetId(b.Identifier)
 	d.Set("title", b.Title)
@@ -358,25 +414,9 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		} else {
 			p["required"] = false
 		}
+
 		if v.Default != nil {
-			switch t := v.Default.(type) {
-			case map[string]interface{}:
-				js, _ := json.Marshal(&t)
-				p["default"] = string(js)
-			case []interface{}:
-				p["default_items"] = t
-			case float64:
-				p["default"] = strconv.FormatFloat(t, 'f', -1, 64)
-			case int:
-				p["default"] = strconv.Itoa(t)
-			case string:
-				p["default"] = t
-			case bool:
-				p["default"] = "false"
-				if t {
-					p["default"] = "true"
-				}
-			}
+			writeDefaultFieldToResource(v, k, d, p)
 		}
 
 		properties.Add(p)
@@ -421,6 +461,37 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	d.Set("relations", &relations)
 }
 
+func defaultResourceToBody(value string, propFields *cli.BlueprintProperty) error {
+	switch propFields.Type {
+	case "string":
+		propFields.Default = value
+	case "number":
+		defaultNum, err := strconv.ParseInt(value, 10, 0)
+		if err != nil {
+			return err
+		}
+		propFields.Default = defaultNum
+
+	case "boolean":
+
+		defaultBool, err := strconv.ParseBool(value)
+		if err != nil {
+			return err
+		}
+		propFields.Default = defaultBool
+
+	case "object":
+		defaultObj := make(map[string]interface{})
+		err := json.Unmarshal([]byte(value), &defaultObj)
+		if err != nil {
+			return err
+		}
+		propFields.Default = defaultObj
+
+	}
+	return nil
+}
+
 func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 	b := &cli.Blueprint{}
 	if identifier, ok := d.GetOk("identifier"); ok {
@@ -460,31 +531,32 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		if d, ok := p["description"]; ok && d != "" {
 			propFields.Description = d.(string)
 		}
-		switch propFields.Type {
-		case "string":
-			if d, ok := p["default"]; ok && d.(string) != "" {
-				propFields.Default = d.(string)
+
+		df, defaultOk := p["default"]
+		dv, defaultValueOk := p["default_value"].(map[string]interface{})
+		di, defaultItemsOk := p["default_items"].([]interface{})
+
+		if propFields.Type == "array" {
+			if (defaultValueOk && len(dv) != 0) || (defaultOk && df != "") {
+				return nil, fmt.Errorf("default or default_value can't be used when type is array for property %s", p["identifier"].(string))
 			}
-		case "number":
-			if d, ok := p["default"]; ok && d.(string) != "" {
-				defaultNum, err := strconv.ParseInt(d.(string), 10, 0)
-				if err != nil {
-					return nil, err
-				}
-				propFields.Default = defaultNum
+
+		} else {
+			if defaultItemsOk && len(di) != 0 {
+				return nil, fmt.Errorf("default_items can't be used when type is not array for property %s", p["identifier"].(string))
 			}
-		case "boolean":
-			if d, ok := p["default"]; ok && d.(string) != "" {
-				defaultBool, err := strconv.ParseBool(d.(string))
-				if err != nil {
-					return nil, err
-				}
-				propFields.Default = defaultBool
+			if (defaultValueOk && defaultOk) && (len(dv) != 0 && df != "") {
+				return nil, fmt.Errorf("default and default_value can't be used together for property %s", p["identifier"].(string))
 			}
-		case "array":
-			if d, ok := p["default_items"]; ok && d != nil {
-				propFields.Default = d
+
+			if _, ok := dv["value"]; !ok && defaultValueOk && len(dv) != 0 {
+				return nil, fmt.Errorf("value key is missing in default_value for property %s", p["identifier"].(string))
 			}
+		}
+
+		if defaultItemsOk && len(di) != 0 && propFields.Type == "array" {
+			propFields.Default = di
+
 			if i, ok := p["items"]; ok && i != nil {
 				items := make(map[string]any)
 				for key, value := range i.(map[string]any) {
@@ -492,16 +564,22 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 				}
 				propFields.Items = items
 			}
-		case "object":
-			if d, ok := p["default"]; ok && d.(string) != "" {
-				defaultObj := make(map[string]interface{})
-				err := json.Unmarshal([]byte(d.(string)), &defaultObj)
+		}
+
+		if defaultOk && df != "" {
+			err := defaultResourceToBody(df.(string), &propFields)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			if defaultValueOk && len(dv) != 0 {
+				err := defaultResourceToBody(dv["value"].(string), &propFields)
 				if err != nil {
 					return nil, err
 				}
-				propFields.Default = defaultObj
 			}
 		}
+
 		if f, ok := p["format"]; ok && f != "" {
 			propFields.Format = f.(string)
 		}

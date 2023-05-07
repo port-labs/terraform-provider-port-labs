@@ -1,8 +1,8 @@
-HOSTNAME=github.com
+HOSTNAME=registry.terraform.io
 NAMESPACE=port-labs
 NAME=port-labs
 BINARY=terraform-provider-${NAME}
-VERSION=0.4.6
+VERSION=0.9.6
 OS=$(shell go env GOOS)
 ARCH=$(shell go env GOARCH)
 OS_ARCH=${OS}_${ARCH}
@@ -27,10 +27,10 @@ release:
 	GOOS=windows GOARCH=amd64 go build -o ./bin/${BINARY}_${VERSION}_windows_amd64
 
 clean:
-	rm -rf examples/provider/.terraform examples/provider/.terraform.lock.hcl examples/provider/terraform*
+	rm -rf examples/.terraform examples/.terraform.lock.hcl examples/terraform*
 
 run-example:
-	cd examples/provider && terraform init && terraform apply
+	cd examples && terraform init && terraform apply
 
 install: build
 	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}

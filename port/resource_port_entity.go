@@ -172,10 +172,6 @@ func convert(prop map[string]interface{}, bp *cli.Blueprint) (interface{}, error
 }
 
 func validateRelation(rel map[string]interface{}) error {
-	if rel["name"] == "" {
-		return fmt.Errorf("relation name is required")
-	}
-
 	if rel["identifier"] == "" && len(rel["identifiers"].(*schema.Set).List()) == 0 {
 		return fmt.Errorf("either relation identifier or identifiers is required for %s", rel["name"])
 	}

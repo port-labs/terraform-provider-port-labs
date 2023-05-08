@@ -24,24 +24,31 @@ type (
 		Blueprint  string                 `json:"blueprint"`
 		Team       []string               `json:"team,omitempty"`
 		Properties map[string]interface{} `json:"properties"`
-		Relations  map[string]string      `json:"relations"`
+		Relations  map[string]interface{} `json:"relations"`
 		// TODO: add the rest of the fields.
 	}
 
 	BlueprintProperty struct {
-		Type        string            `json:"type,omitempty"`
-		Title       string            `json:"title,omitempty"`
-		Identifier  string            `json:"identifier,omitempty"`
-		Items       map[string]any    `json:"items,omitempty"`
-		Default     interface{}       `json:"default,omitempty"`
-		Icon        string            `json:"icon,omitempty"`
-		Format      string            `json:"format,omitempty"`
-		Description string            `json:"description,omitempty"`
-		Blueprint   string            `json:"blueprint,omitempty"`
-		Pattern     string            `json:"pattern,omitempty"`
-		Enum        []string          `json:"enum,omitempty"`
-		Spec        string            `json:"spec,omitempty"`
-		EnumColors  map[string]string `json:"enumColors,omitempty"`
+		Type               string              `json:"type,omitempty"`
+		Title              string              `json:"title,omitempty"`
+		Identifier         string              `json:"identifier,omitempty"`
+		Items              map[string]any      `json:"items,omitempty"`
+		Default            interface{}         `json:"default,omitempty"`
+		Icon               string              `json:"icon,omitempty"`
+		Format             string              `json:"format,omitempty"`
+		Description        string              `json:"description,omitempty"`
+		Blueprint          string              `json:"blueprint,omitempty"`
+		Pattern            string              `json:"pattern,omitempty"`
+		Enum               []string            `json:"enum,omitempty"`
+		Spec               string              `json:"spec,omitempty"`
+		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
+		EnumColors         map[string]string   `json:"enumColors,omitempty"`
+	}
+
+	SpecAuthentication struct {
+		ClientId         string `json:"clientId,omitempty"`
+		AuthorizationUrl string `json:"authorizationUrl,omitempty"`
+		TokenUrl         string `json:"tokenUrl,omitempty"`
 	}
 
 	BlueprintCalculationProperty struct {

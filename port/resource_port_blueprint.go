@@ -151,6 +151,32 @@ func newBlueprintResource() *schema.Resource {
 							ValidateFunc: validation.StringInSlice([]string{"async-api", "open-api", "embedded-url"}, false),
 							Description:  "The specification of the property, one of \"async-api\", \"open-api\", \"embedded-url\"",
 						},
+						"spec_authentication": {
+							Type:     schema.TypeList,
+							Optional: true,
+							MinItems: 1,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"client_id": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "The client id of the specification",
+									},
+									"authorization_url": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "The authorization url of the specification",
+									},
+									"token_url": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: "The token url of the specification",
+									},
+								},
+							},
+							Description: "The authentication of the specification",
+						},
 						"enum": {
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
@@ -407,6 +433,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["format"] = v.Format
 		p["icon"] = v.Icon
 		p["spec"] = v.Spec
+		p["spec_authentication"] = v.SpecAuthentication
 		p["enum"] = v.Enum
 		p["enum_colors"] = v.EnumColors
 		if lo.Contains(b.Schema.Required, k) {
@@ -589,6 +616,21 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 
 		if s, ok := p["spec"]; ok && s != "" {
 			propFields.Spec = s.(string)
+		}
+
+		if s, ok := p["spec_authentication"]; ok && len(s.([]any)) > 0 {
+			if propFields.Spec != "embedded-url" {
+				return nil, fmt.Errorf("spec_authentication can only be used when spec is embedded-url for property %s", p["identifier"].(string))
+			}
+
+			if propFields.SpecAuthentication == nil {
+				propFields.SpecAuthentication = &cli.SpecAuthentication{}
+			}
+
+			propFields.SpecAuthentication.TokenUrl = s.([]any)[0].(map[string]interface{})["token_url"].(string)
+			propFields.SpecAuthentication.AuthorizationUrl = s.([]any)[0].(map[string]interface{})["authorization_url"].(string)
+			propFields.SpecAuthentication.ClientId = s.([]any)[0].(map[string]interface{})["client_id"].(string)
+
 		}
 
 		if r, ok := p["required"]; ok && r.(bool) {

@@ -52,7 +52,7 @@ Optional:
 
 - `default` (String, Deprecated) The default value of the property
 - `default_items` (List of String) The list of items, in case the type of default property is a list
-- `default_value` (Map of String) The default value of the property as a map in format of {"value": defaultValue}, where defaultValue is the default value of the property
+- `default_value` (Map of String) The default value of the property
 - `description` (String) The description of the property
 - `enum` (List of String) A list of allowed values for the property
 - `enum_colors` (Map of String) A map of colors for the enum values
@@ -61,6 +61,17 @@ Optional:
 - `items` (Map of String) A metadata of an array's items, in case the type is an array
 - `required` (Boolean) Whether or not the property is required
 - `spec` (String) The specification of the property, one of "async-api", "open-api", "embedded-url"
+- `spec_authentication` (Block List, Max: 1) The authentication of the specification (see [below for nested schema](#nestedblock--properties--spec_authentication))
+
+<a id="nestedblock--properties--spec_authentication"></a>
+
+### Nested Schema for `properties.spec_authentication`
+
+Required:
+
+- `authorization_url` (String) The authorization url of the specification
+- `client_id` (String) The client id of the specification
+- `token_url` (String) The token url of the specification
 
 <a id="nestedblock--calculation_properties"></a>
 

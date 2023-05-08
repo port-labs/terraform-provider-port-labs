@@ -52,7 +52,7 @@ Optional:
 
 - `default` (String, Deprecated) The default value of the property
 - `default_items` (List of String) The list of items, in case the type of default property is a list
-- `default_value` (Map of String) The default value of the property
+- `default_value` (Map of String) The default value of the property as a map in format of {"value": defaultValue}, where defaultValue is the default value of the property
 - `description` (String) The description of the property
 - `enum` (List of String) A list of allowed values for the property
 - `enum_colors` (Map of String) A map of colors for the enum values

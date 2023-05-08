@@ -67,8 +67,16 @@ func newEntityResource() *schema.Resource {
 						},
 						"identifier": {
 							Type:        schema.TypeString,
-							Required:    true,
+							Optional:    true,
 							Description: "The id of the connected entity",
+						},
+						"identifiers": {
+							Type:        schema.TypeSet,
+							Optional:    true,
+							Description: "The ids of the connected entities",
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
 						},
 					},
 				},
@@ -163,6 +171,18 @@ func convert(prop map[string]interface{}, bp *cli.Blueprint) (interface{}, error
 	return "", fmt.Errorf("unsupported type %s", valType)
 }
 
+func validateRelation(rel map[string]interface{}) error {
+	if rel["identifier"] == "" && len(rel["identifiers"].(*schema.Set).List()) == 0 {
+		return fmt.Errorf("either relation identifier or identifiers is required for %s", rel["name"])
+	}
+
+	if rel["identifier"] != "" && len(rel["identifiers"].(*schema.Set).List()) > 0 {
+		return fmt.Errorf("either relation identifier or identifiers is required for %s", rel["name"])
+	}
+
+	return nil
+}
+
 func entityResourceToBody(d *schema.ResourceData, bp *cli.Blueprint) (*cli.Entity, error) {
 	e := &cli.Entity{}
 	if identifier, ok := d.GetOk("identifier"); ok {
@@ -190,11 +210,23 @@ func entityResourceToBody(d *schema.ResourceData, bp *cli.Blueprint) (*cli.Entit
 	e.Team = teams
 
 	rels := d.Get("relations").(*schema.Set)
-	relations := make(map[string]string)
+	relations := make(map[string]interface{})
 	for _, rel := range rels.List() {
 		r := rel.(map[string]interface{})
-		relations[r["name"].(string)] = r["identifier"].(string)
+		identifier := r["identifier"].(string)
+		identifiers := r["identifiers"].(*schema.Set).List()
+		err := validateRelation(r)
+		if err != nil {
+			return nil, err
+		}
+
+		if identifier != "" {
+			relations[r["name"].(string)] = identifier
+		} else {
+			relations[r["name"].(string)] = identifiers
+		}
 	}
+
 	e.Relations = relations
 	props := d.Get("properties").(*schema.Set)
 	properties := make(map[string]interface{}, props.Len())
@@ -269,6 +301,28 @@ func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
 		properties.Add(p)
 	}
 	d.Set("properties", &properties)
+
+	relations := schema.Set{F: func(i interface{}) int {
+		name := (i.(map[string]interface{}))["name"].(string)
+		return schema.HashString(name)
+	}}
+
+	for k, v := range e.Relations {
+		if v == nil {
+			continue
+		}
+		r := map[string]interface{}{}
+		r["name"] = k
+		switch t := v.(type) {
+		case []interface{}:
+			r["identifiers"] = t
+		case string:
+			r["identifier"] = t
+		}
+		relations.Add(r)
+
+	}
+	d.Set("relations", &relations)
 }
 
 func createEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

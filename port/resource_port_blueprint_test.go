@@ -179,6 +179,11 @@ func TestAccBlueprintWithSpecification(t *testing.T) {
 			type = "string"
 			format = "url"
 			spec = "embedded-url"
+			spec_authentication {
+				token_url = "https://getport.io"
+				client_id = "123"
+				authorization_url = "https://getport.io"
+			}
 		}
 	}
 `, identifier)
@@ -191,6 +196,7 @@ func TestAccBlueprintWithSpecification(t *testing.T) {
 				Config: testAccActionConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.spec", "embedded-url"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.spec_authentication.0.token_url", "https://getport.io"),
 				),
 			},
 		},

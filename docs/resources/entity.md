@@ -56,7 +56,11 @@ Optional:
 
 Required:
 
-- `identifier` (String) The id of the connected entity
 - `name` (String) The name of the relation
+
+Optional:
+
+- `identifier` (String) The id of the connected entity
+- `identifiers` (Set of String) The ids of the connected entities
 
 

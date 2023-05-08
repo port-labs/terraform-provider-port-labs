@@ -61,6 +61,17 @@ Optional:
 - `items` (Map of String) A metadata of an array's items, in case the type is an array
 - `required` (Boolean) Whether or not the property is required
 - `spec` (String) The specification of the property, one of "async-api", "open-api", "embedded-url"
+- `spec_authentication` (Block List, Max: 1) The authentication of the specification (see [below for nested schema](#nestedblock--properties--spec_authentication))
+
+<a id="nestedblock--properties--spec_authentication"></a>
+
+### Nested Schema for `properties.spec_authentication`
+
+Required:
+
+- `authorization_url` (String) The authorization url of the specification
+- `client_id` (String) The client id of the specification
+- `token_url` (String) The token url of the specification
 
 <a id="nestedblock--calculation_properties"></a>
 

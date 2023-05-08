@@ -289,3 +289,81 @@ func TestAccPortEntitiesRelation(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortEntitiesManyRelation(t *testing.T) {
+	identifier1 := genID()
+	identifier2 := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+		relations {
+			identifier = "tf-relation"
+			title = "Test Relation"
+			target = port-labs_blueprint.env.identifier
+			many = true
+		}
+	}
+	resource "port-labs_blueprint" "env" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "str"
+			type = "string"
+			title = "text"
+		}
+	}
+	resource "port-labs_entity" "microservice" {
+		title = "monolith"
+		blueprint = port-labs_blueprint.microservice.id
+		relations {
+			name = "tf-relation"
+			identifiers = ["production","staging"]
+		}
+		properties {
+			name = "text"
+			value = "test-relation"
+		}
+	}
+	resource "port-labs_entity" "env" {
+		title = "staging"
+		identifier = "staging"
+		blueprint = port-labs_blueprint.env.id
+		properties {
+			name = "str"
+			value = "test-many-relation"
+		}
+	}
+
+	resource "port-labs_entity" "env2" {
+		title = "production"
+		identifier = "production"
+		blueprint = port-labs_blueprint.env.id
+		properties {
+			name = "str"
+			value = "test-many-relation"
+		}
+	}
+`, identifier1, identifier2)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "relations.0.identifiers.0", "production"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "relations.0.identifiers.1", "staging"),
+				),
+			},
+		},
+	})
+}

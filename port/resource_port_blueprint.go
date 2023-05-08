@@ -433,7 +433,6 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["format"] = v.Format
 		p["icon"] = v.Icon
 		p["spec"] = v.Spec
-		p["spec_authentication"] = v.SpecAuthentication
 		p["enum"] = v.Enum
 		p["enum_colors"] = v.EnumColors
 		if lo.Contains(b.Schema.Required, k) {
@@ -444,6 +443,14 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 
 		if v.Default != nil {
 			writeDefaultFieldToResource(v, k, d, p)
+		}
+
+		if v.SpecAuthentication != nil {
+			p["spec_authentication"] = []any{map[string]any{
+				"token_url":         v.SpecAuthentication.TokenUrl,
+				"client_id":         v.SpecAuthentication.ClientId,
+				"authorization_url": v.SpecAuthentication.AuthorizationUrl,
+			}}
 		}
 
 		properties.Add(p)

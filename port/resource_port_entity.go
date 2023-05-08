@@ -77,7 +77,6 @@ func newEntityResource() *schema.Resource {
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
-							ConflictsWith: []string{"identifier"},
 						},
 					},
 				},
@@ -172,6 +171,22 @@ func convert(prop map[string]interface{}, bp *cli.Blueprint) (interface{}, error
 	return "", fmt.Errorf("unsupported type %s", valType)
 }
 
+func validateRelation(rel map[string]interface{}) error {
+	if rel["name"] == "" {
+		return fmt.Errorf("relation name is required")
+	}
+
+	if rel["identifier"] == "" && len(rel["identifiers"].(*schema.Set).List()) == 0 {
+		return fmt.Errorf("either relation identifier or identifiers is required for %s", rel["name"])
+	}
+
+	if rel["identifier"] != "" && len(rel["identifiers"].(*schema.Set).List()) > 0 {
+		return fmt.Errorf("either relation identifier or identifiers is required for %s", rel["name"])
+	}
+
+	return nil
+}
+
 func entityResourceToBody(d *schema.ResourceData, bp *cli.Blueprint) (*cli.Entity, error) {
 	e := &cli.Entity{}
 	if identifier, ok := d.GetOk("identifier"); ok {
@@ -204,8 +219,9 @@ func entityResourceToBody(d *schema.ResourceData, bp *cli.Blueprint) (*cli.Entit
 		r := rel.(map[string]interface{})
 		identifier := r["identifier"].(string)
 		identifiers := r["identifiers"].(*schema.Set).List()
-		if identifier != "" && len(identifiers) > 0 {
-			return nil, fmt.Errorf("only identifier or identifiers can be set for relation %s", r["name"])
+		err := validateRelation(r)
+		if err != nil {
+			return nil, err
 		}
 
 		if identifier != "" {

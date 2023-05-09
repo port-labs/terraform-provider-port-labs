@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -445,13 +446,24 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["min_length"] = v.MinLength
 		p["icon"] = v.Icon
 		p["spec"] = v.Spec
-		p["enum"] = v.Enum
 		p["enum_colors"] = v.EnumColors
 		if lo.Contains(b.Schema.Required, k) {
 			p["required"] = true
 		} else {
 			p["required"] = false
 		}
+
+		enumValue := []string{}
+
+		for _, value := range v.Enum {
+			if reflect.TypeOf(value).Kind() == reflect.Float64 {
+				enumValue = append(enumValue, strconv.FormatFloat(value.(float64), 'f', -1, 64))
+			} else {
+				enumValue = append(enumValue, value.(string))
+			}
+		}
+
+		p["enum"] = enumValue
 
 		if v.Default != nil {
 			writeDefaultFieldToResource(v, k, d, p)
@@ -664,7 +676,7 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		if r, ok := p["required"]; ok && r.(bool) {
 			required = append(required, p["identifier"].(string))
 		}
-		if e, ok := p["enum"]; ok && e != nil {
+		if e, ok := p["enum"]; ok && len(e.([]interface{})) > 0 {
 			if propFields.Type != "number" && propFields.Type != "string" {
 				return nil, fmt.Errorf("enum can only be used when type is number or string for property %s", p["identifier"].(string))
 			}

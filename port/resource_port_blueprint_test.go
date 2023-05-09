@@ -17,6 +17,56 @@ func genID() string {
 	return fmt.Sprintf("t-%s", id[:18])
 }
 
+func TestAccPortBlueprintEnum(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "enumTest" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+			icon = "Terraform"
+			enum = ["a", "b", "c"]
+			enum_colors = {
+				a = "red"
+				b = "blue"
+			}
+		}
+		properties {
+			identifier = "number"
+			type = "number"
+			title = "number"
+			enum = [1, 2]
+			
+		}
+	}
+`, identifier)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+
+					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.1.enum.0", "a"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.1.enum.1", "b"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.1.enum.2", "c"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.1.enum_colors.a", "red"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.1.enum_colors.b", "blue"),
+
+					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.0.enum.0", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.0.enum.1", "2"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortBlueprint(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`

@@ -445,7 +445,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["min_length"] = v.MinLength
 		p["icon"] = v.Icon
 		p["spec"] = v.Spec
-		p["enum"] = v.Enum //setTypeToEnum(&v)
+		p["enum"] = v.Enum
 		p["enum_colors"] = v.EnumColors
 		if lo.Contains(b.Schema.Required, k) {
 			p["required"] = true

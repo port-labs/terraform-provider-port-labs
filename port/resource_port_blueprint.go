@@ -445,7 +445,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["min_length"] = v.MinLength
 		p["icon"] = v.Icon
 		p["spec"] = v.Spec
-		p["enum"] = v.Enum
+		p["enum"] = v.Enum //setTypeToEnum(&v)
 		p["enum_colors"] = v.EnumColors
 		if lo.Contains(b.Schema.Required, k) {
 			p["required"] = true
@@ -665,9 +665,25 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 			required = append(required, p["identifier"].(string))
 		}
 		if e, ok := p["enum"]; ok && e != nil {
-			for _, v := range e.([]interface{}) {
-				propFields.Enum = append(propFields.Enum, v.(string))
+			if propFields.Type != "number" && propFields.Type != "string" {
+				return nil, fmt.Errorf("enum can only be used when type is number or string for property %s", p["identifier"].(string))
 			}
+
+			if propFields.Type == "number" {
+				for _, v := range e.([]interface{}) {
+					enumValue, err := strconv.ParseInt(v.(string), 10, 0)
+					if err != nil {
+						return nil, fmt.Errorf("enum value %s is not a valid number for property %s", v.(string), p["identifier"].(string))
+					}
+					propFields.Enum = append(propFields.Enum, enumValue)
+				}
+			}
+			if propFields.Type == "string" {
+				for _, v := range e.([]interface{}) {
+					propFields.Enum = append(propFields.Enum, v.(string))
+				}
+			}
+
 		}
 		if e, ok := p["enum_colors"]; ok && e != nil {
 			enumColors := make(map[string]string)

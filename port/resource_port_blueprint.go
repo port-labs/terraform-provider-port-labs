@@ -629,11 +629,11 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 			propFields.Format = f.(string)
 		}
 
-		if i, ok := p["max_length"]; ok && i != "" {
+		if i, ok := p["max_length"]; ok && i != 0 {
 			propFields.MaxLength = i.(int)
 		}
 
-		if i, ok := p["min_length"]; ok && i != "" {
+		if i, ok := p["min_length"]; ok && i != 0 {
 			propFields.MinLength = i.(int)
 		}
 

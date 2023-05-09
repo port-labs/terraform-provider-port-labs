@@ -442,6 +442,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["description"] = v.Description
 		p["format"] = v.Format
 		p["max_length"] = v.MaxLength
+		p["min_length"] = v.MinLength
 		p["icon"] = v.Icon
 		p["spec"] = v.Spec
 		p["enum"] = v.Enum

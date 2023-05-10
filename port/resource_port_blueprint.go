@@ -322,7 +322,11 @@ func newBlueprintResource() *schema.Resource {
 				Computed: true,
 			},
 		},
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 	}
+
 }
 
 func readBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {

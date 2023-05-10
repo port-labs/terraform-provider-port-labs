@@ -196,6 +196,9 @@ func newActionResource() *schema.Resource {
 							RequiredWith: requiredGithubArguments,
 						},
 					},
+					Importer: &schema.ResourceImporter{
+						StateContext: schema.ImportStatePassthroughContext,
+					},
 				},
 				Required: true,
 			},

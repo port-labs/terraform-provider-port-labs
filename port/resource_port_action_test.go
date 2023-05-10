@@ -80,6 +80,7 @@ func TestAccPortAction(t *testing.T) {
 		identifier = "%s"
 		blueprint_identifier = port-labs_blueprint.microservice.identifier
 		trigger = "DAY-2"
+		required_approval = true
 		invocation_method {
 			type = "KAFKA"
 		}
@@ -112,6 +113,7 @@ func TestAccPortAction(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "blueprint_identifier", identifier),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "invocation_method.0.type", "KAFKA"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "required_approval", "true"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.#", "5"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.default_items.0", "api"),
 					resource.TestCheckResourceAttr("port-labs_action.restart_microservice", "user_properties.0.default_items.#", "2"),

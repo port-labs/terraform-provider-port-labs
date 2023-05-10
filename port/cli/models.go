@@ -118,6 +118,7 @@ type (
 		Icon             string            `json:"icon,omitempty"`
 		UserInputs       ActionUserInputs  `json:"userInputs"`
 		Trigger          string            `json:"trigger"`
+		RequiredApproval bool              `json:"requiredApproval,omitempty"`
 		InvocationMethod *InvocationMethod `json:"invocationMethod,omitempty"`
 	}
 

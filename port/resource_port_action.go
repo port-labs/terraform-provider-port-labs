@@ -205,6 +205,11 @@ func newActionResource() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"CREATE", "DAY-2", "DELETE"}, false),
 			},
+			"required_approval": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: "Whether the action requires approval or not",
+			},
 		},
 	}
 }
@@ -230,6 +235,7 @@ func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
 	d.Set("title", action.Title)
 	d.Set("icon", action.Icon)
 	d.Set("description", action.Description)
+	d.Set("required_approval", action.RequiredApproval)
 
 	reportWorkflowStatus := true
 	if action.InvocationMethod.ReportWorkflowStatus != nil {
@@ -309,6 +315,7 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 
 	action.Title = d.Get("title").(string)
 	action.Icon = d.Get("icon").(string)
+	action.RequiredApproval = d.Get("required_approval").(bool)
 	action.Description = d.Get("description").(string)
 	if invocationMethod, ok := d.GetOk("invocation_method"); ok {
 		if action.InvocationMethod == nil {

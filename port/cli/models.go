@@ -36,8 +36,6 @@ type (
 		Default            interface{}         `json:"default,omitempty"`
 		Icon               string              `json:"icon,omitempty"`
 		Format             string              `json:"format,omitempty"`
-		MaxLength          int                 `json:"maxLength,omitempty"`
-		MinLength          int                 `json:"minLength,omitempty"`
 		Description        string              `json:"description,omitempty"`
 		Blueprint          string              `json:"blueprint,omitempty"`
 		Pattern            string              `json:"pattern,omitempty"`

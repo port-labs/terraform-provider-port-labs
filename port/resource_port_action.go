@@ -196,9 +196,6 @@ func newActionResource() *schema.Resource {
 							RequiredWith: requiredGithubArguments,
 						},
 					},
-					Importer: &schema.ResourceImporter{
-						StateContext: schema.ImportStatePassthroughContext,
-					},
 				},
 				Required: true,
 			},
@@ -208,6 +205,9 @@ func newActionResource() *schema.Resource {
 				Required:     true,
 				ValidateFunc: validation.StringInSlice([]string{"CREATE", "DAY-2", "DELETE"}, false),
 			},
+		},
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
 		},
 	}
 }

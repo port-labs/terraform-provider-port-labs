@@ -396,6 +396,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	d.SetId(b.Identifier)
 	d.Set("title", b.Title)
 	d.Set("icon", b.Icon)
+	d.Set("identifier", b.Identifier)
 	d.Set("description", b.Description)
 	d.Set("created_at", b.CreatedAt.String())
 	d.Set("created_by", b.CreatedBy)

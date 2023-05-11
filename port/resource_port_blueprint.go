@@ -616,12 +616,14 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 			propFields.Default = di
 		}
 
-		if i, ok := p["items"]; ok && i != nil {
-			items := make(map[string]any)
-			for key, value := range i.(map[string]any) {
-				items[key] = value.(string)
+		if propFields.Type == "array" {
+			if i, ok := p["items"]; ok && i != nil {
+				items := make(map[string]any)
+				for key, value := range i.(map[string]any) {
+					items[key] = value.(string)
+				}
+				propFields.Items = items
 			}
-			propFields.Items = items
 		}
 
 		if defaultOk && df != "" {

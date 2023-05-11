@@ -443,12 +443,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		enumValue := []string{}
 
 		for _, value := range v.Enum {
-			if v.Type == "number" {
-				enumValue = append(enumValue, fmt.Sprintf("%v", value))
-			}
-			if v.Type == "string" {
-				enumValue = append(enumValue, value.(string))
-			}
+			enumValue = append(enumValue, value.(string))
 		}
 
 		p["enum"] = enumValue

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"reflect"
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
@@ -444,9 +443,10 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		enumValue := []string{}
 
 		for _, value := range v.Enum {
-			if reflect.TypeOf(value).Kind() == reflect.Float64 {
-				enumValue = append(enumValue, strconv.FormatFloat(value.(float64), 'f', -1, 64))
-			} else {
+			if v.Type == "number" {
+				enumValue = append(enumValue, fmt.Sprintf("%v", value))
+			}
+			if v.Type == "string" {
 				enumValue = append(enumValue, value.(string))
 			}
 		}

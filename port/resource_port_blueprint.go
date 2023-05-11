@@ -614,7 +614,9 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 
 		if defaultItemsOk && len(di) != 0 && propFields.Type == "array" {
 			propFields.Default = di
+		}
 
+		if propFields.Type == "array" {
 			if i, ok := p["items"]; ok && i != nil {
 				items := make(map[string]any)
 				for key, value := range i.(map[string]any) {

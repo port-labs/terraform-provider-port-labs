@@ -108,6 +108,8 @@ func TestAccPortBlueprint(t *testing.T) {
 			title = "text"
 			icon = "Terraform"
 			enum = ["a", "b", "c"]
+			max_length = 10
+			min_length = 1
 			enum_colors = {
 				a = "red"
 				b = "blue"
@@ -132,6 +134,8 @@ func TestAccPortBlueprint(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.identifier", "text"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.enum.0", "a"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.enum_colors.a", "red"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.min_length", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.max_length", "10"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.default", "a"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.3.default", "true"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.4.default", "{\"a\":\"b\"}"),

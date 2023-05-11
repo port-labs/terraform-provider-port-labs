@@ -27,6 +27,7 @@ Port action
 
 - `description` (String) The description of the action
 - `icon` (String) The icon of the action
+- `required_approval` (Boolean) Whether the action requires approval or not
 - `user_properties` (Block Set) The input properties of the action (see [below for nested schema](#nestedblock--user_properties))
 
 ### Read-Only

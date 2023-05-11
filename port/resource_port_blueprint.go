@@ -145,6 +145,16 @@ func newBlueprintResource() *schema.Resource {
 							Optional:    true,
 							Description: "The format of the Property",
 						},
+						"max_length": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "The maximum length of the property",
+						},
+						"min_length": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "The minimum length of the property",
+						},
 						"spec": {
 							Type:         schema.TypeString,
 							Optional:     true,
@@ -431,6 +441,8 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["items"] = v.Items
 		p["description"] = v.Description
 		p["format"] = v.Format
+		p["max_length"] = v.MaxLength
+		p["min_length"] = v.MinLength
 		p["icon"] = v.Icon
 		p["spec"] = v.Spec
 		p["enum"] = v.Enum
@@ -617,6 +629,15 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		if f, ok := p["format"]; ok && f != "" {
 			propFields.Format = f.(string)
 		}
+
+		if i, ok := p["max_length"]; ok && i != 0 {
+			propFields.MaxLength = i.(int)
+		}
+
+		if i, ok := p["min_length"]; ok && i != 0 {
+			propFields.MinLength = i.(int)
+		}
+
 		if i, ok := p["icon"]; ok && i != "" {
 			propFields.Icon = i.(string)
 		}

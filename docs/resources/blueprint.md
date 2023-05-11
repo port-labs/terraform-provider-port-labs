@@ -59,6 +59,8 @@ Optional:
 - `format` (String) The format of the Property
 - `icon` (String) The icon of the property
 - `items` (Map of String) A metadata of an array's items, in case the type is an array
+- `max_length` (Number) The maximum length of the property
+- `min_length` (Number) The minimum length of the property
 - `required` (Boolean) Whether or not the property is required
 - `spec` (String) The specification of the property, one of "async-api", "open-api", "embedded-url"
 - `spec_authentication` (Block List, Max: 1) The authentication of the specification (see [below for nested schema](#nestedblock--properties--spec_authentication))

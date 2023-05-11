@@ -440,18 +440,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 			p["required"] = false
 		}
 
-		enumValue := []string{}
-
-		for _, value := range v.Enum {
-			if v.Type == "number" {
-				enumValue = append(enumValue, fmt.Sprintf("%v", value))
-			}
-			if v.Type == "string" {
-				enumValue = append(enumValue, value.(string))
-			}
-		}
-
-		p["enum"] = enumValue
+		p["enum"] = v.Enum
 
 		if v.Default != nil {
 			writeDefaultFieldToResource(v, k, d, p)

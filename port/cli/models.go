@@ -41,7 +41,7 @@ type (
 		Description        string              `json:"description,omitempty"`
 		Blueprint          string              `json:"blueprint,omitempty"`
 		Pattern            string              `json:"pattern,omitempty"`
-		Enum               []string            `json:"enum,omitempty"`
+		Enum               []interface{}       `json:"enum,omitempty"`
 		Spec               string              `json:"spec,omitempty"`
 		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
 		EnumColors         map[string]string   `json:"enumColors,omitempty"`

@@ -263,11 +263,7 @@ func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
 		d.Set("team", e.Team[0])
 	}
 
-	teams := d.Get("teams").(*schema.Set)
-
-	if len(teams.List()) > 0 {
-		d.Set("teams", e.Team)
-	}
+	d.Set("teams", e.Team)
 
 	d.Set("created_at", e.CreatedAt.String())
 	d.Set("created_by", e.CreatedBy)

@@ -143,7 +143,15 @@ func newEntityResource() *schema.Resource {
 func deleteEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	err := c.DeleteEntity(ctx, d.Id(), d.Get("blueprint").(string))
+	id := d.Id()
+	entityIdentifier := ""
+	blueprintIdentifier := ""
+	if strings.Contains(id, ":") {
+		entityIdentifier = strings.Split(id, ":")[1]
+		blueprintIdentifier = strings.Split(id, ":")[0]
+	}
+
+	err := c.DeleteEntity(ctx, entityIdentifier, blueprintIdentifier)
 	if err != nil {
 		return diag.FromErr(err)
 	}

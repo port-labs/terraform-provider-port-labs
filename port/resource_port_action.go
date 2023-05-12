@@ -3,7 +3,9 @@ package port
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -215,7 +217,17 @@ func newActionResource() *schema.Resource {
 func readAction(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	action, statusCode, err := c.ReadAction(ctx, d.Get("blueprint_identifier").(string), d.Id())
+	id := d.Id()
+	blueprintIdentifier := ""
+	entityIdentifier := ""
+	if strings.Contains(id, ":") {
+		blueprintIdentifier = strings.Split(id, ":")[0]
+		entityIdentifier = strings.Split(id, ":")[1]
+	} else {
+		entityIdentifier = id
+		blueprintIdentifier = d.Get("blueprint_identifier").(string)
+	}
+	action, statusCode, err := c.ReadAction(ctx, blueprintIdentifier, entityIdentifier)
 	if err != nil {
 		if statusCode == 404 {
 			d.SetId("")
@@ -224,12 +236,14 @@ func readAction(ctx context.Context, d *schema.ResourceData, m interface{}) diag
 
 		return diag.FromErr(err)
 	}
-	writeActionFieldsToResource(d, action)
+	writeActionFieldsToResource(d, action, blueprintIdentifier)
 	return diags
 }
 
-func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action) {
-	d.SetId(action.Identifier)
+func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action, blueprintIdentifier string) {
+	d.SetId(fmt.Sprintf("%s:%s", blueprintIdentifier, action.Identifier))
+	d.Set("blueprint_identifier", blueprintIdentifier)
+	d.Set("identifier", action.Identifier)
 	d.Set("title", action.Title)
 	d.Set("icon", action.Icon)
 	d.Set("description", action.Description)
@@ -422,7 +436,15 @@ func actionResourceToBody(d *schema.ResourceData) (*cli.Action, error) {
 func deleteAction(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	err := c.DeleteAction(ctx, d.Get("blueprint_identifier").(string), d.Id())
+	id := d.Id()
+	actionIdentifier := ""
+	blueprintIdentifier := ""
+	if strings.Contains(id, ":") {
+		blueprintIdentifier = strings.Split(id, ":")[0]
+		actionIdentifier = strings.Split(id, ":")[1]
+	}
+
+	err := c.DeleteAction(ctx, blueprintIdentifier, actionIdentifier)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -436,15 +458,26 @@ func createAction(ctx context.Context, d *schema.ResourceData, m interface{}) di
 	if err != nil {
 		return diag.FromErr(err)
 	}
+
 	var a *cli.Action
+
+	blueprintIdentifier := d.Get("blueprint_identifier").(string)
+	actionIdentifier := d.Id()
 	if d.Id() != "" {
-		a, err = c.UpdateAction(ctx, d.Get("blueprint_identifier").(string), d.Id(), action)
+		if strings.Contains(d.Id(), ":") {
+			blueprintIdentifier = strings.Split(d.Id(), ":")[0]
+			actionIdentifier = strings.Split(d.Id(), ":")[1]
+		}
+
+		a, err = c.UpdateAction(ctx, blueprintIdentifier, actionIdentifier, action)
 	} else {
 		a, err = c.CreateAction(ctx, d.Get("blueprint_identifier").(string), action)
 	}
+
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	d.SetId(a.Identifier)
+
+	d.SetId(fmt.Sprintf("%s:%s", blueprintIdentifier, a.Identifier))
 	return diags
 }

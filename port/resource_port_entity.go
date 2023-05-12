@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -192,11 +193,19 @@ func entityResourceToBody(d *schema.ResourceData, bp *cli.Blueprint) (*cli.Entit
 		e.Identifier = identifier.(string)
 	}
 	id := d.Id()
+	blueprintId := d.Get("blueprint").(string)
 	if id != "" {
-		e.Identifier = id
+		if strings.Contains(id, ":") {
+			blueprintId = strings.Split(id, ":")[0]
+			id = strings.Split(id, ":")[1]
+			e.Identifier = id
+		} else {
+			e.Identifier = id
+		}
 	}
+
 	e.Title = d.Get("title").(string)
-	e.Blueprint = d.Get("blueprint").(string)
+	e.Blueprint = blueprintId
 
 	teams := []string{}
 
@@ -246,16 +255,18 @@ func entityResourceToBody(d *schema.ResourceData, bp *cli.Blueprint) (*cli.Entit
 }
 
 func writeEntityComputedFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
-	d.SetId(e.Identifier)
+	d.SetId(fmt.Sprintf("%s:%s", e.Blueprint, e.Identifier))
 	d.Set("created_at", e.CreatedAt.String())
 	d.Set("created_by", e.CreatedBy)
 	d.Set("updated_at", e.UpdatedAt.String())
 	d.Set("updated_by", e.UpdatedBy)
 }
 
-func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
-	d.SetId(e.Identifier)
+func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity, blueprintIdentifier string) {
+	d.SetId(fmt.Sprintf("%s:%s", blueprintIdentifier, e.Identifier))
 	d.Set("title", e.Title)
+	d.Set("blueprint", blueprintIdentifier)
+	d.Set("identifier", e.Identifier)
 
 	team := d.Get("team")
 
@@ -350,7 +361,17 @@ func createEntity(ctx context.Context, d *schema.ResourceData, m interface{}) di
 func readEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	e, statusCode, err := c.ReadEntity(ctx, d.Id(), d.Get("blueprint").(string))
+	id := d.Id()
+	blueprintIdentifier := ""
+	entityIdentifier := ""
+	if strings.Contains(id, ":") {
+		blueprintIdentifier = strings.Split(id, ":")[0]
+		entityIdentifier = strings.Split(id, ":")[1]
+	} else {
+		blueprintIdentifier = d.Get("blueprint").(string)
+		entityIdentifier = d.Id()
+	}
+	e, statusCode, err := c.ReadEntity(ctx, entityIdentifier, blueprintIdentifier)
 	if err != nil {
 		if statusCode == 404 {
 			d.SetId("")
@@ -359,7 +380,7 @@ func readEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag
 
 		return diag.FromErr(err)
 	}
-	writeEntityFieldsToResource(d, e)
+	writeEntityFieldsToResource(d, e, blueprintIdentifier)
 	if err != nil {
 		return diag.FromErr(err)
 	}

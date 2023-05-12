@@ -274,15 +274,17 @@ func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity, blueprin
 	d.SetId(fmt.Sprintf("%s:%s", blueprintIdentifier, e.Identifier))
 	d.Set("title", e.Title)
 	d.Set("blueprint", blueprintIdentifier)
-	d.Set("identifier", e.Identifier)
 
-	team := d.Get("team")
+	entityTeams := e.Team
+	if len(entityTeams) > 0 {
+		team := d.Get("team")
 
-	if team != "" {
-		d.Set("team", e.Team[0])
+		if team != "" {
+			d.Set("team", e.Team[0])
+		} else {
+			d.Set("teams", e.Team)
+		}
 	}
-
-	d.Set("teams", e.Team)
 
 	d.Set("created_at", e.CreatedAt.String())
 	d.Set("created_by", e.CreatedBy)

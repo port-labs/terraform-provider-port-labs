@@ -229,7 +229,7 @@ func TestAccPortEntity(t *testing.T) {
 }
 
 func TestAccPortEntityImport(t *testing.T) {
-	identifier := genID()
+	blueprintIdentifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test"
@@ -286,7 +286,7 @@ func TestAccPortEntityImport(t *testing.T) {
 			value = jsonencode({"a":"b"})
 		}
 	}
-`, identifier)
+`, blueprintIdentifier)
 	resource.Test(t, resource.TestCase{
 		Providers: map[string]*schema.Provider{
 			"port-labs": Provider(),
@@ -299,10 +299,9 @@ func TestAccPortEntityImport(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:            "port-labs_entity.microservice",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"blueprint"},
+				ResourceName:      "port-labs_entity.microservice",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

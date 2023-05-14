@@ -149,6 +149,9 @@ func deleteEntity(ctx context.Context, d *schema.ResourceData, m interface{}) di
 	if strings.Contains(id, ":") {
 		entityIdentifier = strings.Split(id, ":")[1]
 		blueprintIdentifier = strings.Split(id, ":")[0]
+	} else {
+		entityIdentifier = id
+		blueprintIdentifier = d.Get("blueprint").(string)
 	}
 
 	err := c.DeleteEntity(ctx, entityIdentifier, blueprintIdentifier)
@@ -263,7 +266,7 @@ func entityResourceToBody(d *schema.ResourceData, bp *cli.Blueprint) (*cli.Entit
 }
 
 func writeEntityComputedFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
-	d.SetId(fmt.Sprintf("%s:%s", e.Blueprint, e.Identifier))
+	d.SetId(e.Identifier)
 	d.Set("created_at", e.CreatedAt.String())
 	d.Set("created_by", e.CreatedBy)
 	d.Set("updated_at", e.UpdatedAt.String())
@@ -271,9 +274,9 @@ func writeEntityComputedFieldsToResource(d *schema.ResourceData, e *cli.Entity) 
 }
 
 func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity, blueprintIdentifier string) {
-	d.SetId(fmt.Sprintf("%s:%s", blueprintIdentifier, e.Identifier))
+	d.SetId(e.Identifier)
 	d.Set("title", e.Title)
-	d.Set("blueprint", blueprintIdentifier)
+	d.Set("blueprint", e.Blueprint)
 
 	entityTeams := e.Team
 	if len(entityTeams) > 0 {

@@ -3,7 +3,6 @@ package port
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -241,7 +240,7 @@ func readAction(ctx context.Context, d *schema.ResourceData, m interface{}) diag
 }
 
 func writeActionFieldsToResource(d *schema.ResourceData, action *cli.Action, blueprintIdentifier string) {
-	d.SetId(fmt.Sprintf("%s:%s", blueprintIdentifier, action.Identifier))
+	d.SetId(action.Identifier)
 	d.Set("blueprint_identifier", blueprintIdentifier)
 	d.Set("identifier", action.Identifier)
 	d.Set("title", action.Title)
@@ -442,6 +441,9 @@ func deleteAction(ctx context.Context, d *schema.ResourceData, m interface{}) di
 	if strings.Contains(id, ":") {
 		blueprintIdentifier = strings.Split(id, ":")[0]
 		actionIdentifier = strings.Split(id, ":")[1]
+	} else {
+		actionIdentifier = id
+		blueprintIdentifier = d.Get("blueprint_identifier").(string)
 	}
 
 	err := c.DeleteAction(ctx, blueprintIdentifier, actionIdentifier)
@@ -478,6 +480,6 @@ func createAction(ctx context.Context, d *schema.ResourceData, m interface{}) di
 		return diag.FromErr(err)
 	}
 
-	d.SetId(fmt.Sprintf("%s:%s", blueprintIdentifier, a.Identifier))
+	d.SetId(a.Identifier)
 	return diags
 }

@@ -38,6 +38,8 @@ type (
 		Format             string              `json:"format,omitempty"`
 		MaxLength          int                 `json:"maxLength,omitempty"`
 		MinLength          int                 `json:"minLength,omitempty"`
+		MaxItems           int                 `json:"maxItems,omitempty"`
+		MinItems           int                 `json:"minItems,omitempty"`
 		Description        string              `json:"description,omitempty"`
 		Blueprint          string              `json:"blueprint,omitempty"`
 		Pattern            string              `json:"pattern,omitempty"`

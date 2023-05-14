@@ -217,16 +217,14 @@ func readAction(ctx context.Context, d *schema.ResourceData, m interface{}) diag
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
 	id := d.Id()
-	blueprintIdentifier := ""
-	entityIdentifier := ""
+	actionIdentifier := id
+	blueprintIdentifier := d.Get("blueprint_identifier").(string)
 	if strings.Contains(id, ":") {
 		blueprintIdentifier = strings.Split(id, ":")[0]
-		entityIdentifier = strings.Split(id, ":")[1]
-	} else {
-		entityIdentifier = id
-		blueprintIdentifier = d.Get("blueprint_identifier").(string)
+		actionIdentifier = strings.Split(id, ":")[1]
 	}
-	action, statusCode, err := c.ReadAction(ctx, blueprintIdentifier, entityIdentifier)
+
+	action, statusCode, err := c.ReadAction(ctx, blueprintIdentifier, actionIdentifier)
 	if err != nil {
 		if statusCode == 404 {
 			d.SetId("")

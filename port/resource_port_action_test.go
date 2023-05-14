@@ -152,57 +152,57 @@ func TestActionImport(t *testing.T) {
 	identifier := genID()
 	actionIdentifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
-	resource "port-labs_blueprint" "microservice" {
-		title = "TF test microservice"
-		icon = "Terraform"
-		identifier = "%s"
-		properties {
-			identifier = "text"
-			type = "string"
-			title = "text"
+		resource "port-labs_blueprint" "microservice" {
+			title = "TF test microservice"
+			icon = "Terraform"
+			identifier = "%s"
+			properties {
+				identifier = "text"
+				type = "string"
+				title = "text"
+			}
 		}
-	}
-	resource "port-labs_action" "restart_microservice" {
-		title = "Restart service"
-		icon = "Terraform"
-		identifier = "%s"
-		blueprint_identifier = port-labs_blueprint.microservice.identifier
-		trigger = "DAY-2"
-		invocation_method {
-			type = "KAFKA"
+		resource "port-labs_action" "restart_microservice" {
+			title = "Restart service"
+			icon = "Terraform"
+			identifier = "%s"
+			blueprint_identifier = port-labs_blueprint.microservice.identifier
+			trigger = "DAY-2"
+			invocation_method {
+				type = "KAFKA"
+			}
+			user_properties {
+				identifier = "reason"
+				type = "string"
+				title = "Reason"
+				default = "test"
+			}
+			user_properties {
+				identifier = "delay"
+				type = "number"
+				title = "Delay"
+				default = 3
+			}
+			user_properties {
+				identifier = "clear_cache"
+				type = "boolean"
+				title = "Clear cache"
+				default = true
+			}
+			user_properties {
+				identifier = "services"
+				type = "array"
+				title = "Services"
+				default_items = ["api", "frontend"]
+			}
+			user_properties {
+				identifier = "config"
+				type = "object"
+				title = "Config"
+				default = jsonencode({"when":"immediate"})
+			}
 		}
-		user_properties {
-			identifier = "reason"
-			type = "string"
-			title = "Reason"
-			default = "test"
-		}
-		user_properties {
-			identifier = "delay"
-			type = "number"
-			title = "Delay"
-			default = 3
-		}
-		user_properties {
-			identifier = "clear_cache"
-			type = "boolean"
-			title = "Clear cache"
-			default = true
-		}
-		user_properties {
-			identifier = "services"
-			type = "array"
-			title = "Services"
-			default_items = ["api", "frontend"]
-		}
-		user_properties {
-			identifier = "config"
-			type = "object"
-			title = "Config"
-			default = jsonencode({"when":"immediate"})
-		}
-	}
-`, identifier, actionIdentifier)
+	`, identifier, actionIdentifier)
 	resource.Test(t, resource.TestCase{
 		Providers: map[string]*schema.Provider{
 			"port-labs": Provider(),
@@ -218,6 +218,7 @@ func TestActionImport(t *testing.T) {
 				ResourceName:      "port-labs_action.restart_microservice",
 				ImportState:       true,
 				ImportStateVerify: true,
+				ImportStateId:     fmt.Sprintf("%s:%s", identifier, actionIdentifier),
 			},
 		},
 	})

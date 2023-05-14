@@ -101,6 +101,8 @@ func TestAccPortBlueprint(t *testing.T) {
 			}
 			title = "array"
 			default_items = ["https://getport.io", "https://app.getport.io"]
+			min_items = 2
+			max_items = 10
 		}
 		properties {
 			identifier = "text"
@@ -130,6 +132,8 @@ func TestAccPortBlueprint(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.default_items.#", "2"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.items.type", "string"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.items.format", "url"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.min_items", "2"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.max_items", "10"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.1.default", "1"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.identifier", "text"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.enum.0", "a"),

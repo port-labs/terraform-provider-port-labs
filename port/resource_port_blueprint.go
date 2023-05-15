@@ -155,6 +155,16 @@ func newBlueprintResource() *schema.Resource {
 							Optional:    true,
 							Description: "The minimum length of the property",
 						},
+						"min_items": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "The minimum number of items in the property",
+						},
+						"max_items": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: "The maximum number of items in the property",
+						},
 						"spec": {
 							Type:         schema.TypeString,
 							Optional:     true,
@@ -443,6 +453,8 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 		p["format"] = v.Format
 		p["max_length"] = v.MaxLength
 		p["min_length"] = v.MinLength
+		p["max_items"] = v.MaxItems
+		p["min_items"] = v.MinItems
 		p["icon"] = v.Icon
 		p["spec"] = v.Spec
 		p["enum_colors"] = v.EnumColors
@@ -650,6 +662,22 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 
 		if i, ok := p["min_length"]; ok && i != 0 {
 			propFields.MinLength = i.(int)
+		}
+
+		if i, ok := p["min_items"]; ok && i != 0 {
+			if propFields.Type != "array" {
+				return nil, fmt.Errorf("min_items can only be used when type is array for property %s", p["identifier"].(string))
+			}
+
+			propFields.MinItems = i.(int)
+		}
+
+		if i, ok := p["max_items"]; ok && i != 0 {
+			if propFields.Type != "array" {
+				return nil, fmt.Errorf("max_items can only be used when type is array for property %s", p["identifier"].(string))
+			}
+
+			propFields.MaxItems = i.(int)
 		}
 
 		if i, ok := p["icon"]; ok && i != "" {

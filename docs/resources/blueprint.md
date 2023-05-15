@@ -59,7 +59,9 @@ Optional:
 - `format` (String) The format of the Property
 - `icon` (String) The icon of the property
 - `items` (Map of String) A metadata of an array's items, in case the type is an array
+- `max_items` (Number) The maximum number of items in the property
 - `max_length` (Number) The maximum length of the property
+- `min_items` (Number) The minimum number of items in the property
 - `min_length` (Number) The minimum length of the property
 - `required` (Boolean) Whether or not the property is required
 - `spec` (String) The specification of the property, one of "async-api", "open-api", "embedded-url"

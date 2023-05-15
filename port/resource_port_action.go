@@ -434,15 +434,8 @@ func deleteAction(ctx context.Context, d *schema.ResourceData, m interface{}) di
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
 	id := d.Id()
-	actionIdentifier := ""
-	blueprintIdentifier := ""
-	if strings.Contains(id, ":") {
-		blueprintIdentifier = strings.Split(id, ":")[0]
-		actionIdentifier = strings.Split(id, ":")[1]
-	} else {
-		actionIdentifier = id
-		blueprintIdentifier = d.Get("blueprint_identifier").(string)
-	}
+	actionIdentifier := id
+	blueprintIdentifier := d.Get("blueprint_identifier").(string)
 
 	err := c.DeleteAction(ctx, blueprintIdentifier, actionIdentifier)
 	if err != nil {
@@ -464,11 +457,6 @@ func createAction(ctx context.Context, d *schema.ResourceData, m interface{}) di
 	blueprintIdentifier := d.Get("blueprint_identifier").(string)
 	actionIdentifier := d.Id()
 	if d.Id() != "" {
-		if strings.Contains(d.Id(), ":") {
-			blueprintIdentifier = strings.Split(d.Id(), ":")[0]
-			actionIdentifier = strings.Split(d.Id(), ":")[1]
-		}
-
 		a, err = c.UpdateAction(ctx, blueprintIdentifier, actionIdentifier, action)
 	} else {
 		a, err = c.CreateAction(ctx, d.Get("blueprint_identifier").(string), action)

@@ -360,15 +360,18 @@ func readEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
 	id := d.Id()
-	blueprintIdentifier := ""
-	entityIdentifier := ""
+	blueprintIdentifier := d.Get("blueprint").(string)
+	entityIdentifier := d.Id()
+
 	if strings.Contains(id, ":") {
-		blueprintIdentifier = strings.Split(id, ":")[0]
-		entityIdentifier = strings.Split(id, ":")[1]
-	} else {
-		blueprintIdentifier = d.Get("blueprint").(string)
-		entityIdentifier = d.Id()
+		parts := strings.SplitN(id, ":", 2)
+		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+			return diag.FromErr(fmt.Errorf("unexpected format of ID (%s), expected blueprintId:entityId", id))
+		}
+		blueprintIdentifier = parts[0]
+		entityIdentifier = parts[1]
 	}
+
 	e, statusCode, err := c.ReadEntity(ctx, entityIdentifier, blueprintIdentifier)
 	if err != nil {
 		if statusCode == 404 {

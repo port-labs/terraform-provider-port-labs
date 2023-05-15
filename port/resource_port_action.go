@@ -3,6 +3,7 @@ package port
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -220,8 +221,13 @@ func readAction(ctx context.Context, d *schema.ResourceData, m interface{}) diag
 	actionIdentifier := id
 	blueprintIdentifier := d.Get("blueprint_identifier").(string)
 	if strings.Contains(id, ":") {
-		blueprintIdentifier = strings.Split(id, ":")[0]
-		actionIdentifier = strings.Split(id, ":")[1]
+		parts := strings.SplitN(id, ":", 2)
+		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+			return diag.FromErr(fmt.Errorf("unexpected format of ID (%s), expected blueprintId:entityId", id))
+		}
+
+		blueprintIdentifier = parts[0]
+		actionIdentifier = parts[1]
 	}
 
 	action, statusCode, err := c.ReadAction(ctx, blueprintIdentifier, actionIdentifier)

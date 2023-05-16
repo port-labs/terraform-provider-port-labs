@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -133,13 +134,19 @@ func newEntityResource() *schema.Resource {
 				Computed: true,
 			},
 		},
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 	}
 }
 
 func deleteEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	err := c.DeleteEntity(ctx, d.Id(), d.Get("blueprint").(string))
+	id := d.Id()
+	entityIdentifier := id
+	blueprintIdentifier := d.Get("blueprint").(string)
+	err := c.DeleteEntity(ctx, entityIdentifier, blueprintIdentifier)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -192,6 +199,7 @@ func entityResourceToBody(d *schema.ResourceData, bp *cli.Blueprint) (*cli.Entit
 	if id != "" {
 		e.Identifier = id
 	}
+
 	e.Title = d.Get("title").(string)
 	e.Blueprint = d.Get("blueprint").(string)
 
@@ -250,20 +258,20 @@ func writeEntityComputedFieldsToResource(d *schema.ResourceData, e *cli.Entity) 
 	d.Set("updated_by", e.UpdatedBy)
 }
 
-func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity) {
+func writeEntityFieldsToResource(d *schema.ResourceData, e *cli.Entity, blueprintIdentifier string) {
 	d.SetId(e.Identifier)
 	d.Set("title", e.Title)
+	d.Set("blueprint", e.Blueprint)
 
-	team := d.Get("team")
+	entityTeams := e.Team
+	if len(entityTeams) > 0 {
+		team := d.Get("team")
 
-	if team != "" {
-		d.Set("team", e.Team[0])
-	}
-
-	teams := d.Get("teams").(*schema.Set)
-
-	if len(teams.List()) > 0 {
-		d.Set("teams", e.Team)
+		if team != "" {
+			d.Set("team", e.Team[0])
+		} else {
+			d.Set("teams", e.Team)
+		}
 	}
 
 	d.Set("created_at", e.CreatedAt.String())
@@ -351,7 +359,20 @@ func createEntity(ctx context.Context, d *schema.ResourceData, m interface{}) di
 func readEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	var diags diag.Diagnostics
 	c := m.(*cli.PortClient)
-	e, statusCode, err := c.ReadEntity(ctx, d.Id(), d.Get("blueprint").(string))
+	id := d.Id()
+	blueprintIdentifier := d.Get("blueprint").(string)
+	entityIdentifier := d.Id()
+
+	if strings.Contains(id, ":") {
+		parts := strings.SplitN(id, ":", 2)
+		if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+			return diag.FromErr(fmt.Errorf("unexpected format of ID (%s), expected blueprintId:entityId", id))
+		}
+		blueprintIdentifier = parts[0]
+		entityIdentifier = parts[1]
+	}
+
+	e, statusCode, err := c.ReadEntity(ctx, entityIdentifier, blueprintIdentifier)
 	if err != nil {
 		if statusCode == 404 {
 			d.SetId("")
@@ -360,7 +381,7 @@ func readEntity(ctx context.Context, d *schema.ResourceData, m interface{}) diag
 
 		return diag.FromErr(err)
 	}
-	writeEntityFieldsToResource(d, e)
+	writeEntityFieldsToResource(d, e, blueprintIdentifier)
 	if err != nil {
 		return diag.FromErr(err)
 	}

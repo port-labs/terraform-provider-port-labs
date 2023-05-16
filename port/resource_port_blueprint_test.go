@@ -149,6 +149,41 @@ func TestAccPortBlueprint(t *testing.T) {
 	})
 }
 
+func TestAccPortBlueprintImport(t *testing.T) {
+	var testAccActionConfigCreate = `
+	resource "port-labs_blueprint" "microservice" {
+		title      = "microservice"
+		icon       = "Terraform"
+		identifier = "import_microservice"
+		properties {
+			identifier = "bool"
+			type       = "boolean"
+			title      = "boolean"
+		}
+	}
+`
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "title", "microservice"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "identifier", "import_microservice"),
+				),
+			},
+			{
+				ResourceName:            "port-labs_blueprint.microservice",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"data_source"},
+			},
+		},
+	})
+}
+
 func TestAccBlueprintWithDefaultValue(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`

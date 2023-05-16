@@ -342,7 +342,11 @@ func newBlueprintResource() *schema.Resource {
 				Computed: true,
 			},
 		},
+		Importer: &schema.ResourceImporter{
+			StateContext: schema.ImportStatePassthroughContext,
+		},
 	}
+
 }
 
 func readBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
@@ -412,6 +416,7 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	d.SetId(b.Identifier)
 	d.Set("title", b.Title)
 	d.Set("icon", b.Icon)
+	d.Set("identifier", b.Identifier)
 	d.Set("description", b.Description)
 	d.Set("created_at", b.CreatedAt.String())
 	d.Set("created_by", b.CreatedBy)

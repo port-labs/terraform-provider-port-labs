@@ -228,6 +228,88 @@ func TestAccPortEntity(t *testing.T) {
 	})
 }
 
+func TestAccPortEntityImport(t *testing.T) {
+	blueprintIdentifier := genID()
+	entityIdentifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		properties {
+			identifier = "text"
+			type = "string"
+			title = "text"
+		}
+		properties {
+			identifier = "bool"
+			type = "boolean"
+			title = "boolean"
+		}
+		properties {
+			identifier = "num"
+			type = "number"
+			title = "number"
+		}
+		properties {
+			identifier = "obj"
+			type = "object"
+			title = "object"
+		}
+		properties {
+			identifier = "arr"
+			type = "array"
+			title = "array"
+		}
+	}
+	resource "port-labs_entity" "microservice" {
+		title = "monolith"
+		blueprint = "${port-labs_blueprint.microservice.identifier}"
+		teams = ["Everyone"]
+		identifier = "%s"
+		properties {
+			name = "text"
+			value = "hedwig"
+		}
+		properties {
+			name = "bool"
+			value = "true"
+		}
+		properties {
+			name = "num"
+			value = 123
+		}
+		properties {
+			name = "arr"
+			items = [1,2,3]
+		}
+		properties {
+			name = "obj"
+			value = jsonencode({"a":"b"})
+		}
+	}
+`, blueprintIdentifier, entityIdentifier)
+	resource.Test(t, resource.TestCase{
+		Providers: map[string]*schema.Provider{
+			"port-labs": Provider(),
+		},
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "title", "monolith"),
+				),
+			},
+			{
+				ResourceName:            "port-labs_entity.microservice",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateId:           fmt.Sprintf("%s:%s", blueprintIdentifier, entityIdentifier),
+				ImportStateVerifyIgnore: []string{"identifier"},
+			},
+		},
+	})
+}
 func TestAccPortEntitiesRelation(t *testing.T) {
 	identifier1 := genID()
 	identifier2 := genID()

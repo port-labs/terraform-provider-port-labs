@@ -149,7 +149,7 @@ func TestAccPortAction(t *testing.T) {
 }
 
 func TestActionImport(t *testing.T) {
-	identifier := genID()
+	blueprintIdentifier := genID()
 	actionIdentifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 		resource "port-labs_blueprint" "microservice" {
@@ -202,7 +202,7 @@ func TestActionImport(t *testing.T) {
 				default = jsonencode({"when":"immediate"})
 			}
 		}
-	`, identifier, actionIdentifier)
+	`, blueprintIdentifier, actionIdentifier)
 	resource.Test(t, resource.TestCase{
 		Providers: map[string]*schema.Provider{
 			"port-labs": Provider(),
@@ -218,7 +218,7 @@ func TestActionImport(t *testing.T) {
 				ResourceName:      "port-labs_action.restart_microservice",
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateId:     fmt.Sprintf("%s:%s", identifier, actionIdentifier),
+				ImportStateId:     fmt.Sprintf("%s:%s", blueprintIdentifier, actionIdentifier),
 			},
 		},
 	})

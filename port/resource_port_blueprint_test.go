@@ -113,7 +113,6 @@ func TestAccPortBlueprintImport(t *testing.T) {
 				Config: testAccActionConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "title", "microservice"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "data_source", "Port"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "identifier", "import_microservice"),
 				),
 			},

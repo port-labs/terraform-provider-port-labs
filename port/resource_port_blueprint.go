@@ -321,6 +321,11 @@ func newBlueprintResource() *schema.Resource {
 							Optional:    true,
 							Description: "Required when selecting type WEBHOOK. The URL to which the changelog is dispatched",
 						},
+						"agent": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Required when selecting type KAFKA. Whether or not the changelog is dispatched to the agent",
+						},
 					},
 				},
 				Optional: true,

@@ -311,6 +311,7 @@ func TestAccBlueprintWithChangelogDestination(t *testing.T) {
 		changelog_destination {
 			type = "WEBHOOK"
 			url = "https://google.com"
+			agent = true
 		}
 	}
 `, identifier)
@@ -324,6 +325,7 @@ func TestAccBlueprintWithChangelogDestination(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.0.type", "WEBHOOK"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.0.url", "https://google.com"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.0.agent", "true"),
 				),
 			},
 		},

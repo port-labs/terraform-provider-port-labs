@@ -93,8 +93,9 @@ type (
 	}
 
 	ChangelogDestination struct {
-		Type string `json:"type,omitempty"`
-		Url  string `json:"url,omitempty"`
+		Type  string `json:"type,omitempty"`
+		Url   string `json:"url,omitempty"`
+		Agent bool   `json:"agent,omitempty"`
 	}
 
 	ActionUserInputs = BlueprintSchema

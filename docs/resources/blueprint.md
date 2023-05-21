@@ -106,6 +106,7 @@ Required:
 
 Optional:
 
+- `agent` (Boolean) Required when selecting type KAFKA. Whether or not the changelog is dispatched to the agent
 - `url` (String) Required when selecting type WEBHOOK. The URL to which the changelog is dispatched
 
 <a id="nestedblock--mirror_properties"></a>

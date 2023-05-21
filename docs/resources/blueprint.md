@@ -106,6 +106,7 @@ Required:
 
 Optional:
 
+- `agent` (Boolean) Required when selecting type WEBHOOK. Defines whether to use Port Agent for execution or not.
 - `url` (String) Required when selecting type WEBHOOK. The URL to which the changelog is dispatched
 
 <a id="nestedblock--mirror_properties"></a>

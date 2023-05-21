@@ -321,6 +321,11 @@ func newBlueprintResource() *schema.Resource {
 							Optional:    true,
 							Description: "Required when selecting type WEBHOOK. The URL to which the changelog is dispatched",
 						},
+						"agent": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: "Required when selecting type WEBHOOK. Defines whether to use Port Agent for execution or not.",
+						},
 					},
 				},
 				Optional: true,
@@ -424,8 +429,9 @@ func writeBlueprintFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
 	d.Set("updated_by", b.UpdatedBy)
 	if b.ChangelogDestination != nil {
 		d.Set("changelog_destination", []any{map[string]any{
-			"type": b.ChangelogDestination.Type,
-			"url":  b.ChangelogDestination.Url,
+			"type":  b.ChangelogDestination.Type,
+			"url":   b.ChangelogDestination.Url,
+			"agent": b.ChangelogDestination.Agent,
 		}})
 	}
 	properties := schema.Set{F: func(i interface{}) int {
@@ -590,6 +596,7 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		}
 		b.ChangelogDestination.Type = changelogDestination.([]any)[0].(map[string]interface{})["type"].(string)
 		b.ChangelogDestination.Url = changelogDestination.([]any)[0].(map[string]interface{})["url"].(string)
+		b.ChangelogDestination.Agent = changelogDestination.([]any)[0].(map[string]interface{})["agent"].(bool)
 	}
 
 	properties := make(map[string]cli.BlueprintProperty, props.Len())

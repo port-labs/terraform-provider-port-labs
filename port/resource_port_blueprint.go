@@ -376,8 +376,14 @@ func isDeprecatedDefaultExists(identifier string, d *schema.ResourceData) bool {
 	properties := d.Get("properties").(*schema.Set)
 	for _, v := range properties.List() {
 		if v.(map[string]interface{})["identifier"] == identifier {
-			value, ok := v.(map[string]interface{})["default"]
-			return value.(string) != "" && ok
+			if v.(map[string]interface{})["type"] != "array" {
+				value, ok := v.(map[string]interface{})["default"]
+				return value.(string) != "" && ok
+			} else {
+
+				value, ok := v.(map[string]interface{})["default_items"]
+				return len(value.([]interface{})) != 0 && ok
+			}
 		}
 	}
 	return false
@@ -390,7 +396,8 @@ func writeDefaultFieldToResource(v cli.BlueprintProperty, k string, d *schema.Re
 		js, _ := json.Marshal(&t)
 		value = string(js)
 	case []interface{}:
-		p["default_items"] = t
+		js, _ := json.Marshal(&t)
+		value = string(js)
 	case float64:
 		value = strconv.FormatFloat(t, 'f', -1, 64)
 	case int:
@@ -409,7 +416,11 @@ func writeDefaultFieldToResource(v cli.BlueprintProperty, k string, d *schema.Re
 	}
 
 	if ok := isDeprecatedDefaultExists(k, d); ok {
-		p["default"] = value
+		if v.Type == "array" {
+			p["default_items"] = v.Default
+		} else {
+			p["default"] = value
+		}
 	} else {
 		mapDefault := make(map[string]string)
 		mapDefault["value"] = value
@@ -561,6 +572,14 @@ func defaultResourceToBody(value string, propFields *cli.BlueprintProperty) erro
 		}
 		propFields.Default = defaultBool
 
+	case "array":
+		defaultArr := make([]interface{}, 0)
+		err := json.Unmarshal([]byte(value), &defaultArr)
+		if err != nil {
+			return err
+		}
+		propFields.Default = defaultArr
+
 	case "object":
 		defaultObj := make(map[string]interface{})
 		err := json.Unmarshal([]byte(value), &defaultObj)
@@ -619,8 +638,12 @@ func blueprintResourceToBody(d *schema.ResourceData) (*cli.Blueprint, error) {
 		di, defaultItemsOk := p["default_items"].([]interface{})
 
 		if propFields.Type == "array" {
-			if (defaultValueOk && len(dv) != 0) || (defaultOk && df != "") {
-				return nil, fmt.Errorf("default or default_value can't be used when type is array for property %s", p["identifier"].(string))
+			if defaultOk && df != "" {
+				return nil, fmt.Errorf("default  can't be used when type is array for property %s", p["identifier"].(string))
+			}
+
+			if defaultValueOk && len(dv) != 0 && defaultItemsOk && len(di) != 0 {
+				return nil, fmt.Errorf("default_value and default_items can't be used together when type is array for property %s", p["identifier"].(string))
 			}
 
 		} else {

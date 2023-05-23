@@ -220,6 +220,15 @@ func TestAccBlueprintWithDefaultValue(t *testing.T) {
 			default_items = ["https://getport.io", "https://app.getport.io"]
 		}
 		properties {
+			identifier = "defaultValueArray"
+			type = "array"
+			items = {
+				type = "string"
+			}
+			title = "array"
+			default_value = {"value": jsonencode(["a"])}
+		}
+		properties {
 			identifier = "text"
 			type = "string"
 			title = "text"
@@ -246,12 +255,13 @@ func TestAccBlueprintWithDefaultValue(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.items.type", "string"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.items.format", "url"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.1.default_value.value", "1"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.identifier", "text"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.enum.0", "a"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.enum_colors.a", "red"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.default_value.value", "a"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.3.default_value.value", "true"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.4.default_value.value", "{\"a\":\"b\"}"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.3.identifier", "text"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.3.enum.0", "a"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.3.enum_colors.a", "red"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.3.default_value.value", "a"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.4.default_value.value", "true"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.5.default_value.value", "{\"a\":\"b\"}"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.2.default_value.value", "[\"a\"]"),
 				),
 			},
 		},

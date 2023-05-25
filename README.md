@@ -8,8 +8,6 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 
 ## Documentation
 
----
-
 - [Terraform registry docs](https://registry.terraform.io/providers/port-labs/port/latest/docs)
 - [Port docs](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/iac/terraform)
 

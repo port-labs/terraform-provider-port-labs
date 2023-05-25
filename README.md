@@ -8,8 +8,10 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 
 ## Documentation
 
-- [Official Docs](https://registry.terraform.io/providers/port-labs/port/latest/docs)
-- [Port Docs](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/iac/terraform)
+---
+
+- [Terraform registry docs](https://registry.terraform.io/providers/port-labs/port/latest/docs)
+- [Port docs](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/iac/terraform)
 
 ## Requirements
 
@@ -19,7 +21,7 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 
 ## Installation
 
-Terraform utilizes the Terraform Registry to download and install providers. To install port-labs provider, copy and paste the following code into your Terraform file:
+Terraform utilizes the Terraform Registry to download and install providers. To install the `port-labs` provider, copy and paste the following code into your Terraform file:
 
 ```terraform
 terraform {

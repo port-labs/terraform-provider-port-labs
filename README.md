@@ -6,30 +6,43 @@
 
 Port is the Developer Platform meant to supercharge your DevOps and Developers, and allow you to regain control of your environment.
 
-### Docs
+## Documentation
 
-- [Provider Docs](https://registry.terraform.io/providers/port-labs/port/latest/docs)
-- [Port Docs](https://docs.getport.io/)
+- [Terraform registry docs](https://registry.terraform.io/providers/port-labs/port/latest/docs)
+- [Port docs](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/iac/terraform)
+
+## Requirements
+
+- [Terraform](https://www.terraform.io/downloads.html) >= 0.13.x
+- [Go](https://golang.org/doc/install) >= 1.16 (to build the provider plugin)
+- [Port Credentials](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/api/#find-your-port-credentials)
 
 ## Installation
+
+Terraform utilizes the Terraform Registry to download and install providers. To install the `port-labs` provider, copy and paste the following code into your Terraform file:
 
 ```terraform
 terraform {
   required_providers {
-    port = {
+    port-labs = {
       source  = "port-labs/port-labs"
-      version = "~> 0.4.0"
+      version = "~> 0.10.3"
     }
   }
 }
-provider "port" {}
 
-resource "port-labs_entity" "microservice" {
-  title     = "monolith"
-  blueprint = "microservice_blueprint"
-  properties {
-    name  = "microservice_name"
-    value = "golang_monolith"
-  }
+provider "port-labs" {
+  client_id = "{YOUR CLIENT ID}"     # or set the environment variable PORT_CLIENT_ID
+  secret    = "{YOUR CLIENT SECRET}" # or set the environment variable PORT_CLIENT_SECRET
 }
 ```
+
+After you have added the code above, run the following command:
+
+```bash
+terraform init
+```
+
+## Examples
+
+please refer to the [examples](./examples) directory

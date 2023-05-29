@@ -166,7 +166,41 @@ func convert(prop map[string]interface{}, bp *cli.Blueprint) (interface{}, error
 	case "string", "number", "boolean":
 		return prop["value"], nil
 	case "array":
-		return prop["items"], nil
+		var itemsArray []interface{}
+		if itemsType, ok := bp.Schema.Properties[prop["name"].(string)].Items["type"]; ok {
+
+			for _, item := range prop["items"].([]interface{}) {
+				convertItem := item.(string)
+				switch itemsType {
+				case "number":
+					convertItem, err := strconv.ParseFloat(item.(string), 64)
+					if err != nil {
+						return nil, fmt.Errorf("failed to convert item to number")
+					}
+					itemsArray = append(itemsArray, convertItem)
+				case "boolean":
+					convertItem, err := strconv.ParseBool(item.(string))
+					if err != nil {
+						return nil, fmt.Errorf("failed to convert item to boolean")
+					}
+					itemsArray = append(itemsArray, convertItem)
+				case "object":
+					convertItem := make(map[string]interface{})
+					err := json.Unmarshal([]byte(item.(string)), &convertItem)
+					if err != nil {
+						return nil, fmt.Errorf("failed to convert item to object")
+					}
+					itemsArray = append(itemsArray, convertItem)
+				default:
+					itemsArray = append(itemsArray, convertItem)
+				}
+			}
+
+			return itemsArray, nil
+		} else {
+			return prop["items"], nil
+		}
+
 	case "object":
 		obj := make(map[string]interface{})
 		err := json.Unmarshal([]byte(prop["value"].(string)), &obj)

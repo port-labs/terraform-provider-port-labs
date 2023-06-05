@@ -2,10 +2,13 @@ package port
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/port/cli"
 )
 
@@ -36,6 +39,14 @@ type BlueprintResource struct {
 
 func (r *BlueprintResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_blueprint"
+}
+
+func (r *BlueprintResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+
+	r.portClient = req.ProviderData.(*cli.PortClient)
 }
 
 func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -117,7 +128,7 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 }
 
 func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *cli.Blueprint
+	var data *cli.BlueprintModel
 
 	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -127,7 +138,7 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 
 	// Read data from the API
-	b, statusCode, err := r.portClient.ReadBlueprint(ctx, data.Identifier)
+	b, statusCode, err := r.portClient.ReadBlueprint(ctx, data.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.State.RemoveResource(ctx)
@@ -137,8 +148,58 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	// Write data to the model
-	resp.State.Set(ctx, b)
+	writeBlueprintFieldsToResource(data, b)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
+}
+
+func writeBlueprintFieldsToResource(bm *cli.BlueprintModel, b *cli.Blueprint) {
+	bm.Identifier = types.StringValue(b.Identifier)
+	bm.Title = types.StringValue(b.Title)
+	bm.Icon = types.StringValue(b.Icon)
+	bm.Description = types.StringValue(b.Description)
+	bm.CreatedAt = types.StringValue(b.CreatedAt.String())
+	bm.CreatedBy = types.StringValue(b.CreatedBy)
+	bm.UpdatedAt = types.StringValue(b.UpdatedAt.String())
+	bm.UpdatedBy = types.StringValue(b.UpdatedBy)
+	if b.ChangelogDestination != nil {
+		bm.ChangelogDestination = &cli.ChangelogDestinationModel{
+			Type:  types.StringValue(b.ChangelogDestination.Type),
+			Url:   types.StringValue(b.ChangelogDestination.Url),
+			Agent: types.BoolValue(b.ChangelogDestination.Agent),
+		}
+	}
+}
+
+func defaultResourceToBody(value string, propFields *cli.BlueprintProperty) error {
+	switch propFields.Type {
+	case "string":
+		propFields.Default = value
+	case "number":
+		defaultNum, err := strconv.ParseInt(value, 10, 0)
+		if err != nil {
+			return err
+		}
+		propFields.Default = defaultNum
+
+	case "boolean":
+
+		defaultBool, err := strconv.ParseBool(value)
+		if err != nil {
+			return err
+		}
+		propFields.Default = defaultBool
+
+	case "object":
+		defaultObj := make(map[string]interface{})
+		err := json.Unmarshal([]byte(value), &defaultObj)
+		if err != nil {
+			return err
+		}
+		propFields.Default = defaultObj
+
+	}
+	return nil
 }
 
 func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -161,7 +222,18 @@ func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateReque
 		resp.Diagnostics.AddError("failed to create R2 bucket", err.Error())
 		return
 	}
-	fmt.Printf("Created Blueprint %s\n", bp.Identifier)
+
+	writeBlueprintComputedFieldsToResource(data, bp)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
+}
+
+func writeBlueprintComputedFieldsToResource(bm *cli.BlueprintModel, bp *cli.Blueprint) {
+	bm.Identifier = types.StringValue(bp.Identifier)
+	bm.CreatedAt = types.StringValue(bp.CreatedAt.String())
+	bm.CreatedBy = types.StringValue(bp.CreatedBy)
+	bm.UpdatedAt = types.StringValue(bp.UpdatedAt.String())
+	bm.UpdatedBy = types.StringValue(bp.UpdatedBy)
 }
 
 func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -174,223 +246,12 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 
 }
 
-// func readBlueprint(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
-// 	var diags diag.Diagnostics
-// 	c := m.(*cli.PortClient)
-// 	b, statusCode, err := c.ReadBlueprint(ctx, d.Id())
-// 	if err != nil {
-// 		if statusCode == 404 {
-// 			d.SetId("")
-// 			return diags
-// 		}
-
-// 		return diag.FromErr(err)
-// 	}
-
-// 	writeBlueprintFieldsToResource(d, b)
-
-// 	return diags
-// }
-
-// func isDeprecatedDefaultExists(identifier string, d *schema.ResourceData) bool {
-// 	properties := d.Get("properties").(*schema.Set)
-// 	for _, v := range properties.List() {
-// 		if v.(map[string]interface{})["identifier"] == identifier {
-// 			value, ok := v.(map[string]interface{})["default"]
-// 			return value.(string) != "" && ok
-// 		}
-// 	}
-// 	return false
-// }
-
-// func writeDefaultFieldToResource(v cli.BlueprintProperty, k string, d *schema.ResourceData, p map[string]interface{}) {
-// 	var value string
-// 	switch t := v.Default.(type) {
-// 	case map[string]interface{}:
-// 		js, _ := json.Marshal(&t)
-// 		value = string(js)
-// 	case []interface{}:
-// 		p["default_items"] = t
-// 	case float64:
-// 		value = strconv.FormatFloat(t, 'f', -1, 64)
-// 	case int:
-// 		value = strconv.Itoa(t)
-// 	case string:
-// 		value = t
-// 	case bool:
-// 		value = "false"
-// 		if t {
-// 			value = "true"
-// 		}
-// 	}
-
-// 	if p["default_items"] != nil {
-// 		return
-// 	}
-
-// 	if ok := isDeprecatedDefaultExists(k, d); ok {
 // 		p["default"] = value
 // 	} else {
 // 		mapDefault := make(map[string]string)
 // 		mapDefault["value"] = value
 // 		p["default_value"] = mapDefault
 // 	}
-// }
-
-// func writeBlueprintFieldsToResource(d *tfsdk.State, b *cli.Blueprint) {
-// 	d.SetId(b.Identifier)
-// 	d.Set("title", b.Title)
-// 	d.Set("icon", b.Icon)
-// 	d.Set("identifier", b.Identifier)
-// 	d.Set("description", b.Description)
-// 	d.Set("created_at", b.CreatedAt.String())
-// 	d.Set("created_by", b.CreatedBy)
-// 	d.Set("updated_at", b.UpdatedAt.String())
-// 	d.Set("updated_by", b.UpdatedBy)
-// 	if b.ChangelogDestination != nil {
-// 		d.Set("changelog_destination", []any{map[string]any{
-// 			"type":  b.ChangelogDestination.Type,
-// 			"url":   b.ChangelogDestination.Url,
-// 			"agent": b.ChangelogDestination.Agent,
-// 		}})
-// 	}
-// 	properties := schema.Set{F: func(i interface{}) int {
-// 		id := (i.(map[string]interface{}))["identifier"].(string)
-// 		return schema.HashString(id)
-// 	}}
-
-// 	relations := schema.Set{F: func(i interface{}) int {
-// 		id := (i.(map[string]interface{}))["identifier"].(string)
-// 		return schema.HashString(id)
-// 	}}
-
-// 	mirrorPoperties := schema.Set{F: func(i interface{}) int {
-// 		id := (i.(map[string]interface{}))["identifier"].(string)
-// 		return schema.HashString(id)
-// 	}}
-
-// 	calculationProperties := schema.Set{F: func(i interface{}) int {
-// 		id := (i.(map[string]interface{}))["identifier"].(string)
-// 		return schema.HashString(id)
-// 	}}
-
-// 	for k, v := range b.Schema.Properties {
-// 		p := map[string]interface{}{}
-// 		p["identifier"] = k
-// 		p["title"] = v.Title
-// 		p["type"] = v.Type
-// 		p["items"] = v.Items
-// 		p["description"] = v.Description
-// 		p["format"] = v.Format
-// 		p["max_length"] = v.MaxLength
-// 		p["min_length"] = v.MinLength
-// 		p["max_items"] = v.MaxItems
-// 		p["min_items"] = v.MinItems
-// 		p["icon"] = v.Icon
-// 		p["spec"] = v.Spec
-// 		p["enum_colors"] = v.EnumColors
-// 		if lo.Contains(b.Schema.Required, k) {
-// 			p["required"] = true
-// 		} else {
-// 			p["required"] = false
-// 		}
-
-// 		enumValue := []string{}
-
-// 		for _, value := range v.Enum {
-// 			if v.Type == "number" {
-// 				enumValue = append(enumValue, fmt.Sprintf("%v", value))
-// 			}
-// 			if v.Type == "string" {
-// 				enumValue = append(enumValue, value.(string))
-// 			}
-// 		}
-
-// 		p["enum"] = enumValue
-
-// 		if v.Default != nil {
-// 			writeDefaultFieldToResource(v, k, d, p)
-// 		}
-
-// 		if v.SpecAuthentication != nil {
-// 			p["spec_authentication"] = []any{map[string]any{
-// 				"token_url":         v.SpecAuthentication.TokenUrl,
-// 				"client_id":         v.SpecAuthentication.ClientId,
-// 				"authorization_url": v.SpecAuthentication.AuthorizationUrl,
-// 			}}
-// 		}
-
-// 		properties.Add(p)
-// 	}
-
-// 	for k, v := range b.Relations {
-// 		p := map[string]interface{}{}
-// 		p["identifier"] = k
-// 		p["title"] = v.Title
-// 		p["target"] = v.Target
-// 		p["required"] = v.Required
-// 		p["many"] = v.Many
-// 		relations.Add(p)
-// 	}
-
-// 	for k, v := range b.MirrorProperties {
-// 		p := map[string]interface{}{}
-// 		p["identifier"] = k
-// 		p["title"] = v.Title
-// 		p["path"] = v.Path
-// 		mirrorPoperties.Add(p)
-// 	}
-
-// 	for k, v := range b.CalculationProperties {
-// 		p := map[string]interface{}{}
-// 		p["identifier"] = k
-// 		p["title"] = v.Title
-// 		p["description"] = v.Description
-// 		p["icon"] = v.Icon
-// 		p["calculation"] = v.Calculation
-// 		p["type"] = v.Type
-// 		p["format"] = v.Format
-// 		p["colorized"] = v.Colorized
-// 		p["colors"] = v.Colors
-
-// 		calculationProperties.Add(p)
-// 	}
-
-// 	d.Set("properties", &properties)
-// 	d.Set("mirror_properties", &mirrorPoperties)
-// 	d.Set("calculation_properties", &calculationProperties)
-// 	d.Set("relations", &relations)
-// }
-
-// func defaultResourceToBody(value string, propFields *cli.BlueprintProperty) error {
-// 	switch propFields.Type {
-// 	case "string":
-// 		propFields.Default = value
-// 	case "number":
-// 		defaultNum, err := strconv.ParseInt(value, 10, 0)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		propFields.Default = defaultNum
-
-// 	case "boolean":
-
-// 		defaultBool, err := strconv.ParseBool(value)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		propFields.Default = defaultBool
-
-// 	case "object":
-// 		defaultObj := make(map[string]interface{})
-// 		err := json.Unmarshal([]byte(value), &defaultObj)
-// 		if err != nil {
-// 			return err
-// 		}
-// 		propFields.Default = defaultObj
-
-// 	}
-// 	return nil
 // }
 
 func blueprintResourceToBody(d *cli.BlueprintModel) (*cli.Blueprint, error) {
@@ -410,7 +271,7 @@ func blueprintResourceToBody(d *cli.BlueprintModel) (*cli.Blueprint, error) {
 		b.ChangelogDestination.Url = d.ChangelogDestination.Url.ValueString()
 		b.ChangelogDestination.Agent = d.ChangelogDestination.Agent.ValueBool()
 	} else {
-		b.ChangelogDestination = &cli.ChangelogDestination{}
+		b.ChangelogDestination = nil
 	}
 
 	properties := props
@@ -693,12 +554,4 @@ func blueprintResourceToBody(d *cli.BlueprintModel) (*cli.Blueprint, error) {
 // 	}
 // 	writeBlueprintComputedFieldsToResource(d, bp)
 // 	return diags
-// }
-
-// func writeBlueprintComputedFieldsToResource(d *schema.ResourceData, b *cli.Blueprint) {
-// 	d.SetId(b.Identifier)
-// 	d.Set("created_at", b.CreatedAt.String())
-// 	d.Set("created_by", b.CreatedBy)
-// 	d.Set("updated_at", b.UpdatedAt.String())
-// 	d.Set("updated_by", b.UpdatedBy)
 // }

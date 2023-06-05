@@ -74,20 +74,13 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 		return
 	}
 
-	token, err := c.Authenticate(ctx, data.ClientId.ValueString(), data.Secret.ValueString())
+	_, err = c.Authenticate(ctx, data.ClientId.ValueString(), data.Secret.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to authenticate with Port-labs", err.Error())
 		return
 	}
 
-	p = &PortLabsProvider{
-		clientId: data.ClientId.ValueString(),
-		secret:   data.Secret.ValueString(),
-		token:    token,
-		baseUrl:  baseUrl,
-	}
-
-	resp.ResourceData = p
+	resp.ResourceData = c
 
 }
 

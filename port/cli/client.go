@@ -13,6 +13,7 @@ type (
 	PortClient struct {
 		Client   *resty.Client
 		ClientID string
+		Token    string
 	}
 )
 

@@ -26,6 +26,13 @@ func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, 
 }
 
 func (c *PortClient) CreateBlueprint(ctx context.Context, b *Blueprint) (*Blueprint, error) {
+	defer func() {
+		if r := recover(); r != nil {
+			// Handle the panic here
+			fmt.Println("Panic occurred:", r)
+		}
+	}()
+
 	url := "v1/blueprints"
 	resp, err := c.Client.R().
 		SetBody(b).

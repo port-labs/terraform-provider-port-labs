@@ -19,7 +19,8 @@ func main() {
 		context.Background(),
 		port.New,
 		providerserver.ServeOpts{
-			Address: "registry.terraform.io/<namespace>/<provider_name>",
+			Address: "registry.terraform.io/port-labs/port-labs",
+			Debug:   debug,
 		},
 	)
 
@@ -28,7 +29,3 @@ func main() {
 	}
 
 }
-
-//ProviderFunc: func() *schema.Provider {
-// return port.Provider()
-// },

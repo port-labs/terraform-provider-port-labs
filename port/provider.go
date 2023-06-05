@@ -2,7 +2,6 @@ package port
 
 import (
 	"context"
-	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -24,7 +23,7 @@ func New() provider.Provider {
 }
 
 func (p *PortLabsProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "examplecloud"
+	resp.TypeName = "port-labs"
 }
 
 func (p *PortLabsProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
@@ -53,43 +52,49 @@ func (p *PortLabsProvider) Schema(ctx context.Context, req provider.SchemaReques
 }
 
 func (p *PortLabsProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-	p.clientId = os.Getenv("PORT_CLIENT_ID")
-	p.secret = os.Getenv("PORT_SECRET")
-	p.baseUrl = os.Getenv("PORT_BASE_URL")
+	var data *cli.PortProviderModel
 
-	if p.clientId == "" {
-		resp.Diagnostics.AddError("Missing PORT_CLIENT_ID", "PORT_CLIENT_ID is required")
-		return
-	}
-	if p.secret == "" {
-		resp.Diagnostics.AddError("Missing PORT_SECRET", "PORT_SECRET is required")
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if p.baseUrl == "" {
-		p.baseUrl = "https://api.getport.io"
+	var baseUrl string
+
+	if data.BaseUrl.ValueString() == "" {
+		baseUrl = "https://api.getport.io"
+	} else {
+		baseUrl = data.BaseUrl.ValueString()
 	}
 
-	c, err := cli.New(p.baseUrl, cli.WithHeader("User-Agent", version.ProviderVersion), cli.WithClientID(p.clientId))
+	c, err := cli.New(baseUrl, cli.WithHeader("User-Agent", version.ProviderVersion), cli.WithClientID(p.clientId))
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create Port-labs client", err.Error())
 		return
 	}
 
-	token, err := c.Authenticate(ctx, p.clientId, p.secret)
+	token, err := c.Authenticate(ctx, data.ClientId.ValueString(), data.Secret.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to authenticate with Port-labs", err.Error())
 		return
 	}
 
-	p.token = token
+	p = &PortLabsProvider{
+		clientId: data.ClientId.ValueString(),
+		secret:   data.Secret.ValueString(),
+		token:    token,
+		baseUrl:  baseUrl,
+	}
 
 	resp.ResourceData = p
 
 }
 
 func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		newBlueprintResource,
+	}
 }
 
 func (p *PortLabsProvider) DataSources(ctx context.Context) []func() datasource.DataSource {

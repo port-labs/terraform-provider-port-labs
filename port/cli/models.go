@@ -157,9 +157,24 @@ type ChangelogDestinationModel struct {
 }
 
 type StringPropModel struct {
-	Title      types.String `tfsdk:"title"`
-	Identifier types.String `tfsdk:"identifier"`
+	Title       types.String `tfsdk:"title"`
+	Icon        types.String `tfsdk:"icon"`
+	Description types.String `tfsdk:"description"`
+	Default     types.String `tfsdk:"default"`
+	Required    types.Bool   `tfsdk:"required"`
+	Format      types.String `tfsdk:"format"`
+	MaxLength   types.Int64  `tfsdk:"max_length"`
+	MinLength   types.Int64  `tfsdk:"min_length"`
+	Pattern     types.String `tfsdk:"pattern"`
 }
+
+type IdentifierModel struct {
+	StringProp map[string]StringPropModel `tfsdk:"string_prop"`
+}
+type PropertiesModel struct {
+	StringProp map[string]StringPropModel `tfsdk:"string_prop"`
+}
+
 type BlueprintModel struct {
 	Identifier           types.String               `tfsdk:"identifier"`
 	Title                types.String               `tfsdk:"title"`
@@ -170,5 +185,5 @@ type BlueprintModel struct {
 	UpdatedAt            types.String               `tfsdk:"updated_at"`
 	UpdatedBy            types.String               `tfsdk:"updated_by"`
 	ChangelogDestination *ChangelogDestinationModel `tfsdk:"changelog_destination"`
-	StringProp           *StringPropModel           `tfsdk:"string_prop"`
+	Properties           *PropertiesModel           `tfsdk:"properties"`
 }

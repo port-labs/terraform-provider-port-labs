@@ -82,9 +82,6 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 			"updated_at": schema.StringAttribute{
 				MarkdownDescription: "The last update date of the blueprint",
 				Computed:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
 			},
 			"updated_by": schema.StringAttribute{
 				MarkdownDescription: "The last updater of the blueprint",
@@ -208,6 +205,34 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 							},
 						},
 					},
+					"boolean_prop": schema.MapNestedAttribute{
+						MarkdownDescription: "The boolean property of the blueprint",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"title": schema.StringAttribute{
+									MarkdownDescription: "The display name of the boolean property",
+									Optional:            true,
+								},
+								"description": schema.StringAttribute{
+									MarkdownDescription: "The description of the boolean property",
+									Optional:            true,
+								},
+								"default": schema.BoolAttribute{
+									MarkdownDescription: "The default of the boolean property",
+									Optional:            true,
+								},
+								"icon": schema.StringAttribute{
+									MarkdownDescription: "The icon of the boolean property",
+									Optional:            true,
+								},
+								"required": schema.BoolAttribute{
+									MarkdownDescription: "The required of the boolean property",
+									Optional:            true,
+								},
+							},
+						},
+					},
 					"array_prop": schema.MapNestedAttribute{
 						MarkdownDescription: "The array property of the blueprint",
 						Optional:            true,
@@ -326,7 +351,7 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 
 	writeBlueprintFieldsToResource(data, b)
-	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func writeBlueprintFieldsToResource(bm *cli.BlueprintModel, b *cli.Blueprint) {
@@ -417,7 +442,19 @@ func addPropertiesToResource(b *cli.Blueprint, bm *cli.BlueprintModel, propertie
 			setCommonProperties(v, bm.Properties.ArrayProp[k], arrayProp)
 
 			properties.ArrayProp[k] = *arrayProp
+
+		case "boolean":
+			if properties.BooleanProp == nil {
+				properties.BooleanProp = make(map[string]cli.BooleanPropModel)
+			}
+
+			booleanProp := &cli.BooleanPropModel{}
+
+			setCommonProperties(v, bm.Properties.BooleanProp[k], booleanProp)
+
+			properties.BooleanProp[k] = *booleanProp
 		}
+
 	}
 }
 
@@ -436,6 +473,11 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 				case *cli.NumberPropModel:
 					bmNumber := bm.(cli.NumberPropModel)
 					if !bmNumber.Description.IsNull() {
+						p.Description = types.StringValue(v.Description)
+					}
+				case *cli.BooleanPropModel:
+					bmBoolean := bm.(cli.BooleanPropModel)
+					if !bmBoolean.Description.IsNull() {
 						p.Description = types.StringValue(v.Description)
 					}
 
@@ -457,6 +499,11 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 				case *cli.NumberPropModel:
 					bmNumber := bm.(cli.NumberPropModel)
 					if !bmNumber.Icon.IsNull() {
+						p.Icon = types.StringValue(v.Icon)
+					}
+				case *cli.BooleanPropModel:
+					bmBoolean := bm.(cli.BooleanPropModel)
+					if !bmBoolean.Icon.IsNull() {
 						p.Icon = types.StringValue(v.Icon)
 					}
 				case *cli.ArrayPropModel:
@@ -481,6 +528,11 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 					if !bmNumber.Title.IsNull() {
 						p.Title = types.StringValue(v.Title)
 					}
+				case *cli.BooleanPropModel:
+					bmBoolean := bm.(cli.BooleanPropModel)
+					if !bmBoolean.Title.IsNull() {
+						p.Title = types.StringValue(v.Title)
+					}
 				case *cli.ArrayPropModel:
 					bmArray := bm.(cli.ArrayPropModel)
 					if !bmArray.Title.IsNull() {
@@ -501,6 +553,12 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 					bmNumber := bm.(cli.NumberPropModel)
 					if !bmNumber.Default.IsNull() {
 						p.Default = types.Float64Value(v.Default.(float64))
+					}
+
+				case *cli.BooleanPropModel:
+					bmBoolean := bm.(cli.BooleanPropModel)
+					if !bmBoolean.Default.IsNull() {
+						p.Default = types.BoolValue(v.Default.(bool))
 					}
 				}
 			}
@@ -562,7 +620,7 @@ func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateReque
 
 	writeBlueprintComputedFieldsToResource(data, bp)
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func writeBlueprintComputedFieldsToResource(bm *cli.BlueprintModel, bp *cli.Blueprint) {
@@ -574,6 +632,36 @@ func writeBlueprintComputedFieldsToResource(bm *cli.BlueprintModel, bp *cli.Blue
 }
 
 func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data *cli.BlueprintModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	b, err := blueprintResourceToBody(ctx, data)
+
+	if err != nil {
+		resp.Diagnostics.AddError("failed to transform blueprint", err.Error())
+		return
+	}
+
+	var bp *cli.Blueprint
+
+	if data.Identifier.IsNull() {
+		bp, err = r.portClient.CreateBlueprint(ctx, b)
+	} else {
+		bp, err = r.portClient.UpdateBlueprint(ctx, b, data.Identifier.ValueString())
+	}
+
+	if err != nil {
+		resp.Diagnostics.AddError("failed to update blueprint", err.Error())
+		return
+	}
+
+	writeBlueprintComputedFieldsToResource(data, bp)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
 }
 
 func (r *BlueprintResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -670,6 +758,21 @@ func blueprintResourceToBody(ctx context.Context, d *cli.BlueprintModel) (*cli.B
 				}
 			}
 		}
+		if d.Properties.BooleanProp != nil {
+			for propIdentifier, prop := range d.Properties.BooleanProp {
+				props[propIdentifier] = cli.BlueprintProperty{
+					Type:        "boolean",
+					Title:       prop.Title.ValueString(),
+					Default:     prop.Default.ValueBool(),
+					Icon:        prop.Icon.ValueString(),
+					Description: prop.Description.ValueString(),
+				}
+				if prop.Required.ValueBool() {
+					required = append(required, propIdentifier)
+				}
+			}
+		}
+
 	}
 
 	properties := props

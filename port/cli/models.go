@@ -180,6 +180,14 @@ type NumberPropModel struct {
 	Minimum     types.Float64 `tfsdk:"minimum"`
 }
 
+type BooleanPropModel struct {
+	Title       types.String `tfsdk:"title"`
+	Icon        types.String `tfsdk:"icon"`
+	Description types.String `tfsdk:"description"`
+	Default     types.Bool   `tfsdk:"default"`
+	Required    types.Bool   `tfsdk:"required"`
+}
+
 type ItemsModal struct {
 	Type    types.String `tfsdk:"type"`
 	Format  types.String `tfsdk:"format"`
@@ -197,9 +205,10 @@ type ArrayPropModel struct {
 }
 
 type PropertiesModel struct {
-	StringProp map[string]StringPropModel `tfsdk:"string_prop"`
-	NumberProp map[string]NumberPropModel `tfsdk:"number_prop"`
-	ArrayProp  map[string]ArrayPropModel  `tfsdk:"array_prop"`
+	StringProp  map[string]StringPropModel  `tfsdk:"string_prop"`
+	NumberProp  map[string]NumberPropModel  `tfsdk:"number_prop"`
+	BooleanProp map[string]BooleanPropModel `tfsdk:"boolean_prop"`
+	ArrayProp   map[string]ArrayPropModel   `tfsdk:"array_prop"`
 }
 
 type BlueprintModel struct {

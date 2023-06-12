@@ -748,7 +748,7 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 	)...)
 }
 
-func stringPropResourceToBody(d *cli.BlueprintModel, props map[string]cli.BlueprintProperty) {
+func stringPropResourceToBody(d *cli.BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
 	for propIdentifier, prop := range d.Properties.StringProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type:  "string",
@@ -790,7 +790,130 @@ func stringPropResourceToBody(d *cli.BlueprintModel, props map[string]cli.Bluepr
 					property.Enum = append(property.Enum, v)
 				}
 			}
+		}
+		if prop.Required.ValueBool() {
+			required = append(required, propIdentifier)
+		}
+	}
+}
 
+func numberPropResourceToBody(d *cli.BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+	for propIdentifier, prop := range d.Properties.NumberProp {
+		props[propIdentifier] = cli.BlueprintProperty{
+			Type:  "number",
+			Title: prop.Title.ValueString(),
+		}
+
+		if property, ok := props[propIdentifier]; ok {
+			if !prop.Default.IsNull() {
+				property.Default = prop.Default
+			}
+
+			if !prop.Icon.IsNull() {
+				property.Icon = prop.Icon.ValueString()
+			}
+
+			if !prop.Minimum.IsNull() {
+				property.Minimum = prop.Minimum.ValueFloat64()
+			}
+
+			if !prop.Maximum.IsNull() {
+				property.Maximum = prop.Maximum.ValueFloat64()
+			}
+
+			if !prop.Description.IsNull() {
+				property.Description = prop.Description.ValueString()
+			}
+		}
+		if prop.Required.ValueBool() {
+			required = append(required, propIdentifier)
+		}
+	}
+}
+
+func booleanPropResourceToBody(d *cli.BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+	for propIdentifier, prop := range d.Properties.BooleanProp {
+		props[propIdentifier] = cli.BlueprintProperty{
+			Type:  "boolean",
+			Title: prop.Title.ValueString(),
+		}
+
+		if property, ok := props[propIdentifier]; ok {
+			if !prop.Default.IsNull() {
+				property.Default = prop.Default
+			}
+
+			if !prop.Icon.IsNull() {
+				property.Icon = prop.Icon.ValueString()
+			}
+
+			if !prop.Description.IsNull() {
+				property.Description = prop.Description.ValueString()
+			}
+		}
+		if prop.Required.ValueBool() {
+			required = append(required, propIdentifier)
+		}
+	}
+}
+
+func objectPropResourceToBody(d *cli.BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+	for propIdentifier, prop := range d.Properties.ObjectProp {
+		props[propIdentifier] = cli.BlueprintProperty{
+			Type:  "object",
+			Title: prop.Title.ValueString(),
+		}
+
+		if property, ok := props[propIdentifier]; ok {
+			if !prop.Default.IsNull() {
+				property.Default = prop.Default
+			}
+
+			if !prop.Icon.IsNull() {
+				property.Icon = prop.Icon.ValueString()
+			}
+
+			if !prop.Description.IsNull() {
+				property.Description = prop.Description.ValueString()
+			}
+		}
+
+		if prop.Required.ValueBool() {
+			required = append(required, propIdentifier)
+		}
+	}
+}
+
+func arrayPropResourceToBody(d *cli.BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+	for propIdentifier, prop := range d.Properties.ArrayProp {
+		props[propIdentifier] = cli.BlueprintProperty{
+			Type:  "array",
+			Title: prop.Title.ValueString(),
+		}
+
+		if property, ok := props[propIdentifier]; ok {
+
+			if !prop.Icon.IsNull() {
+				property.Icon = prop.Icon.ValueString()
+			}
+
+			if !prop.Description.IsNull() {
+				property.Description = prop.Description.ValueString()
+			}
+			if !prop.Items.Type.IsNull() {
+				items := map[string]interface{}{}
+				if !prop.Items.Type.IsNull() {
+					items["type"] = prop.Items.Type.ValueString()
+				}
+				if !prop.Items.Format.IsNull() {
+					items["format"] = prop.Items.Format.ValueString()
+				}
+				if !prop.Items.Default.IsNull() {
+					items["default"] = prop.Items.Default
+				}
+
+				property.Items = items
+			}
 		}
 
 		if prop.Required.ValueBool() {
@@ -824,78 +947,20 @@ func blueprintResourceToBody(ctx context.Context, d *cli.BlueprintModel) (*cli.B
 
 	if d.Properties != nil {
 		if d.Properties.StringProp != nil {
-			stringPropResourceToBody(d, props)
+			stringPropResourceToBody(d, props, required)
 		}
 		if d.Properties.ArrayProp != nil {
-			for propIdentifier, prop := range d.Properties.ArrayProp {
-				items := map[string]interface{}{}
-				if prop.Items != nil {
-					if !prop.Items.Type.IsNull() {
-						items["type"] = prop.Items.Type.ValueString()
-					}
-					if !prop.Items.Format.IsNull() {
-						items["format"] = prop.Items.Format.ValueString()
-					}
-					if !prop.Items.Default.IsNull() {
-						items["default"] = prop.Items.Default
-					}
-
-				}
-
-				props[propIdentifier] = cli.BlueprintProperty{
-					Type:     "array",
-					Title:    prop.Title.ValueString(),
-					Icon:     prop.Icon.ValueString(),
-					MaxItems: int(prop.MaxItems.ValueInt64()),
-					MinItems: int(prop.MinItems.ValueInt64()),
-					Items:    items,
-				}
-			}
+			arrayPropResourceToBody(d, props, required)
 		}
 		if d.Properties.NumberProp != nil {
-			for propIdentifier, prop := range d.Properties.NumberProp {
-				props[propIdentifier] = cli.BlueprintProperty{
-					Type:        "number",
-					Title:       prop.Title.ValueString(),
-					Default:     prop.Default.ValueFloat64(),
-					Icon:        prop.Icon.ValueString(),
-					Maximum:     prop.Maximum.ValueFloat64(),
-					Minimum:     prop.Minimum.ValueFloat64(),
-					Description: prop.Description.ValueString(),
-				}
-				if prop.Required.ValueBool() {
-					required = append(required, propIdentifier)
-				}
-			}
+			numberPropResourceToBody(d, props, required)
 		}
 		if d.Properties.BooleanProp != nil {
-			for propIdentifier, prop := range d.Properties.BooleanProp {
-				props[propIdentifier] = cli.BlueprintProperty{
-					Type:        "boolean",
-					Title:       prop.Title.ValueString(),
-					Default:     prop.Default.ValueBool(),
-					Icon:        prop.Icon.ValueString(),
-					Description: prop.Description.ValueString(),
-				}
-				if prop.Required.ValueBool() {
-					required = append(required, propIdentifier)
-				}
-			}
+			booleanPropResourceToBody(d, props, required)
 		}
 
 		if d.Properties.ObjectProp != nil {
-			for propIdentifier, prop := range d.Properties.ObjectProp {
-				props[propIdentifier] = cli.BlueprintProperty{
-					Type:        "object",
-					Title:       prop.Title.ValueString(),
-					Default:     prop.Default,
-					Icon:        prop.Icon.ValueString(),
-					Description: prop.Description.ValueString(),
-				}
-				if prop.Required.ValueBool() {
-					required = append(required, propIdentifier)
-				}
-			}
+			objectPropResourceToBody(d, props, required)
 		}
 
 	}

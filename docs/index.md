@@ -6,6 +6,7 @@ description: |-
 ---
 
 # port-labs Provider
+
 [getport.io](https://getport.io)
 
 ## Example Usage
@@ -14,16 +15,15 @@ description: |-
 terraform {
   required_providers {
     port-labs = {
-      source = "port-labs/port-labs"
-      version = "~> 0.10.0"
+      source  = "port-labs/port-labs"
+      version = "~> 0.10.4"
     }
   }
 }
 
-# Configure the port-labs Provider
 provider "port-labs" {
-  client_id = "my-client-id"
-  secret    = "my-secret"
+  client_id = "{YOUR CLIENT ID}"     # or set the environment variable PORT_CLIENT_ID
+  secret    = "{YOUR CLIENT SECRET}" # or set the environment variable PORT_CLIENT_SECRET
 }
 
 ```

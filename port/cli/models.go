@@ -42,6 +42,8 @@ type (
 		MinLength          int                 `json:"minLength,omitempty"`
 		MaxItems           int                 `json:"maxItems,omitempty"`
 		MinItems           int                 `json:"minItems,omitempty"`
+		Maximum            float64             `json:"maximum,omitempty"`
+		Minimum            float64             `json:"minimum,omitempty"`
 		Description        string              `json:"description,omitempty"`
 		Blueprint          string              `json:"blueprint,omitempty"`
 		Pattern            string              `json:"pattern,omitempty"`
@@ -105,9 +107,9 @@ type (
 	Blueprint struct {
 		Meta
 		Identifier            string                                  `json:"identifier,omitempty"`
-		Title                 string                                  `json:"title"`
-		Icon                  string                                  `json:"icon"`
-		Description           string                                  `json:"description"`
+		Title                 string                                  `json:"title,omitempty"`
+		Icon                  string                                  `json:"icon,omitempty"`
+		Description           string                                  `json:"description,omitempty"`
 		Schema                BlueprintSchema                         `json:"schema"`
 		MirrorProperties      map[string]BlueprintMirrorProperty      `json:"mirrorProperties"`
 		CalculationProperties map[string]BlueprintCalculationProperty `json:"calculationProperties"`
@@ -168,11 +170,36 @@ type StringPropModel struct {
 	Pattern     types.String `tfsdk:"pattern"`
 }
 
-type IdentifierModel struct {
-	StringProp map[string]StringPropModel `tfsdk:"string_prop"`
+type NumberPropModel struct {
+	Title       types.String  `tfsdk:"title"`
+	Icon        types.String  `tfsdk:"icon"`
+	Description types.String  `tfsdk:"description"`
+	Default     types.Float64 `tfsdk:"default"`
+	Required    types.Bool    `tfsdk:"required"`
+	Maximum     types.Float64 `tfsdk:"maximum"`
+	Minimum     types.Float64 `tfsdk:"minimum"`
 }
+
+type ItemsModal struct {
+	Type    types.String `tfsdk:"type"`
+	Format  types.String `tfsdk:"format"`
+	Default types.List   `tfsdk:"default"`
+}
+type ArrayPropModel struct {
+	Title       types.String `tfsdk:"title"`
+	Icon        types.String `tfsdk:"icon"`
+	Description types.String `tfsdk:"description"`
+	MaxItems    types.Int64  `tfsdk:"max_items"`
+	MinItems    types.Int64  `tfsdk:"min_items"`
+	Required    types.Bool   `tfsdk:"required"`
+	Items       *ItemsModal  `tfsdk:"items"`
+	// Default     types.ListType `tfsdk:"default"`
+}
+
 type PropertiesModel struct {
 	StringProp map[string]StringPropModel `tfsdk:"string_prop"`
+	NumberProp map[string]NumberPropModel `tfsdk:"number_prop"`
+	ArrayProp  map[string]ArrayPropModel  `tfsdk:"array_prop"`
 }
 
 type BlueprintModel struct {

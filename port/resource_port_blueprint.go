@@ -149,8 +149,7 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 								},
 								"required": schema.BoolAttribute{
 									MarkdownDescription: "The required of the string property",
-									Computed:            true,
-									Default:             booldefault.StaticBool(false),
+									Optional:            true,
 								},
 								"min_length": schema.Int64Attribute{
 									MarkdownDescription: "The min length of the string property",
@@ -173,9 +172,135 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 							},
 						},
 					},
+					"number_prop": schema.MapNestedAttribute{
+						MarkdownDescription: "The number property of the blueprint",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"title": schema.StringAttribute{
+									MarkdownDescription: "The display name of the number property",
+									Optional:            true,
+								},
+								"description": schema.StringAttribute{
+									MarkdownDescription: "The description of the number property",
+									Optional:            true,
+								},
+								"default": schema.Float64Attribute{
+									MarkdownDescription: "The default of the number property",
+									Optional:            true,
+								},
+								"icon": schema.StringAttribute{
+									MarkdownDescription: "The icon of the number property",
+									Optional:            true,
+								},
+								"required": schema.BoolAttribute{
+									MarkdownDescription: "The required of the number property",
+									Optional:            true,
+								},
+								"maximum": schema.Float64Attribute{
+									MarkdownDescription: "The min of the number property",
+									Optional:            true,
+								},
+								"minimum": schema.Float64Attribute{
+									MarkdownDescription: "The max of the number property",
+									Optional:            true,
+								},
+							},
+						},
+					},
+					"array_prop": schema.MapNestedAttribute{
+						MarkdownDescription: "The array property of the blueprint",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"title": schema.StringAttribute{
+									MarkdownDescription: "The display name of the array property",
+									Optional:            true,
+								},
+								"description": schema.StringAttribute{
+									MarkdownDescription: "The description of the array property",
+									Optional:            true,
+								},
+								// "default": schema.ListAttribute{
+								// 	MarkdownDescription: "The default of the array property",
+								// 	Optional:            true,
+								// },
+								// "default": schema.ListAttribute{
+								// 	MarkdownDescription: "The default of the array property",
+								// 	Optional:            true,
+								// 	ElementType:         types.ListUnknown(),
+								// },
+								"icon": schema.StringAttribute{
+									MarkdownDescription: "The icon of the array property",
+									Optional:            true,
+								},
+								"required": schema.BoolAttribute{
+									MarkdownDescription: "The required of the array property",
+									Optional:            true,
+									// Default:             booldefault.StaticBool(false),
+								},
+								"min_items": schema.Int64Attribute{
+									MarkdownDescription: "The min items of the array property",
+									Optional:            true,
+									Validators: []validator.Int64{
+										int64validator.AtLeast(0),
+									},
+								},
+								"max_items": schema.Int64Attribute{
+									MarkdownDescription: "The max items of the array property",
+									Optional:            true,
+									Validators: []validator.Int64{
+										int64validator.AtLeast(0),
+									},
+								},
+								"items": schema.SingleNestedAttribute{
+									MarkdownDescription: "The items of the array property",
+									Optional:            true,
+									Attributes: map[string]schema.Attribute{
+										"type": schema.StringAttribute{
+											MarkdownDescription: "The type of the items",
+											Required:            true,
+											// Validators:          []validator.String{stringvalidator.OneOf("STRING", "BOOLEAN", "INTEGER", "FLOAT", "OBJECT", "ARRAY")},
+										},
+										"format": schema.StringAttribute{
+											MarkdownDescription: "The format of the items",
+											Optional:            true,
+										},
+										"default": schema.ListAttribute{
+											ElementType:         types.StringType,
+											MarkdownDescription: "The default of the items",
+											Optional:            true,
+										},
+									},
+								},
+							},
+						},
+					},
 				},
 			},
 		},
+	}
+}
+
+func getArrayDefaultAttribute(arrayType interface{}) schema.Attribute {
+	switch arrayType {
+	case "string":
+		return schema.ListAttribute{
+			MarkdownDescription: "The default of the array property",
+			Optional:            true,
+			ElementType:         types.StringType,
+		}
+	case "boolean":
+		return schema.ListAttribute{
+			MarkdownDescription: "The default of the array property",
+			Optional:            true,
+			ElementType:         types.BoolType,
+		}
+	}
+	return schema.ListAttribute{
+		MarkdownDescription: "The default of the array property",
+		Optional:            true,
+		ElementType:         types.StringType,
 	}
 }
 
@@ -221,6 +346,164 @@ func writeBlueprintFieldsToResource(bm *cli.BlueprintModel, b *cli.Blueprint) {
 			Type:  types.StringValue(b.ChangelogDestination.Type),
 			Url:   types.StringValue(b.ChangelogDestination.Url),
 			Agent: types.BoolValue(b.ChangelogDestination.Agent),
+		}
+	}
+
+	properties := &cli.PropertiesModel{}
+
+	addPropertiesToResource(b, bm, properties)
+
+	bm.Properties = properties
+
+}
+
+func addPropertiesToResource(b *cli.Blueprint, bm *cli.BlueprintModel, properties *cli.PropertiesModel) {
+	for k, v := range b.Schema.Properties {
+		switch v.Type {
+		case "string":
+			if properties.StringProp == nil {
+				properties.StringProp = make(map[string]cli.StringPropModel)
+			}
+
+			stringProp := &cli.StringPropModel{}
+
+			setCommonProperties(v, bm.Properties.StringProp[k], stringProp)
+
+			properties.StringProp[k] = *stringProp
+
+		case "number":
+			if properties.NumberProp == nil {
+				properties.NumberProp = make(map[string]cli.NumberPropModel)
+			}
+
+			numberProp := &cli.NumberPropModel{}
+
+			if v.Minimum != 0 && !bm.Properties.NumberProp[k].Minimum.IsNull() {
+				numberProp.Minimum = types.Float64Value(v.Minimum)
+			}
+
+			if v.Maximum != 0 && !bm.Properties.NumberProp[k].Maximum.IsNull() {
+				numberProp.Maximum = types.Float64Value(v.Maximum)
+			}
+
+			setCommonProperties(v, bm.Properties.NumberProp[k], numberProp)
+
+			properties.NumberProp[k] = *numberProp
+
+		case "array":
+			if properties.ArrayProp == nil {
+				properties.ArrayProp = make(map[string]cli.ArrayPropModel)
+			}
+
+			arrayProp := &cli.ArrayPropModel{}
+
+			if v.MinItems != 0 && !bm.Properties.ArrayProp[k].MinItems.IsNull() {
+				arrayProp.MinItems = types.Int64Value(int64(v.MinItems))
+			}
+			if v.MaxItems != 0 && !bm.Properties.ArrayProp[k].MaxItems.IsNull() {
+				arrayProp.MaxItems = types.Int64Value(int64(v.MaxItems))
+			}
+
+			if v.Items != nil {
+				arrayProp.Items = &cli.ItemsModal{}
+				if itemType, ok := v.Items["type"].(string); ok {
+					arrayProp.Items.Type = types.StringValue(itemType)
+				}
+				if itemFormat, ok := v.Items["format"].(string); ok {
+					arrayProp.Items.Format = types.StringValue(itemFormat)
+				}
+			}
+
+			setCommonProperties(v, bm.Properties.ArrayProp[k], arrayProp)
+
+			properties.ArrayProp[k] = *arrayProp
+		}
+	}
+}
+
+func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface{}) {
+	properties := []string{"description", "icon", "default", "title"}
+	for _, property := range properties {
+		switch property {
+		case "description":
+			if v.Description != "" {
+				switch p := prop.(type) {
+				case *cli.StringPropModel:
+					bmString := bm.(cli.StringPropModel)
+					if !bmString.Description.IsNull() {
+						p.Description = types.StringValue(v.Description)
+					}
+				case *cli.NumberPropModel:
+					bmNumber := bm.(cli.NumberPropModel)
+					if !bmNumber.Description.IsNull() {
+						p.Description = types.StringValue(v.Description)
+					}
+
+				case *cli.ArrayPropModel:
+					bmArray := bm.(cli.ArrayPropModel)
+					if !bmArray.Description.IsNull() {
+						p.Description = types.StringValue(v.Description)
+					}
+				}
+			}
+		case "icon":
+			if v.Icon != "" {
+				switch p := prop.(type) {
+				case *cli.StringPropModel:
+					bmString := bm.(cli.StringPropModel)
+					if !bmString.Icon.IsNull() {
+						p.Icon = types.StringValue(v.Icon)
+					}
+				case *cli.NumberPropModel:
+					bmNumber := bm.(cli.NumberPropModel)
+					if !bmNumber.Icon.IsNull() {
+						p.Icon = types.StringValue(v.Icon)
+					}
+				case *cli.ArrayPropModel:
+					bmArray := bm.(cli.ArrayPropModel)
+					if !bmArray.Icon.IsNull() {
+						p.Icon = types.StringValue(v.Icon)
+					}
+				}
+			}
+		case "required":
+			// Handle "required" property (add your logic here)
+		case "title":
+			if v.Title != "" {
+				switch p := prop.(type) {
+				case *cli.StringPropModel:
+					bmString := bm.(cli.StringPropModel)
+					if !bmString.Title.IsNull() {
+						p.Title = types.StringValue(v.Title)
+					}
+				case *cli.NumberPropModel:
+					bmNumber := bm.(cli.NumberPropModel)
+					if !bmNumber.Title.IsNull() {
+						p.Title = types.StringValue(v.Title)
+					}
+				case *cli.ArrayPropModel:
+					bmArray := bm.(cli.ArrayPropModel)
+					if !bmArray.Title.IsNull() {
+						p.Title = types.StringValue(v.Title)
+					}
+				}
+			}
+
+		case "default":
+			if v.Default != "" {
+				switch p := prop.(type) {
+				case *cli.StringPropModel:
+					bmString := bm.(cli.StringPropModel)
+					if !bmString.Default.IsNull() {
+						p.Default = types.StringValue(v.Default.(string))
+					}
+				case *cli.NumberPropModel:
+					bmNumber := bm.(cli.NumberPropModel)
+					if !bmNumber.Default.IsNull() {
+						p.Default = types.Float64Value(v.Default.(float64))
+					}
+				}
+			}
 		}
 	}
 }
@@ -327,46 +610,67 @@ func blueprintResourceToBody(ctx context.Context, d *cli.BlueprintModel) (*cli.B
 	required := []string{}
 
 	if d.Properties != nil {
-		fmt.Printf("Properties %+v\n", d.Properties)
 		if d.Properties.StringProp != nil {
 			for propIdentifier, prop := range d.Properties.StringProp {
-				// 		fmt.Printf("Prop %+v\n", prop)
 				props[propIdentifier] = cli.BlueprintProperty{
-					Type:      "string",
-					Title:     prop.Title.ValueString(),
-					Format:    prop.Format.ValueString(),
-					Default:   prop.Default.ValueString(),
-					Icon:      prop.Icon.ValueString(),
-					MinLength: int(prop.MinLength.ValueInt64()),
-					MaxLength: int(prop.MaxLength.ValueInt64()),
-					Pattern:   prop.Pattern.ValueString(),
+					Type:        "string",
+					Title:       prop.Title.ValueString(),
+					Format:      prop.Format.ValueString(),
+					Default:     prop.Default.ValueString(),
+					Icon:        prop.Icon.ValueString(),
+					MinLength:   int(prop.MinLength.ValueInt64()),
+					MaxLength:   int(prop.MaxLength.ValueInt64()),
+					Pattern:     prop.Pattern.ValueString(),
+					Description: prop.Description.ValueString(),
 				}
 				if prop.Required.ValueBool() {
 					required = append(required, propIdentifier)
 				}
 			}
 		}
+		if d.Properties.ArrayProp != nil {
+			for propIdentifier, prop := range d.Properties.ArrayProp {
+				items := map[string]interface{}{}
+				if prop.Items != nil {
+					if !prop.Items.Type.IsNull() {
+						items["type"] = prop.Items.Type.ValueString()
+					}
+					if !prop.Items.Format.IsNull() {
+						items["format"] = prop.Items.Format.ValueString()
+					}
+					if !prop.Items.Default.IsNull() {
+						items["default"] = prop.Items.Default
+					}
 
+				}
+
+				props[propIdentifier] = cli.BlueprintProperty{
+					Type:     "array",
+					Title:    prop.Title.ValueString(),
+					Icon:     prop.Icon.ValueString(),
+					MaxItems: int(prop.MaxItems.ValueInt64()),
+					MinItems: int(prop.MinItems.ValueInt64()),
+					Items:    items,
+				}
+			}
+		}
+		if d.Properties.NumberProp != nil {
+			for propIdentifier, prop := range d.Properties.NumberProp {
+				props[propIdentifier] = cli.BlueprintProperty{
+					Type:        "number",
+					Title:       prop.Title.ValueString(),
+					Default:     prop.Default.ValueFloat64(),
+					Icon:        prop.Icon.ValueString(),
+					Maximum:     prop.Maximum.ValueFloat64(),
+					Minimum:     prop.Minimum.ValueFloat64(),
+					Description: prop.Description.ValueString(),
+				}
+				if prop.Required.ValueBool() {
+					required = append(required, propIdentifier)
+				}
+			}
+		}
 	}
-
-	// for _, prop := range d.Properties {
-	// 	if prop == "string_prop" {
-	// 		continue
-	// 	}
-	// 	props[prop.Identifier.ValueString()] = cli.BlueprintProperty{
-	// 		Type:      prop.Type.ValueString(),
-	// 		Title:     prop.Title.ValueString(),
-	// 		Format:    prop.Format.ValueString(),
-	// 		Default:   prop.Default.ValueString(),
-	// 		Icon:      prop.Icon.ValueString(),
-	// 		MinLength: int(prop.MinLength.ValueInt64()),
-	// 		MaxLength: int(prop.MaxLength.ValueInt64()),
-	// 		Pattern:   prop.Pattern.ValueString(),
-	// 	}
-	// 	if prop.Required.ValueBool() {
-	// 		required = append(required, prop.Identifier.ValueString())
-	// 	}
-	// }
 
 	properties := props
 

@@ -301,6 +301,35 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 							},
 						},
 					},
+					"object_prop": schema.MapNestedAttribute{
+						MarkdownDescription: "The object property of the blueprint",
+						Optional:            true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"title": schema.StringAttribute{
+									MarkdownDescription: "The display name of the object property",
+									Optional:            true,
+								},
+								"description": schema.StringAttribute{
+									MarkdownDescription: "The description of the object property",
+									Optional:            true,
+								},
+								"icon": schema.StringAttribute{
+									MarkdownDescription: "The icon of the object property",
+									Optional:            true,
+								},
+								"default": schema.MapAttribute{
+									Optional:            true,
+									MarkdownDescription: "The default of the object property",
+									ElementType:         types.StringType,
+								},
+								"required": schema.BoolAttribute{
+									MarkdownDescription: "The required of the object property",
+									Optional:            true,
+								},
+							},
+						},
+					},
 				},
 			},
 		},
@@ -453,6 +482,18 @@ func addPropertiesToResource(b *cli.Blueprint, bm *cli.BlueprintModel, propertie
 			setCommonProperties(v, bm.Properties.BooleanProp[k], booleanProp)
 
 			properties.BooleanProp[k] = *booleanProp
+
+		case "object":
+			if properties.ObjectProp == nil {
+				properties.ObjectProp = make(map[string]cli.ObjectPropModel)
+			}
+
+			objectProp := &cli.ObjectPropModel{}
+
+			setCommonProperties(v, bm.Properties.ObjectProp[k], objectProp)
+
+			properties.ObjectProp[k] = *objectProp
+
 		}
 
 	}
@@ -486,6 +527,12 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 					if !bmArray.Description.IsNull() {
 						p.Description = types.StringValue(v.Description)
 					}
+
+				case *cli.ObjectPropModel:
+					bmObject := bm.(cli.ObjectPropModel)
+					if !bmObject.Description.IsNull() {
+						p.Description = types.StringValue(v.Description)
+					}
 				}
 			}
 		case "icon":
@@ -509,6 +556,11 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 				case *cli.ArrayPropModel:
 					bmArray := bm.(cli.ArrayPropModel)
 					if !bmArray.Icon.IsNull() {
+						p.Icon = types.StringValue(v.Icon)
+					}
+				case *cli.ObjectPropModel:
+					bmObject := bm.(cli.ObjectPropModel)
+					if !bmObject.Icon.IsNull() {
 						p.Icon = types.StringValue(v.Icon)
 					}
 				}
@@ -538,6 +590,12 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 					if !bmArray.Title.IsNull() {
 						p.Title = types.StringValue(v.Title)
 					}
+
+				case *cli.ObjectPropModel:
+					bmObject := bm.(cli.ObjectPropModel)
+					if !bmObject.Title.IsNull() {
+						p.Title = types.StringValue(v.Title)
+					}
 				}
 			}
 
@@ -560,6 +618,12 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 					if !bmBoolean.Default.IsNull() {
 						p.Default = types.BoolValue(v.Default.(bool))
 					}
+					// case *cli.ObjectPropModel:
+					// 	bmObject := bm.(cli.ObjectPropModel)
+					// 	if bmObject.Default != nil {
+					// 		p.Default = v.Default.(map[string]interface{})
+					// 	}
+					// }
 				}
 			}
 		}
@@ -764,6 +828,21 @@ func blueprintResourceToBody(ctx context.Context, d *cli.BlueprintModel) (*cli.B
 					Type:        "boolean",
 					Title:       prop.Title.ValueString(),
 					Default:     prop.Default.ValueBool(),
+					Icon:        prop.Icon.ValueString(),
+					Description: prop.Description.ValueString(),
+				}
+				if prop.Required.ValueBool() {
+					required = append(required, propIdentifier)
+				}
+			}
+		}
+
+		if d.Properties.ObjectProp != nil {
+			for propIdentifier, prop := range d.Properties.ObjectProp {
+				props[propIdentifier] = cli.BlueprintProperty{
+					Type:        "object",
+					Title:       prop.Title.ValueString(),
+					Default:     prop.Default,
 					Icon:        prop.Icon.ValueString(),
 					Description: prop.Description.ValueString(),
 				}

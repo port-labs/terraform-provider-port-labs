@@ -204,11 +204,20 @@ type ArrayPropModel struct {
 	// Default     types.ListType `tfsdk:"default"`
 }
 
+type ObjectPropModel struct {
+	Title       types.String `tfsdk:"title"`
+	Icon        types.String `tfsdk:"icon"`
+	Description types.String `tfsdk:"description"`
+	Required    types.Bool   `tfsdk:"required"`
+	Default     types.Map    `tfsdk:"default"`
+}
+
 type PropertiesModel struct {
 	StringProp  map[string]StringPropModel  `tfsdk:"string_prop"`
 	NumberProp  map[string]NumberPropModel  `tfsdk:"number_prop"`
 	BooleanProp map[string]BooleanPropModel `tfsdk:"boolean_prop"`
 	ArrayProp   map[string]ArrayPropModel   `tfsdk:"array_prop"`
+	ObjectProp  map[string]ObjectPropModel  `tfsdk:"object_prop"`
 }
 
 type BlueprintModel struct {

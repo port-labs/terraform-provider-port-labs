@@ -168,6 +168,7 @@ type StringPropModel struct {
 	MaxLength   types.Int64  `tfsdk:"max_length"`
 	MinLength   types.Int64  `tfsdk:"min_length"`
 	Pattern     types.String `tfsdk:"pattern"`
+	Enum        types.List   `tfsdk:"enum"`
 }
 
 type NumberPropModel struct {

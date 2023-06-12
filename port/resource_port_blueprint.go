@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -165,6 +166,15 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 								"pattern": schema.StringAttribute{
 									MarkdownDescription: "The pattern of the string property",
 									Optional:            true,
+								},
+								"enum": schema.ListAttribute{
+									MarkdownDescription: "The enum of the string property",
+									Optional:            true,
+									ElementType:         types.StringType,
+									Validators: []validator.List{
+										listvalidator.UniqueValues(),
+										listvalidator.SizeAtLeast(1),
+									},
 								},
 							},
 						},
@@ -738,6 +748,57 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 	)...)
 }
 
+func stringPropResourceToBody(d *cli.BlueprintModel, props map[string]cli.BlueprintProperty) {
+	for propIdentifier, prop := range d.Properties.StringProp {
+		props[propIdentifier] = cli.BlueprintProperty{
+			Type:  "string",
+			Title: prop.Title.ValueString(),
+		}
+
+		if property, ok := props[propIdentifier]; ok {
+			if !prop.Default.IsNull() {
+				property.Default = prop.Default
+			}
+
+			if !prop.Format.IsNull() {
+				property.Format = prop.Format.ValueString()
+			}
+
+			if !prop.Icon.IsNull() {
+				property.Icon = prop.Icon.ValueString()
+			}
+
+			if !prop.MinLength.IsNull() {
+				property.MinLength = int(prop.MinLength.ValueInt64())
+			}
+
+			if !prop.MaxLength.IsNull() {
+				property.MaxLength = int(prop.MaxLength.ValueInt64())
+			}
+
+			if !prop.Pattern.IsNull() {
+				property.Pattern = prop.Pattern.ValueString()
+			}
+
+			if !prop.Description.IsNull() {
+				property.Description = prop.Description.ValueString()
+			}
+
+			if !prop.Enum.IsNull() {
+				property.Enum = []interface{}{}
+				for _, v := range prop.Enum.Elements() {
+					property.Enum = append(property.Enum, v)
+				}
+			}
+
+		}
+
+		if prop.Required.ValueBool() {
+			required = append(required, propIdentifier)
+		}
+	}
+}
+
 func blueprintResourceToBody(ctx context.Context, d *cli.BlueprintModel) (*cli.Blueprint, error) {
 	b := &cli.Blueprint{}
 	b.Identifier = d.Identifier.ValueString()
@@ -763,22 +824,7 @@ func blueprintResourceToBody(ctx context.Context, d *cli.BlueprintModel) (*cli.B
 
 	if d.Properties != nil {
 		if d.Properties.StringProp != nil {
-			for propIdentifier, prop := range d.Properties.StringProp {
-				props[propIdentifier] = cli.BlueprintProperty{
-					Type:        "string",
-					Title:       prop.Title.ValueString(),
-					Format:      prop.Format.ValueString(),
-					Default:     prop.Default.ValueString(),
-					Icon:        prop.Icon.ValueString(),
-					MinLength:   int(prop.MinLength.ValueInt64()),
-					MaxLength:   int(prop.MaxLength.ValueInt64()),
-					Pattern:     prop.Pattern.ValueString(),
-					Description: prop.Description.ValueString(),
-				}
-				if prop.Required.ValueBool() {
-					required = append(required, propIdentifier)
-				}
-			}
+			stringPropResourceToBody(d, props)
 		}
 		if d.Properties.ArrayProp != nil {
 			for propIdentifier, prop := range d.Properties.ArrayProp {

@@ -790,6 +790,7 @@ func stringPropResourceToBody(d *cli.BlueprintModel, props map[string]cli.Bluepr
 					property.Enum = append(property.Enum, v)
 				}
 			}
+			props[propIdentifier] = property
 		}
 		if prop.Required.ValueBool() {
 			required = append(required, propIdentifier)
@@ -824,6 +825,8 @@ func numberPropResourceToBody(d *cli.BlueprintModel, props map[string]cli.Bluepr
 			if !prop.Description.IsNull() {
 				property.Description = prop.Description.ValueString()
 			}
+
+			props[propIdentifier] = property
 		}
 		if prop.Required.ValueBool() {
 			required = append(required, propIdentifier)
@@ -850,6 +853,8 @@ func booleanPropResourceToBody(d *cli.BlueprintModel, props map[string]cli.Bluep
 			if !prop.Description.IsNull() {
 				property.Description = prop.Description.ValueString()
 			}
+
+			props[propIdentifier] = property
 		}
 		if prop.Required.ValueBool() {
 			required = append(required, propIdentifier)
@@ -876,6 +881,8 @@ func objectPropResourceToBody(d *cli.BlueprintModel, props map[string]cli.Bluepr
 			if !prop.Description.IsNull() {
 				property.Description = prop.Description.ValueString()
 			}
+
+			props[propIdentifier] = property
 		}
 
 		if prop.Required.ValueBool() {
@@ -914,6 +921,7 @@ func arrayPropResourceToBody(d *cli.BlueprintModel, props map[string]cli.Bluepri
 
 				property.Items = items
 			}
+			props[propIdentifier] = property
 		}
 
 		if prop.Required.ValueBool() {

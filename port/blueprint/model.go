@@ -40,20 +40,34 @@ type BooleanPropModel struct {
 	Required    types.Bool   `tfsdk:"required"`
 }
 
-type ItemsModal struct {
-	Type    types.String `tfsdk:"type"`
+type StringItems struct {
 	Format  types.String `tfsdk:"format"`
 	Default types.List   `tfsdk:"default"`
 }
+
+type NumberItems struct {
+	Default types.List `tfsdk:"default"`
+}
+
+type BooleanItems struct {
+	Default types.List `tfsdk:"default"`
+}
+
+type ObjectItems struct {
+	Default types.List `tfsdk:"default"`
+}
+
 type ArrayPropModel struct {
-	Title       types.String `tfsdk:"title"`
-	Icon        types.String `tfsdk:"icon"`
-	Description types.String `tfsdk:"description"`
-	MaxItems    types.Int64  `tfsdk:"max_items"`
-	MinItems    types.Int64  `tfsdk:"min_items"`
-	Required    types.Bool   `tfsdk:"required"`
-	Items       *ItemsModal  `tfsdk:"items"`
-	// Default     types.ListType `tfsdk:"default"`
+	Title        types.String  `tfsdk:"title"`
+	Icon         types.String  `tfsdk:"icon"`
+	Description  types.String  `tfsdk:"description"`
+	MaxItems     types.Int64   `tfsdk:"max_items"`
+	MinItems     types.Int64   `tfsdk:"min_items"`
+	Required     types.Bool    `tfsdk:"required"`
+	StringItems  *StringItems  `tfsdk:"string_items"`
+	NumberItems  *NumberItems  `tfsdk:"number_items"`
+	BooleanItems *BooleanItems `tfsdk:"boolean_items"`
+	ObjectItems  *ObjectItems  `tfsdk:"object_items"`
 }
 
 type ObjectPropModel struct {

@@ -138,6 +138,18 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 				stringProp.Spec = types.StringValue(v.Spec)
 			}
 
+			if v.MinLength != 0 && !bm.Properties.StringProp[k].MinLength.IsNull() {
+				stringProp.MinLength = types.Int64Value(int64(v.MinLength))
+			}
+
+			if v.MaxLength != 0 && !bm.Properties.StringProp[k].MaxLength.IsNull() {
+				stringProp.MaxLength = types.Int64Value(int64(v.MaxLength))
+			}
+
+			if v.Pattern != "" && !bm.Properties.StringProp[k].Pattern.IsNull() {
+				stringProp.Pattern = types.StringValue(v.Pattern)
+			}
+
 			if v.SpecAuthentication != nil && bm.Properties.StringProp[k].SpecAuthentication != nil {
 				stringProp.SpecAuthentication = &SpecAuthenticationModel{
 					AuthorizationUrl: types.StringValue(v.SpecAuthentication.AuthorizationUrl),
@@ -566,6 +578,10 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 				property.MinLength = int(prop.MinLength.ValueInt64())
 			}
 
+			if !prop.MaxLength.IsNull() {
+				property.MaxLength = int(prop.MaxLength.ValueInt64())
+			}
+
 			if !prop.Spec.IsNull() {
 				property.Spec = prop.Spec.ValueString()
 			}
@@ -576,10 +592,6 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 					TokenUrl:         prop.SpecAuthentication.TokenUrl.ValueString(),
 					ClientId:         prop.SpecAuthentication.ClientId.ValueString(),
 				}
-			}
-
-			if !prop.MaxLength.IsNull() {
-				property.MaxLength = int(prop.MaxLength.ValueInt64())
 			}
 
 			if !prop.Pattern.IsNull() {

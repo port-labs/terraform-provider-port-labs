@@ -138,6 +138,14 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 				stringProp.Spec = types.StringValue(v.Spec)
 			}
 
+			if v.SpecAuthentication != nil && bm.Properties.StringProp[k].SpecAuthentication != nil {
+				stringProp.SpecAuthentication = &SpecAuthenticationModel{
+					AuthorizationUrl: types.StringValue(v.SpecAuthentication.AuthorizationUrl),
+					TokenUrl:         types.StringValue(v.SpecAuthentication.TokenUrl),
+					ClientId:         types.StringValue(v.SpecAuthentication.ClientId),
+				}
+			}
+
 			setCommonProperties(v, bm.Properties.StringProp[k], stringProp)
 
 			properties.StringProp[k] = *stringProp
@@ -560,6 +568,14 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 
 			if !prop.Spec.IsNull() {
 				property.Spec = prop.Spec.ValueString()
+			}
+
+			if prop.SpecAuthentication != nil {
+				property.SpecAuthentication = &cli.SpecAuthentication{
+					AuthorizationUrl: prop.SpecAuthentication.AuthorizationUrl.ValueString(),
+					TokenUrl:         prop.SpecAuthentication.TokenUrl.ValueString(),
+					ClientId:         prop.SpecAuthentication.ClientId.ValueString(),
+				}
 			}
 
 			if !prop.MaxLength.IsNull() {

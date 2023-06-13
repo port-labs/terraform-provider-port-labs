@@ -8,18 +8,25 @@ type ChangelogDestinationModel struct {
 	Agent types.Bool   `tfsdk:"agent"`
 }
 
+type SpecAuthenticationModel struct {
+	AuthorizationUrl types.String `tfsdk:"authorization_url"`
+	TokenUrl         types.String `tfsdk:"token_url"`
+	ClientId         types.String `tfsdk:"client_id"`
+}
+
 type StringPropModel struct {
-	Title       types.String `tfsdk:"title"`
-	Icon        types.String `tfsdk:"icon"`
-	Description types.String `tfsdk:"description"`
-	Default     types.String `tfsdk:"default"`
-	Required    types.Bool   `tfsdk:"required"`
-	Format      types.String `tfsdk:"format"`
-	MaxLength   types.Int64  `tfsdk:"max_length"`
-	MinLength   types.Int64  `tfsdk:"min_length"`
-	Pattern     types.String `tfsdk:"pattern"`
-	Enum        types.List   `tfsdk:"enum"`
-	Spec        types.String `tfsdk:"spec"`
+	Title              types.String             `tfsdk:"title"`
+	Icon               types.String             `tfsdk:"icon"`
+	Description        types.String             `tfsdk:"description"`
+	Default            types.String             `tfsdk:"default"`
+	Required           types.Bool               `tfsdk:"required"`
+	Format             types.String             `tfsdk:"format"`
+	MaxLength          types.Int64              `tfsdk:"max_length"`
+	MinLength          types.Int64              `tfsdk:"min_length"`
+	Pattern            types.String             `tfsdk:"pattern"`
+	Enum               types.List               `tfsdk:"enum"`
+	Spec               types.String             `tfsdk:"spec"`
+	SpecAuthentication *SpecAuthenticationModel `tfsdk:"spec_authentication"`
 }
 
 type NumberPropModel struct {

@@ -514,6 +514,17 @@ func (r *BlueprintResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
+	if data.Identifier.IsNull() {
+		resp.Diagnostics.AddError("failed to extract blueprint identifier", "identifier is required")
+		return
+	}
+
+	err := r.portClient.DeleteBlueprint(ctx, data.Identifier.ValueString())
+
+	if err != nil {
+		resp.Diagnostics.AddError("failed to delete blueprint", err.Error())
+		return
+	}
 }
 
 func (r *BlueprintResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

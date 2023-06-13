@@ -28,7 +28,7 @@ resource "port-labs_blueprint" "s3" {
 }
 
 resource "port-labs_entity" "s3" {
-  title     = each.value.id
+  title     = "ARN"
   blueprint = port-labs_blueprint.s3.identifier
 
   properties {

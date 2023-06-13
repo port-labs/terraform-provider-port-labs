@@ -26,7 +26,7 @@ import (
 var _ resource.Resource = &BlueprintResource{}
 var _ resource.ResourceWithImportState = &BlueprintResource{}
 
-func newBlueprintResource() resource.Resource {
+func NewBlueprintResource() resource.Resource {
 	return &BlueprintResource{}
 }
 
@@ -357,27 +357,27 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 	}
 }
 
-func getArrayDefaultAttribute(arrayType interface{}) schema.Attribute {
-	switch arrayType {
-	case "string":
-		return schema.ListAttribute{
-			MarkdownDescription: "The default of the array property",
-			Optional:            true,
-			ElementType:         types.StringType,
-		}
-	case "boolean":
-		return schema.ListAttribute{
-			MarkdownDescription: "The default of the array property",
-			Optional:            true,
-			ElementType:         types.BoolType,
-		}
-	}
-	return schema.ListAttribute{
-		MarkdownDescription: "The default of the array property",
-		Optional:            true,
-		ElementType:         types.StringType,
-	}
-}
+// func getArrayDefaultAttribute(arrayType interface{}) schema.Attribute {
+// 	switch arrayType {
+// 	case "string":
+// 		return schema.ListAttribute{
+// 			MarkdownDescription: "The default of the array property",
+// 			Optional:            true,
+// 			ElementType:         types.StringType,
+// 		}
+// 	case "boolean":
+// 		return schema.ListAttribute{
+// 			MarkdownDescription: "The default of the array property",
+// 			Optional:            true,
+// 			ElementType:         types.BoolType,
+// 		}
+// 	}
+// 	return schema.ListAttribute{
+// 		MarkdownDescription: "The default of the array property",
+// 		Optional:            true,
+// 		ElementType:         types.StringType,
+// 	}
+// }
 
 func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *BlueprintModel
@@ -449,6 +449,9 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 				}
 
 				stringProp.Enum, _ = types.ListValue(types.StringType, attrs)
+			} else {
+				stringProp.Enum = types.ListNull(types.StringType)
+
 			}
 
 			setCommonProperties(v, bm.Properties.StringProp[k], stringProp)
@@ -543,127 +546,142 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 	for _, property := range properties {
 		switch property {
 		case "description":
-			if v.Description != "" {
-				switch p := prop.(type) {
-				case StringPropModel:
-					bmString := bm.(StringPropModel)
-					if !bmString.Description.IsNull() {
-						p.Description = types.StringValue(v.Description)
-					}
-				case NumberPropModel:
-					bmNumber := bm.(NumberPropModel)
-					if !bmNumber.Description.IsNull() {
-						p.Description = types.StringValue(v.Description)
-					}
-				case BooleanPropModel:
-					bmBoolean := bm.(BooleanPropModel)
-					if !bmBoolean.Description.IsNull() {
-						p.Description = types.StringValue(v.Description)
-					}
-
-				case ArrayPropModel:
-					bmArray := bm.(ArrayPropModel)
-					if !bmArray.Description.IsNull() {
-						p.Description = types.StringValue(v.Description)
-					}
-
-				case ObjectPropModel:
-					bmObject := bm.(ObjectPropModel)
-					if !bmObject.Description.IsNull() {
-						p.Description = types.StringValue(v.Description)
-					}
+			switch p := prop.(type) {
+			case *StringPropModel:
+				bmString := bm.(StringPropModel)
+				if v.Description == "" && bmString.Description.IsNull() {
+					continue
 				}
+
+				p.Description = types.StringValue(v.Description)
+			case *NumberPropModel:
+				bmNumber := bm.(NumberPropModel)
+				if v.Description == "" && bmNumber.Description.IsNull() {
+					continue
+				}
+
+				p.Description = types.StringValue(v.Description)
+			case *BooleanPropModel:
+				bmBoolean := bm.(BooleanPropModel)
+				if v.Description == "" && bmBoolean.Description.IsNull() {
+					continue
+				}
+
+				p.Description = types.StringValue(v.Description)
+
+			case *ArrayPropModel:
+				bmArray := bm.(ArrayPropModel)
+				if v.Description == "" && bmArray.Description.IsNull() {
+					continue
+				}
+
+				p.Description = types.StringValue(v.Description)
+
+			case *ObjectPropModel:
+				bmObject := bm.(ObjectPropModel)
+				if v.Description == "" && bmObject.Description.IsNull() {
+					continue
+				}
+				p.Description = types.StringValue(v.Description)
 			}
 		case "icon":
-			if v.Icon != "" {
-				switch p := prop.(type) {
-				case StringPropModel:
-					bmString := bm.(StringPropModel)
-					if !bmString.Icon.IsNull() {
-						p.Icon = types.StringValue(v.Icon)
-					}
-				case NumberPropModel:
-					bmNumber := bm.(NumberPropModel)
-					if !bmNumber.Icon.IsNull() {
-						p.Icon = types.StringValue(v.Icon)
-					}
-				case BooleanPropModel:
-					bmBoolean := bm.(BooleanPropModel)
-					if !bmBoolean.Icon.IsNull() {
-						p.Icon = types.StringValue(v.Icon)
-					}
-				case ArrayPropModel:
-					bmArray := bm.(ArrayPropModel)
-					if !bmArray.Icon.IsNull() {
-						p.Icon = types.StringValue(v.Icon)
-					}
-				case ObjectPropModel:
-					bmObject := bm.(ObjectPropModel)
-					if !bmObject.Icon.IsNull() {
-						p.Icon = types.StringValue(v.Icon)
-					}
-				}
-			}
-		case "required":
-			// Handle "required" property (add your logic here)
-		case "title":
-			if v.Title != "" {
-				switch p := prop.(type) {
-				case StringPropModel:
-					bmString := bm.(StringPropModel)
-					if !bmString.Title.IsNull() {
-						p.Title = types.StringValue(v.Title)
-					}
-				case NumberPropModel:
-					bmNumber := bm.(NumberPropModel)
-					if !bmNumber.Title.IsNull() {
-						p.Title = types.StringValue(v.Title)
-					}
-				case BooleanPropModel:
-					bmBoolean := bm.(BooleanPropModel)
-					if !bmBoolean.Title.IsNull() {
-						p.Title = types.StringValue(v.Title)
-					}
-				case ArrayPropModel:
-					bmArray := bm.(ArrayPropModel)
-					if !bmArray.Title.IsNull() {
-						p.Title = types.StringValue(v.Title)
-					}
 
-				case ObjectPropModel:
-					bmObject := bm.(ObjectPropModel)
-					if !bmObject.Title.IsNull() {
-						p.Title = types.StringValue(v.Title)
-					}
+			switch p := prop.(type) {
+			case *StringPropModel:
+				bmString := bm.(StringPropModel)
+				if v.Icon == "" && bmString.Icon.IsNull() {
+					continue
 				}
+				p.Icon = types.StringValue(v.Icon)
+			case *NumberPropModel:
+				bmNumber := bm.(NumberPropModel)
+				if v.Icon == "" && bmNumber.Icon.IsNull() {
+					continue
+				}
+				p.Icon = types.StringValue(v.Icon)
+			case *BooleanPropModel:
+				bmBoolean := bm.(BooleanPropModel)
+				if v.Icon == "" && bmBoolean.Icon.IsNull() {
+					continue
+				}
+				p.Icon = types.StringValue(v.Icon)
+			case *ArrayPropModel:
+				bmArray := bm.(ArrayPropModel)
+				if v.Icon == "" && bmArray.Icon.IsNull() {
+					continue
+				}
+				p.Icon = types.StringValue(v.Icon)
+			case *ObjectPropModel:
+				bmObject := bm.(ObjectPropModel)
+				if v.Icon == "" && bmObject.Icon.IsNull() {
+					continue
+				}
+				p.Icon = types.StringValue(v.Icon)
+			}
+		case "title":
+
+			switch p := prop.(type) {
+			case *StringPropModel:
+				bmString := bm.(StringPropModel)
+				if v.Title == "" && bmString.Title.IsNull() {
+					continue
+				}
+				p.Title = types.StringValue(v.Title)
+			case *NumberPropModel:
+				bmNumber := bm.(NumberPropModel)
+				if v.Title == "" && bmNumber.Title.IsNull() {
+					continue
+				}
+				p.Title = types.StringValue(v.Title)
+			case *BooleanPropModel:
+				bmBoolean := bm.(BooleanPropModel)
+				if v.Title == "" && bmBoolean.Title.IsNull() {
+					continue
+				}
+				p.Title = types.StringValue(v.Title)
+			case *ArrayPropModel:
+				bmArray := bm.(ArrayPropModel)
+				if v.Title == "" && bmArray.Title.IsNull() {
+					continue
+				}
+				p.Title = types.StringValue(v.Title)
+
+			case *ObjectPropModel:
+				bmObject := bm.(ObjectPropModel)
+				if v.Title == "" && bmObject.Title.IsNull() {
+					continue
+				}
+				p.Title = types.StringValue(v.Title)
+
 			}
 
 		case "default":
-			if v.Default != "" {
-				switch p := prop.(type) {
-				case StringPropModel:
-					bmString := bm.(StringPropModel)
-					if !bmString.Default.IsNull() {
-						p.Default = types.StringValue(v.Default.(string))
-					}
-				case NumberPropModel:
-					bmNumber := bm.(NumberPropModel)
-					if !bmNumber.Default.IsNull() {
-						p.Default = types.Float64Value(v.Default.(float64))
-					}
-
-				case BooleanPropModel:
-					bmBoolean := bm.(BooleanPropModel)
-					if !bmBoolean.Default.IsNull() {
-						p.Default = types.BoolValue(v.Default.(bool))
-					}
-					// case *cli.ObjectPropModel:
-					// 	bmObject := bm.(cli.ObjectPropModel)
-					// 	if bmObject.Default != nil {
-					// 		p.Default = v.Default.(map[string]interface{})
-					// 	}
-					// }
+			switch p := prop.(type) {
+			case *StringPropModel:
+				bmString := bm.(StringPropModel)
+				if v.Default == nil && bmString.Default.IsNull() {
+					continue
 				}
+				p.Default = types.StringValue(v.Default.(string))
+			case *NumberPropModel:
+				bmNumber := bm.(NumberPropModel)
+				if v.Default == nil && bmNumber.Default.IsNull() {
+					continue
+				}
+				p.Default = types.Float64Value(v.Default.(float64))
+			case *BooleanPropModel:
+				bmBoolean := bm.(BooleanPropModel)
+				if v.Default == nil && bmBoolean.Default.IsNull() {
+					continue
+				}
+				p.Default = types.BoolValue(v.Default.(bool))
+				// case *cli.ObjectPropModel:
+				// 	bmObject := bm.(cli.ObjectPropModel)
+				// 	if bmObject.Default != nil {
+				// 		p.Default = v.Default.(map[string]interface{})
+				// 	}
+				// }
+
 			}
 		}
 	}
@@ -701,7 +719,7 @@ func defaultResourceToBody(value string, propFields *cli.BlueprintProperty) erro
 }
 
 func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data BlueprintModel
+	var data *BlueprintModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -717,7 +735,7 @@ func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateReque
 	fmt.Printf("Creating Blueprint %+v\n", b)
 	bp, err := r.portClient.CreateBlueprint(ctx, b)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to create R2 bucket", err.Error())
+		resp.Diagnostics.AddError("failed to create blueprint", err.Error())
 		return
 	}
 
@@ -726,7 +744,7 @@ func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateReque
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func writeBlueprintComputedFieldsToResource(bm BlueprintModel, bp *cli.Blueprint) {
+func writeBlueprintComputedFieldsToResource(bm *BlueprintModel, bp *cli.Blueprint) {
 	bm.Identifier = types.StringValue(bp.Identifier)
 	bm.CreatedAt = types.StringValue(bp.CreatedAt.String())
 	bm.CreatedBy = types.StringValue(bp.CreatedBy)
@@ -735,7 +753,7 @@ func writeBlueprintComputedFieldsToResource(bm BlueprintModel, bp *cli.Blueprint
 }
 
 func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data BlueprintModel
+	var data *BlueprintModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
@@ -768,6 +786,13 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 }
 
 func (r *BlueprintResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *BlueprintModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 }
 
 func (r *BlueprintResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -777,7 +802,7 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 	)...)
 }
 
-func stringPropResourceToBody(ctx context.Context, d BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
 	for propIdentifier, prop := range d.Properties.StringProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type:  "string",
@@ -786,7 +811,7 @@ func stringPropResourceToBody(ctx context.Context, d BlueprintModel, props map[s
 
 		if property, ok := props[propIdentifier]; ok {
 			if !prop.Default.IsNull() {
-				property.Default = prop.Default
+				property.Default = prop.Default.ValueString()
 			}
 
 			if !prop.Format.IsNull() {
@@ -830,7 +855,7 @@ func stringPropResourceToBody(ctx context.Context, d BlueprintModel, props map[s
 	}
 }
 
-func numberPropResourceToBody(ctx context.Context, d BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
 	for propIdentifier, prop := range d.Properties.NumberProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type:  "number",
@@ -876,7 +901,7 @@ func numberPropResourceToBody(ctx context.Context, d BlueprintModel, props map[s
 	}
 }
 
-func booleanPropResourceToBody(d BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+func booleanPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
 	for propIdentifier, prop := range d.Properties.BooleanProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type:  "boolean",
@@ -904,7 +929,7 @@ func booleanPropResourceToBody(d BlueprintModel, props map[string]cli.BlueprintP
 	}
 }
 
-func objectPropResourceToBody(d BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
 	for propIdentifier, prop := range d.Properties.ObjectProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type:  "object",
@@ -933,7 +958,7 @@ func objectPropResourceToBody(d BlueprintModel, props map[string]cli.BlueprintPr
 	}
 }
 
-func arrayPropResourceToBody(d BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+func arrayPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
 	for propIdentifier, prop := range d.Properties.ArrayProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type:  "array",
@@ -972,7 +997,7 @@ func arrayPropResourceToBody(d BlueprintModel, props map[string]cli.BlueprintPro
 	}
 }
 
-func blueprintResourceToBody(ctx context.Context, d BlueprintModel) (*cli.Blueprint, error) {
+func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Blueprint, error) {
 	b := &cli.Blueprint{}
 	b.Identifier = d.Identifier.ValueString()
 

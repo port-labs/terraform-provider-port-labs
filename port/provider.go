@@ -86,7 +86,9 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 }
 
 func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return []func() resource.Resource{}
+	return []func() resource.Resource{
+		blueprint.NewBlueprintResource,
+	}
 }
 
 func (p *PortLabsProvider) DataSources(ctx context.Context) []func() datasource.DataSource {

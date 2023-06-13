@@ -451,7 +451,6 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 				stringProp.Enum, _ = types.ListValue(types.StringType, attrs)
 			} else {
 				stringProp.Enum = types.ListNull(types.StringType)
-
 			}
 
 			setCommonProperties(v, bm.Properties.StringProp[k], stringProp)

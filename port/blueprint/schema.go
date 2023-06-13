@@ -158,6 +158,11 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 									MarkdownDescription: "The pattern of the string property",
 									Optional:            true,
 								},
+								"spec": schema.StringAttribute{
+									MarkdownDescription: "The spec of the string property",
+									Optional:            true,
+									Validators:          []validator.String{stringvalidator.OneOf("open-api", "async-api", "embedded-url")},
+								},
 								"enum": schema.ListAttribute{
 									MarkdownDescription: "The enum of the string property",
 									Optional:            true,
@@ -341,6 +346,13 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 								"description": schema.StringAttribute{
 									MarkdownDescription: "The description of the object property",
 									Optional:            true,
+								},
+								"spec": schema.StringAttribute{
+									MarkdownDescription: "The spec of the object property",
+									Optional:            true,
+									Validators: []validator.String{
+										stringvalidator.OneOf("async-api", "open-api"),
+									},
 								},
 								"icon": schema.StringAttribute{
 									MarkdownDescription: "The icon of the object property",

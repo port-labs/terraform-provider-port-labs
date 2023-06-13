@@ -19,6 +19,7 @@ type StringPropModel struct {
 	MinLength   types.Int64  `tfsdk:"min_length"`
 	Pattern     types.String `tfsdk:"pattern"`
 	Enum        types.List   `tfsdk:"enum"`
+	Spec        types.String `tfsdk:"spec"`
 }
 
 type NumberPropModel struct {
@@ -76,6 +77,7 @@ type ObjectPropModel struct {
 	Description types.String `tfsdk:"description"`
 	Required    types.Bool   `tfsdk:"required"`
 	Default     types.Map    `tfsdk:"default"`
+	Spec        types.String `tfsdk:"spec"`
 }
 
 type PropertiesModel struct {

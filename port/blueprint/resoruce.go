@@ -134,6 +134,10 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 				stringProp.Enum = types.ListNull(types.StringType)
 			}
 
+			if v.Spec != "" && !bm.Properties.StringProp[k].Spec.IsNull() {
+				stringProp.Spec = types.StringValue(v.Spec)
+			}
+
 			setCommonProperties(v, bm.Properties.StringProp[k], stringProp)
 
 			properties.StringProp[k] = *stringProp
@@ -244,6 +248,10 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 			}
 
 			objectProp := &ObjectPropModel{}
+
+			if v.Spec != "" && !bm.Properties.ObjectProp[k].Spec.IsNull() {
+				objectProp.Spec = types.StringValue(v.Spec)
+			}
 
 			setCommonProperties(v, bm.Properties.ObjectProp[k], objectProp)
 
@@ -539,6 +547,10 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 				property.MinLength = int(prop.MinLength.ValueInt64())
 			}
 
+			if !prop.Spec.IsNull() {
+				property.Spec = prop.Spec.ValueString()
+			}
+
 			if !prop.MaxLength.IsNull() {
 				property.MaxLength = int(prop.MaxLength.ValueInt64())
 			}
@@ -660,6 +672,10 @@ func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintP
 
 			if !prop.Description.IsNull() {
 				property.Description = prop.Description.ValueString()
+			}
+
+			if !prop.Spec.IsNull() {
+				property.Spec = prop.Spec.ValueString()
 			}
 
 			props[propIdentifier] = property

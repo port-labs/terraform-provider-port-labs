@@ -38,8 +38,6 @@ func (r *BlueprintResource) Configure(ctx context.Context, req resource.Configur
 	r.portClient = req.ProviderData.(*cli.PortClient)
 }
 
-// func getArrayDefaultAttribute(arrayType interface{}) schema.Attribute {
-// 	switch arrayType {
 // 	case "string":
 // 		return schema.ListAttribute{
 // 			MarkdownDescription: "The default of the array property",
@@ -63,14 +61,12 @@ func (r *BlueprintResource) Configure(ctx context.Context, req resource.Configur
 func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *BlueprintModel
 
-	// Read Terraform prior state data into the model
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	// Read data from the API
 	b, statusCode, err := r.portClient.ReadBlueprint(ctx, data.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
@@ -87,9 +83,14 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 
 func writeBlueprintFieldsToResource(bm *BlueprintModel, b *cli.Blueprint) {
 	bm.Identifier = types.StringValue(b.Identifier)
-	bm.Identifier = types.StringValue(b.Identifier)
-	bm.Title = types.StringValue(b.Title)
-	bm.Icon = types.StringValue(b.Icon)
+	if !bm.Title.IsNull() {
+		bm.Title = types.StringValue(b.Title)
+	}
+
+	if !bm.Icon.IsNull() {
+		bm.Icon = types.StringValue(b.Icon)
+	}
+
 	if !bm.Description.IsNull() {
 		bm.Description = types.StringValue(b.Description)
 	}
@@ -107,6 +108,10 @@ func writeBlueprintFieldsToResource(bm *BlueprintModel, b *cli.Blueprint) {
 
 	properties := &PropertiesModel{}
 
+	if bm.Properties == nil {
+		bm.Properties = &PropertiesModel{}
+	}
+
 	addPropertiesToResource(b, bm, properties)
 
 	bm.Properties = properties
@@ -115,6 +120,7 @@ func writeBlueprintFieldsToResource(bm *BlueprintModel, b *cli.Blueprint) {
 
 func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *PropertiesModel) {
 	for k, v := range b.Schema.Properties {
+		isImportActive := false
 		switch v.Type {
 		case "string":
 			if properties.StringProp == nil {
@@ -123,6 +129,12 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 
 			stringProp := &StringPropModel{}
 
+			if bm.Properties.StringProp == nil {
+				isImportActive = true
+				bm.Properties.StringProp = make(map[string]StringPropModel)
+				bm.Properties.StringProp[k] = *stringProp
+
+			}
 			if v.Enum != nil && !bm.Properties.StringProp[k].Enum.IsNull() {
 				attrs := make([]attr.Value, 0, len(v.Enum))
 				for _, value := range v.Enum {
@@ -158,7 +170,7 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 				}
 			}
 
-			setCommonProperties(v, bm.Properties.StringProp[k], stringProp)
+			setCommonProperties(v, bm.Properties.StringProp[k], stringProp, isImportActive)
 
 			properties.StringProp[k] = *stringProp
 
@@ -186,7 +198,7 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 				numberProp.Enum, _ = types.ListValue(types.Float64Type, attrs)
 			}
 
-			setCommonProperties(v, bm.Properties.NumberProp[k], numberProp)
+			setCommonProperties(v, bm.Properties.NumberProp[k], numberProp, isImportActive)
 
 			properties.NumberProp[k] = *numberProp
 
@@ -247,7 +259,7 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 				}
 			}
 
-			setCommonProperties(v, bm.Properties.ArrayProp[k], arrayProp)
+			setCommonProperties(v, bm.Properties.ArrayProp[k], arrayProp, isImportActive)
 
 			properties.ArrayProp[k] = *arrayProp
 
@@ -258,7 +270,7 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 
 			booleanProp := &BooleanPropModel{}
 
-			setCommonProperties(v, bm.Properties.BooleanProp[k], booleanProp)
+			setCommonProperties(v, bm.Properties.BooleanProp[k], booleanProp, isImportActive)
 
 			properties.BooleanProp[k] = *booleanProp
 
@@ -273,7 +285,7 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 				objectProp.Spec = types.StringValue(v.Spec)
 			}
 
-			setCommonProperties(v, bm.Properties.ObjectProp[k], objectProp)
+			setCommonProperties(v, bm.Properties.ObjectProp[k], objectProp, isImportActive)
 
 			properties.ObjectProp[k] = *objectProp
 
@@ -282,29 +294,29 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 	}
 }
 
-func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface{}) {
-	properties := []string{"description", "icon", "default", "title"}
+func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface{}, isImportActive bool) {
+	properties := []string{"Description", "Icon", "Default", "Title"}
 	for _, property := range properties {
 		switch property {
-		case "description":
+		case "Description":
 			switch p := prop.(type) {
 			case *StringPropModel:
 				bmString := bm.(StringPropModel)
-				if v.Description == "" && bmString.Description.IsNull() {
+				if v.Description == "" && bmString.Description.IsNull() && !isImportActive {
 					continue
 				}
 
 				p.Description = types.StringValue(v.Description)
 			case *NumberPropModel:
 				bmNumber := bm.(NumberPropModel)
-				if v.Description == "" && bmNumber.Description.IsNull() {
+				if v.Description == "" && bmNumber.Description.IsNull() && !isImportActive {
 					continue
 				}
 
 				p.Description = types.StringValue(v.Description)
 			case *BooleanPropModel:
 				bmBoolean := bm.(BooleanPropModel)
-				if v.Description == "" && bmBoolean.Description.IsNull() {
+				if v.Description == "" && bmBoolean.Description.IsNull() && !isImportActive {
 					continue
 				}
 
@@ -312,7 +324,7 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 
 			case *ArrayPropModel:
 				bmArray := bm.(ArrayPropModel)
-				if v.Description == "" && bmArray.Description.IsNull() {
+				if v.Description == "" && bmArray.Description.IsNull() && !isImportActive {
 					continue
 				}
 
@@ -320,99 +332,99 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 
 			case *ObjectPropModel:
 				bmObject := bm.(ObjectPropModel)
-				if v.Description == "" && bmObject.Description.IsNull() {
+				if v.Description == "" && bmObject.Description.IsNull() && !isImportActive {
 					continue
 				}
 				p.Description = types.StringValue(v.Description)
 			}
-		case "icon":
+		case "Icon":
 
 			switch p := prop.(type) {
 			case *StringPropModel:
 				bmString := bm.(StringPropModel)
-				if v.Icon == "" && bmString.Icon.IsNull() {
+				if v.Icon == "" && bmString.Icon.IsNull() && !isImportActive {
 					continue
 				}
 				p.Icon = types.StringValue(v.Icon)
 			case *NumberPropModel:
 				bmNumber := bm.(NumberPropModel)
-				if v.Icon == "" && bmNumber.Icon.IsNull() {
+				if v.Icon == "" && bmNumber.Icon.IsNull() && !isImportActive {
 					continue
 				}
 				p.Icon = types.StringValue(v.Icon)
 			case *BooleanPropModel:
 				bmBoolean := bm.(BooleanPropModel)
-				if v.Icon == "" && bmBoolean.Icon.IsNull() {
+				if v.Icon == "" && bmBoolean.Icon.IsNull() && !isImportActive {
 					continue
 				}
 				p.Icon = types.StringValue(v.Icon)
 			case *ArrayPropModel:
 				bmArray := bm.(ArrayPropModel)
-				if v.Icon == "" && bmArray.Icon.IsNull() {
+				if v.Icon == "" && bmArray.Icon.IsNull() && !isImportActive {
 					continue
 				}
 				p.Icon = types.StringValue(v.Icon)
 			case *ObjectPropModel:
 				bmObject := bm.(ObjectPropModel)
-				if v.Icon == "" && bmObject.Icon.IsNull() {
+				if v.Icon == "" && bmObject.Icon.IsNull() && !isImportActive {
 					continue
 				}
 				p.Icon = types.StringValue(v.Icon)
 			}
-		case "title":
+		case "Title":
 
 			switch p := prop.(type) {
 			case *StringPropModel:
 				bmString := bm.(StringPropModel)
-				if v.Title == "" && bmString.Title.IsNull() {
+				if v.Title == "" && bmString.Title.IsNull() && !isImportActive {
 					continue
 				}
 				p.Title = types.StringValue(v.Title)
 			case *NumberPropModel:
 				bmNumber := bm.(NumberPropModel)
-				if v.Title == "" && bmNumber.Title.IsNull() {
+				if v.Title == "" && bmNumber.Title.IsNull() && !isImportActive {
 					continue
 				}
 				p.Title = types.StringValue(v.Title)
 			case *BooleanPropModel:
 				bmBoolean := bm.(BooleanPropModel)
-				if v.Title == "" && bmBoolean.Title.IsNull() {
+				if v.Title == "" && bmBoolean.Title.IsNull() && !isImportActive {
 					continue
 				}
 				p.Title = types.StringValue(v.Title)
 			case *ArrayPropModel:
 				bmArray := bm.(ArrayPropModel)
-				if v.Title == "" && bmArray.Title.IsNull() {
+				if v.Title == "" && bmArray.Title.IsNull() && !isImportActive {
 					continue
 				}
 				p.Title = types.StringValue(v.Title)
 
 			case *ObjectPropModel:
 				bmObject := bm.(ObjectPropModel)
-				if v.Title == "" && bmObject.Title.IsNull() {
+				if v.Title == "" && bmObject.Title.IsNull() && !isImportActive {
 					continue
 				}
 				p.Title = types.StringValue(v.Title)
 
 			}
 
-		case "default":
+		case "Default":
 			switch p := prop.(type) {
 			case *StringPropModel:
 				bmString := bm.(StringPropModel)
-				if v.Default == nil && bmString.Default.IsNull() {
+				if v.Default == nil && bmString.Default.IsNull() && !isImportActive {
 					continue
 				}
 				p.Default = types.StringValue(v.Default.(string))
 			case *NumberPropModel:
 				bmNumber := bm.(NumberPropModel)
-				if v.Default == nil && bmNumber.Default.IsNull() {
+				if v.Default == nil && bmNumber.Default.IsNull() && !isImportActive {
 					continue
 				}
 				p.Default = types.Float64Value(v.Default.(float64))
 			case *BooleanPropModel:
 				bmBoolean := bm.(BooleanPropModel)
-				if v.Default == nil && bmBoolean.Default.IsNull() {
+				if v.Default == nil && bmBoolean.Default.IsNull() && !isImportActive {
 					continue
 				}
 				p.Default = types.BoolValue(v.Default.(bool))

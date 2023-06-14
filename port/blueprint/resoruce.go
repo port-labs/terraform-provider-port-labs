@@ -556,63 +556,65 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 
 func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
 	for propIdentifier, prop := range d.Properties.StringProp {
-		props[propIdentifier] = cli.BlueprintProperty{
+		property := cli.BlueprintProperty{
 			Type:  "string",
 			Title: prop.Title.ValueString(),
 		}
 
-		if property, ok := props[propIdentifier]; ok {
-			if !prop.Default.IsNull() {
-				property.Default = prop.Default.ValueString()
-			}
-
-			if !prop.Format.IsNull() {
-				property.Format = prop.Format.ValueString()
-			}
-
-			if !prop.Icon.IsNull() {
-				property.Icon = prop.Icon.ValueString()
-			}
-
-			if !prop.MinLength.IsNull() {
-				property.MinLength = int(prop.MinLength.ValueInt64())
-			}
-
-			if !prop.MaxLength.IsNull() {
-				property.MaxLength = int(prop.MaxLength.ValueInt64())
-			}
-
-			if !prop.Spec.IsNull() {
-				property.Spec = prop.Spec.ValueString()
-			}
-
-			if prop.SpecAuthentication != nil {
-				property.SpecAuthentication = &cli.SpecAuthentication{
-					AuthorizationUrl: prop.SpecAuthentication.AuthorizationUrl.ValueString(),
-					TokenUrl:         prop.SpecAuthentication.TokenUrl.ValueString(),
-					ClientId:         prop.SpecAuthentication.ClientId.ValueString(),
-				}
-			}
-
-			if !prop.Pattern.IsNull() {
-				property.Pattern = prop.Pattern.ValueString()
-			}
-
-			if !prop.Description.IsNull() {
-				property.Description = prop.Description.ValueString()
-			}
-
-			if !prop.Enum.IsNull() {
-				property.Enum = []interface{}{}
-				for _, e := range prop.Enum.Elements() {
-					v, _ := e.ToTerraformValue(ctx)
-					var keyValue string
-					v.As(&keyValue)
-					property.Enum = append(property.Enum, keyValue)
-				}
-			}
-			props[propIdentifier] = property
+		if !prop.Default.IsNull() {
+			property.Default = prop.Default.ValueString()
 		}
+
+		if !prop.Format.IsNull() {
+			property.Format = prop.Format.ValueString()
+		}
+
+		if !prop.Icon.IsNull() {
+			property.Icon = prop.Icon.ValueString()
+		}
+
+		if !prop.MinLength.IsNull() {
+			property.MinLength = int(prop.MinLength.ValueInt64())
+		}
+
+		if !prop.MaxLength.IsNull() {
+			property.MaxLength = int(prop.MaxLength.ValueInt64())
+		}
+
+		if !prop.Spec.IsNull() {
+			property.Spec = prop.Spec.ValueString()
+		}
+
+		if prop.SpecAuthentication != nil {
+			specAuth := &cli.SpecAuthentication{
+				AuthorizationUrl: prop.SpecAuthentication.AuthorizationUrl.ValueString(),
+				TokenUrl:         prop.SpecAuthentication.TokenUrl.ValueString(),
+				ClientId:         prop.SpecAuthentication.ClientId.ValueString(),
+			}
+			property.SpecAuthentication = specAuth
+		}
+
+		if !prop.Pattern.IsNull() {
+			property.Pattern = prop.Pattern.ValueString()
+		}
+
+		if !prop.Description.IsNull() {
+			property.Description = prop.Description.ValueString()
+		}
+
+		if !prop.Enum.IsNull() {
+			enumList := []interface{}{}
+			for _, e := range prop.Enum.Elements() {
+				v, _ := e.ToTerraformValue(ctx)
+				var keyValue string
+				v.As(&keyValue)
+				enumList = append(enumList, keyValue)
+			}
+			property.Enum = enumList
+		}
+
+		props[propIdentifier] = property
+
 		if prop.Required.ValueBool() {
 			required = append(required, propIdentifier)
 		}

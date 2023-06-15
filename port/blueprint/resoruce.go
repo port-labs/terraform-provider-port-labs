@@ -213,6 +213,16 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				}
 
 				numberProp.Enum, _ = types.ListValue(types.Float64Type, attrs)
+			} else {
+				numberProp.Enum = types.ListNull(types.Float64Type)
+			}
+
+			if !bm.Properties.NumberProp[k].Required.IsNull() {
+				if lo.Contains(b.Schema.Required, k) {
+					numberProp.Required = types.BoolValue(true)
+				} else {
+					numberProp.Required = types.BoolValue(false)
+				}
 			}
 
 			setCommonProperties(v, bm.Properties.NumberProp[k], numberProp, isImportActive)
@@ -643,7 +653,7 @@ func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 
 		if property, ok := props[propIdentifier]; ok {
 			if !prop.Default.IsNull() {
-				property.Default = prop.Default
+				property.Default = prop.Default.ValueFloat64()
 			}
 
 			if !prop.Icon.IsNull() {

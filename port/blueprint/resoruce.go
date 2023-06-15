@@ -3,6 +3,7 @@ package blueprint
 import (
 	"context"
 	"fmt"
+	"math/big"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -676,9 +677,10 @@ func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 				property.Enum = []interface{}{}
 				for _, e := range prop.Enum.Elements() {
 					v, _ := e.ToTerraformValue(ctx)
-					var keyValue float64
+					var keyValue big.Float
 					v.As(&keyValue)
-					property.Enum = append(property.Enum, keyValue)
+					floatValue, _ := keyValue.Float64()
+					property.Enum = append(property.Enum, floatValue)
 				}
 			}
 

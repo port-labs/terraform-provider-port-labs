@@ -167,8 +167,8 @@ func TestAccPortNumberPropertyBlueprint(t *testing.T) {
 					required = true
 					minimum = 1
 					maximum = 10
-					default = 5
-					
+					default = 3
+					enum = [1, 2, 3]
 				}
 			}
 		}
@@ -190,10 +190,10 @@ func TestAccPortNumberPropertyBlueprint(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.required", "true"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.minimum", "1"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.maximum", "10"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.default", "5"),
-					// resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum.0", "1"),
-					// resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum.1", "2"),
-					// resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum.2", "3"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.default", "3"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum.0", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum.1", "2"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum.2", "3"),
 					// resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum_colors.1", "red"),
 					// resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum_colors.2", "green"),
 					// resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum_colors.3", "blue"),

@@ -108,13 +108,13 @@ func writeBlueprintFieldsToResource(bm *BlueprintModel, b *cli.Blueprint) {
 
 	properties := &PropertiesModel{}
 
-	if bm.Properties == nil {
+	if bm.Properties == nil && len(b.Schema.Properties) == 0 {
+		bm.Properties = nil
+	} else {
 		bm.Properties = &PropertiesModel{}
+		addPropertiesToResource(b, bm, properties)
+		bm.Properties = properties
 	}
-
-	addPropertiesToResource(b, bm, properties)
-
-	bm.Properties = properties
 
 }
 
@@ -491,6 +491,8 @@ func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateReque
 		resp.Diagnostics.AddError("failed to create blueprint", err.Error())
 		return
 	}
+
+	data.ID = types.StringValue(bp.Identifier)
 
 	writeBlueprintComputedFieldsToResource(data, bp)
 

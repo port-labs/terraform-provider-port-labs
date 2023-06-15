@@ -1,4 +1,4 @@
-package port
+package provider
 
 import (
 	"context"
@@ -10,6 +10,10 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/port/blueprint"
 	"github.com/port-labs/terraform-provider-port-labs/port/cli"
 	"github.com/port-labs/terraform-provider-port-labs/version"
+)
+
+var (
+	_ provider.Provider = &PortLabsProvider{}
 )
 
 type PortLabsProvider struct {

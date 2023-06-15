@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/port-labs/terraform-provider-port-labs/port"
+	"github.com/port-labs/terraform-provider-port-labs/provider"
 )
 
 func main() {
@@ -17,7 +17,7 @@ func main() {
 
 	err := providerserver.Serve(
 		context.Background(),
-		port.New,
+		provider.New,
 		providerserver.ServeOpts{
 			Address: "registry.terraform.io/port-labs/port-labs",
 			Debug:   debug,

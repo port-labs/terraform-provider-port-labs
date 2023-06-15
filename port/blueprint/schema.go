@@ -271,6 +271,12 @@ func ObjectPropertySchema() schema.MapNestedAttribute {
 
 func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	blueprintSchema := map[string]schema.Attribute{
+		"id": schema.StringAttribute{
+			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
+		},
 		"identifier": schema.StringAttribute{
 			MarkdownDescription: "The identifier of the blueprint",
 			Required:            true,

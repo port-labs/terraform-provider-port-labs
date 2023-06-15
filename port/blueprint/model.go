@@ -96,6 +96,7 @@ type PropertiesModel struct {
 }
 
 type BlueprintModel struct {
+	ID                   types.String               `tfsdk:"id"`
 	Identifier           types.String               `tfsdk:"identifier"`
 	Title                types.String               `tfsdk:"title"`
 	Icon                 types.String               `tfsdk:"icon"`

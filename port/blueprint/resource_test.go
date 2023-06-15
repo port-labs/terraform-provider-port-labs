@@ -93,6 +93,54 @@ func TestAccPortBasicBlueprint(t *testing.T) {
 	})
 }
 
+func TestAccPortStringPropertyBlueprint(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_prop = {
+				myStringIdentifier = {
+					description = "This is a string property"
+					title = "text"
+					icon = "Terraform"
+					required = true
+					min_length = 1
+					max_length = 10
+					default = "default"
+					enum = ["default", "default2"]
+				}
+			}
+		}
+	}
+`, identifier)
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "identifier", identifier),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.description", "This is a string property"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.title", "text"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.min_length", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.max_length", "10"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.default", "default"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.enum.0", "default"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.enum.1", "default2"),
+				),
+			},
+		},
+	})
+}
+
 // func TestAccPortBlueprintImport(t *testing.T) {
 // 	var testAccActionConfigCreate = `
 // 	resource "port-labs_blueprint" "microservice" {

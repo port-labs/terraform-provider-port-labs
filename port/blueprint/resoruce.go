@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/port/cli"
+	"github.com/samber/lo"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces
@@ -111,7 +112,9 @@ func writeBlueprintFieldsToResource(bm *BlueprintModel, b *cli.Blueprint) {
 	if bm.Properties == nil && len(b.Schema.Properties) == 0 {
 		bm.Properties = nil
 	} else {
-		bm.Properties = &PropertiesModel{}
+		if bm.Properties == nil {
+			bm.Properties = &PropertiesModel{}
+		}
 		addPropertiesToResource(b, bm, properties)
 		bm.Properties = properties
 	}
@@ -160,6 +163,14 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 
 			if v.Pattern != "" && !bm.Properties.StringProp[k].Pattern.IsNull() {
 				stringProp.Pattern = types.StringValue(v.Pattern)
+			}
+
+			if !bm.Properties.StringProp[k].Required.IsNull() {
+				if lo.Contains(b.Schema.Required, k) {
+					stringProp.Required = types.BoolValue(true)
+				} else {
+					stringProp.Required = types.BoolValue(false)
+				}
 			}
 
 			if v.SpecAuthentication != nil && bm.Properties.StringProp[k].SpecAuthentication != nil {
@@ -292,10 +303,11 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 		}
 
 	}
+
 }
 
 func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface{}, isImportActive bool) {
-	properties := []string{"Description", "Icon", "Default", "Title"}
+	properties := []string{"Description", "Icon", "Default", "Title", "Required"}
 	for _, property := range properties {
 		switch property {
 		case "Description":
@@ -568,7 +580,7 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 	)...)
 }
 
-func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
 	for propIdentifier, prop := range d.Properties.StringProp {
 		property := cli.BlueprintProperty{
 			Type:  "string",
@@ -630,12 +642,12 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 		props[propIdentifier] = property
 
 		if prop.Required.ValueBool() {
-			required = append(required, propIdentifier)
+			*required = append(*required, propIdentifier)
 		}
 	}
 }
 
-func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
 	for propIdentifier, prop := range d.Properties.NumberProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type:  "number",
@@ -676,12 +688,12 @@ func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 			props[propIdentifier] = property
 		}
 		if prop.Required.ValueBool() {
-			required = append(required, propIdentifier)
+			*required = append(*required, propIdentifier)
 		}
 	}
 }
 
-func booleanPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+func booleanPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
 	for propIdentifier, prop := range d.Properties.BooleanProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type:  "boolean",
@@ -704,12 +716,12 @@ func booleanPropResourceToBody(d *BlueprintModel, props map[string]cli.Blueprint
 			props[propIdentifier] = property
 		}
 		if prop.Required.ValueBool() {
-			required = append(required, propIdentifier)
+			*required = append(*required, propIdentifier)
 		}
 	}
 }
 
-func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
 	for propIdentifier, prop := range d.Properties.ObjectProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type:  "object",
@@ -737,12 +749,12 @@ func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintP
 		}
 
 		if prop.Required.ValueBool() {
-			required = append(required, propIdentifier)
+			*required = append(*required, propIdentifier)
 		}
 	}
 }
 
-func arrayPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required []string) {
+func arrayPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
 	for propIdentifier, prop := range d.Properties.ArrayProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type:  "array",
@@ -809,7 +821,7 @@ func arrayPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintPr
 		}
 
 		if prop.Required.ValueBool() {
-			required = append(required, propIdentifier)
+			*required = append(*required, propIdentifier)
 		}
 	}
 }
@@ -839,20 +851,20 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 
 	if d.Properties != nil {
 		if d.Properties.StringProp != nil {
-			stringPropResourceToBody(ctx, d, props, required)
+			stringPropResourceToBody(ctx, d, props, &required)
 		}
 		if d.Properties.ArrayProp != nil {
-			arrayPropResourceToBody(d, props, required)
+			arrayPropResourceToBody(d, props, &required)
 		}
 		if d.Properties.NumberProp != nil {
-			numberPropResourceToBody(ctx, d, props, required)
+			numberPropResourceToBody(ctx, d, props, &required)
 		}
 		if d.Properties.BooleanProp != nil {
-			booleanPropResourceToBody(d, props, required)
+			booleanPropResourceToBody(d, props, &required)
 		}
 
 		if d.Properties.ObjectProp != nil {
-			objectPropResourceToBody(d, props, required)
+			objectPropResourceToBody(d, props, &required)
 		}
 
 	}

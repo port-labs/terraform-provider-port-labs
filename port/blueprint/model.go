@@ -39,6 +39,7 @@ type NumberPropModel struct {
 	Maximum     types.Float64 `tfsdk:"maximum"`
 	Minimum     types.Float64 `tfsdk:"minimum"`
 	Enum        types.List    `tfsdk:"enum"`
+	EnumColors  types.Map     `tfsdk:"enum_colors"`
 }
 
 type BooleanPropModel struct {

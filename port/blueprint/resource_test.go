@@ -169,6 +169,11 @@ func TestAccPortNumberPropertyBlueprint(t *testing.T) {
 					maximum = 10
 					default = 3
 					enum = [1, 2, 3]
+					enum_colors = {
+						1 = "red"
+						2 = "green"
+						3 = "blue"
+					}
 				}
 			}
 		}

@@ -143,6 +143,11 @@ func NumberPropertySchema() schema.Attribute {
 				listvalidator.SizeAtLeast(1),
 			},
 		},
+		"enum_colors": schema.MapAttribute{
+			MarkdownDescription: "The enum colors of the number property",
+			Optional:            true,
+			ElementType:         types.StringType,
+		},
 	}
 
 	SpreadMaps(numberPropertySchema, MetadataProperties())

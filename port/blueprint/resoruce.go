@@ -218,6 +218,10 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				numberProp.Enum = types.ListNull(types.Float64Type)
 			}
 
+			if v.EnumColors != nil && !bm.Properties.NumberProp[k].EnumColors.IsNull() {
+				numberProp.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, v.EnumColors)
+			}
+
 			if !bm.Properties.NumberProp[k].Required.IsNull() {
 				if lo.Contains(b.Schema.Required, k) {
 					numberProp.Required = types.BoolValue(true)
@@ -681,6 +685,16 @@ func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 					v.As(&keyValue)
 					floatValue, _ := keyValue.Float64()
 					property.Enum = append(property.Enum, floatValue)
+				}
+			}
+
+			if !prop.EnumColors.IsNull() {
+				property.EnumColors = map[string]string{}
+				for k, v := range prop.EnumColors.Elements() {
+					value, _ := v.ToTerraformValue(ctx)
+					var keyValue string
+					value.As(&keyValue)
+					property.EnumColors[k] = keyValue
 				}
 			}
 

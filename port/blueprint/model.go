@@ -25,6 +25,7 @@ type StringPropModel struct {
 	MinLength          types.Int64              `tfsdk:"min_length"`
 	Pattern            types.String             `tfsdk:"pattern"`
 	Enum               types.List               `tfsdk:"enum"`
+	EnumColors         types.Map                `tfsdk:"enum_colors"`
 	Spec               types.String             `tfsdk:"spec"`
 	SpecAuthentication *SpecAuthenticationModel `tfsdk:"spec_authentication"`
 }

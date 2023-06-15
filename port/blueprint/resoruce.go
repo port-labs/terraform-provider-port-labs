@@ -2,9 +2,7 @@ package blueprint
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -78,11 +76,11 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	writeBlueprintFieldsToResource(data, b)
+	writeBlueprintFieldsToResource(ctx, data, b)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func writeBlueprintFieldsToResource(bm *BlueprintModel, b *cli.Blueprint) {
+func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *cli.Blueprint) {
 	bm.Identifier = types.StringValue(b.Identifier)
 	if !bm.Title.IsNull() {
 		bm.Title = types.StringValue(b.Title)
@@ -115,13 +113,13 @@ func writeBlueprintFieldsToResource(bm *BlueprintModel, b *cli.Blueprint) {
 		if bm.Properties == nil {
 			bm.Properties = &PropertiesModel{}
 		}
-		addPropertiesToResource(b, bm, properties)
+		addPropertiesToResource(ctx, b, bm, properties)
 		bm.Properties = properties
 	}
 
 }
 
-func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *PropertiesModel) {
+func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel, properties *PropertiesModel) {
 	for k, v := range b.Schema.Properties {
 		isImportActive := false
 		switch v.Type {
@@ -147,6 +145,14 @@ func addPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel, properties *P
 				stringProp.Enum, _ = types.ListValue(types.StringType, attrs)
 			} else {
 				stringProp.Enum = types.ListNull(types.StringType)
+			}
+
+			if v.EnumColors != nil && !bm.Properties.StringProp[k].EnumColors.IsNull() {
+				stringProp.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, v.EnumColors)
+			}
+
+			if v.Format != "" && !bm.Properties.StringProp[k].Format.IsNull() {
+				stringProp.Format = types.StringValue(v.Format)
 			}
 
 			if v.Spec != "" && !bm.Properties.StringProp[k].Spec.IsNull() {
@@ -452,37 +458,6 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 	}
 }
 
-func defaultResourceToBody(value string, propFields *cli.BlueprintProperty) error {
-	switch propFields.Type {
-	case "string":
-		propFields.Default = value
-	case "number":
-		defaultNum, err := strconv.ParseInt(value, 10, 0)
-		if err != nil {
-			return err
-		}
-		propFields.Default = defaultNum
-
-	case "boolean":
-
-		defaultBool, err := strconv.ParseBool(value)
-		if err != nil {
-			return err
-		}
-		propFields.Default = defaultBool
-
-	case "object":
-		defaultObj := make(map[string]interface{})
-		err := json.Unmarshal([]byte(value), &defaultObj)
-		if err != nil {
-			return err
-		}
-		propFields.Default = defaultObj
-
-	}
-	return nil
-}
-
 func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data *BlueprintModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -637,6 +612,18 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 				enumList = append(enumList, keyValue)
 			}
 			property.Enum = enumList
+		}
+
+		if !prop.EnumColors.IsNull() {
+			enumColor := map[string]string{}
+			for k, v := range prop.EnumColors.Elements() {
+				value, _ := v.ToTerraformValue(ctx)
+				var keyValue string
+				value.As(&keyValue)
+				enumColor[k] = keyValue
+			}
+
+			property.EnumColors = enumColor
 		}
 
 		props[propIdentifier] = property

@@ -111,6 +111,12 @@ func TestAccPortStringPropertyBlueprint(t *testing.T) {
 					max_length = 10
 					default = "default"
 					enum = ["default", "default2"]
+					pattern = "^[a-zA-Z0-9]*$"
+					format = "user"
+					enum_colors = {
+						default = "red"
+						default2 = "green"
+					}
 				}
 			}
 		}
@@ -133,8 +139,12 @@ func TestAccPortStringPropertyBlueprint(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.min_length", "1"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.max_length", "10"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.default", "default"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.format", "user"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.enum.0", "default"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.enum.1", "default2"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.pattern", "^[a-zA-Z0-9]*$"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.enum_colors.default", "red"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.myStringIdentifier.enum_colors.default2", "green"),
 				),
 			},
 		},

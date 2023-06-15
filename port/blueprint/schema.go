@@ -103,6 +103,11 @@ func StringPropertySchema() schema.Attribute {
 				listvalidator.SizeAtLeast(1),
 			},
 		},
+		"enum_colors": schema.MapAttribute{
+			MarkdownDescription: "The enum colors of the string property",
+			Optional:            true,
+			ElementType:         types.StringType,
+		},
 	}
 
 	SpreadMaps(stringPropertySchema, MetadataProperties())

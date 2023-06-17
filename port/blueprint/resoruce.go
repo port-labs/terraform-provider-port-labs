@@ -495,7 +495,7 @@ func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateReque
 		resp.Diagnostics.AddError("failed to create blueprint", err.Error())
 		return
 	}
-	fmt.Printf("Creating Blueprint %+v\n", b)
+
 	bp, err := r.portClient.CreateBlueprint(ctx, b)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create blueprint", err.Error())

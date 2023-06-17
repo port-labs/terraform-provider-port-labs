@@ -249,6 +249,39 @@ func TestAccPortBlueprintBooleanProperty(t *testing.T) {
 	})
 }
 
+func TestAccBlueprintWithChangelogDestination(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		changelog_destination = {
+						type = "WEBHOOK"
+						url = "https://google.com"
+						agent = true
+					}
+	}`, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "identifier", identifier),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.type", "WEBHOOK"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.url", "https://google.com"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.agent", "true"),
+				),
+			},
+		},
+	})
+}
+
 // func TestAccPortBlueprintImport(t *testing.T) {
 // 	var testAccActionConfigCreate = `
 // 	resource "port-labs_blueprint" "microservice" {

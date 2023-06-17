@@ -67,7 +67,7 @@ func genID() string {
 // 	})
 // }
 
-func TestAccPortBasicBlueprint(t *testing.T) {
+func TestAccPortBlueprintBasic(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
@@ -93,7 +93,7 @@ func TestAccPortBasicBlueprint(t *testing.T) {
 	})
 }
 
-func TestAccPortStringPropertyBlueprint(t *testing.T) {
+func TestAccPortBlueprintStringProperty(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
@@ -151,7 +151,7 @@ func TestAccPortStringPropertyBlueprint(t *testing.T) {
 	})
 }
 
-func TestAccPortNumberPropertyBlueprint(t *testing.T) {
+func TestAccPortBlueprintNumberProperty(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
@@ -202,6 +202,47 @@ func TestAccPortNumberPropertyBlueprint(t *testing.T) {
 					// resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum_colors.1", "red"),
 					// resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum_colors.2", "green"),
 					// resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum_colors.3", "blue"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortBlueprintBooleanProperty(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			boolean_prop = {
+				myBooleanIdentifier = {
+					description = "This is a boolean property"
+					title = "boolean"
+					icon = "Terraform"
+					required = true
+					default = true
+				}
+			}
+		}
+	}`, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "identifier", identifier),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.boolean_prop.myBooleanIdentifier.description", "This is a boolean property"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.boolean_prop.myBooleanIdentifier.title", "boolean"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.boolean_prop.myBooleanIdentifier.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.boolean_prop.myBooleanIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.boolean_prop.myBooleanIdentifier.default", "true"),
 				),
 			},
 		},

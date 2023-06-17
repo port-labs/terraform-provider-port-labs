@@ -304,6 +304,14 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 
 			setCommonProperties(v, bm.Properties.BooleanProp[k], booleanProp, isImportActive)
 
+			if !bm.Properties.BooleanProp[k].Required.IsNull() {
+				if lo.Contains(b.Schema.Required, k) {
+					booleanProp.Required = types.BoolValue(true)
+				} else {
+					booleanProp.Required = types.BoolValue(false)
+				}
+			}
+
 			properties.BooleanProp[k] = *booleanProp
 
 		case "object":
@@ -715,7 +723,7 @@ func booleanPropResourceToBody(d *BlueprintModel, props map[string]cli.Blueprint
 
 		if property, ok := props[propIdentifier]; ok {
 			if !prop.Default.IsNull() {
-				property.Default = prop.Default
+				property.Default = prop.Default.ValueBool()
 			}
 
 			if !prop.Icon.IsNull() {

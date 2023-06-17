@@ -161,7 +161,12 @@ func NumberPropertySchema() schema.Attribute {
 }
 
 func BooleanPropertySchema() schema.Attribute {
-	booleanPropertySchema := map[string]schema.Attribute{}
+	booleanPropertySchema := map[string]schema.Attribute{
+		"default": schema.BoolAttribute{
+			MarkdownDescription: "The default of the boolean property",
+			Optional:            true,
+		},
+	}
 
 	SpreadMaps(booleanPropertySchema, MetadataProperties())
 

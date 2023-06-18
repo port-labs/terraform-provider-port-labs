@@ -52,7 +52,7 @@ func (c *PortClient) DeleteEntity(ctx context.Context, id string, blueprint stri
 	pb := &PortBody{}
 	resp, err := c.Client.R().
 		SetHeader("Accept", "application/json").
-		SetPathParam("blueprint", url.QueryEscape(blueprint).
+		SetPathParam("blueprint", url.QueryEscape(blueprint)).
 		SetPathParam("identifier", url.QueryEscape(id)).
 		SetResult(pb).
 		Delete(url)

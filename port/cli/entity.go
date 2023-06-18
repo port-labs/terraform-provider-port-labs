@@ -11,8 +11,8 @@ func (c *PortClient) ReadEntity(ctx context.Context, id string, blueprint string
 	resp, err := c.Client.R().
 		SetHeader("Accept", "application/json").
 		SetQueryParam("exclude_calculated_properties", "true").
-		SetPathParam(("blueprint"), blueprint).
-		SetPathParam("identifier", id).
+		SetPathParam(("blueprint"), url.QueryEscape(blueprint)).
+		SetPathParam("identifier", url.QueryEscape(id)).
 		Get(url)
 	if err != nil {
 		return nil, resp.StatusCode(), err
@@ -33,7 +33,7 @@ func (c *PortClient) CreateEntity(ctx context.Context, e *Entity, runID string) 
 	pb := &PortBody{}
 	resp, err := c.Client.R().
 		SetBody(e).
-		SetPathParam(("blueprint"), e.Blueprint).
+		SetPathParam(("blueprint"), url.QueryEscape(e.Blueprint)).
 		SetQueryParam("upsert", "true").
 		SetQueryParam("run_id", runID).
 		SetResult(&pb).
@@ -52,8 +52,8 @@ func (c *PortClient) DeleteEntity(ctx context.Context, id string, blueprint stri
 	pb := &PortBody{}
 	resp, err := c.Client.R().
 		SetHeader("Accept", "application/json").
-		SetPathParam("blueprint", blueprint).
-		SetPathParam("identifier", id).
+		SetPathParam("blueprint", url.QueryEscape(blueprint).
+		SetPathParam("identifier", url.QueryEscape(id)).
 		SetResult(pb).
 		Delete(url)
 	if err != nil {

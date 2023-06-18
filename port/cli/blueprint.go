@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 )
 
 func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, int, error) {
@@ -14,7 +15,7 @@ func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, 
 		SetHeader("Accept", "application/json").
 		SetQueryParam("exclude_calculated_properties", "true").
 		SetResult(pb).
-		SetPathParam("identifier", id).
+		SetPathParam("identifier", url.QueryEscape(id)).
 		Get(url)
 	if err != nil {
 		return nil, resp.StatusCode(), err
@@ -50,7 +51,7 @@ func (c *PortClient) UpdateBlueprint(ctx context.Context, b *Blueprint, id strin
 	resp, err := c.Client.R().
 		SetBody(b).
 		SetContext(ctx).
-		SetPathParam("identifier", id).
+		SetPathParam("identifier", url.QueryEscape(id)).
 		Put(url)
 	if err != nil {
 		return nil, err
@@ -71,7 +72,7 @@ func (c *PortClient) DeleteBlueprint(ctx context.Context, id string) error {
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
-		SetPathParam("identifier", id).
+		SetPathParam("identifier", url.QueryEscape(id)).
 		Delete(url)
 	if err != nil {
 		return err

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 )
 
 func (c *PortClient) ReadAction(ctx context.Context, blueprintID, id string) (*Action, int, error) {
@@ -13,8 +14,8 @@ func (c *PortClient) ReadAction(ctx context.Context, blueprintID, id string) (*A
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
 		SetResult(pb).
-		SetPathParam("blueprint_identifier", blueprintID).
-		SetPathParam("action_identifier", id).
+		SetPathParam("blueprint_identifier", url.QueryEscape(blueprintID)).
+		SetPathParam("action_identifier", url.QueryEscape(id)).
 		Get(url)
 	if err != nil {
 		return nil, resp.StatusCode(), err
@@ -29,7 +30,7 @@ func (c *PortClient) CreateAction(ctx context.Context, blueprintID string, actio
 	url := "v1/blueprints/{blueprint_identifier}/actions"
 	resp, err := c.Client.R().
 		SetBody(action).
-		SetPathParam("blueprint_identifier", blueprintID).
+		SetPathParam("blueprint_identifier", url.QueryEscape(blueprintID)).
 		SetContext(ctx).
 		Post(url)
 	if err != nil {
@@ -51,8 +52,8 @@ func (c *PortClient) UpdateAction(ctx context.Context, blueprintID, actionID str
 	resp, err := c.Client.R().
 		SetBody(action).
 		SetContext(ctx).
-		SetPathParam("blueprint_identifier", blueprintID).
-		SetPathParam("action_identifier", actionID).
+		SetPathParam("blueprint_identifier", url.QueryEscape(blueprintID)).
+		SetPathParam("action_identifier", url.QueryEscape(actionID)).
 		Put(url)
 	if err != nil {
 		return nil, err
@@ -73,8 +74,8 @@ func (c *PortClient) DeleteAction(ctx context.Context, blueprintID, actionID str
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
-		SetPathParam("blueprint_identifier", blueprintID).
-		SetPathParam("action_identifier", actionID).
+		SetPathParam("blueprint_identifier", url.QueryEscape(blueprintID)).
+		SetPathParam("action_identifier", url.QueryEscape(actionID)).
 		Delete(url)
 	if err != nil {
 		return err

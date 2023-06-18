@@ -265,10 +265,9 @@ func ObjectPropertySchema() schema.MapNestedAttribute {
 				stringvalidator.OneOf("async-api", "open-api"),
 			},
 		},
-		"default": schema.MapAttribute{
+		"default": schema.StringAttribute{
 			Optional:            true,
 			MarkdownDescription: "The default of the object property",
-			ElementType:         types.StringType,
 		},
 	}
 

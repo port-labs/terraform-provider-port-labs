@@ -85,7 +85,7 @@ type ObjectPropModel struct {
 	Icon        types.String `tfsdk:"icon"`
 	Description types.String `tfsdk:"description"`
 	Required    types.Bool   `tfsdk:"required"`
-	Default     types.Map    `tfsdk:"default"`
+	Default     types.String `tfsdk:"default"`
 	Spec        types.String `tfsdk:"spec"`
 }
 

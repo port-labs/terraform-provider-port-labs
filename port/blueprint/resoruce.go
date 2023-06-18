@@ -338,6 +338,14 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				objectProp.Spec = types.StringValue(v.Spec)
 			}
 
+			if !bm.Properties.ObjectProp[k].Required.IsNull() {
+				if lo.Contains(b.Schema.Required, k) {
+					objectProp.Required = types.BoolValue(true)
+				} else {
+					objectProp.Required = types.BoolValue(false)
+				}
+			}
+
 			setCommonProperties(v, bm.Properties.ObjectProp[k], objectProp, isImportActive)
 
 			properties.ObjectProp[k] = *objectProp
@@ -482,13 +490,12 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 					continue
 				}
 				p.Default = types.BoolValue(v.Default.(bool))
-				// case *cli.ObjectPropModel:
-				// 	bmObject := bm.(cli.ObjectPropModel)
-				// 	if bmObject.Default != nil {
-				// 		p.Default = v.Default.(map[string]interface{})
-				// 	}
-				// }
-
+			case *ObjectPropModel:
+				bmObject := bm.(ObjectPropModel)
+				if v.Default == nil && bmObject.Default.IsNull() && !isImportActive {
+					continue
+				}
+				p.Default = types.StringValue(v.Default.(string))
 			}
 		}
 	}
@@ -764,7 +771,7 @@ func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintP
 
 		if property, ok := props[propIdentifier]; ok {
 			if !prop.Default.IsNull() {
-				property.Default = prop.Default
+				property.Default = prop.Default.ValueString()
 			}
 
 			if !prop.Icon.IsNull() {

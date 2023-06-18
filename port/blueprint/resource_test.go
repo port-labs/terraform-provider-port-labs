@@ -248,6 +248,45 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 	})
 }
 
+func TestAccPortBlueprintObjectProperty(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			object_prop = {
+				myObjectIdentifier = {
+					description = "This is an object property"
+					title = "object"
+					icon = "Terraform"
+					required = true
+				}
+			}
+		}
+	}`, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "identifier", identifier),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.object_prop.myObjectIdentifier.description", "This is an object property"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.object_prop.myObjectIdentifier.title", "object"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.object_prop.myObjectIdentifier.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.object_prop.myObjectIdentifier.required", "true"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccBlueprintWithChangelogDestination(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
@@ -431,42 +470,6 @@ func TestAccBlueprintWithSpecification(t *testing.T) {
 		},
 	})
 }
-
-// func TestAccBlueprintWithChangelogDestination(t *testing.T) {
-// 	identifier := genID()
-// 	var testAccActionConfigCreate = fmt.Sprintf(`
-// 	resource "port-labs_blueprint" "microservice" {
-// 		title = "TF Provider Test BP0"
-// 		icon = "Terraform"
-// 		identifier = "%s"
-// 		properties {
-// 			identifier = "text"
-// 			type = "string"
-// 			title = "text"
-// 		}
-// 		changelog_destination {
-// 			type = "WEBHOOK"
-// 			url = "https://google.com"
-// 			agent = true
-// 		}
-// 	}
-// `, identifier)
-// 	resource.Test(t, resource.TestCase{
-// 		Providers: map[string]*schema.Provider{
-// 			"port-labs": Provider(),
-// 		},
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccActionConfigCreate,
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.0.type", "WEBHOOK"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.0.url", "https://google.com"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.0.agent", "true"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
 
 // func TestAccPortBlueprintWithRelation(t *testing.T) {
 // 	identifier1 := genID()

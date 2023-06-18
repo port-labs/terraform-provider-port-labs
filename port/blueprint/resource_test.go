@@ -17,56 +17,6 @@ func genID() string {
 	return fmt.Sprintf("t-%s", id[:18])
 }
 
-// func TestAccPortBlueprintEnum(t *testing.T) {
-// 	identifier := genID()
-// 	var testAccActionConfigCreate = fmt.Sprintf(`
-// 	resource "port-labs_blueprint" "enumTest" {
-// 		title = "TF Provider Test BP0"
-// 		icon = "Terraform"
-// 		identifier = "%s"
-// 		properties {
-// 			identifier = "text"
-// 			type = "string"
-// 			title = "text"
-// 			icon = "Terraform"
-// 			enum = ["a", "b", "c"]
-// 			enum_colors = {
-// 				a = "red"
-// 				b = "blue"
-// 			}
-// 		}
-// 		properties {
-// 			identifier = "number"
-// 			type = "number"
-// 			title = "number"
-// 			enum = [1, 2]
-
-// 		}
-// 	}
-// `, identifier)
-// 	resource.Test(t, resource.TestCase{
-// 		Providers: map[string]*schema.Provider{
-// 			"port-labs": Provider(),
-// 		},
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccActionConfigCreate,
-// 				Check: resource.ComposeTestCheckFunc(
-
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.1.enum.0", "a"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.1.enum.1", "b"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.1.enum.2", "c"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.1.enum_colors.a", "red"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.1.enum_colors.b", "blue"),
-
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.0.enum.0", "1"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.enumTest", "properties.0.enum.1", "2"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
-
 func TestAccPortBlueprintBasic(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
@@ -249,6 +199,55 @@ func TestAccPortBlueprintBooleanProperty(t *testing.T) {
 	})
 }
 
+func TestAccPortBlueprintArrayProperty(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			array_prop = {
+				myArrayIdentifier = {
+					description = "This is an array property"
+					title = "array"
+					icon = "Terraform"
+					required = true
+					min_items = 1
+					max_items = 10
+					string_items = {
+						default = ["a", "b", "c"]
+					}
+				}
+			}
+		}
+	}`, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "identifier", identifier),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.description", "This is an array property"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.title", "array"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.min_items", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.max_items", "10"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.string_items.default.0", "a"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.string_items.default.1", "b"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.string_items.default.2", "c"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccBlueprintWithChangelogDestination(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
@@ -392,42 +391,46 @@ func TestAccBlueprintWithChangelogDestination(t *testing.T) {
 
 // }
 
-// func TestAccBlueprintWithSpecification(t *testing.T) {
-// 	identifier := genID()
-// 	var testAccActionConfigCreate = fmt.Sprintf(`
-// 	resource "port-labs_blueprint" "microservice" {
-// 		title = "TF Provider Test BP0"
-// 		icon = "Terraform"
-// 		identifier = "%s"
-// 		properties {
-// 			title = "text"
-// 			identifier = "text"
-// 			type = "string"
-// 			format = "url"
-// 			spec = "embedded-url"
-// 			spec_authentication {
-// 				token_url = "https://getport.io"
-// 				client_id = "123"
-// 				authorization_url = "https://getport.io"
-// 			}
-// 		}
-// 	}
-// `, identifier)
-// 	resource.Test(t, resource.TestCase{
-// 		Providers: map[string]*schema.Provider{
-// 			"port-labs": Provider(),
-// 		},
-// 		Steps: []resource.TestStep{
-// 			{
-// 				Config: testAccActionConfigCreate,
-// 				Check: resource.ComposeTestCheckFunc(
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.spec", "embedded-url"),
-// 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.0.spec_authentication.0.token_url", "https://getport.io"),
-// 				),
-// 			},
-// 		},
-// 	})
-// }
+func TestAccBlueprintWithSpecification(t *testing.T) {
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_prop = {
+				"text" = {
+					title = "text"
+					type = "string"
+					format = "url"
+					spec = "embedded-url"
+					spec_authentication = {
+						token_url = "https://getport.io"
+						client_id = "123"
+						authorization_url = "https://getport.io"
+					}
+				}
+			}
+		}
+	}
+`, identifier)
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.text.spec", "embedded-url"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.text.spec_authentication.authorization_url", "https://getport.io"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.text.spec_authentication.client_id", "123"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.string_prop.text.spec_authentication.token_url", "https://getport.io"),
+				),
+			},
+		},
+	})
+}
 
 // func TestAccBlueprintWithChangelogDestination(t *testing.T) {
 // 	identifier := genID()

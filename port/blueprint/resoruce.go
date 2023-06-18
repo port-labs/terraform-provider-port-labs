@@ -150,6 +150,8 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 
 			if v.EnumColors != nil && !bm.Properties.StringProp[k].EnumColors.IsNull() {
 				stringProp.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, v.EnumColors)
+			} else {
+				stringProp.EnumColors = types.MapNull(types.StringType)
 			}
 
 			if v.Format != "" && !bm.Properties.StringProp[k].Format.IsNull() {
@@ -253,8 +255,11 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 					switch v.Items["type"] {
 					case "string":
 						arrayProp.StringItems = &StringItems{}
-						if v.Items["default"] != nil {
-							stringArray := v.Items["default"].([]string)
+						if v.Default != nil {
+							stringArray := make([]string, len(v.Default.([]interface{})))
+							for i, v := range v.Default.([]interface{}) {
+								stringArray[i] = v.(string)
+							}
 							attrs := make([]attr.Value, 0, len(stringArray))
 							for _, value := range stringArray {
 								attrs = append(attrs, basetypes.NewStringValue(value))
@@ -263,31 +268,39 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 						} else {
 							arrayProp.StringItems.Default = types.ListNull(types.StringType)
 						}
-						if v.Items["format"] != "" {
+						if value, ok := v.Items["format"]; ok && value != nil {
 							arrayProp.StringItems.Format = types.StringValue(v.Items["format"].(string))
 						}
 					case "number":
 						arrayProp.NumberItems = &NumberItems{}
-						if v.Items["default"] != nil {
-							numberArray := v.Items["default"].([]float64)
+						if v.Default != nil {
+							numberArray := make([]float64, len(v.Default.([]interface{})))
 							attrs := make([]attr.Value, 0, len(numberArray))
-							for _, value := range numberArray {
-								attrs = append(attrs, basetypes.NewFloat64Value(value))
+							for _, value := range v.Default.([]interface{}) {
+								attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
 							}
 							arrayProp.NumberItems.Default, _ = types.ListValue(types.Float64Type, attrs)
 						}
 
 					case "boolean":
 						arrayProp.BooleanItems = &BooleanItems{}
-						if v.Items["default"] != nil {
-							booleanArray := v.Items["default"].([]bool)
+						if v.Default != nil {
+							booleanArray := make([]bool, len(v.Default.([]interface{})))
 							attrs := make([]attr.Value, 0, len(booleanArray))
-							for _, value := range booleanArray {
-								attrs = append(attrs, basetypes.NewBoolValue(value))
+							for _, value := range v.Default.([]interface{}) {
+								attrs = append(attrs, basetypes.NewBoolValue(value.(bool)))
 							}
 							arrayProp.BooleanItems.Default, _ = types.ListValue(types.BoolType, attrs)
 						}
 					}
+				}
+			}
+
+			if !bm.Properties.ArrayProp[k].Required.IsNull() {
+				if lo.Contains(b.Schema.Required, k) {
+					arrayProp.Required = types.BoolValue(true)
+				} else {
+					arrayProp.Required = types.BoolValue(false)
 				}
 			}
 
@@ -775,7 +788,7 @@ func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintP
 	}
 }
 
-func arrayPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
+func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
 	for propIdentifier, prop := range d.Properties.ArrayProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type:  "array",
@@ -806,7 +819,14 @@ func arrayPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintPr
 					items["format"] = prop.StringItems.Format.ValueString()
 				}
 				if !prop.StringItems.Default.IsNull() {
-					items["default"] = prop.StringItems.Default
+					defaultList := []interface{}{}
+					for _, e := range prop.StringItems.Default.Elements() {
+						v, _ := e.ToTerraformValue(ctx)
+						var keyValue string
+						v.As(&keyValue)
+						defaultList = append(defaultList, keyValue)
+					}
+					property.Default = defaultList
 				}
 				property.Items = items
 			}
@@ -875,7 +895,7 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 			stringPropResourceToBody(ctx, d, props, &required)
 		}
 		if d.Properties.ArrayProp != nil {
-			arrayPropResourceToBody(d, props, &required)
+			arrayPropResourceToBody(ctx, d, props, &required)
 		}
 		if d.Properties.NumberProp != nil {
 			numberPropResourceToBody(ctx, d, props, &required)

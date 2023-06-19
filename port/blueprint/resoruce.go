@@ -2,7 +2,9 @@ package blueprint
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"math/big"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -495,7 +497,9 @@ func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface
 				if v.Default == nil && bmObject.Default.IsNull() && !isImportActive {
 					continue
 				}
-				p.Default = types.StringValue(v.Default.(string))
+				js, _ := json.Marshal(v.Default)
+				value := string(js)
+				p.Default = types.StringValue(value)
 			}
 		}
 	}
@@ -771,7 +775,14 @@ func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintP
 
 		if property, ok := props[propIdentifier]; ok {
 			if !prop.Default.IsNull() {
-				property.Default = prop.Default.ValueString()
+				defaultAsString := prop.Default.ValueString()
+				defaultObj := make(map[string]interface{})
+				err := json.Unmarshal([]byte(defaultAsString), &defaultObj)
+				if err != nil {
+					log.Fatal(err)
+				} else {
+					property.Default = defaultObj
+				}
 			}
 
 			if !prop.Icon.IsNull() {

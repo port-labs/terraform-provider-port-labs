@@ -262,6 +262,9 @@ func TestAccPortBlueprintObjectProperty(t *testing.T) {
 					title = "object"
 					icon = "Terraform"
 					required = true
+					default = jsonencode({
+						"key": "value"
+					})
 				}
 			}
 		}
@@ -281,6 +284,7 @@ func TestAccPortBlueprintObjectProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.object_prop.myObjectIdentifier.title", "object"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.object_prop.myObjectIdentifier.icon", "Terraform"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.object_prop.myObjectIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.object_prop.myObjectIdentifier.default", "{\"key\":\"value\"}"),
 				),
 			},
 		},

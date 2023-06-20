@@ -111,18 +111,28 @@ type MirrorPropertyModel struct {
 	Path  types.String `tfsdk:"path"`
 }
 
+type CalculationPropertyModel struct {
+	Calculation types.String `tfsdk:"calculation"`
+	Title       types.String `tfsdk:"title"`
+	Format      types.String `tfsdk:"format"`
+	Icon        types.String `tfsdk:"icon"`
+	Description types.String `tfsdk:"description"`
+	Type        types.String `tfsdk:"type"`
+}
+
 type BlueprintModel struct {
-	ID                   types.String                   `tfsdk:"id"`
-	Identifier           types.String                   `tfsdk:"identifier"`
-	Title                types.String                   `tfsdk:"title"`
-	Icon                 types.String                   `tfsdk:"icon"`
-	Description          types.String                   `tfsdk:"description"`
-	CreatedAt            types.String                   `tfsdk:"created_at"`
-	CreatedBy            types.String                   `tfsdk:"created_by"`
-	UpdatedAt            types.String                   `tfsdk:"updated_at"`
-	UpdatedBy            types.String                   `tfsdk:"updated_by"`
-	ChangelogDestination *ChangelogDestinationModel     `tfsdk:"changelog_destination"`
-	Properties           *PropertiesModel               `tfsdk:"properties"`
-	Relations            map[string]RelationModel       `tfsdk:"relations"`
-	MirrorProperties     map[string]MirrorPropertyModel `tfsdk:"mirror_properties"`
+	ID                    types.String                        `tfsdk:"id"`
+	Identifier            types.String                        `tfsdk:"identifier"`
+	Title                 types.String                        `tfsdk:"title"`
+	Icon                  types.String                        `tfsdk:"icon"`
+	Description           types.String                        `tfsdk:"description"`
+	CreatedAt             types.String                        `tfsdk:"created_at"`
+	CreatedBy             types.String                        `tfsdk:"created_by"`
+	UpdatedAt             types.String                        `tfsdk:"updated_at"`
+	UpdatedBy             types.String                        `tfsdk:"updated_by"`
+	ChangelogDestination  *ChangelogDestinationModel          `tfsdk:"changelog_destination"`
+	Properties            *PropertiesModel                    `tfsdk:"properties"`
+	Relations             map[string]RelationModel            `tfsdk:"relations"`
+	MirrorProperties      map[string]MirrorPropertyModel      `tfsdk:"mirror_properties"`
+	CalculationProperties map[string]CalculationPropertyModel `tfsdk:"calculation_properties"`
 }

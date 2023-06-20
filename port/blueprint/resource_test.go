@@ -813,6 +813,44 @@ func TestAccPortBlueprintWithMirrorProperty(t *testing.T) {
 	})
 }
 
+func TestAccBlueprintWithCalculationProperty(t *testing.T) {
+	identifier1 := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice1" {
+		title = "TF Provider Test BP2"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_prop = {
+				"text" = {
+					title = "text"
+				}
+			}
+		}
+		calculation_properties = {
+			"calculation-for-microservice1" = {
+				title = "Calculation for microservice1"
+				calculation = "test-rel.$identifier"
+				type = "string"
+			}
+		}
+	}`, identifier1)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.title", "Calculation for microservice1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.calculation", "test-rel.$identifier"),
+				),
+			},
+		},
+	})
+}
+
 // 		Providers: map[string]*schema.Provider{
 // 			"port-labs": Provider(),
 // 		},

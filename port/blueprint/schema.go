@@ -407,6 +407,38 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 				},
 			},
 		},
+		"calculation_properties": schema.MapNestedAttribute{
+			MarkdownDescription: "The calculation properties of the blueprint",
+			Optional:            true,
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"calculation": schema.StringAttribute{
+						MarkdownDescription: "The calculation of the calculation property",
+						Required:            true,
+					},
+					"type": schema.StringAttribute{
+						MarkdownDescription: "The type of the calculation property",
+						Required:            true,
+					},
+					"title": schema.StringAttribute{
+						MarkdownDescription: "The title of the calculation property",
+						Optional:            true,
+					},
+					"description": schema.StringAttribute{
+						MarkdownDescription: "The description of the calculation property",
+						Optional:            true,
+					},
+					"icon": schema.StringAttribute{
+						MarkdownDescription: "The icon of the calculation property",
+						Optional:            true,
+					},
+					"format": schema.StringAttribute{
+						MarkdownDescription: "The format of the calculation property",
+						Optional:            true,
+					},
+				},
+			},
+		},
 	}
 
 	resp.Schema = schema.Schema{

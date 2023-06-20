@@ -120,6 +120,39 @@ func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *
 		bm.Properties = properties
 	}
 
+	if bm.Relations == nil && len(b.Relations) == 0 {
+		bm.Relations = nil
+	} else {
+		addRelationsToResource(b, bm)
+	}
+
+}
+
+func addRelationsToResource(b *cli.Blueprint, bm *BlueprintModel) {
+	if b.Relations != nil {
+		for k, v := range b.Relations {
+			if bm.Relations == nil {
+				bm.Relations = make(map[string]RelationsModel)
+			}
+
+			relationModel := &RelationsModel{
+				Target: types.StringValue(v.Target),
+			}
+			if v.Title != "" {
+				relationModel.Title = types.StringValue(v.Title)
+			}
+			if !bm.Relations[k].Many.IsNull() {
+				relationModel.Many = types.BoolValue(v.Many)
+			}
+
+			if !bm.Relations[k].Required.IsNull() {
+				relationModel.Required = types.BoolValue(v.Required)
+			}
+
+			bm.Relations[k] = *relationModel
+
+		}
+	}
 }
 
 func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel, properties *PropertiesModel) {
@@ -895,7 +928,6 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 	props := map[string]cli.BlueprintProperty{}
 	mirrorProperties := map[string]cli.BlueprintMirrorProperty{}
 	calculationProperties := map[string]cli.BlueprintCalculationProperty{}
-	relations := map[string]cli.Relation{}
 
 	if d.ChangelogDestination != nil {
 		b.ChangelogDestination = &cli.ChangelogDestination{}
@@ -931,8 +963,33 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 	properties := props
 
 	b.Schema = cli.BlueprintSchema{Properties: properties, Required: required}
-	b.Relations = relations
+	b.Relations = relationsResourceToBody(d)
 	b.MirrorProperties = mirrorProperties
 	b.CalculationProperties = calculationProperties
 	return b, nil
+}
+
+func relationsResourceToBody(d *BlueprintModel) map[string]cli.Relation {
+	relations := map[string]cli.Relation{}
+
+	for identifier, prop := range d.Relations {
+		relationProp := cli.Relation{
+			Target: prop.Target.ValueString(),
+		}
+
+		if !prop.Title.IsNull() {
+			relationProp.Title = prop.Title.ValueString()
+		}
+		if !prop.Many.IsNull() {
+			relationProp.Many = prop.Many.ValueBool()
+		}
+
+		if !prop.Required.IsNull() {
+			relationProp.Required = prop.Required.ValueBool()
+		}
+
+		relations[identifier] = relationProp
+	}
+
+	return relations
 }

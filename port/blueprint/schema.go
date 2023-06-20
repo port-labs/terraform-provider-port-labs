@@ -367,6 +367,30 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 				"object_prop":  ObjectPropertySchema(),
 			},
 		},
+		"relations": schema.MapNestedAttribute{
+			MarkdownDescription: "The relations of the blueprint",
+			Optional:            true,
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"title": schema.StringAttribute{
+						MarkdownDescription: "The title of the relation",
+						Optional:            true,
+					},
+					"target": schema.StringAttribute{
+						MarkdownDescription: "The target of the relation",
+						Optional:            true,
+					},
+					"many": schema.BoolAttribute{
+						MarkdownDescription: "The many of the relation",
+						Optional:            true,
+					},
+					"required": schema.BoolAttribute{
+						MarkdownDescription: "The required of the relation",
+						Optional:            true,
+					},
+				},
+			},
+		},
 	}
 
 	resp.Schema = schema.Schema{

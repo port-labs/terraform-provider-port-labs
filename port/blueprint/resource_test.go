@@ -324,6 +324,67 @@ func TestAccBlueprintWithChangelogDestination(t *testing.T) {
 	})
 }
 
+func TestAccBlueprintWithRelation(t *testing.T) {
+	identifier1 := genID()
+	identifier2 := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice1" {
+		title = "TF Provider Test BP2"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_prop = {
+				"text" = {
+					type = "string"
+					title = "text"
+				}
+			}
+		}
+	}
+
+	resource "port-labs_blueprint" "microservice2" {
+		title = "TF Provider Test BP3"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_prop = {
+			   "text" = {
+					type = "string"
+					title = "text"
+				}
+			}
+		}
+		relations = {
+			"test-rel" = {
+				title = "Test Relation"
+				target = port-labs_blueprint.microservice1.identifier	
+			}
+		}
+	}
+`, identifier1, identifier2)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "title", "TF Provider Test BP2"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "identifier", identifier1),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice1", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice2", "title", "TF Provider Test BP3"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice2", "identifier", identifier2),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice2", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice2", "relations.test-rel.title", "Test Relation"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice2", "relations.test-rel.target", identifier1),
+				),
+			},
+		},
+	})
+
+}
+
 // func TestAccPortBlueprintImport(t *testing.T) {
 // 	var testAccActionConfigCreate = `
 // 	resource "port-labs_blueprint" "microservice" {

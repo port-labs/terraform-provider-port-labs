@@ -1,6 +1,8 @@
 package blueprint
 
-import "github.com/hashicorp/terraform-plugin-framework/types"
+import (
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
 
 type ChangelogDestinationModel struct {
 	Type  types.String `tfsdk:"type"`
@@ -97,6 +99,13 @@ type PropertiesModel struct {
 	ObjectProp  map[string]ObjectPropModel  `tfsdk:"object_prop"`
 }
 
+type RelationsModel struct {
+	Target   types.String `tfsdk:"target"`
+	Title    types.String `tfsdk:"title"`
+	Required types.Bool   `tfsdk:"required"`
+	Many     types.Bool   `tfsdk:"many"`
+}
+
 type BlueprintModel struct {
 	ID                   types.String               `tfsdk:"id"`
 	Identifier           types.String               `tfsdk:"identifier"`
@@ -109,4 +118,5 @@ type BlueprintModel struct {
 	UpdatedBy            types.String               `tfsdk:"updated_by"`
 	ChangelogDestination *ChangelogDestinationModel `tfsdk:"changelog_destination"`
 	Properties           *PropertiesModel           `tfsdk:"properties"`
+	Relations            map[string]RelationsModel  `tfsdk:"relations"`
 }

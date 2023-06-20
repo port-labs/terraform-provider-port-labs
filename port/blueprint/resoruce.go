@@ -126,16 +126,22 @@ func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *
 		addRelationsToResource(b, bm)
 	}
 
+	if bm.MirrorProperties == nil && len(b.MirrorProperties) == 0 {
+		bm.MirrorProperties = nil
+	} else {
+		addMirrorPropertiesToResource(b, bm)
+	}
+
 }
 
 func addRelationsToResource(b *cli.Blueprint, bm *BlueprintModel) {
 	if b.Relations != nil {
 		for k, v := range b.Relations {
 			if bm.Relations == nil {
-				bm.Relations = make(map[string]RelationsModel)
+				bm.Relations = make(map[string]RelationModel)
 			}
 
-			relationModel := &RelationsModel{
+			relationModel := &RelationModel{
 				Target: types.StringValue(v.Target),
 			}
 			if v.Title != "" {
@@ -153,6 +159,27 @@ func addRelationsToResource(b *cli.Blueprint, bm *BlueprintModel) {
 
 		}
 	}
+}
+
+func addMirrorPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel) {
+	if b.MirrorProperties != nil {
+		for k, v := range b.MirrorProperties {
+			if bm.MirrorProperties == nil {
+				bm.MirrorProperties = make(map[string]MirrorPropertyModel)
+			}
+
+			mirrorPropertyModel := &MirrorPropertyModel{
+				Path: types.StringValue(v.Path),
+			}
+			if v.Title != "" {
+				mirrorPropertyModel.Title = types.StringValue(v.Title)
+			}
+
+			bm.MirrorProperties[k] = *mirrorPropertyModel
+
+		}
+	}
+
 }
 
 func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel, properties *PropertiesModel) {
@@ -926,7 +953,6 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 	b.Icon = d.Icon.ValueString()
 	b.Description = d.Description.ValueString()
 	props := map[string]cli.BlueprintProperty{}
-	mirrorProperties := map[string]cli.BlueprintMirrorProperty{}
 	calculationProperties := map[string]cli.BlueprintCalculationProperty{}
 
 	if d.ChangelogDestination != nil {
@@ -964,7 +990,7 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 
 	b.Schema = cli.BlueprintSchema{Properties: properties, Required: required}
 	b.Relations = relationsResourceToBody(d)
-	b.MirrorProperties = mirrorProperties
+	b.MirrorProperties = mirrorPropertiesToBody(d)
 	b.CalculationProperties = calculationProperties
 	return b, nil
 }
@@ -992,4 +1018,23 @@ func relationsResourceToBody(d *BlueprintModel) map[string]cli.Relation {
 	}
 
 	return relations
+}
+
+func mirrorPropertiesToBody(d *BlueprintModel) map[string]cli.BlueprintMirrorProperty {
+	mirrorProperties := map[string]cli.BlueprintMirrorProperty{}
+
+	for identifier, prop := range d.MirrorProperties {
+		mirrorProp := cli.BlueprintMirrorProperty{
+			Path: prop.Path.ValueString(),
+		}
+
+		if !prop.Title.IsNull() {
+			mirrorProp.Title = prop.Title.ValueString()
+		}
+
+		mirrorProperties[identifier] = mirrorProp
+	}
+
+	return mirrorProperties
+
 }

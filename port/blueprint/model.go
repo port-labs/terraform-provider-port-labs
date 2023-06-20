@@ -99,24 +99,30 @@ type PropertiesModel struct {
 	ObjectProp  map[string]ObjectPropModel  `tfsdk:"object_prop"`
 }
 
-type RelationsModel struct {
+type RelationModel struct {
 	Target   types.String `tfsdk:"target"`
 	Title    types.String `tfsdk:"title"`
 	Required types.Bool   `tfsdk:"required"`
 	Many     types.Bool   `tfsdk:"many"`
 }
 
+type MirrorPropertyModel struct {
+	Title types.String `tfsdk:"title"`
+	Path  types.String `tfsdk:"path"`
+}
+
 type BlueprintModel struct {
-	ID                   types.String               `tfsdk:"id"`
-	Identifier           types.String               `tfsdk:"identifier"`
-	Title                types.String               `tfsdk:"title"`
-	Icon                 types.String               `tfsdk:"icon"`
-	Description          types.String               `tfsdk:"description"`
-	CreatedAt            types.String               `tfsdk:"created_at"`
-	CreatedBy            types.String               `tfsdk:"created_by"`
-	UpdatedAt            types.String               `tfsdk:"updated_at"`
-	UpdatedBy            types.String               `tfsdk:"updated_by"`
-	ChangelogDestination *ChangelogDestinationModel `tfsdk:"changelog_destination"`
-	Properties           *PropertiesModel           `tfsdk:"properties"`
-	Relations            map[string]RelationsModel  `tfsdk:"relations"`
+	ID                   types.String                   `tfsdk:"id"`
+	Identifier           types.String                   `tfsdk:"identifier"`
+	Title                types.String                   `tfsdk:"title"`
+	Icon                 types.String                   `tfsdk:"icon"`
+	Description          types.String                   `tfsdk:"description"`
+	CreatedAt            types.String                   `tfsdk:"created_at"`
+	CreatedBy            types.String                   `tfsdk:"created_by"`
+	UpdatedAt            types.String                   `tfsdk:"updated_at"`
+	UpdatedBy            types.String                   `tfsdk:"updated_by"`
+	ChangelogDestination *ChangelogDestinationModel     `tfsdk:"changelog_destination"`
+	Properties           *PropertiesModel               `tfsdk:"properties"`
+	Relations            map[string]RelationModel       `tfsdk:"relations"`
+	MirrorProperties     map[string]MirrorPropertyModel `tfsdk:"mirror_properties"`
 }

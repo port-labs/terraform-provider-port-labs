@@ -391,6 +391,22 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 				},
 			},
 		},
+		"mirror_properties": schema.MapNestedAttribute{
+			MarkdownDescription: "The mirror properties of the blueprint",
+			Optional:            true,
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"path": schema.StringAttribute{
+						MarkdownDescription: "The path of the mirror property",
+						Required:            true,
+					},
+					"title": schema.StringAttribute{
+						MarkdownDescription: "The title of the mirror property",
+						Optional:            true,
+					},
+				},
+			},
+		},
 	}
 
 	resp.Schema = schema.Schema{

@@ -755,42 +755,64 @@ func TestAccPortBlueprintUpdateRelation(t *testing.T) {
 // 	})
 // }
 
-// func TestAccPortBlueprintWithMirrorProperty(t *testing.T) {
-// 	identifier1 := genID()
-// 	identifier2 := genID()
-// 	var testAccActionConfigCreate = fmt.Sprintf(`
-// 	resource "port-labs_blueprint" "microservice1" {
-// 		title = "TF Provider Test BP2"
-// 		icon = "Terraform"
-// 		identifier = "%s"
-// 		properties {
-// 			identifier = "text"
-// 			type = "string"
-// 			title = "text"
-// 		}
-// 	}
-// 	resource "port-labs_blueprint" "microservice2" {
-// 		title = "TF Provider Test BP3"
-// 		icon = "Terraform"
-// 		identifier = "%s"
-// 		properties {
-// 			identifier = "text"
-// 			type = "string"
-// 			title = "text"
-// 		}
-// 		mirror_properties {
-// 			identifier = "mirror-for-microservice1"
-// 			title = "Mirror for microservice1"
-// 			path = "test-rel.$identifier"
-// 		}
-// 		relations {
-// 			identifier = "test-rel"
-// 			title = "Test Relation"
-// 			target = port-labs_blueprint.microservice1.identifier
-// 		}
-// 	}
-// `, identifier1, identifier2)
-// 	resource.Test(t, resource.TestCase{
+func TestAccPortBlueprintWithMirrorProperty(t *testing.T) {
+	identifier1 := genID()
+	identifier2 := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice1" {
+		title = "TF Provider Test BP2"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_prop = {
+				"text" = {
+					title = "text"
+				}
+			}
+		}
+	}
+	resource "port-labs_blueprint" "microservice2" {
+		title = "TF Provider Test BP3"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_prop = {
+				"text" = {
+					title = "text"
+				}
+			}
+		}
+		mirror_properties = {
+			"mirror-for-microservice1" = {
+				title = "Mirror for microservice1"
+				path = "test-rel.$identifier"
+			}
+		}
+		relations = {
+			"test-rel" = {
+				title = "Test Relation"
+				target = port-labs_blueprint.microservice1.identifier
+			}
+		}
+	}
+`, identifier1, identifier2)
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice2", "relations.test-rel.title", "Test Relation"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice2", "relations.test-rel.target", identifier1),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice2", "mirror_properties.mirror-for-microservice1.title", "Mirror for microservice1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice2", "mirror_properties.mirror-for-microservice1.path", "test-rel.$identifier"),
+				),
+			},
+		},
+	})
+}
+
 // 		Providers: map[string]*schema.Provider{
 // 			"port-labs": Provider(),
 // 		},

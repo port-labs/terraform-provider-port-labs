@@ -3,7 +3,6 @@ package blueprint
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"math/big"
 
@@ -75,15 +74,19 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 			resp.State.RemoveResource(ctx)
 			return
 		}
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("failed to read blueprint: %s", err))
+		resp.Diagnostics.AddError("failed reading blueprint", err.Error())
 		return
 	}
 
-	writeBlueprintFieldsToResource(ctx, data, b)
+	err = writeBlueprintFieldsToResource(ctx, data, b)
+	if err != nil {
+		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *cli.Blueprint) {
+func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *cli.Blueprint) error {
 	bm.Identifier = types.StringValue(b.Identifier)
 	if !bm.Title.IsNull() {
 		bm.Title = types.StringValue(b.Title)
@@ -108,16 +111,10 @@ func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *
 		}
 	}
 
-	properties := &PropertiesModel{}
-
 	if bm.Properties == nil && len(b.Schema.Properties) == 0 {
 		bm.Properties = nil
 	} else {
-		if bm.Properties == nil {
-			bm.Properties = &PropertiesModel{}
-		}
-		addPropertiesToResource(ctx, b, bm, properties)
-		bm.Properties = properties
+		addPropertiesToResource(ctx, b, bm)
 	}
 
 	if bm.Relations == nil && len(b.Relations) == 0 {
@@ -137,7 +134,7 @@ func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *
 	} else {
 		addCalculationPropertiesToResource(b, bm)
 	}
-
+	return nil
 }
 
 func addRelationsToResource(b *cli.Blueprint, bm *BlueprintModel) {
@@ -216,7 +213,9 @@ func addCalculationPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel) {
 	}
 }
 
-func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel, properties *PropertiesModel) {
+func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel) error {
+	properties := &PropertiesModel{}
+
 	for k, v := range b.Schema.Properties {
 		isImportActive := false
 		switch v.Type {
@@ -449,7 +448,7 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 		}
 
 	}
-
+	return nil
 }
 
 func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface{}, isImportActive bool) {

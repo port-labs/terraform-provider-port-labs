@@ -282,8 +282,8 @@ func ObjectPropertySchema() schema.MapNestedAttribute {
 	}
 }
 
-func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	blueprintSchema := map[string]schema.Attribute{
+func BlueprintSchema() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,
 			PlanModifiers: []planmodifier.String{
@@ -440,10 +440,12 @@ func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaReque
 			},
 		},
 	}
+}
 
+func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		// This description is used by the documentation generator and the language server.
 		MarkdownDescription: "Group resource",
-		Attributes:          blueprintSchema,
+		Attributes:          BlueprintSchema(),
 	}
 }

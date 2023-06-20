@@ -291,7 +291,7 @@ func TestAccPortBlueprintObjectProperty(t *testing.T) {
 	})
 }
 
-func TestAccBlueprintWithChangelogDestination(t *testing.T) {
+func TestAccPortBlueprintWithChangelogDestination(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
@@ -324,7 +324,7 @@ func TestAccBlueprintWithChangelogDestination(t *testing.T) {
 	})
 }
 
-func TestAccBlueprintWithRelation(t *testing.T) {
+func TestAccPortBlueprintWithRelation(t *testing.T) {
 	identifier1 := genID()
 	identifier2 := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
@@ -419,7 +419,7 @@ func TestAccBlueprintWithRelation(t *testing.T) {
 // 	})
 // }
 
-// func TestAccBlueprintWithDefaultValue(t *testing.T) {
+// func TestAccPortBlueprintWithDefaultValue(t *testing.T) {
 // 	identifier := genID()
 // 	var testAccActionConfigCreate = fmt.Sprintf(`
 // 	resource "port-labs_blueprint" "microservice" {
@@ -494,7 +494,7 @@ func TestAccBlueprintWithRelation(t *testing.T) {
 
 // }
 
-func TestAccBlueprintWithSpecification(t *testing.T) {
+func TestAccPortBlueprintWithSpecification(t *testing.T) {
 	identifier := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
@@ -813,7 +813,7 @@ func TestAccPortBlueprintWithMirrorProperty(t *testing.T) {
 	})
 }
 
-func TestAccBlueprintWithCalculationProperty(t *testing.T) {
+func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 	identifier1 := genID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice1" {

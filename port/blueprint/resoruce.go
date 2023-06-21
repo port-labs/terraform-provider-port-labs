@@ -113,29 +113,22 @@ func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *
 		}
 	}
 
-	if len(b.Schema.Properties) == 0 {
-		bm.Properties = nil
-	} else {
+	if len(b.Schema.Properties) != 0 {
 		addPropertiesToResource(ctx, b, bm)
 	}
 
-	if bm.Relations == nil {
-		bm.Relations = nil
-	} else {
+	if len(b.Relations) != 0 {
 		addRelationsToResource(b, bm)
 	}
 
-	if bm.MirrorProperties == nil {
-		bm.MirrorProperties = nil
-	} else {
+	if len(b.MirrorProperties) != 0 {
 		addMirrorPropertiesToResource(b, bm)
 	}
 
-	if bm.CalculationProperties == nil {
-		bm.CalculationProperties = nil
-	} else {
+	if len(b.CalculationProperties) != 0 {
 		addCalculationPropertiesToResource(b, bm)
 	}
+
 	return nil
 }
 
@@ -239,8 +232,8 @@ func addStingPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty)
 		stringProp.Format = types.StringValue(*v.Format)
 	}
 
-	if v.Spec != "" {
-		stringProp.Spec = types.StringValue(v.Spec)
+	if v.Spec != nil {
+		stringProp.Spec = types.StringValue(*v.Spec)
 	}
 
 	if v.MinLength != 0 {

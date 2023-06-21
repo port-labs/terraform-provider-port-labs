@@ -88,6 +88,11 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 
 func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *cli.Blueprint) error {
 	bm.Identifier = types.StringValue(b.Identifier)
+	bm.CreatedAt = types.StringValue(b.CreatedAt.String())
+	bm.CreatedBy = types.StringValue(b.CreatedBy)
+	bm.UpdatedAt = types.StringValue(b.UpdatedAt.String())
+	bm.UpdatedBy = types.StringValue(b.UpdatedBy)
+
 	if b.Title != nil {
 		bm.Title = types.StringValue(*b.Title)
 	}
@@ -99,10 +104,7 @@ func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *
 	if b.Description != nil {
 		bm.Description = types.StringValue(*b.Description)
 	}
-	bm.CreatedAt = types.StringValue(b.CreatedAt.String())
-	bm.CreatedBy = types.StringValue(b.CreatedBy)
-	bm.UpdatedAt = types.StringValue(b.UpdatedAt.String())
-	bm.UpdatedBy = types.StringValue(b.UpdatedBy)
+
 	if b.ChangelogDestination != nil {
 		bm.ChangelogDestination = &ChangelogDestinationModel{
 			Type:  types.StringValue(b.ChangelogDestination.Type),
@@ -111,25 +113,25 @@ func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *
 		}
 	}
 
-	if bm.Properties == nil && len(b.Schema.Properties) == 0 {
+	if len(b.Schema.Properties) == 0 {
 		bm.Properties = nil
 	} else {
 		addPropertiesToResource(ctx, b, bm)
 	}
 
-	if bm.Relations == nil && len(b.Relations) == 0 {
+	if bm.Relations == nil {
 		bm.Relations = nil
 	} else {
 		addRelationsToResource(b, bm)
 	}
 
-	if bm.MirrorProperties == nil && len(b.MirrorProperties) == 0 {
+	if bm.MirrorProperties == nil {
 		bm.MirrorProperties = nil
 	} else {
 		addMirrorPropertiesToResource(b, bm)
 	}
 
-	if bm.CalculationProperties == nil && len(b.CalculationProperties) == 0 {
+	if bm.CalculationProperties == nil {
 		bm.CalculationProperties = nil
 	} else {
 		addCalculationPropertiesToResource(b, bm)

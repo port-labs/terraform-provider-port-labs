@@ -32,19 +32,19 @@ type (
 
 	BlueprintProperty struct {
 		Type               string              `json:"type,omitempty"`
-		Title              string              `json:"title,omitempty"`
+		Title              *string             `json:"title,omitempty"`
 		Identifier         string              `json:"identifier,omitempty"`
 		Items              map[string]any      `json:"items,omitempty"`
 		Default            interface{}         `json:"default,omitempty"`
-		Icon               string              `json:"icon,omitempty"`
-		Format             string              `json:"format,omitempty"`
+		Icon               *string             `json:"icon,omitempty"`
+		Format             *string             `json:"format,omitempty"`
 		MaxLength          int                 `json:"maxLength,omitempty"`
 		MinLength          int                 `json:"minLength,omitempty"`
 		MaxItems           int                 `json:"maxItems,omitempty"`
 		MinItems           int                 `json:"minItems,omitempty"`
 		Maximum            float64             `json:"maximum,omitempty"`
 		Minimum            float64             `json:"minimum,omitempty"`
-		Description        string              `json:"description,omitempty"`
+		Description        *string             `json:"description,omitempty"`
 		Blueprint          string              `json:"blueprint,omitempty"`
 		Pattern            string              `json:"pattern,omitempty"`
 		Enum               []interface{}       `json:"enum,omitempty"`
@@ -107,9 +107,9 @@ type (
 	Blueprint struct {
 		Meta
 		Identifier            string                                  `json:"identifier,omitempty"`
-		Title                 string                                  `json:"title,omitempty"`
-		Icon                  string                                  `json:"icon,omitempty"`
-		Description           string                                  `json:"description,omitempty"`
+		Title                 *string                                 `json:"title,omitempty"`
+		Icon                  *string                                 `json:"icon,omitempty"`
+		Description           *string                                 `json:"description,omitempty"`
 		Schema                BlueprintSchema                         `json:"schema"`
 		MirrorProperties      map[string]BlueprintMirrorProperty      `json:"mirrorProperties"`
 		CalculationProperties map[string]BlueprintCalculationProperty `json:"calculationProperties"`

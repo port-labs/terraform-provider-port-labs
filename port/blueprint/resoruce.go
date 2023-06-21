@@ -88,16 +88,16 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 
 func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *cli.Blueprint) error {
 	bm.Identifier = types.StringValue(b.Identifier)
-	if !bm.Title.IsNull() {
-		bm.Title = types.StringValue(b.Title)
+	if b.Title != nil {
+		bm.Title = types.StringValue(*b.Title)
 	}
 
-	if !bm.Icon.IsNull() {
-		bm.Icon = types.StringValue(b.Icon)
+	if b.Icon != nil {
+		bm.Icon = types.StringValue(*b.Icon)
 	}
 
-	if !bm.Description.IsNull() {
-		bm.Description = types.StringValue(b.Description)
+	if b.Description != nil {
+		bm.Description = types.StringValue(*b.Description)
 	}
 	bm.CreatedAt = types.StringValue(b.CreatedAt.String())
 	bm.CreatedBy = types.StringValue(b.CreatedBy)
@@ -213,79 +213,75 @@ func addCalculationPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel) {
 	}
 }
 
+func addStingPropertiesToResource(ctx context.Context, b *cli.Blueprint, v *cli.BlueprintProperty) *StringPropModel {
+	stringProp := &StringPropModel{}
+
+	if v.Enum != nil {
+		attrs := make([]attr.Value, 0, len(v.Enum))
+		for _, value := range v.Enum {
+			attrs = append(attrs, basetypes.NewStringValue(value.(string)))
+		}
+
+		stringProp.Enum, _ = types.ListValue(types.StringType, attrs)
+	} else {
+		stringProp.Enum = types.ListNull(types.StringType)
+	}
+
+	if v.EnumColors != nil {
+		stringProp.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, v.EnumColors)
+	} else {
+		stringProp.EnumColors = types.MapNull(types.StringType)
+	}
+
+	if v.Format != nil {
+		stringProp.Format = types.StringValue(*v.Format)
+	}
+
+	if v.Spec != "" {
+		stringProp.Spec = types.StringValue(v.Spec)
+	}
+
+	if v.MinLength != 0 {
+		stringProp.MinLength = types.Int64Value(int64(v.MinLength))
+	}
+
+	if v.MaxLength != 0 {
+		stringProp.MaxLength = types.Int64Value(int64(v.MaxLength))
+	}
+
+	if v.Pattern != "" {
+		stringProp.Pattern = types.StringValue(v.Pattern)
+	}
+
+	if v.SpecAuthentication != nil {
+		stringProp.SpecAuthentication = &SpecAuthenticationModel{
+			AuthorizationUrl: types.StringValue(v.SpecAuthentication.AuthorizationUrl),
+			TokenUrl:         types.StringValue(v.SpecAuthentication.TokenUrl),
+			ClientId:         types.StringValue(v.SpecAuthentication.ClientId),
+		}
+	}
+
+	return stringProp
+}
+
 func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel) error {
 	properties := &PropertiesModel{}
 
 	for k, v := range b.Schema.Properties {
-		isImportActive := false
 		switch v.Type {
 		case "string":
 			if properties.StringProp == nil {
 				properties.StringProp = make(map[string]StringPropModel)
 			}
+			stringProp := addStingPropertiesToResource(ctx, b, &v)
 
-			stringProp := &StringPropModel{}
-
-			if bm.Properties.StringProp == nil {
-				isImportActive = true
-				bm.Properties.StringProp = make(map[string]StringPropModel)
-				bm.Properties.StringProp[k] = *stringProp
-
-			}
-			if v.Enum != nil && !bm.Properties.StringProp[k].Enum.IsNull() {
-				attrs := make([]attr.Value, 0, len(v.Enum))
-				for _, value := range v.Enum {
-					attrs = append(attrs, basetypes.NewStringValue(value.(string)))
-				}
-
-				stringProp.Enum, _ = types.ListValue(types.StringType, attrs)
+			if lo.Contains(b.Schema.Required, k) {
+				stringProp.Required = types.BoolValue(true)
 			} else {
-				stringProp.Enum = types.ListNull(types.StringType)
+				stringProp.Required = types.BoolValue(false)
 			}
 
-			if v.EnumColors != nil && !bm.Properties.StringProp[k].EnumColors.IsNull() {
-				stringProp.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, v.EnumColors)
-			} else {
-				stringProp.EnumColors = types.MapNull(types.StringType)
-			}
-
-			if v.Format != "" && !bm.Properties.StringProp[k].Format.IsNull() {
-				stringProp.Format = types.StringValue(v.Format)
-			}
-
-			if v.Spec != "" && !bm.Properties.StringProp[k].Spec.IsNull() {
-				stringProp.Spec = types.StringValue(v.Spec)
-			}
-
-			if v.MinLength != 0 && !bm.Properties.StringProp[k].MinLength.IsNull() {
-				stringProp.MinLength = types.Int64Value(int64(v.MinLength))
-			}
-
-			if v.MaxLength != 0 && !bm.Properties.StringProp[k].MaxLength.IsNull() {
-				stringProp.MaxLength = types.Int64Value(int64(v.MaxLength))
-			}
-
-			if v.Pattern != "" && !bm.Properties.StringProp[k].Pattern.IsNull() {
-				stringProp.Pattern = types.StringValue(v.Pattern)
-			}
-
-			if !bm.Properties.StringProp[k].Required.IsNull() {
-				if lo.Contains(b.Schema.Required, k) {
-					stringProp.Required = types.BoolValue(true)
-				} else {
-					stringProp.Required = types.BoolValue(false)
-				}
-			}
-
-			if v.SpecAuthentication != nil && bm.Properties.StringProp[k].SpecAuthentication != nil {
-				stringProp.SpecAuthentication = &SpecAuthenticationModel{
-					AuthorizationUrl: types.StringValue(v.SpecAuthentication.AuthorizationUrl),
-					TokenUrl:         types.StringValue(v.SpecAuthentication.TokenUrl),
-					ClientId:         types.StringValue(v.SpecAuthentication.ClientId),
-				}
-			}
-
-			setCommonProperties(v, bm.Properties.StringProp[k], stringProp, isImportActive)
+			setCommonProperties(v, stringProp)
 
 			properties.StringProp[k] = *stringProp
 
@@ -327,7 +323,7 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				}
 			}
 
-			setCommonProperties(v, bm.Properties.NumberProp[k], numberProp, isImportActive)
+			setCommonProperties(v, numberProp)
 
 			properties.NumberProp[k] = *numberProp
 
@@ -399,7 +395,7 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				}
 			}
 
-			setCommonProperties(v, bm.Properties.ArrayProp[k], arrayProp, isImportActive)
+			setCommonProperties(v, arrayProp)
 
 			properties.ArrayProp[k] = *arrayProp
 
@@ -410,7 +406,7 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 
 			booleanProp := &BooleanPropModel{}
 
-			setCommonProperties(v, bm.Properties.BooleanProp[k], booleanProp, isImportActive)
+			setCommonProperties(v, booleanProp)
 
 			if !bm.Properties.BooleanProp[k].Required.IsNull() {
 				if lo.Contains(b.Schema.Required, k) {
@@ -441,158 +437,82 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				}
 			}
 
-			setCommonProperties(v, bm.Properties.ObjectProp[k], objectProp, isImportActive)
+			setCommonProperties(v, objectProp)
 
 			properties.ObjectProp[k] = *objectProp
 
 		}
 
 	}
+
+	bm.Properties = properties
+
 	return nil
 }
 
-func setCommonProperties(v cli.BlueprintProperty, bm interface{}, prop interface{}, isImportActive bool) {
-	properties := []string{"Description", "Icon", "Default", "Title", "Required"}
+func setCommonProperties(v cli.BlueprintProperty, prop interface{}) {
+	properties := []string{"Description", "Icon", "Default", "Title"}
 	for _, property := range properties {
 		switch property {
 		case "Description":
-			switch p := prop.(type) {
-			case *StringPropModel:
-				bmString := bm.(StringPropModel)
-				if v.Description == "" && bmString.Description.IsNull() && !isImportActive {
-					continue
+			if v.Description != nil {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Description = types.StringValue(*v.Description)
+				case *NumberPropModel:
+					p.Description = types.StringValue(*v.Description)
+				case *BooleanPropModel:
+					p.Description = types.StringValue(*v.Description)
+				case *ArrayPropModel:
+					p.Description = types.StringValue(*v.Description)
+				case *ObjectPropModel:
+					p.Description = types.StringValue(*v.Description)
 				}
-
-				p.Description = types.StringValue(v.Description)
-			case *NumberPropModel:
-				bmNumber := bm.(NumberPropModel)
-				if v.Description == "" && bmNumber.Description.IsNull() && !isImportActive {
-					continue
-				}
-
-				p.Description = types.StringValue(v.Description)
-			case *BooleanPropModel:
-				bmBoolean := bm.(BooleanPropModel)
-				if v.Description == "" && bmBoolean.Description.IsNull() && !isImportActive {
-					continue
-				}
-
-				p.Description = types.StringValue(v.Description)
-
-			case *ArrayPropModel:
-				bmArray := bm.(ArrayPropModel)
-				if v.Description == "" && bmArray.Description.IsNull() && !isImportActive {
-					continue
-				}
-
-				p.Description = types.StringValue(v.Description)
-
-			case *ObjectPropModel:
-				bmObject := bm.(ObjectPropModel)
-				if v.Description == "" && bmObject.Description.IsNull() && !isImportActive {
-					continue
-				}
-				p.Description = types.StringValue(v.Description)
 			}
 		case "Icon":
-
-			switch p := prop.(type) {
-			case *StringPropModel:
-				bmString := bm.(StringPropModel)
-				if v.Icon == "" && bmString.Icon.IsNull() && !isImportActive {
-					continue
+			if v.Icon != nil {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Icon = types.StringValue(*v.Icon)
+				case *NumberPropModel:
+					p.Icon = types.StringValue(*v.Icon)
+				case *BooleanPropModel:
+					p.Icon = types.StringValue(*v.Icon)
+				case *ArrayPropModel:
+					p.Icon = types.StringValue(*v.Icon)
+				case *ObjectPropModel:
+					p.Icon = types.StringValue(*v.Icon)
 				}
-				p.Icon = types.StringValue(v.Icon)
-			case *NumberPropModel:
-				bmNumber := bm.(NumberPropModel)
-				if v.Icon == "" && bmNumber.Icon.IsNull() && !isImportActive {
-					continue
-				}
-				p.Icon = types.StringValue(v.Icon)
-			case *BooleanPropModel:
-				bmBoolean := bm.(BooleanPropModel)
-				if v.Icon == "" && bmBoolean.Icon.IsNull() && !isImportActive {
-					continue
-				}
-				p.Icon = types.StringValue(v.Icon)
-			case *ArrayPropModel:
-				bmArray := bm.(ArrayPropModel)
-				if v.Icon == "" && bmArray.Icon.IsNull() && !isImportActive {
-					continue
-				}
-				p.Icon = types.StringValue(v.Icon)
-			case *ObjectPropModel:
-				bmObject := bm.(ObjectPropModel)
-				if v.Icon == "" && bmObject.Icon.IsNull() && !isImportActive {
-					continue
-				}
-				p.Icon = types.StringValue(v.Icon)
 			}
 		case "Title":
-
-			switch p := prop.(type) {
-			case *StringPropModel:
-				bmString := bm.(StringPropModel)
-				if v.Title == "" && bmString.Title.IsNull() && !isImportActive {
-					continue
+			if v.Title != nil {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Title = types.StringValue(*v.Title)
+				case *NumberPropModel:
+					p.Title = types.StringValue(*v.Title)
+				case *BooleanPropModel:
+					p.Title = types.StringValue(*v.Title)
+				case *ArrayPropModel:
+					p.Title = types.StringValue(*v.Title)
+				case *ObjectPropModel:
+					p.Title = types.StringValue(*v.Title)
 				}
-				p.Title = types.StringValue(v.Title)
-			case *NumberPropModel:
-				bmNumber := bm.(NumberPropModel)
-				if v.Title == "" && bmNumber.Title.IsNull() && !isImportActive {
-					continue
-				}
-				p.Title = types.StringValue(v.Title)
-			case *BooleanPropModel:
-				bmBoolean := bm.(BooleanPropModel)
-				if v.Title == "" && bmBoolean.Title.IsNull() && !isImportActive {
-					continue
-				}
-				p.Title = types.StringValue(v.Title)
-			case *ArrayPropModel:
-				bmArray := bm.(ArrayPropModel)
-				if v.Title == "" && bmArray.Title.IsNull() && !isImportActive {
-					continue
-				}
-				p.Title = types.StringValue(v.Title)
-
-			case *ObjectPropModel:
-				bmObject := bm.(ObjectPropModel)
-				if v.Title == "" && bmObject.Title.IsNull() && !isImportActive {
-					continue
-				}
-				p.Title = types.StringValue(v.Title)
-
 			}
-
 		case "Default":
-			switch p := prop.(type) {
-			case *StringPropModel:
-				bmString := bm.(StringPropModel)
-				if v.Default == nil && bmString.Default.IsNull() && !isImportActive {
-					continue
+			if v.Default != nil {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Default = types.StringValue(v.Default.(string))
+				case *NumberPropModel:
+					p.Default = types.Float64Value(v.Default.(float64))
+				case *BooleanPropModel:
+					p.Default = types.BoolValue(v.Default.(bool))
+				case *ObjectPropModel:
+					js, _ := json.Marshal(v.Default)
+					value := string(js)
+					p.Default = types.StringValue(value)
 				}
-				p.Default = types.StringValue(v.Default.(string))
-			case *NumberPropModel:
-				bmNumber := bm.(NumberPropModel)
-				if v.Default == nil && bmNumber.Default.IsNull() && !isImportActive {
-					continue
-				}
-				p.Default = types.Float64Value(v.Default.(float64))
-			case *BooleanPropModel:
-				bmBoolean := bm.(BooleanPropModel)
-				if v.Default == nil && bmBoolean.Default.IsNull() && !isImportActive {
-					continue
-				}
-				p.Default = types.BoolValue(v.Default.(bool))
-			case *ObjectPropModel:
-				bmObject := bm.(ObjectPropModel)
-				if v.Default == nil && bmObject.Default.IsNull() && !isImportActive {
-					continue
-				}
-				js, _ := json.Marshal(v.Default)
-				value := string(js)
-				p.Default = types.StringValue(value)
 			}
 		}
 	}
@@ -698,8 +618,12 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
 	for propIdentifier, prop := range d.Properties.StringProp {
 		property := cli.BlueprintProperty{
-			Type:  "string",
-			Title: prop.Title.ValueString(),
+			Type: "string",
+		}
+
+		if !prop.Title.IsNull() {
+			title := prop.Title.ValueString()
+			property.Title = &title
 		}
 
 		if !prop.Default.IsNull() {
@@ -707,11 +631,13 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 		}
 
 		if !prop.Format.IsNull() {
-			property.Format = prop.Format.ValueString()
+			format := prop.Format.ValueString()
+			property.Format = &format
 		}
 
 		if !prop.Icon.IsNull() {
-			property.Icon = prop.Icon.ValueString()
+			icon := prop.Icon.ValueString()
+			property.Icon = &icon
 		}
 
 		if !prop.MinLength.IsNull() {
@@ -740,7 +666,8 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 		}
 
 		if !prop.Description.IsNull() {
-			property.Description = prop.Description.ValueString()
+			description := prop.Description.ValueString()
+			property.Description = &description
 		}
 
 		if !prop.Enum.IsNull() {
@@ -777,17 +704,22 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
 	for propIdentifier, prop := range d.Properties.NumberProp {
 		props[propIdentifier] = cli.BlueprintProperty{
-			Type:  "number",
-			Title: prop.Title.ValueString(),
+			Type: "number",
 		}
 
 		if property, ok := props[propIdentifier]; ok {
+
+			if !prop.Title.IsNull() {
+				title := prop.Title.ValueString()
+				property.Title = &title
+			}
 			if !prop.Default.IsNull() {
 				property.Default = prop.Default.ValueFloat64()
 			}
 
 			if !prop.Icon.IsNull() {
-				property.Icon = prop.Icon.ValueString()
+				icon := prop.Icon.ValueString()
+				property.Icon = &icon
 			}
 
 			if !prop.Minimum.IsNull() {
@@ -799,7 +731,8 @@ func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 			}
 
 			if !prop.Description.IsNull() {
-				property.Description = prop.Description.ValueString()
+				description := prop.Description.ValueString()
+				property.Description = &description
 			}
 
 			if !prop.Enum.IsNull() {
@@ -834,21 +767,27 @@ func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 func booleanPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
 	for propIdentifier, prop := range d.Properties.BooleanProp {
 		props[propIdentifier] = cli.BlueprintProperty{
-			Type:  "boolean",
-			Title: prop.Title.ValueString(),
+			Type: "boolean",
 		}
 
 		if property, ok := props[propIdentifier]; ok {
+			if !prop.Title.IsNull() {
+				title := prop.Title.ValueString()
+				property.Title = &title
+			}
+
 			if !prop.Default.IsNull() {
 				property.Default = prop.Default.ValueBool()
 			}
 
 			if !prop.Icon.IsNull() {
-				property.Icon = prop.Icon.ValueString()
+				icon := prop.Icon.ValueString()
+				property.Icon = &icon
 			}
 
 			if !prop.Description.IsNull() {
-				property.Description = prop.Description.ValueString()
+				description := prop.Description.ValueString()
+				property.Description = &description
 			}
 
 			props[propIdentifier] = property
@@ -862,8 +801,7 @@ func booleanPropResourceToBody(d *BlueprintModel, props map[string]cli.Blueprint
 func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
 	for propIdentifier, prop := range d.Properties.ObjectProp {
 		props[propIdentifier] = cli.BlueprintProperty{
-			Type:  "object",
-			Title: prop.Title.ValueString(),
+			Type: "object",
 		}
 
 		if property, ok := props[propIdentifier]; ok {
@@ -878,12 +816,19 @@ func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintP
 				}
 			}
 
+			if !prop.Title.IsNull() {
+				title := prop.Title.ValueString()
+				property.Title = &title
+			}
+
 			if !prop.Icon.IsNull() {
-				property.Icon = prop.Icon.ValueString()
+				icon := prop.Icon.ValueString()
+				property.Icon = &icon
 			}
 
 			if !prop.Description.IsNull() {
-				property.Description = prop.Description.ValueString()
+				description := prop.Description.ValueString()
+				property.Description = &description
 			}
 
 			if !prop.Spec.IsNull() {
@@ -902,18 +847,24 @@ func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintP
 func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
 	for propIdentifier, prop := range d.Properties.ArrayProp {
 		props[propIdentifier] = cli.BlueprintProperty{
-			Type:  "array",
-			Title: prop.Title.ValueString(),
+			Type: "array",
 		}
 
 		if property, ok := props[propIdentifier]; ok {
 
+			if !prop.Title.IsNull() {
+				title := prop.Title.ValueString()
+				property.Title = &title
+			}
+
 			if !prop.Icon.IsNull() {
-				property.Icon = prop.Icon.ValueString()
+				icon := prop.Icon.ValueString()
+				property.Icon = &icon
 			}
 
 			if !prop.Description.IsNull() {
-				property.Description = prop.Description.ValueString()
+				description := prop.Description.ValueString()
+				property.Description = &description
 			}
 			if !prop.MinItems.IsNull() {
 				property.MinItems = int(prop.MinItems.ValueInt64())
@@ -982,9 +933,20 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 	b := &cli.Blueprint{}
 	b.Identifier = d.Identifier.ValueString()
 
-	b.Title = d.Title.ValueString()
-	b.Icon = d.Icon.ValueString()
-	b.Description = d.Description.ValueString()
+	if !d.Title.IsNull() {
+		titleValue := d.Title.ValueString()
+		b.Title = &titleValue
+	}
+
+	if !d.Icon.IsNull() {
+		iconValue := d.Icon.ValueString()
+		b.Icon = &iconValue
+	}
+
+	if !d.Description.IsNull() {
+		descriptionTest := d.Description.ValueString()
+		b.Description = &descriptionTest
+	}
 	props := map[string]cli.BlueprintProperty{}
 
 	if d.ChangelogDestination != nil {

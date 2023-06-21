@@ -45,9 +45,11 @@ func EntitySchema() map[string]schema.Attribute {
 		},
 		"properties": schema.SingleNestedAttribute{
 			MarkdownDescription: "The properties of the entity",
+			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"string_prop": schema.MapNestedAttribute{
 					MarkdownDescription: "The string properties of the entity",
+					Optional:            true,
 					NestedObject: schema.NestedAttributeObject{
 						Attributes: map[string]schema.Attribute{
 							"value": schema.StringAttribute{
@@ -59,6 +61,7 @@ func EntitySchema() map[string]schema.Attribute {
 				},
 				"number_prop": schema.MapNestedAttribute{
 					MarkdownDescription: "The number properties of the entity",
+					Optional:            true,
 					NestedObject: schema.NestedAttributeObject{
 						Attributes: map[string]schema.Attribute{
 							"value": schema.Float64Attribute{

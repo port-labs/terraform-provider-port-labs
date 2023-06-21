@@ -24,6 +24,7 @@ func TestAccPortBlueprintBasic(t *testing.T) {
 		title = "TF Provider Test"
 		icon = "Terraform"
 		identifier = "%s"
+		description = ""
 	}
 `, identifier)
 	resource.Test(t, resource.TestCase{

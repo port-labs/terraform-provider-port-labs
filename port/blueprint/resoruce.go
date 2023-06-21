@@ -215,7 +215,7 @@ func addCalculationPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel) {
 	}
 }
 
-func addStingPropertiesToResource(ctx context.Context, b *cli.Blueprint, v *cli.BlueprintProperty) *StringPropModel {
+func addStingPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
 	stringProp := &StringPropModel{}
 
 	if v.Enum != nil {
@@ -266,6 +266,100 @@ func addStingPropertiesToResource(ctx context.Context, b *cli.Blueprint, v *cli.
 	return stringProp
 }
 
+func addNumberPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *NumberPropModel {
+	numberProp := &NumberPropModel{}
+	if v.Minimum != nil {
+		numberProp.Minimum = types.Float64Value(*v.Minimum)
+	}
+
+	if v.Maximum != nil {
+		numberProp.Maximum = types.Float64Value(*v.Maximum)
+	}
+
+	if v.Enum != nil {
+		attrs := make([]attr.Value, 0, len(v.Enum))
+		for _, value := range v.Enum {
+			attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
+		}
+
+		numberProp.Enum, _ = types.ListValue(types.Float64Type, attrs)
+	} else {
+		numberProp.Enum = types.ListNull(types.Float64Type)
+	}
+
+	if v.EnumColors != nil {
+		numberProp.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, v.EnumColors)
+	}
+
+	return numberProp
+}
+
+func addObjectPropertiesToResource(v *cli.BlueprintProperty) *ObjectPropModel {
+	objectProp := &ObjectPropModel{}
+
+	if v.Spec != "" {
+		objectProp.Spec = types.StringValue(v.Spec)
+	}
+
+	return objectProp
+}
+
+func addArrayPropertiesToResource(v *cli.BlueprintProperty) *ArrayPropModel {
+	arrayProp := &ArrayPropModel{}
+	if v.MinItems != nil {
+		arrayProp.MinItems = types.Int64Value(int64(*v.MinItems))
+	}
+	if v.MaxItems != nil {
+		arrayProp.MaxItems = types.Int64Value(int64(*v.MaxItems))
+	}
+	if v.Items != nil {
+		if v.Items["type"] != "" {
+			switch v.Items["type"] {
+			case "string":
+				arrayProp.StringItems = &StringItems{}
+				if v.Default != nil {
+					stringArray := make([]string, len(v.Default.([]interface{})))
+					for i, v := range v.Default.([]interface{}) {
+						stringArray[i] = v.(string)
+					}
+					attrs := make([]attr.Value, 0, len(stringArray))
+					for _, value := range stringArray {
+						attrs = append(attrs, basetypes.NewStringValue(value))
+					}
+					arrayProp.StringItems.Default, _ = types.ListValue(types.StringType, attrs)
+				} else {
+					arrayProp.StringItems.Default = types.ListNull(types.StringType)
+				}
+				if value, ok := v.Items["format"]; ok && value != nil {
+					arrayProp.StringItems.Format = types.StringValue(v.Items["format"].(string))
+				}
+			case "number":
+				arrayProp.NumberItems = &NumberItems{}
+				if v.Default != nil {
+					numberArray := make([]float64, len(v.Default.([]interface{})))
+					attrs := make([]attr.Value, 0, len(numberArray))
+					for _, value := range v.Default.([]interface{}) {
+						attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
+					}
+					arrayProp.NumberItems.Default, _ = types.ListValue(types.Float64Type, attrs)
+				}
+
+			case "boolean":
+				arrayProp.BooleanItems = &BooleanItems{}
+				if v.Default != nil {
+					booleanArray := make([]bool, len(v.Default.([]interface{})))
+					attrs := make([]attr.Value, 0, len(booleanArray))
+					for _, value := range v.Default.([]interface{}) {
+						attrs = append(attrs, basetypes.NewBoolValue(value.(bool)))
+					}
+					arrayProp.BooleanItems.Default, _ = types.ListValue(types.BoolType, attrs)
+				}
+			}
+		}
+	}
+
+	return arrayProp
+}
 func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel) error {
 	properties := &PropertiesModel{}
 
@@ -275,7 +369,7 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 			if properties.StringProp == nil {
 				properties.StringProp = make(map[string]StringPropModel)
 			}
-			stringProp := addStingPropertiesToResource(ctx, b, &v)
+			stringProp := addStingPropertiesToResource(ctx, &v)
 
 			if lo.Contains(b.Schema.Required, k) {
 				stringProp.Required = types.BoolValue(true)
@@ -292,37 +386,12 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				properties.NumberProp = make(map[string]NumberPropModel)
 			}
 
-			numberProp := &NumberPropModel{}
+			numberProp := addNumberPropertiesToResource(ctx, &v)
 
-			if v.Minimum != 0 && !bm.Properties.NumberProp[k].Minimum.IsNull() {
-				numberProp.Minimum = types.Float64Value(v.Minimum)
-			}
-
-			if v.Maximum != 0 && !bm.Properties.NumberProp[k].Maximum.IsNull() {
-				numberProp.Maximum = types.Float64Value(v.Maximum)
-			}
-
-			if v.Enum != nil && !bm.Properties.NumberProp[k].Enum.IsNull() {
-				attrs := make([]attr.Value, 0, len(v.Enum))
-				for _, value := range v.Enum {
-					attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
-				}
-
-				numberProp.Enum, _ = types.ListValue(types.Float64Type, attrs)
+			if lo.Contains(b.Schema.Required, k) {
+				numberProp.Required = types.BoolValue(true)
 			} else {
-				numberProp.Enum = types.ListNull(types.Float64Type)
-			}
-
-			if v.EnumColors != nil && !bm.Properties.NumberProp[k].EnumColors.IsNull() {
-				numberProp.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, v.EnumColors)
-			}
-
-			if !bm.Properties.NumberProp[k].Required.IsNull() {
-				if lo.Contains(b.Schema.Required, k) {
-					numberProp.Required = types.BoolValue(true)
-				} else {
-					numberProp.Required = types.BoolValue(false)
-				}
+				numberProp.Required = types.BoolValue(false)
 			}
 
 			setCommonProperties(v, numberProp)
@@ -334,60 +403,7 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				properties.ArrayProp = make(map[string]ArrayPropModel)
 			}
 
-			arrayProp := &ArrayPropModel{}
-
-			if v.MinItems != 0 && !bm.Properties.ArrayProp[k].MinItems.IsNull() {
-				arrayProp.MinItems = types.Int64Value(int64(v.MinItems))
-			}
-			if v.MaxItems != 0 && !bm.Properties.ArrayProp[k].MaxItems.IsNull() {
-				arrayProp.MaxItems = types.Int64Value(int64(v.MaxItems))
-			}
-
-			if v.Items != nil {
-				if v.Items["type"] != "" {
-					switch v.Items["type"] {
-					case "string":
-						arrayProp.StringItems = &StringItems{}
-						if v.Default != nil {
-							stringArray := make([]string, len(v.Default.([]interface{})))
-							for i, v := range v.Default.([]interface{}) {
-								stringArray[i] = v.(string)
-							}
-							attrs := make([]attr.Value, 0, len(stringArray))
-							for _, value := range stringArray {
-								attrs = append(attrs, basetypes.NewStringValue(value))
-							}
-							arrayProp.StringItems.Default, _ = types.ListValue(types.StringType, attrs)
-						} else {
-							arrayProp.StringItems.Default = types.ListNull(types.StringType)
-						}
-						if value, ok := v.Items["format"]; ok && value != nil {
-							arrayProp.StringItems.Format = types.StringValue(v.Items["format"].(string))
-						}
-					case "number":
-						arrayProp.NumberItems = &NumberItems{}
-						if v.Default != nil {
-							numberArray := make([]float64, len(v.Default.([]interface{})))
-							attrs := make([]attr.Value, 0, len(numberArray))
-							for _, value := range v.Default.([]interface{}) {
-								attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
-							}
-							arrayProp.NumberItems.Default, _ = types.ListValue(types.Float64Type, attrs)
-						}
-
-					case "boolean":
-						arrayProp.BooleanItems = &BooleanItems{}
-						if v.Default != nil {
-							booleanArray := make([]bool, len(v.Default.([]interface{})))
-							attrs := make([]attr.Value, 0, len(booleanArray))
-							for _, value := range v.Default.([]interface{}) {
-								attrs = append(attrs, basetypes.NewBoolValue(value.(bool)))
-							}
-							arrayProp.BooleanItems.Default, _ = types.ListValue(types.BoolType, attrs)
-						}
-					}
-				}
-			}
+			arrayProp := addArrayPropertiesToResource(&v)
 
 			if !bm.Properties.ArrayProp[k].Required.IsNull() {
 				if lo.Contains(b.Schema.Required, k) {
@@ -425,11 +441,7 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				properties.ObjectProp = make(map[string]ObjectPropModel)
 			}
 
-			objectProp := &ObjectPropModel{}
-
-			if v.Spec != "" && !bm.Properties.ObjectProp[k].Spec.IsNull() {
-				objectProp.Spec = types.StringValue(v.Spec)
-			}
+			objectProp := addObjectPropertiesToResource(&v)
 
 			if !bm.Properties.ObjectProp[k].Required.IsNull() {
 				if lo.Contains(b.Schema.Required, k) {
@@ -725,11 +737,13 @@ func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 			}
 
 			if !prop.Minimum.IsNull() {
-				property.Minimum = prop.Minimum.ValueFloat64()
+				minimum := prop.Minimum.ValueFloat64()
+				property.Minimum = &minimum
 			}
 
 			if !prop.Maximum.IsNull() {
-				property.Maximum = prop.Maximum.ValueFloat64()
+				maximum := prop.Maximum.ValueFloat64()
+				property.Maximum = &maximum
 			}
 
 			if !prop.Description.IsNull() {
@@ -869,11 +883,13 @@ func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[s
 				property.Description = &description
 			}
 			if !prop.MinItems.IsNull() {
-				property.MinItems = int(prop.MinItems.ValueInt64())
+				minItems := int(prop.MinItems.ValueInt64())
+				property.MinItems = &minItems
 			}
 
 			if !prop.MaxItems.IsNull() {
-				property.MaxItems = int(prop.MaxItems.ValueInt64())
+				maxItems := int(prop.MaxItems.ValueInt64())
+				property.MaxItems = &maxItems
 			}
 
 			if prop.StringItems != nil {

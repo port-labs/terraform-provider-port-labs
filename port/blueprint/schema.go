@@ -35,6 +35,7 @@ func MetadataProperties() map[string]schema.Attribute {
 		"required": schema.BoolAttribute{
 			MarkdownDescription: "The required of the number property",
 			Computed:            true,
+			Optional:            true,
 			Default:             booldefault.StaticBool(false),
 		},
 		"description": schema.StringAttribute{

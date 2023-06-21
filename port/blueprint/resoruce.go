@@ -297,8 +297,8 @@ func addNumberPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty
 func addObjectPropertiesToResource(v *cli.BlueprintProperty) *ObjectPropModel {
 	objectProp := &ObjectPropModel{}
 
-	if v.Spec != "" {
-		objectProp.Spec = types.StringValue(v.Spec)
+	if v.Spec != nil {
+		objectProp.Spec = types.StringValue(*v.Spec)
 	}
 
 	return objectProp
@@ -360,6 +360,7 @@ func addArrayPropertiesToResource(v *cli.BlueprintProperty) *ArrayPropModel {
 
 	return arrayProp
 }
+
 func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel) error {
 	properties := &PropertiesModel{}
 
@@ -663,7 +664,8 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 		}
 
 		if !prop.Spec.IsNull() {
-			property.Spec = prop.Spec.ValueString()
+			spec := prop.Spec.ValueString()
+			property.Spec = &spec
 		}
 
 		if prop.SpecAuthentication != nil {
@@ -848,7 +850,8 @@ func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintP
 			}
 
 			if !prop.Spec.IsNull() {
-				property.Spec = prop.Spec.ValueString()
+				spec := prop.Spec.ValueString()
+				property.Spec = &spec
 			}
 
 			props[propIdentifier] = property

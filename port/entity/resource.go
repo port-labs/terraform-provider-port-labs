@@ -90,7 +90,7 @@ func writeEntityFieldsToResource(ctx context.Context, em *EntityModel, e *cli.En
 			// 	propValue = t
 			// case float64:
 			// 	propValue = strconv.FormatFloat(t, 'f', -1, 64)
-			case int:
+			case float64:
 				if em.Properties.NumberProp == nil {
 					em.Properties.NumberProp = make(map[string]float64)
 				}

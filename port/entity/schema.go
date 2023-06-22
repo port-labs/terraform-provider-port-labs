@@ -52,17 +52,10 @@ func EntitySchema() map[string]schema.Attribute {
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
-				"number_prop": schema.MapNestedAttribute{
+				"number_prop": schema.MapAttribute{
 					MarkdownDescription: "The number properties of the entity",
 					Optional:            true,
-					NestedObject: schema.NestedAttributeObject{
-						Attributes: map[string]schema.Attribute{
-							"value": schema.Float64Attribute{
-								MarkdownDescription: "The value of the number property",
-								Required:            true,
-							},
-						},
-					},
+					ElementType:         types.Float64Type,
 				},
 			},
 		},

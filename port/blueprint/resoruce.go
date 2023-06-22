@@ -88,6 +88,7 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 
 func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *cli.Blueprint) error {
 	bm.Identifier = types.StringValue(b.Identifier)
+	bm.ID = types.StringValue(b.Identifier)
 	bm.CreatedAt = types.StringValue(b.CreatedAt.String())
 	bm.CreatedBy = types.StringValue(b.CreatedBy)
 	bm.UpdatedAt = types.StringValue(b.UpdatedAt.String())
@@ -282,6 +283,8 @@ func addNumberPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty
 
 	if v.EnumColors != nil {
 		numberProp.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, v.EnumColors)
+	} else {
+		numberProp.EnumColors = types.MapNull(types.StringType)
 	}
 
 	return numberProp

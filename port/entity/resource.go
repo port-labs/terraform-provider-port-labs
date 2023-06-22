@@ -168,6 +168,11 @@ func entityResourceToBody(em *EntityModel, bp *cli.Blueprint) (*cli.Entity, erro
 				properties[propIdentifier] = prop
 			}
 		}
+		if em.Properties.NumberProp != nil {
+			for propIdentifier, prop := range em.Properties.NumberProp {
+				properties[propIdentifier] = prop
+			}
+		}
 		e.Properties = properties
 	}
 

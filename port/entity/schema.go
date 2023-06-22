@@ -18,17 +18,21 @@ func EntitySchema() map[string]schema.Attribute {
 				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
+		"identifier": schema.StringAttribute{
+			MarkdownDescription: "Identifier",
+			Required:            true,
+		},
 		"title": schema.StringAttribute{
 			MarkdownDescription: "Title",
 			Optional:            true,
 		},
 		"icon": schema.StringAttribute{
 			MarkdownDescription: "Icon",
-			Required:            true,
+			Optional:            true,
 		},
 		"description": schema.StringAttribute{
 			MarkdownDescription: "Description",
-			Required:            true,
+			Optional:            true,
 		},
 		"run_id": schema.StringAttribute{
 			MarkdownDescription: "The runID of the action run that created the entity",
@@ -47,17 +51,10 @@ func EntitySchema() map[string]schema.Attribute {
 			MarkdownDescription: "The properties of the entity",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
-				"string_prop": schema.MapNestedAttribute{
+				"string_prop": schema.MapAttribute{
 					MarkdownDescription: "The string properties of the entity",
 					Optional:            true,
-					NestedObject: schema.NestedAttributeObject{
-						Attributes: map[string]schema.Attribute{
-							"value": schema.StringAttribute{
-								MarkdownDescription: "The value of the string property",
-								Required:            true,
-							},
-						},
-					},
+					ElementType:         types.StringType,
 				},
 				"number_prop": schema.MapNestedAttribute{
 					MarkdownDescription: "The number properties of the entity",

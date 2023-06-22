@@ -13,8 +13,8 @@ type NumberPropModel struct {
 }
 
 type EntityPropertiesModel struct {
-	StringProp map[string]StringPropModel `tfsdk:"string_prop"`
-	NumberProp map[string]NumberPropModel `tfsdk:"number_prop"`
+	StringProp map[string]string  `tfsdk:"string_prop"`
+	NumberProp map[string]float64 `tfsdk:"number_prop"`
 }
 
 type EntityModel struct {
@@ -30,4 +30,5 @@ type EntityModel struct {
 	UpdatedAt   types.String           `tfsdk:"updated_at"`
 	UpdatedBy   types.String           `tfsdk:"updated_by"`
 	Properties  *EntityPropertiesModel `tfsdk:"properties"`
+	Teams       []types.String         `tfsdk:"teams"`
 }

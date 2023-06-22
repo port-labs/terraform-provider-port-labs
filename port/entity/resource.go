@@ -48,13 +48,13 @@ func (r *EntityResource) Read(ctx context.Context, req resource.ReadRequest, res
 			resp.State.RemoveResource(ctx)
 			return
 		}
-		resp.Diagnostics.AddError("failed reading blueprint", err.Error())
+		resp.Diagnostics.AddError("failed reading entity", err.Error())
 		return
 	}
 
 	err = writeEntityFieldsToResource(ctx, e, blueprintIdentifier)
 	if err != nil {
-		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
+		resp.Diagnostics.AddError("failed writing entity fields to resource", err.Error())
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)

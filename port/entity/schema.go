@@ -30,10 +30,6 @@ func EntitySchema() map[string]schema.Attribute {
 			MarkdownDescription: "Icon",
 			Optional:            true,
 		},
-		"description": schema.StringAttribute{
-			MarkdownDescription: "Description",
-			Optional:            true,
-		},
 		"run_id": schema.StringAttribute{
 			MarkdownDescription: "The runID of the action run that created the entity",
 			Optional:            true,

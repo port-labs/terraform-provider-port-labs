@@ -13,8 +13,9 @@ type NumberPropModel struct {
 }
 
 type EntityPropertiesModel struct {
-	StringProp map[string]string  `tfsdk:"string_prop"`
-	NumberProp map[string]float64 `tfsdk:"number_prop"`
+	StringProp  map[string]string  `tfsdk:"string_prop"`
+	NumberProp  map[string]float64 `tfsdk:"number_prop"`
+	BooleanProp map[string]bool    `tfsdk:"boolean_prop"`
 }
 
 type EntityModel struct {

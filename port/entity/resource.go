@@ -100,6 +100,12 @@ func writeEntityFieldsToResource(ctx context.Context, em *EntityModel, e *cli.En
 					em.Properties.StringProp = make(map[string]string)
 				}
 				em.Properties.StringProp[k] = t
+
+			case bool:
+				if em.Properties.BooleanProp == nil {
+					em.Properties.BooleanProp = make(map[string]bool)
+				}
+				em.Properties.BooleanProp[k] = t
 			}
 		}
 	}
@@ -168,8 +174,15 @@ func entityResourceToBody(em *EntityModel, bp *cli.Blueprint) (*cli.Entity, erro
 				properties[propIdentifier] = prop
 			}
 		}
+
 		if em.Properties.NumberProp != nil {
 			for propIdentifier, prop := range em.Properties.NumberProp {
+				properties[propIdentifier] = prop
+			}
+		}
+
+		if em.Properties.BooleanProp != nil {
+			for propIdentifier, prop := range em.Properties.BooleanProp {
 				properties[propIdentifier] = prop
 			}
 		}

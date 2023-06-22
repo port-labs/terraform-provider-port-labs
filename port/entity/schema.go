@@ -57,6 +57,11 @@ func EntitySchema() map[string]schema.Attribute {
 					Optional:            true,
 					ElementType:         types.Float64Type,
 				},
+				"boolean_prop": schema.MapAttribute{
+					MarkdownDescription: "The bool properties of the entity",
+					Optional:            true,
+					ElementType:         types.BoolType,
+				},
 			},
 		},
 		"created_at": schema.StringAttribute{

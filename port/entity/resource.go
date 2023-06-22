@@ -2,7 +2,9 @@ package entity
 
 import (
 	"context"
+	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/port/cli"
@@ -92,6 +94,7 @@ func writeEntityFieldsToResource(ctx context.Context, em *EntityModel, e *cli.En
 				if em.Properties.NumberProp == nil {
 					em.Properties.NumberProp = make(map[string]float64)
 				}
+				em.Properties.NumberProp[k] = float64(t)
 			case string:
 				if em.Properties.StringProp == nil {
 					em.Properties.StringProp = make(map[string]string)
@@ -236,5 +239,13 @@ func (r *EntityResource) Delete(ctx context.Context, req resource.DeleteRequest,
 }
 
 func (r *EntityResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	// TODO
+	idParts := strings.Split(req.ID, ":")
+
+	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
+		resp.Diagnostics.AddError("invalid import ID", "import ID must be in the format <entity_id>:<blueprint_id>")
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("blueprint"), idParts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("identifier"), idParts[1])...)
 }

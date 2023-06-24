@@ -62,6 +62,11 @@ func EntitySchema() map[string]schema.Attribute {
 					Optional:            true,
 					ElementType:         types.BoolType,
 				},
+				"object_prop": schema.MapAttribute{
+					MarkdownDescription: "The object properties of the entity",
+					Optional:            true,
+					ElementType:         types.StringType,
+				},
 				"array_prop": schema.SingleNestedAttribute{
 					MarkdownDescription: "The array properties of the entity",
 					Optional:            true,

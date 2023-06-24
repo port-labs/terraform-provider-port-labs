@@ -2,6 +2,7 @@ package entity
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -124,6 +125,13 @@ func writeEntityFieldsToResource(ctx context.Context, em *EntityModel, e *cli.En
 					}
 					em.Properties.ArrayProp.StringItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, mapItems)
 				}
+			case interface{}:
+				if em.Properties.ObjectProp == nil {
+					em.Properties.ObjectProp = make(map[string]string)
+				}
+
+				js, _ := json.Marshal(&t)
+				em.Properties.ObjectProp[k] = string(js)
 			}
 		}
 	}
@@ -252,6 +260,17 @@ func entityResourceToBody(ctx context.Context, em *EntityModel, bp *cli.Blueprin
 				}
 			}
 
+		}
+
+		if em.Properties.ObjectProp != nil {
+			for identifier, prop := range em.Properties.ObjectProp {
+				obj := make(map[string]interface{})
+				err := json.Unmarshal([]byte(prop), &obj)
+				if err != nil {
+					return nil, err
+				}
+				properties[identifier] = obj
+			}
 		}
 	}
 

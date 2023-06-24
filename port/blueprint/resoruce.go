@@ -684,8 +684,8 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 
 		if !prop.Enum.IsNull() {
 			enumList := []interface{}{}
-			for _, e := range prop.Enum.Elements() {
-				v, _ := e.ToTerraformValue(ctx)
+			for _, enum := range prop.Enum.Elements() {
+				v, _ := enum.ToTerraformValue(ctx)
 				var keyValue string
 				v.As(&keyValue)
 				enumList = append(enumList, keyValue)

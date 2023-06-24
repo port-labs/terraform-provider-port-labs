@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/port-labs/terraform-provider-port-labs/port/cli"
 )
 
@@ -106,6 +107,23 @@ func writeEntityFieldsToResource(ctx context.Context, em *EntityModel, e *cli.En
 					em.Properties.BooleanProp = make(map[string]bool)
 				}
 				em.Properties.BooleanProp[k] = t
+
+			case []interface{}:
+				if em.Properties.ArrayProp == nil {
+					em.Properties.ArrayProp = &ArrayPropModel{
+						StringItems:  types.MapNull(types.ListType{ElemType: types.StringType}),
+						NumberItems:  types.MapNull(types.ListType{ElemType: types.NumberType}),
+						BooleanItems: types.MapNull(types.ListType{ElemType: types.BoolType}),
+					}
+				}
+				switch t[0].(type) {
+				case string:
+					mapItems := make(map[string][]string)
+					for _, item := range t {
+						mapItems[k] = append(mapItems[k], item.(string))
+					}
+					em.Properties.ArrayProp.StringItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, mapItems)
+				}
 			}
 		}
 	}
@@ -126,7 +144,7 @@ func (r *EntityResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	e, err := entityResourceToBody(data, bp)
+	e, err := entityResourceToBody(ctx, data, bp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert entity resource to body", err.Error())
 		return
@@ -150,7 +168,7 @@ func (r *EntityResource) Create(ctx context.Context, req resource.CreateRequest,
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func entityResourceToBody(em *EntityModel, bp *cli.Blueprint) (*cli.Entity, error) {
+func entityResourceToBody(ctx context.Context, em *EntityModel, bp *cli.Blueprint) (*cli.Entity, error) {
 	e := &cli.Entity{
 		Identifier: em.Identifier.ValueString(),
 		Blueprint:  bp.Identifier,
@@ -186,8 +204,58 @@ func entityResourceToBody(em *EntityModel, bp *cli.Blueprint) (*cli.Entity, erro
 				properties[propIdentifier] = prop
 			}
 		}
-		e.Properties = properties
+
+		if em.Properties.ArrayProp != nil {
+			if !em.Properties.ArrayProp.StringItems.IsNull() {
+				for identifier, itemArray := range em.Properties.ArrayProp.StringItems.Elements() {
+					var items []tftypes.Value
+					v, _ := itemArray.ToTerraformValue(ctx)
+					v.As(&items)
+					var stringItems []string
+					for _, item := range items {
+						var v string
+						item.As(&v)
+						stringItems = append(stringItems, v)
+					}
+
+					properties[identifier] = stringItems
+				}
+			}
+
+			if !em.Properties.ArrayProp.NumberItems.IsNull() {
+				for identifier, itemArray := range em.Properties.ArrayProp.NumberItems.Elements() {
+					var items []tftypes.Value
+					v, _ := itemArray.ToTerraformValue(ctx)
+					v.As(&items)
+					var numberItems []float64
+					for _, item := range items {
+						var v float64
+						item.As(&v)
+						numberItems = append(numberItems, v)
+					}
+					properties[identifier] = numberItems
+				}
+			}
+
+			if !em.Properties.ArrayProp.BooleanItems.IsNull() {
+				for identifier, itemArray := range em.Properties.ArrayProp.BooleanItems.Elements() {
+					var items []tftypes.Value
+					v, _ := itemArray.ToTerraformValue(ctx)
+					v.As(&items)
+					var booleanItems []bool
+					for _, item := range items {
+						var v bool
+						item.As(&v)
+						booleanItems = append(booleanItems, v)
+					}
+					properties[identifier] = booleanItems
+				}
+			}
+
+		}
 	}
+
+	e.Properties = properties
 
 	relations := make(map[string]interface{})
 	e.Relations = relations
@@ -216,7 +284,7 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	e, err := entityResourceToBody(data, bp)
+	e, err := entityResourceToBody(ctx, data, bp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert entity resource to body", err.Error())
 		return

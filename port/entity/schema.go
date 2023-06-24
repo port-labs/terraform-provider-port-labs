@@ -62,6 +62,38 @@ func EntitySchema() map[string]schema.Attribute {
 					Optional:            true,
 					ElementType:         types.BoolType,
 				},
+				"array_prop": schema.SingleNestedAttribute{
+					MarkdownDescription: "The array properties of the entity",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"string_items": schema.MapAttribute{
+							ElementType: types.ListType{ElemType: types.StringType},
+							Optional:    true,
+						},
+						"number_items": schema.MapAttribute{
+							ElementType: types.ListType{ElemType: types.Float64Type},
+							Optional:    true,
+						},
+						"boolean_items": schema.MapAttribute{
+							ElementType: types.ListType{ElemType: types.BoolType},
+							Optional:    true,
+						},
+					},
+					// "string_items":  types.MapType{ElemType: types.ListType{ElemType: types.StringType}},
+					// "number_items":  types.MapType{ElemType: types.ListType{ElemType: types.Float64Type}},
+					// "boolean_items": types.MapType{ElemType: types.ListType{ElemType: types.BoolType}},
+					// "number_items": schema.MapAttribute{
+					// 	MarkdownDescription: "The string properties of the entity",
+					// 	Optional:            true,
+					// 	ElementType:         types.ListType{ElemType: types.Float64Type},
+					// },
+					// "boolean_items": schema.MapAttribute{
+					// 	MarkdownDescription: "The string properties of the entity",
+					// 	Optional:            true,
+					// 	ElementType:         types.ListType{ElemType: types.BoolType},
+					// },
+
+				},
 			},
 		},
 		"created_at": schema.StringAttribute{

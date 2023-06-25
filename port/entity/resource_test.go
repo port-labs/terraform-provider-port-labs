@@ -175,3 +175,55 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortEntityImport(t *testing.T) {
+	blueprintIdentifier := genID()
+	entityIdentifier := genID()
+
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			"string_prop" = {
+				"myStringIdentifier" =  {
+					"title" = "My String Identifier"
+				}
+			}
+		}
+	}
+	resource "port-labs_entity" "microservice" {
+		title = "TF Provider Test Entity0"
+		blueprint = port-labs_blueprint.microservice.id
+		identifier = "%s"
+		properties = {
+			"string_prop" = {
+				"myStringIdentifier" =  "My String Value"
+			}
+		}
+	}`, blueprintIdentifier, entityIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "title", "TF Provider Test Entity0"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.string_prop.myStringIdentifier", "My String Value"),
+				),
+			},
+			{
+				ResourceName:            "port-labs_entity.microservice",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateId:           fmt.Sprintf("%s:%s", blueprintIdentifier, entityIdentifier),
+				ImportStateVerifyIgnore: []string{"identifier"},
+			},
+		},
+	})
+}

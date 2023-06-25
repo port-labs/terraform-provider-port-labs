@@ -140,9 +140,21 @@ func writeEntityFieldsToResource(ctx context.Context, em *EntityModel, e *cli.En
 	if len(e.Relations) != 0 {
 		relations := make(map[string][]string)
 		for identifier, r := range e.Relations {
-			relations[identifier] = r
+			switch r.(type) {
+			case []string:
+				if len(r.([]string)) != 0 {
+					relations[identifier] = r.([]string)
+				}
+
+			case string:
+				if len(r.(string)) != 0 {
+					relations[identifier] = []string{r.(string)}
+				}
+			}
 		}
-		em.Relations, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, relations)
+		if len(relations) != 0 {
+			em.Relations, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, relations)
+		}
 	}
 
 	return nil
@@ -178,7 +190,8 @@ func (r *EntityResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	data.ID = types.StringValue(e.Identifier)
+	data.ID = types.StringValue(en.Identifier)
+	data.Identifier = types.StringValue(en.Identifier)
 
 	writeEntityComputedFieldsToResource(data, en)
 
@@ -187,12 +200,12 @@ func (r *EntityResource) Create(ctx context.Context, req resource.CreateRequest,
 
 func entityResourceToBody(ctx context.Context, em *EntityModel, bp *cli.Blueprint) (*cli.Entity, error) {
 	e := &cli.Entity{
-		Identifier: em.Identifier.ValueString(),
-		Blueprint:  bp.Identifier,
+		Title:     em.Title.ValueString(),
+		Blueprint: bp.Identifier,
 	}
 
-	if !em.Title.IsNull() {
-		e.Title = em.Title.ValueString()
+	if !em.Identifier.IsNull() {
+		e.Identifier = em.Identifier.ValueString()
 	}
 
 	if em.Teams != nil {
@@ -290,8 +303,8 @@ func entityResourceToBody(ctx context.Context, em *EntityModel, bp *cli.Blueprin
 	return e, nil
 }
 
-func writeRelationsToBody(ctx context.Context, relations basetypes.MapValue) map[string][]string {
-	relationsBody := make(map[string][]string)
+func writeRelationsToBody(ctx context.Context, relations basetypes.MapValue) map[string]interface{} {
+	relationsBody := make(map[string]interface{})
 	for identifier, relation := range relations.Elements() {
 		var items []tftypes.Value
 		v, _ := relation.ToTerraformValue(ctx)

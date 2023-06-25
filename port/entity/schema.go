@@ -20,11 +20,15 @@ func EntitySchema() map[string]schema.Attribute {
 		},
 		"identifier": schema.StringAttribute{
 			MarkdownDescription: "Identifier",
-			Required:            true,
+			Optional:            true,
+			Computed:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"title": schema.StringAttribute{
 			MarkdownDescription: "Title",
-			Optional:            true,
+			Required:            true,
 		},
 		"icon": schema.StringAttribute{
 			MarkdownDescription: "Icon",

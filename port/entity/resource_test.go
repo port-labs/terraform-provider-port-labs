@@ -227,3 +227,77 @@ func TestAccPortEntityImport(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortEntityUpdateProp(t *testing.T) {
+
+	identifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			"string_prop" = {
+				"myStringIdentifier" =  {
+					"title" = "My String Identifier"
+				}
+			}
+		}
+	}
+	resource "port-labs_entity" "microservice" {
+		title = "TF Provider Test Entity0"
+		blueprint = port-labs_blueprint.microservice.id
+		properties = {
+			"string_prop" = {
+				"myStringIdentifier" =  "My String Value"
+			}
+		}
+	}`, identifier)
+
+	var testAccActionConfigUpdate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			"string_prop" = {
+				"myStringIdentifier" =  {
+					"title" = "My String Identifier"
+				}
+			}
+		}
+	}
+	resource "port-labs_entity" "microservice" {
+		title = "TF Provider Test Entity0"
+		blueprint = port-labs_blueprint.microservice.id
+		properties = {
+			"string_prop" = {
+				"myStringIdentifier" =  "My String Value2"
+			}
+		}
+	}`, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "title", "TF Provider Test Entity0"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "blueprint", identifier),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.string_prop.myStringIdentifier", "My String Value"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "title", "TF Provider Test Entity0"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "blueprint", identifier),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.string_prop.myStringIdentifier", "My String Value2"),
+				),
+			},
+		},
+	})
+}

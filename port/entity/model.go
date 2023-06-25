@@ -18,6 +18,11 @@ type EntityPropertiesModel struct {
 	ArrayProp   *ArrayPropModel    `tfsdk:"array_prop"`
 }
 
+type RelationModel struct {
+	Identifier  types.String `tfsdk:"identifier"`
+	Identifiers types.List   `tfsdk:"identifiers"`
+}
+
 type EntityModel struct {
 	ID         types.String           `tfsdk:"id"`
 	Identifier types.String           `tfsdk:"identifier"`
@@ -31,4 +36,5 @@ type EntityModel struct {
 	UpdatedBy  types.String           `tfsdk:"updated_by"`
 	Properties *EntityPropertiesModel `tfsdk:"properties"`
 	Teams      []types.String         `tfsdk:"teams"`
+	Relations  types.Map              `tfsdk:"relations"`
 }

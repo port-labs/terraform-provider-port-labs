@@ -84,22 +84,13 @@ func EntitySchema() map[string]schema.Attribute {
 							Optional:    true,
 						},
 					},
-					// "string_items":  types.MapType{ElemType: types.ListType{ElemType: types.StringType}},
-					// "number_items":  types.MapType{ElemType: types.ListType{ElemType: types.Float64Type}},
-					// "boolean_items": types.MapType{ElemType: types.ListType{ElemType: types.BoolType}},
-					// "number_items": schema.MapAttribute{
-					// 	MarkdownDescription: "The string properties of the entity",
-					// 	Optional:            true,
-					// 	ElementType:         types.ListType{ElemType: types.Float64Type},
-					// },
-					// "boolean_items": schema.MapAttribute{
-					// 	MarkdownDescription: "The string properties of the entity",
-					// 	Optional:            true,
-					// 	ElementType:         types.ListType{ElemType: types.BoolType},
-					// },
-
 				},
 			},
+		},
+		"relations": schema.MapAttribute{
+			MarkdownDescription: "The relations of the entity",
+			Optional:            true,
+			ElementType:         types.ListType{ElemType: types.StringType},
 		},
 		"created_at": schema.StringAttribute{
 			MarkdownDescription: "The creation date of the entity",

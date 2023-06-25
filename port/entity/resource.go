@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/port-labs/terraform-provider-port-labs/port/cli"
 )
@@ -134,6 +135,14 @@ func writeEntityFieldsToResource(ctx context.Context, em *EntityModel, e *cli.En
 				em.Properties.ObjectProp[k] = string(js)
 			}
 		}
+	}
+
+	if len(e.Relations) != 0 {
+		relations := make(map[string][]string)
+		for identifier, r := range e.Relations {
+			relations[identifier] = r
+		}
+		em.Relations, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, relations)
 	}
 
 	return nil
@@ -276,9 +285,27 @@ func entityResourceToBody(ctx context.Context, em *EntityModel, bp *cli.Blueprin
 
 	e.Properties = properties
 
-	relations := make(map[string]interface{})
+	relations := writeRelationsToBody(ctx, em.Relations)
 	e.Relations = relations
 	return e, nil
+}
+
+func writeRelationsToBody(ctx context.Context, relations basetypes.MapValue) map[string][]string {
+	relationsBody := make(map[string][]string)
+	for identifier, relation := range relations.Elements() {
+		var items []tftypes.Value
+		v, _ := relation.ToTerraformValue(ctx)
+		v.As(&items)
+		var relationsValue []string
+		for _, item := range items {
+			var v string
+			item.As(&v)
+			relationsValue = append(relationsValue, v)
+		}
+		relationsBody[identifier] = relationsValue
+	}
+
+	return relationsBody
 }
 
 func writeEntityComputedFieldsToResource(data *EntityModel, e *cli.Entity) {

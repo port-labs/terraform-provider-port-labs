@@ -98,3 +98,80 @@ func TestAccPortEntity(t *testing.T) {
 		},
 	})
 }
+func TestAccPortEntityWithRelation(t *testing.T) {
+	identifier := genID()
+	identifier2 := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			"string_prop" = {
+				"myStringIdentifier" =  {
+					"title" = "My String Identifier"
+				}
+			}
+		}
+		relations = {
+			"tfRelation" = {
+				"title" = "Test Relation"
+				"target" = port-labs_blueprint.microservice2.identifier
+			}
+		}	
+	}
+	resource "port-labs_blueprint" "microservice2" {
+		title = "TF Provider Test BP1"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			"string_prop" = {
+				"myStringIdentifier2" =  {
+					"title" = "My String Identifier2"
+				}
+			}
+		}
+	}
+
+	resource "port-labs_entity" "microservice" {
+		title = "TF Provider Test Entity0"
+		blueprint = port-labs_blueprint.microservice.identifier
+		properties = {
+			"string_prop" = {
+				"myStringIdentifier" =  "My String Value"
+			}
+		}
+		relations = {
+			"tfRelation" = [port-labs_entity.microservice2.id]
+		}
+	}
+	
+	resource "port-labs_entity" "microservice2" {
+		title = "TF Provider Test Entity1"
+		identifier = "tf-entity-2"
+		blueprint = port-labs_blueprint.microservice2.identifier
+		properties = {
+			"string_prop" = {
+				"myStringIdentifier2" =  "My String Value2"
+			}
+		}
+	}
+	`, identifier, identifier2)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "title", "TF Provider Test Entity0"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "blueprint", identifier),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.string_prop.myStringIdentifier", "My String Value"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "relations.tfRelation.0", "tf-entity-2"),
+				),
+			},
+		},
+	})
+}

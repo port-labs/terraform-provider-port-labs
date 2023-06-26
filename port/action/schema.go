@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -41,6 +42,13 @@ func ActionSchema() map[string]schema.Attribute {
 		"required_approval": schema.BoolAttribute{
 			MarkdownDescription: "Require approval before invoking the action",
 			Optional:            true,
+		},
+		"trigger": schema.StringAttribute{
+			MarkdownDescription: "The trigger type of the action",
+			Required:            true,
+			Validators: []validator.String{
+				stringvalidator.ExactlyOneOf("CREATE", "DAY-2", "DELETE"),
+			},
 		},
 		"kafka_method": schema.SingleNestedAttribute{
 			MarkdownDescription: "The invocation method of the action",

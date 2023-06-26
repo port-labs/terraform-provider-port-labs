@@ -25,7 +25,7 @@ type ActionResource struct {
 }
 
 func (r *ActionResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_entity"
+	resp.TypeName = req.ProviderTypeName + "_action"
 }
 
 func (r *ActionResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -40,7 +40,7 @@ func (r *ActionResource) ImportState(ctx context.Context, req resource.ImportSta
 	idParts := strings.Split(req.ID, ":")
 
 	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
-		resp.Diagnostics.AddError("invalid import ID", "import ID must be in the format <entity_id>:<blueprint_id>")
+		resp.Diagnostics.AddError("invalid import ID", "import ID must be in the format <blueprint_id>:<action_id>")
 		return
 	}
 
@@ -75,6 +75,7 @@ func (r *ActionResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 func writeActionFieldsToResource(ctx context.Context, data *ActionModel, a *cli.Action, blueprintIdentifier string) {
 	data.Title = types.StringValue(a.Title)
+	data.Trigger = types.StringValue(a.Trigger)
 	if a.Icon != nil {
 		data.Icon = types.StringValue(*a.Icon)
 	}
@@ -229,6 +230,7 @@ func actionResourceToBody(ctx context.Context, data *ActionModel, bp *cli.Bluepr
 	action := &cli.Action{
 		Identifier: data.Identifier.ValueString(),
 		Title:      data.Title.ValueString(),
+		Trigger:    data.Trigger.ValueString(),
 	}
 
 	if !data.Icon.IsNull() {

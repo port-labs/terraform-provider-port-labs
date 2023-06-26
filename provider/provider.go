@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/port-labs/terraform-provider-port-labs/port/action"
 	"github.com/port-labs/terraform-provider-port-labs/port/blueprint"
 	"github.com/port-labs/terraform-provider-port-labs/port/cli"
 	"github.com/port-labs/terraform-provider-port-labs/port/entity"
@@ -94,6 +95,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 	return []func() resource.Resource{
 		blueprint.NewBlueprintResource,
 		entity.NewEntityResource,
+		action.NewActionResource,
 	}
 }
 

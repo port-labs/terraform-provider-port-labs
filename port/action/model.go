@@ -5,7 +5,7 @@ import (
 )
 
 type WebhookMethodModel struct {
-	URL   types.String `tfsdk:"url"`
+	Url   types.String `tfsdk:"url"`
 	Agent types.Bool   `tfsdk:"agent"`
 }
 
@@ -15,11 +15,11 @@ type GithubMethodModel struct {
 	Workflow             types.String `tfsdk:"workflow"`
 	OmitPayload          types.Bool   `tfsdk:"omit_payload"`
 	OmitUserInputs       types.Bool   `tfsdk:"omit_user_inputs"`
-	reportWorkflowStatus types.Bool   `tfsdk:"report_workflow_status"`
+	ReportWorkflowStatus types.Bool   `tfsdk:"report_workflow_status"`
 }
 
 type AzureMethodModel struct {
-	Org     types.Bool   `tfsdk:"agent"`
+	Org     types.String `tfsdk:"agent"`
 	Webhook types.String `tfsdk:"webhook"`
 }
 
@@ -31,7 +31,7 @@ type ActionModel struct {
 	Icon             types.String        `tfsdk:"icon"`
 	Description      types.String        `tfsdk:"description"`
 	RequiredApproval types.Bool          `tfsdk:"required_approval"`
-	KafkaMethod      types.String        `tfsdk:"kafka_method"`
+	KafkaMethod      types.Map           `tfsdk:"kafka_method"`
 	WebhookMethod    *WebhookMethodModel `tfsdk:"webhook_method"`
 	GithubMethod     *GithubMethodModel  `tfsdk:"github_method"`
 	AzureMethod      *AzureMethodModel   `tfsdk:"azure_method"`

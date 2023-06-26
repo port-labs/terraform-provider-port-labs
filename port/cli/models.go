@@ -93,7 +93,7 @@ type (
 		Workflow             string `json:"workflow,omitempty"`
 		OmitPayload          bool   `json:"omitPayload,omitempty"`
 		OmitUserInputs       bool   `json:"omitUserInputs,omitempty"`
-		ReportWorkflowStatus *bool  `json:"reportWorkflowStatus,omitempty"`
+		ReportWorkflowStatus bool   `json:"reportWorkflowStatus,omitempty"`
 	}
 
 	ChangelogDestination struct {

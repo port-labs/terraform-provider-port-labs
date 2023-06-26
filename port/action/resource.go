@@ -13,7 +13,7 @@ import (
 var _ resource.Resource = &ActionResource{}
 var _ resource.ResourceWithImportState = &ActionResource{}
 
-func NewEntityResource() resource.Resource {
+func NewActionResource() resource.Resource {
 	return &ActionResource{}
 }
 
@@ -116,11 +116,71 @@ func (r *ActionResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 func actionResourceToBody(ctx context.Context, data *ActionModel, bp *cli.Blueprint) (*cli.Action, error) {
 	action := &cli.Action{
-		Identifier:  data.Identifier.ValueString(),
-		Title:       data.Title.ValueString(),
-		Icon:        data.Icon.ValueString(),
-		Description: data.Description.ValueString(),
+		Identifier: data.Identifier.ValueString(),
+		Title:      data.Title.ValueString(),
 	}
 
+	if !data.Icon.IsNull() {
+		action.Icon = data.Icon.ValueString()
+	}
+
+	if !data.Description.IsNull() {
+		action.Description = data.Description.ValueString()
+	}
+
+	action.InvocationMethod = invocationMethodToBody(data)
+
 	return action, nil
+}
+
+func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
+	if data.AzureMethod != nil {
+		return &cli.InvocationMethod{
+			Type:    "AZURE-DEVOPS",
+			Org:     data.AzureMethod.Org.ValueString(),
+			Webhook: data.AzureMethod.Webhook.ValueString(),
+		}
+	}
+
+	if data.GithubMethod != nil {
+		githubInvocation := &cli.InvocationMethod{
+			Type: "GITHUB",
+			Org:  data.GithubMethod.Org.ValueString(),
+			Repo: data.GithubMethod.Repo.ValueString(),
+		}
+		if !data.GithubMethod.Workflow.IsNull() {
+			githubInvocation.Workflow = data.GithubMethod.Workflow.ValueString()
+		}
+
+		if !data.GithubMethod.OmitPayload.IsNull() {
+			githubInvocation.OmitPayload = data.GithubMethod.OmitPayload.ValueBool()
+		}
+
+		if !data.GithubMethod.OmitUserInputs.IsNull() {
+			githubInvocation.OmitUserInputs = data.GithubMethod.OmitUserInputs.ValueBool()
+		}
+
+		if !data.GithubMethod.ReportWorkflowStatus.IsNull() {
+			githubInvocation.ReportWorkflowStatus = data.GithubMethod.ReportWorkflowStatus.ValueBool()
+		}
+		return githubInvocation
+	}
+
+	if !data.KafkaMethod.IsNull() {
+		return &cli.InvocationMethod{
+			Type: "KAFKA",
+		}
+	}
+
+	if data.WebhookMethod != nil {
+		webhookInvocation := &cli.InvocationMethod{
+			Type: "WEBHOOK",
+			Url:  data.WebhookMethod.Url.ValueString(),
+		}
+		if !data.WebhookMethod.Agent.IsNull() {
+			webhookInvocation.Agent = data.WebhookMethod.Agent.ValueBool()
+		}
+		return webhookInvocation
+	}
+	return nil
 }

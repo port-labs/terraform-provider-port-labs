@@ -84,16 +84,17 @@ type (
 	}
 
 	InvocationMethod struct {
-		Type                 string `json:"type,omitempty"`
-		Url                  string `json:"url,omitempty"`
-		Agent                bool   `json:"agent,omitempty"`
-		Org                  string `json:"org,omitempty"`
-		Repo                 string `json:"repo,omitempty"`
-		Webhook              string `json:"webhook,omitempty"`
-		Workflow             string `json:"workflow,omitempty"`
-		OmitPayload          bool   `json:"omitPayload,omitempty"`
-		OmitUserInputs       bool   `json:"omitUserInputs,omitempty"`
-		ReportWorkflowStatus bool   `json:"reportWorkflowStatus,omitempty"`
+		Type                 string  `json:"type,omitempty"`
+		Url                  *string `json:"url,omitempty"`
+		Agent                *bool   `json:"agent,omitempty"`
+		Org                  *string `json:"org,omitempty"`
+		Repo                 *string `json:"repo,omitempty"`
+		Webhook              *string `json:"webhook,omitempty"`
+		Workflow             *string `json:"workflow,omitempty"`
+		OmitPayload          *bool   `json:"omitPayload,omitempty"`
+		OmitUserInputs       *bool   `json:"omitUserInputs,omitempty"`
+		ReportWorkflowStatus *bool   `json:"reportWorkflowStatus,omitempty"`
+		Branch               *string `json:"branch,omitempty"`
 	}
 
 	ChangelogDestination struct {
@@ -120,12 +121,12 @@ type (
 	Action struct {
 		ID               string            `json:"id,omitempty"`
 		Identifier       string            `json:"identifier,omitempty"`
-		Description      string            `json:"description,omitempty"`
+		Description      *string           `json:"description,omitempty"`
 		Title            string            `json:"title,omitempty"`
-		Icon             string            `json:"icon,omitempty"`
+		Icon             *string           `json:"icon,omitempty"`
 		UserInputs       ActionUserInputs  `json:"userInputs"`
 		Trigger          string            `json:"trigger"`
-		RequiredApproval bool              `json:"requiredApproval,omitempty"`
+		RequiredApproval *bool             `json:"requiredApproval,omitempty"`
 		InvocationMethod *InvocationMethod `json:"invocationMethod,omitempty"`
 	}
 

@@ -72,12 +72,79 @@ func (r *ActionResource) Read(ctx context.Context, req resource.ReadRequest, res
 
 func writeActionFieldsToResource(ctx context.Context, data *ActionModel, a *cli.Action, blueprintIdentifier string) {
 	data.Title = types.StringValue(a.Title)
-	data.Icon = types.StringValue(a.Icon)
-	data.Description = types.StringValue(a.Description)
+	if a.Icon != nil {
+		data.Icon = types.StringValue(*a.Icon)
+	}
+	if a.Description != nil {
+		data.Description = types.StringValue(*a.Description)
+	}
+
+	if a.RequiredApproval != nil {
+		data.RequiredApproval = types.BoolValue(*a.RequiredApproval)
+	}
+
+	if a.InvocationMethod.Type == "KAFKA" {
+		data.KafkaMethod = types.MapNull(types.StringType)
+	}
+
+	if a.InvocationMethod.Type == "WEBHOOK" {
+		data.WebhookMethod = &WebhookMethodModel{
+			Url: types.StringValue(*a.InvocationMethod.Url),
+		}
+		if a.InvocationMethod.Agent != nil {
+			data.WebhookMethod.Agent = types.BoolValue(*a.InvocationMethod.Agent)
+		}
+	}
+
+	if a.InvocationMethod.Type == "GITHUB" {
+		data.GithubMethod = &GithubMethodModel{
+			Repo: types.StringValue(*a.InvocationMethod.Repo),
+			Org:  types.StringValue(*a.InvocationMethod.Org),
+		}
+
+		if a.InvocationMethod.OmitPayload != nil {
+			data.GithubMethod.OmitPayload = types.BoolValue(*a.InvocationMethod.OmitPayload)
+		}
+
+		if a.InvocationMethod.OmitUserInputs != nil {
+			data.GithubMethod.OmitUserInputs = types.BoolValue(*a.InvocationMethod.OmitUserInputs)
+		}
+
+		if a.InvocationMethod.Workflow != nil {
+			data.GithubMethod.Workflow = types.StringValue(*a.InvocationMethod.Workflow)
+		}
+
+		if a.InvocationMethod.Branch != nil {
+			data.GithubMethod.Branch = types.StringValue(*a.InvocationMethod.Branch)
+		}
+	}
+
+	if a.InvocationMethod.Type == "AZURE-DEVOPS" {
+		data.AzureMethod = &AzureMethodModel{
+			Org:     types.StringValue(*a.InvocationMethod.Org),
+			Webhook: types.StringValue(*a.InvocationMethod.Webhook),
+		}
+	}
+
 }
 
 func (r *ActionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *ActionModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	err := r.portClient.DeleteAction(ctx, data.Identifier.ValueString(), data.Blueprint.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to delete action", err.Error())
+		return
+	}
+
+	resp.State.RemoveResource(ctx)
 }
+
 func (r *ActionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var data *ActionModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
@@ -111,6 +178,35 @@ func (r *ActionResource) Create(ctx context.Context, req resource.CreateRequest,
 }
 
 func (r *ActionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data *ActionModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	bp, _, err := r.portClient.ReadBlueprint(ctx, data.Blueprint.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read blueprint", err.Error())
+		return
+	}
+
+	action, err := actionResourceToBody(ctx, data, bp)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert entity resource to body", err.Error())
+		return
+	}
+
+	a, err := r.portClient.UpdateAction(ctx, bp.Identifier, action.ID, action)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to create action", err.Error())
+		return
+	}
+
+	data.ID = types.StringValue(a.Identifier)
+	data.Identifier = types.StringValue(a.Identifier)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
 }
 
@@ -121,11 +217,13 @@ func actionResourceToBody(ctx context.Context, data *ActionModel, bp *cli.Bluepr
 	}
 
 	if !data.Icon.IsNull() {
-		action.Icon = data.Icon.ValueString()
+		icon := data.Icon.ValueString()
+		action.Icon = &icon
 	}
 
 	if !data.Description.IsNull() {
-		action.Description = data.Description.ValueString()
+		description := data.Description.ValueString()
+		action.Description = &description
 	}
 
 	action.InvocationMethod = invocationMethodToBody(data)
@@ -135,33 +233,41 @@ func actionResourceToBody(ctx context.Context, data *ActionModel, bp *cli.Bluepr
 
 func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 	if data.AzureMethod != nil {
+		org := data.AzureMethod.Org.ValueString()
+		webhook := data.AzureMethod.Webhook.ValueString()
 		return &cli.InvocationMethod{
 			Type:    "AZURE-DEVOPS",
-			Org:     data.AzureMethod.Org.ValueString(),
-			Webhook: data.AzureMethod.Webhook.ValueString(),
+			Org:     &org,
+			Webhook: &webhook,
 		}
 	}
 
 	if data.GithubMethod != nil {
+		org := data.GithubMethod.Org.ValueString()
+		repo := data.GithubMethod.Repo.ValueString()
 		githubInvocation := &cli.InvocationMethod{
 			Type: "GITHUB",
-			Org:  data.GithubMethod.Org.ValueString(),
-			Repo: data.GithubMethod.Repo.ValueString(),
+			Org:  &org,
+			Repo: &repo,
 		}
 		if !data.GithubMethod.Workflow.IsNull() {
-			githubInvocation.Workflow = data.GithubMethod.Workflow.ValueString()
+			workflow := data.GithubMethod.Workflow.ValueString()
+			githubInvocation.Workflow = &workflow
 		}
 
 		if !data.GithubMethod.OmitPayload.IsNull() {
-			githubInvocation.OmitPayload = data.GithubMethod.OmitPayload.ValueBool()
+			omitPayload := data.GithubMethod.OmitPayload.ValueBool()
+			githubInvocation.OmitPayload = &omitPayload
 		}
 
 		if !data.GithubMethod.OmitUserInputs.IsNull() {
-			githubInvocation.OmitUserInputs = data.GithubMethod.OmitUserInputs.ValueBool()
+			omitUserInputs := data.GithubMethod.OmitUserInputs.ValueBool()
+			githubInvocation.OmitUserInputs = &omitUserInputs
 		}
 
 		if !data.GithubMethod.ReportWorkflowStatus.IsNull() {
-			githubInvocation.ReportWorkflowStatus = data.GithubMethod.ReportWorkflowStatus.ValueBool()
+			reportWorkflowStatus := data.GithubMethod.ReportWorkflowStatus.ValueBool()
+			githubInvocation.ReportWorkflowStatus = &reportWorkflowStatus
 		}
 		return githubInvocation
 	}
@@ -173,12 +279,14 @@ func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 	}
 
 	if data.WebhookMethod != nil {
+		url := data.WebhookMethod.Url.ValueString()
 		webhookInvocation := &cli.InvocationMethod{
 			Type: "WEBHOOK",
-			Url:  data.WebhookMethod.Url.ValueString(),
+			Url:  &url,
 		}
 		if !data.WebhookMethod.Agent.IsNull() {
-			webhookInvocation.Agent = data.WebhookMethod.Agent.ValueBool()
+			agent := data.WebhookMethod.Agent.ValueBool()
+			webhookInvocation.Agent = &agent
 		}
 		return webhookInvocation
 	}

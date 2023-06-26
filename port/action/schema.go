@@ -3,11 +3,14 @@ package action
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 func ActionSchema() map[string]schema.Attribute {
@@ -110,37 +113,56 @@ func ActionSchema() map[string]schema.Attribute {
 			MarkdownDescription: "User properties",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
-				"identifier": schema.StringAttribute{
-					MarkdownDescription: "Identifier",
-					Required:            true,
-				},
-				"title": schema.StringAttribute{
-					MarkdownDescription: "Title",
-					Required:            true,
-				},
-				"type": schema.StringAttribute{
-					MarkdownDescription: "Type",
-					Required:            true,
-				},
-				"description": schema.StringAttribute{
-					MarkdownDescription: "Description",
+				"string_prop": schema.MapNestedAttribute{
+					MarkdownDescription: "The string property of the blueprint",
 					Optional:            true,
-				},
-				"default": schema.StringAttribute{
-					MarkdownDescription: "Default",
-					Optional:            true,
-				},
-				"format": schema.StringAttribute{
-					MarkdownDescription: "Format",
-					Optional:            true,
-				},
-				"blueprint": schema.StringAttribute{
-					MarkdownDescription: "Blueprint",
-					Optional:            true,
-				},
-				"required": schema.BoolAttribute{
-					MarkdownDescription: "Required",
-					Optional:            true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"default": schema.StringAttribute{
+								MarkdownDescription: "The default of the string property",
+								Optional:            true,
+							},
+							"format": schema.StringAttribute{
+								MarkdownDescription: "The format of the string property",
+								Optional:            true,
+							},
+							"blueprint": schema.StringAttribute{
+								MarkdownDescription: "The blueprint of the string property",
+								Optional:            true,
+							},
+							"min_length": schema.Int64Attribute{
+								MarkdownDescription: "The min length of the string property",
+								Optional:            true,
+								Validators: []validator.Int64{
+									int64validator.AtLeast(0),
+								},
+							},
+							"max_length": schema.Int64Attribute{
+								MarkdownDescription: "The max length of the string property",
+								Optional:            true,
+								Validators: []validator.Int64{
+									int64validator.AtLeast(0),
+								},
+							},
+							"pattern": schema.StringAttribute{
+								MarkdownDescription: "The pattern of the string property",
+								Optional:            true,
+							},
+							"enum": schema.ListAttribute{
+								MarkdownDescription: "The enum of the string property",
+								Optional:            true,
+								ElementType:         types.StringType,
+								Validators: []validator.List{
+									listvalidator.UniqueValues(),
+									listvalidator.SizeAtLeast(1),
+								},
+							},
+							"required": schema.BoolAttribute{
+								MarkdownDescription: "The required of the string property",
+								Optional:            true,
+							},
+						},
+					},
 				},
 			},
 		},

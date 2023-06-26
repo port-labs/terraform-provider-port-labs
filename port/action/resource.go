@@ -2,6 +2,9 @@ package action
 
 import (
 	"context"
+	"encoding/json"
+	"log"
+	"math/big"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -83,6 +86,13 @@ func writeActionFieldsToResource(ctx context.Context, data *ActionModel, a *cli.
 		data.RequiredApproval = types.BoolValue(*a.RequiredApproval)
 	}
 
+	writeInvocationMethodToResource(a, data)
+
+	writeInputsToResource(a, data)
+
+}
+
+func writeInvocationMethodToResource(a *cli.Action, data *ActionModel) {
 	if a.InvocationMethod.Type == "KAFKA" {
 		data.KafkaMethod = types.MapNull(types.StringType)
 	}
@@ -125,9 +135,14 @@ func writeActionFieldsToResource(ctx context.Context, data *ActionModel, a *cli.
 			Webhook: types.StringValue(*a.InvocationMethod.Webhook),
 		}
 	}
-
 }
 
+func writeInputsToResource(a *cli.Action, data *ActionModel) {
+	if len(a.UserInputs.Properties) > 0 {
+
+	}
+
+}
 func (r *ActionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ActionModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -228,9 +243,322 @@ func actionResourceToBody(ctx context.Context, data *ActionModel, bp *cli.Bluepr
 
 	action.InvocationMethod = invocationMethodToBody(data)
 
+	if data.UserProperties != nil {
+		actionPropertiesToBody(ctx, action, data)
+	}
+
 	return action, nil
 }
 
+func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) {
+	for propIdentifier, prop := range d.UserProperties.StringProp {
+		property := cli.BlueprintProperty{
+			Type: "string",
+		}
+
+		if !prop.Title.IsNull() {
+			title := prop.Title.ValueString()
+			property.Title = &title
+		}
+
+		if !prop.Default.IsNull() {
+			property.Default = prop.Default.ValueString()
+		}
+
+		if !prop.Format.IsNull() {
+			format := prop.Format.ValueString()
+			property.Format = &format
+		}
+
+		if !prop.Icon.IsNull() {
+			icon := prop.Icon.ValueString()
+			property.Icon = &icon
+		}
+
+		if !prop.MinLength.IsNull() {
+			property.MinLength = int(prop.MinLength.ValueInt64())
+		}
+
+		if !prop.MaxLength.IsNull() {
+			property.MaxLength = int(prop.MaxLength.ValueInt64())
+		}
+
+		if !prop.Pattern.IsNull() {
+			property.Pattern = prop.Pattern.ValueString()
+		}
+
+		if !prop.Description.IsNull() {
+			description := prop.Description.ValueString()
+			property.Description = &description
+		}
+
+		if !prop.Enum.IsNull() {
+			enumList := []interface{}{}
+			for _, enum := range prop.Enum.Elements() {
+				v, _ := enum.ToTerraformValue(ctx)
+				var keyValue string
+				v.As(&keyValue)
+				enumList = append(enumList, keyValue)
+			}
+			property.Enum = enumList
+		}
+
+		props[propIdentifier] = property
+
+		if prop.Required.ValueBool() {
+			*required = append(*required, propIdentifier)
+		}
+	}
+}
+
+func numberPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) {
+	for propIdentifier, prop := range d.UserProperties.NumberProp {
+		props[propIdentifier] = cli.BlueprintProperty{
+			Type: "number",
+		}
+
+		if property, ok := props[propIdentifier]; ok {
+
+			if !prop.Title.IsNull() {
+				title := prop.Title.ValueString()
+				property.Title = &title
+			}
+			if !prop.Default.IsNull() {
+				property.Default = prop.Default.ValueFloat64()
+			}
+
+			if !prop.Icon.IsNull() {
+				icon := prop.Icon.ValueString()
+				property.Icon = &icon
+			}
+
+			if !prop.Minimum.IsNull() {
+				minimum := prop.Minimum.ValueFloat64()
+				property.Minimum = &minimum
+			}
+
+			if !prop.Maximum.IsNull() {
+				maximum := prop.Maximum.ValueFloat64()
+				property.Maximum = &maximum
+			}
+
+			if !prop.Description.IsNull() {
+				description := prop.Description.ValueString()
+				property.Description = &description
+			}
+
+			if !prop.Enum.IsNull() {
+				property.Enum = []interface{}{}
+				for _, e := range prop.Enum.Elements() {
+					v, _ := e.ToTerraformValue(ctx)
+					var keyValue big.Float
+					v.As(&keyValue)
+					floatValue, _ := keyValue.Float64()
+					property.Enum = append(property.Enum, floatValue)
+				}
+			}
+
+			props[propIdentifier] = property
+		}
+		if prop.Required.ValueBool() {
+			*required = append(*required, propIdentifier)
+		}
+	}
+}
+
+func booleanPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) {
+	for propIdentifier, prop := range d.UserProperties.BooleanProp {
+		props[propIdentifier] = cli.BlueprintProperty{
+			Type: "boolean",
+		}
+
+		if property, ok := props[propIdentifier]; ok {
+			if !prop.Title.IsNull() {
+				title := prop.Title.ValueString()
+				property.Title = &title
+			}
+
+			if !prop.Default.IsNull() {
+				property.Default = prop.Default.ValueBool()
+			}
+
+			if !prop.Icon.IsNull() {
+				icon := prop.Icon.ValueString()
+				property.Icon = &icon
+			}
+
+			if !prop.Description.IsNull() {
+				description := prop.Description.ValueString()
+				property.Description = &description
+			}
+
+			props[propIdentifier] = property
+		}
+		if prop.Required.ValueBool() {
+			*required = append(*required, propIdentifier)
+		}
+	}
+}
+
+func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) {
+	for propIdentifier, prop := range d.UserProperties.ObjectProp {
+		props[propIdentifier] = cli.BlueprintProperty{
+			Type: "object",
+		}
+
+		if property, ok := props[propIdentifier]; ok {
+			if !prop.Default.IsNull() {
+				defaultAsString := prop.Default.ValueString()
+				defaultObj := make(map[string]interface{})
+				err := json.Unmarshal([]byte(defaultAsString), &defaultObj)
+				if err != nil {
+					log.Fatal(err)
+				} else {
+					property.Default = defaultObj
+				}
+			}
+
+			if !prop.Title.IsNull() {
+				title := prop.Title.ValueString()
+				property.Title = &title
+			}
+
+			if !prop.Icon.IsNull() {
+				icon := prop.Icon.ValueString()
+				property.Icon = &icon
+			}
+
+			if !prop.Description.IsNull() {
+				description := prop.Description.ValueString()
+				property.Description = &description
+			}
+
+			if !prop.Spec.IsNull() {
+				spec := prop.Spec.ValueString()
+				property.Spec = &spec
+			}
+
+			props[propIdentifier] = property
+		}
+
+		if prop.Required.ValueBool() {
+			*required = append(*required, propIdentifier)
+		}
+	}
+}
+
+func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) {
+	for propIdentifier, prop := range d.UserProperties.ArrayProp {
+		props[propIdentifier] = cli.BlueprintProperty{
+			Type: "array",
+		}
+
+		if property, ok := props[propIdentifier]; ok {
+
+			if !prop.Title.IsNull() {
+				title := prop.Title.ValueString()
+				property.Title = &title
+			}
+
+			if !prop.Icon.IsNull() {
+				icon := prop.Icon.ValueString()
+				property.Icon = &icon
+			}
+
+			if !prop.Description.IsNull() {
+				description := prop.Description.ValueString()
+				property.Description = &description
+			}
+			if !prop.MinItems.IsNull() {
+				minItems := int(prop.MinItems.ValueInt64())
+				property.MinItems = &minItems
+			}
+
+			if !prop.MaxItems.IsNull() {
+				maxItems := int(prop.MaxItems.ValueInt64())
+				property.MaxItems = &maxItems
+			}
+
+			if prop.StringItems != nil {
+				items := map[string]interface{}{}
+				items["type"] = "string"
+				if !prop.StringItems.Format.IsNull() {
+					items["format"] = prop.StringItems.Format.ValueString()
+				}
+				if !prop.StringItems.Default.IsNull() {
+					defaultList := []interface{}{}
+					for _, e := range prop.StringItems.Default.Elements() {
+						v, _ := e.ToTerraformValue(ctx)
+						var keyValue string
+						v.As(&keyValue)
+						defaultList = append(defaultList, keyValue)
+					}
+					property.Default = defaultList
+				}
+				property.Items = items
+			}
+
+			if prop.NumberItems != nil {
+				items := map[string]interface{}{}
+				items["type"] = "number"
+				if !prop.NumberItems.Default.IsNull() {
+					items["default"] = prop.NumberItems.Default
+				}
+				property.Items = items
+			}
+
+			if prop.BooleanItems != nil {
+				items := map[string]interface{}{}
+				items["type"] = "boolean"
+				if !prop.BooleanItems.Default.IsNull() {
+					items["default"] = prop.BooleanItems.Default
+				}
+				property.Items = items
+			}
+
+			if prop.ObjectItems != nil {
+				items := map[string]interface{}{}
+				items["type"] = "object"
+				if !prop.ObjectItems.Default.IsNull() {
+					items["default"] = prop.ObjectItems.Default
+				}
+				property.Items = items
+			}
+
+			props[propIdentifier] = property
+		}
+
+		if prop.Required.ValueBool() {
+			*required = append(*required, propIdentifier)
+		}
+	}
+}
+
+func actionPropertiesToBody(ctx context.Context, action *cli.Action, data *ActionModel) {
+	required := []string{}
+	props := map[string]cli.BlueprintProperty{}
+
+	if data.UserProperties.StringProp != nil {
+		stringPropResourceToBody(ctx, data, props, &required)
+	}
+	if data.UserProperties.ArrayProp != nil {
+		arrayPropResourceToBody(ctx, data, props, &required)
+	}
+	if data.UserProperties.NumberProp != nil {
+		numberPropResourceToBody(ctx, data, props, &required)
+	}
+	if data.UserProperties.BooleanProp != nil {
+		booleanPropResourceToBody(data, props, &required)
+	}
+
+	if data.UserProperties.ObjectProp != nil {
+		objectPropResourceToBody(data, props, &required)
+	}
+
+	action.UserInputs.Properties = props
+	action.UserInputs.Required = required
+
+}
 func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 	if data.AzureMethod != nil {
 		org := data.AzureMethod.Org.ValueString()

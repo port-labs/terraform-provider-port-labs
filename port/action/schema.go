@@ -87,15 +87,15 @@ func ActionSchema() map[string]schema.Attribute {
 				stringvalidator.OneOf("CREATE", "DAY-2", "DELETE"),
 			},
 		},
-		// "kafka_method": schema.SingleNestedAttribute{
-		// 	MarkdownDescription: "The invocation method of the action",
-		// 	Optional:            true,
-		// 	// Validators: []validator.Map{
-		// 	// 	mapvalidator.ConflictsWith(path.Expressions{
-		// 	// 		path.MatchRoot("webhook_method"),
-		// 	// 	}...),
-		// 	// },
-		// },
+		"kafka_method": schema.ObjectAttribute{
+			MarkdownDescription: "The invocation method of the action",
+			Optional:            true,
+			// Validators: []validator.Map{
+			// 	mapvalidator.ConflictsWith(path.Expressions{
+			// 		path.MatchRoot("webhook_method"),
+			// 	}...),
+			// },
+		},
 		"webhook_method": schema.SingleNestedAttribute{
 			MarkdownDescription: "The invocation method of the action",
 			Optional:            true,

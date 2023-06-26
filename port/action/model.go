@@ -108,17 +108,17 @@ type ObjectPropModel struct {
 }
 
 type ActionModel struct {
-	ID               types.String `tfsdk:"id"`
-	Identifier       types.String `tfsdk:"identifier"`
-	Blueprint        types.String `tfsdk:"blueprint"`
-	Title            types.String `tfsdk:"title"`
-	Icon             types.String `tfsdk:"icon"`
-	Description      types.String `tfsdk:"description"`
-	RequiredApproval types.Bool   `tfsdk:"required_approval"`
-	Trigger          types.String `tfsdk:"trigger"`
-	// KafkaMethod      types.Map            `tfsdk:"kafka_method"`
-	WebhookMethod  *WebhookMethodModel  `tfsdk:"webhook_method"`
-	GithubMethod   *GithubMethodModel   `tfsdk:"github_method"`
-	AzureMethod    *AzureMethodModel    `tfsdk:"azure_method"`
-	UserProperties *UserPropertiesModel `tfsdk:"user_properties"`
+	ID               types.String         `tfsdk:"id"`
+	Identifier       types.String         `tfsdk:"identifier"`
+	Blueprint        types.String         `tfsdk:"blueprint"`
+	Title            types.String         `tfsdk:"title"`
+	Icon             types.String         `tfsdk:"icon"`
+	Description      types.String         `tfsdk:"description"`
+	RequiredApproval types.Bool           `tfsdk:"required_approval"`
+	Trigger          types.String         `tfsdk:"trigger"`
+	KafkaMethod      types.Object         `tfsdk:"kafka_method"`
+	WebhookMethod    *WebhookMethodModel  `tfsdk:"webhook_method"`
+	GithubMethod     *GithubMethodModel   `tfsdk:"github_method"`
+	AzureMethod      *AzureMethodModel    `tfsdk:"azure_method"`
+	UserProperties   *UserPropertiesModel `tfsdk:"user_properties"`
 }

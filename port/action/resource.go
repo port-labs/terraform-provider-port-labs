@@ -100,9 +100,9 @@ func writeActionFieldsToResource(ctx context.Context, data *ActionModel, a *cli.
 }
 
 func writeInvocationMethodToResource(a *cli.Action, data *ActionModel) {
-	// if a.InvocationMethod.Type == "KAFKA" {
-	// 	data.KafkaMethod = types.MapNull(types.StringType)
-	// }
+	if a.InvocationMethod.Type == "KAFKA" {
+		data.KafkaMethod, _ = types.ObjectValue(nil, nil)
+	}
 
 	if a.InvocationMethod.Type == "WEBHOOK" {
 		data.WebhookMethod = &WebhookMethodModel{
@@ -894,11 +894,11 @@ func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 		return githubInvocation
 	}
 
-	// if !data.KafkaMethod.IsNull() {
-	// 	return &cli.InvocationMethod{
-	// 		Type: "KAFKA",
-	// 	}
-	// }
+	if !data.KafkaMethod.IsNull() {
+		return &cli.InvocationMethod{
+			Type: "KAFKA",
+		}
+	}
 
 	if data.WebhookMethod != nil {
 		url := data.WebhookMethod.Url.ValueString()

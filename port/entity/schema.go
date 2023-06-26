@@ -126,9 +126,7 @@ func EntitySchema() map[string]schema.Attribute {
 
 func (r *EntityResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		// This description is used by the documentation generator and the language server.
-		MarkdownDescription: "Group resource",
+		MarkdownDescription: "Entity resource",
 		Attributes:          EntitySchema(),
 	}
-
 }

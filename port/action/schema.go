@@ -5,19 +5,56 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+func SpreadMaps(target map[string]schema.Attribute, source map[string]schema.Attribute) {
+	for key, value := range source {
+		target[key] = value
+	}
+}
+
+func MetadataProperties() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"title": schema.StringAttribute{
+			MarkdownDescription: "The display name of the blueprint",
+			Optional:            true,
+		},
+		"icon": schema.StringAttribute{
+			MarkdownDescription: "The icon of the blueprint",
+			Optional:            true,
+		},
+		"required": schema.BoolAttribute{
+			MarkdownDescription: "The required of the number property",
+			Computed:            true,
+			Optional:            true,
+			Default:             booldefault.StaticBool(false),
+		},
+		"description": schema.StringAttribute{
+			MarkdownDescription: "The description of the blueprint",
+			Optional:            true,
+		},
+		"blueprint": schema.StringAttribute{
+			MarkdownDescription: "The blueprint identifier the property relates to",
+			Optional:            true,
+		},
+	}
+}
+
 func ActionSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
-		"ID": schema.StringAttribute{
+		"id": schema.StringAttribute{
 			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"identifier": schema.StringAttribute{
 			MarkdownDescription: "Identifier",
@@ -47,18 +84,18 @@ func ActionSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The trigger type of the action",
 			Required:            true,
 			Validators: []validator.String{
-				stringvalidator.ExactlyOneOf("CREATE", "DAY-2", "DELETE"),
+				stringvalidator.OneOf("CREATE", "DAY-2", "DELETE"),
 			},
 		},
-		"kafka_method": schema.SingleNestedAttribute{
-			MarkdownDescription: "The invocation method of the action",
-			Optional:            true,
-			Validators: []validator.Object{
-				objectvalidator.ConflictsWith(path.Expressions{
-					path.MatchRoot("webhook_method"),
-				}...),
-			},
-		},
+		// "kafka_method": schema.SingleNestedAttribute{
+		// 	MarkdownDescription: "The invocation method of the action",
+		// 	Optional:            true,
+		// 	// Validators: []validator.Map{
+		// 	// 	mapvalidator.ConflictsWith(path.Expressions{
+		// 	// 		path.MatchRoot("webhook_method"),
+		// 	// 	}...),
+		// 	// },
+		// },
 		"webhook_method": schema.SingleNestedAttribute{
 			MarkdownDescription: "The invocation method of the action",
 			Optional:            true,
@@ -121,61 +158,209 @@ func ActionSchema() map[string]schema.Attribute {
 			MarkdownDescription: "User properties",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
-				"string_prop": schema.MapNestedAttribute{
-					MarkdownDescription: "The string property of the blueprint",
-					Optional:            true,
-					NestedObject: schema.NestedAttributeObject{
-						Attributes: map[string]schema.Attribute{
-							"default": schema.StringAttribute{
-								MarkdownDescription: "The default of the string property",
-								Optional:            true,
-							},
-							"format": schema.StringAttribute{
-								MarkdownDescription: "The format of the string property",
-								Optional:            true,
-							},
-							"blueprint": schema.StringAttribute{
-								MarkdownDescription: "The blueprint of the string property",
-								Optional:            true,
-							},
-							"min_length": schema.Int64Attribute{
-								MarkdownDescription: "The min length of the string property",
-								Optional:            true,
-								Validators: []validator.Int64{
-									int64validator.AtLeast(0),
-								},
-							},
-							"max_length": schema.Int64Attribute{
-								MarkdownDescription: "The max length of the string property",
-								Optional:            true,
-								Validators: []validator.Int64{
-									int64validator.AtLeast(0),
-								},
-							},
-							"pattern": schema.StringAttribute{
-								MarkdownDescription: "The pattern of the string property",
-								Optional:            true,
-							},
-							"enum": schema.ListAttribute{
-								MarkdownDescription: "The enum of the string property",
-								Optional:            true,
-								ElementType:         types.StringType,
-								Validators: []validator.List{
-									listvalidator.UniqueValues(),
-									listvalidator.SizeAtLeast(1),
-								},
-							},
-							"required": schema.BoolAttribute{
-								MarkdownDescription: "The required of the string property",
-								Optional:            true,
-							},
-						},
-					},
-				},
+				"string_prop":  StringPropertySchema(),
+				"number_prop":  NumberPropertySchema(),
+				"boolean_prop": BooleanPropertySchema(),
+				"object_prop":  ObjectPropertySchema(),
+				"array_prop":   ArrayPropertySchema(),
 			},
 		},
 	}
 
+}
+
+func StringPropertySchema() schema.Attribute {
+	stringPropertySchema := map[string]schema.Attribute{
+		"default": schema.StringAttribute{
+			MarkdownDescription: "The default of the string property",
+			Optional:            true,
+		},
+		"format": schema.StringAttribute{
+			MarkdownDescription: "The format of the string property",
+			Optional:            true,
+		},
+		"blueprint": schema.StringAttribute{
+			MarkdownDescription: "The blueprint of the string property",
+			Optional:            true,
+		},
+		"min_length": schema.Int64Attribute{
+			MarkdownDescription: "The min length of the string property",
+			Optional:            true,
+			Validators: []validator.Int64{
+				int64validator.AtLeast(0),
+			},
+		},
+		"max_length": schema.Int64Attribute{
+			MarkdownDescription: "The max length of the string property",
+			Optional:            true,
+			Validators: []validator.Int64{
+				int64validator.AtLeast(0),
+			},
+		},
+		"pattern": schema.StringAttribute{
+			MarkdownDescription: "The pattern of the string property",
+			Optional:            true,
+		},
+		"enum": schema.ListAttribute{
+			MarkdownDescription: "The enum of the string property",
+			Optional:            true,
+			ElementType:         types.StringType,
+			Validators: []validator.List{
+				listvalidator.UniqueValues(),
+				listvalidator.SizeAtLeast(1),
+			},
+		},
+	}
+
+	SpreadMaps(stringPropertySchema, MetadataProperties())
+	return schema.MapNestedAttribute{
+		MarkdownDescription: "The string property of the blueprint",
+		Optional:            true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: stringPropertySchema,
+		},
+	}
+}
+
+func NumberPropertySchema() schema.Attribute {
+	numberPropertySchema := map[string]schema.Attribute{
+		"default": schema.Float64Attribute{
+			MarkdownDescription: "The default of the number property",
+			Optional:            true,
+		},
+		"maximum": schema.Float64Attribute{
+			MarkdownDescription: "The min of the number property",
+			Optional:            true,
+		},
+		"minimum": schema.Float64Attribute{
+			MarkdownDescription: "The max of the number property",
+			Optional:            true,
+		},
+		"enum": schema.ListAttribute{
+			MarkdownDescription: "The enum of the number property",
+			Optional:            true,
+			ElementType:         types.Float64Type,
+			Validators: []validator.List{
+				listvalidator.UniqueValues(),
+				listvalidator.SizeAtLeast(1),
+			},
+		},
+	}
+
+	SpreadMaps(numberPropertySchema, MetadataProperties())
+	return schema.MapNestedAttribute{
+		MarkdownDescription: "The number property of the blueprint",
+		Optional:            true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: numberPropertySchema,
+		},
+	}
+}
+
+func BooleanPropertySchema() schema.Attribute {
+	booleanPropertySchema := map[string]schema.Attribute{
+		"default": schema.BoolAttribute{
+			MarkdownDescription: "The default of the boolean property",
+			Optional:            true,
+		},
+	}
+	return schema.MapNestedAttribute{
+		MarkdownDescription: "The boolean property of the blueprint",
+		Optional:            true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: booleanPropertySchema,
+		},
+	}
+}
+
+func ObjectPropertySchema() schema.Attribute {
+	objectPropertySchema := map[string]schema.Attribute{
+		"default": schema.StringAttribute{
+			Optional:            true,
+			MarkdownDescription: "The default of the object property",
+		},
+	}
+	return schema.MapNestedAttribute{
+		MarkdownDescription: "The object property of the blueprint",
+		Optional:            true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: objectPropertySchema,
+		},
+	}
+}
+
+func ArrayPropertySchema() schema.Attribute {
+	arrayPropertySchema := map[string]schema.Attribute{
+		"min_items": schema.Int64Attribute{
+			MarkdownDescription: "The min items of the array property",
+			Optional:            true,
+			Validators: []validator.Int64{
+				int64validator.AtLeast(0),
+			},
+		},
+		"max_items": schema.Int64Attribute{
+			MarkdownDescription: "The max items of the array property",
+			Optional:            true,
+			Validators: []validator.Int64{
+				int64validator.AtLeast(0),
+			},
+		},
+		"string_items": schema.SingleNestedAttribute{
+			MarkdownDescription: "The items of the array property",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"format": schema.StringAttribute{
+					MarkdownDescription: "The format of the items",
+					Optional:            true,
+				},
+				"default": schema.ListAttribute{
+					MarkdownDescription: "The default of the items",
+					Optional:            true,
+					ElementType:         types.StringType,
+				},
+			},
+		},
+		"number_items": schema.SingleNestedAttribute{
+			MarkdownDescription: "The items of the array property",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"default": schema.ListAttribute{
+					MarkdownDescription: "The default of the items",
+					Optional:            true,
+					ElementType:         types.Float64Type,
+				},
+			},
+		},
+		"boolean_items": schema.SingleNestedAttribute{
+			MarkdownDescription: "The items of the array property",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"default": schema.ListAttribute{
+					MarkdownDescription: "The default of the items",
+					Optional:            true,
+					ElementType:         types.BoolType,
+				},
+			},
+		},
+		"object_items": schema.SingleNestedAttribute{
+			MarkdownDescription: "The items of the array property",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"default": schema.ListAttribute{
+					MarkdownDescription: "The default of the items",
+					Optional:            true,
+					ElementType:         types.MapType{ElemType: types.StringType},
+				},
+			},
+		},
+	}
+	return schema.MapNestedAttribute{
+		MarkdownDescription: "The array property of the blueprint",
+		Optional:            true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: arrayPropertySchema,
+		},
+	}
 }
 
 func (r *ActionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {

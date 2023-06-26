@@ -27,6 +27,7 @@ type AzureMethodModel struct {
 type StringPropModel struct {
 	Title       types.String `tfsdk:"title"`
 	Icon        types.String `tfsdk:"icon"`
+	Blueprint   types.String `tfsdk:"blueprint"`
 	Description types.String `tfsdk:"description"`
 	Default     types.String `tfsdk:"default"`
 	Required    types.Bool   `tfsdk:"required"`
@@ -46,6 +47,7 @@ type NumberPropModel struct {
 	Maximum     types.Float64 `tfsdk:"maximum"`
 	Minimum     types.Float64 `tfsdk:"minimum"`
 	Enum        types.List    `tfsdk:"enum"`
+	Blueprint   types.String  `tfsdk:"blueprint"`
 }
 
 type BooleanPropModel struct {
@@ -92,6 +94,7 @@ type ArrayPropModel struct {
 	NumberItems  *NumberItems  `tfsdk:"number_items"`
 	BooleanItems *BooleanItems `tfsdk:"boolean_items"`
 	ObjectItems  *ObjectItems  `tfsdk:"object_items"`
+	Blueprint    types.String  `tfsdk:"blueprint"`
 }
 
 type ObjectPropModel struct {
@@ -101,20 +104,21 @@ type ObjectPropModel struct {
 	Required    types.Bool   `tfsdk:"required"`
 	Default     types.String `tfsdk:"default"`
 	Spec        types.String `tfsdk:"spec"`
+	Blueprint   types.String `tfsdk:"blueprint"`
 }
 
 type ActionModel struct {
-	ID               types.String         `tfsdk:"id"`
-	Identifier       types.String         `tfsdk:"identifier"`
-	Blueprint        types.String         `tfsdk:"blueprint"`
-	Title            types.String         `tfsdk:"title"`
-	Icon             types.String         `tfsdk:"icon"`
-	Description      types.String         `tfsdk:"description"`
-	RequiredApproval types.Bool           `tfsdk:"required_approval"`
-	Trigger          types.String         `tfsdk:"trigger"`
-	KafkaMethod      types.Map            `tfsdk:"kafka_method"`
-	WebhookMethod    *WebhookMethodModel  `tfsdk:"webhook_method"`
-	GithubMethod     *GithubMethodModel   `tfsdk:"github_method"`
-	AzureMethod      *AzureMethodModel    `tfsdk:"azure_method"`
-	UserProperties   *UserPropertiesModel `json:"userProperties,omitempty"`
+	ID               types.String `tfsdk:"id"`
+	Identifier       types.String `tfsdk:"identifier"`
+	Blueprint        types.String `tfsdk:"blueprint"`
+	Title            types.String `tfsdk:"title"`
+	Icon             types.String `tfsdk:"icon"`
+	Description      types.String `tfsdk:"description"`
+	RequiredApproval types.Bool   `tfsdk:"required_approval"`
+	Trigger          types.String `tfsdk:"trigger"`
+	// KafkaMethod      types.Map            `tfsdk:"kafka_method"`
+	WebhookMethod  *WebhookMethodModel  `tfsdk:"webhook_method"`
+	GithubMethod   *GithubMethodModel   `tfsdk:"github_method"`
+	AzureMethod    *AzureMethodModel    `tfsdk:"azure_method"`
+	UserProperties *UserPropertiesModel `tfsdk:"user_properties"`
 }

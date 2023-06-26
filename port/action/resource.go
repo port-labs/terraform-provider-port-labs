@@ -7,10 +7,13 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/port/cli"
+	"github.com/samber/lo"
 )
 
 var _ resource.Resource = &ActionResource{}
@@ -58,7 +61,7 @@ func (r *ActionResource) Read(ctx context.Context, req resource.ReadRequest, res
 	}
 
 	blueprintIdentifier := data.Blueprint.ValueString()
-	a, statusCode, err := r.portClient.ReadAction(ctx, data.Identifier.ValueString(), data.Blueprint.ValueString())
+	a, statusCode, err := r.portClient.ReadAction(ctx, data.Blueprint.ValueString(), data.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.State.RemoveResource(ctx)
@@ -74,6 +77,9 @@ func (r *ActionResource) Read(ctx context.Context, req resource.ReadRequest, res
 }
 
 func writeActionFieldsToResource(ctx context.Context, data *ActionModel, a *cli.Action, blueprintIdentifier string) {
+	data.ID = types.StringValue(a.Identifier)
+	data.Identifier = types.StringValue(a.Identifier)
+	data.Blueprint = types.StringValue(blueprintIdentifier)
 	data.Title = types.StringValue(a.Title)
 	data.Trigger = types.StringValue(a.Trigger)
 	if a.Icon != nil {
@@ -89,14 +95,14 @@ func writeActionFieldsToResource(ctx context.Context, data *ActionModel, a *cli.
 
 	writeInvocationMethodToResource(a, data)
 
-	writeInputsToResource(a, data)
+	writeInputsToResource(ctx, a, data)
 
 }
 
 func writeInvocationMethodToResource(a *cli.Action, data *ActionModel) {
-	if a.InvocationMethod.Type == "KAFKA" {
-		data.KafkaMethod = types.MapNull(types.StringType)
-	}
+	// if a.InvocationMethod.Type == "KAFKA" {
+	// 	data.KafkaMethod = types.MapNull(types.StringType)
+	// }
 
 	if a.InvocationMethod.Type == "WEBHOOK" {
 		data.WebhookMethod = &WebhookMethodModel{
@@ -138,12 +144,298 @@ func writeInvocationMethodToResource(a *cli.Action, data *ActionModel) {
 	}
 }
 
-func writeInputsToResource(a *cli.Action, data *ActionModel) {
-	if len(a.UserInputs.Properties) > 0 {
+func setCommonProperties(v cli.BlueprintProperty, prop interface{}) {
+	properties := []string{"Description", "Icon", "Default", "Title"}
+	for _, property := range properties {
+		switch property {
+		case "Description":
+			if v.Description != nil {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Description = types.StringValue(*v.Description)
+				case *NumberPropModel:
+					p.Description = types.StringValue(*v.Description)
+				case *BooleanPropModel:
+					p.Description = types.StringValue(*v.Description)
+				case *ArrayPropModel:
+					p.Description = types.StringValue(*v.Description)
+				case *ObjectPropModel:
+					p.Description = types.StringValue(*v.Description)
+				}
+			}
+		case "Icon":
+			if v.Icon != nil {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Icon = types.StringValue(*v.Icon)
+				case *NumberPropModel:
+					p.Icon = types.StringValue(*v.Icon)
+				case *BooleanPropModel:
+					p.Icon = types.StringValue(*v.Icon)
+				case *ArrayPropModel:
+					p.Icon = types.StringValue(*v.Icon)
+				case *ObjectPropModel:
+					p.Icon = types.StringValue(*v.Icon)
+				}
+			}
+		case "Title":
+			if v.Title != nil {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Title = types.StringValue(*v.Title)
+				case *NumberPropModel:
+					p.Title = types.StringValue(*v.Title)
+				case *BooleanPropModel:
+					p.Title = types.StringValue(*v.Title)
+				case *ArrayPropModel:
+					p.Title = types.StringValue(*v.Title)
+				case *ObjectPropModel:
+					p.Title = types.StringValue(*v.Title)
+				}
+			}
+		case "Default":
+			if v.Default != nil {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Default = types.StringValue(v.Default.(string))
+				case *NumberPropModel:
+					p.Default = types.Float64Value(v.Default.(float64))
+				case *BooleanPropModel:
+					p.Default = types.BoolValue(v.Default.(bool))
+				case *ObjectPropModel:
+					js, _ := json.Marshal(v.Default)
+					value := string(js)
+					p.Default = types.StringValue(value)
+				}
+			}
+		}
+	}
+}
+func addStingPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
+	stringProp := &StringPropModel{}
 
+	if v.Enum != nil {
+		attrs := make([]attr.Value, 0, len(v.Enum))
+		for _, value := range v.Enum {
+			attrs = append(attrs, basetypes.NewStringValue(value.(string)))
+		}
+
+		stringProp.Enum, _ = types.ListValue(types.StringType, attrs)
+	} else {
+		stringProp.Enum = types.ListNull(types.StringType)
 	}
 
+	if v.Format != nil {
+		stringProp.Format = types.StringValue(*v.Format)
+	}
+
+	if v.MinLength != 0 {
+		stringProp.MinLength = types.Int64Value(int64(v.MinLength))
+	}
+
+	if v.MaxLength != 0 {
+		stringProp.MaxLength = types.Int64Value(int64(v.MaxLength))
+	}
+
+	if v.Pattern != "" {
+		stringProp.Pattern = types.StringValue(v.Pattern)
+	}
+
+	return stringProp
 }
+
+func addNumberPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *NumberPropModel {
+	numberProp := &NumberPropModel{}
+	if v.Minimum != nil {
+		numberProp.Minimum = types.Float64Value(*v.Minimum)
+	}
+
+	if v.Maximum != nil {
+		numberProp.Maximum = types.Float64Value(*v.Maximum)
+	}
+
+	if v.Enum != nil {
+		attrs := make([]attr.Value, 0, len(v.Enum))
+		for _, value := range v.Enum {
+			attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
+		}
+
+		numberProp.Enum, _ = types.ListValue(types.Float64Type, attrs)
+	} else {
+		numberProp.Enum = types.ListNull(types.Float64Type)
+	}
+
+	return numberProp
+}
+
+func addObjectPropertiesToResource(v *cli.BlueprintProperty) *ObjectPropModel {
+	objectProp := &ObjectPropModel{}
+
+	if v.Spec != nil {
+		objectProp.Spec = types.StringValue(*v.Spec)
+	}
+
+	return objectProp
+}
+
+func addArrayPropertiesToResource(v *cli.BlueprintProperty) *ArrayPropModel {
+	arrayProp := &ArrayPropModel{}
+	if v.MinItems != nil {
+		arrayProp.MinItems = types.Int64Value(int64(*v.MinItems))
+	}
+	if v.MaxItems != nil {
+		arrayProp.MaxItems = types.Int64Value(int64(*v.MaxItems))
+	}
+	if v.Items != nil {
+		if v.Items["type"] != "" {
+			switch v.Items["type"] {
+			case "string":
+				arrayProp.StringItems = &StringItems{}
+				if v.Default != nil {
+					stringArray := make([]string, len(v.Default.([]interface{})))
+					for i, v := range v.Default.([]interface{}) {
+						stringArray[i] = v.(string)
+					}
+					attrs := make([]attr.Value, 0, len(stringArray))
+					for _, value := range stringArray {
+						attrs = append(attrs, basetypes.NewStringValue(value))
+					}
+					arrayProp.StringItems.Default, _ = types.ListValue(types.StringType, attrs)
+				} else {
+					arrayProp.StringItems.Default = types.ListNull(types.StringType)
+				}
+				if value, ok := v.Items["format"]; ok && value != nil {
+					arrayProp.StringItems.Format = types.StringValue(v.Items["format"].(string))
+				}
+			case "number":
+				arrayProp.NumberItems = &NumberItems{}
+				if v.Default != nil {
+					numberArray := make([]float64, len(v.Default.([]interface{})))
+					attrs := make([]attr.Value, 0, len(numberArray))
+					for _, value := range v.Default.([]interface{}) {
+						attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
+					}
+					arrayProp.NumberItems.Default, _ = types.ListValue(types.Float64Type, attrs)
+				}
+
+			case "boolean":
+				arrayProp.BooleanItems = &BooleanItems{}
+				if v.Default != nil {
+					booleanArray := make([]bool, len(v.Default.([]interface{})))
+					attrs := make([]attr.Value, 0, len(booleanArray))
+					for _, value := range v.Default.([]interface{}) {
+						attrs = append(attrs, basetypes.NewBoolValue(value.(bool)))
+					}
+					arrayProp.BooleanItems.Default, _ = types.ListValue(types.BoolType, attrs)
+				}
+			}
+		}
+	}
+
+	return arrayProp
+}
+
+func writeInputsToResource(ctx context.Context, a *cli.Action, data *ActionModel) {
+	if len(a.UserInputs.Properties) > 0 {
+		properties := &UserPropertiesModel{}
+		for k, v := range a.UserInputs.Properties {
+			switch v.Type {
+			case "string":
+				if properties.StringProp == nil {
+					properties.StringProp = make(map[string]StringPropModel)
+				}
+				stringProp := addStingPropertiesToResource(ctx, &v)
+
+				if lo.Contains(a.UserInputs.Required, k) {
+					stringProp.Required = types.BoolValue(true)
+				} else {
+					stringProp.Required = types.BoolValue(false)
+				}
+
+				setCommonProperties(v, stringProp)
+
+				properties.StringProp[k] = *stringProp
+
+			case "number":
+				if properties.NumberProp == nil {
+					properties.NumberProp = make(map[string]NumberPropModel)
+				}
+
+				numberProp := addNumberPropertiesToResource(ctx, &v)
+
+				if lo.Contains(a.UserInputs.Required, k) {
+					numberProp.Required = types.BoolValue(true)
+				} else {
+					numberProp.Required = types.BoolValue(false)
+				}
+
+				setCommonProperties(v, numberProp)
+
+				properties.NumberProp[k] = *numberProp
+
+			case "array":
+				if properties.ArrayProp == nil {
+					properties.ArrayProp = make(map[string]ArrayPropModel)
+				}
+
+				arrayProp := addArrayPropertiesToResource(&v)
+
+				if !data.UserProperties.ArrayProp[k].Required.IsNull() {
+					if lo.Contains(a.UserInputs.Required, k) {
+						arrayProp.Required = types.BoolValue(true)
+					} else {
+						arrayProp.Required = types.BoolValue(false)
+					}
+				}
+
+				setCommonProperties(v, arrayProp)
+
+				properties.ArrayProp[k] = *arrayProp
+
+			case "boolean":
+				if properties.BooleanProp == nil {
+					properties.BooleanProp = make(map[string]BooleanPropModel)
+				}
+
+				booleanProp := &BooleanPropModel{}
+
+				setCommonProperties(v, booleanProp)
+
+				if !data.UserProperties.BooleanProp[k].Required.IsNull() {
+					if lo.Contains(a.UserInputs.Required, k) {
+						booleanProp.Required = types.BoolValue(true)
+					} else {
+						booleanProp.Required = types.BoolValue(false)
+					}
+				}
+
+				properties.BooleanProp[k] = *booleanProp
+
+			case "object":
+				if properties.ObjectProp == nil {
+					properties.ObjectProp = make(map[string]ObjectPropModel)
+				}
+
+				objectProp := addObjectPropertiesToResource(&v)
+
+				if !data.UserProperties.ObjectProp[k].Required.IsNull() {
+					if lo.Contains(a.UserInputs.Required, k) {
+						objectProp.Required = types.BoolValue(true)
+					} else {
+						objectProp.Required = types.BoolValue(false)
+					}
+				}
+
+				setCommonProperties(v, objectProp)
+
+				properties.ObjectProp[k] = *objectProp
+
+			}
+
+		}
+	}
+}
+
 func (r *ActionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *ActionModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
@@ -213,7 +505,7 @@ func (r *ActionResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	a, err := r.portClient.UpdateAction(ctx, bp.Identifier, action.ID, action)
+	a, err := r.portClient.UpdateAction(ctx, bp.Identifier, action.Identifier, action)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create action", err.Error())
 		return
@@ -602,11 +894,11 @@ func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 		return githubInvocation
 	}
 
-	if !data.KafkaMethod.IsNull() {
-		return &cli.InvocationMethod{
-			Type: "KAFKA",
-		}
-	}
+	// if !data.KafkaMethod.IsNull() {
+	// 	return &cli.InvocationMethod{
+	// 		Type: "KAFKA",
+	// 	}
+	// }
 
 	if data.WebhookMethod != nil {
 		url := data.WebhookMethod.Url.ValueString()

@@ -444,7 +444,7 @@ func (r *ActionResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	err := r.portClient.DeleteAction(ctx, data.Identifier.ValueString(), data.Blueprint.ValueString())
+	err := r.portClient.DeleteAction(ctx, data.Blueprint.ValueString(), data.Identifier.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete action", err.Error())
 		return
@@ -539,6 +539,8 @@ func actionResourceToBody(ctx context.Context, data *ActionModel, bp *cli.Bluepr
 
 	if data.UserProperties != nil {
 		actionPropertiesToBody(ctx, action, data)
+	} else {
+		action.UserInputs.Properties = make(map[string]cli.BlueprintProperty)
 	}
 
 	return action, nil

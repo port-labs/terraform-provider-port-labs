@@ -10,13 +10,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/provider"
 )
 
-// var ProviderConfig = fmt.Sprintf(`
-// provider "port-labs" {
-// clientId = %s
-//   secret = %s
-//   url = %s
-// }`, os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET"), os.Getenv("PORT_BASE_URL"))
-
 var (
 	// testAccProtoV6ProviderFactories are used to instantiate a provider during
 	// acceptance testing. The factory function will be invoked for every Terraform

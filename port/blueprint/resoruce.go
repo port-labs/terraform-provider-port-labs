@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/port-labs/terraform-provider-port-labs/port/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/samber/lo"
 )
 

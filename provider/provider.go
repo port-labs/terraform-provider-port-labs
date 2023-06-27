@@ -7,9 +7,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/port/action"
 	"github.com/port-labs/terraform-provider-port-labs/port/blueprint"
-	"github.com/port-labs/terraform-provider-port-labs/port/cli"
 	"github.com/port-labs/terraform-provider-port-labs/port/entity"
 	"github.com/port-labs/terraform-provider-port-labs/version"
 )

@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"github.com/port-labs/terraform-provider-port-labs/port/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces

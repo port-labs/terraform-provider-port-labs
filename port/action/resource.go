@@ -431,8 +431,8 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, data *ActionModel
 				properties.ObjectProp[k] = *objectProp
 
 			}
-
 		}
+		data.UserProperties = properties
 	}
 }
 

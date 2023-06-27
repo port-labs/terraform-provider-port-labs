@@ -274,3 +274,105 @@ func TestAccPortActionImport(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortActionUpdate(t *testing.T) {
+	identifier := genID()
+	actionIdentifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF test microservice"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_prop = {
+				"text" = {
+					title = "text"
+				}
+			}
+		}
+	}
+	resource "port-labs_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port-labs_blueprint.microservice.id
+		trigger = "DAY-2"
+		webhook_method = {
+			url = "https://example.com"
+		}
+		user_properties = {
+			"string_prop" = {
+				"myStringIdentifier" = {
+					"title" = "My String Identifier"
+					"required" = true
+				}
+			}
+		}
+	}`, identifier, actionIdentifier)
+
+	var testAccActionConfigUpdate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF test microservice"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_prop = {
+				"text" = {
+					title = "text"
+				}
+			}
+		}
+	}
+	resource "port-labs_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port-labs_blueprint.microservice.id
+		trigger = "DAY-2"
+		webhook_method = {
+			url = "https://example.com"
+		}
+		user_properties = {
+			"string_prop" = {
+				"myStringIdentifier2" = {
+					"title" = "My String Identifier"
+					"required" = false
+				}
+			}
+		}
+	}`, identifier, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "blueprint", identifier),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "webhook_method.url", "https://example.com"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "user_properties.string_prop.myStringIdentifier.title", "My String Identifier"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "user_properties.string_prop.myStringIdentifier.required", "true"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "blueprint", identifier),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "webhook_method.url", "https://example.com"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "user_properties.string_prop.myStringIdentifier2.title", "My String Identifier"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "user_properties.string_prop.myStringIdentifier2.required", "false"),
+				),
+			},
+		},
+	})
+}

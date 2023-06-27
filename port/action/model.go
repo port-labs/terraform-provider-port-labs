@@ -20,7 +20,7 @@ type GithubMethodModel struct {
 }
 
 type AzureMethodModel struct {
-	Org     types.String `tfsdk:"agent"`
+	Org     types.String `tfsdk:"org"`
 	Webhook types.String `tfsdk:"webhook"`
 }
 

@@ -9,10 +9,8 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func TestAccPortActionBasic(t *testing.T) {
-	identifier := utils.GenID()
-	actionIdentifier := utils.GenID()
-	var testAccActionConfigCreate = fmt.Sprintf(`
+func testAccCreateBlueprintConfig(identifier string) string {
+	return fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"
 		icon = "Terraform"
@@ -26,6 +24,12 @@ func TestAccPortActionBasic(t *testing.T) {
 			}
 		}
 	}
+	`, identifier)
+}
+func TestAccPortActionBasic(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
 	resource "port-labs_action" "create_microservice" {
 		title = "TF Provider Test"
 		identifier = "%s"
@@ -33,7 +37,7 @@ func TestAccPortActionBasic(t *testing.T) {
 		blueprint = port-labs_blueprint.microservice.id
 		trigger = "DAY-2"
 		kafka_method = {}
-	}`, identifier, actionIdentifier)
+	}`, actionIdentifier)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -55,19 +59,7 @@ func TestAccPortActionBasic(t *testing.T) {
 func TestAccPortActionWebhookInvocation(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()
-	var testAccActionConfigCreate = fmt.Sprintf(`
-	resource "port-labs_blueprint" "microservice" {
-		title = "TF test microservice"
-		icon = "Terraform"
-		identifier = "%s"
-		properties = {
-			string_prop = {
-				"text" = {
-					title = "text"
-				}
-			}
-		}
-	}
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
 	resource "port-labs_action" "create_microservice" {
 		title = "TF Provider Test"
 		identifier = "%s"
@@ -78,7 +70,7 @@ func TestAccPortActionWebhookInvocation(t *testing.T) {
 			url = "https://example.com"
 			agent = true
 		}
-	}`, identifier, actionIdentifier)
+	}`, actionIdentifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -103,19 +95,7 @@ func TestAccPortActionWebhookInvocation(t *testing.T) {
 func TestAccPortActionAzureInvocation(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()
-	var testAccActionConfigCreate = fmt.Sprintf(`
-	resource "port-labs_blueprint" "microservice" {
-		title = "TF test microservice"
-		icon = "Terraform"
-		identifier = "%s"
-		properties = {
-			string_prop = {
-				"text" = {
-					title = "text"
-				}
-			}
-		}
-	}
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
 	resource "port-labs_action" "create_microservice" {
 		title = "TF Provider Test"
 		identifier = "%s"
@@ -126,7 +106,7 @@ func TestAccPortActionAzureInvocation(t *testing.T) {
 			org = "port",
 			webhook = "https://example.com"
 		}
-	}`, identifier, actionIdentifier)
+	}`, actionIdentifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -151,19 +131,7 @@ func TestAccPortActionAzureInvocation(t *testing.T) {
 func TestAccPortActionGithubInvocation(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()
-	var testAccActionConfigCreate = fmt.Sprintf(`
-	resource "port-labs_blueprint" "microservice" {
-		title = "TF test microservice"
-		icon = "Terraform"
-		identifier = "%s"
-		properties = {
-			string_prop = {
-				"text" = {
-					title = "text"
-				}
-			}
-		}
-	}
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
 	resource "port-labs_action" "create_microservice" {
 		title = "TF Provider Test"
 		identifier = "%s"
@@ -178,7 +146,7 @@ func TestAccPortActionGithubInvocation(t *testing.T) {
 			omit_user_inputs = true
 			report_workflow_status = false
 		}
-	}`, identifier, actionIdentifier)
+	}`, actionIdentifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -207,19 +175,7 @@ func TestAccPortActionGithubInvocation(t *testing.T) {
 func TestAccPortActionImport(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	actionIdentifier := utils.GenID()
-	var testAccActionConfigCreate = fmt.Sprintf(`
-	resource "port-labs_blueprint" "microservice" {
-		title = "TF test microservice"
-		icon = "Terraform"
-		identifier = "%s"
-		properties = {
-			string_prop = {
-				"text" = {
-					title = "text"
-				}
-			}
-		}
-	}
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
 	resource "port-labs_action" "create_microservice" {
 		title = "TF Provider Test"
 		identifier = "%s"
@@ -237,7 +193,7 @@ func TestAccPortActionImport(t *testing.T) {
 				}
 			}
 		}
-	}`, blueprintIdentifier, actionIdentifier)
+	}`, actionIdentifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -270,19 +226,7 @@ func TestAccPortActionImport(t *testing.T) {
 func TestAccPortActionUpdate(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()
-	var testAccActionConfigCreate = fmt.Sprintf(`
-	resource "port-labs_blueprint" "microservice" {
-		title = "TF test microservice"
-		icon = "Terraform"
-		identifier = "%s"
-		properties = {
-			string_prop = {
-				"text" = {
-					title = "text"
-				}
-			}
-		}
-	}
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
 	resource "port-labs_action" "create_microservice" {
 		title = "TF Provider Test"
 		identifier = "%s"
@@ -300,21 +244,9 @@ func TestAccPortActionUpdate(t *testing.T) {
 				}
 			}
 		}
-	}`, identifier, actionIdentifier)
+	}`, actionIdentifier)
 
-	var testAccActionConfigUpdate = fmt.Sprintf(`
-	resource "port-labs_blueprint" "microservice" {
-		title = "TF test microservice"
-		icon = "Terraform"
-		identifier = "%s"
-		properties = {
-			string_prop = {
-				"text" = {
-					title = "text"
-				}
-			}
-		}
-	}
+	var testAccActionConfigUpdate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
 	resource "port-labs_action" "create_microservice" {
 		title = "TF Provider Test"
 		identifier = "%s"
@@ -332,7 +264,7 @@ func TestAccPortActionUpdate(t *testing.T) {
 				}
 			}
 		}
-	}`, identifier, actionIdentifier)
+	}`, actionIdentifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"math/big"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -12,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 	"github.com/samber/lo"
 )
 
@@ -631,7 +631,7 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 	)...)
 }
 
-func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
+func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
 	for propIdentifier, prop := range d.Properties.StringProp {
 		property := cli.BlueprintProperty{
 			Type: "string",
@@ -688,12 +688,9 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 		}
 
 		if !prop.Enum.IsNull() {
-			enumList := []interface{}{}
-			for _, enum := range prop.Enum.Elements() {
-				v, _ := enum.ToTerraformValue(ctx)
-				var keyValue string
-				v.As(&keyValue)
-				enumList = append(enumList, keyValue)
+			enumList, err := utils.TerraformListToGoArray(ctx, prop.Enum, "string")
+			if err != nil {
+				return err
 			}
 			property.Enum = enumList
 		}
@@ -716,9 +713,10 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 			*required = append(*required, propIdentifier)
 		}
 	}
+	return nil
 }
 
-func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
+func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
 	for propIdentifier, prop := range d.Properties.NumberProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "number",
@@ -755,14 +753,11 @@ func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 			}
 
 			if !prop.Enum.IsNull() {
-				property.Enum = []interface{}{}
-				for _, e := range prop.Enum.Elements() {
-					v, _ := e.ToTerraformValue(ctx)
-					var keyValue big.Float
-					v.As(&keyValue)
-					floatValue, _ := keyValue.Float64()
-					property.Enum = append(property.Enum, floatValue)
+				enumList, err := utils.TerraformListToGoArray(ctx, prop.Enum, "float64")
+				if err != nil {
+					return err
 				}
+				property.Enum = enumList
 			}
 
 			if !prop.EnumColors.IsNull() {
@@ -781,6 +776,7 @@ func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 			*required = append(*required, propIdentifier)
 		}
 	}
+	return nil
 }
 
 func booleanPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
@@ -992,13 +988,19 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 
 	if d.Properties != nil {
 		if d.Properties.StringProp != nil {
-			stringPropResourceToBody(ctx, d, props, &required)
+			err := stringPropResourceToBody(ctx, d, props, &required)
+			if err != nil {
+				return nil, err
+			}
 		}
 		if d.Properties.ArrayProp != nil {
 			arrayPropResourceToBody(ctx, d, props, &required)
 		}
 		if d.Properties.NumberProp != nil {
-			numberPropResourceToBody(ctx, d, props, &required)
+			err := numberPropResourceToBody(ctx, d, props, &required)
+			if err != nil {
+				return nil, err
+			}
 		}
 		if d.Properties.BooleanProp != nil {
 			booleanPropResourceToBody(d, props, &required)

@@ -4,21 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/port-labs/terraform-provider-port-labs/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func genID() string {
-	id, err := uuid.GenerateUUID()
-	if err != nil {
-		panic(err)
-	}
-	return fmt.Sprintf("t-%s", id[:18])
-}
-
 func TestAccPortEntity(t *testing.T) {
-	identifier := genID()
+	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test BP0"
@@ -99,8 +91,8 @@ func TestAccPortEntity(t *testing.T) {
 	})
 }
 func TestAccPortEntityWithRelation(t *testing.T) {
-	identifier := genID()
-	identifier2 := genID()
+	identifier := utils.GenID()
+	identifier2 := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test BP0"
@@ -177,8 +169,8 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 }
 
 func TestAccPortEntityWithManyRelation(t *testing.T) {
-	identifier1 := genID()
-	identifier2 := genID()
+	identifier1 := utils.GenID()
+	identifier2 := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test BP0"
@@ -268,8 +260,8 @@ func TestAccPortEntityWithManyRelation(t *testing.T) {
 }
 
 func TestAccPortEntityImport(t *testing.T) {
-	blueprintIdentifier := genID()
-	entityIdentifier := genID()
+	blueprintIdentifier := utils.GenID()
+	entityIdentifier := utils.GenID()
 
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
@@ -321,7 +313,7 @@ func TestAccPortEntityImport(t *testing.T) {
 
 func TestAccPortEntityUpdateProp(t *testing.T) {
 
-	identifier := genID()
+	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test BP0"

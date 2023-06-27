@@ -4,21 +4,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/port-labs/terraform-provider-port-labs/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func genID() string {
-	id, err := uuid.GenerateUUID()
-	if err != nil {
-		panic(err)
-	}
-	return fmt.Sprintf("t-%s", id[:18])
-}
-
 func TestAccPortBlueprintBasic(t *testing.T) {
-	identifier := genID()
+	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test"
@@ -45,7 +37,7 @@ func TestAccPortBlueprintBasic(t *testing.T) {
 }
 
 func TestAccPortBlueprintStringProperty(t *testing.T) {
-	identifier := genID()
+	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test"
@@ -103,7 +95,7 @@ func TestAccPortBlueprintStringProperty(t *testing.T) {
 }
 
 func TestAccPortBlueprintNumberProperty(t *testing.T) {
-	identifier := genID()
+	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test"
@@ -160,7 +152,7 @@ func TestAccPortBlueprintNumberProperty(t *testing.T) {
 }
 
 func TestAccPortBlueprintBooleanProperty(t *testing.T) {
-	identifier := genID()
+	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test"
@@ -201,7 +193,7 @@ func TestAccPortBlueprintBooleanProperty(t *testing.T) {
 }
 
 func TestAccPortBlueprintArrayProperty(t *testing.T) {
-	identifier := genID()
+	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test"
@@ -250,7 +242,7 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 }
 
 func TestAccPortBlueprintObjectProperty(t *testing.T) {
-	identifier := genID()
+	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test"
@@ -293,7 +285,7 @@ func TestAccPortBlueprintObjectProperty(t *testing.T) {
 }
 
 func TestAccPortBlueprintWithChangelogDestination(t *testing.T) {
-	identifier := genID()
+	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test"
@@ -326,8 +318,8 @@ func TestAccPortBlueprintWithChangelogDestination(t *testing.T) {
 }
 
 func TestAccPortBlueprintWithRelation(t *testing.T) {
-	identifier1 := genID()
-	identifier2 := genID()
+	identifier1 := utils.GenID()
+	identifier2 := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice1" {
 		title = "TF Provider Test BP2"
@@ -421,7 +413,7 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 // }
 
 // func TestAccPortBlueprintWithDefaultValue(t *testing.T) {
-// 	identifier := genID()
+// 	identifier := utils.GenID()
 // 	var testAccActionConfigCreate = fmt.Sprintf(`
 // 	resource "port-labs_blueprint" "microservice" {
 // 		title = "TF Provider Test BP0"
@@ -496,7 +488,7 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 // }
 
 func TestAccPortBlueprintWithSpecification(t *testing.T) {
-	identifier := genID()
+	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test BP0"
@@ -537,7 +529,7 @@ func TestAccPortBlueprintWithSpecification(t *testing.T) {
 }
 
 // func TestAccPortBlueprintUpdate(t *testing.T) {
-// 	identifier := genID()
+// 	identifier := utils.GenID()
 // 	var testAccActionConfigCreate = fmt.Sprintf(`
 // 	resource "port-labs_blueprint" "microservice1" {
 // 		description = "Test Description"
@@ -641,8 +633,8 @@ func TestAccPortBlueprintWithSpecification(t *testing.T) {
 // }
 
 func TestAccPortBlueprintUpdateRelation(t *testing.T) {
-	envID := genID()
-	vmID := genID()
+	envID := utils.GenID()
+	vmID := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "Environment" {
 		title = "Environment"
@@ -757,8 +749,8 @@ func TestAccPortBlueprintUpdateRelation(t *testing.T) {
 // }
 
 func TestAccPortBlueprintWithMirrorProperty(t *testing.T) {
-	identifier1 := genID()
-	identifier2 := genID()
+	identifier1 := utils.GenID()
+	identifier2 := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice1" {
 		title = "TF Provider Test BP2"
@@ -815,7 +807,7 @@ func TestAccPortBlueprintWithMirrorProperty(t *testing.T) {
 }
 
 func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
-	identifier1 := genID()
+	identifier1 := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice1" {
 		title = "TF Provider Test BP2"
@@ -864,8 +856,8 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 // }
 
 // func TestAccPortBlueprintUpdateMirrorProperty(t *testing.T) {
-// 	envID := genID()
-// 	vmID := genID()
+// 	envID := utils.GenID()
+// 	vmID := utils.GenID()
 // 	var testAccActionConfigCreate = fmt.Sprintf(`
 // 	resource "port-labs_blueprint" "Environment" {
 // 		title = "Environment"

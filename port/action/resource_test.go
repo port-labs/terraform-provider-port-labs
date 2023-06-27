@@ -4,22 +4,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/port-labs/terraform-provider-port-labs/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func genID() string {
-	id, err := uuid.GenerateUUID()
-	if err != nil {
-		panic(err)
-	}
-	return fmt.Sprintf("t-%s", id[:18])
-}
-
 func TestAccPortActionBasic(t *testing.T) {
-	identifier := genID()
-	actionIdentifier := genID()
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"
@@ -61,8 +53,8 @@ func TestAccPortActionBasic(t *testing.T) {
 }
 
 func TestAccPortActionWebhookInvocation(t *testing.T) {
-	identifier := genID()
-	actionIdentifier := genID()
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"
@@ -109,8 +101,8 @@ func TestAccPortActionWebhookInvocation(t *testing.T) {
 }
 
 func TestAccPortActionAzureInvocation(t *testing.T) {
-	identifier := genID()
-	actionIdentifier := genID()
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"
@@ -157,8 +149,8 @@ func TestAccPortActionAzureInvocation(t *testing.T) {
 }
 
 func TestAccPortActionGithubInvocation(t *testing.T) {
-	identifier := genID()
-	actionIdentifier := genID()
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"
@@ -213,8 +205,8 @@ func TestAccPortActionGithubInvocation(t *testing.T) {
 }
 
 func TestAccPortActionImport(t *testing.T) {
-	blueprintIdentifier := genID()
-	actionIdentifier := genID()
+	blueprintIdentifier := utils.GenID()
+	actionIdentifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"
@@ -276,8 +268,8 @@ func TestAccPortActionImport(t *testing.T) {
 }
 
 func TestAccPortActionUpdate(t *testing.T) {
-	identifier := genID()
-	actionIdentifier := genID()
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF test microservice"

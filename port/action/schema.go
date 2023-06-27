@@ -13,13 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
-
-func SpreadMaps(target map[string]schema.Attribute, source map[string]schema.Attribute) {
-	for key, value := range source {
-		target[key] = value
-	}
-}
 
 func MetadataProperties() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
@@ -212,7 +207,7 @@ func StringPropertySchema() schema.Attribute {
 		},
 	}
 
-	SpreadMaps(stringPropertySchema, MetadataProperties())
+	utils.SpreadMaps(stringPropertySchema, MetadataProperties())
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The string property of the blueprint",
 		Optional:            true,
@@ -247,7 +242,7 @@ func NumberPropertySchema() schema.Attribute {
 		},
 	}
 
-	SpreadMaps(numberPropertySchema, MetadataProperties())
+	utils.SpreadMaps(numberPropertySchema, MetadataProperties())
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The number property of the blueprint",
 		Optional:            true,

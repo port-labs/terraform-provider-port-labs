@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/port/action"
 	"github.com/port-labs/terraform-provider-port-labs/port/blueprint"
 	"github.com/port-labs/terraform-provider-port-labs/port/entity"
@@ -70,7 +71,7 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 	var baseUrl string
 
 	if data.BaseUrl.ValueString() == "" {
-		baseUrl = "https://api.getport.io"
+		baseUrl = consts.DefaultBaseUrl
 	} else {
 		baseUrl = data.BaseUrl.ValueString()
 	}

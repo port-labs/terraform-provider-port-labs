@@ -36,8 +36,8 @@ func TestAccPreCheck(t *testing.T) {
 		t.Fatal("PORT_CLIENT_SECRET must be set for acceptance tests")
 	}
 
-	if v := os.Getenv("PORT_BASE_URL"); v == "" {
-		t.Fatal("PORT_BASE_URL must be set for acceptance tests")
-	}
+	// if v := os.Getenv("PORT_BASE_URL"); v == "" {
+
+	// }
 
 }

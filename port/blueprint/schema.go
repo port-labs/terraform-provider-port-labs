@@ -334,6 +334,16 @@ func BlueprintSchema() map[string]schema.Attribute {
 				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
+		"team_inheritance": schema.SingleNestedAttribute{
+			MarkdownDescription: "The team inheritance of the blueprint",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"path": schema.StringAttribute{
+					MarkdownDescription: "The path of the team inheritance",
+					Required:            true,
+				},
+			},
+		},
 		"changelog_destination": schema.SingleNestedAttribute{
 			MarkdownDescription: "The changelog destination of the blueprint",
 			Optional:            true,

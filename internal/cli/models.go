@@ -103,6 +103,10 @@ type (
 		Agent bool   `json:"agent,omitempty"`
 	}
 
+	TeamInheritance struct {
+		Path string `json:"path,omitempty"`
+	}
+
 	ActionUserInputs = BlueprintSchema
 
 	Blueprint struct {
@@ -115,6 +119,7 @@ type (
 		MirrorProperties      map[string]BlueprintMirrorProperty      `json:"mirrorProperties"`
 		CalculationProperties map[string]BlueprintCalculationProperty `json:"calculationProperties"`
 		ChangelogDestination  *ChangelogDestination                   `json:"changelogDestination,omitempty"`
+		TeamInheritance       *TeamInheritance                        `json:"teamInheritance,omitempty"`
 		Relations             map[string]Relation                     `json:"relations"`
 	}
 

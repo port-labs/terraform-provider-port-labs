@@ -113,6 +113,11 @@ func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *
 			Agent: types.BoolValue(b.ChangelogDestination.Agent),
 		}
 	}
+	if b.TeamInheritance != nil {
+		bm.TeamInheritance = &TeamInheritanceModel{
+			Path: types.StringValue(b.TeamInheritance.Path),
+		}
+	}
 
 	if len(b.Schema.Properties) != 0 {
 		addPropertiesToResource(ctx, b, bm)
@@ -973,6 +978,14 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 		b.ChangelogDestination.Agent = d.ChangelogDestination.Agent.ValueBool()
 	} else {
 		b.ChangelogDestination = nil
+	}
+
+	if d.TeamInheritance != nil {
+		b.TeamInheritance = &cli.TeamInheritance{
+			Path: d.TeamInheritance.Path.ValueString(),
+		}
+	} else {
+		b.TeamInheritance = nil
 	}
 
 	required := []string{}

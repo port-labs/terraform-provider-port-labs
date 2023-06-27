@@ -9,6 +9,9 @@ type ChangelogDestinationModel struct {
 	Url   types.String `tfsdk:"url"`
 	Agent types.Bool   `tfsdk:"agent"`
 }
+type TeamInheritanceModel struct {
+	Path types.String `tfsdk:"path"`
+}
 
 type SpecAuthenticationModel struct {
 	AuthorizationUrl types.String `tfsdk:"authorization_url"`
@@ -131,6 +134,7 @@ type BlueprintModel struct {
 	UpdatedAt             types.String                        `tfsdk:"updated_at"`
 	UpdatedBy             types.String                        `tfsdk:"updated_by"`
 	ChangelogDestination  *ChangelogDestinationModel          `tfsdk:"changelog_destination"`
+	TeamInheritance       *TeamInheritanceModel               `tfsdk:"team_inheritance"`
 	Properties            *PropertiesModel                    `tfsdk:"properties"`
 	Relations             map[string]RelationModel            `tfsdk:"relations"`
 	MirrorProperties      map[string]MirrorPropertyModel      `tfsdk:"mirror_properties"`

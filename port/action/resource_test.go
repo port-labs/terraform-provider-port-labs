@@ -155,3 +155,59 @@ func TestAccPortActionAzureInvocation(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortActionGithubInvocation(t *testing.T) {
+	identifier := genID()
+	actionIdentifier := genID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port-labs_blueprint" "microservice" {
+		title = "TF test microservice"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_prop = {
+				"text" = {
+					title = "text"
+				}
+			}
+		}
+	}
+	resource "port-labs_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port-labs_blueprint.microservice.id
+		trigger = "DAY-2"
+		github_method = {
+			org = "port",
+			repo = "terraform-provider-port",
+			workflow = "main.yml"
+			omit_payload = true
+			omit_user_inputs = true
+			report_workflow_status = false
+		}
+	}`, identifier, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "blueprint", identifier),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "github_method.org", "port"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "github_method.repo", "terraform-provider-port"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "github_method.workflow", "main.yml"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "github_method.omit_payload", "true"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "github_method.omit_user_inputs", "true"),
+					resource.TestCheckResourceAttr("port-labs_action.create_microservice", "github_method.report_workflow_status", "false"),
+				),
+			},
+		},
+	})
+}

@@ -16,7 +16,6 @@ type GithubMethodModel struct {
 	OmitPayload          types.Bool   `tfsdk:"omit_payload"`
 	OmitUserInputs       types.Bool   `tfsdk:"omit_user_inputs"`
 	ReportWorkflowStatus types.Bool   `tfsdk:"report_workflow_status"`
-	Branch               types.String `tfsdk:"branch"`
 }
 
 type AzureMethodModel struct {

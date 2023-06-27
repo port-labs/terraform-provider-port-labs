@@ -131,8 +131,8 @@ func writeInvocationMethodToResource(a *cli.Action, data *ActionModel) {
 			data.GithubMethod.Workflow = types.StringValue(*a.InvocationMethod.Workflow)
 		}
 
-		if a.InvocationMethod.Branch != nil {
-			data.GithubMethod.Branch = types.StringValue(*a.InvocationMethod.Branch)
+		if a.InvocationMethod.ReportWorkflowStatus != nil {
+			data.GithubMethod.ReportWorkflowStatus = types.BoolValue(*a.InvocationMethod.ReportWorkflowStatus)
 		}
 	}
 

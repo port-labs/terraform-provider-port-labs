@@ -57,7 +57,7 @@ func (r *EntityResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	err = writeEntityFieldsToResource(ctx, state, e, blueprintIdentifier)
+	err = refreshEntityState(ctx, state, e, blueprintIdentifier)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing entity fields to resource", err.Error())
 		return
@@ -65,7 +65,7 @@ func (r *EntityResource) Read(ctx context.Context, req resource.ReadRequest, res
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func writeEntityFieldsToResource(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint string) error {
+func refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint string) error {
 	state.ID = types.StringValue(e.Identifier)
 	state.Identifier = types.StringValue(e.Identifier)
 	state.Blueprint = types.StringValue(blueprint)
@@ -116,6 +116,7 @@ func writeEntityFieldsToResource(ctx context.Context, state *EntityModel, e *cli
 						StringItems:  types.MapNull(types.ListType{ElemType: types.StringType}),
 						NumberItems:  types.MapNull(types.ListType{ElemType: types.NumberType}),
 						BooleanItems: types.MapNull(types.ListType{ElemType: types.BoolType}),
+						ObjectItems:  types.MapNull(types.ListType{ElemType: types.StringType}),
 					}
 				}
 				switch t[0].(type) {
@@ -125,6 +126,20 @@ func writeEntityFieldsToResource(ctx context.Context, state *EntityModel, e *cli
 						mapItems[k] = append(mapItems[k], item.(string))
 					}
 					state.Properties.ArrayProp.StringItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, mapItems)
+
+				case float64:
+					mapItems := make(map[string][]float64)
+					for _, item := range t {
+						mapItems[k] = append(mapItems[k], item.(float64))
+					}
+					state.Properties.ArrayProp.NumberItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.NumberType}, mapItems)
+
+				case bool:
+					mapItems := make(map[string][]bool)
+					for _, item := range t {
+						mapItems[k] = append(mapItems[k], item.(bool))
+					}
+					state.Properties.ArrayProp.BooleanItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.BoolType}, mapItems)
 				}
 			case interface{}:
 				if state.Properties.ObjectProp == nil {
@@ -193,7 +208,7 @@ func (r *EntityResource) Create(ctx context.Context, req resource.CreateRequest,
 	state.ID = types.StringValue(en.Identifier)
 	state.Identifier = types.StringValue(en.Identifier)
 
-	writeEntityComputedFieldsToResource(state, en)
+	writeEntityComputedFieldsToState(state, en)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -321,7 +336,7 @@ func writeRelationsToBody(ctx context.Context, relations basetypes.MapValue) map
 	return relationsBody
 }
 
-func writeEntityComputedFieldsToResource(state *EntityModel, e *cli.Entity) {
+func writeEntityComputedFieldsToState(state *EntityModel, e *cli.Entity) {
 	state.Identifier = types.StringValue(e.Identifier)
 	state.CreatedAt = types.StringValue(e.CreatedAt.String())
 	state.CreatedBy = types.StringValue(e.CreatedBy)
@@ -362,7 +377,7 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	state.ID = types.StringValue(e.Identifier)
 
-	writeEntityComputedFieldsToResource(state, en)
+	writeEntityComputedFieldsToState(state, en)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

@@ -138,12 +138,12 @@ func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateReque
 
 	state.ID = types.StringValue(bp.Identifier)
 
-	writeBlueprintComputedFieldsToResource(state, bp)
+	writeBlueprintComputedFieldsToState(state, bp)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func writeBlueprintComputedFieldsToResource(state *BlueprintModel, bp *cli.Blueprint) {
+func writeBlueprintComputedFieldsToState(state *BlueprintModel, bp *cli.Blueprint) {
 	state.Identifier = types.StringValue(bp.Identifier)
 	state.CreatedAt = types.StringValue(bp.CreatedAt.String())
 	state.CreatedBy = types.StringValue(bp.CreatedBy)
@@ -178,7 +178,7 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	writeBlueprintComputedFieldsToResource(state, bp)
+	writeBlueprintComputedFieldsToState(state, bp)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 

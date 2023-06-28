@@ -8,6 +8,7 @@ type ArrayPropModel struct {
 	StringItems  types.Map `tfsdk:"string_items"`
 	NumberItems  types.Map `tfsdk:"number_items"`
 	BooleanItems types.Map `tfsdk:"boolean_items"`
+	ObjectItems  types.Map `tfsdk:"object_items"`
 }
 
 type EntityPropertiesModel struct {

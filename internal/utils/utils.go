@@ -2,6 +2,7 @@ package utils
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -52,6 +53,19 @@ func TerraformListToGoArray(ctx context.Context, list types.List, arrayType stri
 				return nil, err
 			}
 			elems = append(elems, boolValue)
+
+		case "object":
+			var stringValue string
+			err := v.As(&stringValue)
+			if err != nil {
+				return nil, err
+			}
+			defaultObject := map[string]interface{}{}
+			err = json.Unmarshal([]byte(stringValue), &defaultObject)
+			if err != nil {
+				return nil, err
+			}
+			elems = append(elems, defaultObject)
 		}
 	}
 	return elems, nil

@@ -940,7 +940,11 @@ func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[s
 				items := map[string]interface{}{}
 				items["type"] = "object"
 				if !prop.ObjectItems.Default.IsNull() {
-					items["default"] = prop.ObjectItems.Default
+					defaultList, err := utils.TerraformListToGoArray(ctx, prop.BooleanItems.Default, "object")
+					if err != nil {
+						return err
+					}
+					property.Default = defaultList
 				}
 				property.Items = items
 			}

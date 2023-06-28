@@ -82,10 +82,14 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 		return
 	}
 
-	_, err = c.Authenticate(ctx, data.ClientId.ValueString(), data.Secret.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("Failed to authenticate with Port-labs", err.Error())
-		return
+	if data.Token.ValueString() != "" {
+		c.Client.SetAuthToken(data.Token.ValueString())
+	} else {
+		_, err = c.Authenticate(ctx, data.ClientId.ValueString(), data.Secret.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("Failed to authenticate with Port-labs", err.Error())
+			return
+		}
 	}
 
 	resp.ResourceData = c

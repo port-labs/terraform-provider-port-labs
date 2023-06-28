@@ -861,7 +861,7 @@ func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintP
 	}
 }
 
-func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
+func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
 	for propIdentifier, prop := range d.Properties.ArrayProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "array",
@@ -900,13 +900,11 @@ func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[s
 					items["format"] = prop.StringItems.Format.ValueString()
 				}
 				if !prop.StringItems.Default.IsNull() {
-					defaultList := []interface{}{}
-					for _, e := range prop.StringItems.Default.Elements() {
-						v, _ := e.ToTerraformValue(ctx)
-						var keyValue string
-						v.As(&keyValue)
-						defaultList = append(defaultList, keyValue)
+					defaultList, err := utils.TerraformListToGoArray(ctx, prop.StringItems.Default, "string")
+					if err != nil {
+						return err
 					}
+
 					property.Default = defaultList
 				}
 				property.Items = items
@@ -916,7 +914,11 @@ func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[s
 				items := map[string]interface{}{}
 				items["type"] = "number"
 				if !prop.NumberItems.Default.IsNull() {
-					items["default"] = prop.NumberItems.Default
+					defaultList, err := utils.TerraformListToGoArray(ctx, prop.NumberItems.Default, "float64")
+					if err != nil {
+						return err
+					}
+					property.Default = defaultList
 				}
 				property.Items = items
 			}
@@ -925,7 +927,11 @@ func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[s
 				items := map[string]interface{}{}
 				items["type"] = "boolean"
 				if !prop.BooleanItems.Default.IsNull() {
-					items["default"] = prop.BooleanItems.Default
+					defaultList, err := utils.TerraformListToGoArray(ctx, prop.BooleanItems.Default, "bool")
+					if err != nil {
+						return err
+					}
+					property.Default = defaultList
 				}
 				property.Items = items
 			}
@@ -946,6 +952,8 @@ func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[s
 			*required = append(*required, propIdentifier)
 		}
 	}
+
+	return nil
 }
 
 func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Blueprint, error) {
@@ -973,7 +981,6 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 		if d.ChangelogDestination.Type.ValueString() == "KAFKA" && !d.ChangelogDestination.Agent.IsNull() {
 			return nil, fmt.Errorf("agent is not supported for Kafka changelog destination")
 		}
-
 		b.ChangelogDestination = &cli.ChangelogDestination{}
 		b.ChangelogDestination.Type = d.ChangelogDestination.Type.ValueString()
 		b.ChangelogDestination.Url = d.ChangelogDestination.Url.ValueString()
@@ -1000,7 +1007,10 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 			}
 		}
 		if d.Properties.ArrayProp != nil {
-			arrayPropResourceToBody(ctx, d, props, &required)
+			err := arrayPropResourceToBody(ctx, d, props, &required)
+			if err != nil {
+				return nil, err
+			}
 		}
 		if d.Properties.NumberProp != nil {
 			err := numberPropResourceToBody(ctx, d, props, &required)

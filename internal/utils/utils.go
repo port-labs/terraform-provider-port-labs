@@ -44,6 +44,14 @@ func TerraformListToGoArray(ctx context.Context, list types.List, arrayType stri
 			}
 			floatValue, _ := keyValue.Float64()
 			elems = append(elems, floatValue)
+
+		case "bool":
+			var boolValue bool
+			err := v.As(&boolValue)
+			if err != nil {
+				return nil, err
+			}
+			elems = append(elems, boolValue)
 		}
 	}
 	return elems, nil

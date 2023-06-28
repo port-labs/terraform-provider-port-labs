@@ -201,8 +201,8 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 		identifier = "%s"
 		properties = {
 			array_prop = {
-				myArrayIdentifier = {
-					description = "This is an array property"
+				myStringArrayIdentifier = {
+					description = "This is a string array property"
 					title = "array"
 					icon = "Terraform"
 					required = true
@@ -210,6 +210,20 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 					max_items = 10
 					string_items = {
 						default = ["a", "b", "c"]
+					}
+				}
+				myNumberArrayIdentifier = {
+					description = "This is a number array property"
+					title = "array"
+					number_items = {
+						default = [1, 2, 3]
+					}
+				}
+				myBooleanArrayIdentifier = {
+					description = "This is a boolean array property"
+					title = "array"
+					boolean_items = {
+						default = [false,true]
 					}
 				}
 			}
@@ -226,15 +240,20 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "title", "TF Provider Test"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "identifier", identifier),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.description", "This is an array property"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.title", "array"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.icon", "Terraform"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.required", "true"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.min_items", "1"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.max_items", "10"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.string_items.default.0", "a"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.string_items.default.1", "b"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myArrayIdentifier.string_items.default.2", "c"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.description", "This is a string array property"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.title", "array"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.min_items", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.max_items", "10"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.string_items.default.0", "a"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.string_items.default.1", "b"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.string_items.default.2", "c"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myNumberArrayIdentifier.number_items.default.0", "1"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myNumberArrayIdentifier.number_items.default.1", "2"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myNumberArrayIdentifier.number_items.default.2", "3"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myBooleanArrayIdentifier.boolean_items.default.0", "false"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myBooleanArrayIdentifier.boolean_items.default.1", "true"),
 				),
 			},
 		},

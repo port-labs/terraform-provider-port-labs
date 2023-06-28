@@ -528,14 +528,14 @@ func setCommonProperties(v cli.BlueprintProperty, prop interface{}) {
 }
 
 func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data *BlueprintModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	var state *BlueprintModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	b, err := blueprintResourceToBody(ctx, data)
+	b, err := blueprintResourceToBody(ctx, state)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create blueprint", err.Error())
@@ -548,29 +548,29 @@ func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	data.ID = types.StringValue(bp.Identifier)
+	state.ID = types.StringValue(bp.Identifier)
 
-	writeBlueprintComputedFieldsToResource(data, bp)
+	writeBlueprintComputedFieldsToResource(state, bp)
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func writeBlueprintComputedFieldsToResource(bm *BlueprintModel, bp *cli.Blueprint) {
-	bm.Identifier = types.StringValue(bp.Identifier)
-	bm.CreatedAt = types.StringValue(bp.CreatedAt.String())
-	bm.CreatedBy = types.StringValue(bp.CreatedBy)
-	bm.UpdatedAt = types.StringValue(bp.UpdatedAt.String())
-	bm.UpdatedBy = types.StringValue(bp.UpdatedBy)
+func writeBlueprintComputedFieldsToResource(state *BlueprintModel, bp *cli.Blueprint) {
+	state.Identifier = types.StringValue(bp.Identifier)
+	state.CreatedAt = types.StringValue(bp.CreatedAt.String())
+	state.CreatedBy = types.StringValue(bp.CreatedBy)
+	state.UpdatedAt = types.StringValue(bp.UpdatedAt.String())
+	state.UpdatedBy = types.StringValue(bp.UpdatedBy)
 }
 
 func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data *BlueprintModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	var state *BlueprintModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	b, err := blueprintResourceToBody(ctx, data)
+	b, err := blueprintResourceToBody(ctx, state)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to transform blueprint", err.Error())
@@ -579,10 +579,10 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 
 	var bp *cli.Blueprint
 
-	if data.Identifier.IsNull() {
+	if state.Identifier.IsNull() {
 		bp, err = r.portClient.CreateBlueprint(ctx, b)
 	} else {
-		bp, err = r.portClient.UpdateBlueprint(ctx, b, data.Identifier.ValueString())
+		bp, err = r.portClient.UpdateBlueprint(ctx, b, state.Identifier.ValueString())
 	}
 
 	if err != nil {
@@ -590,26 +590,26 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	writeBlueprintComputedFieldsToResource(data, bp)
+	writeBlueprintComputedFieldsToResource(state, bp)
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 
 }
 
 func (r *BlueprintResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *BlueprintModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	var state *BlueprintModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if data.Identifier.IsNull() {
+	if state.Identifier.IsNull() {
 		resp.Diagnostics.AddError("failed to extract blueprint identifier", "identifier is required")
 		return
 	}
 
-	err := r.portClient.DeleteBlueprint(ctx, data.Identifier.ValueString())
+	err := r.portClient.DeleteBlueprint(ctx, state.Identifier.ValueString())
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete blueprint", err.Error())
@@ -624,8 +624,8 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 	)...)
 }
 
-func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range d.Properties.StringProp {
+func stringPropResourceToBody(ctx context.Context, state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+	for propIdentifier, prop := range state.Properties.StringProp {
 		property := cli.BlueprintProperty{
 			Type: "string",
 		}
@@ -709,8 +709,8 @@ func stringPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 	return nil
 }
 
-func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range d.Properties.NumberProp {
+func numberPropResourceToBody(ctx context.Context, state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+	for propIdentifier, prop := range state.Properties.NumberProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "number",
 		}
@@ -772,8 +772,8 @@ func numberPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[
 	return nil
 }
 
-func booleanPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
-	for propIdentifier, prop := range d.Properties.BooleanProp {
+func booleanPropResourceToBody(state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
+	for propIdentifier, prop := range state.Properties.BooleanProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "boolean",
 		}
@@ -806,8 +806,8 @@ func booleanPropResourceToBody(d *BlueprintModel, props map[string]cli.Blueprint
 	}
 }
 
-func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
-	for propIdentifier, prop := range d.Properties.ObjectProp {
+func objectPropResourceToBody(state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
+	for propIdentifier, prop := range state.Properties.ObjectProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "object",
 		}
@@ -853,8 +853,8 @@ func objectPropResourceToBody(d *BlueprintModel, props map[string]cli.BlueprintP
 	}
 }
 
-func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range d.Properties.ArrayProp {
+func arrayPropResourceToBody(ctx context.Context, state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+	for propIdentifier, prop := range state.Properties.ArrayProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "array",
 		}
@@ -952,42 +952,42 @@ func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[s
 	return nil
 }
 
-func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Blueprint, error) {
+func blueprintResourceToBody(ctx context.Context, state *BlueprintModel) (*cli.Blueprint, error) {
 	b := &cli.Blueprint{
-		Identifier: d.Identifier.ValueString(),
+		Identifier: state.Identifier.ValueString(),
 	}
 
-	if !d.Title.IsNull() {
-		titleValue := d.Title.ValueString()
+	if !state.Title.IsNull() {
+		titleValue := state.Title.ValueString()
 		b.Title = &titleValue
 	}
 
-	if !d.Icon.IsNull() {
-		iconValue := d.Icon.ValueString()
+	if !state.Icon.IsNull() {
+		iconValue := state.Icon.ValueString()
 		b.Icon = &iconValue
 	}
 
-	if !d.Description.IsNull() {
-		descriptionTest := d.Description.ValueString()
+	if !state.Description.IsNull() {
+		descriptionTest := state.Description.ValueString()
 		b.Description = &descriptionTest
 	}
 	props := map[string]cli.BlueprintProperty{}
 
-	if d.ChangelogDestination != nil {
-		if d.ChangelogDestination.Type.ValueString() == "KAFKA" && !d.ChangelogDestination.Agent.IsNull() {
+	if state.ChangelogDestination != nil {
+		if state.ChangelogDestination.Type.ValueString() == "KAFKA" && !state.ChangelogDestination.Agent.IsNull() {
 			return nil, fmt.Errorf("agent is not supported for Kafka changelog destination")
 		}
 		b.ChangelogDestination = &cli.ChangelogDestination{}
-		b.ChangelogDestination.Type = d.ChangelogDestination.Type.ValueString()
-		b.ChangelogDestination.Url = d.ChangelogDestination.Url.ValueString()
-		b.ChangelogDestination.Agent = d.ChangelogDestination.Agent.ValueBool()
+		b.ChangelogDestination.Type = state.ChangelogDestination.Type.ValueString()
+		b.ChangelogDestination.Url = state.ChangelogDestination.Url.ValueString()
+		b.ChangelogDestination.Agent = state.ChangelogDestination.Agent.ValueBool()
 	} else {
 		b.ChangelogDestination = nil
 	}
 
-	if d.TeamInheritance != nil {
+	if state.TeamInheritance != nil {
 		b.TeamInheritance = &cli.TeamInheritance{
-			Path: d.TeamInheritance.Path.ValueString(),
+			Path: state.TeamInheritance.Path.ValueString(),
 		}
 	} else {
 		b.TeamInheritance = nil
@@ -995,31 +995,31 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 
 	required := []string{}
 
-	if d.Properties != nil {
-		if d.Properties.StringProp != nil {
-			err := stringPropResourceToBody(ctx, d, props, &required)
+	if state.Properties != nil {
+		if state.Properties.StringProp != nil {
+			err := stringPropResourceToBody(ctx, state, props, &required)
 			if err != nil {
 				return nil, err
 			}
 		}
-		if d.Properties.ArrayProp != nil {
-			err := arrayPropResourceToBody(ctx, d, props, &required)
+		if state.Properties.ArrayProp != nil {
+			err := arrayPropResourceToBody(ctx, state, props, &required)
 			if err != nil {
 				return nil, err
 			}
 		}
-		if d.Properties.NumberProp != nil {
-			err := numberPropResourceToBody(ctx, d, props, &required)
+		if state.Properties.NumberProp != nil {
+			err := numberPropResourceToBody(ctx, state, props, &required)
 			if err != nil {
 				return nil, err
 			}
 		}
-		if d.Properties.BooleanProp != nil {
-			booleanPropResourceToBody(d, props, &required)
+		if state.Properties.BooleanProp != nil {
+			booleanPropResourceToBody(state, props, &required)
 		}
 
-		if d.Properties.ObjectProp != nil {
-			objectPropResourceToBody(d, props, &required)
+		if state.Properties.ObjectProp != nil {
+			objectPropResourceToBody(state, props, &required)
 		}
 
 	}
@@ -1027,16 +1027,16 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 	properties := props
 
 	b.Schema = cli.BlueprintSchema{Properties: properties, Required: required}
-	b.Relations = relationsResourceToBody(d)
-	b.MirrorProperties = mirrorPropertiesToBody(d)
-	b.CalculationProperties = calculationPropertiesToBody(d)
+	b.Relations = relationsResourceToBody(state)
+	b.MirrorProperties = mirrorPropertiesToBody(state)
+	b.CalculationProperties = calculationPropertiesToBody(state)
 	return b, nil
 }
 
-func relationsResourceToBody(d *BlueprintModel) map[string]cli.Relation {
+func relationsResourceToBody(state *BlueprintModel) map[string]cli.Relation {
 	relations := map[string]cli.Relation{}
 
-	for identifier, prop := range d.Relations {
+	for identifier, prop := range state.Relations {
 		target := prop.Target.ValueString()
 		relationProp := cli.Relation{
 			Target: &target,
@@ -1062,10 +1062,10 @@ func relationsResourceToBody(d *BlueprintModel) map[string]cli.Relation {
 	return relations
 }
 
-func mirrorPropertiesToBody(d *BlueprintModel) map[string]cli.BlueprintMirrorProperty {
+func mirrorPropertiesToBody(state *BlueprintModel) map[string]cli.BlueprintMirrorProperty {
 	mirrorProperties := map[string]cli.BlueprintMirrorProperty{}
 
-	for identifier, prop := range d.MirrorProperties {
+	for identifier, prop := range state.MirrorProperties {
 		mirrorProp := cli.BlueprintMirrorProperty{
 			Path: prop.Path.ValueString(),
 		}
@@ -1080,10 +1080,10 @@ func mirrorPropertiesToBody(d *BlueprintModel) map[string]cli.BlueprintMirrorPro
 	return mirrorProperties
 }
 
-func calculationPropertiesToBody(d *BlueprintModel) map[string]cli.BlueprintCalculationProperty {
+func calculationPropertiesToBody(state *BlueprintModel) map[string]cli.BlueprintCalculationProperty {
 	calculationProperties := map[string]cli.BlueprintCalculationProperty{}
 
-	for identifier, prop := range d.CalculationProperties {
+	for identifier, prop := range state.CalculationProperties {
 		calculationProp := cli.BlueprintCalculationProperty{
 			Calculation: prop.Calculation.ValueString(),
 			Type:        prop.Type.ValueString(),

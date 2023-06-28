@@ -26,7 +26,7 @@ func New() provider.Provider {
 }
 
 func (p *PortLabsProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
-	resp.TypeName = "port-labs"
+	resp.TypeName = consts.ProviderName
 }
 
 func (p *PortLabsProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {

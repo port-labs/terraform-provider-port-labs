@@ -38,16 +38,16 @@ func (r *EntityResource) Configure(ctx context.Context, req resource.ConfigureRe
 }
 
 func (r *EntityResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *EntityModel
+	var state *EntityModel
 
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	blueprintIdentifier := data.Blueprint.ValueString()
-	e, statusCode, err := r.portClient.ReadEntity(ctx, data.Identifier.ValueString(), data.Blueprint.ValueString())
+	blueprintIdentifier := state.Blueprint.ValueString()
+	e, statusCode, err := r.portClient.ReadEntity(ctx, state.Identifier.ValueString(), state.Blueprint.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.State.RemoveResource(ctx)
@@ -57,33 +57,33 @@ func (r *EntityResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	err = writeEntityFieldsToResource(ctx, data, e, blueprintIdentifier)
+	err = writeEntityFieldsToResource(ctx, state, e, blueprintIdentifier)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing entity fields to resource", err.Error())
 		return
 	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func writeEntityFieldsToResource(ctx context.Context, em *EntityModel, e *cli.Entity, blueprint string) error {
-	em.ID = types.StringValue(e.Identifier)
-	em.Identifier = types.StringValue(e.Identifier)
-	em.Blueprint = types.StringValue(blueprint)
-	em.Title = types.StringValue(e.Title)
-	em.CreatedAt = types.StringValue(e.CreatedAt.String())
-	em.CreatedBy = types.StringValue(e.CreatedBy)
-	em.UpdatedAt = types.StringValue(e.UpdatedAt.String())
-	em.UpdatedBy = types.StringValue(e.UpdatedBy)
+func writeEntityFieldsToResource(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint string) error {
+	state.ID = types.StringValue(e.Identifier)
+	state.Identifier = types.StringValue(e.Identifier)
+	state.Blueprint = types.StringValue(blueprint)
+	state.Title = types.StringValue(e.Title)
+	state.CreatedAt = types.StringValue(e.CreatedAt.String())
+	state.CreatedBy = types.StringValue(e.CreatedBy)
+	state.UpdatedAt = types.StringValue(e.UpdatedAt.String())
+	state.UpdatedBy = types.StringValue(e.UpdatedBy)
 
 	if len(e.Team) != 0 {
-		em.Teams = make([]types.String, len(e.Team))
+		state.Teams = make([]types.String, len(e.Team))
 		for i, t := range e.Team {
-			em.Teams[i] = types.StringValue(t)
+			state.Teams[i] = types.StringValue(t)
 		}
 	}
 
 	if len(e.Properties) != 0 {
-		em.Properties = &EntityPropertiesModel{}
+		state.Properties = &EntityPropertiesModel{}
 		for k, v := range e.Properties {
 			switch t := v.(type) {
 			// case map[string]interface{}:
@@ -94,25 +94,25 @@ func writeEntityFieldsToResource(ctx context.Context, em *EntityModel, e *cli.En
 			// case float64:
 			// 	propValue = strconv.FormatFloat(t, 'f', -1, 64)
 			case float64:
-				if em.Properties.NumberProp == nil {
-					em.Properties.NumberProp = make(map[string]float64)
+				if state.Properties.NumberProp == nil {
+					state.Properties.NumberProp = make(map[string]float64)
 				}
-				em.Properties.NumberProp[k] = float64(t)
+				state.Properties.NumberProp[k] = float64(t)
 			case string:
-				if em.Properties.StringProp == nil {
-					em.Properties.StringProp = make(map[string]string)
+				if state.Properties.StringProp == nil {
+					state.Properties.StringProp = make(map[string]string)
 				}
-				em.Properties.StringProp[k] = t
+				state.Properties.StringProp[k] = t
 
 			case bool:
-				if em.Properties.BooleanProp == nil {
-					em.Properties.BooleanProp = make(map[string]bool)
+				if state.Properties.BooleanProp == nil {
+					state.Properties.BooleanProp = make(map[string]bool)
 				}
-				em.Properties.BooleanProp[k] = t
+				state.Properties.BooleanProp[k] = t
 
 			case []interface{}:
-				if em.Properties.ArrayProp == nil {
-					em.Properties.ArrayProp = &ArrayPropModel{
+				if state.Properties.ArrayProp == nil {
+					state.Properties.ArrayProp = &ArrayPropModel{
 						StringItems:  types.MapNull(types.ListType{ElemType: types.StringType}),
 						NumberItems:  types.MapNull(types.ListType{ElemType: types.NumberType}),
 						BooleanItems: types.MapNull(types.ListType{ElemType: types.BoolType}),
@@ -124,15 +124,15 @@ func writeEntityFieldsToResource(ctx context.Context, em *EntityModel, e *cli.En
 					for _, item := range t {
 						mapItems[k] = append(mapItems[k], item.(string))
 					}
-					em.Properties.ArrayProp.StringItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, mapItems)
+					state.Properties.ArrayProp.StringItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, mapItems)
 				}
 			case interface{}:
-				if em.Properties.ObjectProp == nil {
-					em.Properties.ObjectProp = make(map[string]string)
+				if state.Properties.ObjectProp == nil {
+					state.Properties.ObjectProp = make(map[string]string)
 				}
 
 				js, _ := json.Marshal(&t)
-				em.Properties.ObjectProp[k] = string(js)
+				state.Properties.ObjectProp[k] = string(js)
 			}
 		}
 	}
@@ -153,35 +153,35 @@ func writeEntityFieldsToResource(ctx context.Context, em *EntityModel, e *cli.En
 			}
 		}
 		if len(relations) != 0 {
-			em.Relations, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, relations)
+			state.Relations, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, relations)
 		}
 	}
 
 	return nil
 }
 func (r *EntityResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data *EntityModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	var state *EntityModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	bp, _, err := r.portClient.ReadBlueprint(ctx, data.Blueprint.ValueString())
+	bp, _, err := r.portClient.ReadBlueprint(ctx, state.Blueprint.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read blueprint", err.Error())
 		return
 	}
 
-	e, err := entityResourceToBody(ctx, data, bp)
+	e, err := entityResourceToBody(ctx, state, bp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert entity resource to body", err.Error())
 		return
 	}
 
 	runID := ""
-	if !data.RunID.IsNull() {
-		runID = data.RunID.ValueString()
+	if !state.RunID.IsNull() {
+		runID = state.RunID.ValueString()
 	}
 
 	en, err := r.portClient.CreateEntity(ctx, e, runID)
@@ -190,54 +190,54 @@ func (r *EntityResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	data.ID = types.StringValue(en.Identifier)
-	data.Identifier = types.StringValue(en.Identifier)
+	state.ID = types.StringValue(en.Identifier)
+	state.Identifier = types.StringValue(en.Identifier)
 
-	writeEntityComputedFieldsToResource(data, en)
+	writeEntityComputedFieldsToResource(state, en)
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func entityResourceToBody(ctx context.Context, em *EntityModel, bp *cli.Blueprint) (*cli.Entity, error) {
+func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Blueprint) (*cli.Entity, error) {
 	e := &cli.Entity{
-		Title:     em.Title.ValueString(),
+		Title:     state.Title.ValueString(),
 		Blueprint: bp.Identifier,
 	}
 
-	if !em.Identifier.IsNull() {
-		e.Identifier = em.Identifier.ValueString()
+	if !state.Identifier.IsNull() {
+		e.Identifier = state.Identifier.ValueString()
 	}
 
-	if em.Teams != nil {
-		e.Team = make([]string, len(em.Teams))
-		for i, t := range em.Teams {
+	if state.Teams != nil {
+		e.Team = make([]string, len(state.Teams))
+		for i, t := range state.Teams {
 			e.Team[i] = t.ValueString()
 		}
 	}
 
 	properties := make(map[string]interface{})
-	if em.Properties != nil {
-		if em.Properties.StringProp != nil {
-			for propIdentifier, prop := range em.Properties.StringProp {
+	if state.Properties != nil {
+		if state.Properties.StringProp != nil {
+			for propIdentifier, prop := range state.Properties.StringProp {
 				properties[propIdentifier] = prop
 			}
 		}
 
-		if em.Properties.NumberProp != nil {
-			for propIdentifier, prop := range em.Properties.NumberProp {
+		if state.Properties.NumberProp != nil {
+			for propIdentifier, prop := range state.Properties.NumberProp {
 				properties[propIdentifier] = prop
 			}
 		}
 
-		if em.Properties.BooleanProp != nil {
-			for propIdentifier, prop := range em.Properties.BooleanProp {
+		if state.Properties.BooleanProp != nil {
+			for propIdentifier, prop := range state.Properties.BooleanProp {
 				properties[propIdentifier] = prop
 			}
 		}
 
-		if em.Properties.ArrayProp != nil {
-			if !em.Properties.ArrayProp.StringItems.IsNull() {
-				for identifier, itemArray := range em.Properties.ArrayProp.StringItems.Elements() {
+		if state.Properties.ArrayProp != nil {
+			if !state.Properties.ArrayProp.StringItems.IsNull() {
+				for identifier, itemArray := range state.Properties.ArrayProp.StringItems.Elements() {
 					var items []tftypes.Value
 					v, _ := itemArray.ToTerraformValue(ctx)
 					v.As(&items)
@@ -252,8 +252,8 @@ func entityResourceToBody(ctx context.Context, em *EntityModel, bp *cli.Blueprin
 				}
 			}
 
-			if !em.Properties.ArrayProp.NumberItems.IsNull() {
-				for identifier, itemArray := range em.Properties.ArrayProp.NumberItems.Elements() {
+			if !state.Properties.ArrayProp.NumberItems.IsNull() {
+				for identifier, itemArray := range state.Properties.ArrayProp.NumberItems.Elements() {
 					var items []tftypes.Value
 					v, _ := itemArray.ToTerraformValue(ctx)
 					v.As(&items)
@@ -267,8 +267,8 @@ func entityResourceToBody(ctx context.Context, em *EntityModel, bp *cli.Blueprin
 				}
 			}
 
-			if !em.Properties.ArrayProp.BooleanItems.IsNull() {
-				for identifier, itemArray := range em.Properties.ArrayProp.BooleanItems.Elements() {
+			if !state.Properties.ArrayProp.BooleanItems.IsNull() {
+				for identifier, itemArray := range state.Properties.ArrayProp.BooleanItems.Elements() {
 					var items []tftypes.Value
 					v, _ := itemArray.ToTerraformValue(ctx)
 					v.As(&items)
@@ -284,8 +284,8 @@ func entityResourceToBody(ctx context.Context, em *EntityModel, bp *cli.Blueprin
 
 		}
 
-		if em.Properties.ObjectProp != nil {
-			for identifier, prop := range em.Properties.ObjectProp {
+		if state.Properties.ObjectProp != nil {
+			for identifier, prop := range state.Properties.ObjectProp {
 				obj := make(map[string]interface{})
 				err := json.Unmarshal([]byte(prop), &obj)
 				if err != nil {
@@ -298,7 +298,7 @@ func entityResourceToBody(ctx context.Context, em *EntityModel, bp *cli.Blueprin
 
 	e.Properties = properties
 
-	relations := writeRelationsToBody(ctx, em.Relations)
+	relations := writeRelationsToBody(ctx, state.Relations)
 	e.Relations = relations
 	return e, nil
 }
@@ -321,37 +321,37 @@ func writeRelationsToBody(ctx context.Context, relations basetypes.MapValue) map
 	return relationsBody
 }
 
-func writeEntityComputedFieldsToResource(data *EntityModel, e *cli.Entity) {
-	data.Identifier = types.StringValue(e.Identifier)
-	data.CreatedAt = types.StringValue(e.CreatedAt.String())
-	data.CreatedBy = types.StringValue(e.CreatedBy)
-	data.UpdatedAt = types.StringValue(e.UpdatedAt.String())
-	data.UpdatedBy = types.StringValue(e.UpdatedBy)
+func writeEntityComputedFieldsToResource(state *EntityModel, e *cli.Entity) {
+	state.Identifier = types.StringValue(e.Identifier)
+	state.CreatedAt = types.StringValue(e.CreatedAt.String())
+	state.CreatedBy = types.StringValue(e.CreatedBy)
+	state.UpdatedAt = types.StringValue(e.UpdatedAt.String())
+	state.UpdatedBy = types.StringValue(e.UpdatedBy)
 }
 
 func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data *EntityModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	var state *EntityModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	bp, _, err := r.portClient.ReadBlueprint(ctx, data.Blueprint.ValueString())
+	bp, _, err := r.portClient.ReadBlueprint(ctx, state.Blueprint.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read blueprint", err.Error())
 		return
 	}
 
-	e, err := entityResourceToBody(ctx, data, bp)
+	e, err := entityResourceToBody(ctx, state, bp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert entity resource to body", err.Error())
 		return
 	}
 
 	runID := ""
-	if !data.RunID.IsNull() {
-		runID = data.RunID.ValueString()
+	if !state.RunID.IsNull() {
+		runID = state.RunID.ValueString()
 	}
 
 	en, err := r.portClient.CreateEntity(ctx, e, runID)
@@ -360,21 +360,21 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	data.ID = types.StringValue(e.Identifier)
+	state.ID = types.StringValue(e.Identifier)
 
-	writeEntityComputedFieldsToResource(data, en)
+	writeEntityComputedFieldsToResource(state, en)
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *EntityResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *EntityModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	var state *EntityModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.portClient.DeleteEntity(ctx, data.ID.ValueString(), data.Blueprint.ValueString())
+	err := r.portClient.DeleteEntity(ctx, state.ID.ValueString(), state.Blueprint.ValueString())
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete entity", err.Error())

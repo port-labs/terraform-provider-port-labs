@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -350,11 +349,6 @@ func BlueprintSchema() map[string]schema.Attribute {
 				"url": schema.StringAttribute{
 					MarkdownDescription: "The url of the changelog destination",
 					Optional:            true,
-					Validators: []validator.String{
-						stringvalidator.ExactlyOneOf(path.Expressions{
-							path.MatchRelative(),
-						}...),
-					},
 				},
 				"agent": schema.BoolAttribute{
 					MarkdownDescription: "The agent of the changelog destination",

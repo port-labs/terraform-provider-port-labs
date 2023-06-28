@@ -3,6 +3,7 @@ package blueprint
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -948,8 +949,9 @@ func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[s
 }
 
 func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Blueprint, error) {
-	b := &cli.Blueprint{}
-	b.Identifier = d.Identifier.ValueString()
+	b := &cli.Blueprint{
+		Identifier: d.Identifier.ValueString(),
+	}
 
 	if !d.Title.IsNull() {
 		titleValue := d.Title.ValueString()
@@ -968,6 +970,10 @@ func blueprintResourceToBody(ctx context.Context, d *BlueprintModel) (*cli.Bluep
 	props := map[string]cli.BlueprintProperty{}
 
 	if d.ChangelogDestination != nil {
+		if d.ChangelogDestination.Type.ValueString() == "KAFKA" && !d.ChangelogDestination.Agent.IsNull() {
+			return nil, fmt.Errorf("agent is not supported for Kafka changelog destination")
+		}
+
 		b.ChangelogDestination = &cli.ChangelogDestination{}
 		b.ChangelogDestination.Type = d.ChangelogDestination.Type.ValueString()
 		b.ChangelogDestination.Url = d.ChangelogDestination.Url.ValueString()

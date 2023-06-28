@@ -19,12 +19,7 @@ var (
 	_ provider.Provider = &PortLabsProvider{}
 )
 
-type PortLabsProvider struct {
-	clientId string
-	secret   string
-	token    string
-	baseUrl  string
-}
+type PortLabsProvider struct{}
 
 func New() provider.Provider {
 	return &PortLabsProvider{}
@@ -76,7 +71,7 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 		baseUrl = data.BaseUrl.ValueString()
 	}
 
-	c, err := cli.New(baseUrl, cli.WithHeader("User-Agent", version.ProviderVersion), cli.WithClientID(p.clientId))
+	c, err := cli.New(baseUrl, cli.WithHeader("User-Agent", version.ProviderVersion))
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create Port-labs client", err.Error())
 		return

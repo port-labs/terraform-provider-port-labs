@@ -3,15 +3,16 @@ resource "port-labs_blueprint" "environment" {
   icon       = "Environment"
   identifier = "hedwig-env"
   properties {
-    identifier = "name"
-    type       = "string"
-    title      = "name"
-  }
-  properties {
-    identifier = "docs-url"
-    type       = "string"
-    title      = "Docs URL"
-    format     = "url"
+    string_prop = {
+      "name" = {
+        type  = "string"
+        title = "name"
+      }
+      "docs-url" = {
+        title  = "Docs URL"
+        format = "url"
+      }
+    }
   }
 }
 
@@ -20,14 +21,18 @@ resource "port-labs_blueprint" "vm" {
   icon       = "GPU"
   identifier = "hedwig-vm"
   properties {
-    identifier = "name"
-    type       = "string"
-    title      = "Name"
+    string_prop = {
+      name = {
+        type  = "string"
+        title = "Name"
+      }
+    }
   }
-  relations {
-    identifier = "environment"
-    title      = "Test Relation"
-    required   = "true"
-    target     = port-labs_blueprint.environment.identifier
+  relations = {
+    "environment" = {
+      title    = "Test Relation"
+      required = "true"
+      target   = port-labs_blueprint.environment.identifier
+    }
   }
 }

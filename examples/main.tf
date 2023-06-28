@@ -2,7 +2,7 @@ terraform {
   required_providers {
     port-labs = {
       source  = "port-labs/port-labs"
-      version = "~> 0.10.3"
+      version = "~> 1.0.0"
     }
   }
 }
@@ -15,7 +15,8 @@ resource "port-labs_entity" "microservice" {
   title     = "monolith"
   blueprint = "microservice_blueprint"
   properties {
-    name  = "microservice_name"
-    value = "golang_monolith"
+    string_prop = {
+      "microservice_name" = "golang_monolith"
+    }
   }
 }

@@ -406,12 +406,10 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 
 			arrayProp := addArrayPropertiesToResource(&v)
 
-			if !bm.Properties.ArrayProp[k].Required.IsNull() {
-				if lo.Contains(b.Schema.Required, k) {
-					arrayProp.Required = types.BoolValue(true)
-				} else {
-					arrayProp.Required = types.BoolValue(false)
-				}
+			if lo.Contains(b.Schema.Required, k) {
+				arrayProp.Required = types.BoolValue(true)
+			} else {
+				arrayProp.Required = types.BoolValue(false)
 			}
 
 			setCommonProperties(v, arrayProp)
@@ -427,12 +425,10 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 
 			setCommonProperties(v, booleanProp)
 
-			if !bm.Properties.BooleanProp[k].Required.IsNull() {
-				if lo.Contains(b.Schema.Required, k) {
-					booleanProp.Required = types.BoolValue(true)
-				} else {
-					booleanProp.Required = types.BoolValue(false)
-				}
+			if lo.Contains(b.Schema.Required, k) {
+				booleanProp.Required = types.BoolValue(true)
+			} else {
+				booleanProp.Required = types.BoolValue(false)
 			}
 
 			properties.BooleanProp[k] = *booleanProp
@@ -444,12 +440,10 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 
 			objectProp := addObjectPropertiesToResource(&v)
 
-			if !bm.Properties.ObjectProp[k].Required.IsNull() {
-				if lo.Contains(b.Schema.Required, k) {
-					objectProp.Required = types.BoolValue(true)
-				} else {
-					objectProp.Required = types.BoolValue(false)
-				}
+			if lo.Contains(b.Schema.Required, k) {
+				objectProp.Required = types.BoolValue(true)
+			} else {
+				objectProp.Required = types.BoolValue(false)
 			}
 
 			setCommonProperties(v, objectProp)

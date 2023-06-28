@@ -53,7 +53,7 @@ func (r *EntityResource) Read(ctx context.Context, req resource.ReadRequest, res
 			resp.State.RemoveResource(ctx)
 			return
 		}
-		resp.Diagnostics.AddError("failed reading entity", err.Error())
+		resp.Diagnostics.AddError("failed to read entity", err.Error())
 		return
 	}
 
@@ -387,7 +387,7 @@ func (r *EntityResource) ImportState(ctx context.Context, req resource.ImportSta
 	idParts := strings.Split(req.ID, ":")
 
 	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
-		resp.Diagnostics.AddError("invalid import ID", "import ID must be in the format <entity_id>:<blueprint_id>")
+		resp.Diagnostics.AddError("invalid import ID", "import ID must be in the format <blueprint_id>:<entity_id>")
 		return
 	}
 

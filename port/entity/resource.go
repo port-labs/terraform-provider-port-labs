@@ -140,15 +140,15 @@ func writeEntityFieldsToResource(ctx context.Context, em *EntityModel, e *cli.En
 	if len(e.Relations) != 0 {
 		relations := make(map[string][]string)
 		for identifier, r := range e.Relations {
-			switch r.(type) {
+			switch v := r.(type) {
 			case []string:
-				if len(r.([]string)) != 0 {
-					relations[identifier] = r.([]string)
+				if len(v) != 0 {
+					relations[identifier] = v
 				}
 
 			case string:
-				if len(r.(string)) != 0 {
-					relations[identifier] = []string{r.(string)}
+				if len(v) != 0 {
+					relations[identifier] = []string{v}
 				}
 			}
 		}

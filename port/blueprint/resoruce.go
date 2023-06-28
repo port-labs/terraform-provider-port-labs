@@ -100,7 +100,10 @@ func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *
 	}
 
 	if len(b.Schema.Properties) != 0 {
-		addPropertiesToResource(ctx, b, bm)
+		err := addPropertiesToResource(ctx, b, bm)
+		if err != nil {
+			return err
+		}
 	}
 
 	if len(b.Relations) != 0 {

@@ -16,7 +16,6 @@ import (
 	"github.com/samber/lo"
 )
 
-// Ensure provider defined types fully satisfy framework interfaces
 var _ resource.Resource = &BlueprintResource{}
 var _ resource.ResourceWithImportState = &BlueprintResource{}
 
@@ -39,26 +38,6 @@ func (r *BlueprintResource) Configure(ctx context.Context, req resource.Configur
 
 	r.portClient = req.ProviderData.(*cli.PortClient)
 }
-
-// 	case "string":
-// 		return schema.ListAttribute{
-// 			MarkdownDescription: "The default of the array property",
-// 			Optional:            true,
-// 			ElementType:         types.StringType,
-// 		}
-// 	case "boolean":
-// 		return schema.ListAttribute{
-// 			MarkdownDescription: "The default of the array property",
-// 			Optional:            true,
-// 			ElementType:         types.BoolType,
-// 		}
-// 	}
-// 	return schema.ListAttribute{
-// 		MarkdownDescription: "The default of the array property",
-// 		Optional:            true,
-// 		ElementType:         types.StringType,
-// 	}
-// }
 
 func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var data *BlueprintModel

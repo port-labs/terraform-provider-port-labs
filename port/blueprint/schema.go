@@ -383,10 +383,14 @@ func BlueprintSchema() map[string]schema.Attribute {
 					"many": schema.BoolAttribute{
 						MarkdownDescription: "The many of the relation",
 						Optional:            true,
+						Computed:            true,
+						Default:             booldefault.StaticBool(false),
 					},
 					"required": schema.BoolAttribute{
 						MarkdownDescription: "The required of the relation",
 						Optional:            true,
+						Computed:            true,
+						Default:             booldefault.StaticBool(false),
 					},
 				},
 			},

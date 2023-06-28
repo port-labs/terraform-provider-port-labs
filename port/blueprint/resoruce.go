@@ -122,29 +122,29 @@ func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *
 }
 
 func addRelationsToResource(b *cli.Blueprint, bm *BlueprintModel) {
-	if b.Relations != nil {
-		for k, v := range b.Relations {
-			if bm.Relations == nil {
-				bm.Relations = make(map[string]RelationModel)
-			}
-
-			relationModel := &RelationModel{
-				Target: types.StringValue(v.Target),
-			}
-			if v.Title != "" {
-				relationModel.Title = types.StringValue(v.Title)
-			}
-			if !bm.Relations[k].Many.IsNull() {
-				relationModel.Many = types.BoolValue(v.Many)
-			}
-
-			if !bm.Relations[k].Required.IsNull() {
-				relationModel.Required = types.BoolValue(v.Required)
-			}
-
-			bm.Relations[k] = *relationModel
-
+	for k, v := range b.Relations {
+		if bm.Relations == nil {
+			bm.Relations = make(map[string]RelationModel)
 		}
+
+		relationModel := &RelationModel{
+			Target: types.StringValue(*v.Target),
+		}
+
+		if v.Title != nil {
+			relationModel.Title = types.StringValue(*v.Title)
+		}
+
+		if v.Many != nil {
+			relationModel.Many = types.BoolValue(*v.Many)
+		}
+
+		if v.Required != nil {
+			relationModel.Required = types.BoolValue(*v.Required)
+		}
+
+		bm.Relations[k] = *relationModel
+
 	}
 }
 
@@ -1043,19 +1043,23 @@ func relationsResourceToBody(d *BlueprintModel) map[string]cli.Relation {
 	relations := map[string]cli.Relation{}
 
 	for identifier, prop := range d.Relations {
+		target := prop.Target.ValueString()
 		relationProp := cli.Relation{
-			Target: prop.Target.ValueString(),
+			Target: &target,
 		}
 
 		if !prop.Title.IsNull() {
-			relationProp.Title = prop.Title.ValueString()
+			title := prop.Title.ValueString()
+			relationProp.Title = &title
 		}
 		if !prop.Many.IsNull() {
-			relationProp.Many = prop.Many.ValueBool()
+			many := prop.Many.ValueBool()
+			relationProp.Many = &many
 		}
 
 		if !prop.Required.IsNull() {
-			relationProp.Required = prop.Required.ValueBool()
+			required := prop.Required.ValueBool()
+			relationProp.Required = &required
 		}
 
 		relations[identifier] = relationProp

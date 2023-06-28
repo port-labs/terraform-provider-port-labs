@@ -356,6 +356,22 @@ func addArrayPropertiesToResource(v *cli.BlueprintProperty) *ArrayPropModel {
 					}
 					arrayProp.BooleanItems.Default, _ = types.ListValue(types.BoolType, attrs)
 				}
+
+			case "object":
+				arrayProp.ObjectItems = &ObjectItems{}
+				if v.Default != nil {
+					objectArray := make([]map[string]interface{}, len(v.Default.([]interface{})))
+					for i, v := range v.Default.([]interface{}) {
+						objectArray[i] = v.(map[string]interface{})
+					}
+					attrs := make([]attr.Value, 0, len(objectArray))
+					for _, value := range objectArray {
+						js, _ := json.Marshal(&value)
+						stringValue := string(js)
+						attrs = append(attrs, basetypes.NewStringValue(stringValue))
+					}
+					arrayProp.ObjectItems.Default, _ = types.ListValue(types.StringType, attrs)
+				}
 			}
 		}
 	}
@@ -940,7 +956,7 @@ func arrayPropResourceToBody(ctx context.Context, d *BlueprintModel, props map[s
 				items := map[string]interface{}{}
 				items["type"] = "object"
 				if !prop.ObjectItems.Default.IsNull() {
-					defaultList, err := utils.TerraformListToGoArray(ctx, prop.BooleanItems.Default, "object")
+					defaultList, err := utils.TerraformListToGoArray(ctx, prop.ObjectItems.Default, "object")
 					if err != nil {
 						return err
 					}

@@ -226,6 +226,13 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 						default = [false,true]
 					}
 				}
+				myObjectArrayIdentifier = {
+					description = "This is a object array property"
+					title = "array"
+					object_items = {
+						default = [jsonencode({"a": "b"}), jsonencode({"c": "d"})]
+					}
+				}
 			}
 		}
 	}`, identifier)
@@ -254,6 +261,8 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myNumberArrayIdentifier.number_items.default.2", "3"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myBooleanArrayIdentifier.boolean_items.default.0", "false"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myBooleanArrayIdentifier.boolean_items.default.1", "true"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myObjectArrayIdentifier.object_items.default.0", "{\"a\":\"b\"}"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "properties.array_prop.myObjectArrayIdentifier.object_items.default.1", "{\"c\":\"d\"}"),
 				),
 			},
 		},

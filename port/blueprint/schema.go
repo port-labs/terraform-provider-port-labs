@@ -235,7 +235,7 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 				"default": schema.ListAttribute{
 					MarkdownDescription: "The default of the items",
 					Optional:            true,
-					ElementType:         types.MapType{ElemType: types.StringType},
+					ElementType:         types.StringType,
 				},
 			},
 		},

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -12,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 	"github.com/samber/lo"
 )
 
@@ -40,15 +38,15 @@ func (r *BlueprintResource) Configure(ctx context.Context, req resource.Configur
 }
 
 func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *BlueprintModel
+	var state *BlueprintModel
 
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	b, statusCode, err := r.portClient.ReadBlueprint(ctx, data.Identifier.ValueString())
+	b, statusCode, err := r.portClient.ReadBlueprint(ctx, state.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.State.RemoveResource(ctx)
@@ -58,15 +56,15 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	err = writeBlueprintFieldsToResource(ctx, data, b)
+	err = refreshBlueprintState(ctx, state, b)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
 		return
 	}
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *cli.Blueprint) error {
+func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Blueprint) error {
 	bm.Identifier = types.StringValue(b.Identifier)
 	bm.ID = types.StringValue(b.Identifier)
 	bm.CreatedAt = types.StringValue(b.CreatedAt.String())
@@ -99,22 +97,22 @@ func writeBlueprintFieldsToResource(ctx context.Context, bm *BlueprintModel, b *
 		}
 	}
 
-	if len(b.Schema.Properties) != 0 {
+	if len(b.Schema.Properties) > 0 {
 		err := addPropertiesToResource(ctx, b, bm)
 		if err != nil {
 			return err
 		}
 	}
 
-	if len(b.Relations) != 0 {
+	if len(b.Relations) > 0 {
 		addRelationsToResource(b, bm)
 	}
 
-	if len(b.MirrorProperties) != 0 {
+	if len(b.MirrorProperties) > 0 {
 		addMirrorPropertiesToResource(b, bm)
 	}
 
-	if len(b.CalculationProperties) != 0 {
+	if len(b.CalculationProperties) > 0 {
 		addCalculationPropertiesToResource(b, bm)
 	}
 
@@ -169,35 +167,33 @@ func addMirrorPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel) {
 }
 
 func addCalculationPropertiesToResource(b *cli.Blueprint, bm *BlueprintModel) {
-	if b.CalculationProperties != nil {
-		for k, v := range b.CalculationProperties {
-			if bm.CalculationProperties == nil {
-				bm.CalculationProperties = make(map[string]CalculationPropertyModel)
-			}
-
-			calculationPropertyModel := &CalculationPropertyModel{
-				Calculation: types.StringValue(v.Calculation),
-				Type:        types.StringValue(v.Type),
-			}
-			if v.Title != "" && !bm.CalculationProperties[k].Title.IsNull() {
-				calculationPropertyModel.Title = types.StringValue(v.Title)
-			}
-
-			if v.Description != "" && !bm.CalculationProperties[k].Description.IsNull() {
-				calculationPropertyModel.Description = types.StringValue(v.Description)
-			}
-
-			if v.Format != "" && !bm.CalculationProperties[k].Format.IsNull() {
-				calculationPropertyModel.Format = types.StringValue(v.Format)
-			}
-
-			bm.CalculationProperties[k] = *calculationPropertyModel
-
+	for k, v := range b.CalculationProperties {
+		if bm.CalculationProperties == nil {
+			bm.CalculationProperties = make(map[string]CalculationPropertyModel)
 		}
+
+		calculationPropertyModel := &CalculationPropertyModel{
+			Calculation: types.StringValue(v.Calculation),
+			Type:        types.StringValue(v.Type),
+		}
+		if v.Title != "" && !bm.CalculationProperties[k].Title.IsNull() {
+			calculationPropertyModel.Title = types.StringValue(v.Title)
+		}
+
+		if v.Description != "" && !bm.CalculationProperties[k].Description.IsNull() {
+			calculationPropertyModel.Description = types.StringValue(v.Description)
+		}
+
+		if v.Format != "" && !bm.CalculationProperties[k].Format.IsNull() {
+			calculationPropertyModel.Format = types.StringValue(v.Format)
+		}
+
+		bm.CalculationProperties[k] = *calculationPropertyModel
+
 	}
 }
 
-func addStingPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
+func addStringPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
 	stringProp := &StringPropModel{}
 
 	if v.Enum != nil {
@@ -370,7 +366,7 @@ func addPropertiesToResource(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 			if properties.StringProp == nil {
 				properties.StringProp = make(map[string]StringPropModel)
 			}
-			stringProp := addStingPropertiesToResource(ctx, &v)
+			stringProp := addStringPropertiesToResource(ctx, &v)
 
 			if lo.Contains(b.Schema.Required, k) {
 				stringProp.Required = types.BoolValue(true)
@@ -535,7 +531,7 @@ func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	b, err := blueprintResourceToBody(ctx, state)
+	b, err := blueprintResourceToPortRequest(ctx, state)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create blueprint", err.Error())
@@ -570,7 +566,7 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	b, err := blueprintResourceToBody(ctx, state)
+	b, err := blueprintResourceToPortRequest(ctx, state)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to transform blueprint", err.Error())
@@ -624,335 +620,7 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 	)...)
 }
 
-func stringPropResourceToBody(ctx context.Context, state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range state.Properties.StringProp {
-		property := cli.BlueprintProperty{
-			Type: "string",
-		}
-
-		if !prop.Title.IsNull() {
-			title := prop.Title.ValueString()
-			property.Title = &title
-		}
-
-		if !prop.Default.IsNull() {
-			property.Default = prop.Default.ValueString()
-		}
-
-		if !prop.Format.IsNull() {
-			format := prop.Format.ValueString()
-			property.Format = &format
-		}
-
-		if !prop.Icon.IsNull() {
-			icon := prop.Icon.ValueString()
-			property.Icon = &icon
-		}
-
-		if !prop.MinLength.IsNull() {
-			property.MinLength = int(prop.MinLength.ValueInt64())
-		}
-
-		if !prop.MaxLength.IsNull() {
-			property.MaxLength = int(prop.MaxLength.ValueInt64())
-		}
-
-		if !prop.Spec.IsNull() {
-			spec := prop.Spec.ValueString()
-			property.Spec = &spec
-		}
-
-		if prop.SpecAuthentication != nil {
-			specAuth := &cli.SpecAuthentication{
-				AuthorizationUrl: prop.SpecAuthentication.AuthorizationUrl.ValueString(),
-				TokenUrl:         prop.SpecAuthentication.TokenUrl.ValueString(),
-				ClientId:         prop.SpecAuthentication.ClientId.ValueString(),
-			}
-			property.SpecAuthentication = specAuth
-		}
-
-		if !prop.Pattern.IsNull() {
-			property.Pattern = prop.Pattern.ValueString()
-		}
-
-		if !prop.Description.IsNull() {
-			description := prop.Description.ValueString()
-			property.Description = &description
-		}
-
-		if !prop.Enum.IsNull() {
-			enumList, err := utils.TerraformListToGoArray(ctx, prop.Enum, "string")
-			if err != nil {
-				return err
-			}
-			property.Enum = enumList
-		}
-
-		if !prop.EnumColors.IsNull() {
-			enumColor := map[string]string{}
-			for k, v := range prop.EnumColors.Elements() {
-				value, _ := v.ToTerraformValue(ctx)
-				var keyValue string
-				value.As(&keyValue)
-				enumColor[k] = keyValue
-			}
-
-			property.EnumColors = enumColor
-		}
-
-		props[propIdentifier] = property
-
-		if prop.Required.ValueBool() {
-			*required = append(*required, propIdentifier)
-		}
-	}
-	return nil
-}
-
-func numberPropResourceToBody(ctx context.Context, state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range state.Properties.NumberProp {
-		props[propIdentifier] = cli.BlueprintProperty{
-			Type: "number",
-		}
-
-		if property, ok := props[propIdentifier]; ok {
-
-			if !prop.Title.IsNull() {
-				title := prop.Title.ValueString()
-				property.Title = &title
-			}
-			if !prop.Default.IsNull() {
-				property.Default = prop.Default.ValueFloat64()
-			}
-
-			if !prop.Icon.IsNull() {
-				icon := prop.Icon.ValueString()
-				property.Icon = &icon
-			}
-
-			if !prop.Minimum.IsNull() {
-				minimum := prop.Minimum.ValueFloat64()
-				property.Minimum = &minimum
-			}
-
-			if !prop.Maximum.IsNull() {
-				maximum := prop.Maximum.ValueFloat64()
-				property.Maximum = &maximum
-			}
-
-			if !prop.Description.IsNull() {
-				description := prop.Description.ValueString()
-				property.Description = &description
-			}
-
-			if !prop.Enum.IsNull() {
-				enumList, err := utils.TerraformListToGoArray(ctx, prop.Enum, "float64")
-				if err != nil {
-					return err
-				}
-				property.Enum = enumList
-			}
-
-			if !prop.EnumColors.IsNull() {
-				property.EnumColors = map[string]string{}
-				for k, v := range prop.EnumColors.Elements() {
-					value, _ := v.ToTerraformValue(ctx)
-					var keyValue string
-					value.As(&keyValue)
-					property.EnumColors[k] = keyValue
-				}
-			}
-
-			props[propIdentifier] = property
-		}
-		if prop.Required.ValueBool() {
-			*required = append(*required, propIdentifier)
-		}
-	}
-	return nil
-}
-
-func booleanPropResourceToBody(state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
-	for propIdentifier, prop := range state.Properties.BooleanProp {
-		props[propIdentifier] = cli.BlueprintProperty{
-			Type: "boolean",
-		}
-
-		if property, ok := props[propIdentifier]; ok {
-			if !prop.Title.IsNull() {
-				title := prop.Title.ValueString()
-				property.Title = &title
-			}
-
-			if !prop.Default.IsNull() {
-				property.Default = prop.Default.ValueBool()
-			}
-
-			if !prop.Icon.IsNull() {
-				icon := prop.Icon.ValueString()
-				property.Icon = &icon
-			}
-
-			if !prop.Description.IsNull() {
-				description := prop.Description.ValueString()
-				property.Description = &description
-			}
-
-			props[propIdentifier] = property
-		}
-		if prop.Required.ValueBool() {
-			*required = append(*required, propIdentifier)
-		}
-	}
-}
-
-func objectPropResourceToBody(state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
-	for propIdentifier, prop := range state.Properties.ObjectProp {
-		props[propIdentifier] = cli.BlueprintProperty{
-			Type: "object",
-		}
-
-		if property, ok := props[propIdentifier]; ok {
-			if !prop.Default.IsNull() {
-				defaultAsString := prop.Default.ValueString()
-				defaultObj := make(map[string]interface{})
-				err := json.Unmarshal([]byte(defaultAsString), &defaultObj)
-				if err != nil {
-					log.Fatal(err)
-				} else {
-					property.Default = defaultObj
-				}
-			}
-
-			if !prop.Title.IsNull() {
-				title := prop.Title.ValueString()
-				property.Title = &title
-			}
-
-			if !prop.Icon.IsNull() {
-				icon := prop.Icon.ValueString()
-				property.Icon = &icon
-			}
-
-			if !prop.Description.IsNull() {
-				description := prop.Description.ValueString()
-				property.Description = &description
-			}
-
-			if !prop.Spec.IsNull() {
-				spec := prop.Spec.ValueString()
-				property.Spec = &spec
-			}
-
-			props[propIdentifier] = property
-		}
-
-		if prop.Required.ValueBool() {
-			*required = append(*required, propIdentifier)
-		}
-	}
-}
-
-func arrayPropResourceToBody(ctx context.Context, state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range state.Properties.ArrayProp {
-		props[propIdentifier] = cli.BlueprintProperty{
-			Type: "array",
-		}
-
-		if property, ok := props[propIdentifier]; ok {
-
-			if !prop.Title.IsNull() {
-				title := prop.Title.ValueString()
-				property.Title = &title
-			}
-
-			if !prop.Icon.IsNull() {
-				icon := prop.Icon.ValueString()
-				property.Icon = &icon
-			}
-
-			if !prop.Description.IsNull() {
-				description := prop.Description.ValueString()
-				property.Description = &description
-			}
-			if !prop.MinItems.IsNull() {
-				minItems := int(prop.MinItems.ValueInt64())
-				property.MinItems = &minItems
-			}
-
-			if !prop.MaxItems.IsNull() {
-				maxItems := int(prop.MaxItems.ValueInt64())
-				property.MaxItems = &maxItems
-			}
-
-			if prop.StringItems != nil {
-				items := map[string]interface{}{}
-				items["type"] = "string"
-				if !prop.StringItems.Format.IsNull() {
-					items["format"] = prop.StringItems.Format.ValueString()
-				}
-				if !prop.StringItems.Default.IsNull() {
-					defaultList, err := utils.TerraformListToGoArray(ctx, prop.StringItems.Default, "string")
-					if err != nil {
-						return err
-					}
-
-					property.Default = defaultList
-				}
-				property.Items = items
-			}
-
-			if prop.NumberItems != nil {
-				items := map[string]interface{}{}
-				items["type"] = "number"
-				if !prop.NumberItems.Default.IsNull() {
-					defaultList, err := utils.TerraformListToGoArray(ctx, prop.NumberItems.Default, "float64")
-					if err != nil {
-						return err
-					}
-					property.Default = defaultList
-				}
-				property.Items = items
-			}
-
-			if prop.BooleanItems != nil {
-				items := map[string]interface{}{}
-				items["type"] = "boolean"
-				if !prop.BooleanItems.Default.IsNull() {
-					defaultList, err := utils.TerraformListToGoArray(ctx, prop.BooleanItems.Default, "bool")
-					if err != nil {
-						return err
-					}
-					property.Default = defaultList
-				}
-				property.Items = items
-			}
-
-			if prop.ObjectItems != nil {
-				items := map[string]interface{}{}
-				items["type"] = "object"
-				if !prop.ObjectItems.Default.IsNull() {
-					defaultList, err := utils.TerraformListToGoArray(ctx, prop.ObjectItems.Default, "object")
-					if err != nil {
-						return err
-					}
-					property.Default = defaultList
-				}
-				property.Items = items
-			}
-
-			props[propIdentifier] = property
-		}
-
-		if prop.Required.ValueBool() {
-			*required = append(*required, propIdentifier)
-		}
-	}
-
-	return nil
-}
-
-func blueprintResourceToBody(ctx context.Context, state *BlueprintModel) (*cli.Blueprint, error) {
+func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) (*cli.Blueprint, error) {
 	b := &cli.Blueprint{
 		Identifier: state.Identifier.ValueString(),
 	}
@@ -971,7 +639,6 @@ func blueprintResourceToBody(ctx context.Context, state *BlueprintModel) (*cli.B
 		descriptionTest := state.Description.ValueString()
 		b.Description = &descriptionTest
 	}
-	props := map[string]cli.BlueprintProperty{}
 
 	if state.ChangelogDestination != nil {
 		if state.ChangelogDestination.Type.ValueString() == "KAFKA" && !state.ChangelogDestination.Agent.IsNull() {
@@ -994,34 +661,13 @@ func blueprintResourceToBody(ctx context.Context, state *BlueprintModel) (*cli.B
 	}
 
 	required := []string{}
-
+	props := map[string]cli.BlueprintProperty{}
+	var err error
 	if state.Properties != nil {
-		if state.Properties.StringProp != nil {
-			err := stringPropResourceToBody(ctx, state, props, &required)
-			if err != nil {
-				return nil, err
-			}
+		props, required, err = readPropertiesFromState(ctx, state)
+		if err != nil {
+			return nil, err
 		}
-		if state.Properties.ArrayProp != nil {
-			err := arrayPropResourceToBody(ctx, state, props, &required)
-			if err != nil {
-				return nil, err
-			}
-		}
-		if state.Properties.NumberProp != nil {
-			err := numberPropResourceToBody(ctx, state, props, &required)
-			if err != nil {
-				return nil, err
-			}
-		}
-		if state.Properties.BooleanProp != nil {
-			booleanPropResourceToBody(state, props, &required)
-		}
-
-		if state.Properties.ObjectProp != nil {
-			objectPropResourceToBody(state, props, &required)
-		}
-
 	}
 
 	properties := props

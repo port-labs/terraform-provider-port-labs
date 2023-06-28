@@ -337,7 +337,7 @@ func arrayPropResourceToBody(ctx context.Context, state *BlueprintModel, props m
 	return nil
 }
 
-func readPropertiesFromState(ctx context.Context, state *BlueprintModel) (map[string]cli.BlueprintProperty, []string, error) {
+func readStateToPortBody(ctx context.Context, state *BlueprintModel) (map[string]cli.BlueprintProperty, []string, error) {
 	props := map[string]cli.BlueprintProperty{}
 	var required []string
 	if state.Properties != nil {
@@ -369,5 +369,78 @@ func readPropertiesFromState(ctx context.Context, state *BlueprintModel) (map[st
 
 	}
 	return props, required, nil
+}
 
+func relationsResourceToBody(state *BlueprintModel) map[string]cli.Relation {
+	relations := map[string]cli.Relation{}
+
+	for identifier, prop := range state.Relations {
+		target := prop.Target.ValueString()
+		relationProp := cli.Relation{
+			Target: &target,
+		}
+
+		if !prop.Title.IsNull() {
+			title := prop.Title.ValueString()
+			relationProp.Title = &title
+		}
+		if !prop.Many.IsNull() {
+			many := prop.Many.ValueBool()
+			relationProp.Many = &many
+		}
+
+		if !prop.Required.IsNull() {
+			required := prop.Required.ValueBool()
+			relationProp.Required = &required
+		}
+
+		relations[identifier] = relationProp
+	}
+
+	return relations
+}
+
+func mirrorPropertiesToBody(state *BlueprintModel) map[string]cli.BlueprintMirrorProperty {
+	mirrorProperties := map[string]cli.BlueprintMirrorProperty{}
+
+	for identifier, prop := range state.MirrorProperties {
+		mirrorProp := cli.BlueprintMirrorProperty{
+			Path: prop.Path.ValueString(),
+		}
+
+		if !prop.Title.IsNull() {
+			mirrorProp.Title = prop.Title.ValueString()
+		}
+
+		mirrorProperties[identifier] = mirrorProp
+	}
+
+	return mirrorProperties
+}
+
+func calculationPropertiesToBody(state *BlueprintModel) map[string]cli.BlueprintCalculationProperty {
+	calculationProperties := map[string]cli.BlueprintCalculationProperty{}
+
+	for identifier, prop := range state.CalculationProperties {
+		calculationProp := cli.BlueprintCalculationProperty{
+			Calculation: prop.Calculation.ValueString(),
+			Type:        prop.Type.ValueString(),
+		}
+
+		if !prop.Title.IsNull() {
+			calculationProp.Title = prop.Title.ValueString()
+		}
+
+		if !prop.Description.IsNull() {
+			calculationProp.Description = prop.Description.ValueString()
+		}
+
+		if !prop.Format.IsNull() {
+			calculationProp.Format = prop.Format.ValueString()
+		}
+
+		calculationProperties[identifier] = calculationProp
+	}
+
+	return calculationProperties
 }

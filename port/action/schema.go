@@ -75,6 +75,20 @@ func ActionSchema() map[string]schema.Attribute {
 			MarkdownDescription: "Require approval before invoking the action",
 			Optional:            true,
 		},
+		"approval_webhook_notification": schema.SingleNestedAttribute{
+			MarkdownDescription: "The webhook notification of the approval",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"url": schema.StringAttribute{
+					MarkdownDescription: "The URL to invoke the webhook",
+					Required:            true,
+				},
+			},
+		},
+		"approval_email_notification": schema.ObjectAttribute{
+			MarkdownDescription: "The email notification of the approval",
+			Optional:            true,
+		},
 		"trigger": schema.StringAttribute{
 			MarkdownDescription: "The trigger type of the action",
 			Required:            true,

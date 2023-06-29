@@ -12,45 +12,45 @@ import (
 	"github.com/samber/lo"
 )
 
-func writeInvocationMethodToResource(a *cli.Action, data *ActionModel) {
+func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 	if a.InvocationMethod.Type == consts.Kafka {
-		data.KafkaMethod, _ = types.ObjectValue(nil, nil)
+		state.KafkaMethod, _ = types.ObjectValue(nil, nil)
 	}
 
 	if a.InvocationMethod.Type == consts.Webhook {
-		data.WebhookMethod = &WebhookMethodModel{
+		state.WebhookMethod = &WebhookMethodModel{
 			Url: types.StringValue(*a.InvocationMethod.Url),
 		}
 		if a.InvocationMethod.Agent != nil {
-			data.WebhookMethod.Agent = types.BoolValue(*a.InvocationMethod.Agent)
+			state.WebhookMethod.Agent = types.BoolValue(*a.InvocationMethod.Agent)
 		}
 	}
 
 	if a.InvocationMethod.Type == "GITHUB" {
-		data.GithubMethod = &GithubMethodModel{
+		state.GithubMethod = &GithubMethodModel{
 			Repo: types.StringValue(*a.InvocationMethod.Repo),
 			Org:  types.StringValue(*a.InvocationMethod.Org),
 		}
 
 		if a.InvocationMethod.OmitPayload != nil {
-			data.GithubMethod.OmitPayload = types.BoolValue(*a.InvocationMethod.OmitPayload)
+			state.GithubMethod.OmitPayload = types.BoolValue(*a.InvocationMethod.OmitPayload)
 		}
 
 		if a.InvocationMethod.OmitUserInputs != nil {
-			data.GithubMethod.OmitUserInputs = types.BoolValue(*a.InvocationMethod.OmitUserInputs)
+			state.GithubMethod.OmitUserInputs = types.BoolValue(*a.InvocationMethod.OmitUserInputs)
 		}
 
 		if a.InvocationMethod.Workflow != nil {
-			data.GithubMethod.Workflow = types.StringValue(*a.InvocationMethod.Workflow)
+			state.GithubMethod.Workflow = types.StringValue(*a.InvocationMethod.Workflow)
 		}
 
 		if a.InvocationMethod.ReportWorkflowStatus != nil {
-			data.GithubMethod.ReportWorkflowStatus = types.BoolValue(*a.InvocationMethod.ReportWorkflowStatus)
+			state.GithubMethod.ReportWorkflowStatus = types.BoolValue(*a.InvocationMethod.ReportWorkflowStatus)
 		}
 	}
 
 	if a.InvocationMethod.Type == "AZURE-DEVOPS" {
-		data.AzureMethod = &AzureMethodModel{
+		state.AzureMethod = &AzureMethodModel{
 			Org:     types.StringValue(*a.InvocationMethod.Org),
 			Webhook: types.StringValue(*a.InvocationMethod.Webhook),
 		}
@@ -181,7 +181,7 @@ func addArrayPropertiesToResource(v *cli.BlueprintProperty) *ArrayPropModel {
 	return arrayProp
 }
 
-func writeInputsToResource(ctx context.Context, a *cli.Action, data *ActionModel) {
+func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionModel) {
 	if len(a.UserInputs.Properties) > 0 {
 		properties := &UserPropertiesModel{}
 		for k, v := range a.UserInputs.Properties {
@@ -226,7 +226,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, data *ActionModel
 
 				arrayProp := addArrayPropertiesToResource(&v)
 
-				if !data.UserProperties.ArrayProp[k].Required.IsNull() {
+				if !state.UserProperties.ArrayProp[k].Required.IsNull() {
 					if lo.Contains(a.UserInputs.Required, k) {
 						arrayProp.Required = types.BoolValue(true)
 					} else {
@@ -247,7 +247,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, data *ActionModel
 
 				setCommonProperties(v, booleanProp)
 
-				if !data.UserProperties.BooleanProp[k].Required.IsNull() {
+				if !state.UserProperties.BooleanProp[k].Required.IsNull() {
 					if lo.Contains(a.UserInputs.Required, k) {
 						booleanProp.Required = types.BoolValue(true)
 					} else {
@@ -264,7 +264,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, data *ActionModel
 
 				objectProp := addObjectPropertiesToResource(&v)
 
-				if !data.UserProperties.ObjectProp[k].Required.IsNull() {
+				if !state.UserProperties.ObjectProp[k].Required.IsNull() {
 					if lo.Contains(a.UserInputs.Required, k) {
 						objectProp.Required = types.BoolValue(true)
 					} else {
@@ -278,30 +278,45 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, data *ActionModel
 
 			}
 		}
-		data.UserProperties = properties
+		state.UserProperties = properties
 	}
 }
 
-func refreshActionState(ctx context.Context, data *ActionModel, a *cli.Action, blueprintIdentifier string) {
-	data.ID = types.StringValue(a.Identifier)
-	data.Identifier = types.StringValue(a.Identifier)
-	data.Blueprint = types.StringValue(blueprintIdentifier)
-	data.Title = types.StringValue(a.Title)
-	data.Trigger = types.StringValue(a.Trigger)
+func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, blueprintIdentifier string) {
+	state.ID = types.StringValue(a.Identifier)
+	state.Identifier = types.StringValue(a.Identifier)
+	state.Blueprint = types.StringValue(blueprintIdentifier)
+	state.Title = types.StringValue(a.Title)
+	state.Trigger = types.StringValue(a.Trigger)
 	if a.Icon != nil {
-		data.Icon = types.StringValue(*a.Icon)
+		state.Icon = types.StringValue(*a.Icon)
 	}
 	if a.Description != nil {
-		data.Description = types.StringValue(*a.Description)
+		state.Description = types.StringValue(*a.Description)
 	}
 
 	if a.RequiredApproval != nil {
-		data.RequiredApproval = types.BoolValue(*a.RequiredApproval)
+		state.RequiredApproval = types.BoolValue(*a.RequiredApproval)
 	}
 
-	writeInvocationMethodToResource(a, data)
+	if a.ApprovalNotification != nil {
+		if a.ApprovalNotification.Type == "email" {
+			state.ApprovalEmailNotification, _ = types.ObjectValue(nil, nil)
+		} else {
+			state.ApprovalWebhookNotification = &ApprovalWebhookNotificationModel{
+				Url: types.StringValue(a.ApprovalNotification.Url),
+			}
 
-	writeInputsToResource(ctx, a, data)
+			if a.ApprovalNotification.Format != nil {
+				state.ApprovalWebhookNotification.Format = types.StringValue(*a.ApprovalNotification.Format)
+			}
+
+		}
+	}
+
+	writeInvocationMethodToResource(a, state)
+
+	writeInputsToResource(ctx, a, state)
 
 }
 

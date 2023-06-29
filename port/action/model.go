@@ -107,7 +107,8 @@ type ObjectPropModel struct {
 }
 
 type ApprovalWebhookNotificationModel struct {
-	Url types.String `tfsdk:"url"`
+	Url    types.String `tfsdk:"url"`
+	Format types.String `tfsdk:"format"`
 }
 
 type ActionModel struct {

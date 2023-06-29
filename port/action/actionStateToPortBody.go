@@ -27,6 +27,28 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Bluep
 		action.Description = &description
 	}
 
+	if !data.RequiredApproval.IsNull() {
+		requiredApproval := data.RequiredApproval.ValueBool()
+		action.RequiredApproval = &requiredApproval
+	}
+
+	if !data.ApprovalEmailNotification.IsNull() {
+		action.ApprovalNotification = &cli.ApprovalNotification{
+			Type: "email",
+		}
+	}
+
+	if !data.ApprovalWebhookNotification.IsNull() {
+		action.ApprovalNotification = &cli.ApprovalNotification{
+			Type: "webhook",
+			Url:  data.ApprovalWebhookNotification.Url.ValueString(),
+		}
+
+		if !data.ApprovalWebhookNotification.Format.IsNull() {
+			format := data.ApprovalWebhookNotification.Format.ValueString()
+			action.ApprovalNotification.Format = &format
+		}
+
 	action.InvocationMethod = invocationMethodToBody(data)
 
 	if data.UserProperties != nil {

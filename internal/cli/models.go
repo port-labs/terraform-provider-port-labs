@@ -97,6 +97,12 @@ type (
 		Branch               *string `json:"branch,omitempty"`
 	}
 
+	ApprovalNotification struct {
+		Type   string  `json:"type,omitempty"`
+		Url    string  `json:"url,omitempty"`
+		Format *string `json:"format,omitempty"`
+	}
+
 	ChangelogDestination struct {
 		Type  string `json:"type,omitempty"`
 		Url   string `json:"url,omitempty"`
@@ -124,15 +130,16 @@ type (
 	}
 
 	Action struct {
-		ID               string            `json:"id,omitempty"`
-		Identifier       string            `json:"identifier,omitempty"`
-		Description      *string           `json:"description,omitempty"`
-		Title            string            `json:"title,omitempty"`
-		Icon             *string           `json:"icon,omitempty"`
-		UserInputs       ActionUserInputs  `json:"userInputs"`
-		Trigger          string            `json:"trigger"`
-		RequiredApproval *bool             `json:"requiredApproval,omitempty"`
-		InvocationMethod *InvocationMethod `json:"invocationMethod,omitempty"`
+		ID                   string                `json:"id,omitempty"`
+		Identifier           string                `json:"identifier,omitempty"`
+		Description          *string               `json:"description,omitempty"`
+		Title                string                `json:"title,omitempty"`
+		Icon                 *string               `json:"icon,omitempty"`
+		UserInputs           ActionUserInputs      `json:"userInputs"`
+		Trigger              string                `json:"trigger"`
+		RequiredApproval     *bool                 `json:"requiredApproval,omitempty"`
+		InvocationMethod     *InvocationMethod     `json:"invocationMethod,omitempty"`
+		ApprovalNotification *ApprovalNotification `json:"approvalNotification,omitempty"`
 	}
 
 	Relation struct {

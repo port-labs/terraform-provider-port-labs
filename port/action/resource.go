@@ -103,7 +103,7 @@ func (r *ActionResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	action, err := actionStateToPortBody(ctx, data, bp)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to convert entity resource to body", err.Error())
+		resp.Diagnostics.AddError("failed to convert action resource to body", err.Error())
 		return
 	}
 

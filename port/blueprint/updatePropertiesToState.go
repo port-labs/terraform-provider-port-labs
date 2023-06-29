@@ -140,6 +140,8 @@ func addArrayPropertiesToState(v *cli.BlueprintProperty) *ArrayPropModel {
 						attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
 					}
 					arrayProp.NumberItems.Default, _ = types.ListValue(types.Float64Type, attrs)
+				} else {
+					arrayProp.NumberItems.Default = types.ListNull(types.Float64Type)
 				}
 
 			case "boolean":
@@ -151,6 +153,8 @@ func addArrayPropertiesToState(v *cli.BlueprintProperty) *ArrayPropModel {
 						attrs = append(attrs, basetypes.NewBoolValue(value.(bool)))
 					}
 					arrayProp.BooleanItems.Default, _ = types.ListValue(types.BoolType, attrs)
+				} else {
+					arrayProp.BooleanItems.Default = types.ListNull(types.BoolType)
 				}
 
 			case "object":
@@ -167,6 +171,8 @@ func addArrayPropertiesToState(v *cli.BlueprintProperty) *ArrayPropModel {
 						attrs = append(attrs, basetypes.NewStringValue(stringValue))
 					}
 					arrayProp.ObjectItems.Default, _ = types.ListValue(types.StringType, attrs)
+				} else {
+					arrayProp.ObjectItems.Default = types.ListNull(types.StringType)
 				}
 			}
 		}

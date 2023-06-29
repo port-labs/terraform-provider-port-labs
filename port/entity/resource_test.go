@@ -38,9 +38,21 @@ func TestAccPortEntity(t *testing.T) {
 				}
 			}
 			"array_prop" = {
-				"myArrayIdentifier" =  {
-					"title" = "My Array Identifier"
+				"myStringArrayIdentifier" =  {
+					"title" = "My String Array Identifier"
 					"string_items" = {}
+				}
+				"myNumberArrayIdentifier" =  {
+					"title" = "My Number Array Identifier"
+					"number_items" = {}
+				}
+				"myBooleanArrayIdentifier" =  {
+					"title" = "My Boolean Array Identifier"
+					"boolean_items" = {}
+				}
+				"myObjectArrayIdentifier" =  {
+					"title" = "My Object Array Identifier"
+					"object_items" = {}
 				}
 			}
 		}
@@ -63,7 +75,16 @@ func TestAccPortEntity(t *testing.T) {
 			}
 			"array_prop" = {
 				string_items = {
-					"myArrayIdentifier" =  ["My Array Value"]
+					"myStringArrayIdentifier" =  ["My Array Value"]
+				}
+				number_items = {
+					"myNumberArrayIdentifier" =  [123]
+				}
+				boolean_items = {
+					"myBooleanArrayIdentifier" =  [true]
+				}
+				object_items = {
+					"myObjectArrayIdentifier" =  [jsonencode({"foo": "bar"})]
 				}
 			}
 		}
@@ -84,7 +105,10 @@ func TestAccPortEntity(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.number_prop.myNumberIdentifier", "123"),
 					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.boolean_prop.myBooleanIdentifier", "true"),
 					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.object_prop.myObjectIdentifier", "{\"foo\":\"bar\"}"),
-					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.array_prop.string_items.myArrayIdentifier.0", "My Array Value"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.array_prop.string_items.myStringArrayIdentifier.0", "My Array Value"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.array_prop.number_items.myNumberArrayIdentifier.0", "123"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.array_prop.boolean_items.myBooleanArrayIdentifier.0", "true"),
+					resource.TestCheckResourceAttr("port-labs_entity.microservice", "properties.array_prop.object_items.myObjectArrayIdentifier.0", "{\"foo\":\"bar\"}"),
 				),
 			},
 		},

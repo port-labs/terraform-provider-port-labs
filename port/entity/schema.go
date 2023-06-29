@@ -87,6 +87,10 @@ func EntitySchema() map[string]schema.Attribute {
 							ElementType: types.ListType{ElemType: types.BoolType},
 							Optional:    true,
 						},
+						"object_items": schema.MapAttribute{
+							ElementType: types.ListType{ElemType: types.StringType},
+							Optional:    true,
+						},
 					},
 				},
 			},

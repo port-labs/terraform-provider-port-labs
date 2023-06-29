@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
 // Ensure provider defined types fully satisfy framework interfaces
@@ -86,13 +87,6 @@ func refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, 
 		state.Properties = &EntityPropertiesModel{}
 		for k, v := range e.Properties {
 			switch t := v.(type) {
-			// case map[string]interface{}:
-			// 	js, _ := json.Marshal(&t)
-			// 	propValue = string(js)
-			// case []interface{}:
-			// 	propValue = t
-			// case float64:
-			// 	propValue = strconv.FormatFloat(t, 'f', -1, 64)
 			case float64:
 				if state.Properties.NumberProp == nil {
 					state.Properties.NumberProp = make(map[string]float64)
@@ -140,6 +134,15 @@ func refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, 
 						mapItems[k] = append(mapItems[k], item.(bool))
 					}
 					state.Properties.ArrayProp.BooleanItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.BoolType}, mapItems)
+
+				case map[string]interface{}:
+					mapItems := make(map[string][]string)
+					for _, item := range t {
+						js, _ := json.Marshal(&item)
+						mapItems[k] = append(mapItems[k], string(js))
+					}
+					state.Properties.ArrayProp.ObjectItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, mapItems)
+
 				}
 			case interface{}:
 				if state.Properties.ObjectProp == nil {
@@ -253,30 +256,19 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 		if state.Properties.ArrayProp != nil {
 			if !state.Properties.ArrayProp.StringItems.IsNull() {
 				for identifier, itemArray := range state.Properties.ArrayProp.StringItems.Elements() {
-					var items []tftypes.Value
-					v, _ := itemArray.ToTerraformValue(ctx)
-					v.As(&items)
-					var stringItems []string
-					for _, item := range items {
-						var v string
-						item.As(&v)
-						stringItems = append(stringItems, v)
+					var stringItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "string")
+					if err != nil {
+						return nil, err
 					}
-
 					properties[identifier] = stringItems
 				}
 			}
 
 			if !state.Properties.ArrayProp.NumberItems.IsNull() {
 				for identifier, itemArray := range state.Properties.ArrayProp.NumberItems.Elements() {
-					var items []tftypes.Value
-					v, _ := itemArray.ToTerraformValue(ctx)
-					v.As(&items)
-					var numberItems []float64
-					for _, item := range items {
-						var v float64
-						item.As(&v)
-						numberItems = append(numberItems, v)
+					var numberItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "float64")
+					if err != nil {
+						return nil, err
 					}
 					properties[identifier] = numberItems
 				}
@@ -284,16 +276,21 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 
 			if !state.Properties.ArrayProp.BooleanItems.IsNull() {
 				for identifier, itemArray := range state.Properties.ArrayProp.BooleanItems.Elements() {
-					var items []tftypes.Value
-					v, _ := itemArray.ToTerraformValue(ctx)
-					v.As(&items)
-					var booleanItems []bool
-					for _, item := range items {
-						var v bool
-						item.As(&v)
-						booleanItems = append(booleanItems, v)
+					var booleanItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "bool")
+					if err != nil {
+						return nil, err
 					}
 					properties[identifier] = booleanItems
+				}
+			}
+
+			if !state.Properties.ArrayProp.ObjectItems.IsNull() {
+				for identifier, itemArray := range state.Properties.ArrayProp.ObjectItems.Elements() {
+					var objectItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "object")
+					if err != nil {
+						return nil, err
+					}
+					properties[identifier] = objectItems
 				}
 			}
 

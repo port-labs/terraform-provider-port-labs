@@ -11,7 +11,7 @@ provider "port-labs" {
   secret    = "{YOUR CLIENT SECRET}" # or set the environment variable PORT_CLIENT_SECRET
 }
 
-resource "port-labs_entity" "microservice" {
+resource "port_entity" "microservice" {
   title     = "monolith"
   blueprint = "microservice_blueprint"
   properties {

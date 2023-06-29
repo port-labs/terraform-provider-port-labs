@@ -1,4 +1,4 @@
-resource "port-labs_blueprint" "environment" {
+resource "port_blueprint" "environment" {
   title      = "Environment"
   icon       = "Environment"
   identifier = "hedwig-env"
@@ -16,7 +16,7 @@ resource "port-labs_blueprint" "environment" {
   }
 }
 
-resource "port-labs_blueprint" "vm" {
+resource "port_blueprint" "vm" {
   title      = "VM"
   icon       = "GPU"
   identifier = "hedwig-vm"
@@ -32,7 +32,7 @@ resource "port-labs_blueprint" "vm" {
     "environment" = {
       title    = "Test Relation"
       required = "true"
-      target   = port-labs_blueprint.environment.identifier
+      target   = port_blueprint.environment.identifier
     }
   }
 }

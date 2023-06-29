@@ -1,8 +1,8 @@
-resource "port-labs_action" "restart_microservice" {
+resource "port_action" "restart_microservice" {
   title      = "Restart microservice"
   icon       = "Terraform"
   identifier = "restart-micrservice"
-  blueprint  = port-labs_blueprint.microservice.identifier
+  blueprint  = port_blueprint.microservice.identifier
   trigger    = "DAY-2"
   webhook_method {
     type = "WEBHOOK"

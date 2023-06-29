@@ -1,7 +1,7 @@
 package consts
 
 const (
-	ProviderName   = "port-labs"
+	ProviderName   = "port"
 	DefaultBaseUrl = "https://api.getport.io"
 	Webhook        = "WEBHOOK"
 	Kafka          = "KAFKA"

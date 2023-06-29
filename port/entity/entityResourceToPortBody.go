@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
@@ -53,22 +52,26 @@ func writeArrayResourceToBody(ctx context.Context, state *EntityModel, propertie
 	return nil
 }
 
-func writeRelationsToBody(ctx context.Context, relations basetypes.MapValue) map[string]interface{} {
+func writeRelationsToBody(ctx context.Context, relations basetypes.MapValue) (map[string]interface{}, error) {
 	relationsBody := make(map[string]interface{})
 	for identifier, relation := range relations.Elements() {
-		var items []tftypes.Value
-		v, _ := relation.ToTerraformValue(ctx)
-		v.As(&items)
-		var relationsValue []string
-		for _, item := range items {
-			var v string
-			item.As(&v)
-			relationsValue = append(relationsValue, v)
+		// var items []tftypes.Value
+		// v, _ := relation.ToTerraformValue(ctx)
+		// v.As(&items)
+		// var relationsValue []string
+		// for _, item := range items {
+		// 	var v string
+		// 	item.As(&v)
+		// 	relationsValue = append(relationsValue, v)
+		// }
+		relationsToBody, err := utils.TerraformListToGoArray(ctx, relation.(basetypes.ListValue), "string")
+		if err != nil {
+			return nil, err
 		}
-		relationsBody[identifier] = relationsValue
+		relationsBody[identifier] = relationsToBody
 	}
 
-	return relationsBody
+	return relationsBody, nil
 }
 
 func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Blueprint) (*cli.Entity, error) {
@@ -129,7 +132,11 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 
 	e.Properties = properties
 
-	relations := writeRelationsToBody(ctx, state.Relations)
+	relations, err := writeRelationsToBody(ctx, state.Relations)
+	if err != nil {
+		return nil, err
+	}
+
 	e.Relations = relations
 	return e, nil
 }

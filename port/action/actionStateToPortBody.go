@@ -3,11 +3,10 @@ package action
 import (
 	"context"
 	"encoding/json"
-	"log"
-	"math/big"
 
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
 func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Blueprint) (*cli.Action, error) {
@@ -38,7 +37,7 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Bluep
 		}
 	}
 
-	if !data.ApprovalWebhookNotification.IsNull() {
+	if data.ApprovalWebhookNotification != nil {
 		action.ApprovalNotification = &cli.ApprovalNotification{
 			Type: "webhook",
 			Url:  data.ApprovalWebhookNotification.Url.ValueString(),
@@ -48,11 +47,15 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Bluep
 			format := data.ApprovalWebhookNotification.Format.ValueString()
 			action.ApprovalNotification.Format = &format
 		}
+	}
 
 	action.InvocationMethod = invocationMethodToBody(data)
 
 	if data.UserProperties != nil {
-		actionPropertiesToBody(ctx, action, data)
+		err := actionPropertiesToBody(ctx, action, data)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		action.UserInputs.Properties = make(map[string]cli.BlueprintProperty)
 	}
@@ -60,7 +63,7 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Bluep
 	return action, nil
 }
 
-func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) {
+func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
 	for propIdentifier, prop := range d.UserProperties.StringProp {
 		property := cli.BlueprintProperty{
 			Type: "string",
@@ -103,13 +106,11 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 		}
 
 		if !prop.Enum.IsNull() {
-			enumList := []interface{}{}
-			for _, enum := range prop.Enum.Elements() {
-				v, _ := enum.ToTerraformValue(ctx)
-				var keyValue string
-				v.As(&keyValue)
-				enumList = append(enumList, keyValue)
+			enumList, err := utils.TerraformListToGoArray(ctx, prop.Enum, "string")
+			if err != nil {
+				return err
 			}
+
 			property.Enum = enumList
 		}
 
@@ -119,10 +120,11 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 			*required = append(*required, propIdentifier)
 		}
 	}
+	return nil
 }
 
-func numberPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) {
-	for propIdentifier, prop := range d.UserProperties.NumberProp {
+func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+	for propIdentifier, prop := range state.UserProperties.NumberProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "number",
 		}
@@ -158,14 +160,12 @@ func numberPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 			}
 
 			if !prop.Enum.IsNull() {
-				property.Enum = []interface{}{}
-				for _, e := range prop.Enum.Elements() {
-					v, _ := e.ToTerraformValue(ctx)
-					var keyValue big.Float
-					v.As(&keyValue)
-					floatValue, _ := keyValue.Float64()
-					property.Enum = append(property.Enum, floatValue)
+
+				enumList, err := utils.TerraformListToGoArray(ctx, prop.Enum, "float64")
+				if err != nil {
+					return err
 				}
+				property.Enum = enumList
 			}
 
 			props[propIdentifier] = property
@@ -174,6 +174,7 @@ func numberPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 			*required = append(*required, propIdentifier)
 		}
 	}
+	return nil
 }
 
 func booleanPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) {
@@ -210,7 +211,7 @@ func booleanPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintPro
 	}
 }
 
-func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) {
+func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
 	for propIdentifier, prop := range d.UserProperties.ObjectProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "object",
@@ -222,7 +223,7 @@ func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProp
 				defaultObj := make(map[string]interface{})
 				err := json.Unmarshal([]byte(defaultAsString), &defaultObj)
 				if err != nil {
-					log.Fatal(err)
+					return err
 				} else {
 					property.Default = defaultObj
 				}
@@ -255,9 +256,71 @@ func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProp
 			*required = append(*required, propIdentifier)
 		}
 	}
+	return nil
 }
 
-func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) {
+func handleArrayItemsToBody(ctx context.Context, property *cli.BlueprintProperty, prop ArrayPropModel, required *[]string) error {
+	if prop.StringItems != nil {
+		items := map[string]interface{}{}
+		items["type"] = "string"
+		if !prop.StringItems.Format.IsNull() {
+			items["format"] = prop.StringItems.Format.ValueString()
+		}
+
+		if !prop.StringItems.Default.IsNull() {
+			defaultList, err := utils.TerraformListToGoArray(ctx, prop.StringItems.Default, "string")
+			if err != nil {
+				return err
+			}
+
+			property.Default = defaultList
+		}
+		property.Items = items
+	}
+
+	if prop.NumberItems != nil {
+		items := map[string]interface{}{}
+		items["type"] = "number"
+		if !prop.NumberItems.Default.IsNull() {
+			defaultList, err := utils.TerraformListToGoArray(ctx, prop.StringItems.Default, "float64")
+			if err != nil {
+				return err
+			}
+
+			items["default"] = defaultList
+		}
+		property.Items = items
+	}
+
+	if prop.BooleanItems != nil {
+		items := map[string]interface{}{}
+		items["type"] = "boolean"
+		if !prop.BooleanItems.Default.IsNull() {
+			defaultList, err := utils.TerraformListToGoArray(ctx, prop.StringItems.Default, "bool")
+			if err != nil {
+				return err
+			}
+
+			items["default"] = defaultList
+		}
+		property.Items = items
+	}
+
+	if prop.ObjectItems != nil {
+		items := map[string]interface{}{}
+		items["type"] = "object"
+		if !prop.ObjectItems.Default.IsNull() {
+			defaultList, err := utils.TerraformListToGoArray(ctx, prop.StringItems.Default, "object")
+			if err != nil {
+				return err
+			}
+			items["default"] = defaultList
+		}
+		property.Items = items
+	}
+	return nil
+}
+func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
 	for propIdentifier, prop := range d.UserProperties.ArrayProp {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "array",
@@ -289,50 +352,9 @@ func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[stri
 				property.MaxItems = &maxItems
 			}
 
-			if prop.StringItems != nil {
-				items := map[string]interface{}{}
-				items["type"] = "string"
-				if !prop.StringItems.Format.IsNull() {
-					items["format"] = prop.StringItems.Format.ValueString()
-				}
-				if !prop.StringItems.Default.IsNull() {
-					defaultList := []interface{}{}
-					for _, e := range prop.StringItems.Default.Elements() {
-						v, _ := e.ToTerraformValue(ctx)
-						var keyValue string
-						v.As(&keyValue)
-						defaultList = append(defaultList, keyValue)
-					}
-					property.Default = defaultList
-				}
-				property.Items = items
-			}
-
-			if prop.NumberItems != nil {
-				items := map[string]interface{}{}
-				items["type"] = "number"
-				if !prop.NumberItems.Default.IsNull() {
-					items["default"] = prop.NumberItems.Default
-				}
-				property.Items = items
-			}
-
-			if prop.BooleanItems != nil {
-				items := map[string]interface{}{}
-				items["type"] = "boolean"
-				if !prop.BooleanItems.Default.IsNull() {
-					items["default"] = prop.BooleanItems.Default
-				}
-				property.Items = items
-			}
-
-			if prop.ObjectItems != nil {
-				items := map[string]interface{}{}
-				items["type"] = "object"
-				if !prop.ObjectItems.Default.IsNull() {
-					items["default"] = prop.ObjectItems.Default
-				}
-				property.Items = items
+			err := handleArrayItemsToBody(ctx, &property, prop, required)
+			if err != nil {
+				return err
 			}
 
 			props[propIdentifier] = property
@@ -342,32 +364,38 @@ func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[stri
 			*required = append(*required, propIdentifier)
 		}
 	}
+	return nil
 }
 
-func actionPropertiesToBody(ctx context.Context, action *cli.Action, data *ActionModel) {
+func actionPropertiesToBody(ctx context.Context, action *cli.Action, data *ActionModel) error {
 	required := []string{}
 	props := map[string]cli.BlueprintProperty{}
-
+	var err error
 	if data.UserProperties.StringProp != nil {
-		stringPropResourceToBody(ctx, data, props, &required)
+		err = stringPropResourceToBody(ctx, data, props, &required)
 	}
 	if data.UserProperties.ArrayProp != nil {
-		arrayPropResourceToBody(ctx, data, props, &required)
+		err = arrayPropResourceToBody(ctx, data, props, &required)
 	}
 	if data.UserProperties.NumberProp != nil {
-		numberPropResourceToBody(ctx, data, props, &required)
+		err = numberPropResourceToBody(ctx, data, props, &required)
 	}
 	if data.UserProperties.BooleanProp != nil {
 		booleanPropResourceToBody(data, props, &required)
 	}
 
 	if data.UserProperties.ObjectProp != nil {
-		objectPropResourceToBody(data, props, &required)
+		err = objectPropResourceToBody(data, props, &required)
+	}
+
+	if err != nil {
+		return err
 	}
 
 	action.UserInputs.Properties = props
 	action.UserInputs.Required = required
 
+	return nil
 }
 func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 	if data.AzureMethod != nil {

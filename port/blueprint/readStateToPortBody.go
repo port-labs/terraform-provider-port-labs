@@ -78,7 +78,10 @@ func stringPropResourceToBody(ctx context.Context, state *BlueprintModel, props 
 			for k, v := range prop.EnumColors.Elements() {
 				value, _ := v.ToTerraformValue(ctx)
 				var keyValue string
-				value.As(&keyValue)
+				err := value.As(&keyValue)
+				if err != nil {
+					return err
+				}
 				enumColor[k] = keyValue
 			}
 
@@ -143,7 +146,10 @@ func numberPropResourceToBody(ctx context.Context, state *BlueprintModel, props 
 				for k, v := range prop.EnumColors.Elements() {
 					value, _ := v.ToTerraformValue(ctx)
 					var keyValue string
-					value.As(&keyValue)
+					err := value.As(&keyValue)
+					if err != nil {
+						return err
+					}
 					property.EnumColors[k] = keyValue
 				}
 			}

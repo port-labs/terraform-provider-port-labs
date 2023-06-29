@@ -314,17 +314,25 @@ func TestAccPortBlueprintObjectProperty(t *testing.T) {
 
 func TestAccPortBlueprintWithChangelogDestination(t *testing.T) {
 	identifier := utils.GenID()
+	identifier2 := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port-labs_blueprint" "microservice" {
 		title = "TF Provider Test"
 		icon = "Terraform"
 		identifier = "%s"
-		changelog_destination = {
+		webhook_changelog_destination = {
 						type = "WEBHOOK"
 						url = "https://google.com"
 						agent = true
 					}
-	}`, identifier)
+	}
+	resource "port-labs_blueprint" "microservice2" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		kafka_changelog_destination = {}
+	}
+	`, identifier, identifier2)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -336,9 +344,11 @@ func TestAccPortBlueprintWithChangelogDestination(t *testing.T) {
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "title", "TF Provider Test"),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "identifier", identifier),
 					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.type", "WEBHOOK"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.url", "https://google.com"),
-					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "changelog_destination.agent", "true"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "webhook_changelog_destination.url", "https://google.com"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice", "webhook_changelog_destination.agent", "true"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice2", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice2", "identifier", identifier2),
+					resource.TestCheckResourceAttr("port-labs_blueprint.microservice2", "icon", "Terraform"),
 				),
 			},
 		},

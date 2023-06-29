@@ -338,23 +338,23 @@ func BlueprintSchema() map[string]schema.Attribute {
 				},
 			},
 		},
-		"changelog_destination": schema.SingleNestedAttribute{
-			MarkdownDescription: "The changelog destination of the blueprint",
+		"webhook_changelog_destination": schema.SingleNestedAttribute{
+			MarkdownDescription: "The webhook changelog destination of the blueprint",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
-				"type": schema.StringAttribute{
-					MarkdownDescription: "The type of the changelog destination",
+				"url": schema.StringAttribute{
+					MarkdownDescription: "The url of the webhook changelog destination",
 					Required:            true,
 				},
-				"url": schema.StringAttribute{
-					MarkdownDescription: "The url of the changelog destination",
-					Optional:            true,
-				},
 				"agent": schema.BoolAttribute{
-					MarkdownDescription: "The agent of the changelog destination",
+					MarkdownDescription: "The agent of the webhook changelog destination",
 					Optional:            true,
 				},
 			},
+		},
+		"kafka_changelog_destination": schema.ObjectAttribute{
+			MarkdownDescription: "The changelog destination of the blueprint",
+			Optional:            true,
 		},
 		"properties": schema.SingleNestedAttribute{
 			MarkdownDescription: "The properties of the blueprint",

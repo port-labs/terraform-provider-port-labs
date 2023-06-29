@@ -2,12 +2,12 @@ package blueprint
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
 )
 
 var _ resource.Resource = &BlueprintResource{}
@@ -81,10 +81,15 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 	}
 
 	if b.ChangelogDestination != nil {
-		bm.ChangelogDestination = &ChangelogDestinationModel{
-			Type:  types.StringValue(b.ChangelogDestination.Type),
-			Url:   types.StringValue(b.ChangelogDestination.Url),
-			Agent: types.BoolValue(b.ChangelogDestination.Agent),
+		if b.ChangelogDestination.Type == consts.Kafka {
+			bm.KafkaChangelogDestination, _ = types.ObjectValue(nil, nil)
+		} else {
+			bm.WebhookChangelogDestination = &WebhookChangelogDestinationModel{
+				Url: types.StringValue(b.ChangelogDestination.Url),
+			}
+			if b.ChangelogDestination.Agent != nil {
+				bm.WebhookChangelogDestination.Agent = types.BoolValue(*b.ChangelogDestination.Agent)
+			}
 		}
 	}
 	if b.TeamInheritance != nil {
@@ -232,24 +237,27 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 		b.Description = &descriptionTest
 	}
 
-	if state.ChangelogDestination != nil {
-		if state.ChangelogDestination.Type.ValueString() == "KAFKA" && !state.ChangelogDestination.Agent.IsNull() {
-			return nil, fmt.Errorf("agent is not supported for Kafka changelog destination")
+	if !state.KafkaChangelogDestination.IsNull() {
+		b.ChangelogDestination = &cli.ChangelogDestination{
+			Type: consts.Kafka,
 		}
-		b.ChangelogDestination = &cli.ChangelogDestination{}
-		b.ChangelogDestination.Type = state.ChangelogDestination.Type.ValueString()
-		b.ChangelogDestination.Url = state.ChangelogDestination.Url.ValueString()
-		b.ChangelogDestination.Agent = state.ChangelogDestination.Agent.ValueBool()
-	} else {
-		b.ChangelogDestination = nil
+	}
+
+	if state.WebhookChangelogDestination != nil {
+		b.ChangelogDestination = &cli.ChangelogDestination{
+			Type: consts.Webhook,
+			Url:  state.WebhookChangelogDestination.Url.ValueString(),
+		}
+		if !state.WebhookChangelogDestination.Agent.IsNull() {
+			agent := state.WebhookChangelogDestination.Agent.ValueBool()
+			b.ChangelogDestination.Agent = &agent
+		}
 	}
 
 	if state.TeamInheritance != nil {
 		b.TeamInheritance = &cli.TeamInheritance{
 			Path: state.TeamInheritance.Path.ValueString(),
 		}
-	} else {
-		b.TeamInheritance = nil
 	}
 
 	required := []string{}

@@ -95,10 +95,21 @@ func EntitySchema() map[string]schema.Attribute {
 				},
 			},
 		},
-		"relations": schema.MapAttribute{
+		"relations": schema.SingleNestedAttribute{
 			MarkdownDescription: "The relations of the entity",
 			Optional:            true,
-			ElementType:         types.ListType{ElemType: types.StringType},
+			Attributes: map[string]schema.Attribute{
+				"single_relation": schema.MapAttribute{
+					MarkdownDescription: "The single relation of the entity",
+					Optional:            true,
+					ElementType:         types.StringType,
+				},
+				"many_relations": schema.MapAttribute{
+					MarkdownDescription: "The many relation of the entity",
+					Optional:            true,
+					ElementType:         types.ListType{ElemType: types.StringType},
+				},
+			},
 		},
 		"created_at": schema.StringAttribute{
 			MarkdownDescription: "The creation date of the entity",

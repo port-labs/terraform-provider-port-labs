@@ -158,7 +158,9 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 			}
 		}
 		relations = {
-			"tfRelation" = [port_entity.microservice2.id]
+			single_relation = {
+				"tfRelation" = port_entity.microservice2.id
+			}
 		}
 	}
 	
@@ -185,7 +187,7 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 					resource.TestCheckResourceAttr("port_entity.microservice", "title", "TF Provider Test Entity0"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "blueprint", identifier),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.string_prop.myStringIdentifier", "My String Value"),
-					resource.TestCheckResourceAttr("port_entity.microservice", "relations.tfRelation.0", "tf-entity-2"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "relations.single_relation.tfRelation", "tf-entity-2"),
 				),
 			},
 		},
@@ -237,7 +239,9 @@ func TestAccPortEntityWithManyRelation(t *testing.T) {
 			}
 		}
 		relations = {
-			"tfRelation" = [port_entity.microservice2.id, port_entity.microservice3.id]
+			"many_relations" = {
+				"tfRelation" = [port_entity.microservice2.id, port_entity.microservice3.id]
+			}
 		}
 	}
 
@@ -275,8 +279,8 @@ func TestAccPortEntityWithManyRelation(t *testing.T) {
 					resource.TestCheckResourceAttr("port_entity.microservice", "title", "TF Provider Test Entity0"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "blueprint", identifier1),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.string_prop.myStringIdentifier", "My String Value"),
-					resource.TestCheckResourceAttr("port_entity.microservice", "relations.tfRelation.0", "tf-entity-2"),
-					resource.TestCheckResourceAttr("port_entity.microservice", "relations.tfRelation.1", "tf-entity-3"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "relations.many_relations.tfRelation.0", "tf-entity-2"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "relations.many_relations.tfRelation.1", "tf-entity-3"),
 				),
 			},
 		},

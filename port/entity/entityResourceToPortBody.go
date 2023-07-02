@@ -52,25 +52,21 @@ func writeArrayResourceToBody(ctx context.Context, state *EntityModel, propertie
 	return nil
 }
 
-func writeRelationsToBody(ctx context.Context, relations basetypes.MapValue) (map[string]interface{}, error) {
+func writeRelationsToBody(ctx context.Context, relations *RelationModel) (map[string]interface{}, error) {
 	relationsBody := make(map[string]interface{})
-	for identifier, relation := range relations.Elements() {
-		// var items []tftypes.Value
-		// v, _ := relation.ToTerraformValue(ctx)
-		// v.As(&items)
-		// var relationsValue []string
-		// for _, item := range items {
-		// 	var v string
-		// 	item.As(&v)
-		// 	relationsValue = append(relationsValue, v)
-		// }
-		relationsToBody, err := utils.TerraformListToGoArray(ctx, relation.(basetypes.ListValue), "string")
-		if err != nil {
-			return nil, err
+	if relations != nil {
+		if relations.SingleRelation != nil {
+			for identifier, relation := range relations.SingleRelation {
+				relationsBody[identifier] = relation
+			}
 		}
-		relationsBody[identifier] = relationsToBody
-	}
 
+		if relations.ManyRelations != nil {
+			for identifier, relations := range relations.ManyRelations {
+				relationsBody[identifier] = relations
+			}
+		}
+	}
 	return relationsBody, nil
 }
 

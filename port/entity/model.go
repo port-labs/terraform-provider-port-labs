@@ -20,8 +20,8 @@ type EntityPropertiesModel struct {
 }
 
 type RelationModel struct {
-	Identifier  types.String `tfsdk:"identifier"`
-	Identifiers types.List   `tfsdk:"identifiers"`
+	SingleRelation map[string]string   `tfsdk:"single_relation"`
+	ManyRelations  map[string][]string `tfsdk:"many_relations"`
 }
 
 type EntityModel struct {
@@ -37,5 +37,5 @@ type EntityModel struct {
 	UpdatedBy  types.String           `tfsdk:"updated_by"`
 	Properties *EntityPropertiesModel `tfsdk:"properties"`
 	Teams      []types.String         `tfsdk:"teams"`
-	Relations  types.Map              `tfsdk:"relations"`
+	Relations  *RelationModel         `tfsdk:"relations"`
 }

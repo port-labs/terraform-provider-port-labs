@@ -38,15 +38,15 @@ type (
 		Default            interface{}         `json:"default,omitempty"`
 		Icon               *string             `json:"icon,omitempty"`
 		Format             *string             `json:"format,omitempty"`
-		MaxLength          int                 `json:"maxLength,omitempty"`
-		MinLength          int                 `json:"minLength,omitempty"`
+		MaxLength          *int                `json:"maxLength,omitempty"`
+		MinLength          *int                `json:"minLength,omitempty"`
 		MaxItems           *int                `json:"maxItems,omitempty"`
 		MinItems           *int                `json:"minItems,omitempty"`
 		Maximum            *float64            `json:"maximum,omitempty"`
 		Minimum            *float64            `json:"minimum,omitempty"`
 		Description        *string             `json:"description,omitempty"`
 		Blueprint          string              `json:"blueprint,omitempty"`
-		Pattern            string              `json:"pattern,omitempty"`
+		Pattern            *string             `json:"pattern,omitempty"`
 		Enum               []interface{}       `json:"enum,omitempty"`
 		Spec               *string             `json:"spec,omitempty"`
 		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`

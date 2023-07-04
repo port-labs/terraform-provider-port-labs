@@ -78,6 +78,8 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 
 	if b.Description != nil {
 		bm.Description = types.StringValue(*b.Description)
+	} else {
+		bm.Description = types.StringNull()
 	}
 
 	if b.ChangelogDestination != nil {

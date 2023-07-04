@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -46,16 +47,16 @@ func (r *ActionResource) ImportState(ctx context.Context, req resource.ImportSta
 }
 
 func (r *ActionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var data *ActionModel
+	var state *ActionModel
 
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	blueprintIdentifier := data.Blueprint.ValueString()
-	a, statusCode, err := r.portClient.ReadAction(ctx, data.Blueprint.ValueString(), data.Identifier.ValueString())
+	blueprintIdentifier := state.Blueprint.ValueString()
+	a, statusCode, err := r.portClient.ReadAction(ctx, state.Blueprint.ValueString(), state.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.State.RemoveResource(ctx)
@@ -65,20 +66,20 @@ func (r *ActionResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	refreshActionState(ctx, data, a, blueprintIdentifier)
+	refreshActionState(ctx, state, a, blueprintIdentifier)
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *ActionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *ActionModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	var state *ActionModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.portClient.DeleteAction(ctx, data.Blueprint.ValueString(), data.Identifier.ValueString())
+	err := r.portClient.DeleteAction(ctx, state.Blueprint.ValueString(), state.Identifier.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete action", err.Error())
 		return
@@ -88,20 +89,20 @@ func (r *ActionResource) Delete(ctx context.Context, req resource.DeleteRequest,
 }
 
 func (r *ActionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var data *ActionModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	var state *ActionModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	bp, _, err := r.portClient.ReadBlueprint(ctx, data.Blueprint.ValueString())
+	bp, _, err := r.portClient.ReadBlueprint(ctx, state.Blueprint.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read blueprint", err.Error())
 		return
 	}
 
-	action, err := actionStateToPortBody(ctx, data, bp)
+	action, err := actionStateToPortBody(ctx, state, bp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert action resource to body", err.Error())
 		return
@@ -113,27 +114,27 @@ func (r *ActionResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	data.ID = types.StringValue(a.Identifier)
-	data.Identifier = types.StringValue(a.Identifier)
+	state.ID = types.StringValue(fmt.Sprintf("%s:%s", bp.Identifier, a.Identifier))
+	state.Identifier = types.StringValue(a.Identifier)
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *ActionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var data *ActionModel
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	var state *ActionModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	bp, _, err := r.portClient.ReadBlueprint(ctx, data.Blueprint.ValueString())
+	bp, _, err := r.portClient.ReadBlueprint(ctx, state.Blueprint.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read blueprint", err.Error())
 		return
 	}
 
-	action, err := actionStateToPortBody(ctx, data, bp)
+	action, err := actionStateToPortBody(ctx, state, bp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert entity resource to body", err.Error())
 		return
@@ -145,9 +146,9 @@ func (r *ActionResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	data.ID = types.StringValue(a.Identifier)
-	data.Identifier = types.StringValue(a.Identifier)
+	state.ID = types.StringValue(fmt.Sprintf("%s:%s", bp.Identifier, a.Identifier))
+	state.Identifier = types.StringValue(a.Identifier)
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 
 }

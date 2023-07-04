@@ -3,6 +3,7 @@ package action
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -279,7 +280,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 }
 
 func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, blueprintIdentifier string) {
-	state.ID = types.StringValue(a.Identifier)
+	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintIdentifier, a.Identifier))
 	state.Identifier = types.StringValue(a.Identifier)
 	state.Blueprint = types.StringValue(blueprintIdentifier)
 	state.Title = types.StringValue(a.Title)

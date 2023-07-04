@@ -126,9 +126,6 @@ func EntitySchema() map[string]schema.Attribute {
 		"updated_by": schema.StringAttribute{
 			MarkdownDescription: "The last updater of the entity",
 			Computed:            true,
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-			},
 		},
 	}
 }

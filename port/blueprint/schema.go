@@ -322,9 +322,6 @@ func BlueprintSchema() map[string]schema.Attribute {
 		"updated_by": schema.StringAttribute{
 			MarkdownDescription: "The last updater of the blueprint",
 			Computed:            true,
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-			},
 		},
 		"team_inheritance": schema.SingleNestedAttribute{
 			MarkdownDescription: "The team inheritance of the blueprint",

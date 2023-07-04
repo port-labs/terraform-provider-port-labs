@@ -212,7 +212,7 @@ func StringPropertySchema() schema.Attribute {
 
 	utils.SpreadMaps(stringPropertySchema, MetadataProperties())
 	return schema.MapNestedAttribute{
-		MarkdownDescription: "The string property of the blueprint",
+		MarkdownDescription: "The string property of the action",
 		Optional:            true,
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: stringPropertySchema,
@@ -247,7 +247,7 @@ func NumberPropertySchema() schema.Attribute {
 
 	utils.SpreadMaps(numberPropertySchema, MetadataProperties())
 	return schema.MapNestedAttribute{
-		MarkdownDescription: "The number property of the blueprint",
+		MarkdownDescription: "The number property of the action",
 		Optional:            true,
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: numberPropertySchema,
@@ -263,7 +263,7 @@ func BooleanPropertySchema() schema.Attribute {
 		},
 	}
 	return schema.MapNestedAttribute{
-		MarkdownDescription: "The boolean property of the blueprint",
+		MarkdownDescription: "The boolean property of the action",
 		Optional:            true,
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: booleanPropertySchema,
@@ -279,7 +279,7 @@ func ObjectPropertySchema() schema.Attribute {
 		},
 	}
 	return schema.MapNestedAttribute{
-		MarkdownDescription: "The object property of the blueprint",
+		MarkdownDescription: "The object property of the action",
 		Optional:            true,
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: objectPropertySchema,
@@ -353,7 +353,7 @@ func ArrayPropertySchema() schema.Attribute {
 		},
 	}
 	return schema.MapNestedAttribute{
-		MarkdownDescription: "The array property of the blueprint",
+		MarkdownDescription: "The array property of the action",
 		Optional:            true,
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: arrayPropertySchema,

@@ -47,6 +47,7 @@ type NumberPropModel struct {
 	Minimum     types.Float64 `tfsdk:"minimum"`
 	Enum        types.List    `tfsdk:"enum"`
 	Blueprint   types.String  `tfsdk:"blueprint"`
+	Format      types.String  `tfsdk:"format"`
 }
 
 type BooleanPropModel struct {
@@ -55,6 +56,8 @@ type BooleanPropModel struct {
 	Description types.String `tfsdk:"description"`
 	Default     types.Bool   `tfsdk:"default"`
 	Required    types.Bool   `tfsdk:"required"`
+	Blueprint   types.String `tfsdk:"blueprint"`
+	Format      types.String `tfsdk:"format"`
 }
 
 type StringItems struct {
@@ -89,6 +92,7 @@ type ArrayPropModel struct {
 	MaxItems     types.Int64   `tfsdk:"max_items"`
 	MinItems     types.Int64   `tfsdk:"min_items"`
 	Required     types.Bool    `tfsdk:"required"`
+	Format       types.String  `tfsdk:"format"`
 	StringItems  *StringItems  `tfsdk:"string_items"`
 	NumberItems  *NumberItems  `tfsdk:"number_items"`
 	BooleanItems *BooleanItems `tfsdk:"boolean_items"`
@@ -104,6 +108,7 @@ type ObjectPropModel struct {
 	Default     types.String `tfsdk:"default"`
 	Spec        types.String `tfsdk:"spec"`
 	Blueprint   types.String `tfsdk:"blueprint"`
+	Format      types.String `tfsdk:"format"`
 }
 
 type ApprovalWebhookNotificationModel struct {

@@ -71,10 +71,6 @@ func addStingPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty)
 		stringProp.Enum = types.ListNull(types.StringType)
 	}
 
-	if v.Format != nil {
-		stringProp.Format = types.StringValue(*v.Format)
-	}
-
 	if v.MinLength != nil {
 		stringProp.MinLength = types.Int64Value(int64(*v.MinLength))
 	}
@@ -321,7 +317,7 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 }
 
 func setCommonProperties(v cli.BlueprintProperty, prop interface{}) {
-	properties := []string{"Description", "Icon", "Default", "Title"}
+	properties := []string{"Description", "Icon", "Default", "Title", "Format", "Blueprint"}
 	for _, property := range properties {
 		switch property {
 		case "Description":
@@ -382,6 +378,36 @@ func setCommonProperties(v cli.BlueprintProperty, prop interface{}) {
 					js, _ := json.Marshal(v.Default)
 					value := string(js)
 					p.Default = types.StringValue(value)
+				}
+			}
+		case "Blueprint":
+			if v.Blueprint != nil {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Blueprint = types.StringValue(*v.Blueprint)
+				case *NumberPropModel:
+					p.Blueprint = types.StringValue(*v.Blueprint)
+				case *BooleanPropModel:
+					p.Blueprint = types.StringValue(*v.Blueprint)
+				case *ArrayPropModel:
+					p.Blueprint = types.StringValue(*v.Blueprint)
+				case *ObjectPropModel:
+					p.Blueprint = types.StringValue(*v.Blueprint)
+				}
+			}
+		case "Format":
+			if v.Format != nil {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Format = types.StringValue(*v.Format)
+				case *NumberPropModel:
+					p.Format = types.StringValue(*v.Format)
+				case *BooleanPropModel:
+					p.Format = types.StringValue(*v.Format)
+				case *ArrayPropModel:
+					p.Format = types.StringValue(*v.Format)
+				case *ObjectPropModel:
+					p.Format = types.StringValue(*v.Format)
 				}
 			}
 		}

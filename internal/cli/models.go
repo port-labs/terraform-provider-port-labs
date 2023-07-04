@@ -45,7 +45,7 @@ type (
 		Maximum            *float64            `json:"maximum,omitempty"`
 		Minimum            *float64            `json:"minimum,omitempty"`
 		Description        *string             `json:"description,omitempty"`
-		Blueprint          string              `json:"blueprint,omitempty"`
+		Blueprint          *string             `json:"blueprint,omitempty"`
 		Pattern            *string             `json:"pattern,omitempty"`
 		Enum               []interface{}       `json:"enum,omitempty"`
 		Spec               *string             `json:"spec,omitempty"`

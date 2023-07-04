@@ -83,6 +83,11 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 			property.Format = &format
 		}
 
+		if !prop.Blueprint.IsNull() {
+			blueprint := prop.Blueprint.ValueString()
+			property.Blueprint = &blueprint
+		}
+
 		if !prop.Icon.IsNull() {
 			icon := prop.Icon.ValueString()
 			property.Icon = &icon
@@ -147,6 +152,16 @@ func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map
 				property.Icon = &icon
 			}
 
+			if !prop.Format.IsNull() {
+				format := prop.Format.ValueString()
+				property.Format = &format
+			}
+
+			if !prop.Blueprint.IsNull() {
+				blueprint := prop.Blueprint.ValueString()
+				property.Blueprint = &blueprint
+			}
+
 			if !prop.Minimum.IsNull() {
 				minimum := prop.Minimum.ValueFloat64()
 				property.Minimum = &minimum
@@ -194,6 +209,16 @@ func booleanPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintPro
 
 			if !prop.Default.IsNull() {
 				property.Default = prop.Default.ValueBool()
+			}
+
+			if !prop.Format.IsNull() {
+				format := prop.Format.ValueString()
+				property.Format = &format
+			}
+
+			if !prop.Blueprint.IsNull() {
+				blueprint := prop.Blueprint.ValueString()
+				property.Blueprint = &blueprint
 			}
 
 			if !prop.Icon.IsNull() {
@@ -245,6 +270,16 @@ func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProp
 			if !prop.Description.IsNull() {
 				description := prop.Description.ValueString()
 				property.Description = &description
+			}
+
+			if !prop.Format.IsNull() {
+				format := prop.Format.ValueString()
+				property.Format = &format
+			}
+
+			if !prop.Blueprint.IsNull() {
+				blueprint := prop.Blueprint.ValueString()
+				property.Blueprint = &blueprint
 			}
 
 			if !prop.Spec.IsNull() {
@@ -339,6 +374,16 @@ func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[stri
 			if !prop.Icon.IsNull() {
 				icon := prop.Icon.ValueString()
 				property.Icon = &icon
+			}
+
+			if !prop.Format.IsNull() {
+				format := prop.Format.ValueString()
+				property.Format = &format
+			}
+
+			if !prop.Blueprint.IsNull() {
+				blueprint := prop.Blueprint.ValueString()
+				property.Blueprint = &blueprint
 			}
 
 			if !prop.Description.IsNull() {

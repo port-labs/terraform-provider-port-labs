@@ -275,6 +275,6 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 	b.Schema = cli.BlueprintSchema{Properties: properties, Required: required}
 	b.Relations = relationsResourceToBody(state)
 	b.MirrorProperties = mirrorPropertiesToBody(state)
-	b.CalculationProperties = calculationPropertiesToBody(state)
+	b.CalculationProperties = calculationPropertiesToBody(ctx, state)
 	return b, nil
 }

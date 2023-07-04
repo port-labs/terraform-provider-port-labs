@@ -80,7 +80,7 @@ func EntitySchema() map[string]schema.Attribute {
 							Optional:    true,
 						},
 						"number_items": schema.MapAttribute{
-							ElementType: types.ListType{ElemType: types.Float64Type},
+							ElementType: types.ListType{ElemType: types.NumberType},
 							Optional:    true,
 						},
 						"boolean_items": schema.MapAttribute{

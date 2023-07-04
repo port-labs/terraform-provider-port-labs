@@ -421,7 +421,7 @@ func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *
 		}
 
 		if v.Colors != nil {
-			calculationPropertyModel.Colors, _ = types.MapValueFrom(ctx, types.StringType, Colors)
+			calculationPropertyModel.Colors, _ = types.MapValueFrom(ctx, types.StringType, v.Colors)
 		} else {
 			calculationPropertyModel.Colors = types.MapNull(types.StringType)
 		}

@@ -107,7 +107,7 @@ func StringPropertySchema() schema.Attribute {
 		},
 	}
 
-	utils.SpreadMaps(stringPropertySchema, MetadataProperties())
+	utils.CopyMaps(stringPropertySchema, MetadataProperties())
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The string property of the blueprint",
 		Optional:            true,
@@ -147,7 +147,7 @@ func NumberPropertySchema() schema.Attribute {
 		},
 	}
 
-	utils.SpreadMaps(numberPropertySchema, MetadataProperties())
+	utils.CopyMaps(numberPropertySchema, MetadataProperties())
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The number property of the blueprint",
 		Optional:            true,
@@ -165,7 +165,7 @@ func BooleanPropertySchema() schema.Attribute {
 		},
 	}
 
-	utils.SpreadMaps(booleanPropertySchema, MetadataProperties())
+	utils.CopyMaps(booleanPropertySchema, MetadataProperties())
 
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The boolean property of the blueprint",
@@ -242,7 +242,7 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 		},
 	}
 
-	utils.SpreadMaps(arrayPropertySchema, MetadataProperties())
+	utils.CopyMaps(arrayPropertySchema, MetadataProperties())
 
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The array property of the blueprint",
@@ -269,7 +269,7 @@ func ObjectPropertySchema() schema.MapNestedAttribute {
 		},
 	}
 
-	utils.SpreadMaps(objectPropertySchema, MetadataProperties())
+	utils.CopyMaps(objectPropertySchema, MetadataProperties())
 
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The object property of the blueprint",

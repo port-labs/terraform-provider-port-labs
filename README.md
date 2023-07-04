@@ -19,19 +19,19 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 
 ## Installation
 
-Terraform utilizes the Terraform Registry to download and install providers. To install the `port-labs` provider, copy and paste the following code into your Terraform file:
+Terraform utilizes the Terraform Registry to download and install providers. To install the `port` provider, copy and paste the following code into your Terraform file:
 
 ```terraform
 terraform {
   required_providers {
-    port-labs = {
+    port = {
       source  = "port-labs/port-labs"
       version = "~> 1.0.0"
     }
   }
 }
 
-provider "port-labs" {
+provider "port" {
   client_id = "{YOUR CLIENT ID}"     # or set the environment variable PORT_CLIENT_ID
   secret    = "{YOUR CLIENT SECRET}" # or set the environment variable PORT_CLIENT_SECRET
 }

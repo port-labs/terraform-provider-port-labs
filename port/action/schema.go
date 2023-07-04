@@ -210,7 +210,7 @@ func StringPropertySchema() schema.Attribute {
 		},
 	}
 
-	utils.SpreadMaps(stringPropertySchema, MetadataProperties())
+	utils.CopyMaps(stringPropertySchema, MetadataProperties())
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The string property of the action",
 		Optional:            true,
@@ -245,7 +245,7 @@ func NumberPropertySchema() schema.Attribute {
 		},
 	}
 
-	utils.SpreadMaps(numberPropertySchema, MetadataProperties())
+	utils.CopyMaps(numberPropertySchema, MetadataProperties())
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The number property of the action",
 		Optional:            true,

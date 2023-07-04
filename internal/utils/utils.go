@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func SpreadMaps(target map[string]schema.Attribute, source map[string]schema.Attribute) {
+func CopyMaps(target map[string]schema.Attribute, source map[string]schema.Attribute) {
 	for key, value := range source {
 		target[key] = value
 	}

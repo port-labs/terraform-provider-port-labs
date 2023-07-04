@@ -424,7 +424,7 @@ func mirrorPropertiesToBody(state *BlueprintModel) map[string]cli.BlueprintMirro
 	return mirrorProperties
 }
 
-func calculationPropertiesToBody(state *BlueprintModel) map[string]cli.BlueprintCalculationProperty {
+func calculationPropertiesToBody(ctx context.Context, state *BlueprintModel) map[string]cli.BlueprintCalculationProperty {
 	calculationProperties := map[string]cli.BlueprintCalculationProperty{}
 
 	for identifier, prop := range state.CalculationProperties {
@@ -434,15 +434,32 @@ func calculationPropertiesToBody(state *BlueprintModel) map[string]cli.Blueprint
 		}
 
 		if !prop.Title.IsNull() {
-			calculationProp.Title = prop.Title.ValueString()
+			title := prop.Title.ValueString()
+			calculationProp.Title = &title
 		}
 
 		if !prop.Description.IsNull() {
-			calculationProp.Description = prop.Description.ValueString()
+			description := prop.Description.ValueString()
+			calculationProp.Description = &description
 		}
 
 		if !prop.Format.IsNull() {
-			calculationProp.Format = prop.Format.ValueString()
+			format := prop.Format.ValueString()
+			calculationProp.Format = &format
+		}
+
+		if !prop.Colorized.IsNull() {
+			colorized := prop.Colorized.ValueBool()
+			calculationProp.Colorized = &colorized
+		}
+
+		if !prop.Colors.IsNull() {
+			colors := make(map[string]string)
+			for key, value := range prop.Colors.Elements() {
+				colors[key] = value.String()
+			}
+
+			calculationProp.Colors = colors
 		}
 
 		calculationProperties[identifier] = calculationProp

@@ -394,7 +394,7 @@ func addMirrorPropertiesToState(b *cli.Blueprint, bm *BlueprintModel) {
 	}
 }
 
-func addCalculationPropertiesToState(b *cli.Blueprint, bm *BlueprintModel) {
+func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel) {
 	for k, v := range b.CalculationProperties {
 		if bm.CalculationProperties == nil {
 			bm.CalculationProperties = make(map[string]CalculationPropertyModel)
@@ -404,16 +404,26 @@ func addCalculationPropertiesToState(b *cli.Blueprint, bm *BlueprintModel) {
 			Calculation: types.StringValue(v.Calculation),
 			Type:        types.StringValue(v.Type),
 		}
-		if v.Title != "" && !bm.CalculationProperties[k].Title.IsNull() {
-			calculationPropertyModel.Title = types.StringValue(v.Title)
+		if v.Title != nil {
+			calculationPropertyModel.Title = types.StringValue(*v.Title)
 		}
 
-		if v.Description != "" && !bm.CalculationProperties[k].Description.IsNull() {
-			calculationPropertyModel.Description = types.StringValue(v.Description)
+		if v.Description != nil {
+			calculationPropertyModel.Description = types.StringValue(*v.Description)
 		}
 
-		if v.Format != "" && !bm.CalculationProperties[k].Format.IsNull() {
-			calculationPropertyModel.Format = types.StringValue(v.Format)
+		if v.Format != nil {
+			calculationPropertyModel.Format = types.StringValue(*v.Format)
+		}
+
+		if v.Colorized != nil {
+			calculationPropertyModel.Colorized = types.BoolValue(*v.Colorized)
+		}
+
+		if v.Colors != nil {
+			calculationPropertyModel.Colors, _ = types.MapValueFrom(ctx, types.StringType, Colors)
+		} else {
+			calculationPropertyModel.Colors = types.MapNull(types.StringType)
 		}
 
 		bm.CalculationProperties[k] = *calculationPropertyModel

@@ -114,7 +114,7 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 	}
 
 	if len(b.CalculationProperties) > 0 {
-		addCalculationPropertiesToState(b, bm)
+		addCalculationPropertiesToState(ctx, b, bm)
 	}
 
 	return nil

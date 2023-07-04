@@ -120,6 +120,8 @@ type CalculationPropertyModel struct {
 	Icon        types.String `tfsdk:"icon"`
 	Description types.String `tfsdk:"description"`
 	Type        types.String `tfsdk:"type"`
+	Colorized   types.Bool   `tfsdk:"colorized"`
+	Colors      types.Map    `tfsdk:"colors"`
 }
 
 type BlueprintModel struct {

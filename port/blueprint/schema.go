@@ -442,6 +442,15 @@ func BlueprintSchema() map[string]schema.Attribute {
 						MarkdownDescription: "The format of the calculation property",
 						Optional:            true,
 					},
+					"colorized": schema.BoolAttribute{
+						MarkdownDescription: "The colorized of the calculation property",
+						Optional:            true,
+					},
+					"colors": schema.MapAttribute{
+						MarkdownDescription: "The colors of the calculation property",
+						Optional:            true,
+						ElementType:         types.StringType,
+					},
 				},
 			},
 		},

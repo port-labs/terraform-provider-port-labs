@@ -89,15 +89,18 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 		}
 
 		if !prop.MinLength.IsNull() {
-			property.MinLength = int(prop.MinLength.ValueInt64())
+			minLength := int(prop.MinLength.ValueInt64())
+			property.MinLength = &minLength
 		}
 
 		if !prop.MaxLength.IsNull() {
-			property.MaxLength = int(prop.MaxLength.ValueInt64())
+			maxLength := int(prop.MaxLength.ValueInt64())
+			property.MaxLength = &maxLength
 		}
 
 		if !prop.Pattern.IsNull() {
-			property.Pattern = prop.Pattern.ValueString()
+			pattern := prop.Pattern.ValueString()
+			property.Pattern = &pattern
 		}
 
 		if !prop.Description.IsNull() {

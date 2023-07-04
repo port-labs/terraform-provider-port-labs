@@ -75,16 +75,16 @@ func addStingPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty)
 		stringProp.Format = types.StringValue(*v.Format)
 	}
 
-	if v.MinLength != 0 {
-		stringProp.MinLength = types.Int64Value(int64(v.MinLength))
+	if v.MinLength != nil {
+		stringProp.MinLength = types.Int64Value(int64(*v.MinLength))
 	}
 
-	if v.MaxLength != 0 {
-		stringProp.MaxLength = types.Int64Value(int64(v.MaxLength))
+	if v.MaxLength != nil {
+		stringProp.MaxLength = types.Int64Value(int64(*v.MaxLength))
 	}
 
-	if v.Pattern != "" {
-		stringProp.Pattern = types.StringValue(v.Pattern)
+	if v.Pattern != nil {
+		stringProp.Pattern = types.StringValue(*v.Pattern)
 	}
 
 	return stringProp

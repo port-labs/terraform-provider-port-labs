@@ -14,17 +14,11 @@ func EntitySchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-			},
 		},
 		"identifier": schema.StringAttribute{
 			MarkdownDescription: "Identifier",
 			Optional:            true,
 			Computed:            true,
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-			},
 		},
 		"title": schema.StringAttribute{
 			MarkdownDescription: "Title",

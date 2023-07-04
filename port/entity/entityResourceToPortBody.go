@@ -76,7 +76,7 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 		Blueprint: bp.Identifier,
 	}
 
-	if !state.Identifier.IsNull() {
+	if !state.Identifier.IsUnknown() {
 		e.Identifier = state.Identifier.ValueString()
 	}
 

@@ -59,7 +59,7 @@ func TestAccPortEntity(t *testing.T) {
 	}
 	resource "port_entity" "microservice" {
 		title = "TF Provider Test Entity0"
-		blueprint = port_blueprint.microservice.id
+		blueprint = port_blueprint.microservice.identifier
 		properties = {
 			"string_prop" = {
 				"myStringIdentifier" =  "My String Value"
@@ -159,7 +159,7 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 		}
 		relations = {
 			single_relation = {
-				"tfRelation" = port_entity.microservice2.id
+				"tfRelation" = port_entity.microservice2.identifier
 			}
 		}
 	}
@@ -240,7 +240,7 @@ func TestAccPortEntityWithManyRelation(t *testing.T) {
 		}
 		relations = {
 			"many_relations" = {
-				"tfRelation" = [port_entity.microservice2.id, port_entity.microservice3.id]
+				"tfRelation" = [port_entity.microservice2.identifier, port_entity.microservice3.identifier]
 			}
 		}
 	}
@@ -306,7 +306,7 @@ func TestAccPortEntityImport(t *testing.T) {
 	}
 	resource "port_entity" "microservice" {
 		title = "TF Provider Test Entity0"
-		blueprint = port_blueprint.microservice.id
+		blueprint = port_blueprint.microservice.identifier
 		identifier = "%s"
 		properties = {
 			"string_prop" = {
@@ -358,7 +358,7 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 	}
 	resource "port_entity" "microservice" {
 		title = "TF Provider Test Entity0"
-		blueprint = port_blueprint.microservice.id
+		blueprint = port_blueprint.microservice.identifier
 		identifier = "%s"
 		properties = {
 			"string_prop" = {
@@ -382,7 +382,7 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 	}
 	resource "port_entity" "microservice" {
 		title = "TF Provider Test Entity0"
-		blueprint = port_blueprint.microservice.id
+		blueprint = port_blueprint.microservice.identifier
 		identifier = "%s"
 		properties = {
 			"string_prop" = {

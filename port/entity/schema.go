@@ -19,6 +19,9 @@ func EntitySchema() map[string]schema.Attribute {
 			MarkdownDescription: "Identifier",
 			Optional:            true,
 			Computed:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"title": schema.StringAttribute{
 			MarkdownDescription: "Title",

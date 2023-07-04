@@ -342,6 +342,7 @@ func TestAccPortEntityImport(t *testing.T) {
 func TestAccPortEntityUpdateProp(t *testing.T) {
 
 	identifier := utils.GenID()
+	entityIdentifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port_blueprint" "microservice" {
 		title = "TF Provider Test BP0"
@@ -358,12 +359,13 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 	resource "port_entity" "microservice" {
 		title = "TF Provider Test Entity0"
 		blueprint = port_blueprint.microservice.id
+		identifier = "%s"
 		properties = {
 			"string_prop" = {
 				"myStringIdentifier" =  "My String Value"
 			}
 		}
-	}`, identifier)
+	}`, identifier, entityIdentifier)
 
 	var testAccActionConfigUpdate = fmt.Sprintf(`
 	resource "port_blueprint" "microservice" {
@@ -381,12 +383,13 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 	resource "port_entity" "microservice" {
 		title = "TF Provider Test Entity0"
 		blueprint = port_blueprint.microservice.id
+		identifier = "%s"
 		properties = {
 			"string_prop" = {
 				"myStringIdentifier" =  "My String Value2"
 			}
 		}
-	}`, identifier)
+	}`, identifier, entityIdentifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },

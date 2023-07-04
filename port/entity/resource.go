@@ -2,6 +2,7 @@ package entity
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -93,15 +94,13 @@ func (r *EntityResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	state.ID = types.StringValue(en.Identifier)
-	state.Identifier = types.StringValue(en.Identifier)
-
 	writeEntityComputedFieldsToState(state, en)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func writeEntityComputedFieldsToState(state *EntityModel, e *cli.Entity) {
+	state.ID = types.StringValue(fmt.Sprintf("%s:%s", e.Blueprint, e.Identifier))
 	state.Identifier = types.StringValue(e.Identifier)
 	state.CreatedAt = types.StringValue(e.CreatedAt.String())
 	state.CreatedBy = types.StringValue(e.CreatedBy)
@@ -140,8 +139,6 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	state.ID = types.StringValue(e.Identifier)
-
 	writeEntityComputedFieldsToState(state, en)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -154,7 +151,7 @@ func (r *EntityResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	err := r.portClient.DeleteEntity(ctx, state.ID.ValueString(), state.Blueprint.ValueString())
+	err := r.portClient.DeleteEntity(ctx, state.Identifier.ValueString(), state.Blueprint.ValueString())
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete entity", err.Error())

@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 )
 
 var _ resource.Resource = &BlueprintResource{}
@@ -68,19 +69,9 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 	bm.UpdatedAt = types.StringValue(b.UpdatedAt.String())
 	bm.UpdatedBy = types.StringValue(b.UpdatedBy)
 
-	if b.Title != nil {
-		bm.Title = types.StringValue(*b.Title)
-	}
-
-	if b.Icon != nil {
-		bm.Icon = types.StringValue(*b.Icon)
-	}
-
-	if b.Description != nil {
-		bm.Description = types.StringValue(*b.Description)
-	} else {
-		bm.Description = types.StringNull()
-	}
+	bm.Title = flex.GoStringToFramework(b.Title)
+	bm.Icon = flex.GoStringToFramework(b.Icon)
+	bm.Description = flex.GoStringToFramework(b.Description)
 
 	if b.ChangelogDestination != nil {
 		if b.ChangelogDestination.Type == consts.Kafka {

@@ -8,11 +8,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 	"github.com/samber/lo"
 )
 
 func addStringPropertiesToState(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
-	stringProp := &StringPropModel{}
+	stringProp := &StringPropModel{
+		MinLength: flex.GoInt64ToFramework(v.MinLength),
+		MaxLength: flex.GoInt64ToFramework(v.MaxLength),
+		Format:    flex.GoStringToFramework(v.Format),
+		Spec:      flex.GoStringToFramework(v.Spec),
+		Pattern:   flex.GoStringToFramework(v.Pattern),
+	}
 
 	if v.Enum != nil {
 		attrs := make([]attr.Value, 0, len(v.Enum))
@@ -31,26 +38,6 @@ func addStringPropertiesToState(ctx context.Context, v *cli.BlueprintProperty) *
 		stringProp.EnumColors = types.MapNull(types.StringType)
 	}
 
-	if v.Format != nil {
-		stringProp.Format = types.StringValue(*v.Format)
-	}
-
-	if v.Spec != nil {
-		stringProp.Spec = types.StringValue(*v.Spec)
-	}
-
-	if v.MinLength != nil {
-		stringProp.MinLength = types.Int64Value(int64(*v.MinLength))
-	}
-
-	if v.MaxLength != nil {
-		stringProp.MaxLength = types.Int64Value(int64(*v.MaxLength))
-	}
-
-	if v.Pattern != nil {
-		stringProp.Pattern = types.StringValue(*v.Pattern)
-	}
-
 	if v.SpecAuthentication != nil {
 		stringProp.SpecAuthentication = &SpecAuthenticationModel{
 			AuthorizationUrl: types.StringValue(v.SpecAuthentication.AuthorizationUrl),
@@ -63,13 +50,9 @@ func addStringPropertiesToState(ctx context.Context, v *cli.BlueprintProperty) *
 }
 
 func addNumberPropertiesToState(ctx context.Context, v *cli.BlueprintProperty) *NumberPropModel {
-	numberProp := &NumberPropModel{}
-	if v.Minimum != nil {
-		numberProp.Minimum = types.Float64Value(*v.Minimum)
-	}
-
-	if v.Maximum != nil {
-		numberProp.Maximum = types.Float64Value(*v.Maximum)
+	numberProp := &NumberPropModel{
+		Minimum: flex.GoFloat64ToFramework(v.Minimum),
+		Maximum: flex.GoFloat64ToFramework(v.Maximum),
 	}
 
 	if v.Enum != nil {
@@ -103,13 +86,11 @@ func addObjectPropertiesToState(v *cli.BlueprintProperty) *ObjectPropModel {
 }
 
 func addArrayPropertiesToState(v *cli.BlueprintProperty) *ArrayPropModel {
-	arrayProp := &ArrayPropModel{}
-	if v.MinItems != nil {
-		arrayProp.MinItems = types.Int64Value(int64(*v.MinItems))
+	arrayProp := &ArrayPropModel{
+		MinItems: flex.GoInt64ToFramework(v.MinItems),
+		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
 	}
-	if v.MaxItems != nil {
-		arrayProp.MaxItems = types.Int64Value(int64(*v.MaxItems))
-	}
+
 	if v.Items != nil {
 		if v.Items["type"] != "" {
 			switch v.Items["type"] {
@@ -186,49 +167,43 @@ func setCommonProperties(v cli.BlueprintProperty, prop interface{}) {
 	for _, property := range properties {
 		switch property {
 		case "Description":
-			if v.Description != nil {
-				switch p := prop.(type) {
-				case *StringPropModel:
-					p.Description = types.StringValue(*v.Description)
-				case *NumberPropModel:
-					p.Description = types.StringValue(*v.Description)
-				case *BooleanPropModel:
-					p.Description = types.StringValue(*v.Description)
-				case *ArrayPropModel:
-					p.Description = types.StringValue(*v.Description)
-				case *ObjectPropModel:
-					p.Description = types.StringValue(*v.Description)
-				}
+			switch p := prop.(type) {
+			case *StringPropModel:
+				p.Description = flex.GoStringToFramework(v.Description)
+			case *NumberPropModel:
+				p.Description = flex.GoStringToFramework(v.Description)
+			case *BooleanPropModel:
+				p.Description = flex.GoStringToFramework(v.Description)
+			case *ArrayPropModel:
+				p.Description = flex.GoStringToFramework(v.Description)
+			case *ObjectPropModel:
+				p.Description = flex.GoStringToFramework(v.Description)
 			}
 		case "Icon":
-			if v.Icon != nil {
-				switch p := prop.(type) {
-				case *StringPropModel:
-					p.Icon = types.StringValue(*v.Icon)
-				case *NumberPropModel:
-					p.Icon = types.StringValue(*v.Icon)
-				case *BooleanPropModel:
-					p.Icon = types.StringValue(*v.Icon)
-				case *ArrayPropModel:
-					p.Icon = types.StringValue(*v.Icon)
-				case *ObjectPropModel:
-					p.Icon = types.StringValue(*v.Icon)
-				}
+			switch p := prop.(type) {
+			case *StringPropModel:
+				p.Icon = flex.GoStringToFramework(v.Icon)
+			case *NumberPropModel:
+				p.Icon = flex.GoStringToFramework(v.Icon)
+			case *BooleanPropModel:
+				p.Icon = flex.GoStringToFramework(v.Icon)
+			case *ArrayPropModel:
+				p.Icon = flex.GoStringToFramework(v.Icon)
+			case *ObjectPropModel:
+				p.Icon = flex.GoStringToFramework(v.Icon)
 			}
 		case "Title":
-			if v.Title != nil {
-				switch p := prop.(type) {
-				case *StringPropModel:
-					p.Title = types.StringValue(*v.Title)
-				case *NumberPropModel:
-					p.Title = types.StringValue(*v.Title)
-				case *BooleanPropModel:
-					p.Title = types.StringValue(*v.Title)
-				case *ArrayPropModel:
-					p.Title = types.StringValue(*v.Title)
-				case *ObjectPropModel:
-					p.Title = types.StringValue(*v.Title)
-				}
+			switch p := prop.(type) {
+			case *StringPropModel:
+				p.Title = flex.GoStringToFramework(v.Title)
+			case *NumberPropModel:
+				p.Title = flex.GoStringToFramework(v.Title)
+			case *BooleanPropModel:
+				p.Title = flex.GoStringToFramework(v.Title)
+			case *ArrayPropModel:
+				p.Title = flex.GoStringToFramework(v.Title)
+			case *ObjectPropModel:
+				p.Title = flex.GoStringToFramework(v.Title)
 			}
 		case "Default":
 			if v.Default != nil {
@@ -354,19 +329,10 @@ func addRelationsToState(b *cli.Blueprint, bm *BlueprintModel) {
 		}
 
 		relationModel := &RelationModel{
-			Target: types.StringValue(*v.Target),
-		}
-
-		if v.Title != nil {
-			relationModel.Title = types.StringValue(*v.Title)
-		}
-
-		if v.Many != nil {
-			relationModel.Many = types.BoolValue(*v.Many)
-		}
-
-		if v.Required != nil {
-			relationModel.Required = types.BoolValue(*v.Required)
+			Target:   types.StringValue(*v.Target),
+			Title:    flex.GoStringToFramework(v.Title),
+			Many:     flex.GoBoolToFramework(v.Many),
+			Required: flex.GoBoolToFramework(v.Required),
 		}
 
 		bm.Relations[k] = *relationModel
@@ -382,10 +348,8 @@ func addMirrorPropertiesToState(b *cli.Blueprint, bm *BlueprintModel) {
 			}
 
 			mirrorPropertyModel := &MirrorPropertyModel{
-				Path: types.StringValue(v.Path),
-			}
-			if v.Title != "" {
-				mirrorPropertyModel.Title = types.StringValue(v.Title)
+				Path:  types.StringValue(v.Path),
+				Title: flex.GoStringToFramework(v.Title),
 			}
 
 			bm.MirrorProperties[k] = *mirrorPropertyModel
@@ -403,21 +367,10 @@ func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *
 		calculationPropertyModel := &CalculationPropertyModel{
 			Calculation: types.StringValue(v.Calculation),
 			Type:        types.StringValue(v.Type),
-		}
-		if v.Title != nil {
-			calculationPropertyModel.Title = types.StringValue(*v.Title)
-		}
-
-		if v.Description != nil {
-			calculationPropertyModel.Description = types.StringValue(*v.Description)
-		}
-
-		if v.Format != nil {
-			calculationPropertyModel.Format = types.StringValue(*v.Format)
-		}
-
-		if v.Colorized != nil {
-			calculationPropertyModel.Colorized = types.BoolValue(*v.Colorized)
+			Title:       flex.GoStringToFramework(v.Title),
+			Description: flex.GoStringToFramework(v.Description),
+			Format:      flex.GoStringToFramework(v.Format),
+			Colorized:   flex.GoBoolToFramework(v.Colorized),
 		}
 
 		if v.Colors != nil {

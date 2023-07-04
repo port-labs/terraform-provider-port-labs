@@ -418,7 +418,8 @@ func mirrorPropertiesToBody(state *BlueprintModel) map[string]cli.BlueprintMirro
 		}
 
 		if !prop.Title.IsNull() {
-			mirrorProp.Title = prop.Title.ValueString()
+			title := prop.Title.ValueString()
+			mirrorProp.Title = &title
 		}
 
 		mirrorProperties[identifier] = mirrorProp

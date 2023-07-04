@@ -73,9 +73,9 @@ type (
 	}
 
 	BlueprintMirrorProperty struct {
-		Identifier string `json:"identifier,omitempty"`
-		Title      string `json:"title,omitempty"`
-		Path       string `json:"path,omitempty"`
+		Identifier string  `json:"identifier,omitempty"`
+		Title      *string `json:"title,omitempty"`
+		Path       string  `json:"path,omitempty"`
 	}
 
 	BlueprintSchema struct {

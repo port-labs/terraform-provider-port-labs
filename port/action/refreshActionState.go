@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 	"github.com/samber/lo"
 )
 
@@ -20,33 +21,19 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 
 	if a.InvocationMethod.Type == consts.Webhook {
 		state.WebhookMethod = &WebhookMethodModel{
-			Url: types.StringValue(*a.InvocationMethod.Url),
-		}
-		if a.InvocationMethod.Agent != nil {
-			state.WebhookMethod.Agent = types.BoolValue(*a.InvocationMethod.Agent)
+			Url:   types.StringValue(*a.InvocationMethod.Url),
+			Agent: flex.GoBoolToFramework(a.InvocationMethod.Agent),
 		}
 	}
 
 	if a.InvocationMethod.Type == consts.Github {
 		state.GithubMethod = &GithubMethodModel{
-			Repo: types.StringValue(*a.InvocationMethod.Repo),
-			Org:  types.StringValue(*a.InvocationMethod.Org),
-		}
-
-		if a.InvocationMethod.OmitPayload != nil {
-			state.GithubMethod.OmitPayload = types.BoolValue(*a.InvocationMethod.OmitPayload)
-		}
-
-		if a.InvocationMethod.OmitUserInputs != nil {
-			state.GithubMethod.OmitUserInputs = types.BoolValue(*a.InvocationMethod.OmitUserInputs)
-		}
-
-		if a.InvocationMethod.Workflow != nil {
-			state.GithubMethod.Workflow = types.StringValue(*a.InvocationMethod.Workflow)
-		}
-
-		if a.InvocationMethod.ReportWorkflowStatus != nil {
-			state.GithubMethod.ReportWorkflowStatus = types.BoolValue(*a.InvocationMethod.ReportWorkflowStatus)
+			Repo:                 types.StringValue(*a.InvocationMethod.Repo),
+			Org:                  types.StringValue(*a.InvocationMethod.Org),
+			OmitPayload:          flex.GoBoolToFramework(a.InvocationMethod.OmitPayload),
+			OmitUserInputs:       flex.GoBoolToFramework(a.InvocationMethod.OmitUserInputs),
+			Workflow:             flex.GoStringToFramework(a.InvocationMethod.Workflow),
+			ReportWorkflowStatus: flex.GoBoolToFramework(a.InvocationMethod.ReportWorkflowStatus),
 		}
 	}
 
@@ -59,7 +46,11 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 }
 
 func addStingPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
-	stringProp := &StringPropModel{}
+	stringProp := &StringPropModel{
+		MinLength: flex.GoInt64ToFramework(v.MinLength),
+		MaxLength: flex.GoInt64ToFramework(v.MaxLength),
+		Pattern:   flex.GoStringToFramework(v.Pattern),
+	}
 
 	if v.Enum != nil {
 		attrs := make([]attr.Value, 0, len(v.Enum))
@@ -72,29 +63,13 @@ func addStingPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty)
 		stringProp.Enum = types.ListNull(types.StringType)
 	}
 
-	if v.MinLength != nil {
-		stringProp.MinLength = types.Int64Value(int64(*v.MinLength))
-	}
-
-	if v.MaxLength != nil {
-		stringProp.MaxLength = types.Int64Value(int64(*v.MaxLength))
-	}
-
-	if v.Pattern != nil {
-		stringProp.Pattern = types.StringValue(*v.Pattern)
-	}
-
 	return stringProp
 }
 
 func addNumberPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *NumberPropModel {
-	numberProp := &NumberPropModel{}
-	if v.Minimum != nil {
-		numberProp.Minimum = types.Float64Value(*v.Minimum)
-	}
-
-	if v.Maximum != nil {
-		numberProp.Maximum = types.Float64Value(*v.Maximum)
+	numberProp := &NumberPropModel{
+		Minimum: flex.GoFloat64ToFramework(v.Minimum),
+		Maximum: flex.GoFloat64ToFramework(v.Maximum),
 	}
 
 	if v.Enum != nil {
@@ -112,23 +87,19 @@ func addNumberPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty
 }
 
 func addObjectPropertiesToResource(v *cli.BlueprintProperty) *ObjectPropModel {
-	objectProp := &ObjectPropModel{}
-
-	if v.Spec != nil {
-		objectProp.Spec = types.StringValue(*v.Spec)
+	objectProp := &ObjectPropModel{
+		Spec: flex.GoStringToFramework(v.Spec),
 	}
 
 	return objectProp
 }
 
 func addArrayPropertiesToResource(v *cli.BlueprintProperty) *ArrayPropModel {
-	arrayProp := &ArrayPropModel{}
-	if v.MinItems != nil {
-		arrayProp.MinItems = types.Int64Value(int64(*v.MinItems))
+	arrayProp := &ArrayPropModel{
+		MinItems: flex.GoInt64ToFramework(v.MinItems),
+		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
 	}
-	if v.MaxItems != nil {
-		arrayProp.MaxItems = types.Int64Value(int64(*v.MaxItems))
-	}
+
 	if v.Items != nil {
 		if v.Items["type"] != "" {
 			switch v.Items["type"] {
@@ -223,12 +194,10 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				arrayProp := addArrayPropertiesToResource(&v)
 
-				if !state.UserProperties.ArrayProp[k].Required.IsNull() {
-					if lo.Contains(a.UserInputs.Required, k) {
-						arrayProp.Required = types.BoolValue(true)
-					} else {
-						arrayProp.Required = types.BoolValue(false)
-					}
+				if lo.Contains(a.UserInputs.Required, k) {
+					arrayProp.Required = types.BoolValue(true)
+				} else {
+					arrayProp.Required = types.BoolValue(false)
 				}
 
 				setCommonProperties(v, arrayProp)
@@ -244,12 +213,10 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				setCommonProperties(v, booleanProp)
 
-				if !state.UserProperties.BooleanProp[k].Required.IsNull() {
-					if lo.Contains(a.UserInputs.Required, k) {
-						booleanProp.Required = types.BoolValue(true)
-					} else {
-						booleanProp.Required = types.BoolValue(false)
-					}
+				if lo.Contains(a.UserInputs.Required, k) {
+					booleanProp.Required = types.BoolValue(true)
+				} else {
+					booleanProp.Required = types.BoolValue(false)
 				}
 
 				properties.BooleanProp[k] = *booleanProp
@@ -261,12 +228,10 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				objectProp := addObjectPropertiesToResource(&v)
 
-				if !state.UserProperties.ObjectProp[k].Required.IsNull() {
-					if lo.Contains(a.UserInputs.Required, k) {
-						objectProp.Required = types.BoolValue(true)
-					} else {
-						objectProp.Required = types.BoolValue(false)
-					}
+				if lo.Contains(a.UserInputs.Required, k) {
+					objectProp.Required = types.BoolValue(true)
+				} else {
+					objectProp.Required = types.BoolValue(false)
 				}
 
 				setCommonProperties(v, objectProp)
@@ -285,16 +250,10 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 	state.Blueprint = types.StringValue(blueprintIdentifier)
 	state.Title = types.StringValue(a.Title)
 	state.Trigger = types.StringValue(a.Trigger)
-	if a.Icon != nil {
-		state.Icon = types.StringValue(*a.Icon)
-	}
-	if a.Description != nil {
-		state.Description = types.StringValue(*a.Description)
-	}
 
-	if a.RequiredApproval != nil {
-		state.RequiredApproval = types.BoolValue(*a.RequiredApproval)
-	}
+	state.Icon = flex.GoStringToFramework(a.Icon)
+	state.Description = flex.GoStringToFramework(a.Description)
+	state.RequiredApproval = flex.GoBoolToFramework(a.RequiredApproval)
 
 	if a.ApprovalNotification != nil {
 		if a.ApprovalNotification.Type == "email" {
@@ -322,93 +281,101 @@ func setCommonProperties(v cli.BlueprintProperty, prop interface{}) {
 	for _, property := range properties {
 		switch property {
 		case "Description":
-			if v.Description != nil {
-				switch p := prop.(type) {
-				case *StringPropModel:
-					p.Description = types.StringValue(*v.Description)
-				case *NumberPropModel:
-					p.Description = types.StringValue(*v.Description)
-				case *BooleanPropModel:
-					p.Description = types.StringValue(*v.Description)
-				case *ArrayPropModel:
-					p.Description = types.StringValue(*v.Description)
-				case *ObjectPropModel:
-					p.Description = types.StringValue(*v.Description)
-				}
+			switch p := prop.(type) {
+			case *StringPropModel:
+				p.Description = flex.GoStringToFramework(v.Description)
+			case *NumberPropModel:
+				p.Description = flex.GoStringToFramework(v.Description)
+			case *BooleanPropModel:
+				p.Description = flex.GoStringToFramework(v.Description)
+			case *ArrayPropModel:
+				p.Description = flex.GoStringToFramework(v.Description)
+			case *ObjectPropModel:
+				p.Description = flex.GoStringToFramework(v.Description)
 			}
 		case "Icon":
-			if v.Icon != nil {
-				switch p := prop.(type) {
-				case *StringPropModel:
-					p.Icon = types.StringValue(*v.Icon)
-				case *NumberPropModel:
-					p.Icon = types.StringValue(*v.Icon)
-				case *BooleanPropModel:
-					p.Icon = types.StringValue(*v.Icon)
-				case *ArrayPropModel:
-					p.Icon = types.StringValue(*v.Icon)
-				case *ObjectPropModel:
-					p.Icon = types.StringValue(*v.Icon)
-				}
+			switch p := prop.(type) {
+			case *StringPropModel:
+				p.Icon = flex.GoStringToFramework(v.Icon)
+			case *NumberPropModel:
+				p.Icon = flex.GoStringToFramework(v.Icon)
+			case *BooleanPropModel:
+				p.Icon = flex.GoStringToFramework(v.Icon)
+			case *ArrayPropModel:
+				p.Icon = flex.GoStringToFramework(v.Icon)
+			case *ObjectPropModel:
+				p.Icon = flex.GoStringToFramework(v.Icon)
 			}
 		case "Title":
-			if v.Title != nil {
-				switch p := prop.(type) {
-				case *StringPropModel:
-					p.Title = types.StringValue(*v.Title)
-				case *NumberPropModel:
-					p.Title = types.StringValue(*v.Title)
-				case *BooleanPropModel:
-					p.Title = types.StringValue(*v.Title)
-				case *ArrayPropModel:
-					p.Title = types.StringValue(*v.Title)
-				case *ObjectPropModel:
-					p.Title = types.StringValue(*v.Title)
-				}
+			switch p := prop.(type) {
+			case *StringPropModel:
+				p.Title = flex.GoStringToFramework(v.Title)
+			case *NumberPropModel:
+				p.Title = flex.GoStringToFramework(v.Title)
+			case *BooleanPropModel:
+				p.Title = flex.GoStringToFramework(v.Title)
+			case *ArrayPropModel:
+				p.Title = flex.GoStringToFramework(v.Title)
+			case *ObjectPropModel:
+				p.Title = flex.GoStringToFramework(v.Title)
 			}
 		case "Default":
-			if v.Default != nil {
-				switch p := prop.(type) {
-				case *StringPropModel:
+			switch p := prop.(type) {
+			case *StringPropModel:
+				if v.Default == nil {
+					p.Default = types.StringNull()
+				} else {
 					p.Default = types.StringValue(v.Default.(string))
-				case *NumberPropModel:
+				}
+			case *NumberPropModel:
+				if v.Default == nil {
+					p.Default = types.Float64Null()
+				} else {
 					p.Default = types.Float64Value(v.Default.(float64))
-				case *BooleanPropModel:
+				}
+			case *BooleanPropModel:
+				if v.Default == nil {
+					p.Default = types.BoolNull()
+				} else {
 					p.Default = types.BoolValue(v.Default.(bool))
-				case *ObjectPropModel:
+				}
+			case *ObjectPropModel:
+				if v.Default == nil {
+					p.Default = types.StringNull()
+				} else {
 					js, _ := json.Marshal(v.Default)
 					value := string(js)
 					p.Default = types.StringValue(value)
 				}
 			}
+
 		case "Blueprint":
-			if v.Blueprint != nil {
-				switch p := prop.(type) {
-				case *StringPropModel:
-					p.Blueprint = types.StringValue(*v.Blueprint)
-				case *NumberPropModel:
-					p.Blueprint = types.StringValue(*v.Blueprint)
-				case *BooleanPropModel:
-					p.Blueprint = types.StringValue(*v.Blueprint)
-				case *ArrayPropModel:
-					p.Blueprint = types.StringValue(*v.Blueprint)
-				case *ObjectPropModel:
-					p.Blueprint = types.StringValue(*v.Blueprint)
-				}
+			switch p := prop.(type) {
+			case *StringPropModel:
+				p.Blueprint = flex.GoStringToFramework(v.Blueprint)
+			case *NumberPropModel:
+				p.Blueprint = flex.GoStringToFramework(v.Blueprint)
+			case *BooleanPropModel:
+				p.Blueprint = flex.GoStringToFramework(v.Blueprint)
+			case *ArrayPropModel:
+				p.Blueprint = flex.GoStringToFramework(v.Blueprint)
+			case *ObjectPropModel:
+				p.Blueprint = flex.GoStringToFramework(v.Blueprint)
 			}
+
 		case "Format":
 			if v.Format != nil {
 				switch p := prop.(type) {
 				case *StringPropModel:
-					p.Format = types.StringValue(*v.Format)
+					p.Format = flex.GoStringToFramework(v.Format)
 				case *NumberPropModel:
-					p.Format = types.StringValue(*v.Format)
+					p.Format = flex.GoStringToFramework(v.Format)
 				case *BooleanPropModel:
-					p.Format = types.StringValue(*v.Format)
+					p.Format = flex.GoStringToFramework(v.Format)
 				case *ArrayPropModel:
-					p.Format = types.StringValue(*v.Format)
+					p.Format = flex.GoStringToFramework(v.Format)
 				case *ObjectPropModel:
-					p.Format = types.StringValue(*v.Format)
+					p.Format = flex.GoStringToFramework(v.Format)
 				}
 			}
 		}

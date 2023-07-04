@@ -264,7 +264,7 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 	props := map[string]cli.BlueprintProperty{}
 	var err error
 	if state.Properties != nil {
-		props, required, err = readStateToPortBody(ctx, state)
+		props, required, err = propsResourceToBody(ctx, state)
 		if err != nil {
 			return nil, err
 		}

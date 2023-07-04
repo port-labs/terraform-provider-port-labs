@@ -343,7 +343,7 @@ func arrayPropResourceToBody(ctx context.Context, state *BlueprintModel, props m
 	return nil
 }
 
-func readStateToPortBody(ctx context.Context, state *BlueprintModel) (map[string]cli.BlueprintProperty, []string, error) {
+func propsResourceToBody(ctx context.Context, state *BlueprintModel) (map[string]cli.BlueprintProperty, []string, error) {
 	props := map[string]cli.BlueprintProperty{}
 	var required []string
 	if state.Properties != nil {

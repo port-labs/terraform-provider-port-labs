@@ -20,25 +20,29 @@ import (
 func MetadataProperties() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"title": schema.StringAttribute{
-			MarkdownDescription: "The display name of the blueprint",
+			MarkdownDescription: "The title of the property",
 			Optional:            true,
 		},
 		"icon": schema.StringAttribute{
-			MarkdownDescription: "The icon of the blueprint",
+			MarkdownDescription: "The icon of the property",
 			Optional:            true,
 		},
 		"required": schema.BoolAttribute{
-			MarkdownDescription: "The required of the number property",
+			MarkdownDescription: "Whether the property is required",
 			Computed:            true,
 			Optional:            true,
 			Default:             booldefault.StaticBool(false),
 		},
 		"description": schema.StringAttribute{
-			MarkdownDescription: "The description of the blueprint",
+			MarkdownDescription: "The description of the property",
 			Optional:            true,
 		},
 		"blueprint": schema.StringAttribute{
 			MarkdownDescription: "The blueprint identifier the property relates to",
+			Optional:            true,
+		},
+		"format": schema.StringAttribute{
+			MarkdownDescription: "The format of the string property",
 			Optional:            true,
 		},
 	}
@@ -180,14 +184,6 @@ func StringPropertySchema() schema.Attribute {
 	stringPropertySchema := map[string]schema.Attribute{
 		"default": schema.StringAttribute{
 			MarkdownDescription: "The default of the string property",
-			Optional:            true,
-		},
-		"format": schema.StringAttribute{
-			MarkdownDescription: "The format of the string property",
-			Optional:            true,
-		},
-		"blueprint": schema.StringAttribute{
-			MarkdownDescription: "The blueprint of the string property",
 			Optional:            true,
 		},
 		"min_length": schema.Int64Attribute{
@@ -372,7 +368,7 @@ func ArrayPropertySchema() schema.Attribute {
 
 func (r *ActionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entity resource",
+		MarkdownDescription: "Action resource",
 		Attributes:          ActionSchema(),
 	}
 }

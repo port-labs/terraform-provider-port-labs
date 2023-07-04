@@ -164,9 +164,3 @@ type PortProviderModel struct {
 	Token    types.String `tfsdk:"token"`
 	BaseUrl  types.String `tfsdk:"base_url"`
 }
-
-type ChangelogDestinationModel struct {
-	Type  types.String `tfsdk:"type"`
-	Url   types.String `tfsdk:"url"`
-	Agent types.Bool   `tfsdk:"agent"`
-}

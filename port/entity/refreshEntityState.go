@@ -85,7 +85,6 @@ func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cl
 }
 
 func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli.Entity) {
-	// relations := make(map[string][]string)
 	relations := &RelationModel{
 		SingleRelation: make(map[string]string),
 		ManyRelations:  make(map[string][]string),
@@ -104,10 +103,6 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 			}
 		}
 	}
-
-	// if len(relations) != 0 {
-	// 	state.Relations = relations
-	// }
 }
 
 func refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint string) error {

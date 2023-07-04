@@ -26,7 +26,7 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 		}
 	}
 
-	if a.InvocationMethod.Type == "GITHUB" {
+	if a.InvocationMethod.Type == consts.Github {
 		state.GithubMethod = &GithubMethodModel{
 			Repo: types.StringValue(*a.InvocationMethod.Repo),
 			Org:  types.StringValue(*a.InvocationMethod.Org),
@@ -49,7 +49,7 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 		}
 	}
 
-	if a.InvocationMethod.Type == "AZURE-DEVOPS" {
+	if a.InvocationMethod.Type == consts.AzureDevops {
 		state.AzureMethod = &AzureMethodModel{
 			Org:     types.StringValue(*a.InvocationMethod.Org),
 			Webhook: types.StringValue(*a.InvocationMethod.Webhook),

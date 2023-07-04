@@ -402,7 +402,7 @@ func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 		org := data.AzureMethod.Org.ValueString()
 		webhook := data.AzureMethod.Webhook.ValueString()
 		return &cli.InvocationMethod{
-			Type:    "AZURE-DEVOPS",
+			Type:    consts.AzureDevops,
 			Org:     &org,
 			Webhook: &webhook,
 		}
@@ -412,7 +412,7 @@ func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 		org := data.GithubMethod.Org.ValueString()
 		repo := data.GithubMethod.Repo.ValueString()
 		githubInvocation := &cli.InvocationMethod{
-			Type: "GITHUB",
+			Type: consts.Github,
 			Org:  &org,
 			Repo: &repo,
 		}

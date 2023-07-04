@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -88,6 +89,7 @@ func ActionSchema() map[string]schema.Attribute {
 		"approval_email_notification": schema.ObjectAttribute{
 			MarkdownDescription: "The email notification of the approval",
 			Optional:            true,
+			AttributeTypes:      map[string]attr.Type{},
 		},
 		"trigger": schema.StringAttribute{
 			MarkdownDescription: "The trigger type of the action",
@@ -99,6 +101,7 @@ func ActionSchema() map[string]schema.Attribute {
 		"kafka_method": schema.ObjectAttribute{
 			MarkdownDescription: "The invocation method of the action",
 			Optional:            true,
+			AttributeTypes:      map[string]attr.Type{},
 		},
 		"webhook_method": schema.SingleNestedAttribute{
 			MarkdownDescription: "The invocation method of the action",

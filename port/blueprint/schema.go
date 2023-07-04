@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -355,6 +356,7 @@ func BlueprintSchema() map[string]schema.Attribute {
 		"kafka_changelog_destination": schema.ObjectAttribute{
 			MarkdownDescription: "The changelog destination of the blueprint",
 			Optional:            true,
+			AttributeTypes:      map[string]attr.Type{},
 		},
 		"properties": schema.SingleNestedAttribute{
 			MarkdownDescription: "The properties of the blueprint",

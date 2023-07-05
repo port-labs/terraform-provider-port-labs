@@ -49,7 +49,7 @@ func addStringPropertiesToState(ctx context.Context, v *cli.BlueprintProperty) *
 }
 
 func stringPropResourceToBody(ctx context.Context, state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range state.Properties.StringProp {
+	for propIdentifier, prop := range state.Properties.StringProps {
 		property := cli.BlueprintProperty{
 			Type: "string",
 		}

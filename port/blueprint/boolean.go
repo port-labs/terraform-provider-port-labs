@@ -3,7 +3,7 @@ package blueprint
 import "github.com/port-labs/terraform-provider-port-labs/internal/cli"
 
 func booleanPropResourceToBody(state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
-	for propIdentifier, prop := range state.Properties.BooleanProp {
+	for propIdentifier, prop := range state.Properties.BooleanProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "boolean",
 		}

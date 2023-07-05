@@ -10,29 +10,29 @@ func propsResourceToBody(ctx context.Context, state *BlueprintModel) (map[string
 	props := map[string]cli.BlueprintProperty{}
 	var required []string
 	if state.Properties != nil {
-		if state.Properties.StringProp != nil {
+		if state.Properties.StringProps != nil {
 			err := stringPropResourceToBody(ctx, state, props, &required)
 			if err != nil {
 				return nil, nil, err
 			}
 		}
-		if state.Properties.ArrayProp != nil {
+		if state.Properties.ArrayProps != nil {
 			err := arrayPropResourceToBody(ctx, state, props, &required)
 			if err != nil {
 				return nil, nil, err
 			}
 		}
-		if state.Properties.NumberProp != nil {
+		if state.Properties.NumberProps != nil {
 			err := numberPropResourceToBody(ctx, state, props, &required)
 			if err != nil {
 				return nil, nil, err
 			}
 		}
-		if state.Properties.BooleanProp != nil {
+		if state.Properties.BooleanProps != nil {
 			booleanPropResourceToBody(state, props, &required)
 		}
 
-		if state.Properties.ObjectProp != nil {
+		if state.Properties.ObjectProps != nil {
 			objectPropResourceToBody(state, props, &required)
 		}
 

@@ -78,8 +78,8 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 	for k, v := range b.Schema.Properties {
 		switch v.Type {
 		case "string":
-			if properties.StringProp == nil {
-				properties.StringProp = make(map[string]StringPropModel)
+			if properties.StringProps == nil {
+				properties.StringProps = make(map[string]StringPropModel)
 			}
 			stringProp := addStringPropertiesToState(ctx, &v)
 
@@ -91,11 +91,11 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 
 			setCommonProperties(v, stringProp)
 
-			properties.StringProp[k] = *stringProp
+			properties.StringProps[k] = *stringProp
 
 		case "number":
-			if properties.NumberProp == nil {
-				properties.NumberProp = make(map[string]NumberPropModel)
+			if properties.NumberProps == nil {
+				properties.NumberProps = make(map[string]NumberPropModel)
 			}
 
 			numberProp := addNumberPropertiesToState(ctx, &v)
@@ -108,11 +108,11 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 
 			setCommonProperties(v, numberProp)
 
-			properties.NumberProp[k] = *numberProp
+			properties.NumberProps[k] = *numberProp
 
 		case "array":
-			if properties.ArrayProp == nil {
-				properties.ArrayProp = make(map[string]ArrayPropModel)
+			if properties.ArrayProps == nil {
+				properties.ArrayProps = make(map[string]ArrayPropModel)
 			}
 
 			arrayProp := addArrayPropertiesToState(&v)
@@ -125,11 +125,11 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 
 			setCommonProperties(v, arrayProp)
 
-			properties.ArrayProp[k] = *arrayProp
+			properties.ArrayProps[k] = *arrayProp
 
 		case "boolean":
-			if properties.BooleanProp == nil {
-				properties.BooleanProp = make(map[string]BooleanPropModel)
+			if properties.BooleanProps == nil {
+				properties.BooleanProps = make(map[string]BooleanPropModel)
 			}
 
 			booleanProp := &BooleanPropModel{}
@@ -142,11 +142,11 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				booleanProp.Required = types.BoolValue(false)
 			}
 
-			properties.BooleanProp[k] = *booleanProp
+			properties.BooleanProps[k] = *booleanProp
 
 		case "object":
-			if properties.ObjectProp == nil {
-				properties.ObjectProp = make(map[string]ObjectPropModel)
+			if properties.ObjectProps == nil {
+				properties.ObjectProps = make(map[string]ObjectPropModel)
 			}
 
 			objectProp := addObjectPropertiesToState(&v)
@@ -159,7 +159,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 
 			setCommonProperties(v, objectProp)
 
-			properties.ObjectProp[k] = *objectProp
+			properties.ObjectProps[k] = *objectProp
 
 		}
 

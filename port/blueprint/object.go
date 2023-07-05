@@ -9,7 +9,7 @@ import (
 )
 
 func objectPropResourceToBody(state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
-	for propIdentifier, prop := range state.Properties.ObjectProp {
+	for propIdentifier, prop := range state.Properties.ObjectProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "object",
 		}

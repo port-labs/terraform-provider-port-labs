@@ -94,11 +94,11 @@ type ObjectPropModel struct {
 }
 
 type PropertiesModel struct {
-	StringProp  map[string]StringPropModel  `tfsdk:"string_prop"`
-	NumberProp  map[string]NumberPropModel  `tfsdk:"number_prop"`
-	BooleanProp map[string]BooleanPropModel `tfsdk:"boolean_prop"`
-	ArrayProp   map[string]ArrayPropModel   `tfsdk:"array_prop"`
-	ObjectProp  map[string]ObjectPropModel  `tfsdk:"object_prop"`
+	StringProps  map[string]StringPropModel  `tfsdk:"string_props"`
+	NumberProps  map[string]NumberPropModel  `tfsdk:"number_props"`
+	BooleanProps map[string]BooleanPropModel `tfsdk:"boolean_props"`
+	ArrayProps   map[string]ArrayPropModel   `tfsdk:"array_props"`
+	ObjectProps  map[string]ObjectPropModel  `tfsdk:"object_props"`
 }
 
 type RelationModel struct {

@@ -356,11 +356,11 @@ func BlueprintSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The properties of the blueprint",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
-				"string_prop":  StringPropertySchema(),
-				"number_prop":  NumberPropertySchema(),
-				"boolean_prop": BooleanPropertySchema(),
-				"array_prop":   ArrayPropertySchema(),
-				"object_prop":  ObjectPropertySchema(),
+				"string_props":  StringPropertySchema(),
+				"number_props":  NumberPropertySchema(),
+				"boolean_props": BooleanPropertySchema(),
+				"array_props":   ArrayPropertySchema(),
+				"object_props":  ObjectPropertySchema(),
 			},
 		},
 		"relations": schema.MapNestedAttribute{

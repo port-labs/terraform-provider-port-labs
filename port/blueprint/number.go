@@ -12,7 +12,7 @@ import (
 )
 
 func numberPropResourceToBody(ctx context.Context, state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range state.Properties.NumberProp {
+	for propIdentifier, prop := range state.Properties.NumberProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "number",
 		}

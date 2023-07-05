@@ -13,7 +13,7 @@ import (
 )
 
 func arrayPropResourceToBody(ctx context.Context, state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range state.Properties.ArrayProp {
+	for propIdentifier, prop := range state.Properties.ArrayProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "array",
 		}

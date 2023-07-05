@@ -44,7 +44,7 @@ func TestAccPortBlueprintStringProperty(t *testing.T) {
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {
-			string_prop = {
+			string_props = {
 				myStringIdentifier = {
 					description = "This is a string property"
 					title = "text"
@@ -75,19 +75,19 @@ func TestAccPortBlueprintStringProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.myStringIdentifier.description", "This is a string property"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.myStringIdentifier.title", "text"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.myStringIdentifier.icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.myStringIdentifier.required", "true"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.myStringIdentifier.min_length", "1"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.myStringIdentifier.max_length", "10"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.myStringIdentifier.default", "default"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.myStringIdentifier.format", "user"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.myStringIdentifier.enum.0", "default"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.myStringIdentifier.enum.1", "default2"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.myStringIdentifier.pattern", "^[a-zA-Z0-9]*$"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.myStringIdentifier.enum_colors.default", "red"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.myStringIdentifier.enum_colors.default2", "green"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.myStringIdentifier.description", "This is a string property"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.myStringIdentifier.title", "text"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.myStringIdentifier.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.myStringIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.myStringIdentifier.min_length", "1"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.myStringIdentifier.max_length", "10"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.myStringIdentifier.default", "default"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.myStringIdentifier.format", "user"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.myStringIdentifier.enum.0", "default"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.myStringIdentifier.enum.1", "default2"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.myStringIdentifier.pattern", "^[a-zA-Z0-9]*$"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.myStringIdentifier.enum_colors.default", "red"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.myStringIdentifier.enum_colors.default2", "green"),
 				),
 			},
 		},
@@ -102,7 +102,7 @@ func TestAccPortBlueprintNumberProperty(t *testing.T) {
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {
-			number_prop = {
+			number_props = {
 				myNumberIdentifier = {
 					description = "This is a number property"
 					title = "number"
@@ -132,19 +132,19 @@ func TestAccPortBlueprintNumberProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_prop.myNumberIdentifier.description", "This is a number property"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_prop.myNumberIdentifier.title", "number"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_prop.myNumberIdentifier.icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_prop.myNumberIdentifier.required", "true"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_prop.myNumberIdentifier.minimum", "1"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_prop.myNumberIdentifier.maximum", "10"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_prop.myNumberIdentifier.default", "3"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum.0", "1"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum.1", "2"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum.2", "3"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum_colors.1", "red"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum_colors.2", "green"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_prop.myNumberIdentifier.enum_colors.3", "blue"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_props.myNumberIdentifier.description", "This is a number property"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_props.myNumberIdentifier.title", "number"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_props.myNumberIdentifier.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_props.myNumberIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_props.myNumberIdentifier.minimum", "1"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_props.myNumberIdentifier.maximum", "10"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_props.myNumberIdentifier.default", "3"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_props.myNumberIdentifier.enum.0", "1"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_props.myNumberIdentifier.enum.1", "2"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_props.myNumberIdentifier.enum.2", "3"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_props.myNumberIdentifier.enum_colors.1", "red"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_props.myNumberIdentifier.enum_colors.2", "green"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.number_props.myNumberIdentifier.enum_colors.3", "blue"),
 				),
 			},
 		},
@@ -159,7 +159,7 @@ func TestAccPortBlueprintBooleanProperty(t *testing.T) {
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {
-			boolean_prop = {
+			boolean_props = {
 				myBooleanIdentifier = {
 					description = "This is a boolean property"
 					title = "boolean"
@@ -181,11 +181,11 @@ func TestAccPortBlueprintBooleanProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.boolean_prop.myBooleanIdentifier.description", "This is a boolean property"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.boolean_prop.myBooleanIdentifier.title", "boolean"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.boolean_prop.myBooleanIdentifier.icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.boolean_prop.myBooleanIdentifier.required", "true"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.boolean_prop.myBooleanIdentifier.default", "true"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.boolean_props.myBooleanIdentifier.description", "This is a boolean property"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.boolean_props.myBooleanIdentifier.title", "boolean"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.boolean_props.myBooleanIdentifier.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.boolean_props.myBooleanIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.boolean_props.myBooleanIdentifier.default", "true"),
 				),
 			},
 		},
@@ -200,7 +200,7 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {
-			array_prop = {
+			array_props = {
 				myStringArrayIdentifier = {
 					description = "This is a string array property"
 					title = "array"
@@ -247,22 +247,22 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.description", "This is a string array property"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.title", "array"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.required", "true"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.min_items", "1"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.max_items", "10"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.string_items.default.0", "a"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.string_items.default.1", "b"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myStringArrayIdentifier.string_items.default.2", "c"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myNumberArrayIdentifier.number_items.default.0", "1"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myNumberArrayIdentifier.number_items.default.1", "2"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myNumberArrayIdentifier.number_items.default.2", "3"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myBooleanArrayIdentifier.boolean_items.default.0", "false"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myBooleanArrayIdentifier.boolean_items.default.1", "true"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myObjectArrayIdentifier.object_items.default.0", "{\"a\":\"b\"}"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_prop.myObjectArrayIdentifier.object_items.default.1", "{\"c\":\"d\"}"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.description", "This is a string array property"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.title", "array"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.min_items", "1"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.max_items", "10"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.string_items.default.0", "a"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.string_items.default.1", "b"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.string_items.default.2", "c"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myNumberArrayIdentifier.number_items.default.0", "1"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myNumberArrayIdentifier.number_items.default.1", "2"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myNumberArrayIdentifier.number_items.default.2", "3"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myBooleanArrayIdentifier.boolean_items.default.0", "false"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myBooleanArrayIdentifier.boolean_items.default.1", "true"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myObjectArrayIdentifier.object_items.default.0", "{\"a\":\"b\"}"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myObjectArrayIdentifier.object_items.default.1", "{\"c\":\"d\"}"),
 				),
 			},
 		},
@@ -277,7 +277,7 @@ func TestAccPortBlueprintObjectProperty(t *testing.T) {
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {
-			object_prop = {
+			object_props = {
 				myObjectIdentifier = {
 					description = "This is an object property"
 					title = "object"
@@ -301,11 +301,11 @@ func TestAccPortBlueprintObjectProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_prop.myObjectIdentifier.description", "This is an object property"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_prop.myObjectIdentifier.title", "object"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_prop.myObjectIdentifier.icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_prop.myObjectIdentifier.required", "true"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_prop.myObjectIdentifier.default", "{\"key\":\"value\"}"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_props.myObjectIdentifier.description", "This is an object property"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_props.myObjectIdentifier.title", "object"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_props.myObjectIdentifier.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_props.myObjectIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_props.myObjectIdentifier.default", "{\"key\":\"value\"}"),
 				),
 			},
 		},
@@ -364,7 +364,7 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {
-			string_prop = {
+			string_props = {
 				"text" = {
 					type = "string"
 					title = "text"
@@ -378,7 +378,7 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {
-			string_prop = {
+			string_props = {
 			   "text" = {
 					type = "string"
 					title = "text"
@@ -423,7 +423,7 @@ func TestAccPortBlueprintImport(t *testing.T) {
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {
-			string_prop = {
+			string_props = {
 			   "text" = {
 					type = "string"
 					title = "text"
@@ -461,7 +461,7 @@ func TestAccPortBlueprintWithSpecification(t *testing.T) {
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {
-			string_prop = {
+			string_props = {
 				"text" = {
 					title = "text"
 					type = "string"
@@ -484,10 +484,10 @@ func TestAccPortBlueprintWithSpecification(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccActionConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.text.spec", "embedded-url"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.text.spec_authentication.authorization_url", "https://getport.io"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.text.spec_authentication.client_id", "123"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_prop.text.spec_authentication.token_url", "https://getport.io"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.text.spec", "embedded-url"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.text.spec_authentication.authorization_url", "https://getport.io"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.text.spec_authentication.client_id", "123"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.text.spec_authentication.token_url", "https://getport.io"),
 				),
 			},
 		},
@@ -503,7 +503,7 @@ func TestAccPortBlueprintUpdateRelation(t *testing.T) {
 		icon = "Environment"
 		identifier = "%s"
 		properties = {
-			string_prop = {
+			string_props = {
 				"env_name" = {
 					title = "Name"
 				}
@@ -515,7 +515,7 @@ func TestAccPortBlueprintUpdateRelation(t *testing.T) {
 		icon = "Azure"
 		identifier = "%s"
 		properties = {
-			string_prop = {
+			string_props = {
 				"image" = {
 					title = "Image"
 				}
@@ -535,7 +535,7 @@ func TestAccPortBlueprintUpdateRelation(t *testing.T) {
 		icon = "Environment"
 		identifier = "%s"
 		properties = {
-			string_prop = {
+			string_props = {
 				"env_name" = {
 					title = "Name"
 				}
@@ -547,7 +547,7 @@ func TestAccPortBlueprintUpdateRelation(t *testing.T) {
 		icon = "Azure"
 		identifier = "%s"
 		properties = {
-			string_prop = {
+			string_props = {
 				"image" = {
 					title = "Image"
 				}
@@ -592,7 +592,7 @@ func TestAccPortBlueprintWithMirrorProperty(t *testing.T) {
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {
-			string_prop = {
+			string_props = {
 				"text" = {
 					title = "text"
 				}
@@ -604,7 +604,7 @@ func TestAccPortBlueprintWithMirrorProperty(t *testing.T) {
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {
-			string_prop = {
+			string_props = {
 				"text" = {
 					title = "text"
 				}
@@ -649,7 +649,7 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {
-			string_prop = {
+			string_props = {
 				"text" = {
 					title = "text"
 				}

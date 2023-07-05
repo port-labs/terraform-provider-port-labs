@@ -64,7 +64,7 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Bluep
 }
 
 func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range d.UserProperties.StringProp {
+	for propIdentifier, prop := range d.UserProperties.StringProps {
 		property := cli.BlueprintProperty{
 			Type: "string",
 		}
@@ -132,7 +132,7 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 }
 
 func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range state.UserProperties.NumberProp {
+	for propIdentifier, prop := range state.UserProperties.NumberProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "number",
 		}
@@ -196,7 +196,7 @@ func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map
 }
 
 func booleanPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) {
-	for propIdentifier, prop := range d.UserProperties.BooleanProp {
+	for propIdentifier, prop := range d.UserProperties.BooleanProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "boolean",
 		}
@@ -240,7 +240,7 @@ func booleanPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintPro
 }
 
 func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range d.UserProperties.ObjectProp {
+	for propIdentifier, prop := range d.UserProperties.ObjectProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "object",
 		}
@@ -359,7 +359,7 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.BlueprintProperty
 	return nil
 }
 func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range d.UserProperties.ArrayProp {
+	for propIdentifier, prop := range d.UserProperties.ArrayProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "array",
 		}
@@ -419,20 +419,20 @@ func actionPropertiesToBody(ctx context.Context, action *cli.Action, data *Actio
 	required := []string{}
 	props := map[string]cli.BlueprintProperty{}
 	var err error
-	if data.UserProperties.StringProp != nil {
+	if data.UserProperties.StringProps != nil {
 		err = stringPropResourceToBody(ctx, data, props, &required)
 	}
-	if data.UserProperties.ArrayProp != nil {
+	if data.UserProperties.ArrayProps != nil {
 		err = arrayPropResourceToBody(ctx, data, props, &required)
 	}
-	if data.UserProperties.NumberProp != nil {
+	if data.UserProperties.NumberProps != nil {
 		err = numberPropResourceToBody(ctx, data, props, &required)
 	}
-	if data.UserProperties.BooleanProp != nil {
+	if data.UserProperties.BooleanProps != nil {
 		booleanPropResourceToBody(data, props, &required)
 	}
 
-	if data.UserProperties.ObjectProp != nil {
+	if data.UserProperties.ObjectProps != nil {
 		err = objectPropResourceToBody(data, props, &required)
 	}
 

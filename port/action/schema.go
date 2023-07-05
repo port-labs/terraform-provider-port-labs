@@ -164,11 +164,11 @@ func ActionSchema() map[string]schema.Attribute {
 			MarkdownDescription: "User properties",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
-				"string_prop":  StringPropertySchema(),
-				"number_prop":  NumberPropertySchema(),
-				"boolean_prop": BooleanPropertySchema(),
-				"object_prop":  ObjectPropertySchema(),
-				"array_prop":   ArrayPropertySchema(),
+				"string_props":  StringPropertySchema(),
+				"number_props":  NumberPropertySchema(),
+				"boolean_props": BooleanPropertySchema(),
+				"object_props":  ObjectPropertySchema(),
+				"array_props":   ArrayPropertySchema(),
 			},
 		},
 	}

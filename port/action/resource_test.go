@@ -16,7 +16,7 @@ func testAccCreateBlueprintConfig(identifier string) string {
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {
-			string_prop = {
+			string_props = {
 			"text" = {
 				type = "string"
 				title = "text"
@@ -104,7 +104,7 @@ func TestAccPortActionAzureInvocation(t *testing.T) {
 		trigger = "DAY-2"
 		azure_method = {
 			org = "port",
-			webhook = "https://example.com"
+			webhook = "https://getport.io"
 		}
 	}`, actionIdentifier)
 
@@ -121,7 +121,7 @@ func TestAccPortActionAzureInvocation(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "blueprint", identifier),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "azure_method.org", "port"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "azure_method.webhook", "https://example.com"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "azure_method.webhook", "https://getport.io"),
 				),
 			},
 		},
@@ -183,10 +183,10 @@ func TestAccPortActionImport(t *testing.T) {
 		blueprint = port_blueprint.microservice.id
 		trigger = "DAY-2"
 		webhook_method = {
-			url = "https://example.com"
+			url = "https://getport.io"
 		}
 		user_properties = {
-			"string_prop" = {
+			"string_props" = {
 				"myStringIdentifier" = {
 					"title" = "My String Identifier"
 					"required" = true
@@ -208,9 +208,9 @@ func TestAccPortActionImport(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "blueprint", blueprintIdentifier),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.url", "https://example.com"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_prop.myStringIdentifier.title", "My String Identifier"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_prop.myStringIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.url", "https://getport.io"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier.title", "My String Identifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier.required", "true"),
 				),
 			},
 			{
@@ -234,10 +234,10 @@ func TestAccPortActionUpdate(t *testing.T) {
 		blueprint = port_blueprint.microservice.id
 		trigger = "DAY-2"
 		webhook_method = {
-			url = "https://example.com"
+			url = "https://getport.io"
 		}
 		user_properties = {
-			"string_prop" = {
+			"string_props" = {
 				"myStringIdentifier" = {
 					"title" = "My String Identifier"
 					"required" = true
@@ -254,10 +254,10 @@ func TestAccPortActionUpdate(t *testing.T) {
 		blueprint = port_blueprint.microservice.id
 		trigger = "DAY-2"
 		webhook_method = {
-			url = "https://example.com"
+			url = "https://getport.io"
 		}
 		user_properties = {
-			"string_prop" = {
+			"string_props" = {
 				"myStringIdentifier2" = {
 					"title" = "My String Identifier"
 					"required" = false
@@ -279,9 +279,9 @@ func TestAccPortActionUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "blueprint", identifier),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.url", "https://example.com"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_prop.myStringIdentifier.title", "My String Identifier"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_prop.myStringIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.url", "https://getport.io"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier.title", "My String Identifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier.required", "true"),
 				),
 			},
 			{
@@ -292,9 +292,9 @@ func TestAccPortActionUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "blueprint", identifier),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.url", "https://example.com"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_prop.myStringIdentifier2.title", "My String Identifier"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_prop.myStringIdentifier2.required", "false"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.url", "https://getport.io"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier2.title", "My String Identifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier2.required", "false"),
 				),
 			},
 		},

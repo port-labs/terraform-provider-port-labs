@@ -10,8 +10,8 @@ import (
 )
 
 func writeArrayResourceToBody(ctx context.Context, state *EntityModel, properties map[string]interface{}) error {
-	if !state.Properties.ArrayProp.StringItems.IsNull() {
-		for identifier, itemArray := range state.Properties.ArrayProp.StringItems.Elements() {
+	if !state.Properties.ArrayProps.StringItems.IsNull() {
+		for identifier, itemArray := range state.Properties.ArrayProps.StringItems.Elements() {
 			var stringItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "string")
 			if err != nil {
 				return err
@@ -20,8 +20,8 @@ func writeArrayResourceToBody(ctx context.Context, state *EntityModel, propertie
 		}
 	}
 
-	if !state.Properties.ArrayProp.NumberItems.IsNull() {
-		for identifier, itemArray := range state.Properties.ArrayProp.NumberItems.Elements() {
+	if !state.Properties.ArrayProps.NumberItems.IsNull() {
+		for identifier, itemArray := range state.Properties.ArrayProps.NumberItems.Elements() {
 			var numberItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "float64")
 			if err != nil {
 				return err
@@ -30,8 +30,8 @@ func writeArrayResourceToBody(ctx context.Context, state *EntityModel, propertie
 		}
 	}
 
-	if !state.Properties.ArrayProp.BooleanItems.IsNull() {
-		for identifier, itemArray := range state.Properties.ArrayProp.BooleanItems.Elements() {
+	if !state.Properties.ArrayProps.BooleanItems.IsNull() {
+		for identifier, itemArray := range state.Properties.ArrayProps.BooleanItems.Elements() {
 			var booleanItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "bool")
 			if err != nil {
 				return err
@@ -40,8 +40,8 @@ func writeArrayResourceToBody(ctx context.Context, state *EntityModel, propertie
 		}
 	}
 
-	if !state.Properties.ArrayProp.ObjectItems.IsNull() {
-		for identifier, itemArray := range state.Properties.ArrayProp.ObjectItems.Elements() {
+	if !state.Properties.ArrayProps.ObjectItems.IsNull() {
+		for identifier, itemArray := range state.Properties.ArrayProps.ObjectItems.Elements() {
 			var objectItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "object")
 			if err != nil {
 				return err
@@ -89,33 +89,33 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 
 	properties := make(map[string]interface{})
 	if state.Properties != nil {
-		if state.Properties.StringProp != nil {
-			for propIdentifier, prop := range state.Properties.StringProp {
+		if state.Properties.StringProps != nil {
+			for propIdentifier, prop := range state.Properties.StringProps {
 				properties[propIdentifier] = prop
 			}
 		}
 
-		if state.Properties.NumberProp != nil {
-			for propIdentifier, prop := range state.Properties.NumberProp {
+		if state.Properties.NumberProps != nil {
+			for propIdentifier, prop := range state.Properties.NumberProps {
 				properties[propIdentifier] = prop
 			}
 		}
 
-		if state.Properties.BooleanProp != nil {
-			for propIdentifier, prop := range state.Properties.BooleanProp {
+		if state.Properties.BooleanProps != nil {
+			for propIdentifier, prop := range state.Properties.BooleanProps {
 				properties[propIdentifier] = prop
 			}
 		}
 
-		if state.Properties.ArrayProp != nil {
+		if state.Properties.ArrayProps != nil {
 			err := writeArrayResourceToBody(ctx, state, properties)
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		if state.Properties.ObjectProp != nil {
-			for identifier, prop := range state.Properties.ObjectProp {
+		if state.Properties.ObjectProps != nil {
+			for identifier, prop := range state.Properties.ObjectProps {
 				obj := make(map[string]interface{})
 				err := json.Unmarshal([]byte(prop), &obj)
 				if err != nil {

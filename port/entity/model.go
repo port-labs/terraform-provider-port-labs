@@ -4,7 +4,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type ArrayPropModel struct {
+type ArrayPropsModel struct {
 	StringItems  types.Map `tfsdk:"string_items"`
 	NumberItems  types.Map `tfsdk:"number_items"`
 	BooleanItems types.Map `tfsdk:"boolean_items"`
@@ -12,11 +12,11 @@ type ArrayPropModel struct {
 }
 
 type EntityPropertiesModel struct {
-	StringProp  map[string]string  `tfsdk:"string_prop"`
-	NumberProp  map[string]float64 `tfsdk:"number_prop"`
-	BooleanProp map[string]bool    `tfsdk:"boolean_prop"`
-	ObjectProp  map[string]string  `tfsdk:"object_prop"`
-	ArrayProp   *ArrayPropModel    `tfsdk:"array_prop"`
+	StringProps  map[string]string  `tfsdk:"string_props"`
+	NumberProps  map[string]float64 `tfsdk:"number_props"`
+	BooleanProps map[string]bool    `tfsdk:"boolean_props"`
+	ObjectProps  map[string]string  `tfsdk:"object_props"`
+	ArrayProps   *ArrayPropsModel   `tfsdk:"array_props"`
 }
 
 type RelationModel struct {

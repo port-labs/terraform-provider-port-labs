@@ -48,27 +48,27 @@ func EntitySchema() map[string]schema.Attribute {
 			MarkdownDescription: "The properties of the entity",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
-				"string_prop": schema.MapAttribute{
+				"string_props": schema.MapAttribute{
 					MarkdownDescription: "The string properties of the entity",
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
-				"number_prop": schema.MapAttribute{
+				"number_props": schema.MapAttribute{
 					MarkdownDescription: "The number properties of the entity",
 					Optional:            true,
 					ElementType:         types.Float64Type,
 				},
-				"boolean_prop": schema.MapAttribute{
+				"boolean_props": schema.MapAttribute{
 					MarkdownDescription: "The bool properties of the entity",
 					Optional:            true,
 					ElementType:         types.BoolType,
 				},
-				"object_prop": schema.MapAttribute{
+				"object_props": schema.MapAttribute{
 					MarkdownDescription: "The object properties of the entity",
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
-				"array_prop": schema.SingleNestedAttribute{
+				"array_props": schema.SingleNestedAttribute{
 					MarkdownDescription: "The array properties of the entity",
 					Optional:            true,
 					Attributes: map[string]schema.Attribute{

@@ -9,7 +9,7 @@ resource "port_action" "restart_microservice" {
     url  = "https://app.getport.io"
   }
   user_properties {
-    string_prop = {
+    string_props = {
       "webhook_url" = {
         title       = "Webhook URL"
         description = "Webhook URL to send the request to"

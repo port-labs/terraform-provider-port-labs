@@ -8,7 +8,7 @@ resource "port_entity" "microservice" {
     }
   }
   properties {
-    string_prop = {
+    string_props = {
       "microservice_name" = "golang_monolith"
     }
   }
@@ -18,7 +18,7 @@ resource "port_entity" "prod_env" {
   title     = "production"
   blueprint = "environments"
   properties {
-    string_prop = {
+    string_props = {
       "name" = "production-env"
     }
   }

@@ -15,7 +15,7 @@ resource "port_entity" "microservice" {
   title     = "monolith"
   blueprint = "microservice_blueprint"
   properties {
-    string_prop = {
+    string_props = {
       "microservice_name" = "golang_monolith"
     }
   }

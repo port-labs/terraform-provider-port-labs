@@ -79,7 +79,7 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 	return nil
 }
 
-func addStingPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
+func addStringPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
 	stringProp := &StringPropModel{
 		MinLength: flex.GoInt64ToFramework(v.MinLength),
 		MaxLength: flex.GoInt64ToFramework(v.MaxLength),

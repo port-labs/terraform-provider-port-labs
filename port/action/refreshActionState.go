@@ -52,7 +52,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 				if properties.StringProps == nil {
 					properties.StringProps = make(map[string]StringPropModel)
 				}
-				stringProp := addStingPropertiesToResource(ctx, &v)
+				stringProp := addStringPropertiesToResource(ctx, &v)
 
 				if lo.Contains(a.UserInputs.Required, k) {
 					stringProp.Required = types.BoolValue(true)
@@ -232,6 +232,7 @@ func setCommonProperties(v cli.BlueprintProperty, prop interface{}) error {
 			case *ObjectPropModel:
 				p.Title = flex.GoStringToFramework(v.Title)
 			}
+		// Due to the possibility of an error being raised when converting null to a pointer, we are unable to utilize flex in this scenario.
 		case "Default":
 			switch p := prop.(type) {
 			case *StringPropModel:

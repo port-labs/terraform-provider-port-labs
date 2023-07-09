@@ -71,3 +71,16 @@ func TerraformListToGoArray(ctx context.Context, list types.List, arrayType stri
 	return elems, nil
 
 }
+
+func GoObjectToTerraformString(v interface{}) (types.String, error) {
+	if v == nil {
+		return types.StringNull(), nil
+	}
+	js, err := json.Marshal(v)
+	if err != nil {
+		return types.StringNull(), err
+	}
+
+	value := string(js)
+	return types.StringValue(value), nil
+}

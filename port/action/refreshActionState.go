@@ -2,15 +2,13 @@ package action
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 	"github.com/samber/lo"
 )
 
@@ -43,110 +41,6 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 			Webhook: types.StringValue(*a.InvocationMethod.Webhook),
 		}
 	}
-}
-
-func addStingPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
-	stringProp := &StringPropModel{
-		MinLength: flex.GoInt64ToFramework(v.MinLength),
-		MaxLength: flex.GoInt64ToFramework(v.MaxLength),
-		Pattern:   flex.GoStringToFramework(v.Pattern),
-	}
-
-	if v.Enum != nil {
-		attrs := make([]attr.Value, 0, len(v.Enum))
-		for _, value := range v.Enum {
-			attrs = append(attrs, basetypes.NewStringValue(value.(string)))
-		}
-
-		stringProp.Enum, _ = types.ListValue(types.StringType, attrs)
-	} else {
-		stringProp.Enum = types.ListNull(types.StringType)
-	}
-
-	return stringProp
-}
-
-func addNumberPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *NumberPropModel {
-	numberProp := &NumberPropModel{
-		Minimum: flex.GoFloat64ToFramework(v.Minimum),
-		Maximum: flex.GoFloat64ToFramework(v.Maximum),
-	}
-
-	if v.Enum != nil {
-		attrs := make([]attr.Value, 0, len(v.Enum))
-		for _, value := range v.Enum {
-			attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
-		}
-
-		numberProp.Enum, _ = types.ListValue(types.Float64Type, attrs)
-	} else {
-		numberProp.Enum = types.ListNull(types.Float64Type)
-	}
-
-	return numberProp
-}
-
-func addObjectPropertiesToResource(v *cli.BlueprintProperty) *ObjectPropModel {
-	objectProp := &ObjectPropModel{
-		Spec: flex.GoStringToFramework(v.Spec),
-	}
-
-	return objectProp
-}
-
-func addArrayPropertiesToResource(v *cli.BlueprintProperty) *ArrayPropModel {
-	arrayProp := &ArrayPropModel{
-		MinItems: flex.GoInt64ToFramework(v.MinItems),
-		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
-	}
-
-	if v.Items != nil {
-		if v.Items["type"] != "" {
-			switch v.Items["type"] {
-			case "string":
-				arrayProp.StringItems = &StringItems{}
-				if v.Default != nil {
-					stringArray := make([]string, len(v.Default.([]interface{})))
-					for i, v := range v.Default.([]interface{}) {
-						stringArray[i] = v.(string)
-					}
-					attrs := make([]attr.Value, 0, len(stringArray))
-					for _, value := range stringArray {
-						attrs = append(attrs, basetypes.NewStringValue(value))
-					}
-					arrayProp.StringItems.Default, _ = types.ListValue(types.StringType, attrs)
-				} else {
-					arrayProp.StringItems.Default = types.ListNull(types.StringType)
-				}
-				if value, ok := v.Items["format"]; ok && value != nil {
-					arrayProp.StringItems.Format = types.StringValue(v.Items["format"].(string))
-				}
-			case "number":
-				arrayProp.NumberItems = &NumberItems{}
-				if v.Default != nil {
-					numberArray := make([]float64, len(v.Default.([]interface{})))
-					attrs := make([]attr.Value, 0, len(numberArray))
-					for _, value := range v.Default.([]interface{}) {
-						attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
-					}
-					arrayProp.NumberItems.Default, _ = types.ListValue(types.Float64Type, attrs)
-				}
-
-			case "boolean":
-				arrayProp.BooleanItems = &BooleanItems{}
-				if v.Default != nil {
-					booleanArray := make([]bool, len(v.Default.([]interface{})))
-					attrs := make([]attr.Value, 0, len(booleanArray))
-					for _, value := range v.Default.([]interface{}) {
-						attrs = append(attrs, basetypes.NewBoolValue(value.(bool)))
-					}
-					arrayProp.BooleanItems.Default, _ = types.ListValue(types.BoolType, attrs)
-				}
-			}
-		}
-	}
-
-	return arrayProp
 }
 
 func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionModel) {
@@ -276,7 +170,7 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 
 }
 
-func setCommonProperties(v cli.BlueprintProperty, prop interface{}) {
+func setCommonProperties(v cli.BlueprintProperty, prop interface{}) error {
 	properties := []string{"Description", "Icon", "Default", "Title", "Format", "Blueprint"}
 	for _, property := range properties {
 		switch property {
@@ -324,8 +218,6 @@ func setCommonProperties(v cli.BlueprintProperty, prop interface{}) {
 			case *StringPropModel:
 				if v.Default == nil {
 					p.Default = types.StringNull()
-				} else {
-					p.Default = types.StringValue(v.Default.(string))
 				}
 			case *NumberPropModel:
 				if v.Default == nil {
@@ -340,13 +232,11 @@ func setCommonProperties(v cli.BlueprintProperty, prop interface{}) {
 					p.Default = types.BoolValue(v.Default.(bool))
 				}
 			case *ObjectPropModel:
-				if v.Default == nil {
-					p.Default = types.StringNull()
-				} else {
-					js, _ := json.Marshal(v.Default)
-					value := string(js)
-					p.Default = types.StringValue(value)
+				defaultValue, err := utils.GoObjectToTerraformString(v.Default)
+				if err != nil {
+					return fmt.Errorf("error converting default value to terraform string: %s", err.Error())
 				}
+				p.Default = defaultValue
 			}
 
 		case "Blueprint":
@@ -380,4 +270,5 @@ func setCommonProperties(v cli.BlueprintProperty, prop interface{}) {
 			}
 		}
 	}
+	return nil
 }

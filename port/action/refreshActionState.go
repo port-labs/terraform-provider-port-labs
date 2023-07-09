@@ -43,7 +43,7 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 	}
 }
 
-func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionModel) {
+func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
 	if len(a.UserInputs.Properties) > 0 {
 		properties := &UserPropertiesModel{}
 		for k, v := range a.UserInputs.Properties {
@@ -60,7 +60,10 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					stringProp.Required = types.BoolValue(false)
 				}
 
-				setCommonProperties(v, stringProp)
+				err := setCommonProperties(v, stringProp)
+				if err != nil {
+					return err
+				}
 
 				properties.StringProps[k] = *stringProp
 
@@ -77,7 +80,10 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					numberProp.Required = types.BoolValue(false)
 				}
 
-				setCommonProperties(v, numberProp)
+				err := setCommonProperties(v, numberProp)
+				if err != nil {
+					return err
+				}
 
 				properties.NumberProps[k] = *numberProp
 
@@ -94,7 +100,10 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					arrayProp.Required = types.BoolValue(false)
 				}
 
-				setCommonProperties(v, arrayProp)
+				err := setCommonProperties(v, arrayProp)
+				if err != nil {
+					return err
+				}
 
 				properties.ArrayProps[k] = *arrayProp
 
@@ -105,7 +114,10 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				booleanProp := &BooleanPropModel{}
 
-				setCommonProperties(v, booleanProp)
+				err := setCommonProperties(v, booleanProp)
+				if err != nil {
+					return err
+				}
 
 				if lo.Contains(a.UserInputs.Required, k) {
 					booleanProp.Required = types.BoolValue(true)
@@ -128,7 +140,10 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					objectProp.Required = types.BoolValue(false)
 				}
 
-				setCommonProperties(v, objectProp)
+				err := setCommonProperties(v, objectProp)
+				if err != nil {
+					return err
+				}
 
 				properties.ObjectProps[k] = *objectProp
 
@@ -136,9 +151,10 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 		}
 		state.UserProperties = properties
 	}
+	return nil
 }
 
-func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, blueprintIdentifier string) {
+func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, blueprintIdentifier string) error {
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintIdentifier, a.Identifier))
 	state.Identifier = types.StringValue(a.Identifier)
 	state.Blueprint = types.StringValue(blueprintIdentifier)
@@ -166,8 +182,11 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 
 	writeInvocationMethodToResource(a, state)
 
-	writeInputsToResource(ctx, a, state)
-
+	err := writeInputsToResource(ctx, a, state)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func setCommonProperties(v cli.BlueprintProperty, prop interface{}) error {

@@ -66,7 +66,11 @@ func (r *ActionResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	refreshActionState(ctx, state, a, blueprintIdentifier)
+	err = refreshActionState(ctx, state, a, blueprintIdentifier)
+	if err != nil {
+		resp.Diagnostics.AddError("failed writing action fields to resource", err.Error())
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

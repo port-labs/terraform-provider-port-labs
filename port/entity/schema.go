@@ -16,7 +16,7 @@ func EntitySchema() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"identifier": schema.StringAttribute{
-			MarkdownDescription: "Identifier",
+			MarkdownDescription: "The identifier of the entity",
 			Optional:            true,
 			Computed:            true,
 			PlanModifiers: []planmodifier.String{
@@ -24,11 +24,11 @@ func EntitySchema() map[string]schema.Attribute {
 			},
 		},
 		"title": schema.StringAttribute{
-			MarkdownDescription: "Title",
+			MarkdownDescription: "The title of the entity",
 			Required:            true,
 		},
 		"icon": schema.StringAttribute{
-			MarkdownDescription: "Icon",
+			MarkdownDescription: "The icon of the entity",
 			Optional:            true,
 		},
 		"run_id": schema.StringAttribute{

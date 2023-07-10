@@ -3,6 +3,7 @@
 page_title: "port-labs Provider"
 subcategory: ""
 description: |-
+  Interact with Port-labs
 ---
 
 # port-labs Provider
@@ -15,10 +16,10 @@ description: |-
 
 ### Required
 
-- `client_id` (String)
-- `secret` (String, Sensitive)
+- `client_id` (String) Client ID for Port-labs
+- `secret` (String, Sensitive) Client Secret for Port-labs
 
 ### Optional
 
 - `base_url` (String)
-- `token` (String, Sensitive)
+- `token` (String, Sensitive) Token for Port-labs

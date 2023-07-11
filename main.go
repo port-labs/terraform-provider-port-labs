@@ -1,11 +1,12 @@
 package main
 
 import (
+	"context"
 	"flag"
+	"log"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/plugin"
-	"github.com/port-labs/terraform-provider-port-labs/port"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/port-labs/terraform-provider-port-labs/provider"
 )
 
 func main() {
@@ -14,11 +15,17 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "set to true to run the provider with support for debuggers like delve")
 	flag.Parse()
 
-	plugin.Serve(&plugin.ServeOpts{
-		Debug:        debug,
-		ProviderAddr: "registry.terraform.io/port-labs/port-labs",
-		ProviderFunc: func() *schema.Provider {
-			return port.Provider()
+	err := providerserver.Serve(
+		context.Background(),
+		provider.New,
+		providerserver.ServeOpts{
+			Address: "registry.terraform.io/port-labs/port-labs",
+			Debug:   debug,
 		},
-	})
+	)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }

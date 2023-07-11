@@ -14,24 +14,24 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 ## Requirements
 
 - [Terraform](https://www.terraform.io/downloads.html) >= 0.13.x
-- [Go](https://golang.org/doc/install) >= 1.16 (to build the provider plugin)
+- [Go](https://golang.org/doc/install) >= 1.19 (to build the provider plugin)
 - [Port Credentials](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/api/#find-your-port-credentials)
 
 ## Installation
 
-Terraform utilizes the Terraform Registry to download and install providers. To install the `port-labs` provider, copy and paste the following code into your Terraform file:
+Terraform utilizes the Terraform Registry to download and install providers. To install the `port` provider, copy and paste the following code into your Terraform file:
 
 ```terraform
 terraform {
   required_providers {
-    port-labs = {
+    port = {
       source  = "port-labs/port-labs"
-      version = "~> 0.10.3"
+      version = "~> 1.0.0"
     }
   }
 }
 
-provider "port-labs" {
+provider "port" {
   client_id = "{YOUR CLIENT ID}"     # or set the environment variable PORT_CLIENT_ID
   secret    = "{YOUR CLIENT SECRET}" # or set the environment variable PORT_CLIENT_SECRET
 }

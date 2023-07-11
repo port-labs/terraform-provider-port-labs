@@ -1,21 +1,22 @@
 terraform {
   required_providers {
-    port-labs = {
+    port = {
       source  = "port-labs/port-labs"
-      version = "~> 0.10.3"
+      version = "~> 1.0.0"
     }
   }
 }
-provider "port-labs" {
+provider "port" {
   client_id = "{YOUR CLIENT ID}"     # or set the environment variable PORT_CLIENT_ID
   secret    = "{YOUR CLIENT SECRET}" # or set the environment variable PORT_CLIENT_SECRET
 }
 
-resource "port-labs_entity" "microservice" {
+resource "port_entity" "microservice" {
   title     = "monolith"
   blueprint = "microservice_blueprint"
   properties {
-    name  = "microservice_name"
-    value = "golang_monolith"
+    string_props = {
+      "microservice_name" = "golang_monolith"
+    }
   }
 }

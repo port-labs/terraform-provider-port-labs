@@ -18,16 +18,6 @@ func booleanPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintPro
 				property.Default = prop.Default.ValueBool()
 			}
 
-			if !prop.Format.IsNull() {
-				format := prop.Format.ValueString()
-				property.Format = &format
-			}
-
-			if !prop.Blueprint.IsNull() {
-				blueprint := prop.Blueprint.ValueString()
-				property.Blueprint = &blueprint
-			}
-
 			if !prop.Icon.IsNull() {
 				icon := prop.Icon.ValueString()
 				property.Icon = &icon

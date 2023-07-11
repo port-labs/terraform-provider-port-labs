@@ -33,6 +33,10 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.BlueprintProperty
 			items["format"] = prop.StringItems.Format.ValueString()
 		}
 
+		if !prop.StringItems.Blueprint.IsNull() {
+			items["blueprint"] = prop.StringItems.Blueprint.ValueString()
+		}
+
 		property.Items = items
 	}
 
@@ -46,10 +50,6 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.BlueprintProperty
 			}
 
 			items["default"] = defaultList
-		}
-
-		if !prop.NumberItems.Format.IsNull() {
-			items["format"] = prop.NumberItems.Format.ValueString()
 		}
 
 		property.Items = items
@@ -66,9 +66,6 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.BlueprintProperty
 
 			items["default"] = defaultList
 		}
-		if !prop.BooleanItems.Format.IsNull() {
-			items["format"] = prop.BooleanItems.Format.ValueString()
-		}
 
 		property.Items = items
 	}
@@ -82,10 +79,6 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.BlueprintProperty
 				return err
 			}
 			items["default"] = defaultList
-		}
-
-		if !prop.ObjectItems.Format.IsNull() {
-			items["format"] = prop.ObjectItems.Format.ValueString()
 		}
 
 		property.Items = items
@@ -109,16 +102,6 @@ func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[stri
 			if !prop.Icon.IsNull() {
 				icon := prop.Icon.ValueString()
 				property.Icon = &icon
-			}
-
-			if !prop.Format.IsNull() {
-				format := prop.Format.ValueString()
-				property.Format = &format
-			}
-
-			if !prop.Blueprint.IsNull() {
-				blueprint := prop.Blueprint.ValueString()
-				property.Blueprint = &blueprint
 			}
 
 			if !prop.Description.IsNull() {
@@ -177,6 +160,9 @@ func addArrayPropertiesToResource(v *cli.BlueprintProperty) (*ArrayPropModel, er
 				if value, ok := v.Items["format"]; ok && value != nil {
 					arrayProp.StringItems.Format = types.StringValue(v.Items["format"].(string))
 				}
+				if value, ok := v.Items["blueprint"]; ok && value != nil {
+					arrayProp.StringItems.Blueprint = types.StringValue(v.Items["blueprint"].(string))
+				}
 			case "number":
 				arrayProp.NumberItems = &NumberItems{}
 				if v.Default != nil {
@@ -186,9 +172,6 @@ func addArrayPropertiesToResource(v *cli.BlueprintProperty) (*ArrayPropModel, er
 						attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
 					}
 					arrayProp.NumberItems.Default, _ = types.ListValue(types.Float64Type, attrs)
-				}
-				if value, ok := v.Items["format"]; ok && value != nil {
-					arrayProp.NumberItems.Format = types.StringValue(v.Items["format"].(string))
 				}
 
 			case "boolean":
@@ -201,9 +184,7 @@ func addArrayPropertiesToResource(v *cli.BlueprintProperty) (*ArrayPropModel, er
 					}
 					arrayProp.BooleanItems.Default, _ = types.ListValue(types.BoolType, attrs)
 				}
-				if value, ok := v.Items["format"]; ok && value != nil {
-					arrayProp.BooleanItems.Format = types.StringValue(v.Items["format"].(string))
-				}
+
 			case "object":
 				arrayProp.ObjectItems = &ObjectItems{}
 				if v.Default != nil {
@@ -219,9 +200,7 @@ func addArrayPropertiesToResource(v *cli.BlueprintProperty) (*ArrayPropModel, er
 					}
 					arrayProp.ObjectItems.Default, _ = types.ListValue(types.StringType, attrs)
 				}
-				if value, ok := v.Items["format"]; ok && value != nil {
-					arrayProp.ObjectItems.Format = types.StringValue(v.Items["format"].(string))
-				}
+
 			}
 		}
 	}

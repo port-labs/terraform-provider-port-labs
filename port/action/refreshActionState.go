@@ -193,7 +193,7 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 }
 
 func setCommonProperties(v cli.BlueprintProperty, prop interface{}) error {
-	properties := []string{"Description", "Icon", "Default", "Title", "Format", "Blueprint"}
+	properties := []string{"Description", "Icon", "Default", "Title"}
 	for _, property := range properties {
 		switch property {
 		case "Description":
@@ -260,36 +260,6 @@ func setCommonProperties(v cli.BlueprintProperty, prop interface{}) error {
 					return fmt.Errorf("error converting default value to terraform string: %s", err.Error())
 				}
 				p.Default = defaultValue
-			}
-
-		case "Blueprint":
-			switch p := prop.(type) {
-			case *StringPropModel:
-				p.Blueprint = flex.GoStringToFramework(v.Blueprint)
-			case *NumberPropModel:
-				p.Blueprint = flex.GoStringToFramework(v.Blueprint)
-			case *BooleanPropModel:
-				p.Blueprint = flex.GoStringToFramework(v.Blueprint)
-			case *ArrayPropModel:
-				p.Blueprint = flex.GoStringToFramework(v.Blueprint)
-			case *ObjectPropModel:
-				p.Blueprint = flex.GoStringToFramework(v.Blueprint)
-			}
-
-		case "Format":
-			if v.Format != nil {
-				switch p := prop.(type) {
-				case *StringPropModel:
-					p.Format = flex.GoStringToFramework(v.Format)
-				case *NumberPropModel:
-					p.Format = flex.GoStringToFramework(v.Format)
-				case *BooleanPropModel:
-					p.Format = flex.GoStringToFramework(v.Format)
-				case *ArrayPropModel:
-					p.Format = flex.GoStringToFramework(v.Format)
-				case *ObjectPropModel:
-					p.Format = flex.GoStringToFramework(v.Format)
-				}
 			}
 		}
 	}

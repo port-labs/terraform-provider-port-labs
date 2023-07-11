@@ -35,14 +35,6 @@ func MetadataProperties() map[string]schema.Attribute {
 			MarkdownDescription: "The description of the property",
 			Optional:            true,
 		},
-		"blueprint": schema.StringAttribute{
-			MarkdownDescription: "The blueprint identifier the property relates to",
-			Optional:            true,
-		},
-		"format": schema.StringAttribute{
-			MarkdownDescription: "The format of the string property",
-			Optional:            true,
-		},
 	}
 }
 
@@ -181,6 +173,14 @@ func StringPropertySchema() schema.Attribute {
 			MarkdownDescription: "The default of the string property",
 			Optional:            true,
 		},
+		"blueprint": schema.StringAttribute{
+			MarkdownDescription: "The blueprint identifier the string property relates to",
+			Optional:            true,
+		},
+		"format": schema.StringAttribute{
+			MarkdownDescription: "The format of the string property",
+			Optional:            true,
+		},
 		"min_length": schema.Int64Attribute{
 			MarkdownDescription: "The min length of the string property",
 			Optional:            true,
@@ -278,6 +278,7 @@ func ObjectPropertySchema() schema.Attribute {
 			MarkdownDescription: "The default of the object property",
 		},
 	}
+	utils.CopyMaps(objectPropertySchema, MetadataProperties())
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The object property of the action",
 		Optional:            true,
@@ -309,6 +310,10 @@ func ArrayPropertySchema() schema.Attribute {
 			Attributes: map[string]schema.Attribute{
 				"format": schema.StringAttribute{
 					MarkdownDescription: "The format of the items",
+					Optional:            true,
+				},
+				"blueprint": schema.StringAttribute{
+					MarkdownDescription: "The blueprint identifier the property relates to",
 					Optional:            true,
 				},
 				"default": schema.ListAttribute{
@@ -352,6 +357,8 @@ func ArrayPropertySchema() schema.Attribute {
 			},
 		},
 	}
+
+	utils.CopyMaps(arrayPropertySchema, MetadataProperties())
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The array property of the action",
 		Optional:            true,

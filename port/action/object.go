@@ -40,16 +40,6 @@ func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProp
 				property.Description = &description
 			}
 
-			if !prop.Format.IsNull() {
-				format := prop.Format.ValueString()
-				property.Format = &format
-			}
-
-			if !prop.Blueprint.IsNull() {
-				blueprint := prop.Blueprint.ValueString()
-				property.Blueprint = &blueprint
-			}
-
 			if !prop.Spec.IsNull() {
 				spec := prop.Spec.ValueString()
 				property.Spec = &spec

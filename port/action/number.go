@@ -32,16 +32,6 @@ func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map
 				property.Icon = &icon
 			}
 
-			if !prop.Format.IsNull() {
-				format := prop.Format.ValueString()
-				property.Format = &format
-			}
-
-			if !prop.Blueprint.IsNull() {
-				blueprint := prop.Blueprint.ValueString()
-				property.Blueprint = &blueprint
-			}
-
 			if !prop.Minimum.IsNull() {
 				minimum := prop.Minimum.ValueFloat64()
 				property.Minimum = &minimum

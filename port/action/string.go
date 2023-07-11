@@ -84,6 +84,8 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty
 		MinLength: flex.GoInt64ToFramework(v.MinLength),
 		MaxLength: flex.GoInt64ToFramework(v.MaxLength),
 		Pattern:   flex.GoStringToFramework(v.Pattern),
+		Format:    flex.GoStringToFramework(v.Format),
+		Blueprint: flex.GoStringToFramework(v.Blueprint),
 	}
 
 	if v.Enum != nil {

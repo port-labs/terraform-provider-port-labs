@@ -118,7 +118,7 @@ type (
 	Blueprint struct {
 		Meta
 		Identifier            string                                  `json:"identifier,omitempty"`
-		Title                 *string                                 `json:"title,omitempty"`
+		Title                 string                                  `json:"title,omitempty"`
 		Icon                  *string                                 `json:"icon,omitempty"`
 		Description           *string                                 `json:"description,omitempty"`
 		Schema                BlueprintSchema                         `json:"schema"`

@@ -72,8 +72,11 @@ func writeRelationsToBody(ctx context.Context, relations *RelationModel) (map[st
 
 func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Blueprint) (*cli.Entity, error) {
 	e := &cli.Entity{
-		Title:     state.Title.ValueString(),
 		Blueprint: bp.Identifier,
+	}
+
+	if !state.Title.IsNull() {
+		e.Title = state.Title.ValueString()
 	}
 
 	if !state.Identifier.IsUnknown() {

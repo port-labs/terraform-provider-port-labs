@@ -25,7 +25,7 @@ func EntitySchema() map[string]schema.Attribute {
 		},
 		"title": schema.StringAttribute{
 			MarkdownDescription: "The title of the entity",
-			Required:            true,
+			Optional:            true,
 		},
 		"icon": schema.StringAttribute{
 			MarkdownDescription: "The icon of the entity",

@@ -21,7 +21,7 @@ func MetadataProperties() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"title": schema.StringAttribute{
 			MarkdownDescription: "The title of the property",
-			Optional:            true,
+			Required:            true,
 		},
 		"icon": schema.StringAttribute{
 			MarkdownDescription: "The icon of the property",
@@ -374,7 +374,7 @@ func BlueprintSchema() map[string]schema.Attribute {
 					},
 					"target": schema.StringAttribute{
 						MarkdownDescription: "The target of the relation",
-						Optional:            true,
+						Required:            true,
 					},
 					"many": schema.BoolAttribute{
 						MarkdownDescription: "The many of the relation",

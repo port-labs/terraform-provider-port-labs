@@ -69,7 +69,7 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 	bm.UpdatedAt = types.StringValue(b.UpdatedAt.String())
 	bm.UpdatedBy = types.StringValue(b.UpdatedBy)
 
-	bm.Title = flex.GoStringToFramework(b.Title)
+	bm.Title = types.StringValue(b.Title)
 	bm.Icon = flex.GoStringToFramework(b.Icon)
 	bm.Description = flex.GoStringToFramework(b.Description)
 
@@ -212,11 +212,7 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) (*cli.Blueprint, error) {
 	b := &cli.Blueprint{
 		Identifier: state.Identifier.ValueString(),
-	}
-
-	if !state.Title.IsNull() {
-		titleValue := state.Title.ValueString()
-		b.Title = &titleValue
+		Title:      state.Title.ValueString(),
 	}
 
 	if !state.Icon.IsNull() {

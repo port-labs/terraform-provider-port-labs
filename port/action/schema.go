@@ -122,7 +122,7 @@ func ActionSchema() map[string]schema.Attribute {
 				},
 				"workflow": schema.StringAttribute{
 					MarkdownDescription: "The GitHub workflow that the action belongs to",
-					Optional:            true,
+					Required:            true,
 				},
 				"omit_payload": schema.BoolAttribute{
 					MarkdownDescription: "Omit the payload when invoking the action",

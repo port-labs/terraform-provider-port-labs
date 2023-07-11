@@ -105,14 +105,12 @@ func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 	if data.GithubMethod != nil {
 		org := data.GithubMethod.Org.ValueString()
 		repo := data.GithubMethod.Repo.ValueString()
+		workflow := data.GithubMethod.Workflow.ValueString()
 		githubInvocation := &cli.InvocationMethod{
-			Type: consts.Github,
-			Org:  &org,
-			Repo: &repo,
-		}
-		if !data.GithubMethod.Workflow.IsNull() {
-			workflow := data.GithubMethod.Workflow.ValueString()
-			githubInvocation.Workflow = &workflow
+			Type:     consts.Github,
+			Org:      &org,
+			Repo:     &repo,
+			Workflow: &workflow,
 		}
 
 		if !data.GithubMethod.OmitPayload.IsNull() {

@@ -20,7 +20,7 @@ type EntityPropertiesModel struct {
 }
 
 type RelationModel struct {
-	SingleRelation map[string]string   `tfsdk:"single_relation"`
+	SingleRelation map[string]string   `tfsdk:"single_relations"`
 	ManyRelations  map[string][]string `tfsdk:"many_relations"`
 }
 

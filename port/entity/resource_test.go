@@ -158,7 +158,7 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 			}
 		}
 		relations = {
-			single_relation = {
+			single_relations = {
 				"tfRelation" = port_entity.microservice2.identifier
 			}
 		}
@@ -187,7 +187,7 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 					resource.TestCheckResourceAttr("port_entity.microservice", "title", "TF Provider Test Entity0"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "blueprint", identifier),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.string_props.myStringIdentifier", "My String Value"),
-					resource.TestCheckResourceAttr("port_entity.microservice", "relations.single_relation.tfRelation", "tf-entity-2"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "relations.single_relations.tfRelation", "tf-entity-2"),
 				),
 			},
 		},

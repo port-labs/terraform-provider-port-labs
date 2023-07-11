@@ -96,7 +96,7 @@ func EntitySchema() map[string]schema.Attribute {
 			MarkdownDescription: "The relations of the entity",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
-				"single_relation": schema.MapAttribute{
+				"single_relations": schema.MapAttribute{
 					MarkdownDescription: "The single relation of the entity",
 					Optional:            true,
 					ElementType:         types.StringType,

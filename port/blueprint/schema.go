@@ -291,7 +291,7 @@ func BlueprintSchema() map[string]schema.Attribute {
 		},
 		"title": schema.StringAttribute{
 			MarkdownDescription: "The display name of the blueprint",
-			Optional:            true,
+			Required:            true,
 		},
 		"icon": schema.StringAttribute{
 			MarkdownDescription: "The icon of the blueprint",

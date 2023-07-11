@@ -21,7 +21,7 @@ func MetadataProperties() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"title": schema.StringAttribute{
 			MarkdownDescription: "The title of the property",
-			Required:            true,
+			Optional:            true,
 		},
 		"icon": schema.StringAttribute{
 			MarkdownDescription: "The icon of the property",

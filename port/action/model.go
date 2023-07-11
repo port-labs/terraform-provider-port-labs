@@ -66,15 +66,18 @@ type StringItems struct {
 }
 
 type NumberItems struct {
-	Default types.List `tfsdk:"default"`
+	Format  types.String `tfsdk:"format"`
+	Default types.List   `tfsdk:"default"`
 }
 
 type BooleanItems struct {
-	Default types.List `tfsdk:"default"`
+	Format  types.String `tfsdk:"format"`
+	Default types.List   `tfsdk:"default"`
 }
 
 type ObjectItems struct {
-	Default types.List `tfsdk:"default"`
+	Format  types.String `tfsdk:"format"`
+	Default types.List   `tfsdk:"default"`
 }
 
 type UserPropertiesModel struct {

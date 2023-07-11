@@ -92,7 +92,10 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					properties.ArrayProps = make(map[string]ArrayPropModel)
 				}
 
-				arrayProp := addArrayPropertiesToResource(&v)
+				arrayProp, err := addArrayPropertiesToResource(&v)
+				if err != nil {
+					return err
+				}
 
 				if lo.Contains(a.UserInputs.Required, k) {
 					arrayProp.Required = types.BoolValue(true)
@@ -100,7 +103,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					arrayProp.Required = types.BoolValue(false)
 				}
 
-				err := setCommonProperties(v, arrayProp)
+				err = setCommonProperties(v, arrayProp)
 				if err != nil {
 					return err
 				}

@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -27,6 +28,11 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.BlueprintProperty
 
 			property.Default = defaultList
 		}
+
+		if !prop.StringItems.Format.IsNull() {
+			items["format"] = prop.StringItems.Format.ValueString()
+		}
+
 		property.Items = items
 	}
 
@@ -41,6 +47,11 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.BlueprintProperty
 
 			items["default"] = defaultList
 		}
+
+		if !prop.NumberItems.Format.IsNull() {
+			items["format"] = prop.NumberItems.Format.ValueString()
+		}
+
 		property.Items = items
 	}
 
@@ -55,6 +66,10 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.BlueprintProperty
 
 			items["default"] = defaultList
 		}
+		if !prop.BooleanItems.Format.IsNull() {
+			items["format"] = prop.BooleanItems.Format.ValueString()
+		}
+
 		property.Items = items
 	}
 
@@ -68,6 +83,11 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.BlueprintProperty
 			}
 			items["default"] = defaultList
 		}
+
+		if !prop.ObjectItems.Format.IsNull() {
+			items["format"] = prop.ObjectItems.Format.ValueString()
+		}
+
 		property.Items = items
 	}
 	return nil
@@ -130,7 +150,7 @@ func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[stri
 	return nil
 }
 
-func addArrayPropertiesToResource(v *cli.BlueprintProperty) *ArrayPropModel {
+func addArrayPropertiesToResource(v *cli.BlueprintProperty) (*ArrayPropModel, error) {
 	arrayProp := &ArrayPropModel{
 		MinItems: flex.GoInt64ToFramework(v.MinItems),
 		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
@@ -167,6 +187,9 @@ func addArrayPropertiesToResource(v *cli.BlueprintProperty) *ArrayPropModel {
 					}
 					arrayProp.NumberItems.Default, _ = types.ListValue(types.Float64Type, attrs)
 				}
+				if value, ok := v.Items["format"]; ok && value != nil {
+					arrayProp.NumberItems.Format = types.StringValue(v.Items["format"].(string))
+				}
 
 			case "boolean":
 				arrayProp.BooleanItems = &BooleanItems{}
@@ -178,9 +201,30 @@ func addArrayPropertiesToResource(v *cli.BlueprintProperty) *ArrayPropModel {
 					}
 					arrayProp.BooleanItems.Default, _ = types.ListValue(types.BoolType, attrs)
 				}
+				if value, ok := v.Items["format"]; ok && value != nil {
+					arrayProp.BooleanItems.Format = types.StringValue(v.Items["format"].(string))
+				}
+			case "object":
+				arrayProp.ObjectItems = &ObjectItems{}
+				if v.Default != nil {
+					objectArray := make([]map[string]interface{}, len(v.Default.([]interface{})))
+					attrs := make([]attr.Value, 0, len(objectArray))
+					for _, value := range v.Default.([]interface{}) {
+						stringfiyValue, err := json.Marshal(value)
+						if err != nil {
+							return nil, err
+						}
+						stringValue := string(stringfiyValue)
+						attrs = append(attrs, basetypes.NewStringValue(stringValue))
+					}
+					arrayProp.ObjectItems.Default, _ = types.ListValue(types.StringType, attrs)
+				}
+				if value, ok := v.Items["format"]; ok && value != nil {
+					arrayProp.ObjectItems.Format = types.StringValue(v.Items["format"].(string))
+				}
 			}
 		}
 	}
 
-	return arrayProp
+	return arrayProp, nil
 }

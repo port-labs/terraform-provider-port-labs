@@ -241,6 +241,8 @@ func setCommonProperties(v cli.BlueprintProperty, prop interface{}) error {
 			case *StringPropModel:
 				if v.Default == nil {
 					p.Default = types.StringNull()
+				} else {
+					p.Default = types.StringValue(v.Default.(string))
 				}
 			case *NumberPropModel:
 				if v.Default == nil {

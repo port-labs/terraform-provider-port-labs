@@ -56,6 +56,89 @@ func TestAccPortActionBasic(t *testing.T) {
 	})
 }
 
+func TestAccPortAction(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port_blueprint.microservice.id
+		trigger = "DAY-2"
+		kafka_method = {}
+		user_properties = {
+			"string_props" = {
+				"myStringIdentifier" = {
+					"title" = "My String Identifier"
+					"required" = true
+
+				}
+			}
+			"number_props" = {
+				"myNumberIdentifier" = {
+					"title" = "My Number Identifier"
+					"required" = true
+					maximum = 100
+					minimum = 0
+				}
+			}
+			"boolean_props" = {
+				"myBooleanIdentifier" = {
+					"title" = "My Boolean Identifier"
+					"required" = true
+				}
+			}
+			"object_props" = {
+				"myObjectIdentifier" = {
+					"title" = "My Object Identifier"
+					"required" = true
+				}
+			}
+			"array_props" = {
+				"myArrayIdentifier" = {
+					"title" = "My Array Identifier"
+					"required" = true
+					string_items = {
+						format = "email"
+					}
+				}
+			}
+		}
+
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "blueprint", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier.title", "My String Identifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.number_props.myNumberIdentifier.title", "My Number Identifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.number_props.myNumberIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.number_props.myNumberIdentifier.maximum", "100"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.number_props.myNumberIdentifier.minimum", "0"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.boolean_props.myBooleanIdentifier.title", "My Boolean Identifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.boolean_props.myBooleanIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.object_props.myObjectIdentifier.title", "My Object Identifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.object_props.myObjectIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.array_props.myArrayIdentifier.title", "My Array Identifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.array_props.myArrayIdentifier.required", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.array_props.myArrayIdentifier.string_items.format", "email"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortActionWebhookInvocation(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()

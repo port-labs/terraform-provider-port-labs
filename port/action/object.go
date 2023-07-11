@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 )
 
 func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
@@ -40,11 +39,6 @@ func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProp
 				property.Description = &description
 			}
 
-			if !prop.Spec.IsNull() {
-				spec := prop.Spec.ValueString()
-				property.Spec = &spec
-			}
-
 			props[propIdentifier] = property
 		}
 
@@ -56,9 +50,7 @@ func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProp
 }
 
 func addObjectPropertiesToResource(v *cli.BlueprintProperty) *ObjectPropModel {
-	objectProp := &ObjectPropModel{
-		Spec: flex.GoStringToFramework(v.Spec),
-	}
+	objectProp := &ObjectPropModel{}
 
 	return objectProp
 }

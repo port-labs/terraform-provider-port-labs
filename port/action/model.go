@@ -101,7 +101,6 @@ type ObjectPropModel struct {
 	Description types.String `tfsdk:"description"`
 	Required    types.Bool   `tfsdk:"required"`
 	Default     types.String `tfsdk:"default"`
-	Spec        types.String `tfsdk:"spec"`
 }
 
 type ApprovalWebhookNotificationModel struct {

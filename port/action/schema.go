@@ -262,6 +262,8 @@ func BooleanPropertySchema() schema.Attribute {
 			Optional:            true,
 		},
 	}
+
+	utils.CopyMaps(booleanPropertySchema, MetadataProperties())
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The boolean property of the action",
 		Optional:            true,

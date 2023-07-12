@@ -51,6 +51,7 @@ type (
 		Spec               *string             `json:"spec,omitempty"`
 		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
 		EnumColors         map[string]string   `json:"enumColors,omitempty"`
+		DependsOn          []string            `json:"dependsOn,omitempty"`
 	}
 
 	SpecAuthentication struct {

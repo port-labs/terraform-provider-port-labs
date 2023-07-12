@@ -35,6 +35,7 @@ type StringPropModel struct {
 	MinLength   types.Int64  `tfsdk:"min_length"`
 	Pattern     types.String `tfsdk:"pattern"`
 	Enum        types.List   `tfsdk:"enum"`
+	DependsOn   types.List   `tfsdk:"depends_on"`
 }
 
 type NumberPropModel struct {
@@ -46,6 +47,7 @@ type NumberPropModel struct {
 	Maximum     types.Float64 `tfsdk:"maximum"`
 	Minimum     types.Float64 `tfsdk:"minimum"`
 	Enum        types.List    `tfsdk:"enum"`
+	DependsOn   types.List    `tfsdk:"depends_on"`
 }
 
 type BooleanPropModel struct {
@@ -54,6 +56,7 @@ type BooleanPropModel struct {
 	Description types.String `tfsdk:"description"`
 	Default     types.Bool   `tfsdk:"default"`
 	Required    types.Bool   `tfsdk:"required"`
+	DependsOn   types.List   `tfsdk:"depends_on"`
 }
 
 type StringItems struct {
@@ -93,6 +96,7 @@ type ArrayPropModel struct {
 	NumberItems  *NumberItems  `tfsdk:"number_items"`
 	BooleanItems *BooleanItems `tfsdk:"boolean_items"`
 	ObjectItems  *ObjectItems  `tfsdk:"object_items"`
+	DependsOn    types.List    `tfsdk:"depends_on"`
 }
 
 type ObjectPropModel struct {
@@ -101,6 +105,7 @@ type ObjectPropModel struct {
 	Description types.String `tfsdk:"description"`
 	Required    types.Bool   `tfsdk:"required"`
 	Default     types.String `tfsdk:"default"`
+	DependsOn   types.List   `tfsdk:"depends_on"`
 }
 
 type ApprovalWebhookNotificationModel struct {

@@ -118,6 +118,15 @@ func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[stri
 				property.MaxItems = &maxItems
 			}
 
+			if !prop.DependsOn.IsNull() {
+				dependsOn, err := utils.TerraformListToGoArray(ctx, prop.DependsOn, "string")
+				if err != nil {
+					return err
+				}
+				property.DependsOn = utils.InterfaceToStringArray(dependsOn)
+
+			}
+
 			err := handleArrayItemsToBody(ctx, &property, prop, required)
 			if err != nil {
 				return err

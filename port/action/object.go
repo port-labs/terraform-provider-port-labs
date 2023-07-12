@@ -1,12 +1,14 @@
 package action
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+func objectPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
 	for propIdentifier, prop := range d.UserProperties.ObjectProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "object",
@@ -37,6 +39,15 @@ func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProp
 			if !prop.Description.IsNull() {
 				description := prop.Description.ValueString()
 				property.Description = &description
+			}
+
+			if !prop.DependsOn.IsNull() {
+				dependsOn, err := utils.TerraformListToGoArray(ctx, prop.DependsOn, "string")
+				if err != nil {
+					return err
+				}
+				property.DependsOn = utils.InterfaceToStringArray(dependsOn)
+
 			}
 
 			props[propIdentifier] = property

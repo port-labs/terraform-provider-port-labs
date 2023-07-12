@@ -70,6 +70,15 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 			property.Enum = enumList
 		}
 
+		if !prop.DependsOn.IsNull() {
+			dependsOn, err := utils.TerraformListToGoArray(ctx, prop.DependsOn, "string")
+			if err != nil {
+				return err
+			}
+			property.DependsOn = utils.InterfaceToStringArray(dependsOn)
+
+		}
+
 		props[propIdentifier] = property
 
 		if prop.Required.ValueBool() {

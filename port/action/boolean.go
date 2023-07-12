@@ -1,8 +1,13 @@
 package action
 
-import "github.com/port-labs/terraform-provider-port-labs/internal/cli"
+import (
+	"context"
 
-func booleanPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) {
+	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+)
+
+func booleanPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
 	for propIdentifier, prop := range d.UserProperties.BooleanProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "boolean",
@@ -28,10 +33,20 @@ func booleanPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintPro
 				property.Description = &description
 			}
 
+			if !prop.DependsOn.IsNull() {
+				dependsOn, err := utils.TerraformListToGoArray(ctx, prop.DependsOn, "string")
+				if err != nil {
+					return err
+				}
+				property.DependsOn = utils.InterfaceToStringArray(dependsOn)
+
+			}
+
 			props[propIdentifier] = property
 		}
 		if prop.Required.ValueBool() {
 			*required = append(*required, propIdentifier)
 		}
 	}
+	return nil
 }

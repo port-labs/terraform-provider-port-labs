@@ -35,6 +35,11 @@ func MetadataProperties() map[string]schema.Attribute {
 			MarkdownDescription: "The description of the property",
 			Optional:            true,
 		},
+		"depends_on": schema.ListAttribute{
+			MarkdownDescription: "The properties that this property depends on",
+			Optional:            true,
+			ElementType:         types.StringType,
+		},
 	}
 }
 

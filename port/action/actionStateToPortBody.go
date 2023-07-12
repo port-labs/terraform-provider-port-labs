@@ -75,11 +75,11 @@ func actionPropertiesToBody(ctx context.Context, action *cli.Action, data *Actio
 		err = numberPropResourceToBody(ctx, data, props, &required)
 	}
 	if data.UserProperties.BooleanProps != nil {
-		booleanPropResourceToBody(data, props, &required)
+		err = booleanPropResourceToBody(ctx, data, props, &required)
 	}
 
 	if data.UserProperties.ObjectProps != nil {
-		err = objectPropResourceToBody(data, props, &required)
+		err = objectPropResourceToBody(ctx, data, props, &required)
 	}
 
 	if err != nil {

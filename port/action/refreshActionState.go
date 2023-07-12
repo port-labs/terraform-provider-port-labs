@@ -60,7 +60,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					stringProp.Required = types.BoolValue(false)
 				}
 
-				err := setCommonProperties(v, stringProp)
+				err := setCommonProperties(ctx, v, stringProp)
 				if err != nil {
 					return err
 				}
@@ -80,7 +80,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					numberProp.Required = types.BoolValue(false)
 				}
 
-				err := setCommonProperties(v, numberProp)
+				err := setCommonProperties(ctx, v, numberProp)
 				if err != nil {
 					return err
 				}
@@ -103,7 +103,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					arrayProp.Required = types.BoolValue(false)
 				}
 
-				err = setCommonProperties(v, arrayProp)
+				err = setCommonProperties(ctx, v, arrayProp)
 				if err != nil {
 					return err
 				}
@@ -117,7 +117,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				booleanProp := &BooleanPropModel{}
 
-				err := setCommonProperties(v, booleanProp)
+				err := setCommonProperties(ctx, v, booleanProp)
 				if err != nil {
 					return err
 				}
@@ -143,7 +143,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					objectProp.Required = types.BoolValue(false)
 				}
 
-				err := setCommonProperties(v, objectProp)
+				err := setCommonProperties(ctx, v, objectProp)
 				if err != nil {
 					return err
 				}
@@ -192,8 +192,8 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 	return nil
 }
 
-func setCommonProperties(v cli.BlueprintProperty, prop interface{}) error {
-	properties := []string{"Description", "Icon", "Default", "Title"}
+func setCommonProperties(ctx context.Context, v cli.BlueprintProperty, prop interface{}) error {
+	properties := []string{"Description", "Icon", "Default", "Title", "DependsOn"}
 	for _, property := range properties {
 		switch property {
 		case "Description":
@@ -262,6 +262,19 @@ func setCommonProperties(v cli.BlueprintProperty, prop interface{}) error {
 					return fmt.Errorf("error converting default value to terraform string: %s", err.Error())
 				}
 				p.Default = defaultValue
+			}
+		case "DependsOn":
+			switch p := prop.(type) {
+			case *StringPropModel:
+				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+			case *NumberPropModel:
+				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+			case *BooleanPropModel:
+				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+			case *ArrayPropModel:
+				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+			case *ObjectPropModel:
+				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
 			}
 		}
 	}

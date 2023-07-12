@@ -56,6 +56,15 @@ func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map
 				property.Enum = enumList
 			}
 
+			if !prop.DependsOn.IsNull() {
+				dependsOn, err := utils.TerraformListToGoArray(ctx, prop.DependsOn, "string")
+				if err != nil {
+					return err
+				}
+				property.DependsOn = utils.InterfaceToStringArray(dependsOn)
+
+			}
+
 			props[propIdentifier] = property
 		}
 		if prop.Required.ValueBool() {

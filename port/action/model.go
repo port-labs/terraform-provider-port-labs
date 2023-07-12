@@ -9,6 +9,20 @@ type WebhookMethodModel struct {
 	Agent types.Bool   `tfsdk:"agent"`
 }
 
+type Value struct {
+	JqQuery types.String `tfsdk:"jq_query"`
+}
+type Rule struct {
+	Blueprint types.String `tfsdk:"blueprint"`
+	Property  types.String `tfsdk:"property"`
+	Operator  types.String `tfsdk:"operator"`
+	Value     *Value       `tfsdk:"value"`
+}
+type DatasetModel struct {
+	Combinator types.String `tfsdk:"combinator"`
+	Rules      []Rule       `tfsdk:"rules"`
+}
+
 type GithubMethodModel struct {
 	Org                  types.String `tfsdk:"org"`
 	Repo                 types.String `tfsdk:"repo"`
@@ -24,18 +38,19 @@ type AzureMethodModel struct {
 }
 
 type StringPropModel struct {
-	Title       types.String `tfsdk:"title"`
-	Icon        types.String `tfsdk:"icon"`
-	Blueprint   types.String `tfsdk:"blueprint"`
-	Description types.String `tfsdk:"description"`
-	Default     types.String `tfsdk:"default"`
-	Required    types.Bool   `tfsdk:"required"`
-	Format      types.String `tfsdk:"format"`
-	MaxLength   types.Int64  `tfsdk:"max_length"`
-	MinLength   types.Int64  `tfsdk:"min_length"`
-	Pattern     types.String `tfsdk:"pattern"`
-	Enum        types.List   `tfsdk:"enum"`
-	DependsOn   types.List   `tfsdk:"depends_on"`
+	Title       types.String  `tfsdk:"title"`
+	Icon        types.String  `tfsdk:"icon"`
+	Blueprint   types.String  `tfsdk:"blueprint"`
+	Description types.String  `tfsdk:"description"`
+	Default     types.String  `tfsdk:"default"`
+	Required    types.Bool    `tfsdk:"required"`
+	Format      types.String  `tfsdk:"format"`
+	MaxLength   types.Int64   `tfsdk:"max_length"`
+	MinLength   types.Int64   `tfsdk:"min_length"`
+	Pattern     types.String  `tfsdk:"pattern"`
+	Enum        types.List    `tfsdk:"enum"`
+	DependsOn   types.List    `tfsdk:"depends_on"`
+	Dataset     *DatasetModel `tfsdk:"dataset"`
 }
 
 type NumberPropModel struct {
@@ -48,15 +63,17 @@ type NumberPropModel struct {
 	Minimum     types.Float64 `tfsdk:"minimum"`
 	Enum        types.List    `tfsdk:"enum"`
 	DependsOn   types.List    `tfsdk:"depends_on"`
+	Dataset     *DatasetModel `tfsdk:"dataset"`
 }
 
 type BooleanPropModel struct {
-	Title       types.String `tfsdk:"title"`
-	Icon        types.String `tfsdk:"icon"`
-	Description types.String `tfsdk:"description"`
-	Default     types.Bool   `tfsdk:"default"`
-	Required    types.Bool   `tfsdk:"required"`
-	DependsOn   types.List   `tfsdk:"depends_on"`
+	Title       types.String  `tfsdk:"title"`
+	Icon        types.String  `tfsdk:"icon"`
+	Description types.String  `tfsdk:"description"`
+	Default     types.Bool    `tfsdk:"default"`
+	Required    types.Bool    `tfsdk:"required"`
+	DependsOn   types.List    `tfsdk:"depends_on"`
+	Dataset     *DatasetModel `tfsdk:"dataset"`
 }
 
 type StringItems struct {
@@ -97,15 +114,17 @@ type ArrayPropModel struct {
 	BooleanItems *BooleanItems `tfsdk:"boolean_items"`
 	ObjectItems  *ObjectItems  `tfsdk:"object_items"`
 	DependsOn    types.List    `tfsdk:"depends_on"`
+	Dataset      *DatasetModel `tfsdk:"dataset"`
 }
 
 type ObjectPropModel struct {
-	Title       types.String `tfsdk:"title"`
-	Icon        types.String `tfsdk:"icon"`
-	Description types.String `tfsdk:"description"`
-	Required    types.Bool   `tfsdk:"required"`
-	Default     types.String `tfsdk:"default"`
-	DependsOn   types.List   `tfsdk:"depends_on"`
+	Title       types.String  `tfsdk:"title"`
+	Icon        types.String  `tfsdk:"icon"`
+	Description types.String  `tfsdk:"description"`
+	Required    types.Bool    `tfsdk:"required"`
+	Default     types.String  `tfsdk:"default"`
+	DependsOn   types.List    `tfsdk:"depends_on"`
+	Dataset     *DatasetModel `tfsdk:"dataset"`
 }
 
 type ApprovalWebhookNotificationModel struct {

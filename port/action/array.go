@@ -126,6 +126,9 @@ func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[stri
 				property.DependsOn = utils.InterfaceToStringArray(dependsOn)
 
 			}
+			if prop.Dataset != nil {
+				property.Dataset = actionDataSetToPortBody(prop.Dataset)
+			}
 
 			err := handleArrayItemsToBody(ctx, &property, prop, required)
 			if err != nil {

@@ -43,6 +43,32 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 	}
 }
 
+func writeDatasetToResource(v cli.BlueprintProperty) *DatasetModel {
+	if v.Dataset == nil {
+		return nil
+	}
+
+	dataset := v.Dataset
+
+	datasetModel := &DatasetModel{
+		Combinator: types.StringValue(dataset.Combinator),
+	}
+
+	for _, v := range dataset.Rules {
+		rule := &Rule{
+			Blueprint: flex.GoStringToFramework(v.Blueprint),
+			Property:  flex.GoStringToFramework(v.Property),
+			Operator:  flex.GoStringToFramework(&v.Operator),
+			Value: &Value{
+				JqQuery: flex.GoStringToFramework(&v.Value.JqQuery),
+			},
+		}
+		datasetModel.Rules = append(datasetModel.Rules, *rule)
+	}
+
+	return datasetModel
+
+}
 func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
 	if len(a.UserInputs.Properties) > 0 {
 		properties := &UserPropertiesModel{}
@@ -193,7 +219,7 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 }
 
 func setCommonProperties(ctx context.Context, v cli.BlueprintProperty, prop interface{}) error {
-	properties := []string{"Description", "Icon", "Default", "Title", "DependsOn"}
+	properties := []string{"Description", "Icon", "Default", "Title", "DependsOn", "Dataset"}
 	for _, property := range properties {
 		switch property {
 		case "Description":
@@ -275,6 +301,23 @@ func setCommonProperties(ctx context.Context, v cli.BlueprintProperty, prop inte
 				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
 			case *ObjectPropModel:
 				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+			}
+
+		case "Dataset":
+			dataset := writeDatasetToResource(v)
+			if dataset != nil {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Dataset = dataset
+				case *NumberPropModel:
+					p.Dataset = dataset
+				case *BooleanPropModel:
+					p.Dataset = dataset
+				case *ArrayPropModel:
+					p.Dataset = dataset
+				case *ObjectPropModel:
+					p.Dataset = dataset
+				}
 			}
 		}
 	}

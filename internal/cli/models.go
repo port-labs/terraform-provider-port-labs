@@ -52,12 +52,27 @@ type (
 		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
 		EnumColors         map[string]string   `json:"enumColors,omitempty"`
 		DependsOn          []string            `json:"dependsOn,omitempty"`
+		Dataset            *Dataset            `json:"dataset,omitempty"`
 	}
 
 	SpecAuthentication struct {
 		ClientId         string `json:"clientId,omitempty"`
 		AuthorizationUrl string `json:"authorizationUrl,omitempty"`
 		TokenUrl         string `json:"tokenUrl,omitempty"`
+	}
+
+	DatasetValue struct {
+		JqQuery string `json:"jqQuery,omitempty"`
+	}
+	DatasetRule struct {
+		Blueprint *string       `json:"blueprint,omitempty"`
+		Property  *string       `json:"property,omitempty"`
+		Operator  string        `json:"operator,omitempty"`
+		Value     *DatasetValue `json:"value,omitempty"`
+	}
+	Dataset struct {
+		Combinator string        `json:"combinator,omitempty"`
+		Rules      []DatasetRule `json:"rules,omitempty"`
 	}
 
 	BlueprintCalculationProperty struct {

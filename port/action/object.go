@@ -50,6 +50,10 @@ func objectPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 
 			}
 
+			if prop.Dataset != nil {
+				property.Dataset = actionDataSetToPortBody(prop.Dataset)
+			}
+
 			props[propIdentifier] = property
 		}
 

@@ -76,7 +76,10 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 				return err
 			}
 			property.DependsOn = utils.InterfaceToStringArray(dependsOn)
+		}
 
+		if prop.Dataset != nil {
+			property.Dataset = actionDataSetToPortBody(prop.Dataset)
 		}
 
 		props[propIdentifier] = property

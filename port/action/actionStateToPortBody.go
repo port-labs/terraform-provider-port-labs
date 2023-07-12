@@ -7,6 +7,33 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
 )
 
+func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
+	cliDateSet := &cli.Dataset{
+		Combinator: dataSet.Combinator.ValueString(),
+	}
+	rules := make([]cli.DatasetRule, 0, len(dataSet.Rules))
+	for _, rule := range dataSet.Rules {
+		dataSetRule := cli.DatasetRule{
+			Operator: rule.Operator.ValueString(),
+			Value: &cli.DatasetValue{
+				JqQuery: rule.Value.JqQuery.ValueString(),
+			},
+		}
+		if !rule.Blueprint.IsNull() {
+			blueprint := rule.Blueprint.ValueString()
+			dataSetRule.Blueprint = &blueprint
+		}
+		if !rule.Property.IsNull() {
+			rule := rule.Property.ValueString()
+			dataSetRule.Property = &rule
+		}
+
+		rules = append(rules, dataSetRule)
+	}
+	cliDateSet.Rules = rules
+	return cliDateSet
+}
+
 func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Blueprint) (*cli.Action, error) {
 	action := &cli.Action{
 		Identifier: data.Identifier.ValueString(),

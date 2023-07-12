@@ -40,6 +40,46 @@ func MetadataProperties() map[string]schema.Attribute {
 			Optional:            true,
 			ElementType:         types.StringType,
 		},
+		"dataset": schema.SingleNestedAttribute{
+			MarkdownDescription: "The dataset of the property",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"combinator": schema.StringAttribute{
+					MarkdownDescription: "The combinator of the dataset",
+					Required:            true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("and", "or"),
+					},
+				},
+				"rules": schema.ListNestedAttribute{
+					MarkdownDescription: "The rules of the dataset",
+					Required:            true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"blueprint": schema.StringAttribute{
+								MarkdownDescription: "The blueprint identifier of the rule",
+								Optional:            true,
+							},
+							"property": schema.StringAttribute{
+								MarkdownDescription: "The property identifier of the rule",
+								Optional:            true,
+							},
+							"operator": schema.StringAttribute{
+								MarkdownDescription: "The operator of the rule",
+								Required:            true,
+							},
+							"value": schema.ObjectAttribute{
+								MarkdownDescription: "The value of the rule",
+								Required:            true,
+								AttributeTypes: map[string]attr.Type{
+									"jq_query": types.StringType,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 }
 

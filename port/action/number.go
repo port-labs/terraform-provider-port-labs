@@ -65,6 +65,10 @@ func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map
 
 			}
 
+			if prop.Dataset != nil {
+				property.Dataset = actionDataSetToPortBody(prop.Dataset)
+			}
+
 			props[propIdentifier] = property
 		}
 		if prop.Required.ValueBool() {

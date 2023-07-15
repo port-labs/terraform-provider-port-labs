@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
-          go-version-file: "go.mod"
+          go-version-file: 'go.mod'
           cache: true
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v3
@@ -30,12 +30,12 @@ jobs:
           terraform_wrapper: false
       - name: Setup tools
         run: make setup
-
+  
   acctest:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: ["1.18", "1.19"]
+        go: ['1.18', '1.19']
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
@@ -48,4 +48,4 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Run dialect tests
-        run: make acctest PORT_CLIENT_ID=${{ secrets.PORT_CLIENT_ID }} PORT_CLIENT_SECRET=${{ secrets.PORT_CLIENT_SECRET  }}
+        run: make acctest PORT_CLIENT_ID=${{ secrets.PORT_CLIENT_ID }} PORT_CLIENT_SECRET=${{ secrets.PORT_CLIENT_SECRET }}

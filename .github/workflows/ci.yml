@@ -48,4 +48,4 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
       - name: Run dialect tests
-        run: make acctest
+        run: make acctest PORT_CLIENT_ID=${{ secrets.PORT_CLIENT_ID }} PORT_CLIENT_SECRET=${{ secrets.PORT_CLIENT_SECRET }}

@@ -37,6 +37,15 @@ type AzureMethodModel struct {
 	Webhook types.String `tfsdk:"webhook"`
 }
 
+type GitlabMethodModel struct {
+	ProjectName    types.String `tfsdk:"project_name"`
+	GroupName      types.String `tfsdk:"group_name"`
+	OmitPayload    types.Bool   `tfsdk:"omit_payload"`
+	OmitUserInputs types.Bool   `tfsdk:"omit_user_inputs"`
+	DefaultRef     types.String `tfsdk:"default_ref"`
+	Agent          types.Bool   `tfsdk:"agent"`
+}
+
 type StringPropModel struct {
 	Title       types.String  `tfsdk:"title"`
 	Icon        types.String  `tfsdk:"icon"`
@@ -145,6 +154,7 @@ type ActionModel struct {
 	WebhookMethod               *WebhookMethodModel               `tfsdk:"webhook_method"`
 	GithubMethod                *GithubMethodModel                `tfsdk:"github_method"`
 	AzureMethod                 *AzureMethodModel                 `tfsdk:"azure_method"`
+	GitlabMethod                *GitlabMethodModel                `tfsdk:"gitlab_method"`
 	UserProperties              *UserPropertiesModel              `tfsdk:"user_properties"`
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`

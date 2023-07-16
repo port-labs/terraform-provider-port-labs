@@ -41,6 +41,17 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 			Webhook: types.StringValue(*a.InvocationMethod.Webhook),
 		}
 	}
+
+	if a.InvocationMethod.Type == consts.Gitlab {
+		state.GitlabMethod = &GitlabMethodModel{
+			ProjectName:    types.StringValue(*a.InvocationMethod.ProjectName),
+			GroupName:      types.StringValue(*a.InvocationMethod.GroupName),
+			OmitPayload:    flex.GoBoolToFramework(a.InvocationMethod.OmitPayload),
+			OmitUserInputs: flex.GoBoolToFramework(a.InvocationMethod.OmitUserInputs),
+			DefaultRef:     types.StringValue(*a.InvocationMethod.DefaultRef),
+			Agent:          flex.GoBoolToFramework(a.InvocationMethod.Agent),
+		}
+	}
 }
 
 func writeDatasetToResource(v cli.ActionProperty) *DatasetModel {

@@ -134,6 +134,9 @@ type (
 		OmitUserInputs       *bool   `json:"omitUserInputs,omitempty"`
 		ReportWorkflowStatus *bool   `json:"reportWorkflowStatus,omitempty"`
 		Branch               *string `json:"branch,omitempty"`
+		ProjectName          *string `json:"projectName,omitempty"`
+		GroupName            *string `json:"groupName,omitempty"`
+		DefaultRef           *string `json:"defaultRef,omitempty"`
 	}
 
 	ApprovalNotification struct {

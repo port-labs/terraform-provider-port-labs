@@ -183,6 +183,38 @@ func ActionSchema() map[string]schema.Attribute {
 				},
 			},
 		},
+		"gitlab_method": schema.SingleNestedAttribute{
+			MarkdownDescription: "The invocation method of the action",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"project_name": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type GITLAB. The GitLab project name that the workflow belongs to",
+					Required:            true,
+				},
+				"group_name": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type GITLAB. The GitLab group name that the workflow belongs to",
+					Required:            true,
+				},
+				"omit_payload": schema.BoolAttribute{
+					MarkdownDescription: "Omit the payload when invoking the action",
+					Optional:            true,
+				},
+				"omit_user_inputs": schema.BoolAttribute{
+					MarkdownDescription: "Omit the user inputs when invoking the action",
+					Optional:            true,
+				},
+				"default_ref": schema.StringAttribute{
+					MarkdownDescription: "The default ref of the action",
+					Optional:            true,
+				},
+				"agent": schema.BoolAttribute{
+					MarkdownDescription: "Use the agent to invoke the action",
+					Optional:            true,
+					Computed:            true,
+					Default:             booldefault.StaticBool(true),
+				},
+			},
+		},
 		"azure_method": schema.SingleNestedAttribute{
 			MarkdownDescription: "The invocation method of the action",
 			Optional:            true,

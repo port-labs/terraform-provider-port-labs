@@ -175,5 +175,38 @@ func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 		}
 		return webhookInvocation
 	}
+
+	if data.GitlabMethod != nil {
+		projectName := data.GitlabMethod.ProjectName.ValueString()
+		groupName := data.GitlabMethod.GroupName.ValueString()
+		gitlabInvocation := &cli.InvocationMethod{
+			Type:        consts.Gitlab,
+			ProjectName: &projectName,
+			GroupName:   &groupName,
+		}
+
+		if !data.GitlabMethod.OmitPayload.IsNull() {
+			omitPayload := data.GitlabMethod.OmitPayload.ValueBool()
+			gitlabInvocation.OmitPayload = &omitPayload
+		}
+
+		if !data.GitlabMethod.OmitUserInputs.IsNull() {
+			omitUserInputs := data.GitlabMethod.OmitUserInputs.ValueBool()
+			gitlabInvocation.OmitUserInputs = &omitUserInputs
+		}
+
+		if !data.GitlabMethod.DefaultRef.IsNull() {
+			defaultRef := data.GitlabMethod.DefaultRef.ValueString()
+			gitlabInvocation.DefaultRef = &defaultRef
+		}
+
+		if !data.GitlabMethod.Agent.IsNull() {
+			agent := data.GitlabMethod.Agent.ValueBool()
+			gitlabInvocation.Agent = &agent
+		}
+
+		return gitlabInvocation
+	}
+
 	return nil
 }

@@ -175,6 +175,49 @@ func TestAccPortActionWebhookInvocation(t *testing.T) {
 	})
 }
 
+func TestAccPortActionGitlabInvocation(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port_blueprint.microservice.id
+		trigger = "DAY-2"
+		gitlab_method = {
+			project_name = "terraform-provider-port"
+			group_name = "port"
+			omit_payload = true
+			omit_user_inputs = true
+			default_ref = "main"
+			agent = true
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "blueprint", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "gitlab_method.project_name", "terraform-provider-port"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "gitlab_method.group_name", "port"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "gitlab_method.omit_payload", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "gitlab_method.omit_user_inputs", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "gitlab_method.default_ref", "main"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "gitlab_method.agent", "true"),
+				),
+			},
+		},
+	})
+}
 func TestAccPortActionAzureInvocation(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()

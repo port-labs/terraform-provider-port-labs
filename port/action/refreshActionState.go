@@ -43,7 +43,7 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 	}
 }
 
-func writeDatasetToResource(v cli.BlueprintProperty) *DatasetModel {
+func writeDatasetToResource(v cli.ActionProperty) *DatasetModel {
 	if v.Dataset == nil {
 		return nil
 	}
@@ -218,7 +218,7 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 	return nil
 }
 
-func setCommonProperties(ctx context.Context, v cli.BlueprintProperty, prop interface{}) error {
+func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interface{}) error {
 	properties := []string{"Description", "Icon", "Default", "Title", "DependsOn", "Dataset"}
 	for _, property := range properties {
 		switch property {

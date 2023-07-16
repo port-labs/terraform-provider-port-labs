@@ -7,9 +7,9 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func booleanPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+func booleanPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.ActionProperty, required *[]string) error {
 	for propIdentifier, prop := range d.UserProperties.BooleanProps {
-		props[propIdentifier] = cli.BlueprintProperty{
+		props[propIdentifier] = cli.ActionProperty{
 			Type: "boolean",
 		}
 

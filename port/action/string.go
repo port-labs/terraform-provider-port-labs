@@ -11,9 +11,9 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.ActionProperty, required *[]string) error {
 	for propIdentifier, prop := range d.UserProperties.StringProps {
-		property := cli.BlueprintProperty{
+		property := cli.ActionProperty{
 			Type: "string",
 		}
 
@@ -91,7 +91,7 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 	return nil
 }
 
-func addStringPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
+func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *StringPropModel {
 	stringProp := &StringPropModel{
 		MinLength: flex.GoInt64ToFramework(v.MinLength),
 		MaxLength: flex.GoInt64ToFramework(v.MaxLength),

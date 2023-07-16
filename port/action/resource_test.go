@@ -383,3 +383,87 @@ func TestAccPortActionUpdate(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+		title             = "Action 1"
+		blueprint         =  port_blueprint.microservice.id
+		identifier        = "%s"
+		trigger           = "DAY-2"
+		description       = "This is a test action"
+		required_approval = true
+		github_method = {
+		  org      = "port-labs"
+		  repo     = "Port"
+		  workflow = "lint"
+		}
+		user_properties = {
+		  string_props = {
+			myStringIdentifier = {
+			  title      = "myStringIdentifier"
+			  default    = "default"
+			  required   = false
+			}
+			myStringIdentifier2 = {
+			  title      = "myStringIdentifier2"
+			  default    = "default"
+			  required   = false
+			  depends_on = ["myStringIdentifier"]
+			}
+			myStringIdentifier3 = {
+			  title      = "myStringIdentifier3"
+			  required   = false
+			  dataset = {
+				"combinator" : "and",
+				"rules" : [
+				  {
+					"property" : "$team",
+					"operator" : "containsAny",
+					"value" : {
+					  "jq_query" : "Test"
+					}
+				  }
+				]
+			  }
+			}
+		  }
+		}
+	  }`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.action1", "description", "This is a test action"),
+					resource.TestCheckResourceAttr("port_action.action1", "required_approval", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "github_method.org", "port-labs"),
+					resource.TestCheckResourceAttr("port_action.action1", "github_method.repo", "Port"),
+					resource.TestCheckResourceAttr("port_action.action1", "github_method.workflow", "lint"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.title", "myStringIdentifier"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.default", "default"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.required", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.title", "myStringIdentifier2"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.default", "default"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.required", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.depends_on.0", "myStringIdentifier"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.title", "myStringIdentifier3"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.required", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.combinator", "and"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.property", "$team"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.operator", "containsAny"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.value.jq_query", "Test"),
+				),
+			},
+		},
+	})
+}

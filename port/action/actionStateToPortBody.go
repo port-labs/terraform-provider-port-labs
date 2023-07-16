@@ -82,7 +82,7 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Bluep
 			return nil, err
 		}
 	} else {
-		action.UserInputs.Properties = make(map[string]cli.BlueprintProperty)
+		action.UserInputs.Properties = make(map[string]cli.ActionProperty)
 	}
 
 	return action, nil
@@ -90,7 +90,7 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Bluep
 
 func actionPropertiesToBody(ctx context.Context, action *cli.Action, data *ActionModel) error {
 	required := []string{}
-	props := map[string]cli.BlueprintProperty{}
+	props := map[string]cli.ActionProperty{}
 	var err error
 	if data.UserProperties.StringProps != nil {
 		err = stringPropResourceToBody(ctx, data, props, &required)

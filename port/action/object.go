@@ -8,9 +8,9 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func objectPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+func objectPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.ActionProperty, required *[]string) error {
 	for propIdentifier, prop := range d.UserProperties.ObjectProps {
-		props[propIdentifier] = cli.BlueprintProperty{
+		props[propIdentifier] = cli.ActionProperty{
 			Type: "object",
 		}
 
@@ -64,7 +64,7 @@ func objectPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 	return nil
 }
 
-func addObjectPropertiesToResource(v *cli.BlueprintProperty) *ObjectPropModel {
+func addObjectPropertiesToResource(v *cli.ActionProperty) *ObjectPropModel {
 	objectProp := &ObjectPropModel{}
 
 	return objectProp

@@ -510,3 +510,78 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortActionJqDefault(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title             = "Action 1"
+		blueprint         =  port_blueprint.microservice.id
+		identifier        = "%s"
+		trigger           = "DAY-2"
+		description       = "This is a test action"
+		kafka_method = {} 
+		user_properties = {
+			string_props = {
+				myStringIdentifier = {
+					title      = "myStringIdentifier"
+					default_jq_query = "'Test'"
+					required   = false
+				}
+			}
+			number_props = {
+				myNumberIdentifier = {
+					title      = "myNumberIdentifier"
+					default_jq_query = "1"
+				}
+			}
+			boolean_props = {
+				myBooleanIdentifier = {
+					title      = "myBooleanIdentifier"
+					default_jq_query = "true"
+				}
+			}
+			object_props = {
+				myObjectIdentifier = {
+					title      = "myObjectIdentifier"
+					default_jq_query = "{ \"test\": \"test\" }"
+				}
+			}
+			array_props = {
+				myArrayIdentifier = {
+					title      = "myArrayIdentifier"
+					default_jq_query = "[ \"test\" ]"
+				}
+			}
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "description", "This is a test action"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier.title", "myStringIdentifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier.default_jq_query", "'Test'"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.number_props.myNumberIdentifier.title", "myNumberIdentifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.number_props.myNumberIdentifier.default_jq_query", "1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.boolean_props.myBooleanIdentifier.title", "myBooleanIdentifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.boolean_props.myBooleanIdentifier.default_jq_query", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.object_props.myObjectIdentifier.title", "myObjectIdentifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.object_props.myObjectIdentifier.default_jq_query", "{ \"test\": \"test\" }"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.array_props.myArrayIdentifier.title", "myArrayIdentifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.array_props.myArrayIdentifier.default_jq_query", "[ \"test\" ]"),
+				),
+			},
+		},
+	})
+
+}

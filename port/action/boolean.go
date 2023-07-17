@@ -23,6 +23,14 @@ func booleanPropResourceToBody(ctx context.Context, d *ActionModel, props map[st
 				property.Default = prop.Default.ValueBool()
 			}
 
+			if !prop.DefaultJqQuery.IsNull() {
+				defaultJqQuery := prop.DefaultJqQuery.ValueString()
+				jqQueryMap := map[string]string{
+					"jqQuery": defaultJqQuery,
+				}
+				property.Default = jqQueryMap
+			}
+
 			if !prop.Icon.IsNull() {
 				icon := prop.Icon.ValueString()
 				property.Icon = &icon

@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -24,6 +25,14 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 
 		if !prop.Default.IsNull() {
 			property.Default = prop.Default.ValueString()
+		}
+
+		if !prop.DefaultJqQuery.IsNull() {
+			defaultJqQuery := prop.DefaultJqQuery.ValueString()
+			jqQueryMap := map[string]string{
+				"jqQuery": defaultJqQuery,
+			}
+			property.Default = jqQueryMap
 		}
 
 		if !prop.Format.IsNull() {
@@ -70,6 +79,13 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 			property.Enum = enumList
 		}
 
+		if !prop.EnumJqQuery.IsNull() {
+			enumJqQueryMap := map[string]string{
+				"jqQuery": prop.EnumJqQuery.ValueString(),
+			}
+			property.Enum = enumJqQueryMap
+		}
+
 		if !prop.DependsOn.IsNull() {
 			dependsOn, err := utils.TerraformListToGoArray(ctx, prop.DependsOn, "string")
 			if err != nil {
@@ -101,14 +117,26 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 	}
 
 	if v.Enum != nil {
-		attrs := make([]attr.Value, 0, len(v.Enum))
-		for _, value := range v.Enum {
-			attrs = append(attrs, basetypes.NewStringValue(value.(string)))
-		}
+		v := reflect.ValueOf(v.Enum)
+		switch v.Kind() {
+		case reflect.Slice:
+			slice := v.Interface().([]interface{})
+			attrs := make([]attr.Value, 0, v.Len())
+			for _, value := range slice {
+				attrs = append(attrs, basetypes.NewStringValue(value.(string)))
+			}
+			stringProp.Enum, _ = types.ListValue(types.StringType, attrs)
 
-		stringProp.Enum, _ = types.ListValue(types.StringType, attrs)
+		case reflect.Map:
+			v := v.Interface().(map[string]interface{})
+			jqQueryValue := v["jqQuery"].(string)
+			stringProp.EnumJqQuery = flex.GoStringToFramework(&jqQueryValue)
+			stringProp.Enum = types.ListNull(types.StringType)
+
+		}
 	} else {
 		stringProp.Enum = types.ListNull(types.StringType)
+		stringProp.EnumJqQuery = types.StringNull()
 	}
 
 	return stringProp

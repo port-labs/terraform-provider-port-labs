@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -250,6 +251,13 @@ func StringPropertySchema() schema.Attribute {
 			MarkdownDescription: "The default of the string property",
 			Optional:            true,
 		},
+		"default_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The default jq query of the string property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("default")),
+			},
+		},
 		"blueprint": schema.StringAttribute{
 			MarkdownDescription: "The blueprint identifier the string property relates to",
 			Optional:            true,
@@ -285,6 +293,10 @@ func StringPropertySchema() schema.Attribute {
 				listvalidator.SizeAtLeast(1),
 			},
 		},
+		"enum_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The enum jq query of the string property",
+			Optional:            true,
+		},
 	}
 
 	utils.CopyMaps(stringPropertySchema, MetadataProperties())
@@ -303,6 +315,13 @@ func NumberPropertySchema() schema.Attribute {
 			MarkdownDescription: "The default of the number property",
 			Optional:            true,
 		},
+		"default_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The default jq query of the number property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("default")),
+			},
+		},
 		"maximum": schema.Float64Attribute{
 			MarkdownDescription: "The min of the number property",
 			Optional:            true,
@@ -319,6 +338,10 @@ func NumberPropertySchema() schema.Attribute {
 				listvalidator.UniqueValues(),
 				listvalidator.SizeAtLeast(1),
 			},
+		},
+		"enum_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The enum jq query of the string property",
+			Optional:            true,
 		},
 	}
 
@@ -338,6 +361,13 @@ func BooleanPropertySchema() schema.Attribute {
 			MarkdownDescription: "The default of the boolean property",
 			Optional:            true,
 		},
+		"default_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The default jq query of the boolean property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("default")),
+			},
+		},
 	}
 
 	utils.CopyMaps(booleanPropertySchema, MetadataProperties())
@@ -355,6 +385,13 @@ func ObjectPropertySchema() schema.Attribute {
 		"default": schema.StringAttribute{
 			Optional:            true,
 			MarkdownDescription: "The default of the object property",
+		},
+		"default_jq_query": schema.StringAttribute{
+			Optional:            true,
+			MarkdownDescription: "The default jq query of the object property",
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("default")),
+			},
 		},
 	}
 	utils.CopyMaps(objectPropertySchema, MetadataProperties())
@@ -381,6 +418,16 @@ func ArrayPropertySchema() schema.Attribute {
 			Optional:            true,
 			Validators: []validator.Int64{
 				int64validator.AtLeast(0),
+			},
+		},
+		"default_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The default jq query of the array property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("string_items").AtName("default")),
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("number_items").AtName("default")),
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("boolean_items").AtName("default")),
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("object_items").AtName("default")),
 			},
 		},
 		"string_items": schema.SingleNestedAttribute{

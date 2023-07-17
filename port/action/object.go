@@ -26,6 +26,14 @@ func objectPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 				}
 			}
 
+			if !prop.DefaultJqQuery.IsNull() {
+				defaultJqQuery := prop.DefaultJqQuery.ValueString()
+				jqQueryMap := map[string]string{
+					"jqQuery": defaultJqQuery,
+				}
+				property.Default = jqQueryMap
+			}
+
 			if !prop.Title.IsNull() {
 				title := prop.Title.ValueString()
 				property.Title = &title

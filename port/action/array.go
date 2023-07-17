@@ -104,6 +104,14 @@ func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[stri
 				property.Icon = &icon
 			}
 
+			if !prop.DefaultJqQuery.IsNull() {
+				defaultJqQuery := prop.DefaultJqQuery.ValueString()
+				jqQueryMap := map[string]string{
+					"jqQuery": defaultJqQuery,
+				}
+				property.Default = jqQueryMap
+			}
+
 			if !prop.Description.IsNull() {
 				description := prop.Description.ValueString()
 				property.Description = &description
@@ -149,6 +157,14 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 	arrayProp := &ArrayPropModel{
 		MinItems: flex.GoInt64ToFramework(v.MinItems),
 		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
+	}
+
+	if v.Default != nil {
+		switch v := v.Default.(type) {
+		// We only test for map[string]interface{} ATM
+		case map[string]interface{}:
+			arrayProp.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
+		}
 	}
 
 	if v.Items != nil {

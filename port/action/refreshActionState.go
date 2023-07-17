@@ -278,27 +278,55 @@ func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interfa
 			case *StringPropModel:
 				if v.Default == nil {
 					p.Default = types.StringNull()
+					p.DefaultJqQuery = types.StringNull()
 				} else {
-					p.Default = types.StringValue(v.Default.(string))
+					switch v := v.Default.(type) {
+					case string:
+						p.Default = types.StringValue(v)
+					case map[string]interface{}:
+						p.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
+					}
 				}
 			case *NumberPropModel:
 				if v.Default == nil {
 					p.Default = types.Float64Null()
+					p.DefaultJqQuery = types.StringNull()
 				} else {
-					p.Default = types.Float64Value(v.Default.(float64))
+					switch v := v.Default.(type) {
+					case float64:
+						p.Default = types.Float64Value(v)
+					case map[string]interface{}:
+						p.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
+					}
 				}
 			case *BooleanPropModel:
 				if v.Default == nil {
 					p.Default = types.BoolNull()
+					p.DefaultJqQuery = types.StringNull()
 				} else {
-					p.Default = types.BoolValue(v.Default.(bool))
+					switch v := v.Default.(type) {
+					case bool:
+						p.Default = types.BoolValue(v)
+					case map[string]interface{}:
+						p.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
+					}
 				}
 			case *ObjectPropModel:
-				defaultValue, err := utils.GoObjectToTerraformString(v.Default)
-				if err != nil {
-					return fmt.Errorf("error converting default value to terraform string: %s", err.Error())
+				if v, ok := v.Default.(map[string]interface{}); ok {
+					if v["jqQuery"] != nil {
+						p.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
+					} else {
+						defaultValue, err := utils.GoObjectToTerraformString(v)
+						if err != nil {
+							return fmt.Errorf("error converting default value to terraform string: %s", err.Error())
+						}
+						if defaultValue.IsNull() {
+							p.Default = types.StringNull()
+							p.DefaultJqQuery = types.StringNull()
+						}
+						p.Default = defaultValue
+					}
 				}
-				p.Default = defaultValue
 			}
 		case "DependsOn":
 			switch p := prop.(type) {

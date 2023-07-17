@@ -47,42 +47,74 @@ type GitlabMethodModel struct {
 }
 
 type StringPropModel struct {
-	Title       types.String  `tfsdk:"title"`
-	Icon        types.String  `tfsdk:"icon"`
-	Blueprint   types.String  `tfsdk:"blueprint"`
-	Description types.String  `tfsdk:"description"`
-	Default     types.String  `tfsdk:"default"`
-	Required    types.Bool    `tfsdk:"required"`
-	Format      types.String  `tfsdk:"format"`
-	MaxLength   types.Int64   `tfsdk:"max_length"`
-	MinLength   types.Int64   `tfsdk:"min_length"`
-	Pattern     types.String  `tfsdk:"pattern"`
-	Enum        types.List    `tfsdk:"enum"`
-	DependsOn   types.List    `tfsdk:"depends_on"`
-	Dataset     *DatasetModel `tfsdk:"dataset"`
+	Title          types.String  `tfsdk:"title"`
+	Icon           types.String  `tfsdk:"icon"`
+	Blueprint      types.String  `tfsdk:"blueprint"`
+	Description    types.String  `tfsdk:"description"`
+	Default        types.String  `tfsdk:"default"`
+	Required       types.Bool    `tfsdk:"required"`
+	Format         types.String  `tfsdk:"format"`
+	MaxLength      types.Int64   `tfsdk:"max_length"`
+	MinLength      types.Int64   `tfsdk:"min_length"`
+	Pattern        types.String  `tfsdk:"pattern"`
+	Enum           types.List    `tfsdk:"enum"`
+	DependsOn      types.List    `tfsdk:"depends_on"`
+	Dataset        *DatasetModel `tfsdk:"dataset"`
+	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
+	EnumJqQuery    types.String  `tfsdk:"enum_jq_query"`
 }
 
 type NumberPropModel struct {
-	Title       types.String  `tfsdk:"title"`
-	Icon        types.String  `tfsdk:"icon"`
-	Description types.String  `tfsdk:"description"`
-	Default     types.Float64 `tfsdk:"default"`
-	Required    types.Bool    `tfsdk:"required"`
-	Maximum     types.Float64 `tfsdk:"maximum"`
-	Minimum     types.Float64 `tfsdk:"minimum"`
-	Enum        types.List    `tfsdk:"enum"`
-	DependsOn   types.List    `tfsdk:"depends_on"`
-	Dataset     *DatasetModel `tfsdk:"dataset"`
+	Title          types.String  `tfsdk:"title"`
+	Icon           types.String  `tfsdk:"icon"`
+	Description    types.String  `tfsdk:"description"`
+	Default        types.Float64 `tfsdk:"default"`
+	Required       types.Bool    `tfsdk:"required"`
+	Maximum        types.Float64 `tfsdk:"maximum"`
+	Minimum        types.Float64 `tfsdk:"minimum"`
+	Enum           types.List    `tfsdk:"enum"`
+	DependsOn      types.List    `tfsdk:"depends_on"`
+	Dataset        *DatasetModel `tfsdk:"dataset"`
+	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
+	EnumJqQuery    types.String  `tfsdk:"enum_jq_query"`
 }
 
 type BooleanPropModel struct {
-	Title       types.String  `tfsdk:"title"`
-	Icon        types.String  `tfsdk:"icon"`
-	Description types.String  `tfsdk:"description"`
-	Default     types.Bool    `tfsdk:"default"`
-	Required    types.Bool    `tfsdk:"required"`
-	DependsOn   types.List    `tfsdk:"depends_on"`
-	Dataset     *DatasetModel `tfsdk:"dataset"`
+	Title          types.String  `tfsdk:"title"`
+	Icon           types.String  `tfsdk:"icon"`
+	Description    types.String  `tfsdk:"description"`
+	Default        types.Bool    `tfsdk:"default"`
+	Required       types.Bool    `tfsdk:"required"`
+	DependsOn      types.List    `tfsdk:"depends_on"`
+	Dataset        *DatasetModel `tfsdk:"dataset"`
+	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
+}
+
+type ArrayPropModel struct {
+	Title          types.String  `tfsdk:"title"`
+	Icon           types.String  `tfsdk:"icon"`
+	Description    types.String  `tfsdk:"description"`
+	MaxItems       types.Int64   `tfsdk:"max_items"`
+	MinItems       types.Int64   `tfsdk:"min_items"`
+	Required       types.Bool    `tfsdk:"required"`
+	StringItems    *StringItems  `tfsdk:"string_items"`
+	NumberItems    *NumberItems  `tfsdk:"number_items"`
+	BooleanItems   *BooleanItems `tfsdk:"boolean_items"`
+	ObjectItems    *ObjectItems  `tfsdk:"object_items"`
+	DependsOn      types.List    `tfsdk:"depends_on"`
+	Dataset        *DatasetModel `tfsdk:"dataset"`
+	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
+}
+
+type ObjectPropModel struct {
+	Title          types.String  `tfsdk:"title"`
+	Icon           types.String  `tfsdk:"icon"`
+	Description    types.String  `tfsdk:"description"`
+	Required       types.Bool    `tfsdk:"required"`
+	Default        types.String  `tfsdk:"default"`
+	DependsOn      types.List    `tfsdk:"depends_on"`
+	Dataset        *DatasetModel `tfsdk:"dataset"`
+	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
 }
 
 type StringItems struct {
@@ -109,31 +141,6 @@ type UserPropertiesModel struct {
 	BooleanProps map[string]BooleanPropModel `tfsdk:"boolean_props"`
 	ArrayProps   map[string]ArrayPropModel   `tfsdk:"array_props"`
 	ObjectProps  map[string]ObjectPropModel  `tfsdk:"object_props"`
-}
-
-type ArrayPropModel struct {
-	Title        types.String  `tfsdk:"title"`
-	Icon         types.String  `tfsdk:"icon"`
-	Description  types.String  `tfsdk:"description"`
-	MaxItems     types.Int64   `tfsdk:"max_items"`
-	MinItems     types.Int64   `tfsdk:"min_items"`
-	Required     types.Bool    `tfsdk:"required"`
-	StringItems  *StringItems  `tfsdk:"string_items"`
-	NumberItems  *NumberItems  `tfsdk:"number_items"`
-	BooleanItems *BooleanItems `tfsdk:"boolean_items"`
-	ObjectItems  *ObjectItems  `tfsdk:"object_items"`
-	DependsOn    types.List    `tfsdk:"depends_on"`
-	Dataset      *DatasetModel `tfsdk:"dataset"`
-}
-
-type ObjectPropModel struct {
-	Title       types.String  `tfsdk:"title"`
-	Icon        types.String  `tfsdk:"icon"`
-	Description types.String  `tfsdk:"description"`
-	Required    types.Bool    `tfsdk:"required"`
-	Default     types.String  `tfsdk:"default"`
-	DependsOn   types.List    `tfsdk:"depends_on"`
-	Dataset     *DatasetModel `tfsdk:"dataset"`
 }
 
 type ApprovalWebhookNotificationModel struct {

@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -25,6 +26,14 @@ func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map
 			}
 			if !prop.Default.IsNull() {
 				property.Default = prop.Default.ValueFloat64()
+			}
+
+			if !prop.DefaultJqQuery.IsNull() {
+				defaultJqQuery := prop.DefaultJqQuery.ValueString()
+				jqQueryMap := map[string]string{
+					"jqQuery": defaultJqQuery,
+				}
+				property.Default = jqQueryMap
 			}
 
 			if !prop.Icon.IsNull() {
@@ -85,12 +94,23 @@ func addNumberPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 	}
 
 	if v.Enum != nil {
-		attrs := make([]attr.Value, 0, len(v.Enum))
-		for _, value := range v.Enum {
-			attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
-		}
+		v := reflect.ValueOf(v.Enum)
+		switch v.Kind() {
+		case reflect.Slice:
+			slice := v.Interface().([]interface{})
+			attrs := make([]attr.Value, 0, v.Len())
+			for _, value := range slice {
+				attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
+			}
 
-		numberProp.Enum, _ = types.ListValue(types.Float64Type, attrs)
+			numberProp.Enum, _ = types.ListValue(types.Float64Type, attrs)
+
+		case reflect.Map:
+			v := v.Interface().(map[string]interface{})
+			jqQueryValue := v["jqQuery"].(string)
+			numberProp.EnumJqQuery = flex.GoStringToFramework(&jqQueryValue)
+			numberProp.Enum = types.ListNull(types.StringType)
+		}
 	} else {
 		numberProp.Enum = types.ListNull(types.Float64Type)
 	}

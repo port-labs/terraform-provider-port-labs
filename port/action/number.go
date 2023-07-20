@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -11,9 +12,9 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map[string]cli.ActionProperty, required *[]string) error {
 	for propIdentifier, prop := range state.UserProperties.NumberProps {
-		props[propIdentifier] = cli.BlueprintProperty{
+		props[propIdentifier] = cli.ActionProperty{
 			Type: "number",
 		}
 
@@ -25,6 +26,14 @@ func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map
 			}
 			if !prop.Default.IsNull() {
 				property.Default = prop.Default.ValueFloat64()
+			}
+
+			if !prop.DefaultJqQuery.IsNull() {
+				defaultJqQuery := prop.DefaultJqQuery.ValueString()
+				jqQueryMap := map[string]string{
+					"jqQuery": defaultJqQuery,
+				}
+				property.Default = jqQueryMap
 			}
 
 			if !prop.Icon.IsNull() {
@@ -56,6 +65,19 @@ func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map
 				property.Enum = enumList
 			}
 
+			if !prop.DependsOn.IsNull() {
+				dependsOn, err := utils.TerraformListToGoArray(ctx, prop.DependsOn, "string")
+				if err != nil {
+					return err
+				}
+				property.DependsOn = utils.InterfaceToStringArray(dependsOn)
+
+			}
+
+			if prop.Dataset != nil {
+				property.Dataset = actionDataSetToPortBody(prop.Dataset)
+			}
+
 			props[propIdentifier] = property
 		}
 		if prop.Required.ValueBool() {
@@ -65,19 +87,30 @@ func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map
 	return nil
 }
 
-func addNumberPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *NumberPropModel {
+func addNumberPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *NumberPropModel {
 	numberProp := &NumberPropModel{
 		Minimum: flex.GoFloat64ToFramework(v.Minimum),
 		Maximum: flex.GoFloat64ToFramework(v.Maximum),
 	}
 
 	if v.Enum != nil {
-		attrs := make([]attr.Value, 0, len(v.Enum))
-		for _, value := range v.Enum {
-			attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
-		}
+		v := reflect.ValueOf(v.Enum)
+		switch v.Kind() {
+		case reflect.Slice:
+			slice := v.Interface().([]interface{})
+			attrs := make([]attr.Value, 0, v.Len())
+			for _, value := range slice {
+				attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
+			}
 
-		numberProp.Enum, _ = types.ListValue(types.Float64Type, attrs)
+			numberProp.Enum, _ = types.ListValue(types.Float64Type, attrs)
+
+		case reflect.Map:
+			v := v.Interface().(map[string]interface{})
+			jqQueryValue := v["jqQuery"].(string)
+			numberProp.EnumJqQuery = flex.GoStringToFramework(&jqQueryValue)
+			numberProp.Enum = types.ListNull(types.StringType)
+		}
 	} else {
 		numberProp.Enum = types.ListNull(types.Float64Type)
 	}

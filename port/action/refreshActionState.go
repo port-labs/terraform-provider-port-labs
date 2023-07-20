@@ -41,8 +41,45 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 			Webhook: types.StringValue(*a.InvocationMethod.Webhook),
 		}
 	}
+
+	if a.InvocationMethod.Type == consts.Gitlab {
+		state.GitlabMethod = &GitlabMethodModel{
+			ProjectName:    types.StringValue(*a.InvocationMethod.ProjectName),
+			GroupName:      types.StringValue(*a.InvocationMethod.GroupName),
+			OmitPayload:    flex.GoBoolToFramework(a.InvocationMethod.OmitPayload),
+			OmitUserInputs: flex.GoBoolToFramework(a.InvocationMethod.OmitUserInputs),
+			DefaultRef:     types.StringValue(*a.InvocationMethod.DefaultRef),
+			Agent:          flex.GoBoolToFramework(a.InvocationMethod.Agent),
+		}
+	}
 }
 
+func writeDatasetToResource(v cli.ActionProperty) *DatasetModel {
+	if v.Dataset == nil {
+		return nil
+	}
+
+	dataset := v.Dataset
+
+	datasetModel := &DatasetModel{
+		Combinator: types.StringValue(dataset.Combinator),
+	}
+
+	for _, v := range dataset.Rules {
+		rule := &Rule{
+			Blueprint: flex.GoStringToFramework(v.Blueprint),
+			Property:  flex.GoStringToFramework(v.Property),
+			Operator:  flex.GoStringToFramework(&v.Operator),
+			Value: &Value{
+				JqQuery: flex.GoStringToFramework(&v.Value.JqQuery),
+			},
+		}
+		datasetModel.Rules = append(datasetModel.Rules, *rule)
+	}
+
+	return datasetModel
+
+}
 func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
 	if len(a.UserInputs.Properties) > 0 {
 		properties := &UserPropertiesModel{}
@@ -60,7 +97,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					stringProp.Required = types.BoolValue(false)
 				}
 
-				err := setCommonProperties(v, stringProp)
+				err := setCommonProperties(ctx, v, stringProp)
 				if err != nil {
 					return err
 				}
@@ -80,7 +117,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					numberProp.Required = types.BoolValue(false)
 				}
 
-				err := setCommonProperties(v, numberProp)
+				err := setCommonProperties(ctx, v, numberProp)
 				if err != nil {
 					return err
 				}
@@ -103,7 +140,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					arrayProp.Required = types.BoolValue(false)
 				}
 
-				err = setCommonProperties(v, arrayProp)
+				err = setCommonProperties(ctx, v, arrayProp)
 				if err != nil {
 					return err
 				}
@@ -117,7 +154,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				booleanProp := &BooleanPropModel{}
 
-				err := setCommonProperties(v, booleanProp)
+				err := setCommonProperties(ctx, v, booleanProp)
 				if err != nil {
 					return err
 				}
@@ -143,7 +180,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					objectProp.Required = types.BoolValue(false)
 				}
 
-				err := setCommonProperties(v, objectProp)
+				err := setCommonProperties(ctx, v, objectProp)
 				if err != nil {
 					return err
 				}
@@ -192,8 +229,8 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 	return nil
 }
 
-func setCommonProperties(v cli.BlueprintProperty, prop interface{}) error {
-	properties := []string{"Description", "Icon", "Default", "Title"}
+func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interface{}) error {
+	properties := []string{"Description", "Icon", "Default", "Title", "DependsOn", "Dataset"}
 	for _, property := range properties {
 		switch property {
 		case "Description":
@@ -241,27 +278,85 @@ func setCommonProperties(v cli.BlueprintProperty, prop interface{}) error {
 			case *StringPropModel:
 				if v.Default == nil {
 					p.Default = types.StringNull()
+					p.DefaultJqQuery = types.StringNull()
 				} else {
-					p.Default = types.StringValue(v.Default.(string))
+					switch v := v.Default.(type) {
+					case string:
+						p.Default = types.StringValue(v)
+					case map[string]interface{}:
+						p.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
+					}
 				}
 			case *NumberPropModel:
 				if v.Default == nil {
 					p.Default = types.Float64Null()
+					p.DefaultJqQuery = types.StringNull()
 				} else {
-					p.Default = types.Float64Value(v.Default.(float64))
+					switch v := v.Default.(type) {
+					case float64:
+						p.Default = types.Float64Value(v)
+					case map[string]interface{}:
+						p.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
+					}
 				}
 			case *BooleanPropModel:
 				if v.Default == nil {
 					p.Default = types.BoolNull()
+					p.DefaultJqQuery = types.StringNull()
 				} else {
-					p.Default = types.BoolValue(v.Default.(bool))
+					switch v := v.Default.(type) {
+					case bool:
+						p.Default = types.BoolValue(v)
+					case map[string]interface{}:
+						p.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
+					}
 				}
 			case *ObjectPropModel:
-				defaultValue, err := utils.GoObjectToTerraformString(v.Default)
-				if err != nil {
-					return fmt.Errorf("error converting default value to terraform string: %s", err.Error())
+				if v, ok := v.Default.(map[string]interface{}); ok {
+					if v["jqQuery"] != nil {
+						p.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
+					} else {
+						defaultValue, err := utils.GoObjectToTerraformString(v)
+						if err != nil {
+							return fmt.Errorf("error converting default value to terraform string: %s", err.Error())
+						}
+						if defaultValue.IsNull() {
+							p.Default = types.StringNull()
+							p.DefaultJqQuery = types.StringNull()
+						}
+						p.Default = defaultValue
+					}
 				}
-				p.Default = defaultValue
+			}
+		case "DependsOn":
+			switch p := prop.(type) {
+			case *StringPropModel:
+				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+			case *NumberPropModel:
+				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+			case *BooleanPropModel:
+				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+			case *ArrayPropModel:
+				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+			case *ObjectPropModel:
+				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+			}
+
+		case "Dataset":
+			dataset := writeDatasetToResource(v)
+			if dataset != nil {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Dataset = dataset
+				case *NumberPropModel:
+					p.Dataset = dataset
+				case *BooleanPropModel:
+					p.Dataset = dataset
+				case *ArrayPropModel:
+					p.Dataset = dataset
+				case *ObjectPropModel:
+					p.Dataset = dataset
+				}
 			}
 		}
 	}

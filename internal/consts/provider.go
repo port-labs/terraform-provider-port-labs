@@ -7,4 +7,5 @@ const (
 	Kafka          = "KAFKA"
 	AzureDevops    = "AZURE-DEVOPS"
 	Github         = "GITHUB"
+	Gitlab         = "GITLAB"
 )

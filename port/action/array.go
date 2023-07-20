@@ -12,7 +12,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func handleArrayItemsToBody(ctx context.Context, property *cli.BlueprintProperty, prop ArrayPropModel, required *[]string) error {
+func handleArrayItemsToBody(ctx context.Context, property *cli.ActionProperty, prop ArrayPropModel, required *[]string) error {
 	if prop.StringItems != nil {
 		items := map[string]interface{}{}
 		items["type"] = "string"
@@ -86,9 +86,9 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.BlueprintProperty
 	return nil
 }
 
-func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.ActionProperty, required *[]string) error {
 	for propIdentifier, prop := range d.UserProperties.ArrayProps {
-		props[propIdentifier] = cli.BlueprintProperty{
+		props[propIdentifier] = cli.ActionProperty{
 			Type: "array",
 		}
 
@@ -104,6 +104,14 @@ func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[stri
 				property.Icon = &icon
 			}
 
+			if !prop.DefaultJqQuery.IsNull() {
+				defaultJqQuery := prop.DefaultJqQuery.ValueString()
+				jqQueryMap := map[string]string{
+					"jqQuery": defaultJqQuery,
+				}
+				property.Default = jqQueryMap
+			}
+
 			if !prop.Description.IsNull() {
 				description := prop.Description.ValueString()
 				property.Description = &description
@@ -116,6 +124,18 @@ func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[stri
 			if !prop.MaxItems.IsNull() {
 				maxItems := int(prop.MaxItems.ValueInt64())
 				property.MaxItems = &maxItems
+			}
+
+			if !prop.DependsOn.IsNull() {
+				dependsOn, err := utils.TerraformListToGoArray(ctx, prop.DependsOn, "string")
+				if err != nil {
+					return err
+				}
+				property.DependsOn = utils.InterfaceToStringArray(dependsOn)
+
+			}
+			if prop.Dataset != nil {
+				property.Dataset = actionDataSetToPortBody(prop.Dataset)
 			}
 
 			err := handleArrayItemsToBody(ctx, &property, prop, required)
@@ -133,10 +153,18 @@ func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[stri
 	return nil
 }
 
-func addArrayPropertiesToResource(v *cli.BlueprintProperty) (*ArrayPropModel, error) {
+func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error) {
 	arrayProp := &ArrayPropModel{
 		MinItems: flex.GoInt64ToFramework(v.MinItems),
 		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
+	}
+
+	if v.Default != nil {
+		switch v := v.Default.(type) {
+		// We only test for map[string]interface{} ATM
+		case map[string]interface{}:
+			arrayProp.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
+		}
 	}
 
 	if v.Items != nil {

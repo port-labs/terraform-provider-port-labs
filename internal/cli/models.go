@@ -53,10 +53,49 @@ type (
 		EnumColors         map[string]string   `json:"enumColors,omitempty"`
 	}
 
+	ActionProperty struct {
+		Type               string              `json:"type,omitempty"`
+		Title              *string             `json:"title,omitempty"`
+		Identifier         string              `json:"identifier,omitempty"`
+		Items              map[string]any      `json:"items,omitempty"`
+		Default            interface{}         `json:"default,omitempty"`
+		Icon               *string             `json:"icon,omitempty"`
+		Format             *string             `json:"format,omitempty"`
+		MaxLength          *int                `json:"maxLength,omitempty"`
+		MinLength          *int                `json:"minLength,omitempty"`
+		MaxItems           *int                `json:"maxItems,omitempty"`
+		MinItems           *int                `json:"minItems,omitempty"`
+		Maximum            *float64            `json:"maximum,omitempty"`
+		Minimum            *float64            `json:"minimum,omitempty"`
+		Description        *string             `json:"description,omitempty"`
+		Blueprint          *string             `json:"blueprint,omitempty"`
+		Pattern            *string             `json:"pattern,omitempty"`
+		Enum               interface{}         `json:"enum,omitempty"`
+		Spec               *string             `json:"spec,omitempty"`
+		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
+		EnumColors         map[string]string   `json:"enumColors,omitempty"`
+		DependsOn          []string            `json:"dependsOn,omitempty"`
+		Dataset            *Dataset            `json:"dataset,omitempty"`
+	}
+
 	SpecAuthentication struct {
 		ClientId         string `json:"clientId,omitempty"`
 		AuthorizationUrl string `json:"authorizationUrl,omitempty"`
 		TokenUrl         string `json:"tokenUrl,omitempty"`
+	}
+
+	DatasetValue struct {
+		JqQuery string `json:"jqQuery,omitempty"`
+	}
+	DatasetRule struct {
+		Blueprint *string       `json:"blueprint,omitempty"`
+		Property  *string       `json:"property,omitempty"`
+		Operator  string        `json:"operator,omitempty"`
+		Value     *DatasetValue `json:"value,omitempty"`
+	}
+	Dataset struct {
+		Combinator string        `json:"combinator,omitempty"`
+		Rules      []DatasetRule `json:"rules,omitempty"`
 	}
 
 	BlueprintCalculationProperty struct {
@@ -95,6 +134,9 @@ type (
 		OmitUserInputs       *bool   `json:"omitUserInputs,omitempty"`
 		ReportWorkflowStatus *bool   `json:"reportWorkflowStatus,omitempty"`
 		Branch               *string `json:"branch,omitempty"`
+		ProjectName          *string `json:"projectName,omitempty"`
+		GroupName            *string `json:"groupName,omitempty"`
+		DefaultRef           *string `json:"defaultRef,omitempty"`
 	}
 
 	ApprovalNotification struct {
@@ -113,7 +155,10 @@ type (
 		Path string `json:"path,omitempty"`
 	}
 
-	ActionUserInputs = BlueprintSchema
+	ActionUserInputs = struct {
+		Properties map[string]ActionProperty `json:"properties"`
+		Required   []string                  `json:"required,omitempty"`
+	}
 
 	Blueprint struct {
 		Meta

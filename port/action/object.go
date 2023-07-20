@@ -1,14 +1,16 @@
 package action
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+func objectPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.ActionProperty, required *[]string) error {
 	for propIdentifier, prop := range d.UserProperties.ObjectProps {
-		props[propIdentifier] = cli.BlueprintProperty{
+		props[propIdentifier] = cli.ActionProperty{
 			Type: "object",
 		}
 
@@ -22,6 +24,14 @@ func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProp
 				} else {
 					property.Default = defaultObj
 				}
+			}
+
+			if !prop.DefaultJqQuery.IsNull() {
+				defaultJqQuery := prop.DefaultJqQuery.ValueString()
+				jqQueryMap := map[string]string{
+					"jqQuery": defaultJqQuery,
+				}
+				property.Default = jqQueryMap
 			}
 
 			if !prop.Title.IsNull() {
@@ -39,6 +49,19 @@ func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProp
 				property.Description = &description
 			}
 
+			if !prop.DependsOn.IsNull() {
+				dependsOn, err := utils.TerraformListToGoArray(ctx, prop.DependsOn, "string")
+				if err != nil {
+					return err
+				}
+				property.DependsOn = utils.InterfaceToStringArray(dependsOn)
+
+			}
+
+			if prop.Dataset != nil {
+				property.Dataset = actionDataSetToPortBody(prop.Dataset)
+			}
+
 			props[propIdentifier] = property
 		}
 
@@ -49,7 +72,7 @@ func objectPropResourceToBody(d *ActionModel, props map[string]cli.BlueprintProp
 	return nil
 }
 
-func addObjectPropertiesToResource(v *cli.BlueprintProperty) *ObjectPropModel {
+func addObjectPropertiesToResource(v *cli.ActionProperty) *ObjectPropModel {
 	objectProp := &ObjectPropModel{}
 
 	return objectProp

@@ -84,3 +84,13 @@ func GoObjectToTerraformString(v interface{}) (types.String, error) {
 	value := string(js)
 	return types.StringValue(value), nil
 }
+
+func InterfaceToStringArray(o interface{}) []string {
+	items := o.([]interface{})
+	res := make([]string, len(items))
+	for i, item := range items {
+		res[i] = item.(string)
+	}
+
+	return res
+}

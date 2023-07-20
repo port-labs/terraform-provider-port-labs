@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -11,9 +12,9 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.ActionProperty, required *[]string) error {
 	for propIdentifier, prop := range d.UserProperties.StringProps {
-		property := cli.BlueprintProperty{
+		property := cli.ActionProperty{
 			Type: "string",
 		}
 
@@ -24,6 +25,14 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 
 		if !prop.Default.IsNull() {
 			property.Default = prop.Default.ValueString()
+		}
+
+		if !prop.DefaultJqQuery.IsNull() {
+			defaultJqQuery := prop.DefaultJqQuery.ValueString()
+			jqQueryMap := map[string]string{
+				"jqQuery": defaultJqQuery,
+			}
+			property.Default = jqQueryMap
 		}
 
 		if !prop.Format.IsNull() {
@@ -70,6 +79,25 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 			property.Enum = enumList
 		}
 
+		if !prop.EnumJqQuery.IsNull() {
+			enumJqQueryMap := map[string]string{
+				"jqQuery": prop.EnumJqQuery.ValueString(),
+			}
+			property.Enum = enumJqQueryMap
+		}
+
+		if !prop.DependsOn.IsNull() {
+			dependsOn, err := utils.TerraformListToGoArray(ctx, prop.DependsOn, "string")
+			if err != nil {
+				return err
+			}
+			property.DependsOn = utils.InterfaceToStringArray(dependsOn)
+		}
+
+		if prop.Dataset != nil {
+			property.Dataset = actionDataSetToPortBody(prop.Dataset)
+		}
+
 		props[propIdentifier] = property
 
 		if prop.Required.ValueBool() {
@@ -79,7 +107,7 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 	return nil
 }
 
-func addStringPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
+func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *StringPropModel {
 	stringProp := &StringPropModel{
 		MinLength: flex.GoInt64ToFramework(v.MinLength),
 		MaxLength: flex.GoInt64ToFramework(v.MaxLength),
@@ -89,14 +117,26 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.BlueprintProperty
 	}
 
 	if v.Enum != nil {
-		attrs := make([]attr.Value, 0, len(v.Enum))
-		for _, value := range v.Enum {
-			attrs = append(attrs, basetypes.NewStringValue(value.(string)))
-		}
+		v := reflect.ValueOf(v.Enum)
+		switch v.Kind() {
+		case reflect.Slice:
+			slice := v.Interface().([]interface{})
+			attrs := make([]attr.Value, 0, v.Len())
+			for _, value := range slice {
+				attrs = append(attrs, basetypes.NewStringValue(value.(string)))
+			}
+			stringProp.Enum, _ = types.ListValue(types.StringType, attrs)
 
-		stringProp.Enum, _ = types.ListValue(types.StringType, attrs)
+		case reflect.Map:
+			v := v.Interface().(map[string]interface{})
+			jqQueryValue := v["jqQuery"].(string)
+			stringProp.EnumJqQuery = flex.GoStringToFramework(&jqQueryValue)
+			stringProp.Enum = types.ListNull(types.StringType)
+
+		}
 	} else {
 		stringProp.Enum = types.ListNull(types.StringType)
+		stringProp.EnumJqQuery = types.StringNull()
 	}
 
 	return stringProp

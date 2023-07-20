@@ -175,6 +175,49 @@ func TestAccPortActionWebhookInvocation(t *testing.T) {
 	})
 }
 
+func TestAccPortActionGitlabInvocation(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port_blueprint.microservice.id
+		trigger = "DAY-2"
+		gitlab_method = {
+			project_name = "terraform-provider-port"
+			group_name = "port"
+			omit_payload = true
+			omit_user_inputs = true
+			default_ref = "main"
+			agent = true
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "blueprint", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "gitlab_method.project_name", "terraform-provider-port"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "gitlab_method.group_name", "port"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "gitlab_method.omit_payload", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "gitlab_method.omit_user_inputs", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "gitlab_method.default_ref", "main"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "gitlab_method.agent", "true"),
+				),
+			},
+		},
+	})
+}
 func TestAccPortActionAzureInvocation(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()
@@ -382,4 +425,163 @@ func TestAccPortActionUpdate(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+		title             = "Action 1"
+		blueprint         =  port_blueprint.microservice.id
+		identifier        = "%s"
+		trigger           = "DAY-2"
+		description       = "This is a test action"
+		required_approval = true
+		github_method = {
+		  org      = "port-labs"
+		  repo     = "Port"
+		  workflow = "lint"
+		}
+		user_properties = {
+		  string_props = {
+			myStringIdentifier = {
+			  title      = "myStringIdentifier"
+			  default    = "default"
+			  required   = false
+			}
+			myStringIdentifier2 = {
+			  title      = "myStringIdentifier2"
+			  default    = "default"
+			  required   = false
+			  depends_on = ["myStringIdentifier"]
+			}
+			myStringIdentifier3 = {
+			  title      = "myStringIdentifier3"
+			  required   = false
+			  dataset = {
+				"combinator" : "and",
+				"rules" : [
+				  {
+					"property" : "$team",
+					"operator" : "containsAny",
+					"value" : {
+					  "jq_query" : "Test"
+					}
+				  }
+				]
+			  }
+			}
+		  }
+		}
+	  }`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.action1", "description", "This is a test action"),
+					resource.TestCheckResourceAttr("port_action.action1", "required_approval", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "github_method.org", "port-labs"),
+					resource.TestCheckResourceAttr("port_action.action1", "github_method.repo", "Port"),
+					resource.TestCheckResourceAttr("port_action.action1", "github_method.workflow", "lint"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.title", "myStringIdentifier"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.default", "default"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.required", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.title", "myStringIdentifier2"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.default", "default"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.required", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.depends_on.0", "myStringIdentifier"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.title", "myStringIdentifier3"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.required", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.combinator", "and"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.property", "$team"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.operator", "containsAny"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.value.jq_query", "Test"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionJqDefault(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title             = "Action 1"
+		blueprint         =  port_blueprint.microservice.id
+		identifier        = "%s"
+		trigger           = "DAY-2"
+		description       = "This is a test action"
+		kafka_method = {} 
+		user_properties = {
+			string_props = {
+				myStringIdentifier = {
+					title      = "myStringIdentifier"
+					default_jq_query = "'Test'"
+					required   = false
+				}
+			}
+			number_props = {
+				myNumberIdentifier = {
+					title      = "myNumberIdentifier"
+					default_jq_query = "1"
+				}
+			}
+			boolean_props = {
+				myBooleanIdentifier = {
+					title      = "myBooleanIdentifier"
+					default_jq_query = "true"
+				}
+			}
+			object_props = {
+				myObjectIdentifier = {
+					title      = "myObjectIdentifier"
+					default_jq_query = "{ \"test\": \"test\" }"
+				}
+			}
+			array_props = {
+				myArrayIdentifier = {
+					title      = "myArrayIdentifier"
+					default_jq_query = "[ \"test\" ]"
+				}
+			}
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "description", "This is a test action"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier.title", "myStringIdentifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier.default_jq_query", "'Test'"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.number_props.myNumberIdentifier.title", "myNumberIdentifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.number_props.myNumberIdentifier.default_jq_query", "1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.boolean_props.myBooleanIdentifier.title", "myBooleanIdentifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.boolean_props.myBooleanIdentifier.default_jq_query", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.object_props.myObjectIdentifier.title", "myObjectIdentifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.object_props.myObjectIdentifier.default_jq_query", "{ \"test\": \"test\" }"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.array_props.myArrayIdentifier.title", "myArrayIdentifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.array_props.myArrayIdentifier.default_jq_query", "[ \"test\" ]"),
+				),
+			},
+		},
+	})
+
 }

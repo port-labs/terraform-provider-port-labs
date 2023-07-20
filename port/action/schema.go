@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -34,6 +35,51 @@ func MetadataProperties() map[string]schema.Attribute {
 		"description": schema.StringAttribute{
 			MarkdownDescription: "The description of the property",
 			Optional:            true,
+		},
+		"depends_on": schema.ListAttribute{
+			MarkdownDescription: "The properties that this property depends on",
+			Optional:            true,
+			ElementType:         types.StringType,
+		},
+		"dataset": schema.SingleNestedAttribute{
+			MarkdownDescription: "The dataset of the property",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"combinator": schema.StringAttribute{
+					MarkdownDescription: "The combinator of the dataset",
+					Required:            true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("and", "or"),
+					},
+				},
+				"rules": schema.ListNestedAttribute{
+					MarkdownDescription: "The rules of the dataset",
+					Required:            true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"blueprint": schema.StringAttribute{
+								MarkdownDescription: "The blueprint identifier of the rule",
+								Optional:            true,
+							},
+							"property": schema.StringAttribute{
+								MarkdownDescription: "The property identifier of the rule",
+								Optional:            true,
+							},
+							"operator": schema.StringAttribute{
+								MarkdownDescription: "The operator of the rule",
+								Required:            true,
+							},
+							"value": schema.ObjectAttribute{
+								MarkdownDescription: "The value of the rule",
+								Required:            true,
+								AttributeTypes: map[string]attr.Type{
+									"jq_query": types.StringType,
+								},
+							},
+						},
+					},
+				},
+			},
 		},
 	}
 }
@@ -138,6 +184,38 @@ func ActionSchema() map[string]schema.Attribute {
 				},
 			},
 		},
+		"gitlab_method": schema.SingleNestedAttribute{
+			MarkdownDescription: "The invocation method of the action",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"project_name": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type GITLAB. The GitLab project name that the workflow belongs to",
+					Required:            true,
+				},
+				"group_name": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type GITLAB. The GitLab group name that the workflow belongs to",
+					Required:            true,
+				},
+				"omit_payload": schema.BoolAttribute{
+					MarkdownDescription: "Omit the payload when invoking the action",
+					Optional:            true,
+				},
+				"omit_user_inputs": schema.BoolAttribute{
+					MarkdownDescription: "Omit the user inputs when invoking the action",
+					Optional:            true,
+				},
+				"default_ref": schema.StringAttribute{
+					MarkdownDescription: "The default ref of the action",
+					Optional:            true,
+				},
+				"agent": schema.BoolAttribute{
+					MarkdownDescription: "Use the agent to invoke the action",
+					Optional:            true,
+					Computed:            true,
+					Default:             booldefault.StaticBool(true),
+				},
+			},
+		},
 		"azure_method": schema.SingleNestedAttribute{
 			MarkdownDescription: "The invocation method of the action",
 			Optional:            true,
@@ -172,6 +250,13 @@ func StringPropertySchema() schema.Attribute {
 		"default": schema.StringAttribute{
 			MarkdownDescription: "The default of the string property",
 			Optional:            true,
+		},
+		"default_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The default jq query of the string property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("default")),
+			},
 		},
 		"blueprint": schema.StringAttribute{
 			MarkdownDescription: "The blueprint identifier the string property relates to",
@@ -208,6 +293,10 @@ func StringPropertySchema() schema.Attribute {
 				listvalidator.SizeAtLeast(1),
 			},
 		},
+		"enum_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The enum jq query of the string property",
+			Optional:            true,
+		},
 	}
 
 	utils.CopyMaps(stringPropertySchema, MetadataProperties())
@@ -226,6 +315,13 @@ func NumberPropertySchema() schema.Attribute {
 			MarkdownDescription: "The default of the number property",
 			Optional:            true,
 		},
+		"default_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The default jq query of the number property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("default")),
+			},
+		},
 		"maximum": schema.Float64Attribute{
 			MarkdownDescription: "The min of the number property",
 			Optional:            true,
@@ -242,6 +338,10 @@ func NumberPropertySchema() schema.Attribute {
 				listvalidator.UniqueValues(),
 				listvalidator.SizeAtLeast(1),
 			},
+		},
+		"enum_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The enum jq query of the string property",
+			Optional:            true,
 		},
 	}
 
@@ -261,6 +361,13 @@ func BooleanPropertySchema() schema.Attribute {
 			MarkdownDescription: "The default of the boolean property",
 			Optional:            true,
 		},
+		"default_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The default jq query of the boolean property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("default")),
+			},
+		},
 	}
 
 	utils.CopyMaps(booleanPropertySchema, MetadataProperties())
@@ -278,6 +385,13 @@ func ObjectPropertySchema() schema.Attribute {
 		"default": schema.StringAttribute{
 			Optional:            true,
 			MarkdownDescription: "The default of the object property",
+		},
+		"default_jq_query": schema.StringAttribute{
+			Optional:            true,
+			MarkdownDescription: "The default jq query of the object property",
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("default")),
+			},
 		},
 	}
 	utils.CopyMaps(objectPropertySchema, MetadataProperties())
@@ -304,6 +418,16 @@ func ArrayPropertySchema() schema.Attribute {
 			Optional:            true,
 			Validators: []validator.Int64{
 				int64validator.AtLeast(0),
+			},
+		},
+		"default_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The default jq query of the array property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("string_items").AtName("default")),
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("number_items").AtName("default")),
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("boolean_items").AtName("default")),
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("object_items").AtName("default")),
 			},
 		},
 		"string_items": schema.SingleNestedAttribute{

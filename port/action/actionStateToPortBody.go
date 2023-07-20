@@ -7,6 +7,33 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
 )
 
+func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
+	cliDateSet := &cli.Dataset{
+		Combinator: dataSet.Combinator.ValueString(),
+	}
+	rules := make([]cli.DatasetRule, 0, len(dataSet.Rules))
+	for _, rule := range dataSet.Rules {
+		dataSetRule := cli.DatasetRule{
+			Operator: rule.Operator.ValueString(),
+			Value: &cli.DatasetValue{
+				JqQuery: rule.Value.JqQuery.ValueString(),
+			},
+		}
+		if !rule.Blueprint.IsNull() {
+			blueprint := rule.Blueprint.ValueString()
+			dataSetRule.Blueprint = &blueprint
+		}
+		if !rule.Property.IsNull() {
+			rule := rule.Property.ValueString()
+			dataSetRule.Property = &rule
+		}
+
+		rules = append(rules, dataSetRule)
+	}
+	cliDateSet.Rules = rules
+	return cliDateSet
+}
+
 func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Blueprint) (*cli.Action, error) {
 	action := &cli.Action{
 		Identifier: data.Identifier.ValueString(),
@@ -55,7 +82,7 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Bluep
 			return nil, err
 		}
 	} else {
-		action.UserInputs.Properties = make(map[string]cli.BlueprintProperty)
+		action.UserInputs.Properties = make(map[string]cli.ActionProperty)
 	}
 
 	return action, nil
@@ -63,7 +90,7 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Bluep
 
 func actionPropertiesToBody(ctx context.Context, action *cli.Action, data *ActionModel) error {
 	required := []string{}
-	props := map[string]cli.BlueprintProperty{}
+	props := map[string]cli.ActionProperty{}
 	var err error
 	if data.UserProperties.StringProps != nil {
 		err = stringPropResourceToBody(ctx, data, props, &required)
@@ -75,11 +102,11 @@ func actionPropertiesToBody(ctx context.Context, action *cli.Action, data *Actio
 		err = numberPropResourceToBody(ctx, data, props, &required)
 	}
 	if data.UserProperties.BooleanProps != nil {
-		booleanPropResourceToBody(data, props, &required)
+		err = booleanPropResourceToBody(ctx, data, props, &required)
 	}
 
 	if data.UserProperties.ObjectProps != nil {
-		err = objectPropResourceToBody(data, props, &required)
+		err = objectPropResourceToBody(ctx, data, props, &required)
 	}
 
 	if err != nil {
@@ -148,5 +175,38 @@ func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 		}
 		return webhookInvocation
 	}
+
+	if data.GitlabMethod != nil {
+		projectName := data.GitlabMethod.ProjectName.ValueString()
+		groupName := data.GitlabMethod.GroupName.ValueString()
+		gitlabInvocation := &cli.InvocationMethod{
+			Type:        consts.Gitlab,
+			ProjectName: &projectName,
+			GroupName:   &groupName,
+		}
+
+		if !data.GitlabMethod.OmitPayload.IsNull() {
+			omitPayload := data.GitlabMethod.OmitPayload.ValueBool()
+			gitlabInvocation.OmitPayload = &omitPayload
+		}
+
+		if !data.GitlabMethod.OmitUserInputs.IsNull() {
+			omitUserInputs := data.GitlabMethod.OmitUserInputs.ValueBool()
+			gitlabInvocation.OmitUserInputs = &omitUserInputs
+		}
+
+		if !data.GitlabMethod.DefaultRef.IsNull() {
+			defaultRef := data.GitlabMethod.DefaultRef.ValueString()
+			gitlabInvocation.DefaultRef = &defaultRef
+		}
+
+		if !data.GitlabMethod.Agent.IsNull() {
+			agent := data.GitlabMethod.Agent.ValueBool()
+			gitlabInvocation.Agent = &agent
+		}
+
+		return gitlabInvocation
+	}
+
 	return nil
 }

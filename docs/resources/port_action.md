@@ -29,6 +29,7 @@ Action resource
 - `azure_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--azure_method))
 - `description` (String) Description
 - `github_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--github_method))
+- `gitlab_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--gitlab_method))
 - `icon` (String) Icon
 - `kafka_method` (Object) The invocation method of the action (see [below for nested schema](#nestedatt--kafka_method))
 - `required_approval` (Boolean) Require approval before invoking the action
@@ -70,13 +71,29 @@ Required:
 
 - `org` (String) Required when selecting type GITHUB. The GitHub org that the workflow belongs to
 - `repo` (String) Required when selecting type GITHUB. The GitHub repo that the workflow belongs to
+- `workflow` (String) The GitHub workflow that the action belongs to
 
 Optional:
 
 - `omit_payload` (Boolean) Omit the payload when invoking the action
 - `omit_user_inputs` (Boolean) Omit the user inputs when invoking the action
 - `report_workflow_status` (Boolean) Report the workflow status when invoking the action
-- `workflow` (String) The GitHub workflow that the action belongs to
+
+
+<a id="nestedatt--gitlab_method"></a>
+### Nested Schema for `gitlab_method`
+
+Required:
+
+- `group_name` (String) Required when selecting type GITLAB. The GitLab group name that the workflow belongs to
+- `project_name` (String) Required when selecting type GITLAB. The GitLab project name that the workflow belongs to
+
+Optional:
+
+- `agent` (Boolean) Use the agent to invoke the action
+- `default_ref` (String) The default ref of the action
+- `omit_payload` (Boolean) Omit the payload when invoking the action
+- `omit_user_inputs` (Boolean) Omit the user inputs when invoking the action
 
 
 <a id="nestedatt--kafka_method"></a>
@@ -103,11 +120,18 @@ Optional:
 Optional:
 
 - `boolean_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--boolean_items))
+- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--array_props--dataset))
+- `default_jq_query` (String) The default jq query of the array property
+- `depends_on` (List of String) The properties that this property depends on
+- `description` (String) The description of the property
+- `icon` (String) The icon of the property
 - `max_items` (Number) The max items of the array property
 - `min_items` (Number) The min items of the array property
 - `number_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--number_items))
 - `object_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--object_items))
+- `required` (Boolean) Whether the property is required
 - `string_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--string_items))
+- `title` (String) The title of the property
 
 <a id="nestedatt--user_properties--array_props--boolean_items"></a>
 ### Nested Schema for `user_properties.array_props.boolean_items`
@@ -115,6 +139,37 @@ Optional:
 Optional:
 
 - `default` (List of Boolean) The default of the items
+
+
+<a id="nestedatt--user_properties--array_props--dataset"></a>
+### Nested Schema for `user_properties.array_props.dataset`
+
+Required:
+
+- `combinator` (String) The combinator of the dataset
+- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--array_props--dataset--rules))
+
+<a id="nestedatt--user_properties--array_props--dataset--rules"></a>
+### Nested Schema for `user_properties.array_props.dataset.rules`
+
+Required:
+
+- `operator` (String) The operator of the rule
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--array_props--dataset--rules--value))
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `property` (String) The property identifier of the rule
+
+<a id="nestedatt--user_properties--array_props--dataset--rules--value"></a>
+### Nested Schema for `user_properties.array_props.dataset.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
 
 
 <a id="nestedatt--user_properties--array_props--number_items"></a>
@@ -138,6 +193,7 @@ Optional:
 
 Optional:
 
+- `blueprint` (String) The blueprint identifier the property relates to
 - `default` (List of String) The default of the items
 - `format` (String) The format of the items
 
@@ -148,7 +204,45 @@ Optional:
 
 Optional:
 
+- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--boolean_props--dataset))
 - `default` (Boolean) The default of the boolean property
+- `default_jq_query` (String) The default jq query of the boolean property
+- `depends_on` (List of String) The properties that this property depends on
+- `description` (String) The description of the property
+- `icon` (String) The icon of the property
+- `required` (Boolean) Whether the property is required
+- `title` (String) The title of the property
+
+<a id="nestedatt--user_properties--boolean_props--dataset"></a>
+### Nested Schema for `user_properties.boolean_props.dataset`
+
+Required:
+
+- `combinator` (String) The combinator of the dataset
+- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--boolean_props--dataset--rules))
+
+<a id="nestedatt--user_properties--boolean_props--dataset--rules"></a>
+### Nested Schema for `user_properties.boolean_props.dataset.rules`
+
+Required:
+
+- `operator` (String) The operator of the rule
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--boolean_props--dataset--rules--value))
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `property` (String) The property identifier of the rule
+
+<a id="nestedatt--user_properties--boolean_props--dataset--rules--value"></a>
+### Nested Schema for `user_properties.boolean_props.dataset.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
 
 
 <a id="nestedatt--user_properties--number_props"></a>
@@ -156,16 +250,49 @@ Optional:
 
 Optional:
 
-- `blueprint` (String) The blueprint identifier the property relates to
+- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--number_props--dataset))
 - `default` (Number) The default of the number property
+- `default_jq_query` (String) The default jq query of the number property
+- `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
 - `enum` (List of Number) The enum of the number property
-- `format` (String) The format of the string property
+- `enum_jq_query` (String) The enum jq query of the string property
 - `icon` (String) The icon of the property
 - `maximum` (Number) The min of the number property
 - `minimum` (Number) The max of the number property
 - `required` (Boolean) Whether the property is required
 - `title` (String) The title of the property
+
+<a id="nestedatt--user_properties--number_props--dataset"></a>
+### Nested Schema for `user_properties.number_props.dataset`
+
+Required:
+
+- `combinator` (String) The combinator of the dataset
+- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--number_props--dataset--rules))
+
+<a id="nestedatt--user_properties--number_props--dataset--rules"></a>
+### Nested Schema for `user_properties.number_props.dataset.rules`
+
+Required:
+
+- `operator` (String) The operator of the rule
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--number_props--dataset--rules--value))
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `property` (String) The property identifier of the rule
+
+<a id="nestedatt--user_properties--number_props--dataset--rules--value"></a>
+### Nested Schema for `user_properties.number_props.dataset.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
 
 
 <a id="nestedatt--user_properties--object_props"></a>
@@ -173,7 +300,45 @@ Optional:
 
 Optional:
 
+- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--object_props--dataset))
 - `default` (String) The default of the object property
+- `default_jq_query` (String) The default jq query of the object property
+- `depends_on` (List of String) The properties that this property depends on
+- `description` (String) The description of the property
+- `icon` (String) The icon of the property
+- `required` (Boolean) Whether the property is required
+- `title` (String) The title of the property
+
+<a id="nestedatt--user_properties--object_props--dataset"></a>
+### Nested Schema for `user_properties.object_props.dataset`
+
+Required:
+
+- `combinator` (String) The combinator of the dataset
+- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--object_props--dataset--rules))
+
+<a id="nestedatt--user_properties--object_props--dataset--rules"></a>
+### Nested Schema for `user_properties.object_props.dataset.rules`
+
+Required:
+
+- `operator` (String) The operator of the rule
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--object_props--dataset--rules--value))
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `property` (String) The property identifier of the rule
+
+<a id="nestedatt--user_properties--object_props--dataset--rules--value"></a>
+### Nested Schema for `user_properties.object_props.dataset.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
 
 
 <a id="nestedatt--user_properties--string_props"></a>
@@ -181,10 +346,14 @@ Optional:
 
 Optional:
 
-- `blueprint` (String) The blueprint identifier the property relates to
+- `blueprint` (String) The blueprint identifier the string property relates to
+- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--string_props--dataset))
 - `default` (String) The default of the string property
+- `default_jq_query` (String) The default jq query of the string property
+- `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
 - `enum` (List of String) The enum of the string property
+- `enum_jq_query` (String) The enum jq query of the string property
 - `format` (String) The format of the string property
 - `icon` (String) The icon of the property
 - `max_length` (Number) The max length of the string property
@@ -192,6 +361,37 @@ Optional:
 - `pattern` (String) The pattern of the string property
 - `required` (Boolean) Whether the property is required
 - `title` (String) The title of the property
+
+<a id="nestedatt--user_properties--string_props--dataset"></a>
+### Nested Schema for `user_properties.string_props.dataset`
+
+Required:
+
+- `combinator` (String) The combinator of the dataset
+- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--string_props--dataset--rules))
+
+<a id="nestedatt--user_properties--string_props--dataset--rules"></a>
+### Nested Schema for `user_properties.string_props.dataset.rules`
+
+Required:
+
+- `operator` (String) The operator of the rule
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--string_props--dataset--rules--value))
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `property` (String) The property identifier of the rule
+
+<a id="nestedatt--user_properties--string_props--dataset--rules--value"></a>
+### Nested Schema for `user_properties.string_props.dataset.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
 
 
 

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
@@ -35,12 +36,12 @@ func (p *PortLabsProvider) Schema(ctx context.Context, req provider.SchemaReques
 		Attributes: map[string]schema.Attribute{
 			"client_id": schema.StringAttribute{
 				MarkdownDescription: "Client ID for Port-labs",
-				Required:            true,
+				Optional:            true,
 			},
 			"secret": schema.StringAttribute{
 				MarkdownDescription: "Client Secret for Port-labs",
 				Sensitive:           true,
-				Required:            true,
+				Optional:            true,
 			},
 			"token": schema.StringAttribute{
 				MarkdownDescription: "Token for Port-labs",
@@ -65,10 +66,14 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 
 	var baseUrl string
 
-	if data.BaseUrl.ValueString() == "" {
-		baseUrl = consts.DefaultBaseUrl
+	if data.BaseUrl.IsNull() {
+		baseUrl = os.Getenv("PORT_BASE_URL")
 	} else {
 		baseUrl = data.BaseUrl.ValueString()
+	}
+
+	if baseUrl == "" {
+		baseUrl = consts.DefaultBaseUrl
 	}
 
 	c, err := cli.New(baseUrl, cli.WithHeader("User-Agent", version.ProviderVersion))
@@ -80,7 +85,30 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 	if data.Token.ValueString() != "" {
 		c.Client.SetAuthToken(data.Token.ValueString())
 	} else {
-		_, err = c.Authenticate(ctx, data.ClientId.ValueString(), data.Secret.ValueString())
+		var clientID, secret string
+		if data.ClientId.IsNull() {
+			clientID = os.Getenv("PORT_CLIENT_ID")
+		} else {
+			clientID = data.ClientId.ValueString()
+		}
+		if clientID == "" {
+			resp.Diagnostics.AddError("Unable to find client ID",
+				"Client ID is required, either set in config or environment variable PORT_CLIENT_ID")
+			return
+		}
+
+		if data.Secret.IsNull() {
+			secret = os.Getenv("PORT_CLIENT_SECRET")
+		} else {
+			secret = data.Secret.ValueString()
+		}
+		if secret == "" {
+			resp.Diagnostics.AddError("Unable to find client secret",
+				"Client secret is required, either set in config or environment variable PORT_CLIENT_SECRET")
+			return
+		}
+
+		_, err = c.Authenticate(ctx, clientID, secret)
 		if err != nil {
 			resp.Diagnostics.AddError("Failed to authenticate with Port-labs", err.Error())
 			return

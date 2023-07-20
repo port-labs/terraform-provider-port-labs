@@ -16,10 +16,10 @@ description: |-
 
 ### Required
 
-- `client_id` (String) Client ID for Port-labs
-- `secret` (String, Sensitive) Client Secret for Port-labs
+- `client_id` (String) Client ID for Port-labs (environment: `PORT_CLIENT_ID`)
+- `secret` (String, Sensitive) Client Secret for Port-labs (environment: `PORT_CLIENT_SECRET`)
 
 ### Optional
 
-- `base_url` (String)
+- `base_url` (String) Base URL for Port-labs (environment: `PORT_BASE_URL`)
 - `token` (String, Sensitive) Token for Port-labs

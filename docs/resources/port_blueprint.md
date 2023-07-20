@@ -3,12 +3,12 @@
 page_title: "port_blueprint Resource - terraform-provider-port-labs"
 subcategory: ""
 description: |-
-  Group resource
+  Blueprint Resource
 ---
 
 # port_blueprint (Resource)
 
-Group resource
+Blueprint Resource
 
 
 
@@ -18,6 +18,7 @@ Group resource
 ### Required
 
 - `identifier` (String) The identifier of the blueprint
+- `title` (String) The display name of the blueprint
 
 ### Optional
 
@@ -29,7 +30,6 @@ Group resource
 - `properties` (Attributes) The properties of the blueprint (see [below for nested schema](#nestedatt--properties))
 - `relations` (Attributes Map) The relations of the blueprint (see [below for nested schema](#nestedatt--relations))
 - `team_inheritance` (Attributes) The team inheritance of the blueprint (see [below for nested schema](#nestedatt--team_inheritance))
-- `title` (String) The display name of the blueprint
 - `webhook_changelog_destination` (Attributes) The webhook changelog destination of the blueprint (see [below for nested schema](#nestedatt--webhook_changelog_destination))
 
 ### Read-Only
@@ -213,11 +213,14 @@ Required:
 <a id="nestedatt--relations"></a>
 ### Nested Schema for `relations`
 
+Required:
+
+- `target` (String) The target of the relation
+
 Optional:
 
 - `many` (Boolean) The many of the relation
 - `required` (Boolean) The required of the relation
-- `target` (String) The target of the relation
 - `title` (String) The title of the relation
 
 

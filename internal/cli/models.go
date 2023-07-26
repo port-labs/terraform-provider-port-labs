@@ -158,6 +158,7 @@ type (
 	ActionUserInputs = struct {
 		Properties map[string]ActionProperty `json:"properties"`
 		Required   []string                  `json:"required,omitempty"`
+		Order      []string                  `json:"order,omitempty"`
 	}
 
 	Blueprint struct {

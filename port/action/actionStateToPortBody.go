@@ -5,6 +5,7 @@ import (
 
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
 func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
@@ -83,6 +84,15 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Bluep
 		}
 	} else {
 		action.UserInputs.Properties = make(map[string]cli.ActionProperty)
+	}
+
+	if !data.OrderProperties.IsNull() {
+		order, err := utils.TerraformListToGoArray(ctx, data.OrderProperties, "string")
+		if err != nil {
+			return nil, err
+		}
+		orderString := utils.InterfaceToStringArray(order)
+		action.UserInputs.Order = orderString
 	}
 
 	return action, nil

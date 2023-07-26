@@ -230,6 +230,11 @@ func ActionSchema() map[string]schema.Attribute {
 				},
 			},
 		},
+		"order_properties": schema.ListAttribute{
+			MarkdownDescription: "Order properties",
+			Optional:            true,
+			ElementType:         types.StringType,
+		},
 		"user_properties": schema.SingleNestedAttribute{
 			MarkdownDescription: "User properties",
 			Optional:            true,

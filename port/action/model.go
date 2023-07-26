@@ -165,4 +165,5 @@ type ActionModel struct {
 	UserProperties              *UserPropertiesModel              `tfsdk:"user_properties"`
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
+	OrderProperties             types.List                        `tfsdk:"order_properties"`
 }

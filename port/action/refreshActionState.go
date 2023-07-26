@@ -190,6 +190,9 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 			}
 		}
 		state.UserProperties = properties
+		if len(a.UserInputs.Order) > 0 {
+			state.OrderProperties = flex.GoArrayStringToTerraformList(ctx, a.UserInputs.Order)
+		}
 	}
 	return nil
 }

@@ -585,3 +585,50 @@ func TestAccPortActionJqDefault(t *testing.T) {
 	})
 
 }
+
+func TestAccPortActionOrderProperties(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+		title = "Action 1"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port_blueprint.microservice.id
+		trigger = "DAY-2"
+		kafka_method = {}
+		order_properties = ["myStringIdentifier2", "myStringIdentifier1"]
+		user_properties = {
+			string_props = {
+				myStringIdentifier1 = {
+					title      = "myStringIdentifier1"
+					required   = false
+				}
+				myStringIdentifier2 = {
+					title      = "myStringIdentifier2"
+					required   = false
+				}
+			}
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier1.title", "myStringIdentifier1"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.title", "myStringIdentifier2"),
+					resource.TestCheckResourceAttr("port_action.action1", "order_properties.0", "myStringIdentifier2"),
+					resource.TestCheckResourceAttr("port_action.action1", "order_properties.1", "myStringIdentifier1"),
+				),
+			},
+		},
+	})
+}

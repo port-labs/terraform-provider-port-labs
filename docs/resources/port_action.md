@@ -32,6 +32,7 @@ Action resource
 - `gitlab_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--gitlab_method))
 - `icon` (String) Icon
 - `kafka_method` (Object) The invocation method of the action (see [below for nested schema](#nestedatt--kafka_method))
+- `order_properties` (List of String) Order properties
 - `required_approval` (Boolean) Require approval before invoking the action
 - `user_properties` (Attributes) User properties (see [below for nested schema](#nestedatt--user_properties))
 - `webhook_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--webhook_method))

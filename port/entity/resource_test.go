@@ -65,7 +65,7 @@ func TestAccPortEntity(t *testing.T) {
 				"myStringIdentifier" =  "My String Value"
 			}
 			"number_props" = {
-				"myNumberIdentifier" =  123
+				"myNumberIdentifier" =  123.456
 			}
 			"boolean_props" = {
 				"myBooleanIdentifier" =  true
@@ -102,7 +102,7 @@ func TestAccPortEntity(t *testing.T) {
 					resource.TestCheckResourceAttr("port_entity.microservice", "title", "TF Provider Test Entity0"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "blueprint", identifier),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.string_props.myStringIdentifier", "My String Value"),
-					resource.TestCheckResourceAttr("port_entity.microservice", "properties.number_props.myNumberIdentifier", "123"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.number_props.myNumberIdentifier", "123.456"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.boolean_props.myBooleanIdentifier", "true"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.object_props.myObjectIdentifier", "{\"foo\":\"bar\"}"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.string_items.myStringArrayIdentifier.0", "My Array Value"),

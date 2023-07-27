@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 )
 
@@ -56,9 +57,9 @@ func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cl
 		switch t := v.(type) {
 		case float64:
 			if state.Properties.NumberProps == nil {
-				state.Properties.NumberProps = make(map[string]float64)
+				state.Properties.NumberProps = make(map[string]types.Float64)
 			}
-			state.Properties.NumberProps[k] = float64(t)
+			state.Properties.NumberProps[k] = basetypes.NewFloat64Value(t)
 		case string:
 			if state.Properties.StringProps == nil {
 				state.Properties.StringProps = make(map[string]string)

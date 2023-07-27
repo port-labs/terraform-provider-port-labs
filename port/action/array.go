@@ -172,7 +172,7 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 			switch v.Items["type"] {
 			case "string":
 				arrayProp.StringItems = &StringItems{}
-				if v.Default != nil {
+				if v.Default != nil && arrayProp.DefaultJqQuery.IsNull() {
 					stringArray := make([]string, len(v.Default.([]interface{})))
 					for i, v := range v.Default.([]interface{}) {
 						stringArray[i] = v.(string)
@@ -193,7 +193,7 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 				}
 			case "number":
 				arrayProp.NumberItems = &NumberItems{}
-				if v.Default != nil {
+				if v.Default != nil && arrayProp.DefaultJqQuery.IsNull() {
 					numberArray := make([]float64, len(v.Default.([]interface{})))
 					attrs := make([]attr.Value, 0, len(numberArray))
 					for _, value := range v.Default.([]interface{}) {
@@ -204,7 +204,7 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 
 			case "boolean":
 				arrayProp.BooleanItems = &BooleanItems{}
-				if v.Default != nil {
+				if v.Default != nil && arrayProp.DefaultJqQuery.IsNull() {
 					booleanArray := make([]bool, len(v.Default.([]interface{})))
 					attrs := make([]attr.Value, 0, len(booleanArray))
 					for _, value := range v.Default.([]interface{}) {
@@ -215,7 +215,7 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 
 			case "object":
 				arrayProp.ObjectItems = &ObjectItems{}
-				if v.Default != nil {
+				if v.Default != nil && arrayProp.DefaultJqQuery.IsNull() {
 					objectArray := make([]map[string]interface{}, len(v.Default.([]interface{})))
 					attrs := make([]attr.Value, 0, len(objectArray))
 					for _, value := range v.Default.([]interface{}) {

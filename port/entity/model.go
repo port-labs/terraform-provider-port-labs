@@ -12,11 +12,11 @@ type ArrayPropsModel struct {
 }
 
 type EntityPropertiesModel struct {
-	StringProps  map[string]string  `tfsdk:"string_props"`
-	NumberProps  map[string]float64 `tfsdk:"number_props"`
-	BooleanProps map[string]bool    `tfsdk:"boolean_props"`
-	ObjectProps  map[string]string  `tfsdk:"object_props"`
-	ArrayProps   *ArrayPropsModel   `tfsdk:"array_props"`
+	StringProps  map[string]string        `tfsdk:"string_props"`
+	NumberProps  map[string]types.Float64 `tfsdk:"number_props"`
+	BooleanProps map[string]bool          `tfsdk:"boolean_props"`
+	ObjectProps  map[string]string        `tfsdk:"object_props"`
+	ArrayProps   *ArrayPropsModel         `tfsdk:"array_props"`
 }
 
 type RelationModel struct {

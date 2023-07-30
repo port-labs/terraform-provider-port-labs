@@ -100,7 +100,7 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 
 		if state.Properties.NumberProps != nil {
 			for propIdentifier, prop := range state.Properties.NumberProps {
-				properties[propIdentifier] = prop
+				properties[propIdentifier] = prop.ValueFloat64()
 			}
 		}
 

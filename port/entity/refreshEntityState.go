@@ -9,7 +9,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 )
 
-func refreshArrayEntityState(ctx context.Context, state *EntityModel, k string, t []interface{}) {
+func refreshArrayEntityState(ctx context.Context, state *EntityModel, k string, t []interface{}, blueprint *cli.Blueprint) {
 	if state.Properties.ArrayProps == nil {
 		state.Properties.ArrayProps = &ArrayPropsModel{
 			StringItems:  types.MapNull(types.ListType{ElemType: types.StringType}),
@@ -18,29 +18,29 @@ func refreshArrayEntityState(ctx context.Context, state *EntityModel, k string, 
 			ObjectItems:  types.MapNull(types.ListType{ElemType: types.StringType}),
 		}
 	}
-	switch t[0].(type) {
-	case string:
+	switch blueprint.Schema.Properties[k].Items["type"] {
+	case "string":
 		mapItems := make(map[string][]string)
 		for _, item := range t {
 			mapItems[k] = append(mapItems[k], item.(string))
 		}
 		state.Properties.ArrayProps.StringItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, mapItems)
 
-	case float64:
+	case "number":
 		mapItems := make(map[string][]float64)
 		for _, item := range t {
 			mapItems[k] = append(mapItems[k], item.(float64))
 		}
 		state.Properties.ArrayProps.NumberItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.NumberType}, mapItems)
 
-	case bool:
+	case "boolean":
 		mapItems := make(map[string][]bool)
 		for _, item := range t {
 			mapItems[k] = append(mapItems[k], item.(bool))
 		}
 		state.Properties.ArrayProps.BooleanItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.BoolType}, mapItems)
 
-	case map[string]interface{}:
+	case "object":
 		mapItems := make(map[string][]string)
 		for _, item := range t {
 			js, _ := json.Marshal(&item)
@@ -51,7 +51,7 @@ func refreshArrayEntityState(ctx context.Context, state *EntityModel, k string, 
 	}
 }
 
-func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cli.Entity) {
+func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) {
 	state.Properties = &EntityPropertiesModel{}
 	for k, v := range e.Properties {
 		switch t := v.(type) {
@@ -73,7 +73,7 @@ func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cl
 			state.Properties.BooleanProps[k] = t
 
 		case []interface{}:
-			refreshArrayEntityState(ctx, state, k, t)
+			refreshArrayEntityState(ctx, state, k, t, blueprint)
 		case interface{}:
 			if state.Properties.ObjectProps == nil {
 				state.Properties.ObjectProps = make(map[string]string)
@@ -106,10 +106,10 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 	}
 }
 
-func refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint string) error {
+func refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) error {
 	state.ID = types.StringValue(e.Identifier)
 	state.Identifier = types.StringValue(e.Identifier)
-	state.Blueprint = types.StringValue(blueprint)
+	state.Blueprint = types.StringValue(blueprint.Identifier)
 	state.Title = types.StringValue(e.Title)
 	state.CreatedAt = types.StringValue(e.CreatedAt.String())
 	state.CreatedBy = types.StringValue(e.CreatedBy)
@@ -124,7 +124,7 @@ func refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, 
 	}
 
 	if len(e.Properties) != 0 {
-		refreshPropertiesEntityState(ctx, state, e)
+		refreshPropertiesEntityState(ctx, state, e, blueprint)
 	}
 
 	if len(e.Relations) != 0 {

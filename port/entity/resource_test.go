@@ -75,16 +75,16 @@ func TestAccPortEntity(t *testing.T) {
 			}
 			"array_props" = {
 				string_items = {
-					"myStringArrayIdentifier" =  ["My Array Value"]
+					"myStringArrayIdentifier" =  ["My Array Value", "My Array Value2"]
 				}
 				number_items = {
-					"myNumberArrayIdentifier" =  [123]
+					"myNumberArrayIdentifier" =  [123, 456]
 				}
 				boolean_items = {
-					"myBooleanArrayIdentifier" =  [true]
+					"myBooleanArrayIdentifier" =  [true, false]
 				}
 				object_items = {
-					"myObjectArrayIdentifier" =  [jsonencode({"foo": "bar"})]
+					"myObjectArrayIdentifier" =  [jsonencode({"foo": "bar"}), jsonencode({"foo": "bar2"})]
 				}
 			}
 		}
@@ -106,9 +106,13 @@ func TestAccPortEntity(t *testing.T) {
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.boolean_props.myBooleanIdentifier", "true"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.object_props.myObjectIdentifier", "{\"foo\":\"bar\"}"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.string_items.myStringArrayIdentifier.0", "My Array Value"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.string_items.myStringArrayIdentifier.1", "My Array Value2"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.number_items.myNumberArrayIdentifier.0", "123"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.number_items.myNumberArrayIdentifier.1", "456"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.boolean_items.myBooleanArrayIdentifier.0", "true"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.boolean_items.myBooleanArrayIdentifier.1", "false"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.object_items.myObjectArrayIdentifier.0", "{\"foo\":\"bar\"}"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.object_items.myObjectArrayIdentifier.1", "{\"foo\":\"bar2\"}"),
 				),
 			},
 		},

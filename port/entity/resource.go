@@ -54,8 +54,13 @@ func (r *EntityResource) Read(ctx context.Context, req resource.ReadRequest, res
 		resp.Diagnostics.AddError("failed to read entity", err.Error())
 		return
 	}
+	b, _, err := r.portClient.ReadBlueprint(ctx, blueprintIdentifier)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read blueprint", err.Error())
+		return
+	}
 
-	err = refreshEntityState(ctx, state, e, blueprintIdentifier)
+	err = refreshEntityState(ctx, state, e, b)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing entity fields to resource", err.Error())
 		return

@@ -195,13 +195,53 @@ type (
 		Required   *bool   `json:"required,omitempty"`
 		Many       *bool   `json:"many,omitempty"`
 	}
+
+	Webhook struct {
+		Meta
+		Identifier  string     `json:"identifier,omitempty"`
+		Title       *string    `json:"title,omitempty"`
+		Icon        *string    `json:"icon,omitempty"`
+		Description *string    `json:"description,omitempty"`
+		Enabled     *bool      `json:"enabled,omitempty"`
+		Security    *Security  `json:"security,omitempty"`
+		Mappings    []Mappings `json:"mappings,omitempty"`
+	}
+
+	Security struct {
+		Secret                *string `json:"secret,omitempty"`
+		SignatureHeaderName   *string `json:"signatureHeaderName,omitempty"`
+		SignatureAlgorithm    *string `json:"signatureAlgorithm,omitempty"`
+		SignaturePrefix       *string `json:"signaturePrefix,omitempty"`
+		RequestIdentifierPath *string `json:"requestIdentifierPath,omitempty"`
+	}
+
+	EntityProperty struct {
+		Identifier *string           `json:"identifier,omitempty"`
+		Title      *string           `json:"title,omitempty"`
+		Icon       *string           `json:"icon,omitempty"`
+		Team       *string           `json:"team,omitempty"`
+		Properties map[string]string `json:"properties,omitempty"`
+		Relations  map[string]string `json:"relations,omitempty"`
+	}
+
+	WebhookProperty struct {
+		Blueprint    *string         `json:"blueprint,omitempty"`
+		Filter       *string         `json:"filter,omitempty"`
+		ItemsToParse *string         `json:"items_to_parse,omitempty"`
+		Entity       *EntityProperty `json:"entity,omitempty"`
+	}
+
+	Mappings struct {
+		Properties *WebhookProperty `json:"properties,omitempty"`
+	}
 )
 
 type PortBody struct {
-	OK        bool      `json:"ok"`
-	Entity    Entity    `json:"entity"`
-	Blueprint Blueprint `json:"blueprint"`
-	Action    Action    `json:"action"`
+	OK          bool      `json:"ok"`
+	Entity      Entity    `json:"entity"`
+	Blueprint   Blueprint `json:"blueprint"`
+	Action      Action    `json:"action"`
+	Integration Webhook   `json:"integration"`
 }
 
 type PortProviderModel struct {

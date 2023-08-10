@@ -9,6 +9,7 @@ import (
 func webhookResourceToBody(ctx context.Context, state *WebhookModel) (*cli.Webhook, error) {
 	w := &cli.Webhook{
 		Identifier: state.Identifier.ValueString(),
+		Security:   &cli.Security{},
 	}
 
 	if !state.Icon.IsNull() {
@@ -30,13 +31,11 @@ func webhookResourceToBody(ctx context.Context, state *WebhookModel) (*cli.Webho
 		enabled := state.Enabled.ValueBool()
 		w.Enabled = &enabled
 	}
-
 	if state.Security != nil {
-		w.Security = &cli.Security{}
-		// if !state.Security.Secret.IsNull() {
-		// 	secret := state.Security.Secret.ValueString()
-		// 	w.Security.Secret = &secret
-		// }
+		if !state.Security.Secret.IsNull() {
+			secret := state.Security.Secret.ValueString()
+			w.Security.Secret = &secret
+		}
 		if !state.Security.SignatureHeaderName.IsNull() {
 			signatureHeaderName := state.Security.SignatureHeaderName.ValueString()
 			w.Security.SignatureHeaderName = &signatureHeaderName
@@ -54,7 +53,6 @@ func webhookResourceToBody(ctx context.Context, state *WebhookModel) (*cli.Webho
 			requestIdentifierPath := state.Security.RequestIdentifierPath.ValueString()
 			w.Security.RequestIdentifierPath = &requestIdentifierPath
 		}
-
 	}
 
 	if len(state.Mappings) > 0 {

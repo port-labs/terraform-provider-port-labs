@@ -32,7 +32,9 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 	}
 
 	if w.Security != nil {
-		state.Security = &SecurityModel{}
+		if state.Security == nil {
+			state.Security = &SecurityModel{}
+		}
 		if w.Security.Secret != nil {
 			state.Security.Secret = types.StringValue(*w.Security.Secret)
 		}
@@ -50,10 +52,10 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 		}
 	}
 
-	if w.Mappings != nil {
+	if len(w.Mappings) > 0 {
 		state.Mappings = []MappingsModel{}
 		for _, v := range w.Mappings {
-			mapping := MappingsModel{
+			mapping := &MappingsModel{
 				Blueprint: types.StringValue(v.Blueprint),
 				Entity: &EntityModel{
 					Identifier: types.StringValue(v.Entity.Identifier),
@@ -93,8 +95,7 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 					mapping.Entity.Relations[k] = v
 				}
 			}
-
-			state.Mappings = append(state.Mappings, mapping)
+			state.Mappings = append(state.Mappings, *mapping)
 		}
 	}
 

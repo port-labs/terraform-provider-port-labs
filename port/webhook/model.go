@@ -21,15 +21,11 @@ type EntityModel struct {
 	Relations  map[string]string `tfsdk:"relations"`
 }
 
-type PropertiesModel struct {
-	Identifier   types.String `tfsdk:"identifier"`
+type MappingsModel struct {
+	Blueprint    types.String `tfsdk:"blueprint"`
 	Filter       types.String `tfsdk:"filter"`
 	ItemsToParse types.String `tfsdk:"items_to_parse"`
 	Entity       *EntityModel `tfsdk:"entity"`
-}
-
-type MappingsModel struct {
-	Properties *PropertiesModel `tfsdk:"properties"`
 }
 
 type WebhookModel struct {

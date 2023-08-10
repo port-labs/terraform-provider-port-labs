@@ -70,57 +70,47 @@ func WebhookSchema() map[string]schema.Attribute {
 			Optional:            true,
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: map[string]schema.Attribute{
-					"properties": schema.MapNestedAttribute{
-						MarkdownDescription: "The properties of the mapping",
+					"blueprint": schema.StringAttribute{
+						MarkdownDescription: "The blueprint of the mapping",
+						Required:            true,
+					},
+					"filter": schema.StringAttribute{
+						MarkdownDescription: "The filter of the mapping",
 						Optional:            true,
-						NestedObject: schema.NestedAttributeObject{
-							Attributes: map[string]schema.Attribute{
-								"blueprint": schema.StringAttribute{
-									MarkdownDescription: "The blueprint of the mapping",
-									Required:            true,
-								},
-								"filter": schema.StringAttribute{
-									MarkdownDescription: "The filter of the mapping",
-									Optional:            true,
-								},
-								"items_to_parser": schema.StringAttribute{
-									MarkdownDescription: "The items to parser of the mapping",
-									Optional:            true,
-								},
-								"entity": schema.MapNestedAttribute{
-									MarkdownDescription: "The entity of the mapping",
-									Required:            true,
-									NestedObject: schema.NestedAttributeObject{
-										Attributes: map[string]schema.Attribute{
-											"identifier": schema.StringAttribute{
-												MarkdownDescription: "The identifier of the entity",
-												Required:            true,
-											},
-											"title": schema.StringAttribute{
-												MarkdownDescription: "The title of the entity",
-												Optional:            true,
-											},
-											"icon": schema.StringAttribute{
-												MarkdownDescription: "The icon of the entity",
-												Optional:            true,
-											},
-											"team": schema.StringAttribute{
-												MarkdownDescription: "The team of the entity",
-												Optional:            true,
-											},
-											"properties": schema.MapAttribute{
-												MarkdownDescription: "The properties of the entity",
-												Optional:            true,
-												ElementType:         types.StringType,
-											},
-											"relations": schema.MapAttribute{
-												MarkdownDescription: "The relations of the entity",
-												Optional:            true,
-												ElementType:         types.StringType,
-											},
-										},
-									},
-								},
+					},
+					"items_to_parse": schema.StringAttribute{
+						MarkdownDescription: "The items to parser of the mapping",
+						Optional:            true,
+					},
+					"entity": schema.SingleNestedAttribute{
+						MarkdownDescription: "The entity of the mapping",
+						Required:            true,
+						Attributes: map[string]schema.Attribute{
+							"identifier": schema.StringAttribute{
+								MarkdownDescription: "The identifier of the entity",
+								Required:            true,
+							},
+							"title": schema.StringAttribute{
+								MarkdownDescription: "The title of the entity",
+								Optional:            true,
+							},
+							"icon": schema.StringAttribute{
+								MarkdownDescription: "The icon of the entity",
+								Optional:            true,
+							},
+							"team": schema.StringAttribute{
+								MarkdownDescription: "The team of the entity",
+								Optional:            true,
+							},
+							"properties": schema.MapAttribute{
+								MarkdownDescription: "The properties of the entity",
+								Optional:            true,
+								ElementType:         types.StringType,
+							},
+							"relations": schema.MapAttribute{
+								MarkdownDescription: "The relations of the entity",
+								Optional:            true,
+								ElementType:         types.StringType,
 							},
 						},
 					},
@@ -154,7 +144,7 @@ func WebhookSchema() map[string]schema.Attribute {
 
 func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Entity resource",
+		MarkdownDescription: "Webhook resource",
 		Attributes:          WebhookSchema(),
 	}
 }

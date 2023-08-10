@@ -33,10 +33,10 @@ func webhookResourceToBody(ctx context.Context, state *WebhookModel) (*cli.Webho
 
 	if state.Security != nil {
 		w.Security = &cli.Security{}
-		if !state.Security.Secret.IsNull() {
-			secret := state.Security.Secret.ValueString()
-			w.Security.Secret = &secret
-		}
+		// if !state.Security.Secret.IsNull() {
+		// 	secret := state.Security.Secret.ValueString()
+		// 	w.Security.Secret = &secret
+		// }
 		if !state.Security.SignatureHeaderName.IsNull() {
 			signatureHeaderName := state.Security.SignatureHeaderName.ValueString()
 			w.Security.SignatureHeaderName = &signatureHeaderName
@@ -55,6 +55,61 @@ func webhookResourceToBody(ctx context.Context, state *WebhookModel) (*cli.Webho
 			w.Security.RequestIdentifierPath = &requestIdentifierPath
 		}
 
+	}
+
+	if len(state.Mappings) > 0 {
+		w.Mappings = []cli.Mappings{}
+		for _, v := range state.Mappings {
+			mapping := cli.Mappings{
+				Blueprint: v.Blueprint.ValueString(),
+				Entity: &cli.EntityProperty{
+					Identifier: v.Entity.Identifier.ValueString(),
+				},
+			}
+
+			if !v.Filter.IsNull() {
+				filter := v.Filter.ValueString()
+				mapping.Filter = &filter
+			}
+
+			if !v.ItemsToParse.IsNull() {
+				ItemsToParse := v.ItemsToParse.ValueString()
+				mapping.ItemsToParse = &ItemsToParse
+			}
+
+			if !v.Entity.Icon.IsNull() {
+				icon := v.Entity.Icon.ValueString()
+				mapping.Entity.Icon = &icon
+			}
+
+			if !v.Entity.Title.IsNull() {
+				title := v.Entity.Title.ValueString()
+				mapping.Entity.Title = &title
+			}
+
+			if !v.Entity.Team.IsNull() {
+				team := v.Entity.Team.ValueString()
+				mapping.Entity.Team = &team
+			}
+
+			if v.Entity.Properties != nil {
+				properties := make(map[string]string)
+				for k, v := range v.Entity.Properties {
+					properties[k] = v
+				}
+				mapping.Entity.Properties = properties
+			}
+
+			if v.Entity.Relations != nil {
+				relations := make(map[string]string)
+				for k, v := range v.Entity.Relations {
+					relations[k] = v
+				}
+				mapping.Entity.Relations = relations
+			}
+
+			w.Mappings = append(w.Mappings, mapping)
+		}
 	}
 
 	return w, nil

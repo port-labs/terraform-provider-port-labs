@@ -216,7 +216,7 @@ type (
 	}
 
 	EntityProperty struct {
-		Identifier *string           `json:"identifier,omitempty"`
+		Identifier string            `json:"identifier,omitempty"`
 		Title      *string           `json:"title,omitempty"`
 		Icon       *string           `json:"icon,omitempty"`
 		Team       *string           `json:"team,omitempty"`
@@ -224,15 +224,11 @@ type (
 		Relations  map[string]string `json:"relations,omitempty"`
 	}
 
-	WebhookProperty struct {
-		Blueprint    *string         `json:"blueprint,omitempty"`
+	Mappings struct {
+		Blueprint    string          `json:"blueprint,omitempty"`
 		Filter       *string         `json:"filter,omitempty"`
 		ItemsToParse *string         `json:"items_to_parse,omitempty"`
 		Entity       *EntityProperty `json:"entity,omitempty"`
-	}
-
-	Mappings struct {
-		Properties *WebhookProperty `json:"properties,omitempty"`
 	}
 )
 

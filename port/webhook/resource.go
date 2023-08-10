@@ -81,12 +81,12 @@ func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	writeEntityComputedFieldsToState(state, wp)
+	writeWebhookComputedFieldsToState(state, wp)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func writeEntityComputedFieldsToState(state *WebhookModel, wp *cli.Webhook) {
+func writeWebhookComputedFieldsToState(state *WebhookModel, wp *cli.Webhook) {
 	state.ID = types.StringValue(wp.Identifier)
 	state.Identifier = types.StringValue(wp.Identifier)
 	state.CreatedAt = types.StringValue(wp.CreatedAt.String())
@@ -103,30 +103,19 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	// bp, _, err := r.portClient.ReadBlueprint(ctx, state.Blueprint.ValueString())
-	// if err != nil {
-	// 	resp.Diagnostics.AddError("failed to read blueprint", err.Error())
-	// 	return
-	// }
+	w, err := webhookResourceToBody(ctx, state)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert webhook resource to body", err.Error())
+		return
+	}
 
-	// e, err := entityResourceToBody(ctx, state, bp)
-	// if err != nil {
-	// 	resp.Diagnostics.AddError("failed to convert entity resource to body", err.Error())
-	// 	return
-	// }
+	wp, err := r.portClient.UpdateWebhook(ctx, w.Identifier, w)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to create webhook", err.Error())
+		return
+	}
 
-	// runID := ""
-	// if !state.RunID.IsNull() {
-	// 	runID = state.RunID.ValueString()
-	// }
-
-	// en, err := r.portClient.CreateEntity(ctx, e, runID)
-	// if err != nil {
-	// 	resp.Diagnostics.AddError("failed to create entity", err.Error())
-	// 	return
-	// }
-
-	// writeEntityComputedFieldsToState(state, en)
+	writeWebhookComputedFieldsToState(state, wp)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

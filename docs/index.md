@@ -21,5 +21,7 @@ description: |-
 
 ### Optional
 
-- `base_url` (String) Base URL for Port-labs (environment: `PORT_BASE_URL`)
+- `base_url` (String)
+- `client_id` (String) Client ID for Port-labsß
+- `secret` (String, Sensitive) Client Secret for Port-labs
 - `token` (String, Sensitive) Token for Port-labs

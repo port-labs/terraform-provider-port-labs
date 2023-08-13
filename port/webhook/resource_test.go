@@ -76,7 +76,7 @@ func TestAccPortWebhook(t *testing.T) {
 		  }
 		mappings = [
 			{
-			"blueprint" = "pullRequest",
+			"blueprint" = "%s",
 			"filter" = ".headers.\"X-GitHub-Event\" == \"pull_request\"",
 			"entity" = {
 					"identifier" = ".body.pull_request.id | tostring",
@@ -95,7 +95,10 @@ func TestAccPortWebhook(t *testing.T) {
 			  security.secret
 			]
 		  }
-	}`, webhookIdentifier)
+		  depends_on = [
+			port_blueprint.microservice
+			]		  		
+	}`, webhookIdentifier, identifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -112,7 +115,7 @@ func TestAccPortWebhook(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_algorithm", "sha256"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_prefix", "sha256="),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.request_identifier_path", "body.repository.full_name"),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.blueprint", "pullRequest"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.blueprint", identifier),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.filter", ".headers.\"X-GitHub-Event\" == \"pull_request\""),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.identifier", ".body.pull_request.id | tostring"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.title", ".body.pull_request.title"),
@@ -143,7 +146,7 @@ func TestAccPortWebhookImport(t *testing.T) {
 		  }
 		mappings = [
 			{
-			"blueprint" = "pullRequest",
+			"blueprint" = "%s",
 			"filter" = ".headers.\"X-GitHub-Event\" == \"pull_request\"",
 			"entity" = {
 					"identifier" = ".body.pull_request.id | tostring",
@@ -162,7 +165,10 @@ func TestAccPortWebhookImport(t *testing.T) {
 			  security.secret
 			]
 		  }
-	}`, webhookIdentifier)
+		depends_on = [
+		  port_blueprint.microservice
+		  ]	
+	}`, webhookIdentifier, identifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -179,7 +185,7 @@ func TestAccPortWebhookImport(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_algorithm", "sha256"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_prefix", "sha256="),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.request_identifier_path", "body.repository.full_name"),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.blueprint", "pullRequest"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.blueprint", identifier),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.filter", ".headers.\"X-GitHub-Event\" == \"pull_request\""),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.identifier", ".body.pull_request.id | tostring"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.title", ".body.pull_request.title"),

@@ -11,6 +11,80 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+func WebhookSecuritySchema() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"secret": schema.StringAttribute{
+			MarkdownDescription: "The secret of the webhook",
+			Optional:            true,
+		},
+		"signature_header_name": schema.StringAttribute{
+			MarkdownDescription: "The signature header name of the webhook",
+			Optional:            true,
+		},
+		"signature_algorithm": schema.StringAttribute{
+			MarkdownDescription: "The signature algorithm of the webhook",
+			Optional:            true,
+		},
+		"signature_prefix": schema.StringAttribute{
+			MarkdownDescription: "The signature prefix of the webhook",
+			Optional:            true,
+		},
+		"request_identifier_path": schema.StringAttribute{
+			MarkdownDescription: "The request identifier path of the webhook",
+			Optional:            true,
+		},
+	}
+}
+
+func WebhookMappingSchema() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"blueprint": schema.StringAttribute{
+			MarkdownDescription: "The blueprint of the mapping",
+			Required:            true,
+		},
+		"filter": schema.StringAttribute{
+			MarkdownDescription: "The filter of the mapping",
+			Optional:            true,
+		},
+		"items_to_parse": schema.StringAttribute{
+			MarkdownDescription: "The items to parser of the mapping",
+			Optional:            true,
+		},
+		"entity": schema.SingleNestedAttribute{
+			MarkdownDescription: "The entity of the mapping",
+			Required:            true,
+			Attributes: map[string]schema.Attribute{
+				"identifier": schema.StringAttribute{
+					MarkdownDescription: "The identifier of the entity",
+					Required:            true,
+				},
+				"title": schema.StringAttribute{
+					MarkdownDescription: "The title of the entity",
+					Optional:            true,
+				},
+				"icon": schema.StringAttribute{
+					MarkdownDescription: "The icon of the entity",
+					Optional:            true,
+				},
+				"team": schema.StringAttribute{
+					MarkdownDescription: "The team of the entity",
+					Optional:            true,
+				},
+				"properties": schema.MapAttribute{
+					MarkdownDescription: "The properties of the entity",
+					Optional:            true,
+					ElementType:         types.StringType,
+				},
+				"relations": schema.MapAttribute{
+					MarkdownDescription: "The relations of the entity",
+					Optional:            true,
+					ElementType:         types.StringType,
+				},
+			},
+		},
+	}
+}
+
 func WebhookSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
@@ -42,79 +116,14 @@ func WebhookSchema() map[string]schema.Attribute {
 		"security": schema.SingleNestedAttribute{
 			MarkdownDescription: "The security of the webhook",
 			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"secret": schema.StringAttribute{
-					MarkdownDescription: "The secret of the webhook",
-					Optional:            true,
-				},
-				"signature_header_name": schema.StringAttribute{
-					MarkdownDescription: "The signature header name of the webhook",
-					Optional:            true,
-				},
-				"signature_algorithm": schema.StringAttribute{
-					MarkdownDescription: "The signature algorithm of the webhook",
-					Optional:            true,
-				},
-				"signature_prefix": schema.StringAttribute{
-					MarkdownDescription: "The signature prefix of the webhook",
-					Optional:            true,
-				},
-				"request_identifier_path": schema.StringAttribute{
-					MarkdownDescription: "The request identifier path of the webhook",
-					Optional:            true,
-				},
-			},
+			Attributes:          WebhookSecuritySchema(),
 		},
+
 		"mappings": schema.ListNestedAttribute{
 			MarkdownDescription: "The mappings of the webhook",
 			Optional:            true,
 			NestedObject: schema.NestedAttributeObject{
-				Attributes: map[string]schema.Attribute{
-					"blueprint": schema.StringAttribute{
-						MarkdownDescription: "The blueprint of the mapping",
-						Required:            true,
-					},
-					"filter": schema.StringAttribute{
-						MarkdownDescription: "The filter of the mapping",
-						Optional:            true,
-					},
-					"items_to_parse": schema.StringAttribute{
-						MarkdownDescription: "The items to parser of the mapping",
-						Optional:            true,
-					},
-					"entity": schema.SingleNestedAttribute{
-						MarkdownDescription: "The entity of the mapping",
-						Required:            true,
-						Attributes: map[string]schema.Attribute{
-							"identifier": schema.StringAttribute{
-								MarkdownDescription: "The identifier of the entity",
-								Required:            true,
-							},
-							"title": schema.StringAttribute{
-								MarkdownDescription: "The title of the entity",
-								Optional:            true,
-							},
-							"icon": schema.StringAttribute{
-								MarkdownDescription: "The icon of the entity",
-								Optional:            true,
-							},
-							"team": schema.StringAttribute{
-								MarkdownDescription: "The team of the entity",
-								Optional:            true,
-							},
-							"properties": schema.MapAttribute{
-								MarkdownDescription: "The properties of the entity",
-								Optional:            true,
-								ElementType:         types.StringType,
-							},
-							"relations": schema.MapAttribute{
-								MarkdownDescription: "The relations of the entity",
-								Optional:            true,
-								ElementType:         types.StringType,
-							},
-						},
-					},
-				},
+				Attributes: WebhookMappingSchema(),
 			},
 		},
 		"created_at": schema.StringAttribute{

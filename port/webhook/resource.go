@@ -69,7 +69,7 @@ func (r *WebhookResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	w, err := webhookResourceToBody(ctx, state)
+	w, err := webhookResourceToPortBody(ctx, state)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert webhook resource to body", err.Error())
 		return
@@ -103,7 +103,7 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	w, err := webhookResourceToBody(ctx, state)
+	w, err := webhookResourceToPortBody(ctx, state)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert webhook resource to body", err.Error())
 		return
@@ -111,7 +111,7 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	wp, err := r.portClient.UpdateWebhook(ctx, w.Identifier, w)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to create webhook", err.Error())
+		resp.Diagnostics.AddError("failed to update the webhook", err.Error())
 		return
 	}
 

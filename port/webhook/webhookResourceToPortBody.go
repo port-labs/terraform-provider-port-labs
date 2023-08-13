@@ -6,7 +6,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 )
 
-func webhookResourceToBody(ctx context.Context, state *WebhookModel) (*cli.Webhook, error) {
+func webhookResourceToPortBody(ctx context.Context, state *WebhookModel) (*cli.Webhook, error) {
 	w := &cli.Webhook{
 		Identifier: state.Identifier.ValueString(),
 		Security:   &cli.Security{},

@@ -179,6 +179,8 @@ Optional:
 Optional:
 
 - `default` (List of Number) The default of the items
+- `enum` (List of Number) The enum of the items
+- `enum_jq_query` (String) The enum jq query of the number items
 
 
 <a id="nestedatt--user_properties--array_props--object_items"></a>
@@ -196,6 +198,8 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier the property relates to
 - `default` (List of String) The default of the items
+- `enum` (List of String) The enum of the items
+- `enum_jq_query` (String) The enum jq query of the string items
 - `format` (String) The format of the items
 
 

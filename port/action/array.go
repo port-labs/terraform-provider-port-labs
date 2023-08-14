@@ -239,6 +239,8 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 						arrayProp.StringItems.EnumJqQuery = flex.GoStringToFramework(&jqQueryValue)
 						arrayProp.StringItems.Enum = types.ListNull(types.StringType)
 					}
+				} else {
+					arrayProp.StringItems.Enum = types.ListNull(types.StringType)
 				}
 
 			case "number":
@@ -270,6 +272,8 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 						arrayProp.NumberItems.EnumJqQuery = flex.GoStringToFramework(&jqQueryValue)
 						arrayProp.NumberItems.Enum = types.ListNull(types.Float64Type)
 					}
+				} else {
+					arrayProp.NumberItems.Enum = types.ListNull(types.Float64Type)
 				}
 
 			case "boolean":

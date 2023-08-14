@@ -301,6 +301,9 @@ func StringPropertySchema() schema.Attribute {
 		"enum_jq_query": schema.StringAttribute{
 			MarkdownDescription: "The enum jq query of the string property",
 			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
+			},
 		},
 	}
 
@@ -347,6 +350,9 @@ func NumberPropertySchema() schema.Attribute {
 		"enum_jq_query": schema.StringAttribute{
 			MarkdownDescription: "The enum jq query of the string property",
 			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
+			},
 		},
 	}
 
@@ -464,6 +470,9 @@ func ArrayPropertySchema() schema.Attribute {
 				"enum_jq_query": schema.StringAttribute{
 					MarkdownDescription: "The enum jq query of the string items",
 					Optional:            true,
+					Validators: []validator.String{
+						stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
+					},
 				},
 			},
 		},
@@ -488,6 +497,9 @@ func ArrayPropertySchema() schema.Attribute {
 				"enum_jq_query": schema.StringAttribute{
 					MarkdownDescription: "The enum jq query of the number items",
 					Optional:            true,
+					Validators: []validator.String{
+						stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
+					},
 				},
 			},
 		},

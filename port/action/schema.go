@@ -452,6 +452,15 @@ func ArrayPropertySchema() schema.Attribute {
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
+				"enum": schema.ListAttribute{
+					MarkdownDescription: "The enum of the items",
+					Optional:            true,
+					ElementType:         types.StringType,
+					Validators: []validator.List{
+						listvalidator.UniqueValues(),
+						listvalidator.SizeAtLeast(1),
+					},
+				},
 				"enum_jq_query": schema.StringAttribute{
 					MarkdownDescription: "The enum jq query of the string items",
 					Optional:            true,
@@ -466,6 +475,15 @@ func ArrayPropertySchema() schema.Attribute {
 					MarkdownDescription: "The default of the items",
 					Optional:            true,
 					ElementType:         types.Float64Type,
+				},
+				"enum": schema.ListAttribute{
+					MarkdownDescription: "The enum of the items",
+					Optional:            true,
+					ElementType:         types.Float64Type,
+					Validators: []validator.List{
+						listvalidator.UniqueValues(),
+						listvalidator.SizeAtLeast(1),
+					},
 				},
 				"enum_jq_query": schema.StringAttribute{
 					MarkdownDescription: "The enum jq query of the number items",

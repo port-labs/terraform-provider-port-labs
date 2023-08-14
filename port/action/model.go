@@ -121,11 +121,13 @@ type StringItems struct {
 	Blueprint   types.String `tfsdk:"blueprint"`
 	Format      types.String `tfsdk:"format"`
 	Default     types.List   `tfsdk:"default"`
+	Enum        types.List   `tfsdk:"enum"`
 	EnumJqQuery types.String `tfsdk:"enum_jq_query"`
 }
 
 type NumberItems struct {
 	Default     types.List   `tfsdk:"default"`
+	Enum        types.List   `tfsdk:"enum"`
 	EnumJqQuery types.String `tfsdk:"enum_jq_query"`
 }
 

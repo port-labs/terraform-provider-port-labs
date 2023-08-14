@@ -30,6 +30,14 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.ActionProperty, p
 			property.Default = defaultList
 		}
 
+		if !prop.StringItems.Enum.IsNull() {
+			enumList, err := utils.TerraformListToGoArray(ctx, prop.StringItems.Enum, "string")
+			if err != nil {
+				return err
+			}
+			items["enum"] = enumList
+		}
+
 		if !prop.StringItems.Format.IsNull() {
 			items["format"] = prop.StringItems.Format.ValueString()
 		}
@@ -58,6 +66,14 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.ActionProperty, p
 			}
 
 			items["default"] = defaultList
+		}
+
+		if !prop.NumberItems.Enum.IsNull() {
+			enumList, err := utils.TerraformListToGoArray(ctx, prop.NumberItems.Enum, "float64")
+			if err != nil {
+				return err
+			}
+			items["enum"] = enumList
 		}
 
 		if !prop.NumberItems.EnumJqQuery.IsNull() {
@@ -210,10 +226,18 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 				if value, ok := v.Items["enum"]; ok && value != nil {
 					v := reflect.ValueOf(value)
 					switch v.Kind() {
+					case reflect.Slice:
+						slice := v.Interface().([]interface{})
+						attrs := make([]attr.Value, 0, v.Len())
+						for _, value := range slice {
+							attrs = append(attrs, basetypes.NewStringValue(value.(string)))
+						}
+						arrayProp.StringItems.Enum, _ = types.ListValue(types.StringType, attrs)
 					case reflect.Map:
 						v := v.Interface().(map[string]interface{})
 						jqQueryValue := v["jqQuery"].(string)
 						arrayProp.StringItems.EnumJqQuery = flex.GoStringToFramework(&jqQueryValue)
+						arrayProp.StringItems.Enum = types.ListNull(types.StringType)
 					}
 				}
 
@@ -233,10 +257,18 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 				if value, ok := v.Items["enum"]; ok && value != nil {
 					v := reflect.ValueOf(value)
 					switch v.Kind() {
+					case reflect.Slice:
+						slice := v.Interface().([]interface{})
+						attrs := make([]attr.Value, 0, v.Len())
+						for _, value := range slice {
+							attrs = append(attrs, basetypes.NewFloat64Value(value.(float64)))
+						}
+						arrayProp.NumberItems.Enum, _ = types.ListValue(types.Float64Type, attrs)
 					case reflect.Map:
 						v := v.Interface().(map[string]interface{})
 						jqQueryValue := v["jqQuery"].(string)
 						arrayProp.NumberItems.EnumJqQuery = flex.GoStringToFramework(&jqQueryValue)
+						arrayProp.NumberItems.Enum = types.ListNull(types.Float64Type)
 					}
 				}
 

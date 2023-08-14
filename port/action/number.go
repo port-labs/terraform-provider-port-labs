@@ -65,6 +65,13 @@ func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map
 				property.Enum = enumList
 			}
 
+			if !prop.EnumJqQuery.IsNull() {
+				enumJqQueryMap := map[string]string{
+					"jqQuery": prop.EnumJqQuery.ValueString(),
+				}
+				property.Enum = enumJqQueryMap
+			}
+
 			if !prop.DependsOn.IsNull() {
 				dependsOn, err := utils.TerraformListToGoArray(ctx, prop.DependsOn, "string")
 				if err != nil {
@@ -109,10 +116,11 @@ func addNumberPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 			v := v.Interface().(map[string]interface{})
 			jqQueryValue := v["jqQuery"].(string)
 			numberProp.EnumJqQuery = flex.GoStringToFramework(&jqQueryValue)
-			numberProp.Enum = types.ListNull(types.StringType)
+			numberProp.Enum = types.ListNull(types.Float64Type)
 		}
 	} else {
 		numberProp.Enum = types.ListNull(types.Float64Type)
+		numberProp.EnumJqQuery = types.StringNull()
 	}
 
 	return numberProp

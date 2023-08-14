@@ -452,6 +452,10 @@ func ArrayPropertySchema() schema.Attribute {
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
+				"enum_jq_query": schema.StringAttribute{
+					MarkdownDescription: "The enum jq query of the string items",
+					Optional:            true,
+				},
 			},
 		},
 		"number_items": schema.SingleNestedAttribute{
@@ -462,6 +466,10 @@ func ArrayPropertySchema() schema.Attribute {
 					MarkdownDescription: "The default of the items",
 					Optional:            true,
 					ElementType:         types.Float64Type,
+				},
+				"enum_jq_query": schema.StringAttribute{
+					MarkdownDescription: "The enum jq query of the number items",
+					Optional:            true,
 				},
 			},
 		},

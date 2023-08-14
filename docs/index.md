@@ -22,4 +22,3 @@ description: |-
 ### Optional
 
 - `base_url` (String) Base URL for Port-labs (environment: `PORT_BASE_URL`)
-- `token` (String, Sensitive) Token for Port-labs

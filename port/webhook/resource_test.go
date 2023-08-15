@@ -92,6 +92,7 @@ func TestAccPortWebhook(t *testing.T) {
 			{
 			"blueprint" = "%s",
 			"filter" = ".headers.\"X-GitHub-Event\" == \"pull_request\"",
+			"items_to_parse" = "body.pull_request",
 			"entity" = {
 					"identifier" = ".body.pull_request.id | tostring",
 					"title" = ".body.pull_request.title",
@@ -145,6 +146,7 @@ func TestAccPortWebhook(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.request_identifier_path", "body.repository.full_name"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.blueprint", identifier),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.filter", ".headers.\"X-GitHub-Event\" == \"pull_request\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.items_to_parse", "body.pull_request"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.identifier", ".body.pull_request.id | tostring"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.title", ".body.pull_request.title"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.icon", "Terraform"),

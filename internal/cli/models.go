@@ -229,7 +229,7 @@ type (
 	Mappings struct {
 		Blueprint    string          `json:"blueprint,omitempty"`
 		Filter       *string         `json:"filter,omitempty"`
-		ItemsToParse *string         `json:"items_to_parse,omitempty"`
+		ItemsToParse *string         `json:"itemsToParse,omitempty"`
 		Entity       *EntityProperty `json:"entity,omitempty"`
 	}
 )

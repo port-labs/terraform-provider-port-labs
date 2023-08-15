@@ -15,6 +15,8 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 	state.CreatedBy = types.StringValue(w.CreatedBy)
 	state.UpdatedAt = types.StringValue(w.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(w.UpdatedBy)
+	state.Url = types.StringValue(w.Url)
+	state.WebhookKey = types.StringValue(w.WebhookKey)
 	state.Icon = flex.GoStringToFramework(w.Icon)
 	state.Title = flex.GoStringToFramework(w.Title)
 	state.Description = flex.GoStringToFramework(w.Description)

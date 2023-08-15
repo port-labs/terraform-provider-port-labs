@@ -93,6 +93,8 @@ func writeWebhookComputedFieldsToState(state *WebhookModel, wp *cli.Webhook) {
 	state.CreatedBy = types.StringValue(wp.CreatedBy)
 	state.UpdatedAt = types.StringValue(wp.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(wp.UpdatedBy)
+	state.Url = types.StringValue(wp.Url)
+	state.WebhookKey = types.StringValue(wp.WebhookKey)
 }
 
 func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {

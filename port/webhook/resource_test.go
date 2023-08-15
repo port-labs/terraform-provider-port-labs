@@ -52,6 +52,20 @@ func TestAccPortWebhookBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "title", "Test"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "enabled", "true"),
+					resource.TestCheckResourceAttrWith("port_webhook.create_pr", "url",
+						func(value string) error {
+							if value == "" {
+								return fmt.Errorf("value is empty")
+							}
+							return nil
+						}),
+					resource.TestCheckResourceAttrWith("port_webhook.create_pr", "webhook_key",
+						func(value string) error {
+							if value == "" {
+								return fmt.Errorf("value is empty")
+							}
+							return nil
+						}),
 				),
 			},
 		},
@@ -111,6 +125,20 @@ func TestAccPortWebhook(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "title", "Test"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "enabled", "true"),
+					resource.TestCheckResourceAttrWith("port_webhook.create_pr", "url",
+						func(value string) error {
+							if value == "" {
+								return fmt.Errorf("value is empty")
+							}
+							return nil
+						}),
+					resource.TestCheckResourceAttrWith("port_webhook.create_pr", "webhook_key",
+						func(value string) error {
+							if value == "" {
+								return fmt.Errorf("value is empty")
+							}
+							return nil
+						}),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_header_name", "X-Hub-Signature-256"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_algorithm", "sha256"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_prefix", "sha256="),
@@ -181,6 +209,20 @@ func TestAccPortWebhookImport(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "title", "Test"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "enabled", "true"),
+					resource.TestCheckResourceAttrWith("port_webhook.create_pr", "url",
+						func(value string) error {
+							if value == "" {
+								return fmt.Errorf("value is empty")
+							}
+							return nil
+						}),
+					resource.TestCheckResourceAttrWith("port_webhook.create_pr", "webhook_key",
+						func(value string) error {
+							if value == "" {
+								return fmt.Errorf("value is empty")
+							}
+							return nil
+						}),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_header_name", "X-Hub-Signature-256"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_algorithm", "sha256"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_prefix", "sha256="),

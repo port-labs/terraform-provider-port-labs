@@ -35,6 +35,8 @@ type WebhookModel struct {
 	Title       types.String    `tfsdk:"title"`
 	Description types.String    `tfsdk:"description"`
 	Enabled     types.Bool      `tfsdk:"enabled"`
+	WebhookKey  types.String    `tfsdk:"webhook_key"`
+	Url         types.String    `tfsdk:"url"`
 	Security    *SecurityModel  `tfsdk:"security"`
 	Mappings    []MappingsModel `tfsdk:"mappings"`
 	CreatedAt   types.String    `tfsdk:"created_at"`

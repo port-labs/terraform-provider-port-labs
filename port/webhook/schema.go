@@ -113,6 +113,14 @@ func WebhookSchema() map[string]schema.Attribute {
 			Computed:            true,
 			Default:             booldefault.StaticBool(false),
 		},
+		"url": schema.StringAttribute{
+			MarkdownDescription: "The url of the webhook",
+			Computed:            true,
+		},
+		"webhook_key": schema.StringAttribute{
+			MarkdownDescription: "The webhook key of the webhook",
+			Computed:            true,
+		},
 		"security": schema.SingleNestedAttribute{
 			MarkdownDescription: "The security of the webhook",
 			Optional:            true,

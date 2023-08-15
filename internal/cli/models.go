@@ -205,6 +205,8 @@ type (
 		Enabled     *bool      `json:"enabled,omitempty"`
 		Security    *Security  `json:"security,omitempty"`
 		Mappings    []Mappings `json:"mappings,omitempty"`
+		WebhookKey  string     `json:"webhookKey,omitempty"`
+		Url         string     `json:"url,omitempty"`
 	}
 
 	Security struct {

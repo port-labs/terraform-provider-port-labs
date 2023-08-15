@@ -18,6 +18,8 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 	state.Icon = flex.GoStringToFramework(w.Icon)
 	state.Title = flex.GoStringToFramework(w.Title)
 	state.Description = flex.GoStringToFramework(w.Description)
+	state.Url = flex.GoStringToFramework(&w.Url)
+	state.WebhookKey = flex.GoStringToFramework(&w.WebhookKey)
 	state.Enabled = flex.GoBoolToFramework(w.Enabled)
 
 	if w.Security.RequestIdentifierPath != nil || w.Security.Secret != nil || w.Security.SignatureHeaderName != nil || w.Security.SignatureAlgorithm != nil || w.Security.SignaturePrefix != nil {

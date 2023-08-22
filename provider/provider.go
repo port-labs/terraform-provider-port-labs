@@ -13,6 +13,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/port/action"
 	"github.com/port-labs/terraform-provider-port-labs/port/blueprint"
 	"github.com/port-labs/terraform-provider-port-labs/port/entity"
+	"github.com/port-labs/terraform-provider-port-labs/port/scorecard"
 	"github.com/port-labs/terraform-provider-port-labs/port/webhook"
 	"github.com/port-labs/terraform-provider-port-labs/version"
 )
@@ -126,6 +127,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		entity.NewEntityResource,
 		action.NewActionResource,
 		webhook.NewWebhookResource,
+		scorecard.NewScorecardResource,
 	}
 }
 

@@ -2,6 +2,8 @@ package scorecard
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -13,7 +15,7 @@ import (
 var _ resource.Resource = &ScorecardResource{}
 var _ resource.ResourceWithImportState = &ScorecardResource{}
 
-func NewWebhookResource() resource.Resource {
+func NewScorecardResource() resource.Resource {
 	return &ScorecardResource{}
 }
 
@@ -43,58 +45,57 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 
 	identifier := state.Identifier.ValueString()
-	w, statusCode, err := r.portClient.ReadWebhook(ctx, identifier)
+	blueprintIdentifier := state.Blueprint.ValueString()
+	s, statusCode, err := r.portClient.ReadScorecard(ctx, blueprintIdentifier, identifier)
 	if err != nil {
 		if statusCode == 404 {
 			resp.State.RemoveResource(ctx)
 			return
 		}
-		resp.Diagnostics.AddError("failed to read webhook", err.Error())
+		resp.Diagnostics.AddError("failed to read scorecard", err.Error())
 		return
 	}
 
-	err = refreshWebhookState(ctx, state, w)
+	err = refreshScorecardState(ctx, state, s, blueprintIdentifier)
 	if err != nil {
-		resp.Diagnostics.AddError("failed writing webhook fields to resource", err.Error())
+		resp.Diagnostics.AddError("failed writing scorecard fields to resource", err.Error())
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var state *WebhookModel
+	var state *ScorecardModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	w, err := webhookResourceToPortBody(ctx, state)
+	s, err := scorecardResourceToPortBody(ctx, state)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to convert webhook resource to body", err.Error())
+		resp.Diagnostics.AddError("failed to convert scorecard resource to body", err.Error())
 		return
 	}
 
-	wp, err := r.portClient.CreateWebhook(ctx, w)
+	sp, err := r.portClient.CreateScorecard(ctx, state.Blueprint.ValueString(), s)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to create webhook", err.Error())
+		resp.Diagnostics.AddError("failed to create scorecard", err.Error())
 		return
 	}
 
-	writeWebhookComputedFieldsToState(state, wp)
+	writeScorecardComputedFieldsToState(state, sp)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func writeWebhookComputedFieldsToState(state *WebhookModel, wp *cli.Webhook) {
-	state.ID = types.StringValue(wp.Identifier)
+func writeScorecardComputedFieldsToState(state *ScorecardModel, wp *cli.Scorecard) {
+	state.ID = types.StringValue(fmt.Sprintf("%s:%s", wp.Blueprint, wp.Identifier))
 	state.Identifier = types.StringValue(wp.Identifier)
 	state.CreatedAt = types.StringValue(wp.CreatedAt.String())
 	state.CreatedBy = types.StringValue(wp.CreatedBy)
 	state.UpdatedAt = types.StringValue(wp.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(wp.UpdatedBy)
-	state.Url = types.StringValue(wp.Url)
-	state.WebhookKey = types.StringValue(wp.WebhookKey)
 }
 
 func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -105,19 +106,19 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	w, err := webhookResourceToPortBody(ctx, state)
+	s, err := scorecardResourceToPortBody(ctx, state)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to convert webhook resource to body", err.Error())
+		resp.Diagnostics.AddError("failed to convert scorecard resource to body", err.Error())
 		return
 	}
 
-	wp, err := r.portClient.UpdateWebhook(ctx, w.Identifier, w)
+	sp, err := r.portClient.UpdateScorecard(ctx, state.Blueprint.ValueString(), state.Identifier.ValueString(), s)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to update the webhook", err.Error())
+		resp.Diagnostics.AddError("failed to update the scorecard", err.Error())
 		return
 	}
 
-	writeWebhookComputedFieldsToState(state, wp)
+	writeScorecardComputedFieldsToState(state, sp)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -129,17 +130,23 @@ func (r *ScorecardResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	err := r.portClient.DeleteWebhook(ctx, state.Identifier.ValueString())
+	err := r.portClient.DeleteScorecard(ctx, state.Blueprint.ValueString(), state.Identifier.ValueString())
 
 	if err != nil {
-		resp.Diagnostics.AddError("failed to delete webhook", err.Error())
+		resp.Diagnostics.AddError("failed to delete scorecard", err.Error())
 		return
 	}
 
 }
 
 func (r *ScorecardResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resp.Diagnostics.Append(resp.State.SetAttribute(
-		ctx, path.Root("identifier"), req.ID,
-	)...)
+	idParts := strings.Split(req.ID, ":")
+
+	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
+		resp.Diagnostics.AddError("invalid import ID", "import ID must be in the format <blueprint_id>:<scorecard_id>")
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("blueprint"), idParts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("identifier"), idParts[1])...)
 }

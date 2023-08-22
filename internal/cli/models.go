@@ -196,6 +196,32 @@ type (
 		Many       *bool   `json:"many,omitempty"`
 	}
 
+	Scorecard struct {
+		Meta
+		Identifier string `json:"identifier,omitempty"`
+		Title      string `json:"title,omitempty"`
+		Blueprint  string `json:"blueprint,omitempty"`
+		Rules      []Rule `json:"rules,omitempty"`
+	}
+
+	Rule struct {
+		Identifier string `json:"identifier,omitempty"`
+		Title      string `json:"title,omitempty"`
+		Level      string `json:"level,omitempty"`
+		Query      Query  `json:"query,omitempty"`
+	}
+
+	Query struct {
+		Combinator string      `json:"combinator,omitempty"`
+		Conditions []Condition `json:"conditions,omitempty"`
+	}
+
+	Condition struct {
+		Property string  `json:"property,omitempty"`
+		Operator string  `json:"operator,omitempty"`
+		Value    *string `json:"value,omitempty"`
+	}
+
 	Webhook struct {
 		Meta
 		Identifier  string     `json:"identifier,omitempty"`
@@ -240,6 +266,7 @@ type PortBody struct {
 	Blueprint   Blueprint `json:"blueprint"`
 	Action      Action    `json:"action"`
 	Integration Webhook   `json:"integration"`
+	Scorecard   Scorecard `json:"Scorecard"`
 }
 
 type PortProviderModel struct {

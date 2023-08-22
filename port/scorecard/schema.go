@@ -118,7 +118,7 @@ func ScorecardSchema() map[string]schema.Attribute {
 
 func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Webhook resource",
+		MarkdownDescription: "scorecard resource",
 		Attributes:          ScorecardSchema(),
 	}
 }

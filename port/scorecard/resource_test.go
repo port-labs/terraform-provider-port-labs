@@ -242,7 +242,6 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 }
 
 func TestAccPortScorecardImport(t *testing.T) {
-
 	blueprintIdentifier := utils.GenID()
 	scorecardIdentifier := utils.GenID()
 	var testAccActionConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`

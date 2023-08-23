@@ -9,7 +9,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 )
 
-func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string) error {
+func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string) {
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintIdentifier, s.Identifier))
 	state.Identifier = types.StringValue(s.Identifier)
 	state.Blueprint = types.StringValue(blueprintIdentifier)
@@ -47,5 +47,4 @@ func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Sc
 
 	state.Rules = stateRules
 
-	return nil
 }

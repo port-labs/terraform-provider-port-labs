@@ -56,11 +56,8 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	err = refreshScorecardState(ctx, state, s, blueprintIdentifier)
-	if err != nil {
-		resp.Diagnostics.AddError("failed writing scorecard fields to resource", err.Error())
-		return
-	}
+	refreshScorecardState(ctx, state, s, blueprintIdentifier)
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 

@@ -56,7 +56,7 @@ func (r *ActionResource) Read(ctx context.Context, req resource.ReadRequest, res
 	}
 
 	blueprintIdentifier := state.Blueprint.ValueString()
-	a, statusCode, err := r.portClient.ReadAction(ctx, state.Blueprint.ValueString(), state.Identifier.ValueString())
+	a, statusCode, err := r.portClient.ReadAction(ctx, blueprintIdentifier, state.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.State.RemoveResource(ctx)

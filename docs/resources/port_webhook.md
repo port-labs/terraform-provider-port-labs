@@ -32,6 +32,8 @@ Webhook resource
 - `id` (String) The ID of this resource.
 - `updated_at` (String) The last update date of the webhook
 - `updated_by` (String) The last updater of the webhook
+- `url` (String) The url of the webhook
+- `webhook_key` (String) The webhook key of the webhook
 
 <a id="nestedatt--mappings"></a>
 ### Nested Schema for `mappings`

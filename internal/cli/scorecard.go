@@ -79,12 +79,13 @@ func (c *PortClient) DeleteScorecard(ctx context.Context, blueprintID string, sc
 	if err != nil {
 		return err
 	}
-	responseBody := make(map[string]interface{})
-	err = json.Unmarshal(resp.Body(), &responseBody)
+	var pb PortBodyDelete
+	err = json.Unmarshal(resp.Body(), &pb)
 	if err != nil {
 		return err
 	}
-	if !(responseBody["ok"].(bool)) {
+
+	if !(pb.Ok) {
 		return fmt.Errorf("failed to delete scorecard. got:\n%s", string(resp.Body()))
 	}
 	return nil

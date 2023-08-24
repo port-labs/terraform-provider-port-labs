@@ -275,3 +275,7 @@ type PortProviderModel struct {
 	Token    types.String `tfsdk:"token"`
 	BaseUrl  types.String `tfsdk:"base_url"`
 }
+
+type PortBodyDelete struct {
+	Ok bool `json:"ok"`
+}

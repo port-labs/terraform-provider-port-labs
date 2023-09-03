@@ -11,7 +11,7 @@ resource "port_scorecard" "production_readiness" {
       conditions = [{
         property = "replicaCount"
         operator = ">="
-        "value"  = "4"
+        value    = "4"
       }]
     }
   }]

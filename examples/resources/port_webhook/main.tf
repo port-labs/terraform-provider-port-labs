@@ -1,7 +1,7 @@
 resource "port_webhook" "github" {
   identifier = "github"
   title      = "Github"
-  icon       = "Terraform"
+  icon       = "Github"
   enabled    = true
   mappings = [
     {

@@ -264,6 +264,7 @@ type (
 		Name        string     `json:"name,omitempty"`
 		Description string     `json:"description,omitempty"`
 		Users       []string   `json:"users,omitempty"`
+		Provider    string     `json:"provider,omitempty"`
 	}
 )
 

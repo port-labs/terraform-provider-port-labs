@@ -7,10 +7,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 func TeamSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
+		"id": schema.StringAttribute{
+			Computed: true,
+		},
 		"name": schema.StringAttribute{
 			MarkdownDescription: "The name of the team",
 			Required:            true,
@@ -22,8 +26,9 @@ func TeamSchema() map[string]schema.Attribute {
 		"users": schema.ListAttribute{
 			MarkdownDescription: "The users of the team",
 			Optional:            true,
+			ElementType:         types.StringType,
 		},
-		"provider": schema.StringAttribute{
+		"provider_name": schema.StringAttribute{
 			MarkdownDescription: "The provider of the team",
 			Computed:            true,
 			PlanModifiers: []planmodifier.String{

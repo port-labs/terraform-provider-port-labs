@@ -49,7 +49,7 @@ func (r *TeamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 			resp.State.RemoveResource(ctx)
 			return
 		}
-		resp.Diagnostics.AddError("failed to read webhook", err.Error())
+		resp.Diagnostics.AddError("failed to read team", err.Error())
 		return
 	}
 
@@ -90,7 +90,7 @@ func writeTeamComputedFieldsToState(state *TeamModel, tp *cli.Team) {
 	state.ID = types.StringValue(tp.Name)
 	state.CreatedAt = types.StringValue(tp.CreatedAt.String())
 	state.UpdatedAt = types.StringValue(tp.UpdatedAt.String())
-	state.Provider = types.StringValue(tp.Provider.String())
+	state.ProviderName = types.StringValue(tp.Provider)
 }
 
 func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {

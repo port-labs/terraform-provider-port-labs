@@ -1,0 +1,88 @@
+package cli
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+)
+
+func (c *PortClient) ReadTeam(ctx context.Context, teamName string) (*Team, int, error) {
+	pb := &PortBody{}
+	url := "v1/teams/{name}"
+	resp, err := c.Client.R().
+		SetContext(ctx).
+		SetHeader("Accept", "application/json").
+		SetResult(pb).
+		SetPathParam("name", teamName).
+		Get(url)
+	if err != nil {
+		return nil, resp.StatusCode(), err
+	}
+	if !pb.OK {
+		return nil, resp.StatusCode(), fmt.Errorf("failed to read team, got: %s", resp.Body())
+	}
+	return &pb.Team, resp.StatusCode(), nil
+}
+
+func (c *PortClient) CreateTeam(ctx context.Context, team *Team) (*Team, error) {
+	url := "v1/teams"
+	resp, err := c.Client.R().
+		SetBody(team).
+		SetContext(ctx).
+		Post(url)
+	if err != nil {
+		return nil, err
+	}
+	var pb PortBody
+	err = json.Unmarshal(resp.Body(), &pb)
+	if err != nil {
+		return nil, err
+	}
+	if !pb.OK {
+		return nil, fmt.Errorf("failed to create team, got: %s", resp.Body())
+	}
+	return &pb.Team, nil
+}
+
+func (c *PortClient) UpdateTeam(ctx context.Context, teamName string, team *Team) (*Team, error) {
+	url := "v1/teams/{name}"
+	resp, err := c.Client.R().
+		SetBody(team).
+		SetContext(ctx).
+		SetPathParam("name", teamName).
+		Patch(url)
+	if err != nil {
+		return nil, err
+	}
+	var pb PortBody
+	err = json.Unmarshal(resp.Body(), &pb)
+	if err != nil {
+		return nil, err
+	}
+	if !pb.OK {
+		return nil, fmt.Errorf("failed to update team, got: %s", resp.Body())
+	}
+	return &pb.Team, nil
+}
+
+func (c *PortClient) DeleteTeam(ctx context.Context, teamName string) error {
+	url := "v1/teams/{name}"
+	resp, err := c.Client.R().
+		SetContext(ctx).
+		SetHeader("Accept", "application/json").
+		SetPathParam("name", teamName).
+		Delete(url)
+	if err != nil {
+		return err
+	}
+	var pb PortBodyDelete
+	err = json.Unmarshal(resp.Body(), &pb)
+	if err != nil {
+		return err
+	}
+
+	if !(pb.Ok) {
+		return fmt.Errorf("failed to delete team. got:\n%s", string(resp.Body()))
+	}
+	return nil
+}

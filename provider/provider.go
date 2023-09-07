@@ -128,6 +128,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		action.NewActionResource,
 		webhook.NewWebhookResource,
 		scorecard.NewScorecardResource,
+		team.NewTeamResource,
 	}
 }
 

@@ -258,6 +258,13 @@ type (
 		ItemsToParse *string         `json:"itemsToParse,omitempty"`
 		Entity       *EntityProperty `json:"entity,omitempty"`
 	}
+	Team struct {
+		CreatedAt   *time.Time `json:"createdAt,omitempty"`
+		UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
+		Name        string     `json:"name,omitempty"`
+		Description string     `json:"description,omitempty"`
+		Users       []string   `json:"users,omitempty"`
+	}
 )
 
 type PortBody struct {
@@ -267,6 +274,7 @@ type PortBody struct {
 	Action      Action    `json:"action"`
 	Integration Webhook   `json:"integration"`
 	Scorecard   Scorecard `json:"Scorecard"`
+	Team        Team      `json:"team"`
 }
 
 type PortProviderModel struct {

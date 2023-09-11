@@ -7,16 +7,16 @@ import (
 )
 
 func TeamResourceToPortBody(ctx context.Context, state *TeamModel) (*cli.Team, error) {
-	w := &cli.Team{
+	tp := &cli.Team{
 		Name:        state.Name.ValueString(),
 		Description: state.Description.ValueString(),
 	}
 	if state.Users != nil {
-		w.Users = make([]string, len(state.Users))
+		tp.Users = make([]string, len(state.Users))
 		for i, t := range state.Users {
-			w.Users[i] = t.ValueString()
+			tp.Users[i] = t.ValueString()
 		}
 	}
 
-	return w, nil
+	return tp, nil
 }

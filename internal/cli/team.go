@@ -7,21 +7,39 @@ import (
 )
 
 func (c *PortClient) ReadTeam(ctx context.Context, teamName string) (*Team, int, error) {
-	pb := &PortBody{}
-	url := "v1/teams/{name}"
+	url := "v1/teams/{name}?fields=name&fields=provider&fields=description&fields=createdAt&fields=updatedAt&fields=users.firstName&fields=users.status&fields=users.email"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
-		SetResult(pb).
 		SetPathParam("name", teamName).
 		Get(url)
 	if err != nil {
 		return nil, resp.StatusCode(), err
 	}
-	if !pb.OK {
+
+	var pt PortTeamBody
+	err = json.Unmarshal(resp.Body(), &pt)
+	if err != nil {
+		return nil, resp.StatusCode(), err
+	}
+
+	if !pt.OK {
 		return nil, resp.StatusCode(), fmt.Errorf("failed to read team, got: %s", resp.Body())
 	}
-	return &pb.Team, resp.StatusCode(), nil
+	team := &Team{
+		Name:        pt.Team.Name,
+		Description: pt.Team.Description,
+		CreatedAt:   pt.Team.CreatedAt,
+		UpdatedAt:   pt.Team.UpdatedAt,
+	}
+
+	team.Users = make([]string, len(pt.Team.Users))
+
+	for i, u := range pt.Team.Users {
+		team.Users[i] = u.Email
+	}
+
+	return team, resp.StatusCode(), nil
 }
 
 func (c *PortClient) CreateTeam(ctx context.Context, team *Team) (*Team, error) {

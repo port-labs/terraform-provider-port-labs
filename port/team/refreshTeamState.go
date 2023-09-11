@@ -9,6 +9,8 @@ import (
 )
 
 func refreshTeamState(ctx context.Context, state *TeamModel, t *cli.Team) error {
+	state.CreatedAt = types.StringValue(t.CreatedAt.String())
+	state.UpdatedAt = types.StringValue(t.UpdatedAt.String())
 	state.ID = types.StringValue(t.Name)
 	state.Name = types.StringValue(t.Name)
 	state.Description = flex.GoStringToFramework(&t.Description)

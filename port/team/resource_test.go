@@ -10,7 +10,7 @@ import (
 func TestAccPortTeam(t *testing.T) {
 	var testAccTeamConfigCreate = `
 	resource "port_team" "team" {
-		name = "Test"
+		name = "Tf-Test"
 		description = "Test description"
 		users = []
 	}`
@@ -22,7 +22,7 @@ func TestAccPortTeam(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccTeamConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_team.team", "name", "Test"),
+					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
 					resource.TestCheckResourceAttr("port_team.team", "description", "Test description"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "0"),
 				),
@@ -34,7 +34,7 @@ func TestAccPortTeam(t *testing.T) {
 func TestAccPortTeamUpdate(t *testing.T) {
 	var testAccTeamConfigCreate = `
 	resource "port_team" "team" {
-		name = "Test"
+		name = "Tf-Test"
 		description = "Test description"
 		users = []
 	}`
@@ -53,7 +53,7 @@ func TestAccPortTeamUpdate(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccTeamConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_team.team", "name", "Test"),
+					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
 					resource.TestCheckResourceAttr("port_team.team", "description", "Test description"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "0"),
 				),
@@ -61,7 +61,7 @@ func TestAccPortTeamUpdate(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccTeamConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_team.team", "name", "Test"),
+					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
 					resource.TestCheckResourceAttr("port_team.team", "description", "Test description2"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "1"),
 					resource.TestCheckResourceAttr("port_team.team", "users.0", "devops-port@port-test.io"),
@@ -74,7 +74,7 @@ func TestAccPortTeamUpdate(t *testing.T) {
 func TestAccPortTeamImport(t *testing.T) {
 	var testAccTeamConfigCreate = `
 	resource "port_team" "team" {
-		name = "Test"
+		name = "Tf-Test"
 		description = "Test description"
 		users = ["devops-port@port-test.io"]
 	}`
@@ -86,7 +86,7 @@ func TestAccPortTeamImport(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccTeamConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_team.team", "name", "Test"),
+					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
 					resource.TestCheckResourceAttr("port_team.team", "description", "Test description"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "1"),
 					resource.TestCheckResourceAttr("port_team.team", "users.0", "devops-port@port-test.io"),

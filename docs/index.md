@@ -24,4 +24,4 @@ Interact with Port-labs
 
 ### Optional
 
-- `base_url` (String)
+- `base_url` (String) Base URL for Port-labs (environment: `PORT_BASE_URL`)

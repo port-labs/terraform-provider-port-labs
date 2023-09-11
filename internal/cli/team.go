@@ -48,6 +48,7 @@ func (c *PortClient) CreateTeam(ctx context.Context, team *Team) (*Team, error) 
 		SetBody(team).
 		SetContext(ctx).
 		Post(url)
+
 	if err != nil {
 		return nil, err
 	}
@@ -69,6 +70,7 @@ func (c *PortClient) UpdateTeam(ctx context.Context, teamName string, team *Team
 		SetContext(ctx).
 		SetPathParam("name", teamName).
 		Patch(url)
+
 	if err != nil {
 		return nil, err
 	}
@@ -90,6 +92,7 @@ func (c *PortClient) DeleteTeam(ctx context.Context, teamName string) error {
 		SetHeader("Accept", "application/json").
 		SetPathParam("name", teamName).
 		Delete(url)
+
 	if err != nil {
 		return err
 	}

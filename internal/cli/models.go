@@ -258,6 +258,15 @@ type (
 		ItemsToParse *string         `json:"itemsToParse,omitempty"`
 		Entity       *EntityProperty `json:"entity,omitempty"`
 	}
+
+	Team struct {
+		CreatedAt   *time.Time `json:"createdAt,omitempty"`
+		UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
+		Name        string     `json:"name,omitempty"`
+		Description string     `json:"description,omitempty"`
+		Users       []string   `json:"users,omitempty"`
+		Provider    string     `json:"provider,omitempty"`
+	}
 )
 
 type PortBody struct {
@@ -267,6 +276,25 @@ type PortBody struct {
 	Action      Action    `json:"action"`
 	Integration Webhook   `json:"integration"`
 	Scorecard   Scorecard `json:"Scorecard"`
+	Team        Team      `json:"team"`
+}
+
+type TeamUserBody struct {
+	Email string `json:"email"`
+}
+
+type TeamPortBody struct {
+	CreatedAt   *time.Time     `json:"createdAt,omitempty"`
+	UpdatedAt   *time.Time     `json:"updatedAt,omitempty"`
+	Name        string         `json:"name,omitempty"`
+	Description string         `json:"description,omitempty"`
+	Users       []TeamUserBody `json:"users,omitempty"`
+	Provider    string         `json:"provider,omitempty"`
+}
+
+type PortTeamBody struct {
+	OK   bool         `json:"ok"`
+	Team TeamPortBody `json:"team"`
 }
 
 type PortProviderModel struct {

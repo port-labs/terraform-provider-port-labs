@@ -41,7 +41,7 @@ func TestAccPortTeamUpdate(t *testing.T) {
 
 	var testAccTeamConfigUpdate = `
 	resource "port_team" "team" {
-		name = "Test"
+		name = "Tf-Test"
 		description = "Test description2"
 		users = ["devops-port@port-test.io"]
 	}`
@@ -96,7 +96,7 @@ func TestAccPortTeamImport(t *testing.T) {
 				ResourceName:            "port_team.team",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateId:           "Test",
+				ImportStateId:           "Tf-Test",
 				ImportStateVerifyIgnore: []string{"provider_name"},
 			},
 		},

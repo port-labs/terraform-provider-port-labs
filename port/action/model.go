@@ -5,8 +5,10 @@ import (
 )
 
 type WebhookMethodModel struct {
-	Url   types.String `tfsdk:"url"`
-	Agent types.Bool   `tfsdk:"agent"`
+	Url          types.String `tfsdk:"url"`
+	Agent        types.Bool   `tfsdk:"agent"`
+	Synchronized types.Bool   `tfsdk:"synchronized"`
+	Method       types.String `tfsdk:"method"`
 }
 
 type Value struct {

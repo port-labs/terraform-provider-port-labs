@@ -174,6 +174,45 @@ func TestAccPortActionWebhookInvocation(t *testing.T) {
 		},
 	})
 }
+func TestAccPortActionWebhookSyncInvocation(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port_blueprint.microservice.id
+		trigger = "DAY-2"
+		webhook_method = {
+			url = "https://example.com"
+			synchronized = true
+			agent = true
+			method = "POST"
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "blueprint", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.url", "https://example.com"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.synchronized", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.method", "POST"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.agent", "true"),
+				),
+			},
+		},
+	})
+}
 
 func TestAccPortActionGitlabInvocation(t *testing.T) {
 	identifier := utils.GenID()

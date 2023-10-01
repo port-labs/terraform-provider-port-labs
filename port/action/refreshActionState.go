@@ -19,8 +19,10 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 
 	if a.InvocationMethod.Type == consts.Webhook {
 		state.WebhookMethod = &WebhookMethodModel{
-			Url:   types.StringValue(*a.InvocationMethod.Url),
-			Agent: flex.GoBoolToFramework(a.InvocationMethod.Agent),
+			Url:          types.StringValue(*a.InvocationMethod.Url),
+			Agent:        flex.GoBoolToFramework(a.InvocationMethod.Agent),
+			Synchronized: flex.GoBoolToFramework(a.InvocationMethod.Synchronized),
+			Method:       flex.GoStringToFramework(a.InvocationMethod.Method),
 		}
 	}
 

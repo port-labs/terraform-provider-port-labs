@@ -183,6 +183,15 @@ func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 			agent := data.WebhookMethod.Agent.ValueBool()
 			webhookInvocation.Agent = &agent
 		}
+		if !data.WebhookMethod.Synchronized.IsNull() {
+			synchronized := data.WebhookMethod.Synchronized.ValueBool()
+			webhookInvocation.Synchronized = &synchronized
+		}
+		if !data.WebhookMethod.Method.IsNull() {
+			method := data.WebhookMethod.Method.ValueString()
+			webhookInvocation.Method = &method
+		}
+
 		return webhookInvocation
 	}
 

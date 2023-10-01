@@ -152,6 +152,17 @@ func ActionSchema() map[string]schema.Attribute {
 					MarkdownDescription: "Use the agent to invoke the action",
 					Optional:            true,
 				},
+				"synchronized": schema.BoolAttribute{
+					MarkdownDescription: "Synchronize the action",
+					Optional:            true,
+				},
+				"method": schema.StringAttribute{
+					MarkdownDescription: "The HTTP method to invoke the action",
+					Optional:            true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("POST", "PUT", "PATCH", "DELETE"),
+					},
+				},
 			},
 		},
 		"github_method": schema.SingleNestedAttribute{

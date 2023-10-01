@@ -126,6 +126,8 @@ type (
 		Type                 string  `json:"type,omitempty"`
 		Url                  *string `json:"url,omitempty"`
 		Agent                *bool   `json:"agent,omitempty"`
+		Synchronized         *bool   `json:"synchronized,omitempty"`
+		Method               *string `json:"method,omitempty"`
 		Org                  *string `json:"org,omitempty"`
 		Repo                 *string `json:"repo,omitempty"`
 		Webhook              *string `json:"webhook,omitempty"`

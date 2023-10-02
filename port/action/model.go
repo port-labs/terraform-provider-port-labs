@@ -64,6 +64,7 @@ type StringPropModel struct {
 	Dataset        *DatasetModel `tfsdk:"dataset"`
 	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
 	EnumJqQuery    types.String  `tfsdk:"enum_jq_query"`
+	Encryption     types.String  `tfsdk:"encryption"`
 }
 
 type NumberPropModel struct {
@@ -117,6 +118,7 @@ type ObjectPropModel struct {
 	DependsOn      types.List    `tfsdk:"depends_on"`
 	Dataset        *DatasetModel `tfsdk:"dataset"`
 	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
+	Encryption     types.String  `tfsdk:"encryption"`
 }
 
 type StringItems struct {

@@ -316,6 +316,13 @@ func StringPropertySchema() schema.Attribute {
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
 			},
 		},
+		"encryption": schema.StringAttribute{
+			MarkdownDescription: "The algorithm to encrypt the property with",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.OneOf("fernet"),
+			},
+		},
 	}
 
 	utils.CopyMaps(stringPropertySchema, MetadataProperties())
@@ -413,6 +420,13 @@ func ObjectPropertySchema() schema.Attribute {
 			MarkdownDescription: "The default jq query of the object property",
 			Validators: []validator.String{
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("default")),
+			},
+		},
+		"encryption": schema.StringAttribute{
+			MarkdownDescription: "The algorithm to encrypt the property with",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.OneOf("fernet"),
 			},
 		},
 	}

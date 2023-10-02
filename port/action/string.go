@@ -94,6 +94,11 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 			property.DependsOn = utils.InterfaceToStringArray(dependsOn)
 		}
 
+		if !prop.Encryption.IsNull() {
+			encryption := prop.Encryption.ValueString()
+			property.Encryption = &encryption
+		}
+
 		if prop.Dataset != nil {
 			property.Dataset = actionDataSetToPortBody(prop.Dataset)
 		}
@@ -109,11 +114,12 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 
 func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *StringPropModel {
 	stringProp := &StringPropModel{
-		MinLength: flex.GoInt64ToFramework(v.MinLength),
-		MaxLength: flex.GoInt64ToFramework(v.MaxLength),
-		Pattern:   flex.GoStringToFramework(v.Pattern),
-		Format:    flex.GoStringToFramework(v.Format),
-		Blueprint: flex.GoStringToFramework(v.Blueprint),
+		MinLength:  flex.GoInt64ToFramework(v.MinLength),
+		MaxLength:  flex.GoInt64ToFramework(v.MaxLength),
+		Pattern:    flex.GoStringToFramework(v.Pattern),
+		Format:     flex.GoStringToFramework(v.Format),
+		Blueprint:  flex.GoStringToFramework(v.Blueprint),
+		Encryption: flex.GoStringToFramework(v.Encryption),
 	}
 
 	if v.Enum != nil {

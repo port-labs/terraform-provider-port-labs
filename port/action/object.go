@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
@@ -55,7 +56,11 @@ func objectPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 					return err
 				}
 				property.DependsOn = utils.InterfaceToStringArray(dependsOn)
+			}
 
+			if !prop.Encryption.IsNull() {
+				encryption := prop.Encryption.ValueString()
+				property.Encryption = &encryption
 			}
 
 			if prop.Dataset != nil {
@@ -73,7 +78,9 @@ func objectPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 }
 
 func addObjectPropertiesToResource(v *cli.ActionProperty) *ObjectPropModel {
-	objectProp := &ObjectPropModel{}
+	objectProp := &ObjectPropModel{
+		Encryption: flex.GoStringToFramework(v.Encryption),
+	}
 
 	return objectProp
 }

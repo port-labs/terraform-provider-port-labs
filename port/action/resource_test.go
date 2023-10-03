@@ -798,7 +798,7 @@ func TestAccPortActionOrderProperties(t *testing.T) {
 	})
 }
 
-func TestPortActionEncryption(t *testing.T) {
+func TestAccPortActionEncryption(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	actionIdentifier := utils.GenID()
 	var testAccActionConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`

@@ -797,3 +797,60 @@ func TestAccPortActionOrderProperties(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortActionEncryption(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port_blueprint.microservice.id
+		trigger = "DAY-2"
+		webhook_method = {
+			url = "https://getport.io"
+		}
+		user_properties = {
+			"string_props" = {
+				"encryptedStringProp" = {
+					"title" = "Encrypted string"
+					"required" = true
+					"encryption" = "fernet"
+				}
+			}
+			"object_props" = {
+				"encryptedObjectProp" = {
+					"title" = "Encrypted object"
+					"required" = true
+					"encryption" = "fernet"
+				}
+			}
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.action1", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.action1", "webhook_method.url", "https://getport.io"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.encryptedStringProp.title", "Encrypted string"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.encryptedStringProp.required", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.encryptedStringProp.encryption", "fernet"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.encryptedObjectProp.title", "Encrypted object"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.encryptedObjectProp.required", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.encryptedObjectProp.encryption", "fernet"),
+				),
+			},
+		},
+	})
+}

@@ -76,6 +76,7 @@ type (
 		EnumColors         map[string]string   `json:"enumColors,omitempty"`
 		DependsOn          []string            `json:"dependsOn,omitempty"`
 		Dataset            *Dataset            `json:"dataset,omitempty"`
+		Encryption         *string             `json:"encryption,omitempty"`
 	}
 
 	SpecAuthentication struct {

@@ -1,8 +1,6 @@
 package flex
 
 import (
-	"context"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -16,7 +14,7 @@ func GoStringToFramework(v *string) types.String {
 	return types.StringValue(*v)
 }
 
-func GoArrayStringToTerraformList(ctx context.Context, array []string) types.List {
+func GoArrayStringToTerraformList(array []string) types.List {
 	if array == nil {
 		return types.ListNull(types.StringType)
 	}
@@ -26,4 +24,12 @@ func GoArrayStringToTerraformList(ctx context.Context, array []string) types.Lis
 	}
 	list, _ := types.ListValue(types.StringType, attrs)
 	return list
+}
+
+func TerraformStringListToGoArray(list []types.String) []string {
+	arr := make([]string, len(list))
+	for i, t := range list {
+		arr[i] = t.ValueString()
+	}
+	return arr
 }

@@ -191,6 +191,25 @@ type (
 		ApprovalNotification *ApprovalNotification `json:"approvalNotification,omitempty"`
 	}
 
+	ActionExecutePermissions struct {
+		Users       []string `json:"users"`
+		Roles       []string `json:"roles"`
+		Teams       []string `json:"teams"`
+		OwnedByTeam bool     `json:"ownedByTeam"`
+	}
+
+	ActionApprovePermissions struct {
+		Users []string `json:"users"`
+		Roles []string `json:"roles"`
+		Teams []string `json:"teams"`
+	}
+
+	ActionPermissions struct {
+		Action  string                   `json:"action"`
+		Execute ActionExecutePermissions `json:"execute"`
+		Approve ActionApprovePermissions `json:"approve"`
+	}
+
 	Relation struct {
 		Identifier *string `json:"identifier,omitempty"`
 		Title      *string `json:"title,omitempty"`

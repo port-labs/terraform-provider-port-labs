@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
@@ -84,10 +85,7 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 	}
 
 	if state.Teams != nil {
-		e.Team = make([]string, len(state.Teams))
-		for i, t := range state.Teams {
-			e.Team[i] = t.ValueString()
-		}
+		e.Team = flex.TerraformStringListToGoArray(state.Teams)
 	}
 
 	properties := make(map[string]interface{})

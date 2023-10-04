@@ -193,7 +193,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 		}
 		state.UserProperties = properties
 		if len(a.UserInputs.Order) > 0 {
-			state.OrderProperties = flex.GoArrayStringToTerraformList(ctx, a.UserInputs.Order)
+			state.OrderProperties = flex.GoArrayStringToTerraformList(a.UserInputs.Order)
 		}
 	}
 	return nil
@@ -336,15 +336,15 @@ func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interfa
 		case "DependsOn":
 			switch p := prop.(type) {
 			case *StringPropModel:
-				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+				p.DependsOn = flex.GoArrayStringToTerraformList(v.DependsOn)
 			case *NumberPropModel:
-				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+				p.DependsOn = flex.GoArrayStringToTerraformList(v.DependsOn)
 			case *BooleanPropModel:
-				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+				p.DependsOn = flex.GoArrayStringToTerraformList(v.DependsOn)
 			case *ArrayPropModel:
-				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+				p.DependsOn = flex.GoArrayStringToTerraformList(v.DependsOn)
 			case *ObjectPropModel:
-				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
+				p.DependsOn = flex.GoArrayStringToTerraformList(v.DependsOn)
 			}
 
 		case "Dataset":

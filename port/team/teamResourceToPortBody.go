@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 )
 
 func TeamResourceToPortBody(ctx context.Context, state *TeamModel) (*cli.Team, error) {
@@ -12,10 +13,7 @@ func TeamResourceToPortBody(ctx context.Context, state *TeamModel) (*cli.Team, e
 		Description: state.Description.ValueString(),
 	}
 	if state.Users != nil {
-		tp.Users = make([]string, len(state.Users))
-		for i, t := range state.Users {
-			tp.Users[i] = t.ValueString()
-		}
+		tp.Users = flex.TerraformStringListToGoArray(state.Users)
 	}
 
 	return tp, nil

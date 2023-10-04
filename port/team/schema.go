@@ -8,16 +8,23 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/port-labs/terraform-provider-port-labs/internal/modifiers"
 )
 
 func TeamSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"name": schema.StringAttribute{
 			MarkdownDescription: "The name of the team",
 			Required:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"description": schema.StringAttribute{
 			MarkdownDescription: "The description of the team",
@@ -27,6 +34,9 @@ func TeamSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The users of the team",
 			Optional:            true,
 			ElementType:         types.StringType,
+			PlanModifiers: []planmodifier.List{
+				modifiers.JsonIgnoreDiffPlanModifierList(),
+			},
 		},
 		"provider_name": schema.StringAttribute{
 			MarkdownDescription: "The provider of the team",
@@ -45,6 +55,9 @@ func TeamSchema() map[string]schema.Attribute {
 		"updated_at": schema.StringAttribute{
 			MarkdownDescription: "The last update date of the team",
 			Computed:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 	}
 }

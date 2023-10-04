@@ -31,6 +31,7 @@ func (c *PortClient) ReadTeam(ctx context.Context, teamName string) (*Team, int,
 		Description: pt.Team.Description,
 		CreatedAt:   pt.Team.CreatedAt,
 		UpdatedAt:   pt.Team.UpdatedAt,
+		Provider:    pt.Team.Provider,
 	}
 
 	team.Users = make([]string, len(pt.Team.Users))

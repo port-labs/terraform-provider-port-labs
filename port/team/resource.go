@@ -54,7 +54,6 @@ func (r *TeamResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	}
 
 	err = refreshTeamState(ctx, state, t)
-	writeTeamComputedFieldsToState(state, t)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing team fields to resource", err.Error())
 		return

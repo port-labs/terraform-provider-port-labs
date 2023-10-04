@@ -23,7 +23,7 @@ func TeamSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The description of the team",
 			Optional:            true,
 		},
-		"users": schema.ListAttribute{
+		"users": schema.SetAttribute{
 			MarkdownDescription: "The users of the team",
 			Optional:            true,
 			ElementType:         types.StringType,

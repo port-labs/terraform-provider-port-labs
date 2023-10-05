@@ -128,6 +128,58 @@ func ActionSchema() map[string]schema.Attribute {
 			Optional:            true,
 			AttributeTypes:      map[string]attr.Type{},
 		},
+		"permissions": schema.SingleNestedAttribute{
+			MarkdownDescription: "The permissions for the action",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"execute": schema.SingleNestedAttribute{
+					MarkdownDescription: "The permission to execute the action",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"users": schema.ListAttribute{
+							MarkdownDescription: "The users with execution permission",
+							Optional:            true,
+							ElementType:         types.StringType,
+						},
+						"roles": schema.ListAttribute{
+							MarkdownDescription: "The roles with execution permission",
+							Optional:            true,
+							ElementType:         types.StringType,
+						},
+						"teams": schema.ListAttribute{
+							MarkdownDescription: "The teams with execution permission",
+							Optional:            true,
+							ElementType:         types.StringType,
+						},
+						"owned_by_team": schema.BoolAttribute{
+							MarkdownDescription: "Give execution permission to the teams who own the entity",
+							Optional:            true,
+						},
+					},
+				},
+				"approve": schema.SingleNestedAttribute{
+					MarkdownDescription: "The permission to approve the action's runs",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"users": schema.ListAttribute{
+							MarkdownDescription: "The users with approval permission",
+							Optional:            true,
+							ElementType:         types.StringType,
+						},
+						"roles": schema.ListAttribute{
+							MarkdownDescription: "The roles with approval permission",
+							Optional:            true,
+							ElementType:         types.StringType,
+						},
+						"teams": schema.ListAttribute{
+							MarkdownDescription: "The teams with approval permission",
+							Optional:            true,
+							ElementType:         types.StringType,
+						},
+					},
+				},
+			},
+		},
 		"trigger": schema.StringAttribute{
 			MarkdownDescription: "The trigger type of the action",
 			Required:            true,

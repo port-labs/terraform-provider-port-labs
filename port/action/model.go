@@ -156,6 +156,24 @@ type ApprovalWebhookNotificationModel struct {
 	Format types.String `tfsdk:"format"`
 }
 
+type ExecuteModel struct {
+	Users       []types.String `tfsdk:"users"`
+	Roles       []types.String `tfsdk:"roles"`
+	Teams       []types.String `tfsdk:"teams"`
+	OwnedByTeam types.Bool     `tfsdk:"ownedByTeam"`
+}
+
+type ApproveModel struct {
+	Users []types.String `tfsdk:"users"`
+	Roles []types.String `tfsdk:"roles"`
+	Teams []types.String `tfsdk:"teams"`
+}
+
+type PermissionsModel struct {
+	Execute *ExecuteModel `tfsdk:"execute"`
+	Approve *ApproveModel `tfsdk:"approve"`
+}
+
 type ActionModel struct {
 	ID                          types.String                      `tfsdk:"id"`
 	Identifier                  types.String                      `tfsdk:"identifier"`
@@ -173,5 +191,6 @@ type ActionModel struct {
 	UserProperties              *UserPropertiesModel              `tfsdk:"user_properties"`
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
+	Permissions                 *PermissionsModel                 `tfsdk:"permissions"`
 	OrderProperties             types.List                        `tfsdk:"order_properties"`
 }

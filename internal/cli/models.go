@@ -189,13 +189,14 @@ type (
 		RequiredApproval     *bool                 `json:"requiredApproval,omitempty"`
 		InvocationMethod     *InvocationMethod     `json:"invocationMethod,omitempty"`
 		ApprovalNotification *ApprovalNotification `json:"approvalNotification,omitempty"`
+		Permissions          *ActionPermissions    `json:"actionPermissions,omitempty"`
 	}
 
 	ActionExecutePermissions struct {
 		Users       []string `json:"users"`
 		Roles       []string `json:"roles"`
 		Teams       []string `json:"teams"`
-		OwnedByTeam bool     `json:"ownedByTeam"`
+		OwnedByTeam *bool    `json:"ownedByTeam"`
 	}
 
 	ActionApprovePermissions struct {

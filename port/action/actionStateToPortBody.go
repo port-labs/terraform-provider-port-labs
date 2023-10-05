@@ -229,3 +229,22 @@ func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 
 	return nil
 }
+func actionPermissionsToPortBody(state *PermissionsModel) *cli.ActionPermissions {
+	if state == nil {
+		return nil
+	}
+
+	return &cli.ActionPermissions{
+		Execute: cli.ActionExecutePermissions{
+			Users:       flex.TerraformStringListToGoArray(state.Execute.Users),
+			Roles:       flex.TerraformStringListToGoArray(state.Execute.Roles),
+			Teams:       flex.TerraformStringListToGoArray(state.Execute.Teams),
+			OwnedByTeam: state.Execute.OwnedByTeam.ValueBoolPointer(),
+		},
+		Approve: cli.ActionApprovePermissions{
+			Users: flex.TerraformStringListToGoArray(state.Approve.Users),
+			Roles: flex.TerraformStringListToGoArray(state.Approve.Roles),
+			Teams: flex.TerraformStringListToGoArray(state.Approve.Teams),
+		},
+	}
+}

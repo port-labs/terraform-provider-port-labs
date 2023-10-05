@@ -5,6 +5,7 @@ import (
 
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
@@ -37,24 +38,13 @@ func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
 
 func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Blueprint) (*cli.Action, error) {
 	action := &cli.Action{
-		Identifier: data.Identifier.ValueString(),
-		Title:      data.Title.ValueString(),
-		Trigger:    data.Trigger.ValueString(),
-	}
-
-	if !data.Icon.IsNull() {
-		icon := data.Icon.ValueString()
-		action.Icon = &icon
-	}
-
-	if !data.Description.IsNull() {
-		description := data.Description.ValueString()
-		action.Description = &description
-	}
-
-	if !data.RequiredApproval.IsNull() {
-		requiredApproval := data.RequiredApproval.ValueBool()
-		action.RequiredApproval = &requiredApproval
+		Identifier:       data.Identifier.ValueString(),
+		Title:            data.Title.ValueString(),
+		Trigger:          data.Trigger.ValueString(),
+		Icon:             data.Icon.ValueStringPointer(),
+		Description:      data.Description.ValueStringPointer(),
+		RequiredApproval: data.RequiredApproval.ValueBoolPointer(),
+		Permissions:      actionPermissionsToPortBody(data.Permissions),
 	}
 
 	if !data.ApprovalEmailNotification.IsNull() {
@@ -140,31 +130,15 @@ func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 	}
 
 	if data.GithubMethod != nil {
-		org := data.GithubMethod.Org.ValueString()
-		repo := data.GithubMethod.Repo.ValueString()
-		workflow := data.GithubMethod.Workflow.ValueString()
-		githubInvocation := &cli.InvocationMethod{
-			Type:     consts.Github,
-			Org:      &org,
-			Repo:     &repo,
-			Workflow: &workflow,
+		return &cli.InvocationMethod{
+			Type:                 consts.Github,
+			Org:                  data.GithubMethod.Org.ValueStringPointer(),
+			Repo:                 data.GithubMethod.Repo.ValueStringPointer(),
+			Workflow:             data.GithubMethod.Workflow.ValueStringPointer(),
+			OmitPayload:          data.GithubMethod.OmitPayload.ValueBoolPointer(),
+			OmitUserInputs:       data.GithubMethod.OmitUserInputs.ValueBoolPointer(),
+			ReportWorkflowStatus: data.GithubMethod.ReportWorkflowStatus.ValueBoolPointer(),
 		}
-
-		if !data.GithubMethod.OmitPayload.IsNull() {
-			omitPayload := data.GithubMethod.OmitPayload.ValueBool()
-			githubInvocation.OmitPayload = &omitPayload
-		}
-
-		if !data.GithubMethod.OmitUserInputs.IsNull() {
-			omitUserInputs := data.GithubMethod.OmitUserInputs.ValueBool()
-			githubInvocation.OmitUserInputs = &omitUserInputs
-		}
-
-		if !data.GithubMethod.ReportWorkflowStatus.IsNull() {
-			reportWorkflowStatus := data.GithubMethod.ReportWorkflowStatus.ValueBool()
-			githubInvocation.ReportWorkflowStatus = &reportWorkflowStatus
-		}
-		return githubInvocation
 	}
 
 	if !data.KafkaMethod.IsNull() {
@@ -174,57 +148,25 @@ func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 	}
 
 	if data.WebhookMethod != nil {
-		url := data.WebhookMethod.Url.ValueString()
-		webhookInvocation := &cli.InvocationMethod{
-			Type: consts.Webhook,
-			Url:  &url,
+		return &cli.InvocationMethod{
+			Type:         consts.Webhook,
+			Url:          data.WebhookMethod.Url.ValueStringPointer(),
+			Agent:        data.WebhookMethod.Agent.ValueBoolPointer(),
+			Synchronized: data.WebhookMethod.Synchronized.ValueBoolPointer(),
+			Method:       data.WebhookMethod.Method.ValueStringPointer(),
 		}
-		if !data.WebhookMethod.Agent.IsNull() {
-			agent := data.WebhookMethod.Agent.ValueBool()
-			webhookInvocation.Agent = &agent
-		}
-		if !data.WebhookMethod.Synchronized.IsNull() {
-			synchronized := data.WebhookMethod.Synchronized.ValueBool()
-			webhookInvocation.Synchronized = &synchronized
-		}
-		if !data.WebhookMethod.Method.IsNull() {
-			method := data.WebhookMethod.Method.ValueString()
-			webhookInvocation.Method = &method
-		}
-
-		return webhookInvocation
 	}
 
 	if data.GitlabMethod != nil {
-		projectName := data.GitlabMethod.ProjectName.ValueString()
-		groupName := data.GitlabMethod.GroupName.ValueString()
-		gitlabInvocation := &cli.InvocationMethod{
-			Type:        consts.Gitlab,
-			ProjectName: &projectName,
-			GroupName:   &groupName,
+		return &cli.InvocationMethod{
+			Type:           consts.Gitlab,
+			ProjectName:    data.GitlabMethod.ProjectName.ValueStringPointer(),
+			GroupName:      data.GitlabMethod.GroupName.ValueStringPointer(),
+			OmitPayload:    data.GitlabMethod.OmitPayload.ValueBoolPointer(),
+			OmitUserInputs: data.GitlabMethod.OmitUserInputs.ValueBoolPointer(),
+			DefaultRef:     data.GitlabMethod.DefaultRef.ValueStringPointer(),
+			Agent:          data.GitlabMethod.Agent.ValueBoolPointer(),
 		}
-
-		if !data.GitlabMethod.OmitPayload.IsNull() {
-			omitPayload := data.GitlabMethod.OmitPayload.ValueBool()
-			gitlabInvocation.OmitPayload = &omitPayload
-		}
-
-		if !data.GitlabMethod.OmitUserInputs.IsNull() {
-			omitUserInputs := data.GitlabMethod.OmitUserInputs.ValueBool()
-			gitlabInvocation.OmitUserInputs = &omitUserInputs
-		}
-
-		if !data.GitlabMethod.DefaultRef.IsNull() {
-			defaultRef := data.GitlabMethod.DefaultRef.ValueString()
-			gitlabInvocation.DefaultRef = &defaultRef
-		}
-
-		if !data.GitlabMethod.Agent.IsNull() {
-			agent := data.GitlabMethod.Agent.ValueBool()
-			gitlabInvocation.Agent = &agent
-		}
-
-		return gitlabInvocation
 	}
 
 	return nil

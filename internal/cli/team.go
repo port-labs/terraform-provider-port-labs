@@ -70,7 +70,7 @@ func (c *PortClient) UpdateTeam(ctx context.Context, teamName string, team *Team
 		SetBody(team).
 		SetContext(ctx).
 		SetPathParam("name", teamName).
-		Patch(url)
+		Put(url)
 
 	if err != nil {
 		return nil, err

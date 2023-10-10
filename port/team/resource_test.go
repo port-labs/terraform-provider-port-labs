@@ -102,3 +102,40 @@ func TestAccPortTeamImport(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortTeamEmptyDescription(t *testing.T) {
+	var testAccTeamConfigCreate = `
+	resource "port_team" "team" {
+		name = "Tf-Test"
+		description = "abc"
+		users = []
+	}`
+
+	var testAccTeamConfigUpdate = `
+	resource "port_team" "team" {
+		name = "Tf-Test"
+		users = []
+	}`
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccTeamConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
+					resource.TestCheckResourceAttr("port_team.team", "description", "abc"),
+					resource.TestCheckResourceAttr("port_team.team", "users.#", "0"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccTeamConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
+					resource.TestCheckNoResourceAttr("port_team.team", "description"),
+					resource.TestCheckResourceAttr("port_team.team", "users.#", "0"),
+				),
+			},
+		},
+	})
+}

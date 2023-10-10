@@ -13,7 +13,7 @@ func refreshTeamState(ctx context.Context, state *TeamModel, t *cli.Team) error 
 	state.UpdatedAt = types.StringValue(t.UpdatedAt.String())
 	state.ID = types.StringValue(t.Name)
 	state.Name = types.StringValue(t.Name)
-	state.Description = flex.GoStringToFramework(&t.Description)
+	state.Description = flex.GoStringToFramework(t.Description)
 	state.ProviderName = flex.GoStringToFramework(&t.Provider)
 
 	if len(t.Users) != 0 {

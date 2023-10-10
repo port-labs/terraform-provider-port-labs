@@ -266,7 +266,7 @@ type (
 		CreatedAt   *time.Time `json:"createdAt,omitempty"`
 		UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
 		Name        string     `json:"name,omitempty"`
-		Description string     `json:"description,omitempty"`
+		Description *string    `json:"description,omitempty"`
 		Users       []string   `json:"users,omitempty"`
 		Provider    string     `json:"provider,omitempty"`
 	}
@@ -290,7 +290,7 @@ type TeamPortBody struct {
 	CreatedAt   *time.Time     `json:"createdAt,omitempty"`
 	UpdatedAt   *time.Time     `json:"updatedAt,omitempty"`
 	Name        string         `json:"name,omitempty"`
-	Description string         `json:"description,omitempty"`
+	Description *string        `json:"description,omitempty"`
 	Users       []TeamUserBody `json:"users,omitempty"`
 	Provider    string         `json:"provider,omitempty"`
 }

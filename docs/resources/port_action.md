@@ -310,6 +310,7 @@ Optional:
 - `default_jq_query` (String) The default jq query of the object property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
+- `encryption` (String) The algorithm to encrypt the property with
 - `icon` (String) The icon of the property
 - `required` (Boolean) Whether the property is required
 - `title` (String) The title of the property
@@ -357,6 +358,7 @@ Optional:
 - `default_jq_query` (String) The default jq query of the string property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
+- `encryption` (String) The algorithm to encrypt the property with
 - `enum` (List of String) The enum of the string property
 - `enum_jq_query` (String) The enum jq query of the string property
 - `format` (String) The format of the string property
@@ -410,5 +412,5 @@ Required:
 Optional:
 
 - `agent` (Boolean) Use the agent to invoke the action
-
-
+- `method` (String) The HTTP method to invoke the action
+- `synchronized` (Boolean) Synchronize the action

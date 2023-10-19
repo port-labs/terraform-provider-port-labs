@@ -99,7 +99,10 @@ func writeWebhookComputedFieldsToState(state *WebhookModel, wp *cli.Webhook) {
 
 func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var state *WebhookModel
+	var previousState *WebhookModel
+
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &previousState)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -111,7 +114,14 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	wp, err := r.portClient.UpdateWebhook(ctx, w.Identifier, w)
+	var wp *cli.Webhook
+
+	if previousState.ID.IsNull() {
+		wp, err = r.portClient.CreateWebhook(ctx, w)
+	} else {
+		wp, err = r.portClient.UpdateWebhook(ctx, previousState.Identifier.ValueString(), w)
+	}
+
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update the webhook", err.Error())
 		return

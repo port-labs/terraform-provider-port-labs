@@ -678,3 +678,48 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortUpdateBlueprintIdentifier(t *testing.T) {
+	identifier := utils.GenID()
+	updatedIdentifier := utils.GenID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+	}
+`, identifier)
+
+	var testAccActionConfigUpdate = fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+	}
+`, updatedIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "icon", "Terraform"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", updatedIdentifier),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "icon", "Terraform"),
+				),
+			},
+		},
+	})
+}

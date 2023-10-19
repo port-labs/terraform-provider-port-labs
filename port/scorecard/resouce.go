@@ -97,7 +97,10 @@ func writeScorecardComputedFieldsToState(state *ScorecardModel, wp *cli.Scorecar
 
 func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var state *ScorecardModel
+	var previousState *ScorecardModel
+
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &previousState)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -109,7 +112,13 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	sp, err := r.portClient.UpdateScorecard(ctx, state.Blueprint.ValueString(), state.Identifier.ValueString(), s)
+	sp := &cli.Scorecard{}
+	if previousState.ID.IsNull() {
+		sp, err = r.portClient.CreateScorecard(ctx, state.Blueprint.ValueString(), s)
+	} else {
+		sp, err = r.portClient.UpdateScorecard(ctx, state.Blueprint.ValueString(), previousState.Identifier.ValueString(), s)
+	}
+
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update the scorecard", err.Error())
 		return

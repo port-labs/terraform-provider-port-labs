@@ -44,6 +44,7 @@ func (r *ActionResource) ImportState(ctx context.Context, req resource.ImportSta
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("blueprint"), idParts[0])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("identifier"), idParts[1])...)
+
 }
 
 func (r *ActionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -126,7 +127,10 @@ func (r *ActionResource) Create(ctx context.Context, req resource.CreateRequest,
 
 func (r *ActionResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var state *ActionModel
+	var previousState *ActionModel
+
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &previousState)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -144,7 +148,12 @@ func (r *ActionResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	a, err := r.portClient.UpdateAction(ctx, bp.Identifier, action.Identifier, action)
+	var a *cli.Action
+	if previousState.ID.IsNull() {
+		a, err = r.portClient.CreateAction(ctx, bp.Identifier, action)
+	} else {
+		a, err = r.portClient.UpdateAction(ctx, bp.Identifier, previousState.Identifier.ValueString(), action)
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create action", err.Error())
 		return

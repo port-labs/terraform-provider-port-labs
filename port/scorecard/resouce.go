@@ -112,7 +112,8 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	sp := &cli.Scorecard{}
+	var sp *cli.Scorecard
+
 	if previousState.ID.IsNull() {
 		sp, err = r.portClient.CreateScorecard(ctx, state.Blueprint.ValueString(), s)
 	} else {

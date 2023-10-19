@@ -115,7 +115,10 @@ func writeEntityComputedFieldsToState(state *EntityModel, e *cli.Entity) {
 
 func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var state *EntityModel
+	var previousState *EntityModel
+
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &previousState)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -138,7 +141,14 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 		runID = state.RunID.ValueString()
 	}
 
-	en, err := r.portClient.CreateEntity(ctx, e, runID)
+	var en *cli.Entity
+
+	if previousState.ID.IsNull() {
+		en, err = r.portClient.CreateEntity(ctx, e, runID)
+	} else {
+		en, err = r.portClient.UpdateEntity(ctx, previousState.ID.ValueString(), previousState.Blueprint.ValueString(), e, runID)
+	}
+
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create entity", err.Error())
 		return

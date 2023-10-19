@@ -47,6 +47,25 @@ func (c *PortClient) CreateEntity(ctx context.Context, e *Entity, runID string) 
 	return &pb.Entity, nil
 }
 
+func (c *PortClient) UpdateEntity(ctx context.Context, id string, blueprint string, e *Entity, runID string) (*Entity, error) {
+	url := "v1/blueprints/{blueprint}/entities/{identifier}"
+	pb := &PortBody{}
+	resp, err := c.Client.R().
+		SetBody(e).
+		SetPathParam(("blueprint"), e.Blueprint).
+		SetPathParam("identifier", id).
+		SetQueryParam("run_id", runID).
+		SetResult(&pb).
+		Put(url)
+	if err != nil {
+		return nil, err
+	}
+	if !pb.OK {
+		return nil, fmt.Errorf("failed to update entity, got: %s", resp.Body())
+	}
+	return &pb.Entity, nil
+}
+
 func (c *PortClient) DeleteEntity(ctx context.Context, id string, blueprint string) error {
 	url := "v1/blueprints/{blueprint}/entities/{identifier}"
 	pb := &PortBody{}

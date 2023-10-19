@@ -327,7 +327,7 @@ func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
 	var testAccActionConfigUpdate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
 	resource "port_scorecard" "test" {
 		identifier = "%s"
-		title      = "Scorecard 2"
+		title      = "Scorecard 1"
 		blueprint  = "%s"
 		rules = [{
 			identifier = "hasTeam"

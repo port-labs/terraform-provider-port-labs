@@ -43,7 +43,7 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	b, statusCode, err := r.portClient.ReadBlueprint(ctx, state.ID.ValueString())
+	b, statusCode, err := r.portClient.ReadBlueprint(ctx, state.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.State.RemoveResource(ctx)

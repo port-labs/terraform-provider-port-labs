@@ -146,7 +146,7 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 	if previousState.Identifier.IsNull() {
 		en, err = r.portClient.CreateEntity(ctx, e, runID)
 	} else {
-		en, err = r.portClient.UpdateEntity(ctx, previousState.ID.ValueString(), previousState.Blueprint.ValueString(), e, runID)
+		en, err = r.portClient.UpdateEntity(ctx, previousState.Identifier.ValueString(), previousState.Blueprint.ValueString(), e, runID)
 	}
 
 	if err != nil {

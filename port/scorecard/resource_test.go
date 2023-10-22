@@ -296,3 +296,93 @@ func TestAccPortScorecardImport(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	scorecardIdentifier := utils.GenID()
+	scorecardIdentifierUpdated := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_scorecard" "test" {
+		identifier = "%s"
+		title      = "Scorecard 1"
+		blueprint  = "%s"
+		rules = [{
+		  identifier = "hasTeam"
+		  title      = "Has Team"
+		  level      = "Gold" 
+		  query = {
+			combinator = "and"
+			conditions = [{
+			  property = "$team"
+			  operator = "isNotEmpty"
+			}]
+		  }
+		}]
+
+		depends_on = [
+		port_blueprint.microservice
+		]		
+	  }`, scorecardIdentifier, blueprintIdentifier)
+
+	var testAccActionConfigUpdate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_scorecard" "test" {
+		identifier = "%s"
+		title      = "Scorecard 1"
+		blueprint  = "%s"
+		rules = [{
+			identifier = "hasTeam"
+			title      = "Has Team"
+			level      = "Gold" 
+			query = {
+			  combinator = "and"
+			  conditions = [{
+				property = "$team"
+				operator = "isNotEmpty"
+			  }]
+			}
+		  }]
+		depends_on = [
+		port_blueprint.microservice
+		]
+	 }`, scorecardIdentifierUpdated, blueprintIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "identifier", scorecardIdentifier),
+					resource.TestCheckResourceAttr("port_scorecard.test", "title", "Scorecard 1"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.identifier", "hasTeam"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.title", "Has Team"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Gold"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.combinator", "and"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.#", "1"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.property", "$team"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.operator", "isNotEmpty"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "identifier", scorecardIdentifierUpdated),
+					resource.TestCheckResourceAttr("port_scorecard.test", "title", "Scorecard 1"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.identifier", "hasTeam"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.title", "Has Team"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Gold"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.combinator", "and"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.#", "1"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.property", "$team"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.operator", "isNotEmpty"),
+				),
+			},
+		},
+	})
+}

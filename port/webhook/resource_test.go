@@ -248,3 +248,49 @@ func TestAccPortWebhookImport(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortWebhookUpdateIdentifier(t *testing.T) {
+	identifier := utils.GenID()
+	webhookIdentifier := utils.GenID()
+	webhookIdentifierUpdated := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_webhook" "create_pr" {
+		identifier = "%s"
+		title      = "Test"
+		icon       = "Terraform"
+		enabled    = true
+	}`, webhookIdentifier)
+
+	var testAccActionConfigUpdate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_webhook" "create_pr" {
+		identifier = "%s"
+		title      = "Test"
+		icon       = "Terraform"
+		enabled    = true
+	}`, webhookIdentifierUpdated)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "identifier", webhookIdentifier),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "title", "Test"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "enabled", "true"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "identifier", webhookIdentifierUpdated),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "title", "Test"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "enabled", "true"),
+				),
+			},
+		},
+	})
+}

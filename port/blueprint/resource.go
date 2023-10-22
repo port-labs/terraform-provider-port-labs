@@ -150,7 +150,10 @@ func writeBlueprintComputedFieldsToState(state *BlueprintModel, bp *cli.Blueprin
 
 func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var state *BlueprintModel
+	var previousState *BlueprintModel
+
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &previousState)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -164,10 +167,10 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 
 	var bp *cli.Blueprint
 
-	if state.Identifier.IsNull() {
+	if previousState.Identifier.IsNull() {
 		bp, err = r.portClient.CreateBlueprint(ctx, b)
 	} else {
-		bp, err = r.portClient.UpdateBlueprint(ctx, b, state.Identifier.ValueString())
+		bp, err = r.portClient.UpdateBlueprint(ctx, b, previousState.ID.ValueString())
 	}
 
 	if err != nil {
@@ -206,6 +209,10 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(
 		ctx, path.Root("identifier"), req.ID,
+	)...)
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(
+		ctx, path.Root("id"), req.ID,
 	)...)
 }
 

@@ -167,7 +167,7 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 
 	var bp *cli.Blueprint
 
-	if previousState.ID.IsNull() {
+	if previousState.Identifier.IsNull() {
 		bp, err = r.portClient.CreateBlueprint(ctx, b)
 	} else {
 		bp, err = r.portClient.UpdateBlueprint(ctx, b, previousState.ID.ValueString())

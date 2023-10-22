@@ -149,7 +149,7 @@ func (r *ActionResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	var a *cli.Action
-	if previousState.ID.IsNull() {
+	if previousState.Identifier.IsNull() {
 		a, err = r.portClient.CreateAction(ctx, bp.Identifier, action)
 	} else {
 		a, err = r.portClient.UpdateAction(ctx, bp.Identifier, previousState.Identifier.ValueString(), action)

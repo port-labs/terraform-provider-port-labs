@@ -116,7 +116,7 @@ func (r *WebhookResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	var wp *cli.Webhook
 
-	if previousState.ID.IsNull() {
+	if previousState.Identifier.IsNull() {
 		wp, err = r.portClient.CreateWebhook(ctx, w)
 	} else {
 		wp, err = r.portClient.UpdateWebhook(ctx, previousState.Identifier.ValueString(), w)

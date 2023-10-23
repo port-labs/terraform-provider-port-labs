@@ -143,15 +143,26 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	var en *cli.Entity
 
-	if previousState.Identifier.IsNull() {
+	isBlueprintChanged := !previousState.Blueprint.IsNull() && previousState.Blueprint.ValueString() != state.Blueprint.ValueString()
+
+	if previousState.Identifier.IsNull() || isBlueprintChanged {
 		en, err = r.portClient.CreateEntity(ctx, e, runID)
 	} else {
 		en, err = r.portClient.UpdateEntity(ctx, previousState.Identifier.ValueString(), previousState.Blueprint.ValueString(), e, runID)
 	}
 
 	if err != nil {
-		resp.Diagnostics.AddError("failed to create entity", err.Error())
+		resp.Diagnostics.AddError("failed to update entity", err.Error())
 		return
+	}
+
+	if isBlueprintChanged {
+		// Delete the old entity
+		err := r.portClient.DeleteEntity(ctx, previousState.Identifier.ValueString(), previousState.Blueprint.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("failed to delete entity", err.Error())
+			return
+		}
 	}
 
 	writeEntityComputedFieldsToState(state, en)

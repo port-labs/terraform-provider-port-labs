@@ -20,9 +20,9 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 	if a.InvocationMethod.Type == consts.Webhook {
 		state.WebhookMethod = &WebhookMethodModel{
 			Url:          types.StringValue(*a.InvocationMethod.Url),
-			Agent:        flex.GoBoolToFramework(a.InvocationMethod.Agent),
-			Synchronized: flex.GoBoolToFramework(a.InvocationMethod.Synchronized),
-			Method:       flex.GoStringToFramework(a.InvocationMethod.Method),
+			Agent:        types.BoolPointerValue(a.InvocationMethod.Agent),
+			Synchronized: types.BoolPointerValue(a.InvocationMethod.Synchronized),
+			Method:       types.StringPointerValue(a.InvocationMethod.Method),
 		}
 	}
 
@@ -30,10 +30,10 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 		state.GithubMethod = &GithubMethodModel{
 			Repo:                 types.StringValue(*a.InvocationMethod.Repo),
 			Org:                  types.StringValue(*a.InvocationMethod.Org),
-			OmitPayload:          flex.GoBoolToFramework(a.InvocationMethod.OmitPayload),
-			OmitUserInputs:       flex.GoBoolToFramework(a.InvocationMethod.OmitUserInputs),
-			Workflow:             flex.GoStringToFramework(a.InvocationMethod.Workflow),
-			ReportWorkflowStatus: flex.GoBoolToFramework(a.InvocationMethod.ReportWorkflowStatus),
+			OmitPayload:          types.BoolPointerValue(a.InvocationMethod.OmitPayload),
+			OmitUserInputs:       types.BoolPointerValue(a.InvocationMethod.OmitUserInputs),
+			Workflow:             types.StringPointerValue(a.InvocationMethod.Workflow),
+			ReportWorkflowStatus: types.BoolPointerValue(a.InvocationMethod.ReportWorkflowStatus),
 		}
 	}
 
@@ -48,10 +48,10 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 		state.GitlabMethod = &GitlabMethodModel{
 			ProjectName:    types.StringValue(*a.InvocationMethod.ProjectName),
 			GroupName:      types.StringValue(*a.InvocationMethod.GroupName),
-			OmitPayload:    flex.GoBoolToFramework(a.InvocationMethod.OmitPayload),
-			OmitUserInputs: flex.GoBoolToFramework(a.InvocationMethod.OmitUserInputs),
+			OmitPayload:    types.BoolPointerValue(a.InvocationMethod.OmitPayload),
+			OmitUserInputs: types.BoolPointerValue(a.InvocationMethod.OmitUserInputs),
 			DefaultRef:     types.StringValue(*a.InvocationMethod.DefaultRef),
-			Agent:          flex.GoBoolToFramework(a.InvocationMethod.Agent),
+			Agent:          types.BoolPointerValue(a.InvocationMethod.Agent),
 		}
 	}
 }
@@ -69,11 +69,11 @@ func writeDatasetToResource(v cli.ActionProperty) *DatasetModel {
 
 	for _, v := range dataset.Rules {
 		rule := &Rule{
-			Blueprint: flex.GoStringToFramework(v.Blueprint),
-			Property:  flex.GoStringToFramework(v.Property),
-			Operator:  flex.GoStringToFramework(&v.Operator),
+			Blueprint: types.StringPointerValue(v.Blueprint),
+			Property:  types.StringPointerValue(v.Property),
+			Operator:  types.StringPointerValue(&v.Operator),
 			Value: &Value{
-				JqQuery: flex.GoStringToFramework(&v.Value.JqQuery),
+				JqQuery: types.StringPointerValue(&v.Value.JqQuery),
 			},
 		}
 		datasetModel.Rules = append(datasetModel.Rules, *rule)
@@ -206,9 +206,9 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 	state.Title = types.StringValue(a.Title)
 	state.Trigger = types.StringValue(a.Trigger)
 
-	state.Icon = flex.GoStringToFramework(a.Icon)
-	state.Description = flex.GoStringToFramework(a.Description)
-	state.RequiredApproval = flex.GoBoolToFramework(a.RequiredApproval)
+	state.Icon = types.StringPointerValue(a.Icon)
+	state.Description = types.StringPointerValue(a.Description)
+	state.RequiredApproval = types.BoolPointerValue(a.RequiredApproval)
 
 	if a.ApprovalNotification != nil {
 		if a.ApprovalNotification.Type == "email" {
@@ -241,41 +241,41 @@ func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interfa
 		case "Description":
 			switch p := prop.(type) {
 			case *StringPropModel:
-				p.Description = flex.GoStringToFramework(v.Description)
+				p.Description = types.StringPointerValue(v.Description)
 			case *NumberPropModel:
-				p.Description = flex.GoStringToFramework(v.Description)
+				p.Description = types.StringPointerValue(v.Description)
 			case *BooleanPropModel:
-				p.Description = flex.GoStringToFramework(v.Description)
+				p.Description = types.StringPointerValue(v.Description)
 			case *ArrayPropModel:
-				p.Description = flex.GoStringToFramework(v.Description)
+				p.Description = types.StringPointerValue(v.Description)
 			case *ObjectPropModel:
-				p.Description = flex.GoStringToFramework(v.Description)
+				p.Description = types.StringPointerValue(v.Description)
 			}
 		case "Icon":
 			switch p := prop.(type) {
 			case *StringPropModel:
-				p.Icon = flex.GoStringToFramework(v.Icon)
+				p.Icon = types.StringPointerValue(v.Icon)
 			case *NumberPropModel:
-				p.Icon = flex.GoStringToFramework(v.Icon)
+				p.Icon = types.StringPointerValue(v.Icon)
 			case *BooleanPropModel:
-				p.Icon = flex.GoStringToFramework(v.Icon)
+				p.Icon = types.StringPointerValue(v.Icon)
 			case *ArrayPropModel:
-				p.Icon = flex.GoStringToFramework(v.Icon)
+				p.Icon = types.StringPointerValue(v.Icon)
 			case *ObjectPropModel:
-				p.Icon = flex.GoStringToFramework(v.Icon)
+				p.Icon = types.StringPointerValue(v.Icon)
 			}
 		case "Title":
 			switch p := prop.(type) {
 			case *StringPropModel:
-				p.Title = flex.GoStringToFramework(v.Title)
+				p.Title = types.StringPointerValue(v.Title)
 			case *NumberPropModel:
-				p.Title = flex.GoStringToFramework(v.Title)
+				p.Title = types.StringPointerValue(v.Title)
 			case *BooleanPropModel:
-				p.Title = flex.GoStringToFramework(v.Title)
+				p.Title = types.StringPointerValue(v.Title)
 			case *ArrayPropModel:
-				p.Title = flex.GoStringToFramework(v.Title)
+				p.Title = types.StringPointerValue(v.Title)
 			case *ObjectPropModel:
-				p.Title = flex.GoStringToFramework(v.Title)
+				p.Title = types.StringPointerValue(v.Title)
 			}
 		// Due to the possibility of an error being raised when converting null to a pointer, we are unable to utilize flex in this scenario.
 		case "Default":

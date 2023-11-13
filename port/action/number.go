@@ -115,7 +115,7 @@ func addNumberPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 		case reflect.Map:
 			v := v.Interface().(map[string]interface{})
 			jqQueryValue := v["jqQuery"].(string)
-			numberProp.EnumJqQuery = flex.GoStringToFramework(&jqQueryValue)
+			numberProp.EnumJqQuery = types.StringPointerValue(&jqQueryValue)
 			numberProp.Enum = types.ListNull(types.Float64Type)
 		}
 	} else {

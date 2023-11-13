@@ -15,9 +15,9 @@ func addStringPropertiesToState(ctx context.Context, v *cli.BlueprintProperty) *
 	stringProp := &StringPropModel{
 		MinLength: flex.GoInt64ToFramework(v.MinLength),
 		MaxLength: flex.GoInt64ToFramework(v.MaxLength),
-		Format:    flex.GoStringToFramework(v.Format),
-		Spec:      flex.GoStringToFramework(v.Spec),
-		Pattern:   flex.GoStringToFramework(v.Pattern),
+		Format:    types.StringPointerValue(v.Format),
+		Spec:      types.StringPointerValue(v.Spec),
+		Pattern:   types.StringPointerValue(v.Pattern),
 	}
 
 	if v.Enum != nil {

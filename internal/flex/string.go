@@ -6,14 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
-func GoStringToFramework(v *string) types.String {
-	if v == nil {
-		return types.StringNull()
-	}
-
-	return types.StringValue(*v)
-}
-
 func GoArrayStringToTerraformList(array []string) types.List {
 	if array == nil {
 		return types.ListNull(types.StringType)

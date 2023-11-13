@@ -5,7 +5,6 @@ import (
 
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
-	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
@@ -44,7 +43,6 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Bluep
 		Icon:             data.Icon.ValueStringPointer(),
 		Description:      data.Description.ValueStringPointer(),
 		RequiredApproval: data.RequiredApproval.ValueBoolPointer(),
-		Permissions:      actionPermissionsToPortBody(data.Permissions),
 	}
 
 	if !data.ApprovalEmailNotification.IsNull() {
@@ -170,23 +168,4 @@ func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
 	}
 
 	return nil
-}
-func actionPermissionsToPortBody(state *PermissionsModel) *cli.ActionPermissions {
-	if state == nil {
-		return nil
-	}
-
-	return &cli.ActionPermissions{
-		Execute: cli.ActionExecutePermissions{
-			Users:       flex.TerraformStringListToGoArray(state.Execute.Users),
-			Roles:       flex.TerraformStringListToGoArray(state.Execute.Roles),
-			Teams:       flex.TerraformStringListToGoArray(state.Execute.Teams),
-			OwnedByTeam: state.Execute.OwnedByTeam.ValueBoolPointer(),
-		},
-		Approve: cli.ActionApprovePermissions{
-			Users: flex.TerraformStringListToGoArray(state.Approve.Users),
-			Roles: flex.TerraformStringListToGoArray(state.Approve.Roles),
-			Teams: flex.TerraformStringListToGoArray(state.Approve.Teams),
-		},
-	}
 }

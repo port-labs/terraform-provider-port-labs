@@ -118,6 +118,15 @@ func (r *ActionResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
+	actionPermissions := actionPermissionsToPortBody(state.Permissions)
+	if actionPermissions != nil {
+		_, err := r.portClient.UpdateActionPermissions(ctx, a.Identifier, bp.Identifier, actionPermissions)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to update action permissions", err.Error())
+			return
+		}
+	}
+
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", bp.Identifier, a.Identifier))
 	state.Identifier = types.StringValue(a.Identifier)
 

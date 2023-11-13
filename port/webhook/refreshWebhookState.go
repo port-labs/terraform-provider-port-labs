@@ -5,7 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 )
 
 func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhook) error {
@@ -17,18 +16,18 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 	state.UpdatedBy = types.StringValue(w.UpdatedBy)
 	state.Url = types.StringValue(w.Url)
 	state.WebhookKey = types.StringValue(w.WebhookKey)
-	state.Icon = flex.GoStringToFramework(w.Icon)
-	state.Title = flex.GoStringToFramework(w.Title)
-	state.Description = flex.GoStringToFramework(w.Description)
-	state.Enabled = flex.GoBoolToFramework(w.Enabled)
+	state.Icon = types.StringPointerValue(w.Icon)
+	state.Title = types.StringPointerValue(w.Title)
+	state.Description = types.StringPointerValue(w.Description)
+	state.Enabled = types.BoolPointerValue(w.Enabled)
 
 	if w.Security.RequestIdentifierPath != nil || w.Security.Secret != nil || w.Security.SignatureHeaderName != nil || w.Security.SignatureAlgorithm != nil || w.Security.SignaturePrefix != nil {
 		state.Security = &SecurityModel{
-			Secret:                flex.GoStringToFramework(w.Security.Secret),
-			SignatureHeaderName:   flex.GoStringToFramework(w.Security.SignatureHeaderName),
-			SignatureAlgorithm:    flex.GoStringToFramework(w.Security.SignatureAlgorithm),
-			SignaturePrefix:       flex.GoStringToFramework(w.Security.SignaturePrefix),
-			RequestIdentifierPath: flex.GoStringToFramework(w.Security.RequestIdentifierPath),
+			Secret:                types.StringPointerValue(w.Security.Secret),
+			SignatureHeaderName:   types.StringPointerValue(w.Security.SignatureHeaderName),
+			SignatureAlgorithm:    types.StringPointerValue(w.Security.SignatureAlgorithm),
+			SignaturePrefix:       types.StringPointerValue(w.Security.SignaturePrefix),
+			RequestIdentifierPath: types.StringPointerValue(w.Security.RequestIdentifierPath),
 		}
 	}
 
@@ -42,11 +41,11 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 				},
 			}
 
-			mapping.Filter = flex.GoStringToFramework(v.Filter)
-			mapping.ItemsToParse = flex.GoStringToFramework(v.ItemsToParse)
-			mapping.Entity.Icon = flex.GoStringToFramework(v.Entity.Icon)
-			mapping.Entity.Title = flex.GoStringToFramework(v.Entity.Title)
-			mapping.Entity.Team = flex.GoStringToFramework(v.Entity.Team)
+			mapping.Filter = types.StringPointerValue(v.Filter)
+			mapping.ItemsToParse = types.StringPointerValue(v.ItemsToParse)
+			mapping.Entity.Icon = types.StringPointerValue(v.Entity.Icon)
+			mapping.Entity.Title = types.StringPointerValue(v.Entity.Title)
+			mapping.Entity.Team = types.StringPointerValue(v.Entity.Team)
 
 			if v.Entity.Properties != nil {
 				mapping.Entity.Properties = map[string]string{}

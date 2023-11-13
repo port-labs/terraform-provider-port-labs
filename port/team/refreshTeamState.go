@@ -5,7 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 )
 
 func refreshTeamState(ctx context.Context, state *TeamModel, t *cli.Team) error {
@@ -13,7 +12,7 @@ func refreshTeamState(ctx context.Context, state *TeamModel, t *cli.Team) error 
 	state.UpdatedAt = types.StringValue(t.UpdatedAt.String())
 	state.ID = types.StringValue(t.Name)
 	state.Name = types.StringValue(t.Name)
-	state.Description = flex.GoStringToFramework(&t.Description)
+	state.Description = types.StringPointerValue(&t.Description)
 
 	if len(t.Users) != 0 {
 		state.Users = make([]types.String, len(t.Users))

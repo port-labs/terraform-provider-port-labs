@@ -156,17 +156,24 @@ type ApprovalWebhookNotificationModel struct {
 	Format types.String `tfsdk:"format"`
 }
 
+type PolicyModel struct {
+	Queries    map[string]types.String `tfsdk:"queries"`
+	Conditions []types.String          `tfsdk:"conditions"`
+}
+
 type ExecuteModel struct {
 	Users       []types.String `tfsdk:"users"`
 	Roles       []types.String `tfsdk:"roles"`
 	Teams       []types.String `tfsdk:"teams"`
-	OwnedByTeam types.Bool     `tfsdk:"ownedByTeam"`
+	OwnedByTeam types.Bool     `tfsdk:"owned_by_team"`
+	Policy      *PolicyModel   `tfsdk:"policy"`
 }
 
 type ApproveModel struct {
-	Users []types.String `tfsdk:"users"`
-	Roles []types.String `tfsdk:"roles"`
-	Teams []types.String `tfsdk:"teams"`
+	Users  []types.String `tfsdk:"users"`
+	Roles  []types.String `tfsdk:"roles"`
+	Teams  []types.String `tfsdk:"teams"`
+	Policy *PolicyModel   `tfsdk:"policy"`
 }
 
 type PermissionsModel struct {

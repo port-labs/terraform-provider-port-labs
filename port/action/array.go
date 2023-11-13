@@ -236,7 +236,7 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 					case reflect.Map:
 						v := v.Interface().(map[string]interface{})
 						jqQueryValue := v["jqQuery"].(string)
-						arrayProp.StringItems.EnumJqQuery = flex.GoStringToFramework(&jqQueryValue)
+						arrayProp.StringItems.EnumJqQuery = types.StringPointerValue(&jqQueryValue)
 						arrayProp.StringItems.Enum = types.ListNull(types.StringType)
 					}
 				} else {
@@ -269,7 +269,7 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 					case reflect.Map:
 						v := v.Interface().(map[string]interface{})
 						jqQueryValue := v["jqQuery"].(string)
-						arrayProp.NumberItems.EnumJqQuery = flex.GoStringToFramework(&jqQueryValue)
+						arrayProp.NumberItems.EnumJqQuery = types.StringPointerValue(&jqQueryValue)
 						arrayProp.NumberItems.Enum = types.ListNull(types.Float64Type)
 					}
 				} else {

@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 )
 
 func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string) {
@@ -34,7 +33,7 @@ func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Sc
 			stateCondition := &Condition{
 				Operator: types.StringValue(condition.Operator),
 				Property: types.StringValue(condition.Property),
-				Value:    flex.GoStringToFramework(condition.Value),
+				Value:    types.StringPointerValue(condition.Value),
 			}
 			stateConditions = append(stateConditions, *stateCondition)
 		}

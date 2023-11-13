@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 	"github.com/samber/lo"
 )
 
@@ -17,41 +16,41 @@ func setCommonProperties(v cli.BlueprintProperty, prop interface{}) {
 		case "Description":
 			switch p := prop.(type) {
 			case *StringPropModel:
-				p.Description = flex.GoStringToFramework(v.Description)
+				p.Description = types.StringPointerValue(v.Description)
 			case *NumberPropModel:
-				p.Description = flex.GoStringToFramework(v.Description)
+				p.Description = types.StringPointerValue(v.Description)
 			case *BooleanPropModel:
-				p.Description = flex.GoStringToFramework(v.Description)
+				p.Description = types.StringPointerValue(v.Description)
 			case *ArrayPropModel:
-				p.Description = flex.GoStringToFramework(v.Description)
+				p.Description = types.StringPointerValue(v.Description)
 			case *ObjectPropModel:
-				p.Description = flex.GoStringToFramework(v.Description)
+				p.Description = types.StringPointerValue(v.Description)
 			}
 		case "Icon":
 			switch p := prop.(type) {
 			case *StringPropModel:
-				p.Icon = flex.GoStringToFramework(v.Icon)
+				p.Icon = types.StringPointerValue(v.Icon)
 			case *NumberPropModel:
-				p.Icon = flex.GoStringToFramework(v.Icon)
+				p.Icon = types.StringPointerValue(v.Icon)
 			case *BooleanPropModel:
-				p.Icon = flex.GoStringToFramework(v.Icon)
+				p.Icon = types.StringPointerValue(v.Icon)
 			case *ArrayPropModel:
-				p.Icon = flex.GoStringToFramework(v.Icon)
+				p.Icon = types.StringPointerValue(v.Icon)
 			case *ObjectPropModel:
-				p.Icon = flex.GoStringToFramework(v.Icon)
+				p.Icon = types.StringPointerValue(v.Icon)
 			}
 		case "Title":
 			switch p := prop.(type) {
 			case *StringPropModel:
-				p.Title = flex.GoStringToFramework(v.Title)
+				p.Title = types.StringPointerValue(v.Title)
 			case *NumberPropModel:
-				p.Title = flex.GoStringToFramework(v.Title)
+				p.Title = types.StringPointerValue(v.Title)
 			case *BooleanPropModel:
-				p.Title = flex.GoStringToFramework(v.Title)
+				p.Title = types.StringPointerValue(v.Title)
 			case *ArrayPropModel:
-				p.Title = flex.GoStringToFramework(v.Title)
+				p.Title = types.StringPointerValue(v.Title)
 			case *ObjectPropModel:
-				p.Title = flex.GoStringToFramework(v.Title)
+				p.Title = types.StringPointerValue(v.Title)
 			}
 		case "Default":
 			if v.Default != nil {
@@ -178,9 +177,9 @@ func addRelationsToState(b *cli.Blueprint, bm *BlueprintModel) {
 
 		relationModel := &RelationModel{
 			Target:   types.StringValue(*v.Target),
-			Title:    flex.GoStringToFramework(v.Title),
-			Many:     flex.GoBoolToFramework(v.Many),
-			Required: flex.GoBoolToFramework(v.Required),
+			Title:    types.StringPointerValue(v.Title),
+			Many:     types.BoolPointerValue(v.Many),
+			Required: types.BoolPointerValue(v.Required),
 		}
 
 		bm.Relations[k] = *relationModel
@@ -197,7 +196,7 @@ func addMirrorPropertiesToState(b *cli.Blueprint, bm *BlueprintModel) {
 
 			mirrorPropertyModel := &MirrorPropertyModel{
 				Path:  types.StringValue(v.Path),
-				Title: flex.GoStringToFramework(v.Title),
+				Title: types.StringPointerValue(v.Title),
 			}
 
 			bm.MirrorProperties[k] = *mirrorPropertyModel
@@ -215,10 +214,10 @@ func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *
 		calculationPropertyModel := &CalculationPropertyModel{
 			Calculation: types.StringValue(v.Calculation),
 			Type:        types.StringValue(v.Type),
-			Title:       flex.GoStringToFramework(v.Title),
-			Description: flex.GoStringToFramework(v.Description),
-			Format:      flex.GoStringToFramework(v.Format),
-			Colorized:   flex.GoBoolToFramework(v.Colorized),
+			Title:       types.StringPointerValue(v.Title),
+			Description: types.StringPointerValue(v.Description),
+			Format:      types.StringPointerValue(v.Format),
+			Colorized:   types.BoolPointerValue(v.Colorized),
 		}
 
 		if v.Colors != nil {

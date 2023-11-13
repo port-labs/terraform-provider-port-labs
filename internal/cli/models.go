@@ -192,23 +192,29 @@ type (
 		Permissions          *ActionPermissions    `json:"actionPermissions,omitempty"`
 	}
 
+	Policy struct {
+		Queries    map[string]string `json:"queries"`
+		Conditions []string          `json:"Conditions"`
+	}
+
 	ActionExecutePermissions struct {
 		Users       []string `json:"users"`
 		Roles       []string `json:"roles"`
 		Teams       []string `json:"teams"`
 		OwnedByTeam *bool    `json:"ownedByTeam"`
+		Policy      *Policy  `json:"policy,omitempty"`
 	}
 
 	ActionApprovePermissions struct {
-		Users []string `json:"users"`
-		Roles []string `json:"roles"`
-		Teams []string `json:"teams"`
+		Users  []string `json:"users"`
+		Roles  []string `json:"roles"`
+		Teams  []string `json:"teams"`
+		Policy *Policy  `json:"policy,omitempty"`
 	}
 
 	ActionPermissions struct {
-		Action  string                   `json:"action"`
-		Execute ActionExecutePermissions `json:"execute"`
-		Approve ActionApprovePermissions `json:"approve"`
+		Execute *ActionExecutePermissions `json:"execute"`
+		Approve *ActionApprovePermissions `json:"approve"`
 	}
 
 	Relation struct {
@@ -318,6 +324,11 @@ type TeamPortBody struct {
 type PortTeamBody struct {
 	OK   bool         `json:"ok"`
 	Team TeamPortBody `json:"team"`
+}
+
+type PortActionPermissionsBody struct {
+	OK          bool              `json:"ok"`
+	Permissions ActionPermissions `json:"permissions"`
 }
 
 type PortProviderModel struct {

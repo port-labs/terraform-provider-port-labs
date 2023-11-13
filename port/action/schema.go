@@ -155,6 +155,22 @@ func ActionSchema() map[string]schema.Attribute {
 							MarkdownDescription: "Give execution permission to the teams who own the entity",
 							Optional:            true,
 						},
+						"policy": schema.SingleNestedAttribute{
+							MarkdownDescription: "",
+							Optional:            true,
+							Attributes: map[string]schema.Attribute{
+								"conditions": schema.ListAttribute{
+									MarkdownDescription: "",
+									Required:            true,
+									ElementType:         types.StringType,
+								},
+								"queries": schema.MapAttribute{
+									MarkdownDescription: "",
+									Required:            true,
+									ElementType:         types.StringType,
+								},
+							},
+						},
 					},
 				},
 				"approve": schema.SingleNestedAttribute{
@@ -175,6 +191,22 @@ func ActionSchema() map[string]schema.Attribute {
 							MarkdownDescription: "The teams with approval permission",
 							Optional:            true,
 							ElementType:         types.StringType,
+						},
+						"policy": schema.SingleNestedAttribute{
+							MarkdownDescription: "",
+							Optional:            true,
+							Attributes: map[string]schema.Attribute{
+								"conditions": schema.ListAttribute{
+									MarkdownDescription: "",
+									Required:            true,
+									ElementType:         types.StringType,
+								},
+								"queries": schema.MapAttribute{
+									MarkdownDescription: "",
+									Required:            true,
+									ElementType:         types.StringType,
+								},
+							},
 						},
 					},
 				},

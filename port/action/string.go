@@ -116,10 +116,10 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 	stringProp := &StringPropModel{
 		MinLength:  flex.GoInt64ToFramework(v.MinLength),
 		MaxLength:  flex.GoInt64ToFramework(v.MaxLength),
-		Pattern:    flex.GoStringToFramework(v.Pattern),
-		Format:     flex.GoStringToFramework(v.Format),
-		Blueprint:  flex.GoStringToFramework(v.Blueprint),
-		Encryption: flex.GoStringToFramework(v.Encryption),
+		Pattern:    types.StringPointerValue(v.Pattern),
+		Format:     types.StringPointerValue(v.Format),
+		Blueprint:  types.StringPointerValue(v.Blueprint),
+		Encryption: types.StringPointerValue(v.Encryption),
 	}
 
 	if v.Enum != nil {
@@ -136,7 +136,7 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 		case reflect.Map:
 			v := v.Interface().(map[string]interface{})
 			jqQueryValue := v["jqQuery"].(string)
-			stringProp.EnumJqQuery = flex.GoStringToFramework(&jqQueryValue)
+			stringProp.EnumJqQuery = types.StringPointerValue(&jqQueryValue)
 			stringProp.Enum = types.ListNull(types.StringType)
 
 		}

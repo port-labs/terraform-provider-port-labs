@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
@@ -79,7 +79,7 @@ func objectPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 
 func addObjectPropertiesToResource(v *cli.ActionProperty) *ObjectPropModel {
 	objectProp := &ObjectPropModel{
-		Encryption: flex.GoStringToFramework(v.Encryption),
+		Encryption: types.StringPointerValue(v.Encryption),
 	}
 
 	return objectProp

@@ -85,6 +85,18 @@ func GoObjectToTerraformString(v interface{}) (types.String, error) {
 	return types.StringValue(value), nil
 }
 
+func TerraformMapToGoMap(v map[string]types.String) map[string]string {
+	out := make(map[string]string)
+
+	for key, val := range v {
+		if !val.IsNull() {
+			out[key] = val.ValueString()
+		}
+	}
+
+	return out
+}
+
 func InterfaceToStringArray(o interface{}) []string {
 	items := o.([]interface{})
 	res := make([]string, len(items))

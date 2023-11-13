@@ -16,7 +16,7 @@ func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
 	for _, rule := range dataSet.Rules {
 		dataSetRule := cli.DatasetRule{
 			Operator: rule.Operator.ValueString(),
-			Value: &cli.DatasetValue{
+			Value: &cli.JqDefinition{
 				JqQuery: rule.Value.JqQuery.ValueString(),
 			},
 		}

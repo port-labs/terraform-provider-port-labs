@@ -323,6 +323,17 @@ func StringPropertySchema() schema.Attribute {
 				stringvalidator.OneOf("fernet"),
 			},
 		},
+		"display_condition": schema.BoolAttribute{
+			MarkdownDescription: "The display condition of the string property",
+			Optional:            true,
+		},
+		"display_condition_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The display condition jq query of the string property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
+			},
+		},
 	}
 
 	utils.CopyMaps(stringPropertySchema, MetadataProperties())
@@ -372,6 +383,17 @@ func NumberPropertySchema() schema.Attribute {
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
 			},
 		},
+		"display_condition": schema.BoolAttribute{
+			MarkdownDescription: "The display condition of the number property",
+			Optional:            true,
+		},
+		"display_condition_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The display condition jq query of the number property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
+			},
+		},
 	}
 
 	utils.CopyMaps(numberPropertySchema, MetadataProperties())
@@ -395,6 +417,17 @@ func BooleanPropertySchema() schema.Attribute {
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("default")),
+			},
+		},
+		"display_condition": schema.BoolAttribute{
+			MarkdownDescription: "The display condition of the boolean property",
+			Optional:            true,
+		},
+		"display_condition_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The display condition jq query of the boolean property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
 			},
 		},
 	}
@@ -427,6 +460,17 @@ func ObjectPropertySchema() schema.Attribute {
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.OneOf("fernet"),
+			},
+		},
+		"display_condition": schema.BoolAttribute{
+			MarkdownDescription: "The display condition of the object property",
+			Optional:            true,
+		},
+		"display_condition_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The display condition jq query of the object property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
 			},
 		},
 	}
@@ -548,6 +592,17 @@ func ArrayPropertySchema() schema.Attribute {
 					Optional:            true,
 					ElementType:         types.MapType{ElemType: types.StringType},
 				},
+			},
+		},
+		"display_condition": schema.BoolAttribute{
+			MarkdownDescription: "The display condition of the array property",
+			Optional:            true,
+		},
+		"display_condition_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The display condition jq query of the array property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
 			},
 		},
 	}

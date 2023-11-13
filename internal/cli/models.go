@@ -75,8 +75,10 @@ type (
 		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
 		EnumColors         map[string]string   `json:"enumColors,omitempty"`
 		DependsOn          []string            `json:"dependsOn,omitempty"`
-		Dataset            *Dataset            `json:"dataset,omitempty"`
-		Encryption         *string             `json:"encryption,omitempty"`
+		// JqDisplayCondition   *JqDefinition       `json:"displayCondition,omitempty"`
+		// BoolDisplayCondition *bool               `json:"displayCondition,omitempty"`
+		Dataset    *Dataset `json:"dataset,omitempty"`
+		Encryption *string  `json:"encryption,omitempty"`
 	}
 
 	SpecAuthentication struct {
@@ -85,14 +87,15 @@ type (
 		TokenUrl         string `json:"tokenUrl,omitempty"`
 	}
 
-	DatasetValue struct {
+	JqDefinition struct {
 		JqQuery string `json:"jqQuery,omitempty"`
 	}
+
 	DatasetRule struct {
 		Blueprint *string       `json:"blueprint,omitempty"`
 		Property  *string       `json:"property,omitempty"`
 		Operator  string        `json:"operator,omitempty"`
-		Value     *DatasetValue `json:"value,omitempty"`
+		Value     *JqDefinition `json:"value,omitempty"`
 	}
 	Dataset struct {
 		Combinator string        `json:"combinator,omitempty"`

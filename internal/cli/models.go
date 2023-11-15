@@ -77,6 +77,7 @@ type (
 		DependsOn          []string            `json:"dependsOn,omitempty"`
 		Dataset            *Dataset            `json:"dataset,omitempty"`
 		Encryption         *string             `json:"encryption,omitempty"`
+		Visible            any                 `json:"visible,omitempty"`
 	}
 
 	SpecAuthentication struct {

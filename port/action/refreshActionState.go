@@ -3,6 +3,7 @@ package action
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
@@ -82,6 +83,26 @@ func writeDatasetToResource(v cli.ActionProperty) *DatasetModel {
 	return datasetModel
 
 }
+
+func writeVisibleToResource(v cli.ActionProperty) (types.Bool, types.String) {
+	if v.Visible == nil {
+		return types.BoolNull(), types.StringNull()
+	}
+
+	visible := reflect.ValueOf(v.Visible)
+	switch visible.Kind() {
+	case reflect.Bool:
+		boolValue := visible.Interface().(bool)
+		return types.BoolValue(boolValue), types.StringNull()
+	case reflect.Map:
+		jq := visible.Interface().(map[string]any)
+		jqQueryValue := jq["jqQuery"].(string)
+		return types.BoolNull(), flex.GoStringToFramework(&jqQueryValue)
+	}
+
+	return types.BoolNull(), types.StringNull()
+}
+
 func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
 	if len(a.UserInputs.Properties) > 0 {
 		properties := &UserPropertiesModel{}
@@ -235,7 +256,7 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 }
 
 func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interface{}) error {
-	properties := []string{"Description", "Icon", "Default", "Title", "DependsOn", "Dataset"}
+	properties := []string{"Description", "Icon", "Default", "Title", "DependsOn", "Dataset", "Visible"}
 	for _, property := range properties {
 		switch property {
 		case "Description":
@@ -361,6 +382,37 @@ func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interfa
 					p.Dataset = dataset
 				case *ObjectPropModel:
 					p.Dataset = dataset
+				}
+			}
+
+		case "Visible":
+			visible, visibleJq := writeVisibleToResource(v)
+			if !visible.IsNull() {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Visible = visible
+				case *NumberPropModel:
+					p.Visible = visible
+				case *BooleanPropModel:
+					p.Visible = visible
+				case *ArrayPropModel:
+					p.Visible = visible
+				case *ObjectPropModel:
+					p.Visible = visible
+				}
+			}
+			if !visibleJq.IsNull() {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.VisibleJqQuery = visibleJq
+				case *NumberPropModel:
+					p.VisibleJqQuery = visibleJq
+				case *BooleanPropModel:
+					p.VisibleJqQuery = visibleJq
+				case *ArrayPropModel:
+					p.VisibleJqQuery = visibleJq
+				case *ObjectPropModel:
+					p.VisibleJqQuery = visibleJq
 				}
 			}
 		}

@@ -133,6 +133,8 @@ Optional:
 - `required` (Boolean) Whether the property is required
 - `string_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--string_items))
 - `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the array property
+- `visible_jq_query` (String) The visibility condition jq query of the array property
 
 <a id="nestedatt--user_properties--array_props--boolean_items"></a>
 ### Nested Schema for `user_properties.array_props.boolean_items`
@@ -217,6 +219,8 @@ Optional:
 - `icon` (String) The icon of the property
 - `required` (Boolean) Whether the property is required
 - `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the boolean property
+- `visible_jq_query` (String) The visibility condition jq query of the boolean property
 
 <a id="nestedatt--user_properties--boolean_props--dataset"></a>
 ### Nested Schema for `user_properties.boolean_props.dataset`
@@ -267,6 +271,8 @@ Optional:
 - `minimum` (Number) The max of the number property
 - `required` (Boolean) Whether the property is required
 - `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the number property
+- `visible_jq_query` (String) The visibility condition jq query of the number property
 
 <a id="nestedatt--user_properties--number_props--dataset"></a>
 ### Nested Schema for `user_properties.number_props.dataset`
@@ -314,6 +320,8 @@ Optional:
 - `icon` (String) The icon of the property
 - `required` (Boolean) Whether the property is required
 - `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the object property
+- `visible_jq_query` (String) The visibility condition jq query of the object property
 
 <a id="nestedatt--user_properties--object_props--dataset"></a>
 ### Nested Schema for `user_properties.object_props.dataset`
@@ -368,6 +376,8 @@ Optional:
 - `pattern` (String) The pattern of the string property
 - `required` (Boolean) Whether the property is required
 - `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the string property
+- `visible_jq_query` (String) The visibility condition jq query of the string property
 
 <a id="nestedatt--user_properties--string_props--dataset"></a>
 ### Nested Schema for `user_properties.string_props.dataset`

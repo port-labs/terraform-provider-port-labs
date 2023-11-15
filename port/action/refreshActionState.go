@@ -97,7 +97,7 @@ func writeVisibleToResource(v cli.ActionProperty) (types.Bool, types.String) {
 	case reflect.Map:
 		jq := visible.Interface().(map[string]any)
 		jqQueryValue := jq["jqQuery"].(string)
-		return types.BoolNull(), flex.GoStringToFramework(&jqQueryValue)
+		return types.BoolNull(), types.StringValue(jqQueryValue)
 	}
 
 	return types.BoolNull(), types.StringNull()

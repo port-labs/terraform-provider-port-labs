@@ -320,7 +320,7 @@ func StringPropertySchema() schema.Attribute {
 			MarkdownDescription: "The algorithm to encrypt the property with",
 			Optional:            true,
 			Validators: []validator.String{
-				stringvalidator.OneOf("fernet"),
+				stringvalidator.OneOf("aes256-gcm"),
 			},
 		},
 		"visible": schema.BoolAttribute{
@@ -459,7 +459,7 @@ func ObjectPropertySchema() schema.Attribute {
 			MarkdownDescription: "The algorithm to encrypt the property with",
 			Optional:            true,
 			Validators: []validator.String{
-				stringvalidator.OneOf("fernet"),
+				stringvalidator.OneOf("aes256-gcm"),
 			},
 		},
 		"visible": schema.BoolAttribute{

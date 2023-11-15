@@ -816,14 +816,14 @@ func TestAccPortActionEncryption(t *testing.T) {
 				"encryptedStringProp" = {
 					"title" = "Encrypted string"
 					"required" = true
-					"encryption" = "fernet"
+					"encryption" = "aes256-gcm"
 				}
 			}
 			"object_props" = {
 				"encryptedObjectProp" = {
 					"title" = "Encrypted object"
 					"required" = true
-					"encryption" = "fernet"
+					"encryption" = "aes256-gcm"
 				}
 			}
 		}
@@ -845,10 +845,10 @@ func TestAccPortActionEncryption(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.action1", "webhook_method.url", "https://getport.io"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.encryptedStringProp.title", "Encrypted string"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.encryptedStringProp.required", "true"),
-					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.encryptedStringProp.encryption", "fernet"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.encryptedStringProp.encryption", "aes256-gcm"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.encryptedObjectProp.title", "Encrypted object"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.encryptedObjectProp.required", "true"),
-					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.encryptedObjectProp.encryption", "fernet"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.encryptedObjectProp.encryption", "aes256-gcm"),
 				),
 			},
 		},

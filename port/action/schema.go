@@ -323,6 +323,17 @@ func StringPropertySchema() schema.Attribute {
 				stringvalidator.OneOf("fernet"),
 			},
 		},
+		"visible": schema.BoolAttribute{
+			MarkdownDescription: "The visibility of the string property",
+			Optional:            true,
+		},
+		"visible_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The visibility condition jq query of the string property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("visible")),
+			},
+		},
 	}
 
 	utils.CopyMaps(stringPropertySchema, MetadataProperties())
@@ -372,6 +383,17 @@ func NumberPropertySchema() schema.Attribute {
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
 			},
 		},
+		"visible": schema.BoolAttribute{
+			MarkdownDescription: "The visibility of the number property",
+			Optional:            true,
+		},
+		"visible_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The visibility condition jq query of the number property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("visible")),
+			},
+		},
 	}
 
 	utils.CopyMaps(numberPropertySchema, MetadataProperties())
@@ -395,6 +417,17 @@ func BooleanPropertySchema() schema.Attribute {
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("default")),
+			},
+		},
+		"visible": schema.BoolAttribute{
+			MarkdownDescription: "The visibility of the boolean property",
+			Optional:            true,
+		},
+		"visible_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The visibility condition jq query of the boolean property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("visible")),
 			},
 		},
 	}
@@ -427,6 +460,17 @@ func ObjectPropertySchema() schema.Attribute {
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.OneOf("fernet"),
+			},
+		},
+		"visible": schema.BoolAttribute{
+			MarkdownDescription: "The visibility of the object property",
+			Optional:            true,
+		},
+		"visible_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The visibility condition jq query of the object property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("visible")),
 			},
 		},
 	}
@@ -548,6 +592,17 @@ func ArrayPropertySchema() schema.Attribute {
 					Optional:            true,
 					ElementType:         types.MapType{ElemType: types.StringType},
 				},
+			},
+		},
+		"visible": schema.BoolAttribute{
+			MarkdownDescription: "The visibility of the array property",
+			Optional:            true,
+		},
+		"visible_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The visibility condition jq query of the array property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("visible")),
 			},
 		},
 	}

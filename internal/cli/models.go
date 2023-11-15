@@ -21,12 +21,12 @@ type (
 	}
 	Entity struct {
 		Meta
-		Identifier string                 `json:"identifier,omitempty"`
-		Title      string                 `json:"title"`
-		Blueprint  string                 `json:"blueprint"`
-		Team       []string               `json:"team,omitempty"`
-		Properties map[string]interface{} `json:"properties"`
-		Relations  map[string]interface{} `json:"relations"`
+		Identifier string         `json:"identifier,omitempty"`
+		Title      string         `json:"title"`
+		Blueprint  string         `json:"blueprint"`
+		Team       []string       `json:"team,omitempty"`
+		Properties map[string]any `json:"properties"`
+		Relations  map[string]any `json:"relations"`
 		// TODO: add the rest of the fields.
 	}
 
@@ -35,7 +35,7 @@ type (
 		Title              *string             `json:"title,omitempty"`
 		Identifier         string              `json:"identifier,omitempty"`
 		Items              map[string]any      `json:"items,omitempty"`
-		Default            interface{}         `json:"default,omitempty"`
+		Default            any                 `json:"default,omitempty"`
 		Icon               *string             `json:"icon,omitempty"`
 		Format             *string             `json:"format,omitempty"`
 		MaxLength          *int                `json:"maxLength,omitempty"`
@@ -47,7 +47,7 @@ type (
 		Description        *string             `json:"description,omitempty"`
 		Blueprint          *string             `json:"blueprint,omitempty"`
 		Pattern            *string             `json:"pattern,omitempty"`
-		Enum               []interface{}       `json:"enum,omitempty"`
+		Enum               []any               `json:"enum,omitempty"`
 		Spec               *string             `json:"spec,omitempty"`
 		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
 		EnumColors         map[string]string   `json:"enumColors,omitempty"`
@@ -58,7 +58,7 @@ type (
 		Title              *string             `json:"title,omitempty"`
 		Identifier         string              `json:"identifier,omitempty"`
 		Items              map[string]any      `json:"items,omitempty"`
-		Default            interface{}         `json:"default,omitempty"`
+		Default            any                 `json:"default,omitempty"`
 		Icon               *string             `json:"icon,omitempty"`
 		Format             *string             `json:"format,omitempty"`
 		MaxLength          *int                `json:"maxLength,omitempty"`
@@ -70,13 +70,14 @@ type (
 		Description        *string             `json:"description,omitempty"`
 		Blueprint          *string             `json:"blueprint,omitempty"`
 		Pattern            *string             `json:"pattern,omitempty"`
-		Enum               interface{}         `json:"enum,omitempty"`
+		Enum               any                 `json:"enum,omitempty"`
 		Spec               *string             `json:"spec,omitempty"`
 		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
 		EnumColors         map[string]string   `json:"enumColors,omitempty"`
 		DependsOn          []string            `json:"dependsOn,omitempty"`
 		Dataset            *Dataset            `json:"dataset,omitempty"`
 		Encryption         *string             `json:"encryption,omitempty"`
+		Visible            any                 `json:"visible,omitempty"`
 	}
 
 	SpecAuthentication struct {
@@ -104,7 +105,7 @@ type (
 		Title       *string           `json:"title,omitempty"`
 		Identifier  string            `json:"identifier,omitempty"`
 		Calculation string            `json:"calculation,omitempty"`
-		Default     interface{}       `json:"default,omitempty"`
+		Default     any               `json:"default,omitempty"`
 		Icon        *string           `json:"icon,omitempty"`
 		Format      *string           `json:"format,omitempty"`
 		Description *string           `json:"description,omitempty"`

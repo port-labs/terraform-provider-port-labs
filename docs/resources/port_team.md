@@ -22,7 +22,7 @@ Team resource
 ### Optional
 
 - `description` (String) The description of the team
-- `users` (List of String) The users of the team
+- `users` (Set of String) The users of the team
 
 ### Read-Only
 

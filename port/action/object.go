@@ -67,6 +67,17 @@ func objectPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 				property.Dataset = actionDataSetToPortBody(prop.Dataset)
 			}
 
+			if !prop.Visible.IsNull() {
+				property.Visible = prop.Visible.ValueBoolPointer()
+			}
+
+			if !prop.VisibleJqQuery.IsNull() {
+				VisibleJqQueryMap := map[string]string{
+					"jqQuery": prop.VisibleJqQuery.ValueString(),
+				}
+				property.Visible = VisibleJqQueryMap
+			}
+
 			props[propIdentifier] = property
 		}
 

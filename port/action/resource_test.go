@@ -933,3 +933,141 @@ func TestAccPortActionUpdateIdentifier(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortActionVisibility(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port_blueprint.microservice.id
+		trigger = "DAY-2"
+		webhook_method = {
+			url = "https://getport.io"
+		}
+		user_properties = {
+			"string_props" = {
+				"visibleStringProp" = {
+					"title" = "visible string"
+					"required" = true
+					"visible" = true
+				}
+				"invisibleStringProp" = {
+					"title" = "invisible string"
+					"required" = true
+					"visible" = false
+				}
+				"jqQueryStringProp" = {
+					"title" = "jq based visibilty string"
+					"required" = true
+					"visible_jq_query" = "1==1"
+				}
+			}
+			"number_props" = {
+				"visibleNumberProp" = {
+					"title" = "visible number"
+					"required" = true
+					"visible" = true
+				}
+				"invisibleNumberProp" = {
+					"title" = "invisible number"
+					"required" = true
+					"visible" = false
+				}
+				"jqQueryNumberProp" = {
+					"title" = "jq based visibilty number"
+					"required" = true
+					"visible_jq_query" = "1==1"
+				}
+			}
+			"boolean_props" = {
+				"visibleBooleanProp" = {
+					"title" = "visible boolean"
+					"required" = true
+					"visible" = true
+				}
+				"invisibleBooleanProp" = {
+					"title" = "invisible boolean"
+					"required" = true
+					"visible" = false
+				}
+				"jqQueryBooleanProp" = {
+					"title" = "jq based visibilty boolean"
+					"required" = true
+					"visible_jq_query" = "1==1"
+				}
+			}
+			"array_props" = {
+				"visibleArrayProp" = {
+					"title" = "visible array"
+					"required" = true
+					"visible" = true
+				}
+				"invisibleArrayProp" = {
+					"title" = "invisible array"
+					"required" = true
+					"visible" = false
+				}
+				"jqQueryArrayProp" = {
+					"title" = "jq based visibilty array"
+					"required" = true
+					"visible_jq_query" = "1==1"
+				}
+			}
+			"object_props" = {
+				"visibleObjectProp" = {
+					"title" = "visible array"
+					"required" = true
+					"visible" = true
+				}
+				"invisibleObjectProp" = {
+					"title" = "invisible array"
+					"required" = true
+					"visible" = false
+				}
+				"jqQueryObjectProp" = {
+					"title" = "jq based visibilty array"
+					"required" = true
+					"visible_jq_query" = "1==1"
+				}
+			}
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.action1", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.action1", "webhook_method.url", "https://getport.io"),
+
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.visibleStringProp.visible", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.invisibleStringProp.visible", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.jqQueryStringProp.visible_jq_query", "1==1"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.number_props.visibleNumberProp.visible", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.number_props.invisibleNumberProp.visible", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.number_props.jqQueryNumberProp.visible_jq_query", "1==1"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.boolean_props.visibleBooleanProp.visible", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.boolean_props.invisibleBooleanProp.visible", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.boolean_props.jqQueryBooleanProp.visible_jq_query", "1==1"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.array_props.visibleArrayProp.visible", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.array_props.invisibleArrayProp.visible", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.array_props.jqQueryArrayProp.visible_jq_query", "1==1"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.visibleObjectProp.visible", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.invisibleObjectProp.visible", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.jqQueryObjectProp.visible_jq_query", "1==1"),
+				),
+			},
+		},
+	})
+}

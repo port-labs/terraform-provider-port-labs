@@ -27,3 +27,11 @@ func GoArrayStringToTerraformList(ctx context.Context, array []string) types.Lis
 	list, _ := types.ListValue(types.StringType, attrs)
 	return list
 }
+
+func TerraformStringListToGoArray(list []types.String) []string {
+	arr := make([]string, len(list))
+	for i, t := range list {
+		arr[i] = t.ValueString()
+	}
+	return arr
+}

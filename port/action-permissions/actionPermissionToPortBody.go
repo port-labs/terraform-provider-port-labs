@@ -31,8 +31,13 @@ func actionPermissionsToPortBody(state *PermissionsModel) (*cli.ActionPermission
 			return nil, err
 		}
 	}
-	if approvePolicyMap != nil {
-		actionPermissions.Approve.Policy = approvePolicyMap
+
+	if len(approvePolicyMap) > 0 {
+		actionPermissions.Approve.Policy = &approvePolicyMap
+	} else {
+		// if policy is empty, set it to nil, so it will override the existing policy on server,
+		// as opposed to merging it, due to only having a PATCH endpoint
+		actionPermissions.Approve.Policy = nil
 	}
 
 	executePolicyMap := make(map[string]interface{})
@@ -41,5 +46,14 @@ func actionPermissionsToPortBody(state *PermissionsModel) (*cli.ActionPermission
 			return nil, err
 		}
 	}
+
+	if len(executePolicyMap) > 0 {
+		actionPermissions.Execute.Policy = &executePolicyMap
+	} else {
+		// if policy is empty, set it to nil, so it will override the existing policy on server,
+		// as opposed to merging it, due to only having a PATCH endpoint
+		actionPermissions.Execute.Policy = nil
+	}
+
 	return &actionPermissions, nil
 }

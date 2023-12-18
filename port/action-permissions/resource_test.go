@@ -11,6 +11,12 @@ import (
 
 func testAccCreateBlueprintAndActionConfig(blueprintIdentifier string, actionIdentifier string) string {
 	return fmt.Sprintf(`
+	resource "port_team" "team" {
+		name = "Tf-Test"
+		description = "Test description"
+		users = []
+	}
+	
 	resource "port_blueprint" "microservice" {
 		title = "TF test microservice"
 		icon = "Terraform"
@@ -112,8 +118,8 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 		  "roles": [
 			"Member",
 		  ],
-		  "users": ["test-member-user@test.com"],
-		  "teams": ["Team Spiderman"],
+		  "users": ["devops-port@port-test.io"],
+		  "teams": ["Tf-Test"],
 		  "owned_by_team": false
 		},
 		"approve": {
@@ -153,9 +159,9 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.0", "Member"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "1"),
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.0", "test-member-user@test.com"),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.0", "devops-port@port-test.io"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.teams.#", "1"),
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.teams.0", "Team Spiderman"),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.teams.0", "Tf-Test"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.owned_by_team", "false"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.approve.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.approve.roles.0", "Member"),

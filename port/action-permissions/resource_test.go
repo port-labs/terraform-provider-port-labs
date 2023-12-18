@@ -11,12 +11,6 @@ import (
 
 func testAccCreateBlueprintAndActionConfig(blueprintIdentifier string, actionIdentifier string) string {
 	return fmt.Sprintf(`
-	resource "port_team" "team" {
-		name = "Tf-Test"
-		description = "Test description"
-		users = []
-	}
-	
 	resource "port_blueprint" "microservice" {
 		title = "TF test microservice"
 		icon = "Terraform"
@@ -110,6 +104,12 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 	  }
 	}`
 	var testAccActionPermissionsConfigUpdate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
+   	resource "port_team" "team" {
+		name = "Tf-Test"
+		description = "Test description"
+		users = []
+	}
+
 	resource "port_action_permissions" "create_microservice_permissions" {
 	  action_identifier = port_action.create_microservice.identifier
 	  blueprint_identifier = port_blueprint.microservice.identifier

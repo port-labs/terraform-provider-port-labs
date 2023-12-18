@@ -30,6 +30,8 @@ jobs:
   
   acctest:
     runs-on: ubuntu-20.04
+    concurrency:
+      group: 'acctest-${{ github.sha }}'
     strategy:
       matrix:
         go: ['1.18', '1.19']

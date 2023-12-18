@@ -119,7 +119,7 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 			"Member",
 		  ],
 		  "users": ["devops-port@port-test.io"],
-		  "teams": ["Tf-Test"],
+		  "teams": ["Tf-Test1"],
 		  "owned_by_team": false
 		},
 		"approve": {
@@ -161,7 +161,7 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.0", "devops-port@port-test.io"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.teams.#", "1"),
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.teams.0", "Tf-Test"),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.teams.0", "Tf-Test1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.owned_by_team", "false"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.approve.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.approve.roles.0", "Member"),

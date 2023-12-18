@@ -37,7 +37,7 @@ func testAccCreateBlueprintAndActionConfig(blueprintIdentifier string, actionIde
 func TestAccPortActionPermissionsBasic(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	actionIdentifier := utils.GenID()
-	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + fmt.Sprintf(`
+	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
 	  action_identifier = port_action.create_microservice.identifier
 	  blueprint_identifier = port_blueprint.microservice.identifier
@@ -56,7 +56,7 @@ func TestAccPortActionPermissionsBasic(t *testing.T) {
 		  "teams": []
 		}
 	  }
-	}`)
+	}`
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -83,7 +83,7 @@ func TestAccPortActionPermissionsBasic(t *testing.T) {
 func TestAccPortActionPermissionsUpdate(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	actionIdentifier := utils.GenID()
-	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + fmt.Sprintf(`
+	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
 	  action_identifier = port_action.create_microservice.identifier
 	  blueprint_identifier = port_blueprint.microservice.identifier
@@ -102,8 +102,8 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 		  "teams": []
 		}
 	  }
-	}`)
-	var testAccActionPermissionsConfigUpdate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + fmt.Sprintf(`
+	}`
+	var testAccActionPermissionsConfigUpdate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
 	  action_identifier = port_action.create_microservice.identifier
 	  blueprint_identifier = port_blueprint.microservice.identifier
@@ -124,7 +124,7 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 		  "teams": []
 		}
 	  }
-	}`)
+	}`
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -170,7 +170,7 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 func TestAccPortActionPermissionsWithPolicy(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	actionIdentifier := utils.GenID()
-	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + fmt.Sprintf(`
+	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
 	  action_identifier = port_action.create_microservice.identifier
 	  blueprint_identifier = port_blueprint.microservice.identifier	
@@ -217,9 +217,9 @@ func TestAccPortActionPermissionsWithPolicy(t *testing.T) {
           })
 		}
       }
-	}`)
+	}`
 
-	var testAccActionPermissionsConfigUpdate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + fmt.Sprintf(`
+	var testAccActionPermissionsConfigUpdate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
 	  action_identifier = port_action.create_microservice.identifier
 	  blueprint_identifier = port_blueprint.microservice.identifier	
@@ -238,7 +238,7 @@ func TestAccPortActionPermissionsWithPolicy(t *testing.T) {
 		  "teams": []
 		}
 	  }
-    }`)
+    }`
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -282,7 +282,7 @@ func TestAccPortActionPermissionsWithPolicy(t *testing.T) {
 func TestAccPortActionPermissionsWithPolicyUpdate(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	actionIdentifier := utils.GenID()
-	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + fmt.Sprintf(`
+	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
 	  action_identifier = port_action.create_microservice.identifier
 	  blueprint_identifier = port_blueprint.microservice.identifier	
@@ -329,9 +329,9 @@ func TestAccPortActionPermissionsWithPolicyUpdate(t *testing.T) {
 		  })
 		}
 	  }
-	}`)
+	}`
 
-	var testAccActionPermissionsConfigUpdate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + fmt.Sprintf(`
+	var testAccActionPermissionsConfigUpdate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
 	  action_identifier = port_action.create_microservice.identifier
 	  blueprint_identifier = port_blueprint.microservice.identifier	
@@ -378,7 +378,7 @@ func TestAccPortActionPermissionsWithPolicyUpdate(t *testing.T) {
 		  })
 		}	
 	  }
-	}`)
+	}`
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -422,7 +422,7 @@ func TestAccPortActionPermissionsWithPolicyUpdate(t *testing.T) {
 func TestAccPortActionPermissionsImportState(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	actionIdentifier := utils.GenID()
-	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + fmt.Sprintf(`
+	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
 	  action_identifier = port_action.create_microservice.identifier
 	  blueprint_identifier = port_blueprint.microservice.identifier	
@@ -469,7 +469,7 @@ func TestAccPortActionPermissionsImportState(t *testing.T) {
 		  })
 		}
 	  }
-	}`)
+	}`
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,

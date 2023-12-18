@@ -1,6 +1,8 @@
 package team_test
 
 import (
+	"fmt"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -8,12 +10,13 @@ import (
 )
 
 func TestAccPortTeam(t *testing.T) {
-	var testAccTeamConfigCreate = `
+	teamName := utils.GenID()
+	var testAccTeamConfigCreate = fmt.Sprintf(`
 	resource "port_team" "team" {
-		name = "Tf-Test"
+		name = "%s"
 		description = "Test description"
 		users = []
-	}`
+	}`, teamName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -22,7 +25,7 @@ func TestAccPortTeam(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccTeamConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
+					resource.TestCheckResourceAttr("port_team.team", "name", teamName),
 					resource.TestCheckResourceAttr("port_team.team", "description", "Test description"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "0"),
 				),
@@ -32,19 +35,20 @@ func TestAccPortTeam(t *testing.T) {
 }
 
 func TestAccPortTeamUpdate(t *testing.T) {
-	var testAccTeamConfigCreate = `
+	teamName := utils.GenID()
+	var testAccTeamConfigCreate = fmt.Sprintf(`
 	resource "port_team" "team" {
-		name = "Tf-Test"
+		name = "%s"
 		description = "Test description"
 		users = []
-	}`
+	}`, teamName)
 
-	var testAccTeamConfigUpdate = `
+	var testAccTeamConfigUpdate = fmt.Sprintf(`
 	resource "port_team" "team" {
-		name = "Tf-Test"
+		name = "%s"
 		description = "Test description2"
 		users = ["devops-port@port-test.io"]
-	}`
+	}`, teamName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -53,7 +57,7 @@ func TestAccPortTeamUpdate(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccTeamConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
+					resource.TestCheckResourceAttr("port_team.team", "name", teamName),
 					resource.TestCheckResourceAttr("port_team.team", "description", "Test description"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "0"),
 				),
@@ -61,7 +65,7 @@ func TestAccPortTeamUpdate(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccTeamConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
+					resource.TestCheckResourceAttr("port_team.team", "name", teamName),
 					resource.TestCheckResourceAttr("port_team.team", "description", "Test description2"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "1"),
 					resource.TestCheckResourceAttr("port_team.team", "users.0", "devops-port@port-test.io"),
@@ -72,18 +76,19 @@ func TestAccPortTeamUpdate(t *testing.T) {
 }
 
 func TestAccPortTeamEmptyDescription(t *testing.T) {
-	var testAccTeamConfigCreate = `
+	teamName := utils.GenID()
+	var testAccTeamConfigCreate = fmt.Sprintf(`
 	resource "port_team" "team" {
-		name = "Tf-Test"
+		name = "%s"
 		description = "abc"
 		users = []
-	}`
+	}`, teamName)
 
-	var testAccTeamConfigUpdate = `
+	var testAccTeamConfigUpdate = fmt.Sprintf(`
 	resource "port_team" "team" {
-		name = "Tf-Test"
+		name = "%s"
 		users = []
-	}`
+	}`, teamName)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -91,7 +96,7 @@ func TestAccPortTeamEmptyDescription(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccTeamConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
+					resource.TestCheckResourceAttr("port_team.team", "name", teamName),
 					resource.TestCheckResourceAttr("port_team.team", "description", "abc"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "0"),
 				),
@@ -99,7 +104,7 @@ func TestAccPortTeamEmptyDescription(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccTeamConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
+					resource.TestCheckResourceAttr("port_team.team", "name", teamName),
 					resource.TestCheckNoResourceAttr("port_team.team", "description"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "0"),
 				),
@@ -109,12 +114,13 @@ func TestAccPortTeamEmptyDescription(t *testing.T) {
 }
 
 func TestAccPortTeamImport(t *testing.T) {
-	var testAccTeamConfigCreate = `
+	teamName := utils.GenID()
+	var testAccTeamConfigCreate = fmt.Sprintf(`
 	resource "port_team" "team" {
-		name = "Tf-Test"
+		name = "%s"
 		description = "Test description"
 		users = ["devops-port@port-test.io"]
-	}`
+	}`, teamName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -123,7 +129,7 @@ func TestAccPortTeamImport(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccTeamConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
+					resource.TestCheckResourceAttr("port_team.team", "name", teamName),
 					resource.TestCheckResourceAttr("port_team.team", "description", "Test description"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "1"),
 					resource.TestCheckResourceAttr("port_team.team", "users.0", "devops-port@port-test.io"),
@@ -133,7 +139,7 @@ func TestAccPortTeamImport(t *testing.T) {
 				ResourceName:            "port_team.team",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateId:           "Tf-Test",
+				ImportStateId:           teamName,
 				ImportStateVerifyIgnore: []string{"provider_name"},
 			},
 		},

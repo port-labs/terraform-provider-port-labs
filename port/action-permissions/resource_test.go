@@ -83,6 +83,7 @@ func TestAccPortActionPermissionsBasic(t *testing.T) {
 func TestAccPortActionPermissionsUpdate(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	actionIdentifier := utils.GenID()
+	teamName := utils.GenID()
 	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
 	  action_identifier = port_action.create_microservice.identifier
@@ -103,9 +104,9 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 		}
 	  }
 	}`
-	var testAccActionPermissionsConfigUpdate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
+	var testAccActionPermissionsConfigUpdate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + fmt.Sprintf(`
    	resource "port_team" "team" {
-		name = "Tf-Test1"
+		name = "%s"
 		description = "Test description"
 		users = []
 	}
@@ -119,7 +120,7 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 			"Member",
 		  ],
 		  "users": ["devops-port@port-test.io"],
-		  "teams": ["Tf-Test1"],
+		  "teams": [port_team.team.name],
 		  "owned_by_team": false
 		},
 		"approve": {
@@ -130,7 +131,7 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 		  "teams": []
 		}
 	  }
-	}`
+	}`, teamName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },

@@ -71,38 +71,6 @@ func TestAccPortTeamUpdate(t *testing.T) {
 	})
 }
 
-func TestAccPortTeamImport(t *testing.T) {
-	var testAccTeamConfigCreate = `
-	resource "port_team" "team" {
-		name = "Tf-Test"
-		description = "Test description"
-		users = ["devops-port@port-test.io"]
-	}`
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: acctest.ProviderConfig + testAccTeamConfigCreate,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
-					resource.TestCheckResourceAttr("port_team.team", "description", "Test description"),
-					resource.TestCheckResourceAttr("port_team.team", "users.#", "1"),
-					resource.TestCheckResourceAttr("port_team.team", "users.0", "devops-port@port-test.io"),
-				),
-			},
-			{
-				ResourceName:            "port_team.team",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateId:           "Tf-Test",
-				ImportStateVerifyIgnore: []string{"provider_name"},
-			},
-		},
-	})
-}
-
 func TestAccPortTeamEmptyDescription(t *testing.T) {
 	var testAccTeamConfigCreate = `
 	resource "port_team" "team" {
@@ -135,6 +103,38 @@ func TestAccPortTeamEmptyDescription(t *testing.T) {
 					resource.TestCheckNoResourceAttr("port_team.team", "description"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "0"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccPortTeamImport(t *testing.T) {
+	var testAccTeamConfigCreate = `
+	resource "port_team" "team" {
+		name = "Tf-Test"
+		description = "Test description"
+		users = ["devops-port@port-test.io"]
+	}`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccTeamConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_team.team", "name", "Tf-Test"),
+					resource.TestCheckResourceAttr("port_team.team", "description", "Test description"),
+					resource.TestCheckResourceAttr("port_team.team", "users.#", "1"),
+					resource.TestCheckResourceAttr("port_team.team", "users.0", "devops-port@port-test.io"),
+				),
+			},
+			{
+				ResourceName:            "port_team.team",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateId:           "Tf-Test",
+				ImportStateVerifyIgnore: []string{"provider_name"},
 			},
 		},
 	})

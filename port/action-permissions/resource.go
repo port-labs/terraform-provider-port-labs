@@ -123,7 +123,7 @@ func (r *ActionPermissionsResource) Delete(ctx context.Context, req resource.Del
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	// actionPermissions is not deletable resource by itself as it is tight to an action and is created by default when an action is created
+	// actionPermissions is not deletable resource by itself as it is tied to an action and is created by default when an action is created
 	resp.State.RemoveResource(ctx)
 }
 

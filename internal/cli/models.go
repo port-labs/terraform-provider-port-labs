@@ -193,18 +193,18 @@ type (
 	}
 
 	ActionExecutePermissions struct {
-		Users       []string                `json:"users"`
-		Roles       []string                `json:"roles"`
-		Teams       []string                `json:"teams"`
-		OwnedByTeam *bool                   `json:"ownedByTeam"`
-		Policy      *map[string]interface{} `json:"policy"`
+		Users       []string        `json:"users"`
+		Roles       []string        `json:"roles"`
+		Teams       []string        `json:"teams"`
+		OwnedByTeam *bool           `json:"ownedByTeam"`
+		Policy      *map[string]any `json:"policy"`
 	}
 
 	ActionApprovePermissions struct {
-		Users  []string                `json:"users"`
-		Roles  []string                `json:"roles"`
-		Teams  []string                `json:"teams"`
-		Policy *map[string]interface{} `json:"policy"`
+		Users  []string        `json:"users"`
+		Roles  []string        `json:"roles"`
+		Teams  []string        `json:"teams"`
+		Policy *map[string]any `json:"policy"`
 	}
 
 	ActionPermissions struct {

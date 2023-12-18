@@ -6,6 +6,22 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 )
 
+func policyToPortBody(policy *string) (*map[string]any, error) {
+	// if policy is empty, set it to nil, so it will override the existing policy on server,
+	// as opposed to merging it, due to only having a PATCH endpoint
+
+	if policy == nil || *policy == "" {
+		return nil, nil
+	}
+
+	policyMap := make(map[string]any)
+	if err := json.Unmarshal([]byte(*policy), &policyMap); err != nil {
+		return nil, err
+	}
+
+	return &policyMap, nil
+}
+
 func actionPermissionsToPortBody(state *PermissionsModel) (*cli.ActionPermissions, error) {
 	if state == nil {
 		return nil, nil
@@ -25,35 +41,18 @@ func actionPermissionsToPortBody(state *PermissionsModel) (*cli.ActionPermission
 		},
 	}
 
-	approvePolicyMap := make(map[string]interface{})
-	if state.Approve.Policy.ValueString() != "" {
-		if err := json.Unmarshal([]byte(state.Approve.Policy.ValueString()), &approvePolicyMap); err != nil {
-			return nil, err
-		}
+	approvePolicyMap, err := policyToPortBody(state.Approve.Policy.ValueStringPointer())
+	if err != nil {
+		return nil, err
 	}
 
-	if len(approvePolicyMap) > 0 {
-		actionPermissions.Approve.Policy = &approvePolicyMap
-	} else {
-		// if policy is empty, set it to nil, so it will override the existing policy on server,
-		// as opposed to merging it, due to only having a PATCH endpoint
-		actionPermissions.Approve.Policy = nil
+	executePolicyMap, err := policyToPortBody(state.Execute.Policy.ValueStringPointer())
+	if err != nil {
+		return nil, err
 	}
 
-	executePolicyMap := make(map[string]interface{})
-	if state.Execute.Policy.ValueString() != "" {
-		if err := json.Unmarshal([]byte(state.Execute.Policy.ValueString()), &executePolicyMap); err != nil {
-			return nil, err
-		}
-	}
-
-	if len(executePolicyMap) > 0 {
-		actionPermissions.Execute.Policy = &executePolicyMap
-	} else {
-		// if policy is empty, set it to nil, so it will override the existing policy on server,
-		// as opposed to merging it, due to only having a PATCH endpoint
-		actionPermissions.Execute.Policy = nil
-	}
+	actionPermissions.Approve.Policy = approvePolicyMap
+	actionPermissions.Execute.Policy = executePolicyMap
 
 	return &actionPermissions, nil
 }

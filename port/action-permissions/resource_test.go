@@ -105,7 +105,7 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 	}`
 	var testAccActionPermissionsConfigUpdate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
    	resource "port_team" "team" {
-		name = "Tf-Test"
+		name = "Tf-Test1"
 		description = "Test description"
 		users = []
 	}

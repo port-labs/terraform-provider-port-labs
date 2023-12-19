@@ -192,6 +192,26 @@ type (
 		ApprovalNotification *ApprovalNotification `json:"approvalNotification,omitempty"`
 	}
 
+	ActionExecutePermissions struct {
+		Users       []string        `json:"users"`
+		Roles       []string        `json:"roles"`
+		Teams       []string        `json:"teams"`
+		OwnedByTeam *bool           `json:"ownedByTeam"`
+		Policy      *map[string]any `json:"policy"`
+	}
+
+	ActionApprovePermissions struct {
+		Users  []string        `json:"users"`
+		Roles  []string        `json:"roles"`
+		Teams  []string        `json:"teams"`
+		Policy *map[string]any `json:"policy"`
+	}
+
+	ActionPermissions struct {
+		Execute ActionExecutePermissions `json:"execute"`
+		Approve ActionApprovePermissions `json:"approve"`
+	}
+
 	Relation struct {
 		Identifier *string `json:"identifier,omitempty"`
 		Title      *string `json:"title,omitempty"`
@@ -274,13 +294,14 @@ type (
 )
 
 type PortBody struct {
-	OK          bool      `json:"ok"`
-	Entity      Entity    `json:"entity"`
-	Blueprint   Blueprint `json:"blueprint"`
-	Action      Action    `json:"action"`
-	Integration Webhook   `json:"integration"`
-	Scorecard   Scorecard `json:"Scorecard"`
-	Team        Team      `json:"team"`
+	OK                bool              `json:"ok"`
+	Entity            Entity            `json:"entity"`
+	Blueprint         Blueprint         `json:"blueprint"`
+	Action            Action            `json:"action"`
+	ActionPermissions ActionPermissions `json:"permissions"`
+	Integration       Webhook           `json:"integration"`
+	Scorecard         Scorecard         `json:"Scorecard"`
+	Team              Team              `json:"team"`
 }
 
 type TeamUserBody struct {

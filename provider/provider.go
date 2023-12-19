@@ -11,6 +11,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/port/action"
+	"github.com/port-labs/terraform-provider-port-labs/port/action-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/port/blueprint"
 	"github.com/port-labs/terraform-provider-port-labs/port/entity"
 	"github.com/port-labs/terraform-provider-port-labs/port/scorecard"
@@ -127,6 +128,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		blueprint.NewBlueprintResource,
 		entity.NewEntityResource,
 		action.NewActionResource,
+		action_permissions.NewActionPermissionsResource,
 		webhook.NewWebhookResource,
 		scorecard.NewScorecardResource,
 		team.NewTeamResource,

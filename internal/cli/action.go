@@ -68,7 +68,7 @@ func (c *PortClient) UpdateAction(ctx context.Context, blueprintID, actionID str
 	return &pb.Action, nil
 }
 
-func (c *PortClient) DeleteAction(ctx context.Context, blueprintID, actionID string) error {
+func (c *PortClient) DeleteAction(ctx context.Context, blueprintID string, actionID string) error {
 	url := "v1/blueprints/{blueprint_identifier}/actions/{action_identifier}"
 	resp, err := c.Client.R().
 		SetContext(ctx).

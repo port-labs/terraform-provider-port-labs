@@ -131,3 +131,39 @@ func calculationPropertiesToBody(ctx context.Context, state *BlueprintModel) map
 
 	return calculationProperties
 }
+
+func aggregationPropertiesToBody(ctx context.Context, state *BlueprintModel) map[string]cli.BlueprintCalculationProperty {
+	aggregationProperties := map[string]cli.BlueprintAggregationProperty{}
+
+	for identifier, prop := range state.AggregationProperties {
+		aggregationProp := cli.BlueprintAggregationProperty{
+			RelatedBlueprint: prop.RelatedBlueprint.ValueString(),
+			Type:        prop.Type.ValueString(),
+			Function:    prop.Function.ValueString()
+		}
+
+		if !prop.Title.IsNull() {
+			title := prop.Title.ValueString()
+			aggregationProp.Title = &title
+		}
+
+		if !prop.Description.IsNull() {
+			description := prop.Description.ValueString()
+			aggregationProp.Description = &description
+		}
+
+		if !prop.Icon.IsNull() {
+			icon := prop.Icon.ValueString()
+			aggregationProp.Icon = &icon
+		}
+
+		if !prop.Property.IsNull() {
+			property := prop.Property.ValueBool()
+			aggregationProp.Property = &property
+		}
+
+		aggregationProperties[identifier] = aggregationProp
+	}
+
+	return aggregationProperties
+}

@@ -448,6 +448,42 @@ func BlueprintSchema() map[string]schema.Attribute {
 				},
 			},
 		},
+		"aggregation_properties": schema.MapNestedAttribute{
+			MarkdownDescription: "The aggregation properties of the blueprint",
+			Optional:            true,
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"title": schema.StringAttribute{
+						MarkdownDescription: "The title of the aggregation property",
+						Optional:            true,
+					},
+					"description": schema.StringAttribute{
+						MarkdownDescription: "The description of the aggregation property",
+						Optional:            true,
+					},
+					"icon": schema.StringAttribute{
+						MarkdownDescription: "The icon of the aggregation property",
+						Optional:            true,
+					},
+					"related_blueprint": schema.StringAttribute{
+						MarkdownDescription: "The blueprint to aggregate from",
+						Required:            true,
+					},
+					"type": schema.StringAttribute{
+						MarkdownDescription: "The type of the aggregation property",
+						Required:            true,
+					},
+					"property": schema.StringAttribute{
+						MarkdownDescription: "In case of type \"property\", the property to use for with the function",
+						Optional:            true,
+					},
+					"function": schema.StringAttribute{
+						MarkdownDescription: "The function to use to calculate the aggregation",
+						Required:            true,
+					},
+				},
+			},
+		},
 	}
 }
 

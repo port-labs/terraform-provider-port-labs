@@ -113,6 +113,17 @@ type (
 		Colors      map[string]string `json:"colors,omitempty"`
 	}
 
+	BlueprintAggregationProperty struct {
+		Identifier       string            `json:"identifier,omitempty"`
+		Title            *string           `json:"title,omitempty"`
+		Description      *string           `json:"description,omitempty"`
+		Icon             *string           `json:"icon,omitempty"`
+		RelatedBlueprint *string           `json:"relatedBlueprint,omitempty"`
+		Type             *string           `json:"type,omitempty"`
+		Function         *string           `json:"function,omitempty"`
+		Property         *string           `json:"property,omitempty"`
+	}
+
 	BlueprintMirrorProperty struct {
 		Identifier string  `json:"identifier,omitempty"`
 		Title      *string `json:"title,omitempty"`
@@ -174,6 +185,7 @@ type (
 		Schema                BlueprintSchema                         `json:"schema"`
 		MirrorProperties      map[string]BlueprintMirrorProperty      `json:"mirrorProperties"`
 		CalculationProperties map[string]BlueprintCalculationProperty `json:"calculationProperties"`
+		AggregationProperties map[string]BlueprintAggregationProperty `json:"aggregationProperties"`
 		ChangelogDestination  *ChangelogDestination                   `json:"changelogDestination,omitempty"`
 		TeamInheritance       *TeamInheritance                        `json:"teamInheritance,omitempty"`
 		Relations             map[string]Relation                     `json:"relations"`

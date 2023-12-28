@@ -679,6 +679,49 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 	})
 }
 
+func TestAccPortBlueprintWithAggregationProperty(t *testing.T) {
+	identifier1 := utils.GenID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port_blueprint" "microservice1" {
+		title = "TF Provider Test BP2"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_props = {
+				"text" = {
+					title = "text"
+				}
+			}
+		}
+		aggregation_properties = {
+			"aggregation-for-microservice1" = {
+				title = "Aggregation for microservice1"
+				related_blueprint = "other_blueprint"
+				type = "property"
+				function = "sum"
+				property = "someproperty"
+			}
+		}
+	}`, identifier1)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.microservice1", "aggregation_properties.aggregation-for-microservice1.title", "Aggregation for microservice1"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice1", "aggregation_properties.aggregation-for-microservice1.related_blueprint", "other_blueprint"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice1", "aggregation_properties.aggregation-for-microservice1.type", "property"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice1", "aggregation_properties.aggregation-for-microservice1.function", "sum"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice1", "aggregation_properties.aggregation-for-microservice1.property", "someproperty"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortUpdateBlueprintIdentifier(t *testing.T) {
 	identifier := utils.GenID()
 	updatedIdentifier := utils.GenID()

@@ -231,3 +231,28 @@ func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *
 
 	}
 }
+
+func addAggregationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel) {
+	for k, v := range b.AggregationProperties {
+		if bm.AggregationProperties == nil {
+			bm.AggregationProperties = make(map[string]AggregationPropertyModel)
+		}
+
+		aggregationPropertyModel := &AggregationPropertyModel{
+			Title:            flex.GoStringToFramework(v.Title),
+			Description:      flex.GoStringToFramework(v.Description),
+			Icon:             flex.GoStringToFramework(v.Icon)
+			RelatedBlueprint: types.StringValue(v.RelatedBlueprint),
+			Type:        	  types.StringValue(v.Type),
+			Function:         types.StringValue(v.Function),
+		}
+
+		if v.Function == "property" {
+			calculationPropertyModel.Property, _ =  types.StringValue(v.Property)
+		}
+
+
+		bm.AggregationProperties[k] = *aggregationPropertyModel
+
+	}
+}

@@ -110,6 +110,10 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 		addCalculationPropertiesToState(ctx, b, bm)
 	}
 
+	if len(b.AggregationProperties) > 0 {
+		addAggregationPropertiesToState(ctx, b, bm)
+	}
+
 	return nil
 }
 
@@ -271,5 +275,6 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 	b.Relations = relationsResourceToBody(state)
 	b.MirrorProperties = mirrorPropertiesToBody(state)
 	b.CalculationProperties = calculationPropertiesToBody(ctx, state)
+	b.AggregationProperties = aggregationPropertiesToBody(ctx, state)
 	return b, nil
 }

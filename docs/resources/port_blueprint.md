@@ -23,6 +23,7 @@ Blueprint Resource
 ### Optional
 
 - `calculation_properties` (Attributes Map) The calculation properties of the blueprint (see [below for nested schema](#nestedatt--calculation_properties))
+- `aggregation_properties` (Attributes Map) The aggregation properties of the blueprint (see [below for nested schema](#nestedatt--aggregation_properties))
 - `description` (String) The description of the blueprint
 - `icon` (String) The icon of the blueprint
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (see [below for nested schema](#nestedatt--kafka_changelog_destination))
@@ -56,6 +57,23 @@ Optional:
 - `format` (String) The format of the calculation property
 - `icon` (String) The icon of the calculation property
 - `title` (String) The title of the calculation property
+
+<a id="nestedatt--aggregation_properties"></a>
+### Nested Schema for `aggregation_properties`
+
+Required:
+
+- `relatedBlueprint` (String) The blueprint to aggregate from
+- `type` (String) The type of the aggregation property
+- `function` (String) The function to use to calculate the aggregation
+
+Optional:
+
+- `title` (String) The title of the aggregation property
+- `description` (String) The description of the aggregation property
+- `icon` (String) The icon of the aggregation property
+- `property` (String) In case of type "property", the property to use for with the function
+
 
 
 <a id="nestedatt--kafka_changelog_destination"></a>

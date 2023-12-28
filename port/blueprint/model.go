@@ -124,6 +124,16 @@ type CalculationPropertyModel struct {
 	Colors      types.Map    `tfsdk:"colors"`
 }
 
+type AggregationPropertyModel struct {
+	Title            types.String `tfsdk:"title"`
+	Description      types.String `tfsdk:"description"`
+	Icon             types.String `tfsdk:"icon"`
+	RelatedBlueprint types.String `tfsdk:"related_blueprint"`
+	Type             types.String `tfsdk:"type"`
+	Property         types.String `tfsdk:"property"`
+	Function         types.String `tfsdk:"function"`
+}
+
 type BlueprintModel struct {
 	ID                          types.String                        `tfsdk:"id"`
 	Identifier                  types.String                        `tfsdk:"identifier"`
@@ -141,4 +151,5 @@ type BlueprintModel struct {
 	Relations                   map[string]RelationModel            `tfsdk:"relations"`
 	MirrorProperties            map[string]MirrorPropertyModel      `tfsdk:"mirror_properties"`
 	CalculationProperties       map[string]CalculationPropertyModel `tfsdk:"calculation_properties"`
+	AggregationProperties       map[string]AggregationPropertyModel `tfsdk:"aggregation_properties"`
 }

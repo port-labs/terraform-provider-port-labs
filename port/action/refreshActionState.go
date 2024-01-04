@@ -152,9 +152,6 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					} else if stateProp.Required == types.BoolValue(false) {
 						stringProp.Required = types.BoolValue(false)
 					}
-					//else {
-					//	stringProp.Required = types.BoolNull()
-					//}
 				}
 
 				err := setCommonProperties(ctx, v, stringProp)
@@ -181,9 +178,6 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					} else if stateProp.Required == types.BoolValue(false) {
 						numberProp.Required = types.BoolValue(false)
 					}
-					//else {
-					//	numberProp.Required = types.BoolNull()
-					//}
 				}
 
 				err := setCommonProperties(ctx, v, numberProp)
@@ -213,9 +207,6 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					} else if stateProp.Required == types.BoolValue(false) {
 						arrayProp.Required = types.BoolValue(false)
 					}
-					//else {
-					//	arrayProp.Required = types.BoolNull()
-					//}
 				}
 
 				err = setCommonProperties(ctx, v, arrayProp)
@@ -247,9 +238,6 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					} else if stateProp.Required == types.BoolValue(false) {
 						booleanProp.Required = types.BoolValue(false)
 					}
-					//else {
-					//	booleanProp.Required = types.BoolNull()
-					//}
 				}
 
 				properties.BooleanProps[k] = *booleanProp
@@ -271,9 +259,6 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					} else if stateProp.Required == types.BoolValue(false) {
 						objectProp.Required = types.BoolValue(false)
 					}
-					//else {
-					//	objectProp.Required = types.BoolNull()
-					//}
 				}
 
 				err := setCommonProperties(ctx, v, objectProp)

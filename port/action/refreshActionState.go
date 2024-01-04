@@ -3,6 +3,7 @@ package action
 import (
 	"context"
 	"fmt"
+	"github.com/samber/lo"
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -10,7 +11,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
-	"github.com/samber/lo"
 )
 
 func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
@@ -103,9 +103,37 @@ func writeVisibleToResource(v cli.ActionProperty) (types.Bool, types.String) {
 	return types.BoolNull(), types.StringNull()
 }
 
+func writeRequiredToResource(v cli.ActionUserInputs) (types.String, []string) {
+	// If required is nil, return an empty string and nil
+	if v.Required == nil {
+		return types.StringNull(), nil
+	}
+
+	required := reflect.ValueOf(v.Required)
+	switch required.Kind() {
+	// if required is a slice of strings that means that the user has specified which properties are required
+	case reflect.Slice:
+		slice := required.Interface().([]interface{})
+		attrs := make([]string, 0, required.Len())
+		for _, value := range slice {
+			attrs = append(attrs, value.(string))
+		}
+		return types.StringNull(), attrs
+	// if required is a map, that means that the user has specified a jq query to determine which properties are required
+	case reflect.Map:
+		jq := required.Interface().(map[string]any)
+		jqQueryValue := jq["jqQuery"].(string)
+		return types.StringValue(jqQueryValue), nil
+	}
+
+	// if required is not a slice or a map, return an empty string and nil
+	return types.StringNull(), nil
+}
+
 func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
 	if len(a.UserInputs.Properties) > 0 {
 		properties := &UserPropertiesModel{}
+		requiredJq, required := writeRequiredToResource(a.UserInputs)
 		for k, v := range a.UserInputs.Properties {
 			switch v.Type {
 			case "string":
@@ -114,10 +142,19 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 				}
 				stringProp := addStringPropertiesToResource(ctx, &v)
 
-				if lo.Contains(a.UserInputs.Required, k) {
-					stringProp.Required = types.BoolValue(true)
-				} else {
-					stringProp.Required = types.BoolValue(false)
+				if requiredJq.IsNull() {
+					var stateProp = StringPropModel{}
+					if state.UserProperties != nil {
+						stateProp, _ = state.UserProperties.StringProps[k]
+					}
+					if lo.Contains(required, k) {
+						stringProp.Required = types.BoolValue(true)
+					} else if stateProp.Required == types.BoolValue(false) {
+						stringProp.Required = types.BoolValue(false)
+					}
+					//else {
+					//	stringProp.Required = types.BoolNull()
+					//}
 				}
 
 				err := setCommonProperties(ctx, v, stringProp)
@@ -134,10 +171,19 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				numberProp := addNumberPropertiesToResource(ctx, &v)
 
-				if lo.Contains(a.UserInputs.Required, k) {
-					numberProp.Required = types.BoolValue(true)
-				} else {
-					numberProp.Required = types.BoolValue(false)
+				if requiredJq.IsNull() {
+					var stateProp = NumberPropModel{}
+					if state.UserProperties != nil {
+						stateProp, _ = state.UserProperties.NumberProps[k]
+					}
+					if lo.Contains(required, k) {
+						numberProp.Required = types.BoolValue(true)
+					} else if stateProp.Required == types.BoolValue(false) {
+						numberProp.Required = types.BoolValue(false)
+					}
+					//else {
+					//	numberProp.Required = types.BoolNull()
+					//}
 				}
 
 				err := setCommonProperties(ctx, v, numberProp)
@@ -157,10 +203,19 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					return err
 				}
 
-				if lo.Contains(a.UserInputs.Required, k) {
-					arrayProp.Required = types.BoolValue(true)
-				} else {
-					arrayProp.Required = types.BoolValue(false)
+				if requiredJq.IsNull() {
+					var stateProp = ArrayPropModel{}
+					if state.UserProperties != nil {
+						stateProp, _ = state.UserProperties.ArrayProps[k]
+					}
+					if lo.Contains(required, k) {
+						arrayProp.Required = types.BoolValue(true)
+					} else if stateProp.Required == types.BoolValue(false) {
+						arrayProp.Required = types.BoolValue(false)
+					}
+					//else {
+					//	arrayProp.Required = types.BoolNull()
+					//}
 				}
 
 				err = setCommonProperties(ctx, v, arrayProp)
@@ -182,10 +237,19 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 					return err
 				}
 
-				if lo.Contains(a.UserInputs.Required, k) {
-					booleanProp.Required = types.BoolValue(true)
-				} else {
-					booleanProp.Required = types.BoolValue(false)
+				if requiredJq.IsNull() {
+					var stateProp = BooleanPropModel{}
+					if state.UserProperties != nil {
+						stateProp, _ = state.UserProperties.BooleanProps[k]
+					}
+					if lo.Contains(required, k) {
+						booleanProp.Required = types.BoolValue(true)
+					} else if stateProp.Required == types.BoolValue(false) {
+						booleanProp.Required = types.BoolValue(false)
+					}
+					//else {
+					//	booleanProp.Required = types.BoolNull()
+					//}
 				}
 
 				properties.BooleanProps[k] = *booleanProp
@@ -197,10 +261,19 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				objectProp := addObjectPropertiesToResource(&v)
 
-				if lo.Contains(a.UserInputs.Required, k) {
-					objectProp.Required = types.BoolValue(true)
-				} else {
-					objectProp.Required = types.BoolValue(false)
+				if requiredJq.IsNull() {
+					var stateProp = ObjectPropModel{}
+					if state.UserProperties != nil {
+						stateProp, _ = state.UserProperties.ObjectProps[k]
+					}
+					if lo.Contains(required, k) {
+						objectProp.Required = types.BoolValue(true)
+					} else if stateProp.Required == types.BoolValue(false) {
+						objectProp.Required = types.BoolValue(false)
+					}
+					//else {
+					//	objectProp.Required = types.BoolNull()
+					//}
 				}
 
 				err := setCommonProperties(ctx, v, objectProp)
@@ -244,6 +317,12 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 			}
 
 		}
+	}
+
+	requiredJq, _ := writeRequiredToResource(a.UserInputs)
+
+	if !requiredJq.IsNull() {
+		state.RequiredJqQuery = requiredJq
 	}
 
 	writeInvocationMethodToResource(a, state)

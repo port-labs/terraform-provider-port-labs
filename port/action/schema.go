@@ -2,7 +2,7 @@ package action
 
 import (
 	"context"
-
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -27,10 +27,13 @@ func MetadataProperties() map[string]schema.Attribute {
 			Optional:            true,
 		},
 		"required": schema.BoolAttribute{
-			MarkdownDescription: "Whether the property is required",
-			Computed:            true,
-			Optional:            true,
-			Default:             booldefault.StaticBool(false),
+			MarkdownDescription: "Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set",
+			//Computed:            true,
+			Optional: true,
+			//Default:             booldefault.StaticBool(false),
+			Validators: []validator.Bool{
+				boolvalidator.ConflictsWith(path.MatchRoot("required_jq_query")),
+			},
 		},
 		"description": schema.StringAttribute{
 			MarkdownDescription: "The description of the property",
@@ -256,6 +259,10 @@ func ActionSchema() map[string]schema.Attribute {
 				"object_props":  ObjectPropertySchema(),
 				"array_props":   ArrayPropertySchema(),
 			},
+		},
+		"required_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The required jq query of the property",
+			Optional:            true,
 		},
 	}
 

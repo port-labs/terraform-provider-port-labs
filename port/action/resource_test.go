@@ -498,6 +498,8 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 			myStringIdentifier3 = {
 			  title      = "myStringIdentifier3"
 			  required   = false
+			  format     = "entity"
+			  blueprint  = port_blueprint.microservice.id
 			  dataset = {
 				"combinator" : "and",
 				"rules" : [

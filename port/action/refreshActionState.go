@@ -144,8 +144,8 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				if requiredJq.IsNull() {
 					var stateProp = StringPropModel{}
-					if state.UserProperties != nil {
-						stateProp, _ = state.UserProperties.StringProps[k]
+					if state.UserProperties != nil && state.UserProperties.StringProps != nil {
+						stateProp = state.UserProperties.StringProps[k]
 					}
 					if lo.Contains(required, k) {
 						stringProp.Required = types.BoolValue(true)
@@ -170,8 +170,8 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				if requiredJq.IsNull() {
 					var stateProp = NumberPropModel{}
-					if state.UserProperties != nil {
-						stateProp, _ = state.UserProperties.NumberProps[k]
+					if state.UserProperties != nil && state.UserProperties.NumberProps != nil {
+						stateProp = state.UserProperties.NumberProps[k]
 					}
 					if lo.Contains(required, k) {
 						numberProp.Required = types.BoolValue(true)
@@ -199,8 +199,8 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				if requiredJq.IsNull() {
 					var stateProp = ArrayPropModel{}
-					if state.UserProperties != nil {
-						stateProp, _ = state.UserProperties.ArrayProps[k]
+					if state.UserProperties != nil && state.UserProperties.ArrayProps != nil {
+						stateProp = state.UserProperties.ArrayProps[k]
 					}
 					if lo.Contains(required, k) {
 						arrayProp.Required = types.BoolValue(true)
@@ -230,8 +230,8 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				if requiredJq.IsNull() {
 					var stateProp = BooleanPropModel{}
-					if state.UserProperties != nil {
-						stateProp, _ = state.UserProperties.BooleanProps[k]
+					if state.UserProperties != nil && state.UserProperties.BooleanProps != nil {
+						stateProp = state.UserProperties.BooleanProps[k]
 					}
 					if lo.Contains(required, k) {
 						booleanProp.Required = types.BoolValue(true)
@@ -251,8 +251,8 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				if requiredJq.IsNull() {
 					var stateProp = ObjectPropModel{}
-					if state.UserProperties != nil {
-						stateProp, _ = state.UserProperties.ObjectProps[k]
+					if state.UserProperties != nil && state.UserProperties.ObjectProps != nil {
+						stateProp = state.UserProperties.ObjectProps[k]
 					}
 					if lo.Contains(required, k) {
 						objectProp.Required = types.BoolValue(true)

@@ -186,10 +186,14 @@ func ActionSchema() map[string]schema.Attribute {
 				"omit_payload": schema.BoolAttribute{
 					MarkdownDescription: "Omit the payload when invoking the action",
 					Optional:            true,
+					Computed:            true,
+					Default:             booldefault.StaticBool(false),
 				},
 				"omit_user_inputs": schema.BoolAttribute{
 					MarkdownDescription: "Omit the user inputs when invoking the action",
 					Optional:            true,
+					Computed:            true,
+					Default:             booldefault.StaticBool(false),
 				},
 				"report_workflow_status": schema.BoolAttribute{
 					MarkdownDescription: "Report the workflow status when invoking the action",
@@ -212,10 +216,14 @@ func ActionSchema() map[string]schema.Attribute {
 				"omit_payload": schema.BoolAttribute{
 					MarkdownDescription: "Omit the payload when invoking the action",
 					Optional:            true,
+					Computed:            true,
+					Default:             booldefault.StaticBool(false),
 				},
 				"omit_user_inputs": schema.BoolAttribute{
 					MarkdownDescription: "Omit the user inputs when invoking the action",
 					Optional:            true,
+					Computed:            true,
+					Default:             booldefault.StaticBool(false),
 				},
 				"default_ref": schema.StringAttribute{
 					MarkdownDescription: "The default ref of the action",

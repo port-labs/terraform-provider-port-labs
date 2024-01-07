@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -27,10 +28,8 @@ func MetadataProperties() map[string]schema.Attribute {
 			Optional:            true,
 		},
 		"required": schema.BoolAttribute{
-			MarkdownDescription: "Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set",
-			//Computed:            true,
-			Optional: true,
-			//Default:             booldefault.StaticBool(false),
+			MarkdownDescription: "Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value",
+			Optional:            true,
 			Validators: []validator.Bool{
 				boolvalidator.ConflictsWith(path.MatchRoot("required_jq_query")),
 			},
@@ -628,5 +627,52 @@ func (r *ActionResource) Schema(ctx context.Context, req resource.SchemaRequest,
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Action resource",
 		Attributes:          ActionSchema(),
+	}
+}
+
+func (r *ActionResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var state *ActionModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	validateUserInputRequiredNotSetToFalse(state, resp)
+}
+
+func validateUserInputRequiredNotSetToFalse(state *ActionModel, resp *resource.ValidateConfigResponse) {
+	// go over all the properties and check if required is set to false, is its false, raise an error that false is not
+	// supported anymore
+	const errorString = "required is set to false, this is not supported anymore, if you don't want to make the property required, remove the required property"
+	for _, property := range state.UserProperties.StringProps {
+		if !property.Required.IsNull() && !property.Required.ValueBool() && property.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, property.Title, ` in action: `, state.Identifier))
+		}
+	}
+
+	for _, property := range state.UserProperties.NumberProps {
+		if !property.Required.IsNull() && !property.Required.ValueBool() && property.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, property.Title, ` in action: `, state.Identifier))
+		}
+	}
+
+	for _, property := range state.UserProperties.BooleanProps {
+		if !property.Required.IsNull() && !property.Required.ValueBool() && property.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, property.Title, ` in action: `, state.Identifier))
+		}
+	}
+
+	for _, property := range state.UserProperties.ObjectProps {
+		if !property.Required.IsNull() && !property.Required.ValueBool() && property.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, property.Title, ` in action: `, state.Identifier))
+		}
+	}
+
+	for _, property := range state.UserProperties.ArrayProps {
+		if !property.Required.IsNull() && !property.Required.ValueBool() && property.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, property.Title, ` in action: `, state.Identifier))
+		}
 	}
 }

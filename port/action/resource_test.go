@@ -426,7 +426,6 @@ func TestAccPortActionUpdate(t *testing.T) {
 			"string_props" = {
 				"myStringIdentifier2" = {
 					"title" = "My String Identifier"
-					"required" = false
 				}
 			}
 		}
@@ -460,7 +459,7 @@ func TestAccPortActionUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.url", "https://getport.io"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier2.title", "My String Identifier"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier2.required", "false"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier2.required"),
 				),
 			},
 		},
@@ -488,17 +487,15 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 			myStringIdentifier = {
 			  title      = "myStringIdentifier"
 			  default    = "default"
-			  required   = false
 			}
 			myStringIdentifier2 = {
 			  title      = "myStringIdentifier2"
 			  default    = "default"
-			  required   = false
 			  depends_on = ["myStringIdentifier"]
 			}
 			myStringIdentifier3 = {
 			  title      = "myStringIdentifier3"
-			  required   = false
+			  required   = true
 			  dataset = {
 				"combinator" : "and",
 				"rules" : [
@@ -534,13 +531,13 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.action1", "github_method.workflow", "lint"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.title", "myStringIdentifier"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.default", "default"),
-					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.required", "false"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.required"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.title", "myStringIdentifier2"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.default", "default"),
-					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.required", "false"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.required"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.depends_on.0", "myStringIdentifier"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.title", "myStringIdentifier3"),
-					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.required", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.required", "true"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.combinator", "and"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.property", "$team"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.operator", "containsAny"),
@@ -767,11 +764,9 @@ func TestAccPortActionOrderProperties(t *testing.T) {
 			string_props = {
 				myStringIdentifier1 = {
 					title      = "myStringIdentifier1"
-					required   = false
 				}
 				myStringIdentifier2 = {
 					title      = "myStringIdentifier2"
-					required   = false
 				}
 			}
 		}
@@ -1208,10 +1203,6 @@ func TestAccPortActionRequiredFalseAndNull(t *testing.T) {
 		}	
 		user_properties = {	
 			"string_props" = {
-				"falsyy" = {
-					"title" = "equalsOne"
-					"required" = false
-				}
 				"notRequiredExist" = {
 					"title" = "notEqualsOne"
 				}
@@ -1238,8 +1229,6 @@ func TestAccPortActionRequiredFalseAndNull(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.action1", "blueprint", blueprintIdentifier),
 					resource.TestCheckResourceAttr("port_action.action1", "trigger", "DAY-2"),
 					resource.TestCheckResourceAttr("port_action.action1", "webhook_method.url", "https://getport.io"),
-					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.falsyy.title", "equalsOne"),
-					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.falsyy.required", "false"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.notRequiredExist.title", "notEqualsOne"),
 					resource.TestCheckNoResourceAttr("port_action.action1", "user_properties.string_props.notRequiredExist.required"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.requiredTrue.title", "notEqualsOne"),

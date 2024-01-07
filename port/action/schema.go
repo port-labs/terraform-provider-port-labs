@@ -645,34 +645,39 @@ func (r *ActionResource) ValidateConfig(ctx context.Context, req resource.Valida
 func validateUserInputRequiredNotSetToFalse(state *ActionModel, resp *resource.ValidateConfigResponse) {
 	// go over all the properties and check if required is set to false, is its false, raise an error that false is not
 	// supported anymore
-	const errorString = "required is set to false, this is not supported anymore, if you don't want to make the property required, remove the required property"
-	for _, property := range state.UserProperties.StringProps {
-		if !property.Required.IsNull() && !property.Required.ValueBool() && property.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, property.Title, ` in action: `, state.Identifier))
+	const errorString = "required is set to false, this is not supported anymore, if you don't want to make the stringProp required, remove the required stringProp"
+
+	if state.UserProperties == nil {
+		return
+	}
+
+	for _, stringProp := range state.UserProperties.StringProps {
+		if !stringProp.Required.IsNull() && !stringProp.Required.ValueBool() && stringProp.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, stringProp.Title, ` in action: `, state.Identifier))
 		}
 	}
 
-	for _, property := range state.UserProperties.NumberProps {
-		if !property.Required.IsNull() && !property.Required.ValueBool() && property.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, property.Title, ` in action: `, state.Identifier))
+	for _, numberProp := range state.UserProperties.NumberProps {
+		if !numberProp.Required.IsNull() && !numberProp.Required.ValueBool() && numberProp.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, numberProp.Title, ` in action: `, state.Identifier))
 		}
 	}
 
-	for _, property := range state.UserProperties.BooleanProps {
-		if !property.Required.IsNull() && !property.Required.ValueBool() && property.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, property.Title, ` in action: `, state.Identifier))
+	for _, boolProp := range state.UserProperties.BooleanProps {
+		if !boolProp.Required.IsNull() && !boolProp.Required.ValueBool() && boolProp.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, boolProp.Title, ` in action: `, state.Identifier))
 		}
 	}
 
-	for _, property := range state.UserProperties.ObjectProps {
-		if !property.Required.IsNull() && !property.Required.ValueBool() && property.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, property.Title, ` in action: `, state.Identifier))
+	for _, objectProp := range state.UserProperties.ObjectProps {
+		if !objectProp.Required.IsNull() && !objectProp.Required.ValueBool() && objectProp.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, objectProp.Title, ` in action: `, state.Identifier))
 		}
 	}
 
-	for _, property := range state.UserProperties.ArrayProps {
-		if !property.Required.IsNull() && !property.Required.ValueBool() && property.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, property.Title, ` in action: `, state.Identifier))
+	for _, arrayProp := range state.UserProperties.ArrayProps {
+		if !arrayProp.Required.IsNull() && !arrayProp.Required.ValueBool() && arrayProp.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, arrayProp.Title, ` in action: `, state.Identifier))
 		}
 	}
 }

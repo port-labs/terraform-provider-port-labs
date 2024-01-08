@@ -2,6 +2,7 @@ package action_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -425,7 +426,6 @@ func TestAccPortActionUpdate(t *testing.T) {
 			"string_props" = {
 				"myStringIdentifier2" = {
 					"title" = "My String Identifier"
-					"required" = false
 				}
 			}
 		}
@@ -459,7 +459,7 @@ func TestAccPortActionUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.url", "https://getport.io"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier2.title", "My String Identifier"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier2.required", "false"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier2.required"),
 				),
 			},
 		},
@@ -487,17 +487,15 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 			myStringIdentifier = {
 			  title      = "myStringIdentifier"
 			  default    = "default"
-			  required   = false
 			}
 			myStringIdentifier2 = {
 			  title      = "myStringIdentifier2"
 			  default    = "default"
-			  required   = false
 			  depends_on = ["myStringIdentifier"]
 			}
 			myStringIdentifier3 = {
 			  title      = "myStringIdentifier3"
-			  required   = false
+			  required   = true
 			  format     = "entity"
 			  blueprint  = port_blueprint.microservice.id
 			  dataset = {
@@ -535,13 +533,13 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.action1", "github_method.workflow", "lint"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.title", "myStringIdentifier"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.default", "default"),
-					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.required", "false"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier.required"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.title", "myStringIdentifier2"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.default", "default"),
-					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.required", "false"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.required"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier2.depends_on.0", "myStringIdentifier"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.title", "myStringIdentifier3"),
-					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.required", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.required", "true"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.combinator", "and"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.property", "$team"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.operator", "containsAny"),
@@ -568,7 +566,6 @@ func TestAccPortActionJqDefault(t *testing.T) {
 				myStringIdentifier = {
 					title      = "myStringIdentifier"
 					default_jq_query = "'Test'"
-					required   = false
 				}
 			}
 			number_props = {
@@ -769,11 +766,9 @@ func TestAccPortActionOrderProperties(t *testing.T) {
 			string_props = {
 				myStringIdentifier1 = {
 					title      = "myStringIdentifier1"
-					required   = false
 				}
 				myStringIdentifier2 = {
 					title      = "myStringIdentifier2"
-					required   = false
 				}
 			}
 		}
@@ -1068,6 +1063,178 @@ func TestAccPortActionVisibility(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.visibleObjectProp.visible", "true"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.invisibleObjectProp.visible", "false"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.jqQueryObjectProp.visible_jq_query", "1==1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionRequiredConflictsWithRequiredJQ(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port_blueprint.microservice.id
+		trigger = "DAY-2"
+		webhook_method = {
+			url = "https://getport.io"
+		}
+		user_properties = {
+			"string_props" = {
+				"equalsOne" = {
+					"title" = "equalsOne"
+					"required" = true
+				}
+				"notEqualsOne" = {
+					"title" = "notEqualsOne"
+					"required" = true
+				}
+			}
+		}
+	}`, actionIdentifier)
+
+	var testAccActionConfigUpdate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port_blueprint.microservice.id
+		trigger = "DAY-2"
+		webhook_method = {
+			url = "https://getport.io"
+		}	
+		user_properties = {	
+			"string_props" = {
+				"equalsOne" = {
+					"title" = "equalsOne"
+					"required" = true
+				}
+				"notEqualsOne" = {
+					"title" = "notEqualsOne"
+					"required" = true
+				}
+			}
+		}
+        required_jq_query = "1==1"
+	}`, actionIdentifier)
+
+	var testAccActionConfigUpdate2 = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port_blueprint.microservice.id
+		trigger = "DAY-2"
+		webhook_method = {
+			url = "https://getport.io"
+		}
+		user_properties = {
+			"string_props" = {
+				"equalsOne" = {
+					"title" = "equalsOne"
+				}
+				"notEqualsOne" = {
+					"title" = "notEqualsOne"
+				}
+			}
+		}
+	   required_jq_query = "1==1"
+	}`, actionIdentifier)
+
+	// expect a failure when applying the update
+	resource.Test(t, resource.TestCase{
+		PreCheck:                  func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories:  acctest.TestAccProtoV6ProviderFactories,
+		PreventPostDestroyRefresh: true,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.action1", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.action1", "webhook_method.url", "https://getport.io"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.equalsOne.title", "equalsOne"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.equalsOne.required", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.notEqualsOne.title", "notEqualsOne"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.notEqualsOne.required", "true"),
+				),
+			},
+			{
+				Config:      acctest.ProviderConfig + testAccActionConfigUpdate,
+				ExpectError: regexp.MustCompile(`.*Invalid Attribute Combination*`),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigUpdate2,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.action1", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.action1", "webhook_method.url", "https://getport.io"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.equalsOne.title", "equalsOne"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "user_properties.string_props.equalsOne.required"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.notEqualsOne.title", "notEqualsOne"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "user_properties.string_props.notEqualsOne.required"),
+					resource.TestCheckResourceAttr("port_action.action1", "required_jq_query", "1==1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionRequiredFalseAndNull(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		blueprint = port_blueprint.microservice.id
+		trigger = "DAY-2"
+		webhook_method = {
+			url = "https://getport.io"
+		}	
+		user_properties = {	
+			"string_props" = {
+				"notRequiredExist" = {
+					"title" = "notEqualsOne"
+				}
+				"requiredTrue" = {
+					"title" = "notEqualsOne"	
+					"required" = true
+				}
+			}
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                  func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories:  acctest.TestAccProtoV6ProviderFactories,
+		PreventPostDestroyRefresh: true,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.action1", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.action1", "webhook_method.url", "https://getport.io"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.notRequiredExist.title", "notEqualsOne"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "user_properties.string_props.notRequiredExist.required"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.requiredTrue.title", "notEqualsOne"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.requiredTrue.required", "true"),
 				),
 			},
 		},

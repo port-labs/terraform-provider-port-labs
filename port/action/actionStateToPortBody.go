@@ -124,7 +124,16 @@ func actionPropertiesToBody(ctx context.Context, action *cli.Action, data *Actio
 	}
 
 	action.UserInputs.Properties = props
-	action.UserInputs.Required = required
+
+	// if requiredJqQuery is set, required shouldn't be set and vice versa
+	if !data.RequiredJqQuery.IsNull() {
+		RequiredJqQueryMap := map[string]string{
+			"jqQuery": data.RequiredJqQuery.ValueString(),
+		}
+		action.UserInputs.Required = RequiredJqQueryMap
+	} else {
+		action.UserInputs.Required = required
+	}
 
 	return nil
 }

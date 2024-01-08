@@ -170,7 +170,7 @@ type (
 
 	ActionUserInputs = struct {
 		Properties map[string]ActionProperty `json:"properties"`
-		Required   []string                  `json:"required,omitempty"`
+		Required   any                       `json:"required,omitempty"`
 		Order      []string                  `json:"order,omitempty"`
 	}
 

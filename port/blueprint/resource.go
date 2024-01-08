@@ -271,5 +271,9 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 	b.Relations = relationsResourceToBody(state)
 	b.MirrorProperties = mirrorPropertiesToBody(state)
 	b.CalculationProperties = calculationPropertiesToBody(ctx, state)
+	b.AggregationProperties, err = aggregationPropertiesToBody(ctx, state)
+	if err != nil {
+		return nil, err
+	}
 	return b, nil
 }

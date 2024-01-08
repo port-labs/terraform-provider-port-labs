@@ -140,16 +140,20 @@ type AggregateByPropertyModel struct {
 	Property types.String `tfsdk:"property"`
 }
 
-type AggregationPropertyModel struct {
-	Title               types.String              `tfsdk:"title"`
-	Icon                types.String              `tfsdk:"icon"`
-	Description         types.String              `tfsdk:"description"`
-	Target              types.String              `tfsdk:"target"`
+type AggregationMethodsModel struct {
 	CountEntities       types.Bool                `tfsdk:"count_entities"`
 	AverageEntities     *AverageEntitiesModel     `tfsdk:"average_entities"`
 	AverageByProperty   *AverageByProperty        `tfsdk:"average_by_property"`
 	AggregateByProperty *AggregateByPropertyModel `tfsdk:"aggregate_by_property"`
-	Query               types.String              `tfsdk:"query"`
+}
+
+type AggregationPropertyModel struct {
+	Title       types.String             `tfsdk:"title"`
+	Icon        types.String             `tfsdk:"icon"`
+	Description types.String             `tfsdk:"description"`
+	Target      types.String             `tfsdk:"target"`
+	Method      *AggregationMethodsModel `tfsdk:"method"`
+	Query       types.String             `tfsdk:"query"`
 }
 
 type BlueprintModel struct {

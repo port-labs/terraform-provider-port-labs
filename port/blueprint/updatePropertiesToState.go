@@ -258,26 +258,34 @@ func addAggregationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *
 				if calculationBy == "entities" {
 					if entitiesFunc, ok := v.CalculationSpec["func"]; ok {
 						if entitiesFunc == "count" {
-							aggregationPropertyModel.CountEntities = types.BoolValue(true)
+							aggregationPropertyModel.Method = &AggregationMethodsModel{
+								CountEntities: types.BoolValue(true),
+							}
 						} else if entitiesFunc == "average" {
-							aggregationPropertyModel.AverageEntities = &AverageEntitiesModel{
-								AverageOf:     types.StringValue(v.CalculationSpec["averageOf"]),
-								MeasureTimeBy: types.StringValue(v.CalculationSpec["measureTimeBy"]),
+							aggregationPropertyModel.Method = &AggregationMethodsModel{
+								AverageEntities: &AverageEntitiesModel{
+									AverageOf:     types.StringValue(v.CalculationSpec["averageOf"]),
+									MeasureTimeBy: types.StringValue(v.CalculationSpec["measureTimeBy"]),
+								},
 							}
 						}
 					}
 				} else if calculationBy == "property" {
 					if propertyFunc, ok := v.CalculationSpec["func"]; ok {
 						if propertyFunc == "average" {
-							aggregationPropertyModel.AverageByProperty = &AverageByProperty{
-								AverageOf:     types.StringValue(v.CalculationSpec["averageOf"]),
-								MeasureTimeBy: types.StringValue(v.CalculationSpec["measureTimeBy"]),
-								Property:      types.StringValue(v.CalculationSpec["property"]),
+							aggregationPropertyModel.Method = &AggregationMethodsModel{
+								AverageByProperty: &AverageByProperty{
+									MeasureTimeBy: types.StringValue(v.CalculationSpec["measureTimeBy"]),
+									AverageOf:     types.StringValue(v.CalculationSpec["averageOf"]),
+									Property:      types.StringValue(v.CalculationSpec["property"]),
+								},
 							}
 						} else {
-							aggregationPropertyModel.AggregateByProperty = &AggregateByPropertyModel{
-								Func:     types.StringValue(v.CalculationSpec["func"]),
-								Property: types.StringValue(v.CalculationSpec["property"]),
+							aggregationPropertyModel.Method = &AggregationMethodsModel{
+								AggregateByProperty: &AggregateByPropertyModel{
+									Func:     types.StringValue(v.CalculationSpec["func"]),
+									Property: types.StringValue(v.CalculationSpec["property"]),
+								},
 							}
 						}
 					}

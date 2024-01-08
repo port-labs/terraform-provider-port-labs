@@ -156,31 +156,31 @@ func aggregationPropertiesToBody(ctx context.Context, state *BlueprintModel) (ma
 			aggregationProp.Icon = &icon
 		}
 
-		if !prop.CountEntities.IsNull() {
+		if !prop.Method.CountEntities.IsNull() {
 			aggregationProp.CalculationSpec = map[string]string{
 				"func":          "count",
 				"calculationBy": "entities",
 			}
-		} else if prop.AverageEntities != nil {
+		} else if prop.Method.AverageEntities != nil {
 			aggregationProp.CalculationSpec = map[string]string{
 				"func":          "average",
 				"calculationBy": "entities",
-				"averageOf":     prop.AverageEntities.AverageOf.ValueString(),
-				"measureTimeBy": prop.AverageEntities.MeasureTimeBy.ValueString(),
+				"averageOf":     prop.Method.AverageEntities.AverageOf.ValueString(),
+				"measureTimeBy": prop.Method.AverageEntities.MeasureTimeBy.ValueString(),
 			}
-		} else if prop.AverageByProperty != nil {
+		} else if prop.Method.AverageByProperty != nil {
 			aggregationProp.CalculationSpec = map[string]string{
 				"func":          "average",
 				"calculationBy": "property",
-				"property":      prop.AverageByProperty.Property.ValueString(),
-				"averageOf":     prop.AverageByProperty.AverageOf.ValueString(),
-				"measureTimeBy": prop.AverageByProperty.MeasureTimeBy.ValueString(),
+				"property":      prop.Method.AverageByProperty.Property.ValueString(),
+				"averageOf":     prop.Method.AverageByProperty.AverageOf.ValueString(),
+				"measureTimeBy": prop.Method.AverageByProperty.MeasureTimeBy.ValueString(),
 			}
-		} else if prop.AggregateByProperty != nil {
+		} else if prop.Method.AggregateByProperty != nil {
 			aggregationProp.CalculationSpec = map[string]string{
-				"func":          prop.AggregateByProperty.Func.ValueString(),
+				"func":          prop.Method.AggregateByProperty.Func.ValueString(),
 				"calculationBy": "property",
-				"property":      prop.AggregateByProperty.Property.ValueString(),
+				"property":      prop.Method.AggregateByProperty.Property.ValueString(),
 			}
 		}
 

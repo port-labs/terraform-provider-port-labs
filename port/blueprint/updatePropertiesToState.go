@@ -231,3 +231,62 @@ func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *
 
 	}
 }
+
+func addAggregationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel) error {
+	for k, v := range b.AggregationProperties {
+		if bm.AggregationProperties == nil {
+			bm.AggregationProperties = make(map[string]AggregationPropertyModel)
+		}
+
+		aggregationPropertyModel := &AggregationPropertyModel{
+			Title:       flex.GoStringToFramework(v.Title),
+			Icon:        flex.GoStringToFramework(v.Icon),
+			Description: flex.GoStringToFramework(v.Description),
+			Target:      types.StringValue(v.Target),
+		}
+
+		if v.Query != nil {
+			query, err := json.Marshal(v.Query)
+			if err != nil {
+				return err
+			}
+			aggregationPropertyModel.Query = types.StringValue(string(query))
+		}
+
+		if v.CalculationSpec != nil {
+			if calculationBy, ok := v.CalculationSpec["calculationBy"]; ok {
+				if calculationBy == "entities" {
+					if entitiesFunc, ok := v.CalculationSpec["func"]; ok {
+						if entitiesFunc == "count" {
+							aggregationPropertyModel.CountEntities = types.BoolValue(true)
+						} else if entitiesFunc == "average" {
+							aggregationPropertyModel.AverageEntities = &AverageEntitiesModel{
+								AverageOf:     types.StringValue(v.CalculationSpec["averageOf"]),
+								MeasureTimeBy: types.StringValue(v.CalculationSpec["measureTimeBy"]),
+							}
+						}
+					}
+				} else if calculationBy == "property" {
+					if propertyFunc, ok := v.CalculationSpec["func"]; ok {
+						if propertyFunc == "average" {
+							aggregationPropertyModel.AverageByProperty = &AverageByProperty{
+								AverageOf:     types.StringValue(v.CalculationSpec["averageOf"]),
+								MeasureTimeBy: types.StringValue(v.CalculationSpec["measureTimeBy"]),
+								Property:      types.StringValue(v.CalculationSpec["property"]),
+							}
+						} else {
+							aggregationPropertyModel.AggregateByProperty = &AggregateByPropertyModel{
+								Func:     types.StringValue(v.CalculationSpec["func"]),
+								Property: types.StringValue(v.CalculationSpec["property"]),
+							}
+						}
+					}
+				}
+			}
+		}
+
+		bm.AggregationProperties[k] = *aggregationPropertyModel
+
+	}
+	return nil
+}

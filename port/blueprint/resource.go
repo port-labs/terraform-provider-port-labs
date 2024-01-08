@@ -110,6 +110,13 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 		addCalculationPropertiesToState(ctx, b, bm)
 	}
 
+	if len(b.AggregationProperties) > 0 {
+		err := addAggregationPropertiesToState(ctx, b, bm)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 

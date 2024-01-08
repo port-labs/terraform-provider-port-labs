@@ -496,10 +496,10 @@ func BlueprintSchema() map[string]schema.Attribute {
 								},
 							},
 							"measure_time_by": schema.StringAttribute{
-								MarkdownDescription: "The property name on which to calculate the the time periods, e.g. $created_at, $updated_at or any other date property",
+								MarkdownDescription: "The property name on which to calculate the the time periods, e.g. $createdAt, $updated_at or any other date property",
 								Optional:            true,
 								Computed:            true,
-								Default:             stringdefault.StaticString("$created_at"),
+								Default:             stringdefault.StaticString("$createdAt"),
 							},
 						},
 						Validators: []validator.Object{
@@ -522,7 +522,7 @@ func BlueprintSchema() map[string]schema.Attribute {
 								},
 							},
 							"measure_time_by": schema.StringAttribute{
-								MarkdownDescription: "The property name on which to calculate the the time periods, e.g. $created_at, $updated_at or any other date property",
+								MarkdownDescription: "The property name on which to calculate the the time periods, e.g. $createdAt, $updated_at or any other date property",
 								Required:            true,
 							},
 							"property": schema.StringAttribute{

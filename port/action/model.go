@@ -189,4 +189,5 @@ type ActionModel struct {
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
 	OrderProperties             types.List                        `tfsdk:"order_properties"`
+	RequiredJqQuery             types.String                      `tfsdk:"required_jq_query"`
 }

@@ -34,6 +34,7 @@ Action resource
 - `kafka_method` (Object) The invocation method of the action (see [below for nested schema](#nestedatt--kafka_method))
 - `order_properties` (List of String) Order properties
 - `required_approval` (Boolean) Require approval before invoking the action
+- `required_jq_query` (String) The required jq query of the property
 - `user_properties` (Attributes) User properties (see [below for nested schema](#nestedatt--user_properties))
 - `webhook_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--webhook_method))
 
@@ -130,7 +131,7 @@ Optional:
 - `min_items` (Number) The min items of the array property
 - `number_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--number_items))
 - `object_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--object_items))
-- `required` (Boolean) Whether the property is required
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
 - `string_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--string_items))
 - `title` (String) The title of the property
 - `visible` (Boolean) The visibility of the array property
@@ -217,7 +218,7 @@ Optional:
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
 - `icon` (String) The icon of the property
-- `required` (Boolean) Whether the property is required
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
 - `title` (String) The title of the property
 - `visible` (Boolean) The visibility of the boolean property
 - `visible_jq_query` (String) The visibility condition jq query of the boolean property
@@ -269,7 +270,7 @@ Optional:
 - `icon` (String) The icon of the property
 - `maximum` (Number) The min of the number property
 - `minimum` (Number) The max of the number property
-- `required` (Boolean) Whether the property is required
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
 - `title` (String) The title of the property
 - `visible` (Boolean) The visibility of the number property
 - `visible_jq_query` (String) The visibility condition jq query of the number property
@@ -318,7 +319,7 @@ Optional:
 - `description` (String) The description of the property
 - `encryption` (String) The algorithm to encrypt the property with
 - `icon` (String) The icon of the property
-- `required` (Boolean) Whether the property is required
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
 - `title` (String) The title of the property
 - `visible` (Boolean) The visibility of the object property
 - `visible_jq_query` (String) The visibility condition jq query of the object property
@@ -374,7 +375,7 @@ Optional:
 - `max_length` (Number) The max length of the string property
 - `min_length` (Number) The min length of the string property
 - `pattern` (String) The pattern of the string property
-- `required` (Boolean) Whether the property is required
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
 - `title` (String) The title of the property
 - `visible` (Boolean) The visibility of the string property
 - `visible_jq_query` (String) The visibility condition jq query of the string property

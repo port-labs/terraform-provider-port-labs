@@ -2,7 +2,8 @@ package action
 
 import (
 	"context"
-
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -27,10 +28,11 @@ func MetadataProperties() map[string]schema.Attribute {
 			Optional:            true,
 		},
 		"required": schema.BoolAttribute{
-			MarkdownDescription: "Whether the property is required",
-			Computed:            true,
+			MarkdownDescription: "Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value",
 			Optional:            true,
-			Default:             booldefault.StaticBool(false),
+			Validators: []validator.Bool{
+				boolvalidator.ConflictsWith(path.MatchRoot("required_jq_query")),
+			},
 		},
 		"description": schema.StringAttribute{
 			MarkdownDescription: "The description of the property",
@@ -264,6 +266,10 @@ func ActionSchema() map[string]schema.Attribute {
 				"object_props":  ObjectPropertySchema(),
 				"array_props":   ArrayPropertySchema(),
 			},
+		},
+		"required_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The required jq query of the property",
+			Optional:            true,
 		},
 	}
 
@@ -629,5 +635,57 @@ func (r *ActionResource) Schema(ctx context.Context, req resource.SchemaRequest,
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Action resource",
 		Attributes:          ActionSchema(),
+	}
+}
+
+func (r *ActionResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var state *ActionModel
+
+	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	validateUserInputRequiredNotSetToFalse(state, resp)
+}
+
+func validateUserInputRequiredNotSetToFalse(state *ActionModel, resp *resource.ValidateConfigResponse) {
+	// go over all the properties and check if required is set to false, is its false, raise an error that false is not
+	// supported anymore
+	const errorString = "required is set to false, this is not supported anymore, if you don't want to make the stringProp required, remove the required stringProp"
+
+	if state.UserProperties == nil {
+		return
+	}
+
+	for _, stringProp := range state.UserProperties.StringProps {
+		if !stringProp.Required.IsNull() && !stringProp.Required.ValueBool() && stringProp.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, stringProp.Title, ` in action: `, state.Identifier))
+		}
+	}
+
+	for _, numberProp := range state.UserProperties.NumberProps {
+		if !numberProp.Required.IsNull() && !numberProp.Required.ValueBool() && numberProp.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, numberProp.Title, ` in action: `, state.Identifier))
+		}
+	}
+
+	for _, boolProp := range state.UserProperties.BooleanProps {
+		if !boolProp.Required.IsNull() && !boolProp.Required.ValueBool() && boolProp.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, boolProp.Title, ` in action: `, state.Identifier))
+		}
+	}
+
+	for _, objectProp := range state.UserProperties.ObjectProps {
+		if !objectProp.Required.IsNull() && !objectProp.Required.ValueBool() && objectProp.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, objectProp.Title, ` in action: `, state.Identifier))
+		}
+	}
+
+	for _, arrayProp := range state.UserProperties.ArrayProps {
+		if !arrayProp.Required.IsNull() && !arrayProp.Required.ValueBool() && arrayProp.Required == types.BoolValue(false) {
+			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, arrayProp.Title, ` in action: `, state.Identifier))
+		}
 	}
 }

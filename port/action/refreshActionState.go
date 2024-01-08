@@ -266,9 +266,7 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 
 	requiredJq, _ := writeRequiredToResource(a.UserInputs)
 
-	if !requiredJq.IsNull() {
-		state.RequiredJqQuery = requiredJq
-	}
+	state.RequiredJqQuery = requiredJq
 
 	writeInvocationMethodToResource(a, state)
 

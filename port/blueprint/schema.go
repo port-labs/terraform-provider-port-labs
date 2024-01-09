@@ -2,10 +2,13 @@ package blueprint
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
@@ -477,11 +480,11 @@ func BlueprintSchema() map[string]schema.Attribute {
 							"count_entities": schema.BoolAttribute{
 								MarkdownDescription: "Function to count the entities of the target entities",
 								Optional:            true,
-								//Validators: []validator.Bool{
-								//	boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("average_entities")),
-								//	boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("average_by_property")),
-								//	boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("aggregate_by_property")),
-								//},
+								Validators: []validator.Bool{
+									boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("average_entities")),
+									boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("average_by_property")),
+									boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("aggregate_by_property")),
+								},
 							},
 							"average_entities": schema.SingleNestedAttribute{
 								MarkdownDescription: "Function to average the entities of the target entities",
@@ -503,13 +506,13 @@ func BlueprintSchema() map[string]schema.Attribute {
 										Default:             stringdefault.StaticString("$createdAt"),
 									},
 								},
-								//Validators: []validator.Object{
-								//	objectvalidator.ConflictsWith(
-								//		path.MatchRelative().AtParent().AtName("count_entities"),
-								//		path.MatchRelative().AtParent().AtName("average_by_property"),
-								//		path.MatchRelative().AtParent().AtName("aggregate_by_property"),
-								//	),
-								//},
+								Validators: []validator.Object{
+									objectvalidator.ConflictsWith(
+										path.MatchRelative().AtParent().AtName("count_entities"),
+										path.MatchRelative().AtParent().AtName("average_by_property"),
+										path.MatchRelative().AtParent().AtName("aggregate_by_property"),
+									),
+								},
 							},
 							"average_by_property": schema.SingleNestedAttribute{
 								MarkdownDescription: "Function to calculate the average by property value of the target entities",
@@ -531,13 +534,13 @@ func BlueprintSchema() map[string]schema.Attribute {
 										Required:            true,
 									},
 								},
-								//Validators: []validator.Object{
-								//	objectvalidator.ConflictsWith(
-								//		path.MatchRelative().AtParent().AtName("count_entities"),
-								//		path.MatchRelative().AtParent().AtName("average_entities"),
-								//		path.MatchRelative().AtParent().AtName("aggregate_by_property"),
-								//	),
-								//},
+								Validators: []validator.Object{
+									objectvalidator.ConflictsWith(
+										path.MatchRelative().AtParent().AtName("count_entities"),
+										path.MatchRelative().AtParent().AtName("average_entities"),
+										path.MatchRelative().AtParent().AtName("aggregate_by_property"),
+									),
+								},
 							},
 							"aggregate_by_property": schema.SingleNestedAttribute{
 								MarkdownDescription: "Function to calculate the aggregate by property value of the target entities, such as sum, min, max, avg, count",
@@ -555,24 +558,15 @@ func BlueprintSchema() map[string]schema.Attribute {
 										Required:            true,
 									},
 								},
-								//Validators: []validator.Object{
-								//	objectvalidator.ConflictsWith(
-								//		path.MatchRelative().AtName("count_entities"),
-								//		path.MatchRelative().AtName("average_entities"),
-								//		path.MatchRelative().AtName("average_by_property"),
-								//
-								//	),
-								//},
+								Validators: []validator.Object{
+									objectvalidator.ConflictsWith(
+										path.MatchRelative().AtName("count_entities"),
+										path.MatchRelative().AtName("average_entities"),
+										path.MatchRelative().AtName("average_by_property"),
+									),
+								},
 							},
 						},
-						//Validators: []validator.Object{
-						//	objectvalidator.ExactlyOneOf(
-						//		path.MatchRelative().AtParent().AtName("count_entities"),
-						//		path.MatchRelative().AtParent().AtName("average_entities"),
-						//		path.MatchRelative().AtParent().AtName("average_by_property"),
-						//		path.MatchRelative().AtParent().AtName("aggregate_by_property"),
-						//	),
-						//},
 					},
 					"query": schema.StringAttribute{
 						MarkdownDescription: "Query to filter the target entities",

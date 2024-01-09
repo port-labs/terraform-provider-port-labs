@@ -142,18 +142,15 @@ func aggregationPropertiesToBody(ctx context.Context, state *BlueprintModel) (ma
 		}
 
 		if !prop.Title.IsNull() {
-			title := prop.Title.ValueString()
-			aggregationProp.Title = &title
+			aggregationProp.Title = prop.Title.ValueStringPointer()
 		}
 
 		if !prop.Description.IsNull() {
-			description := prop.Description.ValueString()
-			aggregationProp.Description = &description
+			aggregationProp.Description = prop.Description.ValueStringPointer()
 		}
 
 		if !prop.Icon.IsNull() {
-			icon := prop.Icon.ValueString()
-			aggregationProp.Icon = &icon
+			aggregationProp.Icon = prop.Icon.ValueStringPointer()
 		}
 
 		if !prop.Method.CountEntities.IsNull() {

@@ -22,6 +22,7 @@ Blueprint Resource
 
 ### Optional
 
+- `aggregation_properties` (Attributes Map) The aggregation properties of the blueprint (see [below for nested schema](#nestedatt--aggregation_properties))
 - `calculation_properties` (Attributes Map) The calculation properties of the blueprint (see [below for nested schema](#nestedatt--calculation_properties))
 - `description` (String) The description of the blueprint
 - `icon` (String) The icon of the blueprint
@@ -39,6 +40,61 @@ Blueprint Resource
 - `id` (String) The ID of this resource.
 - `updated_at` (String) The last update date of the blueprint
 - `updated_by` (String) The last updater of the blueprint
+
+<a id="nestedatt--aggregation_properties"></a>
+### Nested Schema for `aggregation_properties`
+
+Required:
+
+- `method` (Attributes) The aggregation method to perform on the target blueprint, one of count_entities, average_entities, average_by_property, aggregate_by_property (see [below for nested schema](#nestedatt--aggregation_properties--method))
+- `target` (String) The target blueprint to perform the aggregation on
+
+Optional:
+
+- `description` (String) The description of the aggregation property
+- `icon` (String) The icon of the aggregation property
+- `query` (String) Query to filter the target entities
+- `title` (String) The title of the aggregation property
+
+<a id="nestedatt--aggregation_properties--method"></a>
+### Nested Schema for `aggregation_properties.method`
+
+Optional:
+
+- `aggregate_by_property` (Attributes) Function to calculate the aggregate by property value of the target entities, such as sum, min, max, median (see [below for nested schema](#nestedatt--aggregation_properties--method--aggregate_by_property))
+- `average_by_property` (Attributes) Function to calculate the average by property value of the target entities (see [below for nested schema](#nestedatt--aggregation_properties--method--average_by_property))
+- `average_entities` (Attributes) Function to average the entities of the target entities (see [below for nested schema](#nestedatt--aggregation_properties--method--average_entities))
+- `count_entities` (Boolean) Function to count the entities of the target entities
+
+<a id="nestedatt--aggregation_properties--method--aggregate_by_property"></a>
+### Nested Schema for `aggregation_properties.method.aggregate_by_property`
+
+Required:
+
+- `func` (String) The func of the aggregate by property
+- `property` (String) The property of the aggregate by property
+
+
+<a id="nestedatt--aggregation_properties--method--average_by_property"></a>
+### Nested Schema for `aggregation_properties.method.average_by_property`
+
+Required:
+
+- `average_of` (String) The time periods to calculate the average by, e.g. hour, day, week, month
+- `measure_time_by` (String) The property name on which to calculate the the time periods, e.g. $createdAt, $updated_at or any other date property
+- `property` (String) The property name on which to calculate the average by
+
+
+<a id="nestedatt--aggregation_properties--method--average_entities"></a>
+### Nested Schema for `aggregation_properties.method.average_entities`
+
+Optional:
+
+- `average_of` (String) The time periods to calculate the average of, e.g. hour, day, week, month
+- `measure_time_by` (String) The property name on which to calculate the the time periods, e.g. $createdAt, $updated_at or any other date property
+
+
+
 
 <a id="nestedatt--calculation_properties"></a>
 ### Nested Schema for `calculation_properties`

@@ -543,14 +543,14 @@ func BlueprintSchema() map[string]schema.Attribute {
 								},
 							},
 							"aggregate_by_property": schema.SingleNestedAttribute{
-								MarkdownDescription: "Function to calculate the aggregate by property value of the target entities, such as sum, min, max, avg, count",
+								MarkdownDescription: "Function to calculate the aggregate by property value of the target entities, such as sum, min, max, median",
 								Optional:            true,
 								Attributes: map[string]schema.Attribute{
 									"func": schema.StringAttribute{
 										MarkdownDescription: "The func of the aggregate by property",
 										Required:            true,
 										Validators: []validator.String{
-											stringvalidator.OneOf("sum", "min", "max", "avg", "count"),
+											stringvalidator.OneOf("sum", "min", "max", "median"),
 										},
 									},
 									"property": schema.StringAttribute{
@@ -560,9 +560,9 @@ func BlueprintSchema() map[string]schema.Attribute {
 								},
 								Validators: []validator.Object{
 									objectvalidator.ConflictsWith(
-										path.MatchRelative().AtName("count_entities"),
-										path.MatchRelative().AtName("average_entities"),
-										path.MatchRelative().AtName("average_by_property"),
+										path.MatchRelative().AtParent().AtName("count_entities"),
+										path.MatchRelative().AtParent().AtName("average_entities"),
+										path.MatchRelative().AtParent().AtName("average_by_property"),
 									),
 								},
 							},

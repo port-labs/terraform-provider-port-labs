@@ -10,6 +10,8 @@ func (c *PortClient) ReadEntity(ctx context.Context, id string, blueprint string
 	url := "v1/blueprints/{blueprint}/entities/{identifier}"
 	resp, err := c.Client.R().
 		SetHeader("Accept", "application/json").
+		// we don't want to include those properties as they are calculated by the backend
+		// and not part of the state, pulling them would cause a diff
 		SetQueryParam("exclude_calculated_properties", "true").
 		SetPathParam(("blueprint"), blueprint).
 		SetPathParam("identifier", id).

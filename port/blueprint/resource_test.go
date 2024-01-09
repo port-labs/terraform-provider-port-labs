@@ -366,7 +366,6 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 		properties = {
 			string_props = {
 				"text" = {
-					type = "string"
 					title = "text"
 				}
 			}
@@ -380,7 +379,6 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 		properties = {
 			string_props = {
 			   "text" = {
-					type = "string"
 					title = "text"
 				}
 			}
@@ -425,7 +423,6 @@ func TestAccPortBlueprintImport(t *testing.T) {
 		properties = {
 			string_props = {
 			   "text" = {
-					type = "string"
 					title = "text"
 				}
 			}
@@ -718,6 +715,324 @@ func TestAccPortUpdateBlueprintIdentifier(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", updatedIdentifier),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "icon", "Terraform"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortCreateBlueprintWithAggregationCountEntitiesProperties(t *testing.T) {
+	baseIdentifier := utils.GenID()
+	aggrBlueprintIdentifier := utils.GenID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port_blueprint" "base_blueprint" {
+		title = "Base Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "aggr_blueprint" {
+		title = "Aggregation Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		aggregation_properties = {
+			"count_entities" = {
+				title = "Count Entities"
+				icon = "Terraform"
+				description = "Count Entities"
+                target = port_blueprint.base_blueprint.identifier
+			    method = {
+					count_entities = true
+				}
+			}
+		}
+        relations = {
+             "base_blueprint" = {
+					 title = "Base Blueprint"	
+					 target = port_blueprint.base_blueprint.identifier	
+			 }	
+		}
+	}
+`, baseIdentifier, aggrBlueprintIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "title", "Aggregation Blueprint"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "identifier", aggrBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.count_entities.title", "Count Entities"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.count_entities.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.count_entities.description", "Count Entities"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.count_entities.target", baseIdentifier),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.count_entities.method.count_entities", "true"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "relations.base_blueprint.title", "Base Blueprint"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "relations.base_blueprint.target", baseIdentifier),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortCreateBlueprintWithAggregationAverageEntities(t *testing.T) {
+	baseIdentifier := utils.GenID()
+	aggrBlueprintIdentifier := utils.GenID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port_blueprint" "base_blueprint" {
+		title = "Base Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "aggr_blueprint" {
+		title = "Aggregation Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		aggregation_properties = {
+			"average_entities" = {
+				title = "Average Entities"
+				icon = "Terraform"
+				description = "Average Entities"
+				target = port_blueprint.base_blueprint.identifier
+			    method = {
+					average_entities = {}
+				}
+			}
+		}
+		relations = {
+			 "base_blueprint" = {
+					 title = "Base Blueprint"	
+					 target = port_blueprint.base_blueprint.identifier	
+			 }	
+		}
+	}
+`, baseIdentifier, aggrBlueprintIdentifier)
+
+	var testAccActionConfigUpdate = fmt.Sprintf(`
+	resource "port_blueprint" "base_blueprint" {
+		title = "Base Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+					type = "number"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "aggr_blueprint" {
+		title = "Aggregation Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		aggregation_properties = {
+			"average_entities" = {
+				title = "Average Entities"
+				icon = "Terraform"
+				description = "Average Entities"
+				target = port_blueprint.base_blueprint.identifier
+			    method = {
+					average_entities = {
+                        "average_of" = "month"
+                        "measure_time_by" = "$updatedAt"
+                    }
+				}
+			}
+		}
+		relations = {
+			 "base_blueprint" = {
+					 title = "Base Blueprint"	
+					 target = port_blueprint.base_blueprint.identifier	
+			 }	
+		}
+	}
+`, baseIdentifier, aggrBlueprintIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "title", "Aggregation Blueprint"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "identifier", aggrBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average_entities.title", "Average Entities"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average_entities.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average_entities.description", "Average Entities"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average_entities.target", baseIdentifier),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average_entities.method.average_entities.average_of", "day"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average_entities.method.average_entities.measure_time_by", "$createdAt"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "title", "Aggregation Blueprint"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "identifier", aggrBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average_entities.title", "Average Entities"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average_entities.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average_entities.description", "Average Entities"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average_entities.target", baseIdentifier),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average_entities.method.average_entities.average_of", "month"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average_entities.method.average_entities.measure_time_by", "$updatedAt"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortCreateBlueprintWithAggregationAverageProperties(t *testing.T) {
+	baseIdentifier := utils.GenID()
+	aggrBlueprintIdentifier := utils.GenID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port_blueprint" "base_blueprint" {
+		title = "Base Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+					type = "number"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "aggr_blueprint" {
+		title = "Aggregation Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		aggregation_properties = {
+			"average" = {
+				title = "Average"
+				icon = "Terraform"
+				description = "Average"
+                target = port_blueprint.base_blueprint.identifier
+				method = {
+					average_by_property = {
+						"average_of" = "month"
+						"measure_time_by" = "$updatedAt"
+                        "property" = "age"
+					}
+				}
+			}
+		}
+		relations = {
+			 "base_blueprint" = {
+					 title = "Base Blueprint"	
+					 target = port_blueprint.base_blueprint.identifier	
+			 }	
+		}
+	}
+`, baseIdentifier, aggrBlueprintIdentifier)
+
+	var testAccActionConfigUpdate = fmt.Sprintf(`
+	resource "port_blueprint" "base_blueprint" {
+		title = "Base Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+					type = "number"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "aggr_blueprint" {
+		title = "Aggregation Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		aggregation_properties = {
+			"average" = {
+				title = "Average"
+				icon = "Terraform"
+				description = "Average"
+				target = port_blueprint.base_blueprint.identifier
+				method = {
+					average_by_property = {
+						"average_of" = "day"
+						"measure_time_by" = "$createdAt"
+                        "property" = "age"
+					}
+				}
+			}
+		}
+		relations = {
+			 "base_blueprint" = {
+					 title = "Base Blueprint"	
+					 target = port_blueprint.base_blueprint.identifier	
+			 }	
+		}
+	}
+`, baseIdentifier, aggrBlueprintIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "title", "Aggregation Blueprint"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "identifier", aggrBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average.title", "Average"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average.description", "Average"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average.method.average_by_property.average_of", "month"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average.method.average_by_property.measure_time_by", "$updatedAt"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average.method.average_by_property.property", "age"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "title", "Aggregation Blueprint"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "identifier", aggrBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average.title", "Average"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average.description", "Average"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average.method.average_by_property.average_of", "day"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average.method.average_by_property.measure_time_by", "$createdAt"),
+					resource.TestCheckResourceAttr("port_blueprint.aggr_blueprint", "aggregation_properties.average.method.average_by_property.property", "age"),
 				),
 			},
 		},

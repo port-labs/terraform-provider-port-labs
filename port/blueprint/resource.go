@@ -169,6 +169,10 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 
 	if previousState.Identifier.IsNull() {
 		bp, err = r.portClient.CreateBlueprint(ctx, b)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to create blueprint", err.Error())
+			return
+		}
 	} else {
 		existingBp, statusCode, err := r.portClient.ReadBlueprint(ctx, previousState.Identifier.ValueString())
 		if err != nil {
@@ -185,10 +189,10 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 			b.AggregationProperties = existingBp.AggregationProperties
 		}
 		bp, err = r.portClient.UpdateBlueprint(ctx, b, previousState.ID.ValueString())
-	}
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update blueprint", err.Error())
-		return
+		if err != nil {
+			resp.Diagnostics.AddError("failed to update blueprint", err.Error())
+			return
+		}
 	}
 
 	writeBlueprintComputedFieldsToState(state, bp)

@@ -474,8 +474,8 @@ resource "port_blueprint" "environment" {
   identifier = "environment"
   properties = {
     string_props = {
-      "name" = {
-        title = "name"
+      "aws-region" = {
+        title = "AWS Region"
       }
       "docs-url" = {
         title  = "Docs URL"
@@ -494,17 +494,17 @@ resource "port_blueprint" "environment" {
 resource "port_blueprint" "environment" {
   title      = "Environment"
   icon       = "Environment"
-  identifier = "environment"	
+  identifier = "environment"
   properties = {
-	string_props = {
-	  "aws-region" = {
-		title = "AWS Region"
-	  }
-      "docs-url" = {
-	    title  = "Docs URL"	
-	    format = "url"
+    string_props = {
+      "aws-region" = {
+        title = "AWS Region"
       }
-	}	
+      "docs-url" = {
+        title  = "Docs URL"
+        format = "url"
+      }
+    }
   }
 }
 
@@ -513,22 +513,22 @@ resource "port_blueprint" "microservice" {
   icon       = "Microservice"
   identifier = "microservice"
   properties = {
-	string_props = {
-	  "domain" = {
-		title = "Domain"
-	  }
-	  "slack-channel" = {
-		title = "Slack Channel"
-		format = "url"
-	  }
-	}
+    string_props = {
+      "domain" = {
+        title = "Domain"
+      }
+      "slack-channel" = {
+        title  = "Slack Channel"
+        format = "url"
+      }
+    }
   }
   relations = {
-	"environment" = {	
-	  target 	= port_blueprint.environment.identifier
-      required 	= true
-	  many   	= false
-	}
+    "environment" = {
+      target   = port_blueprint.environment.identifier
+      required = true
+      many     = false
+    }
   }
 }
 
@@ -544,27 +544,27 @@ resource "port_blueprint" "microservice" {
   icon       = "Microservice"
   identifier = "microservice"
   properties = {
-	string_props = {
-	  "domain" = {
-		title = "Domain"
-	  }
-	  "slack-channel" = {
-		title  = "Slack Channel"	
-		format = "url"
-	  }
-	}
+    string_props = {
+      "domain" = {
+        title = "Domain"
+      }
+      "slack-channel" = {
+        title  = "Slack Channel"
+        format = "url"
+      }
+    }
   }
   mirror_properties = {
-	"aws-region" = {
-	  path  = "environment.aws-region"
-	}
+    "aws-region" = {
+      path = "environment.aws-region"
+    }
   }
   relations = {
-	"environment" = {	
-	  target 	= port_blueprint.environment.identifier
-      required 	= true
-	  many   	= false
-	}
+    "environment" = {
+      target   = port_blueprint.environment.identifier
+      required = true
+      many     = false
+    }
   }
 }
 

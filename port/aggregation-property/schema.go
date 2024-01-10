@@ -172,106 +172,106 @@ Create a parent blueprint with a child blueprint and an aggregation property to 
 
 ` + "```hcl" + `
 
-  resource "port_blueprint" "parent_blueprint" {
-    title = "Parent Blueprint"
-    icon = "Terraform"
-    identifier = "parent"
-    description = ""
-    properties = {
-      number_props = {
-        "age" = {
-          title = "Age"
-        }
+resource "port_blueprint" "parent_blueprint" {
+  title       = "Parent Blueprint"
+  icon        = "Terraform"
+  identifier  = "parent"
+  description = ""
+  properties = {
+    number_props = {
+      "age" = {
+        title = "Age"
       }
     }
   }
+}
 
-  resource "port_blueprint" "child_blueprint" {
-    title = "Child Blueprint"
-    icon = "Terraform"
-    identifier = "child"
-    description = ""
-    properties = {
-      number_props = {
-        "age" = {
-          title = "Age"
-        }
-      }
-    }
-    relations = {
-      "parent" = {
-        title = "Parent"
-        target = port_blueprint.parent_blueprint.identifier
+resource "port_blueprint" "child_blueprint" {
+  title       = "Child Blueprint"
+  icon        = "Terraform"
+  identifier  = "child"
+  description = ""
+  properties = {
+    number_props = {
+      "age" = {
+        title = "Age"
       }
     }
   }
+  relations = {
+    "parent" = {
+      title  = "Parent"
+      target = port_blueprint.parent_blueprint.identifier
+    }
+  }
+}
 
-  resource "port_aggregation_property" "count_kids" {
-    aggregation_identifier = "count_kids"
-    blueprint_identifier = port_blueprint.parent_blueprint.identifier
-    target_blueprint_identifier = port_blueprint.child_blueprint.identifier
-    title = "Count Kids"
-    icon = "Terraform"
-    description = "Count Kids"
-    method = {
-      count_entities = true
-    }
+resource "port_aggregation_property" "count_kids" {
+  aggregation_identifier      = "count_kids"
+  blueprint_identifier        = port_blueprint.parent_blueprint.identifier
+  target_blueprint_identifier = port_blueprint.child_blueprint.identifier
+  title                       = "Count Kids"
+  icon                        = "Terraform"
+  description                 = "Count Kids"
+  method = {
+    count_entities = true
   }
+}
 ` + "```" + `
 
 Create a parent blueprint with a child blueprint and an aggregation property to calculate the average avg of the parent kids age:
 
 ` + "```hcl" + `
 
-  resource "port_blueprint" "parent_blueprint" {
-    title = "Parent Blueprint"
-    icon = "Terraform"
-    identifier = "parent"
-    description = ""
-    properties = {
-      number_props = {
-        "age" = {
-          title = "Age"
-        }
+resource "port_blueprint" "parent_blueprint" {
+  title       = "Parent Blueprint"
+  icon        = "Terraform"
+  identifier  = "parent"
+  description = ""
+  properties = {
+    number_props = {
+      "age" = {
+        title = "Age"
       }
     }
   }
+}
 
-  resource "port_blueprint" "child_blueprint" {
-    title = "Child Blueprint"
-    icon = "Terraform"
-    identifier = "child"
-    description = ""
-    properties = {
-      number_props = {
-        "age" = {
-          title = "Age"
-        }
-      }
-    }
-    relations = {
-      "parent" = {
-        title = "Parent"
-        target = port_blueprint.parent_blueprint.identifier
+resource "port_blueprint" "child_blueprint" {
+  title       = "Child Blueprint"
+  icon        = "Terraform"
+  identifier  = "child"
+  description = ""
+  properties = {
+    number_props = {
+      "age" = {
+        title = "Age"
       }
     }
   }
+  relations = {
+    "parent" = {
+      title  = "Parent"
+      target = port_blueprint.parent_blueprint.identifier
+    }
+  }
+}
 
-  resource "port_aggregation_property" "average_kids_age" {
-    aggregation_identifier = "average_kids_age"
-    blueprint_identifier = port_blueprint.parent_blueprint.identifier
-    target_blueprint_identifier = port_blueprint.child_blueprint.identifier
-    title = "Average Kids Age"
-    icon = "Terraform"
-    description = "Average Kids Age"
-    method = {
-      average_by_property = {
-        average_of = "total"
-        measure_time_by = "$createdAt"
-        property = "age"
-      }
+resource "port_aggregation_property" "average_kids_age" {
+  aggregation_identifier      = "average_kids_age"
+  blueprint_identifier        = port_blueprint.parent_blueprint.identifier
+  target_blueprint_identifier = port_blueprint.child_blueprint.identifier
+  title                       = "Average Kids Age"
+  icon                        = "Terraform"
+  description                 = "Average Kids Age"
+  method = {
+    average_by_property = {
+      average_of      = "total"
+      measure_time_by = "$createdAt"
+      property        = "age"
     }
   }
+}
 
 ` + "```" + `
 
@@ -279,47 +279,47 @@ Create a repository blueprint and a pull request blueprint and an aggregation pr
 
 ` + "```hcl" + `
 
-  resource "port_blueprint" "repository_blueprint" {
-    title = "Repository Blueprint"
-    icon = "Terraform"
-    identifier = "repository"
-    description = ""  
-  }
-  
-  resource "port_blueprint" "pull_request_blueprint" {
-    title = "Pull Request Blueprint"
-    icon = "Terraform"  
-    identifier = "pull_request"  
-    description = ""
-    properties = {
-      string_props = {
-        "status" = {
-          title = "Status"
-        }  
-      }
-    }
-    relations = {
-      "repository" = {
-        title = "Repository"
-        target = port_blueprint.repository_blueprint.identifier
-      }
-    }
-  }
+resource "port_blueprint" "repository_blueprint" {
+  title       = "Repository Blueprint"
+  icon        = "Terraform"
+  identifier  = "repository"
+  description = ""
+}
 
-  resource "port_aggregation_property" "pull_requests_per_day" {
-    aggregation_identifier = "pull_requests_per_day"  
-    blueprint_identifier = port_blueprint.repository_blueprint.identifier  
-    target_blueprint_identifier = port_blueprint.pull_request_blueprint.identifier  
-    title = "Pull Requests Per Day"  
-    icon = "Terraform"  
-    description = "Pull Requests Per Day"
-    method = {  
-      average_entities = {
-        average_of = "day"
-        measure_time_by = "$createdAt"
+resource "port_blueprint" "pull_request_blueprint" {
+  title       = "Pull Request Blueprint"
+  icon        = "Terraform"
+  identifier  = "pull_request"
+  description = ""
+  properties = {
+    string_props = {
+      "status" = {
+        title = "Status"
       }
     }
   }
+  relations = {
+    "repository" = {
+      title  = "Repository"
+      target = port_blueprint.repository_blueprint.identifier
+    }
+  }
+}
+
+resource "port_aggregation_property" "pull_requests_per_day" {
+  aggregation_identifier      = "pull_requests_per_day"
+  blueprint_identifier        = port_blueprint.repository_blueprint.identifier
+  target_blueprint_identifier = port_blueprint.pull_request_blueprint.identifier
+  title                       = "Pull Requests Per Day"
+  icon                        = "Terraform"
+  description                 = "Pull Requests Per Day"
+  method = {
+    average_entities = {
+      average_of      = "day"
+      measure_time_by = "$createdAt"
+    }
+  }
+}
   
 ` + "```" + `
 
@@ -329,58 +329,58 @@ To do that we will add a query to the aggregation property to filter only pull r
 
 ` + "```hcl" + `
 
-  resource "port_blueprint" "repository_blueprint" {
-    title = "Repository Blueprint"  
-    icon = "Terraform"
-    identifier = "repository"  
-    description = ""  
-  }
-  
-  resource "port_blueprint" "pull_request_blueprint" {
-    title = "Pull Request Blueprint"
-    icon = "Terraform"  
-    identifier = "pull_request"  
-    description = ""  
-    properties = {
-      string_props = {  
-        "status" = {
-          title = "Status"
-        }
-      }
-    }  
-    relations = {  
-      "repository" = {
-        title = "Repository"  
-        target = port_blueprint.repository_blueprint.identifier  
-      }
-    }  
-  }
+resource "port_blueprint" "repository_blueprint" {
+  title       = "Repository Blueprint"
+  icon        = "Terraform"
+  identifier  = "repository"
+  description = ""
+}
 
-  resource "port_aggregation_property" "fix_pull_requests_per_day" {
-    aggregation_identifier = "fix_pull_requests_count"  
-    blueprint_identifier = port_blueprint.repository_blueprint.identifier  
-    target_blueprint_identifier = port_blueprint.pull_request_blueprint.identifier  
-    title = "Pull Requests Per Day"
-    icon = "Terraform"  
-    description = "Pull Requests Per Day"
-    method = {  
-      average_entities = {
-        average_of = "month"
-        measure_time_by = "$createdAt"
+resource "port_blueprint" "pull_request_blueprint" {
+  title       = "Pull Request Blueprint"
+  icon        = "Terraform"
+  identifier  = "pull_request"
+  description = ""
+  properties = {
+    string_props = {
+      "status" = {
+        title = "Status"
       }
     }
-    query = jsonencode(
-      {
-        "combinator": "and",
-        "rules": [
-          {
-            "property": "$title",
-              "operator": "ContainsAny",
-              "value": ["fix", "fixed", "fixing", "Fix"]
-          }
-        ]
-      }
-    )
   }
+  relations = {
+    "repository" = {
+      title  = "Repository"
+      target = port_blueprint.repository_blueprint.identifier
+    }
+  }
+}
+
+resource "port_aggregation_property" "fix_pull_requests_per_day" {
+  aggregation_identifier      = "fix_pull_requests_count"
+  blueprint_identifier        = port_blueprint.repository_blueprint.identifier
+  target_blueprint_identifier = port_blueprint.pull_request_blueprint.identifier
+  title                       = "Pull Requests Per Day"
+  icon                        = "Terraform"
+  description                 = "Pull Requests Per Day"
+  method = {
+    average_entities = {
+      average_of      = "month"
+      measure_time_by = "$createdAt"
+    }
+  }
+  query = jsonencode(
+    {
+      "combinator" : "and",
+      "rules" : [
+        {
+          "property" : "$title",
+          "operator" : "ContainsAny",
+          "value" : ["fix", "fixed", "fixing", "Fix"]
+        }
+      ]
+    }
+  )
+}
 
 ` + "```" + ``

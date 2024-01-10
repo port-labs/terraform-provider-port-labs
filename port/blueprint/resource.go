@@ -110,13 +110,6 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 		addCalculationPropertiesToState(ctx, b, bm)
 	}
 
-	if len(b.AggregationProperties) > 0 {
-		err := addAggregationPropertiesToState(ctx, b, bm)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 
@@ -177,6 +170,18 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 	if previousState.Identifier.IsNull() {
 		bp, err = r.portClient.CreateBlueprint(ctx, b)
 	} else {
+		existingBp, statusCode, err := r.portClient.ReadBlueprint(ctx, previousState.Identifier.ValueString())
+		if err != nil {
+			if statusCode == 404 {
+				resp.Diagnostics.AddError("Blueprint doesn't exists, it is required to update the blueprint", err.Error())
+				return
+			}
+			resp.Diagnostics.AddError("failed reading blueprint", err.Error())
+			return
+		}
+		// aggregation properties are managed in a different resource, so we need to keep them in the update
+		// to avoid losing them
+		b.AggregationProperties = existingBp.AggregationProperties
 		bp, err = r.portClient.UpdateBlueprint(ctx, b, previousState.ID.ValueString())
 	}
 
@@ -278,7 +283,6 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 	b.Relations = relationsResourceToBody(state)
 	b.MirrorProperties = mirrorPropertiesToBody(state)
 	b.CalculationProperties = calculationPropertiesToBody(ctx, state)
-	b.AggregationProperties, err = aggregationPropertiesToBody(ctx, state)
 	if err != nil {
 		return nil, err
 	}

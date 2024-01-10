@@ -173,5 +173,4 @@ type BlueprintModel struct {
 	Relations                   map[string]RelationModel            `tfsdk:"relations"`
 	MirrorProperties            map[string]MirrorPropertyModel      `tfsdk:"mirror_properties"`
 	CalculationProperties       map[string]CalculationPropertyModel `tfsdk:"calculation_properties"`
-	AggregationProperties       map[string]AggregationPropertyModel `tfsdk:"aggregation_properties"`
 }

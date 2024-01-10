@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	aggregation_property "github.com/port-labs/terraform-provider-port-labs/port/aggregation-property"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -126,6 +127,7 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		blueprint.NewBlueprintResource,
+		aggregation_property.NewAggregationPropertyResource,
 		entity.NewEntityResource,
 		action.NewActionResource,
 		action_permissions.NewActionPermissionsResource,

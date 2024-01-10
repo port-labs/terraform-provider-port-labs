@@ -2,18 +2,13 @@ package blueprint
 
 import (
 	"context"
-	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
-
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -452,135 +447,125 @@ func BlueprintSchema() map[string]schema.Attribute {
 				},
 			},
 		},
-		"aggregation_properties": schema.MapNestedAttribute{
-			MarkdownDescription: "The aggregation properties of the blueprint",
-			Optional:            true,
-			NestedObject: schema.NestedAttributeObject{
-				Attributes: map[string]schema.Attribute{
-					"title": schema.StringAttribute{
-						MarkdownDescription: "The title of the aggregation property",
-						Optional:            true,
-					},
-					"icon": schema.StringAttribute{
-						MarkdownDescription: "The icon of the aggregation property",
-						Optional:            true,
-					},
-					"description": schema.StringAttribute{
-						MarkdownDescription: "The description of the aggregation property",
-						Optional:            true,
-					},
-					"target": schema.StringAttribute{
-						MarkdownDescription: "The target blueprint to perform the aggregation on",
-						Required:            true,
-					},
-					"method": schema.SingleNestedAttribute{
-						MarkdownDescription: "The aggregation method to perform on the target blueprint, one of count_entities, average_entities, average_by_property, aggregate_by_property",
-						Required:            true,
-						Attributes: map[string]schema.Attribute{
-							"count_entities": schema.BoolAttribute{
-								MarkdownDescription: "Function to count the entities of the target entities",
-								Optional:            true,
-								Validators: []validator.Bool{
-									boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("average_entities")),
-									boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("average_by_property")),
-									boolvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("aggregate_by_property")),
-								},
-							},
-							"average_entities": schema.SingleNestedAttribute{
-								MarkdownDescription: "Function to average the entities of the target entities",
-								Optional:            true,
-								Attributes: map[string]schema.Attribute{
-									"average_of": schema.StringAttribute{
-										MarkdownDescription: "The time periods to calculate the average of, e.g. hour, day, week, month",
-										Optional:            true,
-										Computed:            true,
-										Default:             stringdefault.StaticString("day"),
-										Validators: []validator.String{
-											stringvalidator.OneOf("hour", "day", "week", "month"),
-										},
-									},
-									"measure_time_by": schema.StringAttribute{
-										MarkdownDescription: "The property name on which to calculate the the time periods, e.g. $createdAt, $updated_at or any other date property",
-										Optional:            true,
-										Computed:            true,
-										Default:             stringdefault.StaticString("$createdAt"),
-									},
-								},
-								Validators: []validator.Object{
-									objectvalidator.ConflictsWith(
-										path.MatchRelative().AtParent().AtName("count_entities"),
-										path.MatchRelative().AtParent().AtName("average_by_property"),
-										path.MatchRelative().AtParent().AtName("aggregate_by_property"),
-									),
-								},
-							},
-							"average_by_property": schema.SingleNestedAttribute{
-								MarkdownDescription: "Function to calculate the average by property value of the target entities",
-								Optional:            true,
-								Attributes: map[string]schema.Attribute{
-									"average_of": schema.StringAttribute{
-										MarkdownDescription: "The time periods to calculate the average by, e.g. hour, day, week, month",
-										Required:            true,
-										Validators: []validator.String{
-											stringvalidator.OneOf("hour", "day", "week", "month", "total"),
-										},
-									},
-									"measure_time_by": schema.StringAttribute{
-										MarkdownDescription: "The property name on which to calculate the the time periods, e.g. $createdAt, $updated_at or any other date property",
-										Required:            true,
-									},
-									"property": schema.StringAttribute{
-										MarkdownDescription: "The property name on which to calculate the average by",
-										Required:            true,
-									},
-								},
-								Validators: []validator.Object{
-									objectvalidator.ConflictsWith(
-										path.MatchRelative().AtParent().AtName("count_entities"),
-										path.MatchRelative().AtParent().AtName("average_entities"),
-										path.MatchRelative().AtParent().AtName("aggregate_by_property"),
-									),
-								},
-							},
-							"aggregate_by_property": schema.SingleNestedAttribute{
-								MarkdownDescription: "Function to calculate the aggregate by property value of the target entities, such as sum, min, max, median",
-								Optional:            true,
-								Attributes: map[string]schema.Attribute{
-									"func": schema.StringAttribute{
-										MarkdownDescription: "The func of the aggregate by property",
-										Required:            true,
-										Validators: []validator.String{
-											stringvalidator.OneOf("sum", "min", "max", "median"),
-										},
-									},
-									"property": schema.StringAttribute{
-										MarkdownDescription: "The property of the aggregate by property",
-										Required:            true,
-									},
-								},
-								Validators: []validator.Object{
-									objectvalidator.ConflictsWith(
-										path.MatchRelative().AtParent().AtName("count_entities"),
-										path.MatchRelative().AtParent().AtName("average_entities"),
-										path.MatchRelative().AtParent().AtName("average_by_property"),
-									),
-								},
-							},
-						},
-					},
-					"query": schema.StringAttribute{
-						MarkdownDescription: "Query to filter the target entities",
-						Optional:            true,
-					},
-				},
-			},
-		},
 	}
 }
 
 func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Blueprint Resource",
+		MarkdownDescription: blueprintMarkdownDescription,
 		Attributes:          BlueprintSchema(),
 	}
 }
+
+var blueprintMarkdownDescription = `
+
+# Blueprint Resource
+
+Docs about the blueprint resource in Port can be found [here](https://docs.getport.io/build-your-software-catalog/define-your-data-model/setup-blueprint/).
+
+
+## Example Usage
+
+` + "```hcl" + `
+
+resource "port_blueprint" "environment" {
+  title      = "Environment"
+  icon       = "Environment"
+  identifier = "environment"
+  properties = {
+    string_props = {
+      "name" = {
+        title = "name"
+      }
+      "docs-url" = {
+        title  = "Docs URL"
+        format = "url"
+      }
+    }
+  }
+}
+
+` + "```" + `
+
+## Example Usage with Relations
+
+` + "```hcl" + `
+
+resource "port_blueprint" "environment" {
+  title      = "Environment"
+  icon       = "Environment"
+  identifier = "environment"	
+  properties = {
+	string_props = {
+	  "aws-region" = {
+		title = "AWS Region"
+	  }
+      "docs-url" = {
+	    title  = "Docs URL"	
+	    format = "url"
+      }
+	}	
+  }
+}
+
+resource "port_blueprint" "microservice" {
+  title      = "Microservice"
+  icon       = "Microservice"
+  identifier = "microservice"
+  properties = {
+	string_props = {
+	  "domain" = {
+		title = "Domain"
+	  }
+	  "slack-channel" = {
+		title = "Slack Channel"
+		format = "url"
+	  }
+	}
+  }
+  relations = {
+	"environment" = {	
+	  target 	= port_blueprint.environment.identifier
+      required 	= true
+	  many   	= false
+	}
+  }
+}
+
+` + "```" + `
+
+
+## Example Usage with Mirror Properties
+
+` + "```hcl" + `
+
+resource "port_blueprint" "microservice" {
+  title      = "Microservice"
+  icon       = "Microservice"
+  identifier = "microservice"
+  properties = {
+	string_props = {
+	  "domain" = {
+		title = "Domain"
+	  }
+	  "slack-channel" = {
+		title  = "Slack Channel"	
+		format = "url"
+	  }
+	}
+  }
+  mirror_properties = {
+	"aws-region" = {
+	  path  = "environment.aws-region"
+	}
+  }
+  relations = {
+	"environment" = {	
+	  target 	= port_blueprint.environment.identifier
+	  required 	= true
+	  many   	= false
+	}
+  }
+}
+
+` + "```"

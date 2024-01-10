@@ -2,8 +2,6 @@ package blueprint
 
 import (
 	"context"
-	"encoding/json"
-
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 )
 
@@ -131,82 +129,4 @@ func calculationPropertiesToBody(ctx context.Context, state *BlueprintModel) map
 	}
 
 	return calculationProperties
-}
-
-func aggregationPropertiesToBody(ctx context.Context, state *BlueprintModel) (map[string]cli.BlueprintAggregationProperty, error) {
-	aggregationProperties := map[string]cli.BlueprintAggregationProperty{}
-
-	for identifier, prop := range state.AggregationProperties {
-		aggregationProp := cli.BlueprintAggregationProperty{
-			Target: prop.Target.ValueString(),
-		}
-
-		if !prop.Title.IsNull() {
-			aggregationProp.Title = prop.Title.ValueStringPointer()
-		}
-
-		if !prop.Description.IsNull() {
-			aggregationProp.Description = prop.Description.ValueStringPointer()
-		}
-
-		if !prop.Icon.IsNull() {
-			aggregationProp.Icon = prop.Icon.ValueStringPointer()
-		}
-
-		if !prop.Method.CountEntities.IsNull() {
-			aggregationProp.CalculationSpec = map[string]string{
-				"func":          "count",
-				"calculationBy": "entities",
-			}
-		} else if prop.Method.AverageEntities != nil {
-			aggregationProp.CalculationSpec = map[string]string{
-				"func":          "average",
-				"calculationBy": "entities",
-				"averageOf":     prop.Method.AverageEntities.AverageOf.ValueString(),
-				"measureTimeBy": prop.Method.AverageEntities.MeasureTimeBy.ValueString(),
-			}
-		} else if prop.Method.AverageByProperty != nil {
-			aggregationProp.CalculationSpec = map[string]string{
-				"func":          "average",
-				"calculationBy": "property",
-				"property":      prop.Method.AverageByProperty.Property.ValueString(),
-				"averageOf":     prop.Method.AverageByProperty.AverageOf.ValueString(),
-				"measureTimeBy": prop.Method.AverageByProperty.MeasureTimeBy.ValueString(),
-			}
-		} else if prop.Method.AggregateByProperty != nil {
-			aggregationProp.CalculationSpec = map[string]string{
-				"func":          prop.Method.AggregateByProperty.Func.ValueString(),
-				"calculationBy": "property",
-				"property":      prop.Method.AggregateByProperty.Property.ValueString(),
-			}
-		}
-
-		query, err := queryToPortBody(prop.Query.ValueStringPointer())
-		if err != nil {
-			return nil, err
-		}
-
-		// don't set query, if it wasn't set in the state, as the backend only supports setting to an object with
-		// the search format, and not empty map or nil
-		if query != nil {
-			aggregationProp.Query = *query
-		}
-
-		aggregationProperties[identifier] = aggregationProp
-	}
-
-	return aggregationProperties, nil
-}
-
-func queryToPortBody(query *string) (*map[string]any, error) {
-	if query == nil || *query == "" {
-		return nil, nil
-	}
-
-	queryMap := make(map[string]any)
-	if err := json.Unmarshal([]byte(*query), &queryMap); err != nil {
-		return nil, err
-	}
-
-	return &queryMap, nil
 }

@@ -2,7 +2,7 @@ resource "port_blueprint" "environment" {
   title      = "Environment"
   icon       = "Environment"
   identifier = "hedwig-env"
-  properties {
+  properties = {
     string_props = {
       "name" = {
         type  = "string"
@@ -20,7 +20,7 @@ resource "port_blueprint" "vm" {
   title      = "VM"
   icon       = "GPU"
   identifier = "hedwig-vm"
-  properties {
+  properties = {
     string_props = {
       name = {
         type  = "string"

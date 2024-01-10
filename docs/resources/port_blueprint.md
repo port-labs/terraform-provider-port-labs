@@ -199,7 +199,7 @@ resource "port_blueprint" "microservice" {
   relations = {
 	"environment" = {	
 	  target 	= port_blueprint.environment.identifier
-	  required 	= true
+      required 	= true
 	  many   	= false
 	}
   }

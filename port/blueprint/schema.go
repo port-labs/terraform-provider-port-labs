@@ -2,7 +2,6 @@ package blueprint
 
 import (
 	"context"
-
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -453,7 +452,120 @@ func BlueprintSchema() map[string]schema.Attribute {
 
 func (r *BlueprintResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Blueprint Resource",
+		MarkdownDescription: blueprintMarkdownDescription,
 		Attributes:          BlueprintSchema(),
 	}
 }
+
+var blueprintMarkdownDescription = `
+
+# Blueprint Resource
+
+Docs about the blueprint resource in Port can be found [here](https://docs.getport.io/build-your-software-catalog/define-your-data-model/setup-blueprint/).
+
+
+## Example Usage
+
+` + "```hcl" + `
+
+resource "port_blueprint" "environment" {
+  title      = "Environment"
+  icon       = "Environment"
+  identifier = "environment"
+  properties = {
+    string_props = {
+      "aws-region" = {
+        title = "AWS Region"
+      }
+      "docs-url" = {
+        title  = "Docs URL"
+        format = "url"
+      }
+    }
+  }
+}
+
+` + "```" + `
+
+## Example Usage with Relations
+
+` + "```hcl" + `
+
+resource "port_blueprint" "environment" {
+  title      = "Environment"
+  icon       = "Environment"
+  identifier = "environment"
+  properties = {
+    string_props = {
+      "aws-region" = {
+        title = "AWS Region"
+      }
+      "docs-url" = {
+        title  = "Docs URL"
+        format = "url"
+      }
+    }
+  }
+}
+
+resource "port_blueprint" "microservice" {
+  title      = "Microservice"
+  icon       = "Microservice"
+  identifier = "microservice"
+  properties = {
+    string_props = {
+      "domain" = {
+        title = "Domain"
+      }
+      "slack-channel" = {
+        title  = "Slack Channel"
+        format = "url"
+      }
+    }
+  }
+  relations = {
+    "environment" = {
+      target   = port_blueprint.environment.identifier
+      required = true
+      many     = false
+    }
+  }
+}
+
+` + "```" + `
+
+
+## Example Usage with Mirror Properties
+
+` + "```hcl" + `
+
+resource "port_blueprint" "microservice" {
+  title      = "Microservice"
+  icon       = "Microservice"
+  identifier = "microservice"
+  properties = {
+    string_props = {
+      "domain" = {
+        title = "Domain"
+      }
+      "slack-channel" = {
+        title  = "Slack Channel"
+        format = "url"
+      }
+    }
+  }
+  mirror_properties = {
+    "aws-region" = {
+      path = "environment.aws-region"
+    }
+  }
+  relations = {
+    "environment" = {
+      target   = port_blueprint.environment.identifier
+      required = true
+      many     = false
+    }
+  }
+}
+
+` + "```" + ``

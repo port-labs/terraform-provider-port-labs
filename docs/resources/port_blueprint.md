@@ -4,11 +4,213 @@ page_title: "port_blueprint Resource - terraform-provider-port-labs"
 subcategory: ""
 description: |-
   Blueprint Resource
+  Docs about the blueprint resource in Port can be found here https://docs.getport.io/build-your-software-catalog/define-your-data-model/setup-blueprint/.
+  Example Usage
+  ```hcl
+  resource "portblueprint" "environment" {
+    title      = "Environment"
+    icon       = "Environment"
+    identifier = "environment"
+    properties = {
+      stringprops = {
+        "aws-region" = {
+          title = "AWS Region"
+        }
+        "docs-url" = {
+          title  = "Docs URL"
+          format = "url"
+        }
+      }
+    }
+  }
+  ```
+  Example Usage with Relations
+  ```hcl
+  resource "portblueprint" "environment" {
+    title      = "Environment"
+    icon       = "Environment"
+    identifier = "environment"
+    properties = {
+      stringprops = {
+        "aws-region" = {
+          title = "AWS Region"
+        }
+        "docs-url" = {
+          title  = "Docs URL"
+          format = "url"
+        }
+      }
+    }
+  }
+  resource "portblueprint" "microservice" {
+    title      = "Microservice"
+    icon       = "Microservice"
+    identifier = "microservice"
+    properties = {
+      stringprops = {
+        "domain" = {
+          title = "Domain"
+        }
+        "slack-channel" = {
+          title  = "Slack Channel"
+          format = "url"
+        }
+      }
+    }
+    relations = {
+      "environment" = {
+        target   = port_blueprint.environment.identifier
+        required = true
+        many     = false
+      }
+    }
+  }
+  ```
+  Example Usage with Mirror Properties
+  ```hcl
+  resource "portblueprint" "microservice" {
+    title      = "Microservice"
+    icon       = "Microservice"
+    identifier = "microservice"
+    properties = {
+      stringprops = {
+        "domain" = {
+          title = "Domain"
+        }
+        "slack-channel" = {
+          title  = "Slack Channel"
+          format = "url"
+        }
+      }
+    }
+    mirrorproperties = {
+      "aws-region" = {
+        path = "environment.aws-region"
+      }
+    }
+    relations = {
+      "environment" = {
+        target   = portblueprint.environment.identifier
+        required = true
+        many     = false
+      }
+    }
+  }
+  ```
 ---
 
 # port_blueprint (Resource)
 
-Blueprint Resource
+# Blueprint Resource
+
+Docs about the blueprint resource in Port can be found [here](https://docs.getport.io/build-your-software-catalog/define-your-data-model/setup-blueprint/).
+
+
+## Example Usage
+
+```hcl
+
+resource "port_blueprint" "environment" {
+  title      = "Environment"
+  icon       = "Environment"
+  identifier = "environment"
+  properties = {
+    string_props = {
+      "aws-region" = {
+        title = "AWS Region"
+      }
+      "docs-url" = {
+        title  = "Docs URL"
+        format = "url"
+      }
+    }
+  }
+}
+
+```
+
+## Example Usage with Relations
+
+```hcl
+
+resource "port_blueprint" "environment" {
+  title      = "Environment"
+  icon       = "Environment"
+  identifier = "environment"
+  properties = {
+    string_props = {
+      "aws-region" = {
+        title = "AWS Region"
+      }
+      "docs-url" = {
+        title  = "Docs URL"
+        format = "url"
+      }
+    }
+  }
+}
+
+resource "port_blueprint" "microservice" {
+  title      = "Microservice"
+  icon       = "Microservice"
+  identifier = "microservice"
+  properties = {
+    string_props = {
+      "domain" = {
+        title = "Domain"
+      }
+      "slack-channel" = {
+        title  = "Slack Channel"
+        format = "url"
+      }
+    }
+  }
+  relations = {
+    "environment" = {
+      target   = port_blueprint.environment.identifier
+      required = true
+      many     = false
+    }
+  }
+}
+
+```
+
+
+## Example Usage with Mirror Properties
+
+```hcl
+
+resource "port_blueprint" "microservice" {
+  title      = "Microservice"
+  icon       = "Microservice"
+  identifier = "microservice"
+  properties = {
+    string_props = {
+      "domain" = {
+        title = "Domain"
+      }
+      "slack-channel" = {
+        title  = "Slack Channel"
+        format = "url"
+      }
+    }
+  }
+  mirror_properties = {
+    "aws-region" = {
+      path = "environment.aws-region"
+    }
+  }
+  relations = {
+    "environment" = {
+      target   = port_blueprint.environment.identifier
+      required = true
+      many     = false
+    }
+  }
+}
+
+```
 
 
 

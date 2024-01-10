@@ -105,18 +105,18 @@ Docs for the Action Permissions resource can be found [here](https://docs.getpor
 resource "port_action_permissions" "restart_microservice_permissions" {
   action_identifier = port_action.restart_microservice.identifier
   permissions = {
-    "execute": {
-      "roles": [
+    "execute" : {
+      "roles" : [
         "Admin"
       ],
-      "users": [],
-      "teams": [],
-      "owned_by_team": true
+      "users" : [],
+      "teams" : [],
+      "owned_by_team" : true
     },
-    "approve": {
-      "roles": ["Member", "Admin"],
-      "users": [],
-      "teams": []
+    "approve" : {
+      "roles" : ["Member", "Admin"],
+      "users" : [],
+      "teams" : []
     }
   }
 }` + "\n```" + `
@@ -134,41 +134,41 @@ To pass a JSON string to Terraform, you can use the [jsonencode](https://develop
 resource "port_action_permissions" "restart_microservice_permissions" {
   action_identifier = port_action.restart_microservice.identifier
   permissions = {
-    "execute": {
-      "roles": [
+    "execute" : {
+      "roles" : [
         "Admin"
       ],
-      "users": [],
-      "teams": [],
-      "owned_by_team": true
+      "users" : [],
+      "teams" : [],
+      "owned_by_team" : true
     },
-    "approve": {
-      "roles": ["Member", "Admin"],
-      "users": [],
-      "teams": []
+    "approve" : {
+      "roles" : ["Member", "Admin"],
+      "users" : [],
+      "teams" : []
       # Terraform's "jsonencode" function converts a
       # Terraform expression result to valid JSON syntax.
-      "policy": jsonencode(
+      "policy" : jsonencode(
         {
-          queries: {
-            executingUser: {
-              rules: [
+          queries : {
+            executingUser : {
+              rules : [
                 {
-                  value: "user",
-                  operator: "=",
-                  property: "$blueprint"
+                  value : "user",
+                  operator : "=",
+                  property : "$blueprint"
                 },
                 {
-                    value: "true",
-                    operator: "=",
-                    property: "$owned_by_team"
+                  value : "true",
+                  operator : "=",
+                  property : "$owned_by_team"
 
                 }
               ],
-              combinator: "and"
+              combinator : "and"
             }
           },
-          conditions: [
+          conditions : [
           "true"]
         }
       )

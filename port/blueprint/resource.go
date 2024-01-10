@@ -181,7 +181,9 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 		}
 		// aggregation properties are managed in a different resource, so we need to keep them in the update
 		// to avoid losing them
-		b.AggregationProperties = existingBp.AggregationProperties
+		if existingBp.AggregationProperties != nil {
+			b.AggregationProperties = existingBp.AggregationProperties
+		}
 		bp, err = r.portClient.UpdateBlueprint(ctx, b, previousState.ID.ValueString())
 	}
 

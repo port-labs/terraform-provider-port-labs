@@ -183,7 +183,7 @@ type (
 		Schema                BlueprintSchema                         `json:"schema"`
 		MirrorProperties      map[string]BlueprintMirrorProperty      `json:"mirrorProperties"`
 		CalculationProperties map[string]BlueprintCalculationProperty `json:"calculationProperties"`
-		AggregationProperties map[string]BlueprintAggregationProperty `json:"aggregationProperties"`
+		AggregationProperties map[string]BlueprintAggregationProperty `json:"aggregationProperties,omitempty"`
 		ChangelogDestination  *ChangelogDestination                   `json:"changelogDestination,omitempty"`
 		TeamInheritance       *TeamInheritance                        `json:"teamInheritance,omitempty"`
 		Relations             map[string]Relation                     `json:"relations"`

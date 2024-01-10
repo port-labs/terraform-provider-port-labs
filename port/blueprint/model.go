@@ -124,6 +124,38 @@ type CalculationPropertyModel struct {
 	Colors      types.Map    `tfsdk:"colors"`
 }
 
+type AverageEntitiesModel struct {
+	AverageOf     types.String `tfsdk:"average_of"`
+	MeasureTimeBy types.String `tfsdk:"measure_time_by"`
+}
+
+type AverageByProperty struct {
+	MeasureTimeBy types.String `tfsdk:"measure_time_by"`
+	AverageOf     types.String `tfsdk:"average_of"`
+	Property      types.String `tfsdk:"property"`
+}
+
+type AggregateByPropertyModel struct {
+	Func     types.String `tfsdk:"func"`
+	Property types.String `tfsdk:"property"`
+}
+
+type AggregationMethodsModel struct {
+	CountEntities       types.Bool                `tfsdk:"count_entities"`
+	AverageEntities     *AverageEntitiesModel     `tfsdk:"average_entities"`
+	AverageByProperty   *AverageByProperty        `tfsdk:"average_by_property"`
+	AggregateByProperty *AggregateByPropertyModel `tfsdk:"aggregate_by_property"`
+}
+
+type AggregationPropertyModel struct {
+	Title       types.String             `tfsdk:"title"`
+	Icon        types.String             `tfsdk:"icon"`
+	Description types.String             `tfsdk:"description"`
+	Target      types.String             `tfsdk:"target"`
+	Method      *AggregationMethodsModel `tfsdk:"method"`
+	Query       types.String             `tfsdk:"query"`
+}
+
 type BlueprintModel struct {
 	ID                          types.String                        `tfsdk:"id"`
 	Identifier                  types.String                        `tfsdk:"identifier"`

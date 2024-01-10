@@ -366,7 +366,6 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 		properties = {
 			string_props = {
 				"text" = {
-					type = "string"
 					title = "text"
 				}
 			}
@@ -380,7 +379,6 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 		properties = {
 			string_props = {
 			   "text" = {
-					type = "string"
 					title = "text"
 				}
 			}
@@ -425,7 +423,6 @@ func TestAccPortBlueprintImport(t *testing.T) {
 		properties = {
 			string_props = {
 			   "text" = {
-					type = "string"
 					title = "text"
 				}
 			}

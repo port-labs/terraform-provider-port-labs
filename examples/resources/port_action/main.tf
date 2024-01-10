@@ -4,11 +4,11 @@ resource "port_action" "restart_microservice" {
   identifier = "restart-micrservice"
   blueprint  = port_blueprint.microservice.identifier
   trigger    = "DAY-2"
-  webhook_method {
+  webhook_method = {
     type = "WEBHOOK"
     url  = "https://app.getport.io"
   }
-  user_properties {
+  user_properties = {
     string_props = {
       "webhook_url" = {
         title       = "Webhook URL"

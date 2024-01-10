@@ -2,7 +2,6 @@ package blueprint
 
 import (
 	"context"
-
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 )
 

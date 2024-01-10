@@ -78,3 +78,126 @@ func TestAccPortAggregationPropertyWithCycleRelation(t *testing.T) {
 		},
 	})
 }
+
+func TestAccCreateAggregationPropertyAverageEntities(t *testing.T) {
+	parentBlueprintIdentifier := utils.GenID()
+	childBlueprintIdentifier := utils.GenID()
+	aggregationPropIdentifier := utils.GenID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port_blueprint" "parent_blueprint" {
+		title = "Parent Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "child_blueprint" {
+		title = "Child Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+       	relations = {
+            "parent" = {
+				 title = "Parent"
+				 target = port_blueprint.parent_blueprint.identifier
+			 }
+		}
+	}
+
+	resource "port_aggregation_property" "count_entities" {
+		aggregation_identifier = "%s"
+		blueprint_identifier = port_blueprint.parent_blueprint.identifier
+		target_blueprint_identifier = port_blueprint.child_blueprint.identifier
+		title = "Count Childrens"
+		icon = "Terraform"
+		description = "Count Childrens"
+		method = {
+			average_entities = {
+				"average_of" = "month"
+				"measure_time_by" = "$updatedAt"
+			}
+		}
+	}
+`, parentBlueprintIdentifier, childBlueprintIdentifier, aggregationPropIdentifier)
+
+	var testAccActionConfigUpdate = fmt.Sprintf(`
+	resource "port_blueprint" "parent_blueprint" {
+		title = "Parent Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "child_blueprint" {
+		title = "Child Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		relations = {
+			"parent" = {
+				title = "Parent"
+				target = port_blueprint.parent_blueprint.identifier
+			}
+		}
+	}
+
+	resource "port_aggregation_property" "count_entities" {
+		aggregation_identifier = "%s"
+		blueprint_identifier = port_blueprint.parent_blueprint.identifier
+		target_blueprint_identifier = port_blueprint.child_blueprint.identifier
+		title = "Count Childrens"
+		icon = "Terraform"
+		description = "Count Childrens"
+		method = {
+			average_entities = {}
+		}
+	}
+`, parentBlueprintIdentifier, childBlueprintIdentifier, aggregationPropIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "title", "Count Childrens"),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "aggregation_identifier", aggregationPropIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "description", "Count Childrens"),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "blueprint_identifier", parentBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "target_blueprint_identifier", childBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "method.average_entities.average_of", "month"),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "method.average_entities.measure_time_by", "$updatedAt"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "title", "Count Childrens"),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "aggregation_identifier", aggregationPropIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "description", "Count Childrens"),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "blueprint_identifier", parentBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "target_blueprint_identifier", childBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "method.average_entities.average_of", "day"),
+					resource.TestCheckResourceAttr("port_aggregation_property.count_entities", "method.average_entities.measure_time_by", "$createdAt"),
+				),
+			},
+		},
+	})
+}

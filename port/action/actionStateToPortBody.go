@@ -37,6 +37,7 @@ func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
 }
 
 func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action, error) {
+	var err error
 	action := &cli.Action{
 		Identifier: data.Identifier.ValueString(),
 	}
@@ -56,8 +57,10 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action,
 		action.Description = &description
 	}
 
-	var err error
 	action.Trigger, err = triggerToBody(ctx, data)
+	if err != nil {
+		return nil, err
+	}
 
 	action.InvocationMethod, err = invocationMethodToBody(ctx, data)
 	if err != nil {

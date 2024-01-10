@@ -117,7 +117,7 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.ActionProperty, p
 	return nil
 }
 
-func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.ActionProperty, required *[]string) error {
+func arrayPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, props map[string]cli.ActionProperty, required *[]string) error {
 	for propIdentifier, prop := range d.UserProperties.ArrayProps {
 		props[propIdentifier] = cli.ActionProperty{
 			Type: "array",

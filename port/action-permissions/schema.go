@@ -2,8 +2,10 @@ package action_permissions
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -12,13 +14,15 @@ func ActionPermissionsSchema() map[string]schema.Attribute {
 		"id": schema.StringAttribute{
 			Computed: true,
 		},
-		"blueprint_identifier": schema.StringAttribute{
-			Description: "The ID of the blueprint",
-			Required:    true,
-		},
 		"action_identifier": schema.StringAttribute{
 			Description: "The ID of the action",
 			Required:    true,
+		},
+		"blueprint_identifier": schema.StringAttribute{
+			Description:        "The ID of the blueprint",
+			Optional:           true,
+			DeprecationMessage: "Action is not attached to blueprint anymore. This value is ignored",
+			Validators:         []validator.String{stringvalidator.OneOf("")},
 		},
 		"permissions": schema.SingleNestedAttribute{
 			MarkdownDescription: "The permissions for the action",
@@ -100,7 +104,6 @@ Docs for the Action Permissions resource can be found [here](https://docs.getpor
 ` + "```hcl" + `
 resource "port_action_permissions" "restart_microservice_permissions" {
   action_identifier = port_action.restart_microservice.identifier
-  blueprint_identifier = port_blueprint.microservice.identifier
   permissions = {
     "execute": {
       "roles": [
@@ -130,7 +133,6 @@ To pass a JSON string to Terraform, you can use the [jsonencode](https://develop
 ` + "```hcl" + `
 resource "port_action_permissions" "restart_microservice_permissions" {
   action_identifier = port_action.restart_microservice.identifier
-  blueprint_identifier = port_blueprint.microservice.identifier
   permissions = {
     "execute": {
       "roles": [

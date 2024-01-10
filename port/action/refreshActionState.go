@@ -13,48 +13,120 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
+func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
 	if a.InvocationMethod.Type == consts.Kafka {
-		state.KafkaMethod, _ = types.ObjectValue(nil, nil)
+		payload, err := utils.GoObjectToTerraformString(a.InvocationMethod.Payload)
+		if err != nil {
+			return err
+		}
+
+		state.KafkaMethod = &KafkaMethodModel{
+			Payload: payload,
+		}
 	}
 
 	if a.InvocationMethod.Type == consts.Webhook {
+		agent, err := utils.GoObjectToTerraformString(a.InvocationMethod.Agent)
+		if err != nil {
+			return err
+		}
+		synchronized, err := utils.GoObjectToTerraformString(a.InvocationMethod.Synchronized)
+		if err != nil {
+			return err
+		}
+		headers, _ := types.MapValueFrom(ctx, types.StringType, a.InvocationMethod.Headers)
+		body, err := utils.GoObjectToTerraformString(a.InvocationMethod.Body)
+		if err != nil {
+			return err
+		}
+
 		state.WebhookMethod = &WebhookMethodModel{
 			Url:          types.StringValue(*a.InvocationMethod.Url),
-			Agent:        flex.GoBoolToFramework(a.InvocationMethod.Agent),
-			Synchronized: flex.GoBoolToFramework(a.InvocationMethod.Synchronized),
+			Agent:        agent,
+			Synchronized: synchronized,
 			Method:       flex.GoStringToFramework(a.InvocationMethod.Method),
+			Headers:      headers,
+			Body:         body,
 		}
 	}
 
 	if a.InvocationMethod.Type == consts.Github {
-		state.GithubMethod = &GithubMethodModel{
-			Repo:                 types.StringValue(*a.InvocationMethod.Repo),
-			Org:                  types.StringValue(*a.InvocationMethod.Org),
-			OmitPayload:          flex.GoBoolToFramework(a.InvocationMethod.OmitPayload),
-			OmitUserInputs:       flex.GoBoolToFramework(a.InvocationMethod.OmitUserInputs),
-			Workflow:             flex.GoStringToFramework(a.InvocationMethod.Workflow),
-			ReportWorkflowStatus: flex.GoBoolToFramework(a.InvocationMethod.ReportWorkflowStatus),
+		workflowInputs, err := utils.GoObjectToTerraformString(a.InvocationMethod.WorkflowInputs)
+		if err != nil {
+			return err
 		}
-	}
+		reportWorkflowStatus, err := utils.GoObjectToTerraformString(a.InvocationMethod.ReportWorkflowStatus)
+		if err != nil {
+			return err
+		}
 
-	if a.InvocationMethod.Type == consts.AzureDevops {
-		state.AzureMethod = &AzureMethodModel{
-			Org:     types.StringValue(*a.InvocationMethod.Org),
-			Webhook: types.StringValue(*a.InvocationMethod.Webhook),
+		state.GithubMethod = &GithubMethodModel{
+			Org:                  types.StringValue(*a.InvocationMethod.Org),
+			Repo:                 types.StringValue(*a.InvocationMethod.Repo),
+			Workflow:             types.StringValue(*a.InvocationMethod.Workflow),
+			WorkflowInputs:       workflowInputs,
+			ReportWorkflowStatus: reportWorkflowStatus,
 		}
 	}
 
 	if a.InvocationMethod.Type == consts.Gitlab {
+		pipelineVariables, err := utils.GoObjectToTerraformString(a.InvocationMethod.PipelineVariables)
+		if err != nil {
+			return err
+		}
+
 		state.GitlabMethod = &GitlabMethodModel{
-			ProjectName:    types.StringValue(*a.InvocationMethod.ProjectName),
-			GroupName:      types.StringValue(*a.InvocationMethod.GroupName),
-			OmitPayload:    flex.GoBoolToFramework(a.InvocationMethod.OmitPayload),
-			OmitUserInputs: flex.GoBoolToFramework(a.InvocationMethod.OmitUserInputs),
-			DefaultRef:     types.StringValue(*a.InvocationMethod.DefaultRef),
-			Agent:          flex.GoBoolToFramework(a.InvocationMethod.Agent),
+			ProjectName:       types.StringValue(*a.InvocationMethod.ProjectName),
+			GroupName:         types.StringValue(*a.InvocationMethod.GroupName),
+			DefaultRef:        types.StringValue(*a.InvocationMethod.DefaultRef),
+			PipelineVariables: pipelineVariables,
 		}
 	}
+
+	if a.InvocationMethod.Type == consts.AzureDevops {
+		payload, err := utils.GoObjectToTerraformString(a.InvocationMethod.Payload)
+		if err != nil {
+			return err
+		}
+
+		state.AzureMethod = &AzureMethodModel{
+			Org:     types.StringValue(*a.InvocationMethod.Org),
+			Webhook: types.StringValue(*a.InvocationMethod.Webhook),
+			Payload: payload,
+		}
+	}
+
+	if a.InvocationMethod.Type == consts.UpsertEntity {
+		var teams []types.String
+		switch team := a.InvocationMethod.Team.(type) {
+		case string:
+			teams = append(teams, types.StringValue(team))
+		case []string:
+			for _, t := range team {
+				teams = append(teams, types.StringValue(t))
+			}
+		}
+		properties, err := utils.GoObjectToTerraformString(a.InvocationMethod.Properties)
+		if err != nil {
+			return err
+		}
+		relations, err := utils.GoObjectToTerraformString(a.InvocationMethod.Relations)
+		if err != nil {
+			return err
+		}
+
+		state.UpsertEntityMethod = &UpsertEntityMethodModel{
+			Identifier:          types.StringValue(*a.InvocationMethod.Identifier),
+			Title:               flex.GoStringToFramework(a.InvocationMethod.Title),
+			BlueprintIdentifier: types.StringValue(*a.InvocationMethod.BlueprintIdentifier),
+			Teams:               teams,
+			Icon:                flex.GoStringToFramework(a.InvocationMethod.Icon),
+			Properties:          properties,
+			Relations:           relations,
+		}
+	}
+
+	return nil
 }
 
 func writeDatasetToResource(v cli.ActionProperty) *DatasetModel {
@@ -103,7 +175,7 @@ func writeVisibleToResource(v cli.ActionProperty) (types.Bool, types.String) {
 	return types.BoolNull(), types.StringNull()
 }
 
-func writeRequiredToResource(v cli.ActionUserInputs) (types.String, []string) {
+func buildRequired(v cli.ActionUserInputs) (types.String, []string) {
 	// If required is nil, return an empty string and nil
 	if v.Required == nil {
 		return types.StringNull(), nil
@@ -130,11 +202,11 @@ func writeRequiredToResource(v cli.ActionUserInputs) (types.String, []string) {
 	return types.StringNull(), nil
 }
 
-func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
-	if len(a.UserInputs.Properties) > 0 {
+func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesModel, error) {
+	if len(a.Trigger.UserInputs.Properties) > 0 {
 		properties := &UserPropertiesModel{}
-		requiredJq, required := writeRequiredToResource(a.UserInputs)
-		for k, v := range a.UserInputs.Properties {
+		requiredJq, required := buildRequired(a.Trigger.UserInputs)
+		for k, v := range a.Trigger.UserInputs.Properties {
 			switch v.Type {
 			case "string":
 				if properties.StringProps == nil {
@@ -148,7 +220,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				err := setCommonProperties(ctx, v, stringProp)
 				if err != nil {
-					return err
+					return nil, err
 				}
 
 				properties.StringProps[k] = *stringProp
@@ -166,7 +238,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				err := setCommonProperties(ctx, v, numberProp)
 				if err != nil {
-					return err
+					return nil, err
 				}
 
 				properties.NumberProps[k] = *numberProp
@@ -178,7 +250,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				arrayProp, err := addArrayPropertiesToResource(&v)
 				if err != nil {
-					return err
+					return nil, err
 				}
 
 				if requiredJq.IsNull() && lo.Contains(required, k) {
@@ -187,7 +259,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				err = setCommonProperties(ctx, v, arrayProp)
 				if err != nil {
-					return err
+					return nil, err
 				}
 
 				properties.ArrayProps[k] = *arrayProp
@@ -201,7 +273,7 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				err := setCommonProperties(ctx, v, booleanProp)
 				if err != nil {
-					return err
+					return nil, err
 				}
 
 				if requiredJq.IsNull() && lo.Contains(required, k) {
@@ -223,32 +295,110 @@ func writeInputsToResource(ctx context.Context, a *cli.Action, state *ActionMode
 
 				err := setCommonProperties(ctx, v, objectProp)
 				if err != nil {
-					return err
+					return nil, err
 				}
 
 				properties.ObjectProps[k] = *objectProp
 
 			}
 		}
-		state.UserProperties = properties
-		if len(a.UserInputs.Order) > 0 {
-			state.OrderProperties = flex.GoArrayStringToTerraformList(ctx, a.UserInputs.Order)
+
+		return properties, nil
+	}
+
+	return nil, nil
+}
+
+func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
+	if a.Trigger.Type == consts.SelfService {
+		userProperties, err := buildUserProperties(ctx, a)
+		if err != nil {
+			return err
+		}
+		requiredJqQuery, _ := buildRequired(a.Trigger.UserInputs)
+		orderProperties := types.ListNull(types.StringType)
+		if len(a.Trigger.UserInputs.Order) > 0 {
+			orderProperties = flex.GoArrayStringToTerraformList(ctx, a.Trigger.UserInputs.Order)
+		}
+
+		state.SelfServiceTrigger = &SelfServiceTriggerModel{
+			BlueprintIdentifier: flex.GoStringToFramework(a.Trigger.BlueprintIdentifier),
+			Operation:           types.StringValue(*a.Trigger.Operation),
+			UserProperties:      userProperties,
+			RequiredJqQuery:     requiredJqQuery,
+			OrderProperties:     orderProperties,
 		}
 	}
+
+	if a.Trigger.Type == consts.Automation {
+		automationTrigger := &AutomationTriggerModel{}
+
+		var expressions []types.String
+		for _, e := range a.Trigger.Condition.Expressions {
+			expressions = append(expressions, types.StringValue(e))
+		}
+
+		automationTrigger.JqCondition = &JqConditionModel{
+			Expressions: expressions,
+			Combinator:  flex.GoStringToFramework(a.Trigger.Condition.Combinator),
+		}
+
+		if a.Trigger.Event.Type == consts.EntityCreated {
+			automationTrigger.EntityCreatedEvent = &EntityCreatedEventModel{
+				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+			}
+		}
+
+		if a.Trigger.Event.Type == consts.EntityUpdated {
+			automationTrigger.EntityUpdatedEvent = &EntityUpdatedEventModel{
+				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+			}
+		}
+
+		if a.Trigger.Event.Type == consts.EntityDeleted {
+			automationTrigger.EntityDeletedEvent = &EntityDeletedEventModel{
+				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+			}
+		}
+
+		if a.Trigger.Event.Type == consts.AnyEntityChange {
+			automationTrigger.AnyEntityChangeEvent = &AnyEntityChangeEventModel{
+				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+			}
+		}
+
+		if a.Trigger.Event.Type == consts.TimerPropertyExpired {
+			automationTrigger.TimerPropertyExpiredEvent = &TimerPropertyExpiredEventModel{
+				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+				PropertyIdentifier:  types.StringValue(*a.Trigger.Event.PropertyIdentifier),
+			}
+		}
+
+		state.AutomationTrigger = automationTrigger
+	}
+
 	return nil
 }
 
-func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, blueprintIdentifier string) error {
-	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintIdentifier, a.Identifier))
+func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action) error {
+	state.ID = types.StringValue(a.Identifier)
 	state.Identifier = types.StringValue(a.Identifier)
-	state.Blueprint = types.StringValue(blueprintIdentifier)
-	state.Title = types.StringValue(a.Title)
-	state.Trigger = types.StringValue(a.Trigger)
-
+	state.Blueprint = types.StringNull()
+	state.Title = flex.GoStringToFramework(a.Title)
 	state.Icon = flex.GoStringToFramework(a.Icon)
 	state.Description = flex.GoStringToFramework(a.Description)
-	state.RequiredApproval = flex.GoBoolToFramework(a.RequiredApproval)
 
+	err := writeTriggerToResource(ctx, a, state)
+	if err != nil {
+		return err
+	}
+
+	err = writeInvocationMethodToResource(ctx, a, state)
+	if err != nil {
+		return err
+	}
+
+	state.RequiredApproval = flex.GoBoolToFramework(a.RequiredApproval)
 	if a.ApprovalNotification != nil {
 		if a.ApprovalNotification.Type == "email" {
 			state.ApprovalEmailNotification, _ = types.ObjectValue(nil, nil)
@@ -263,17 +413,8 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action, 
 
 		}
 	}
+	state.Publish = flex.GoBoolToFramework(a.Publish)
 
-	requiredJq, _ := writeRequiredToResource(a.UserInputs)
-
-	state.RequiredJqQuery = requiredJq
-
-	writeInvocationMethodToResource(a, state)
-
-	err := writeInputsToResource(ctx, a, state)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 

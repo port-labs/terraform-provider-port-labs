@@ -155,4 +155,232 @@ var AggregationPropertyResourceMarkdownDescription = `
 # Aggregation Property
 
 This resource allows you to manage an aggregation property.
-`
+
+See the [Port documentation](https://docs.getport.io/build-your-software-catalog/define-your-data-model/setup-blueprint/properties/aggregation-property/) for more information about aggregation properties.
+
+
+Supported Methods:
+
+- count_entities - Count the entities of the target blueprint
+- average_entities - Average the entities of the target blueprint by time periods
+- average_by_property - Calculate the average by property value of the target entities
+- aggregate_by_property - Calculate the aggregate by property value of the target entities, such as sum, min, max, median
+
+## Example Usage
+
+Create a parent blueprint with a child blueprint and an aggregation property to count the children's:
+
+` + "```hcl" + `
+
+	resource "port_blueprint" "parent_blueprint" {
+		title = "Parent Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "child_blueprint" {
+		title = "Child Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+				}
+			}
+		}
+       	relations = {
+            "parent" = {
+				 title = "Parent"
+				 target = port_blueprint.parent_blueprint.identifier
+			 }
+		}
+	}
+
+	resource "port_aggregation_property" "count_entities" {
+		aggregation_identifier = "%s"
+		blueprint_identifier = port_blueprint.parent_blueprint.identifier
+		target_blueprint_identifier = port_blueprint.child_blueprint.identifier
+		title = "Count Childrens"
+		icon = "Terraform"
+		description = "Count Childrens"
+		method = {
+			count_entities = true
+		}
+	}
+` + "```" + `
+
+Create a parent blueprint with a child blueprint and an aggregation property to calculate the average avg of the children's age:
+
+` + "```hcl" + `
+
+	resource "port_blueprint" "parent_blueprint" {
+		title = "Parent Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "child_blueprint" {
+		title = "Child Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+				}
+			}
+		}
+       	relations = {
+            "parent" = {
+				 title = "Parent"
+				 target = port_blueprint.parent_blueprint.identifier
+			 }
+		}
+	}
+
+	resource "port_aggregation_property" "count_entities" {
+		aggregation_identifier = "%s"
+		blueprint_identifier = port_blueprint.parent_blueprint.identifier
+		target_blueprint_identifier = port_blueprint.child_blueprint.identifier
+		title = "Count Childrens"
+		icon = "Terraform"
+		description = "Count Childrens"
+		method = {
+			average_by_property = {
+				average_of = "total"
+				measure_time_by = "$createdAt"
+				property = "age"
+            }
+		}
+	}
+
+` + "```" + `
+
+Create a repository blueprint and a pull request blueprint and an aggregation property to calculate the average of pull requests created per day:
+
+` + "```hcl" + `
+
+	resource "port_blueprint" "repository_blueprint" {
+		title = "Repository Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""	
+	}
+	
+	resource "port_blueprint" "pull_request_blueprint" {
+		title = "Pull Request Blueprint"
+		icon = "Terraform"	
+		identifier = "%s"	
+		description = ""
+		properties = {
+			string_props = {
+				"status" = {
+					title = "Status"
+				}	
+			}
+		}
+		relations = {
+			"repository" = {
+				title = "Repository"
+				target = port_blueprint.repository_blueprint.identifier
+			}
+		}
+	}
+
+	resource "port_aggregation_property" "pull_requests_per_day" {
+		aggregation_identifier = "%s"	
+		blueprint_identifier = port_blueprint.repository_blueprint.identifier	
+		target_blueprint_identifier = port_blueprint.pull_request_blueprint.identifier	
+		title = "Pull Requests Per Day"	
+		icon = "Terraform"	
+		description = "Pull Requests Per Day"
+		method = {	
+			average_entities = {
+				average_of = "day"
+				measure_time_by = "$createdAt"
+			}
+		}
+	}
+	
+` + "```" + `
+
+Create a repository blueprint and a pull request blueprint and an aggregation property to calculate the average of fix pull request per month:
+
+To do that we will add a query to the aggregation property to filter only pull requests with fixed title:
+
+` + "```hcl" + `
+
+	resource "port_blueprint" "repository_blueprint" {
+		title = "Repository Blueprint"	
+		icon = "Terraform"
+		identifier = "%s"	
+		description = ""	
+	}
+	
+	resource "port_blueprint" "pull_request_blueprint" {
+		title = "Pull Request Blueprint"
+		icon = "Terraform"	
+		identifier = "%s"	
+		description = ""	
+		properties = {
+			string_props = {	
+				"status" = {
+					title = "Status"
+				}
+			}
+		}	
+		relations = {	
+			"repository" = {
+				title = "Repository"	
+				target = port_blueprint.repository_blueprint.identifier	
+			}
+		}	
+	}
+
+	resource "port_aggregation_property" "pull_requests_per_day" {
+		aggregation_identifier = "%s"	
+		blueprint_identifier = port_blueprint.repository_blueprint.identifier	
+		target_blueprint_identifier = port_blueprint.pull_request_blueprint.identifier	
+		title = "Pull Requests Per Day"
+		icon = "Terraform"	
+		description = "Pull Requests Per Day"
+		method = {	
+			average_entities = {
+				average_of = "month"
+				measure_time_by = "$createdAt"
+			}
+		}
+		query = jsonencode(
+			{
+				"combinator": "and",
+				"rules": [
+					{
+						"property": "$title",
+					  	"operator": "ContainsAny",
+					  	"value": ["fix", "fixed", "fixing", "Fix"]
+					}
+				]
+			}
+		)
+	}
+
+` + "```" + ``

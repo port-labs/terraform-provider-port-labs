@@ -8,7 +8,7 @@ import (
 )
 
 func refreshAggregationPropertyState(state *AggregationPropertyModel, aggregationProperty cli.BlueprintAggregationProperty, blueprintIdentifier string, aggregationIdentifier string) error {
-	state.ID = types.StringValue(fmt.Sprint("%s:%s", blueprintIdentifier, aggregationIdentifier))
+	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintIdentifier, aggregationIdentifier))
 	state.BlueprintIdentifier = types.StringValue(blueprintIdentifier)
 	state.AggregationIdentifier = types.StringValue(aggregationIdentifier)
 	state.TargetBlueprintIdentifier = types.StringValue(aggregationProperty.Target)

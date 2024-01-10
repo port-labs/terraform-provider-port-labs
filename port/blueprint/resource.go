@@ -186,7 +186,6 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 		}
 		bp, err = r.portClient.UpdateBlueprint(ctx, b, previousState.ID.ValueString())
 	}
-
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update blueprint", err.Error())
 		return

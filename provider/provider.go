@@ -2,7 +2,6 @@ package provider
 
 import (
 	"context"
-	aggregation_property "github.com/port-labs/terraform-provider-port-labs/port/aggregation-property"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -13,6 +12,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/port/action"
 	"github.com/port-labs/terraform-provider-port-labs/port/action-permissions"
+	"github.com/port-labs/terraform-provider-port-labs/port/aggregation-property"
 	"github.com/port-labs/terraform-provider-port-labs/port/blueprint"
 	"github.com/port-labs/terraform-provider-port-labs/port/entity"
 	"github.com/port-labs/terraform-provider-port-labs/port/scorecard"

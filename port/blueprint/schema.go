@@ -568,4 +568,4 @@ resource "port_blueprint" "microservice" {
   }
 }
 
-` + "```"
+` + "```" + ``

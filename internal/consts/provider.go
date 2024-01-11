@@ -16,4 +16,5 @@ const (
 	EntityDeleted        = "ENTITY_DELETED"
 	TimerPropertyExpired = "TIMER_PROPERTY_EXPIRED"
 	AnyEntityChange      = "ANY_ENTITY_CHANGE"
+	JqCondition          = "JQ"
 )

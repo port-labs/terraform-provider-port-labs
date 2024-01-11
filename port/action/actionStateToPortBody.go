@@ -103,6 +103,9 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 			Type:                consts.SelfService,
 			BlueprintIdentifier: data.SelfServiceTrigger.BlueprintIdentifier.ValueStringPointer(),
 			Operation:           data.SelfServiceTrigger.Operation.ValueStringPointer(),
+			UserInputs: &cli.ActionUserInputs{
+				Properties: make(map[string]cli.ActionProperty),
+			},
 		}
 
 		if data.SelfServiceTrigger.UserProperties != nil {
@@ -110,8 +113,6 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 			if err != nil {
 				return nil, err
 			}
-		} else {
-			selfServiceTrigger.UserInputs.Properties = make(map[string]cli.ActionProperty)
 		}
 
 		if !data.SelfServiceTrigger.OrderProperties.IsNull() {
@@ -129,10 +130,14 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 	if data.AutomationTrigger != nil {
 		automationTrigger := &cli.Trigger{
 			Type: consts.Automation,
-			Condition: &cli.TriggerCondition{
+		}
+
+		if data.AutomationTrigger.JqCondition != nil {
+			automationTrigger.Condition = &cli.TriggerCondition{
+				Type:        consts.JqCondition,
 				Expressions: flex.TerraformStringListToGoArray(data.AutomationTrigger.JqCondition.Expressions),
 				Combinator:  data.AutomationTrigger.JqCondition.Combinator.ValueStringPointer(),
-			},
+			}
 		}
 
 		if data.AutomationTrigger.EntityCreatedEvent != nil {
@@ -177,7 +182,7 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 	return nil, nil
 }
 
-func actionPropertiesToBody(ctx context.Context, action *cli.Trigger, data *SelfServiceTriggerModel) error {
+func actionPropertiesToBody(ctx context.Context, actionTrigger *cli.Trigger, data *SelfServiceTriggerModel) error {
 	required := []string{}
 	props := map[string]cli.ActionProperty{}
 	var err error
@@ -202,16 +207,16 @@ func actionPropertiesToBody(ctx context.Context, action *cli.Trigger, data *Self
 		return err
 	}
 
-	action.UserInputs.Properties = props
+	actionTrigger.UserInputs.Properties = props
 
 	// if requiredJqQuery is set, required shouldn't be set and vice versa
 	if !data.RequiredJqQuery.IsNull() {
 		RequiredJqQueryMap := map[string]string{
 			"jqQuery": data.RequiredJqQuery.ValueString(),
 		}
-		action.UserInputs.Required = RequiredJqQueryMap
+		actionTrigger.UserInputs.Required = RequiredJqQueryMap
 	} else {
-		action.UserInputs.Required = required
+		actionTrigger.UserInputs.Required = required
 	}
 
 	return nil
@@ -269,17 +274,18 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 		if err != nil {
 			return nil, err
 		}
-		workflowInputs, err := utils.TerraformStringToGoObject(data.GithubMethod.WorkflowInputs)
+		wi, err := utils.TerraformStringToGoObject(data.GithubMethod.WorkflowInputs)
 		if err != nil {
 			return nil, err
 		}
+		workflowInputs, _ := wi.(map[string]interface{})
 
 		githubInvocation := &cli.InvocationMethod{
 			Type:                 consts.Github,
 			Org:                  data.GithubMethod.Org.ValueStringPointer(),
 			Repo:                 data.GithubMethod.Repo.ValueStringPointer(),
 			Workflow:             data.GithubMethod.Workflow.ValueStringPointer(),
-			WorkflowInputs:       workflowInputs.(map[string]interface{}),
+			WorkflowInputs:       workflowInputs,
 			ReportWorkflowStatus: reportWorkflowStatus,
 		}
 
@@ -287,17 +293,18 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 	}
 
 	if data.GitlabMethod != nil {
-		pipelineVariables, err := utils.TerraformStringToGoObject(data.GitlabMethod.PipelineVariables)
+		pv, err := utils.TerraformStringToGoObject(data.GitlabMethod.PipelineVariables)
 		if err != nil {
 			return nil, err
 		}
+		pipelineVariables, _ := pv.(map[string]interface{})
 
 		gitlabInvocation := &cli.InvocationMethod{
 			Type:              consts.Gitlab,
 			ProjectName:       data.GitlabMethod.ProjectName.ValueStringPointer(),
 			GroupName:         data.GitlabMethod.GroupName.ValueStringPointer(),
 			DefaultRef:        data.GitlabMethod.DefaultRef.ValueStringPointer(),
-			PipelineVariables: pipelineVariables.(map[string]interface{}),
+			PipelineVariables: pipelineVariables,
 		}
 
 		return gitlabInvocation, nil
@@ -320,6 +327,17 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 	}
 
 	if data.UpsertEntityMethod != nil {
+		p, err := utils.TerraformStringToGoObject(data.UpsertEntityMethod.Properties)
+		if err != nil {
+			return nil, err
+		}
+		properties, _ := p.(map[string]interface{})
+		r, err := utils.TerraformStringToGoObject(data.UpsertEntityMethod.Relations)
+		if err != nil {
+			return nil, err
+		}
+		relations, _ := r.(map[string]interface{})
+
 		upsertEntityInvocation := &cli.InvocationMethod{
 			Type:                consts.UpsertEntity,
 			Identifier:          data.UpsertEntityMethod.Identifier.ValueStringPointer(),
@@ -327,6 +345,8 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 			BlueprintIdentifier: data.UpsertEntityMethod.BlueprintIdentifier.ValueStringPointer(),
 			Team:                flex.TerraformStringListToGoArray(data.UpsertEntityMethod.Teams),
 			Icon:                data.UpsertEntityMethod.Icon.ValueStringPointer(),
+			Properties:          properties,
+			Relations:           relations,
 		}
 
 		return upsertEntityInvocation, nil

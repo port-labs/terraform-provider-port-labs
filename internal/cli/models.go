@@ -145,7 +145,7 @@ type (
 		Org                  *string           `json:"org,omitempty"`
 		Repo                 *string           `json:"repo,omitempty"`
 		Workflow             *string           `json:"workflow,omitempty"`
-		WorkflowInputs       map[string]any    `json:"workflow_inputs,omitempty"`
+		WorkflowInputs       map[string]any    `json:"workflowInputs,omitempty"`
 		ReportWorkflowStatus any               `json:"reportWorkflowStatus,omitempty"`
 		Branch               *string           `json:"branch,omitempty"`
 		ProjectName          *string           `json:"projectName,omitempty"`
@@ -200,7 +200,7 @@ type (
 		Type                string            `json:"type"`
 		BlueprintIdentifier *string           `json:"blueprintIdentifier,omitempty"`
 		Operation           *string           `json:"operation,omitempty"`
-		UserInputs          ActionUserInputs  `json:"userInputs,omitempty"`
+		UserInputs          *ActionUserInputs `json:"userInputs,omitempty"`
 		Event               *TriggerEvent     `json:"event,omitempty"`
 		Condition           *TriggerCondition `json:"condition,omitempty"`
 	}

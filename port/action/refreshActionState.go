@@ -101,9 +101,9 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 		switch team := a.InvocationMethod.Team.(type) {
 		case string:
 			teams = append(teams, types.StringValue(team))
-		case []string:
+		case []interface{}:
 			for _, t := range team {
-				teams = append(teams, types.StringValue(t))
+				teams = append(teams, types.StringValue(t.(string)))
 			}
 		}
 		properties, err := utils.GoObjectToTerraformString(a.InvocationMethod.Properties)
@@ -175,7 +175,7 @@ func writeVisibleToResource(v cli.ActionProperty) (types.Bool, types.String) {
 	return types.BoolNull(), types.StringNull()
 }
 
-func buildRequired(v cli.ActionUserInputs) (types.String, []string) {
+func buildRequired(v *cli.ActionUserInputs) (types.String, []string) {
 	// If required is nil, return an empty string and nil
 	if v.Required == nil {
 		return types.StringNull(), nil
@@ -334,13 +334,14 @@ func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionMod
 		automationTrigger := &AutomationTriggerModel{}
 
 		var expressions []types.String
-		for _, e := range a.Trigger.Condition.Expressions {
-			expressions = append(expressions, types.StringValue(e))
-		}
-
-		automationTrigger.JqCondition = &JqConditionModel{
-			Expressions: expressions,
-			Combinator:  flex.GoStringToFramework(a.Trigger.Condition.Combinator),
+		if a.Trigger.Condition != nil {
+			for _, e := range a.Trigger.Condition.Expressions {
+				expressions = append(expressions, types.StringValue(e))
+			}
+			automationTrigger.JqCondition = &JqConditionModel{
+				Expressions: expressions,
+				Combinator:  flex.GoStringToFramework(a.Trigger.Condition.Combinator),
+			}
 		}
 
 		if a.Trigger.Event.Type == consts.EntityCreated {

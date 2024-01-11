@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
@@ -32,7 +34,7 @@ func MetadataProperties() map[string]schema.Attribute {
 			MarkdownDescription: "Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value",
 			Optional:            true,
 			Validators: []validator.Bool{
-				boolvalidator.ConflictsWith(path.MatchRoot("required_jq_query")),
+				boolvalidator.ConflictsWith(path.MatchRoot("self_service_trigger").AtName("required_jq_query")),
 			},
 		},
 		"description": schema.StringAttribute{
@@ -162,7 +164,10 @@ func ActionSchema() map[string]schema.Attribute {
 				},
 			},
 			Validators: []validator.Object{
-				objectvalidator.ExactlyOneOf(path.MatchRoot("automation_trigger")),
+				objectvalidator.ExactlyOneOf(
+					path.MatchRoot("self_service_trigger"),
+					path.MatchRoot("automation_trigger"),
+				),
 			},
 		},
 		"automation_trigger": schema.SingleNestedAttribute{
@@ -180,6 +185,7 @@ func ActionSchema() map[string]schema.Attribute {
 					},
 					Validators: []validator.Object{
 						objectvalidator.ExactlyOneOf(
+							path.MatchRelative().AtParent().AtName("entity_created_event"),
 							path.MatchRelative().AtParent().AtName("entity_updated_event"),
 							path.MatchRelative().AtParent().AtName("entity_deleted_event"),
 							path.MatchRelative().AtParent().AtName("any_entity_change_event"),
@@ -196,14 +202,6 @@ func ActionSchema() map[string]schema.Attribute {
 							Required:            true,
 						},
 					},
-					Validators: []validator.Object{
-						objectvalidator.ExactlyOneOf(
-							path.MatchRelative().AtParent().AtName("entity_created_event"),
-							path.MatchRelative().AtParent().AtName("entity_deleted_event"),
-							path.MatchRelative().AtParent().AtName("any_entity_change_event"),
-							path.MatchRelative().AtParent().AtName("timer_property_expired_event"),
-						),
-					},
 				},
 				"entity_deleted_event": schema.SingleNestedAttribute{
 					MarkdownDescription: "Entity deleted event trigger",
@@ -214,14 +212,6 @@ func ActionSchema() map[string]schema.Attribute {
 							Required:            true,
 						},
 					},
-					Validators: []validator.Object{
-						objectvalidator.ExactlyOneOf(
-							path.MatchRelative().AtParent().AtName("entity_created_event"),
-							path.MatchRelative().AtParent().AtName("entity_updated_event"),
-							path.MatchRelative().AtParent().AtName("any_entity_change_event"),
-							path.MatchRelative().AtParent().AtName("timer_property_expired_event"),
-						),
-					},
 				},
 				"any_entity_change_event": schema.SingleNestedAttribute{
 					MarkdownDescription: "Any entity change event trigger",
@@ -231,14 +221,6 @@ func ActionSchema() map[string]schema.Attribute {
 							MarkdownDescription: "The blueprint identifier of the changed entity",
 							Required:            true,
 						},
-					},
-					Validators: []validator.Object{
-						objectvalidator.ExactlyOneOf(
-							path.MatchRelative().AtParent().AtName("entity_created_event"),
-							path.MatchRelative().AtParent().AtName("entity_updated_event"),
-							path.MatchRelative().AtParent().AtName("entity_deleted_event"),
-							path.MatchRelative().AtParent().AtName("timer_property_expired_event"),
-						),
 					},
 				},
 				"timer_property_expired_event": schema.SingleNestedAttribute{
@@ -254,14 +236,6 @@ func ActionSchema() map[string]schema.Attribute {
 							Required:            true,
 						},
 					},
-					Validators: []validator.Object{
-						objectvalidator.ExactlyOneOf(
-							path.MatchRelative().AtParent().AtName("entity_created_event"),
-							path.MatchRelative().AtParent().AtName("entity_updated_event"),
-							path.MatchRelative().AtParent().AtName("entity_deleted_event"),
-							path.MatchRelative().AtParent().AtName("any_entity_change_event"),
-						),
-					},
 				},
 				"jq_condition": schema.SingleNestedAttribute{
 					MarkdownDescription: "JQ condition for automation trigger",
@@ -274,16 +248,15 @@ func ActionSchema() map[string]schema.Attribute {
 						},
 						"combinator": schema.StringAttribute{
 							MarkdownDescription: "The combinator of the condition",
-							Required:            true,
+							Optional:            true,
+							Computed:            true,
+							Default:             stringdefault.StaticString("and"),
 							Validators: []validator.String{
 								stringvalidator.OneOf("and", "or"),
 							},
 						},
 					},
 				},
-			},
-			Validators: []validator.Object{
-				objectvalidator.ExactlyOneOf(path.MatchRoot("self_service_trigger")),
 			},
 		},
 		"kafka_method": schema.SingleNestedAttribute{
@@ -297,6 +270,7 @@ func ActionSchema() map[string]schema.Attribute {
 			},
 			Validators: []validator.Object{
 				objectvalidator.ExactlyOneOf(
+					path.MatchRoot("kafka_method"),
 					path.MatchRoot("webhook_method"),
 					path.MatchRoot("github_method"),
 					path.MatchRoot("gitlab_method"),
@@ -337,15 +311,6 @@ func ActionSchema() map[string]schema.Attribute {
 					Optional:            true,
 				},
 			},
-			Validators: []validator.Object{
-				objectvalidator.ExactlyOneOf(
-					path.MatchRoot("kafka_method"),
-					path.MatchRoot("github_method"),
-					path.MatchRoot("gitlab_method"),
-					path.MatchRoot("azure_method"),
-					path.MatchRoot("upsert_entity_method"),
-				),
-			},
 		},
 		"github_method": schema.SingleNestedAttribute{
 			MarkdownDescription: "GitHub invocation method",
@@ -373,15 +338,6 @@ func ActionSchema() map[string]schema.Attribute {
 					Validators:          StringBooleanOrJQTemplateValidator(),
 				},
 			},
-			Validators: []validator.Object{
-				objectvalidator.ExactlyOneOf(
-					path.MatchRoot("kafka_method"),
-					path.MatchRoot("webhook_method"),
-					path.MatchRoot("gitlab_method"),
-					path.MatchRoot("azure_method"),
-					path.MatchRoot("upsert_entity_method"),
-				),
-			},
 		},
 		"gitlab_method": schema.SingleNestedAttribute{
 			MarkdownDescription: "Gitlab invocation method",
@@ -404,15 +360,6 @@ func ActionSchema() map[string]schema.Attribute {
 					Optional:            true,
 				},
 			},
-			Validators: []validator.Object{
-				objectvalidator.ExactlyOneOf(
-					path.MatchRoot("kafka_method"),
-					path.MatchRoot("webhook_method"),
-					path.MatchRoot("github_method"),
-					path.MatchRoot("azure_method"),
-					path.MatchRoot("upsert_entity_method"),
-				),
-			},
 		},
 		"azure_method": schema.SingleNestedAttribute{
 			MarkdownDescription: "Azure DevOps invocation method",
@@ -430,15 +377,6 @@ func ActionSchema() map[string]schema.Attribute {
 					MarkdownDescription: "The Azure Devops workflow payload (array or object encoded to a string)",
 					Optional:            true,
 				},
-			},
-			Validators: []validator.Object{
-				objectvalidator.ExactlyOneOf(
-					path.MatchRoot("kafka_method"),
-					path.MatchRoot("webhook_method"),
-					path.MatchRoot("github_method"),
-					path.MatchRoot("gitlab_method"),
-					path.MatchRoot("upsert_entity_method"),
-				),
 			},
 		},
 		"upsert_entity_method": schema.SingleNestedAttribute{
@@ -475,15 +413,6 @@ func ActionSchema() map[string]schema.Attribute {
 					Optional:            true,
 				},
 			},
-			Validators: []validator.Object{
-				objectvalidator.ExactlyOneOf(
-					path.MatchRoot("kafka_method"),
-					path.MatchRoot("webhook_method"),
-					path.MatchRoot("github_method"),
-					path.MatchRoot("gitlab_method"),
-					path.MatchRoot("azure_method"),
-				),
-			},
 		},
 		"required_approval": schema.BoolAttribute{
 			MarkdownDescription: "Require approval before invoking the action",
@@ -510,6 +439,8 @@ func ActionSchema() map[string]schema.Attribute {
 		"publish": schema.BoolAttribute{
 			MarkdownDescription: "Publish action",
 			Optional:            true,
+			Computed:            true,
+			Default:             booldefault.StaticBool(true),
 		},
 	}
 }

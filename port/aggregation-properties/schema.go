@@ -17,7 +17,6 @@ func AggregationPropertySchema() schema.Attribute {
 		MarkdownDescription: "The aggregation property of the blueprint",
 		Required:            true,
 		NestedObject: schema.NestedAttributeObject{
-
 			Attributes: map[string]schema.Attribute{
 				"target_blueprint_identifier": schema.StringAttribute{
 					MarkdownDescription: "The identifier of the blueprint to perform the aggregation on",

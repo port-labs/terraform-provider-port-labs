@@ -669,7 +669,7 @@ func TestAccPortCreateBlueprintWithAggregationByPropertyWithFilter(t *testing.T)
 	})
 }
 
-func testAccMultipleAggregationPropertiesForBlueprintCreate(t *testing.T) {
+func TestAccMultipleAggregationPropertiesForBlueprintCreate(t *testing.T) {
 	parentBlueprintIdentifier := utils.GenID()
 	childBlueprintIdentifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`

@@ -78,7 +78,7 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 		state.GitlabMethod = &GitlabMethodModel{
 			ProjectName:       types.StringValue(*a.InvocationMethod.ProjectName),
 			GroupName:         types.StringValue(*a.InvocationMethod.GroupName),
-			DefaultRef:        types.StringValue(*a.InvocationMethod.DefaultRef),
+			DefaultRef:        flex.GoStringToFramework(a.InvocationMethod.DefaultRef),
 			PipelineVariables: pipelineVariables,
 		}
 	}
@@ -102,6 +102,7 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 		case string:
 			teams = append(teams, types.StringValue(team))
 		case []interface{}:
+			teams = make([]types.String, 0)
 			for _, t := range team {
 				teams = append(teams, types.StringValue(t.(string)))
 			}

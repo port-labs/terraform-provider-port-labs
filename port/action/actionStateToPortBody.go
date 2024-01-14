@@ -327,6 +327,10 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 	}
 
 	if data.UpsertEntityMethod != nil {
+		var team interface{}
+		if data.UpsertEntityMethod.Teams != nil {
+			team = flex.TerraformStringListToGoArray(data.UpsertEntityMethod.Teams)
+		}
 		p, err := utils.TerraformStringToGoObject(data.UpsertEntityMethod.Properties)
 		if err != nil {
 			return nil, err
@@ -343,7 +347,7 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 			Identifier:          data.UpsertEntityMethod.Identifier.ValueStringPointer(),
 			Title:               data.UpsertEntityMethod.Title.ValueStringPointer(),
 			BlueprintIdentifier: data.UpsertEntityMethod.BlueprintIdentifier.ValueStringPointer(),
-			Team:                flex.TerraformStringListToGoArray(data.UpsertEntityMethod.Teams),
+			Team:                team,
 			Icon:                data.UpsertEntityMethod.Icon.ValueStringPointer(),
 			Properties:          properties,
 			Relations:           relations,

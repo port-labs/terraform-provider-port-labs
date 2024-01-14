@@ -29,8 +29,10 @@ func testAccCreateBlueprintAndActionConfig(blueprintIdentifier string, actionIde
 		title = "TF Provider Test"
 		identifier = "%s"
 		icon = "Terraform"
-		blueprint = port_blueprint.microservice.identifier
-		trigger = "DAY-2"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+		}
 		kafka_method = {}
 	}`, blueprintIdentifier, actionIdentifier)
 }
@@ -39,7 +41,7 @@ func TestAccPortActionPermissionsBasic(t *testing.T) {
 	actionIdentifier := utils.GenID()
 	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
-	  action_identifier = "${port_blueprint.microservice.identifier}_${port_action.create_microservice.identifier}"
+	  action_identifier = port_action.create_microservice.identifier
 	  permissions = {
 		"execute": {
 		  "roles": [
@@ -63,7 +65,7 @@ func TestAccPortActionPermissionsBasic(t *testing.T) {
 			{
 				Config: testAccActionPermissionsConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.0", "Member"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "0"),
@@ -84,7 +86,7 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 	teamName := utils.GenID()
 	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
-	  action_identifier = "${port_blueprint.microservice.identifier}_${port_action.create_microservice.identifier}"
+	  action_identifier = port_action.create_microservice.identifier
 	  permissions = {
 		"execute": {
 		  "roles": [
@@ -109,7 +111,7 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 	}
 
 	resource "port_action_permissions" "create_microservice_permissions" {
-	  action_identifier = "${port_blueprint.microservice.identifier}_${port_action.create_microservice.identifier}"
+	  action_identifier = port_action.create_microservice.identifier
 	  permissions = {
 		"execute": {
 		  "roles": [
@@ -136,7 +138,7 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 			{
 				Config: testAccActionPermissionsConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.0", "Member"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "0"),
@@ -150,7 +152,7 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 			{
 				Config: testAccActionPermissionsConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.0", "Member"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "1"),
@@ -173,7 +175,7 @@ func TestAccPortActionPermissionsWithPolicy(t *testing.T) {
 	actionIdentifier := utils.GenID()
 	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
-	  action_identifier = "${port_blueprint.microservice.identifier}_${port_action.create_microservice.identifier}"
+	  action_identifier = port_action.create_microservice.identifier
 	  permissions = {
 		"execute": {
 		  "roles": [
@@ -221,7 +223,7 @@ func TestAccPortActionPermissionsWithPolicy(t *testing.T) {
 
 	var testAccActionPermissionsConfigUpdate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
-	  action_identifier = "${port_blueprint.microservice.identifier}_${port_action.create_microservice.identifier}"
+	  action_identifier = port_action.create_microservice.identifier
 	  permissions = {
 		"execute": {
 		  "roles": [
@@ -246,7 +248,7 @@ func TestAccPortActionPermissionsWithPolicy(t *testing.T) {
 			{
 				Config: testAccActionPermissionsConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.0", "Member"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "0"),
@@ -261,7 +263,7 @@ func TestAccPortActionPermissionsWithPolicy(t *testing.T) {
 			{
 				Config: testAccActionPermissionsConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.0", "Member"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "0"),
@@ -281,7 +283,7 @@ func TestAccPortActionPermissionsWithPolicyUpdate(t *testing.T) {
 	actionIdentifier := utils.GenID()
 	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
-	  action_identifier = "${port_blueprint.microservice.identifier}_${port_action.create_microservice.identifier}"
+	  action_identifier = port_action.create_microservice.identifier
 	  permissions = {
 		"execute": {
 		  "roles": [
@@ -329,7 +331,7 @@ func TestAccPortActionPermissionsWithPolicyUpdate(t *testing.T) {
 
 	var testAccActionPermissionsConfigUpdate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
-	  action_identifier = "${port_blueprint.microservice.identifier}_${port_action.create_microservice.identifier}"
+	  action_identifier = port_action.create_microservice.identifier
 	  permissions = {
 		"execute": {
 		  "roles": [
@@ -381,7 +383,7 @@ func TestAccPortActionPermissionsWithPolicyUpdate(t *testing.T) {
 			{
 				Config: testAccActionPermissionsConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.0", "Member"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "0"),
@@ -396,7 +398,7 @@ func TestAccPortActionPermissionsWithPolicyUpdate(t *testing.T) {
 			{
 				Config: testAccActionPermissionsConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.0", "Member"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "0"),
@@ -417,7 +419,7 @@ func TestAccPortActionPermissionsImportState(t *testing.T) {
 	actionIdentifier := utils.GenID()
 	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
-	  action_identifier = "${port_blueprint.microservice.identifier}_${port_action.create_microservice.identifier}"
+	  action_identifier = port_action.create_microservice.identifier
 	  permissions = {
 		"execute": {
 		  "roles": [
@@ -469,7 +471,7 @@ func TestAccPortActionPermissionsImportState(t *testing.T) {
 			{
 				Config: testAccActionPermissionsConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.0", "Member"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "0"),

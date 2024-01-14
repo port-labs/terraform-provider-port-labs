@@ -110,7 +110,7 @@ func (r *AggregationPropertyResource) Create(ctx context.Context, req resource.C
 
 	_, ok := b.AggregationProperties[state.AggregationIdentifier.ValueString()]
 	if ok {
-		resp.Diagnostics.AddError("Aggregation property already exists", `Aggregation property with identifier "`+state.AggregationIdentifier.ValueString()+`" already exists`)
+		resp.Diagnostics.AddError("Aggregation property already exists", fmt.Sprintf("Aggregation property with identifier %s already exists", state.AggregationIdentifier.ValueString()))
 		return
 	}
 

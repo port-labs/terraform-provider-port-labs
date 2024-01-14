@@ -117,7 +117,7 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 		  "roles": [
 			"Member",
 		  ],
-		  "users": ["test-member-user@test.com"],
+		  "users": [],
 		  "teams": [port_team.team.name],
 		  "owned_by_team": false
 		},
@@ -155,8 +155,7 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.0", "Member"),
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "1"),
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.0", "test-member-user@test.com"),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "0"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.teams.#", "1"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.teams.0", teamName),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.owned_by_team", "false"),

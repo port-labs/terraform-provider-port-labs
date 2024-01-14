@@ -2,6 +2,7 @@ package aggregation_property
 
 import (
 	"context"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
@@ -124,7 +125,7 @@ func (r *AggregationPropertyResource) Create(ctx context.Context, req resource.C
 
 	aggregationProperty, ok := bp.AggregationProperties[state.AggregationIdentifier.ValueString()]
 	if !ok {
-		resp.Diagnostics.AddError("failed to create aggregation property", `Aggregation property with identifier "`+state.AggregationIdentifier.ValueString()+`" doesn't exists after creation`)
+		resp.Diagnostics.AddError("failed to create aggregation property", fmt.Sprintf("Aggregation property with identifier %s doesn't exists after creation", state.AggregationIdentifier.ValueString()))
 		return
 	}
 
@@ -176,7 +177,7 @@ func (r *AggregationPropertyResource) Update(ctx context.Context, req resource.U
 
 	aggregationProperty, ok := bp.AggregationProperties[state.AggregationIdentifier.ValueString()]
 	if !ok {
-		resp.Diagnostics.AddError("failed to update aggregation property", `Aggregation property with identifier "`+state.AggregationIdentifier.ValueString()+`" doesn't exists after update`)
+		resp.Diagnostics.AddError("failed to update aggregation property", fmt.Sprintf("Aggregation property with identifier %s doesn't exists after update", state.AggregationIdentifier.ValueString()))
 		return
 	}
 
@@ -219,7 +220,7 @@ func (r *AggregationPropertyResource) Delete(ctx context.Context, req resource.D
 
 	_, ok := bp.AggregationProperties[state.AggregationIdentifier.ValueString()]
 	if ok {
-		resp.Diagnostics.AddError("failed to delete aggregation property", `Aggregation property with identifier "`+state.AggregationIdentifier.ValueString()+`" still exists after deletion`)
+		resp.Diagnostics.AddError("failed to delete aggregation property", fmt.Sprintf("Aggregation property with identifier %s still exists after deletion", state.AggregationIdentifier.ValueString()))
 		return
 	}
 

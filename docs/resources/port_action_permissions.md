@@ -9,20 +9,19 @@ description: |-
   hcl
   resource "port_action_permissions" "restart_microservice_permissions" {
     action_identifier = port_action.restart_microservice.identifier
-    blueprint_identifier = port_blueprint.microservice.identifier
     permissions = {
-      "execute": {
-        "roles": [
+      "execute" : {
+        "roles" : [
           "Admin"
         ],
-        "users": [],
-        "teams": [],
-        "owned_by_team": true
+        "users" : [],
+        "teams" : [],
+        "owned_by_team" : true
       },
-      "approve": {
-        "roles": ["Member", "Admin"],
-        "users": [],
-        "teams": []
+      "approve" : {
+        "roles" : ["Member", "Admin"],
+        "users" : [],
+        "teams" : []
       }
     }
   }
@@ -35,42 +34,41 @@ description: |-
   ```hcl
   resource "portactionpermissions" "restartmicroservicepermissions" {
     actionidentifier = portaction.restartmicroservice.identifier
-    blueprintidentifier = portblueprint.microservice.identifier
     permissions = {
-      "execute": {
-        "roles": [
+      "execute" : {
+        "roles" : [
           "Admin"
         ],
-        "users": [],
-        "teams": [],
-        "ownedbyteam": true
+        "users" : [],
+        "teams" : [],
+        "ownedbyteam" : true
       },
-      "approve": {
-        "roles": ["Member", "Admin"],
-        "users": [],
-        "teams": []
+      "approve" : {
+        "roles" : ["Member", "Admin"],
+        "users" : [],
+        "teams" : []
         # Terraform's "jsonencode" function converts a
         # Terraform expression result to valid JSON syntax.
-        "policy": jsonencode(
+        "policy" : jsonencode(
           {
-            queries: {
-              executingUser: {
-                rules: [
+            queries : {
+              executingUser : {
+                rules : [
                   {
-                    value: "user",
-                    operator: "=",
-                    property: "$blueprint"
+                    value : "user",
+                    operator : "=",
+                    property : "$blueprint"
                   },
                   {
-                      value: "true",
-                      operator: "=",
-                      property: "$ownedby_team"
+                    value : "true",
+                    operator : "=",
+                    property : "$ownedby_team"
               }
             ],
-            combinator: "and"
+            combinator : "and"
           }
         },
-        conditions: [
+        conditions : [
         "true"]
       }
     )
@@ -94,20 +92,19 @@ Docs for the Action Permissions resource can be found [here](https://docs.getpor
 ```hcl
 resource "port_action_permissions" "restart_microservice_permissions" {
   action_identifier = port_action.restart_microservice.identifier
-  blueprint_identifier = port_blueprint.microservice.identifier
   permissions = {
-    "execute": {
-      "roles": [
+    "execute" : {
+      "roles" : [
         "Admin"
       ],
-      "users": [],
-      "teams": [],
-      "owned_by_team": true
+      "users" : [],
+      "teams" : [],
+      "owned_by_team" : true
     },
-    "approve": {
-      "roles": ["Member", "Admin"],
-      "users": [],
-      "teams": []
+    "approve" : {
+      "roles" : ["Member", "Admin"],
+      "users" : [],
+      "teams" : []
     }
   }
 }
@@ -125,43 +122,42 @@ To pass a JSON string to Terraform, you can use the [jsonencode](https://develop
 ```hcl
 resource "port_action_permissions" "restart_microservice_permissions" {
   action_identifier = port_action.restart_microservice.identifier
-  blueprint_identifier = port_blueprint.microservice.identifier
   permissions = {
-    "execute": {
-      "roles": [
+    "execute" : {
+      "roles" : [
         "Admin"
       ],
-      "users": [],
-      "teams": [],
-      "owned_by_team": true
+      "users" : [],
+      "teams" : [],
+      "owned_by_team" : true
     },
-    "approve": {
-      "roles": ["Member", "Admin"],
-      "users": [],
-      "teams": []
+    "approve" : {
+      "roles" : ["Member", "Admin"],
+      "users" : [],
+      "teams" : []
       # Terraform's "jsonencode" function converts a
       # Terraform expression result to valid JSON syntax.
-      "policy": jsonencode(
+      "policy" : jsonencode(
         {
-          queries: {
-            executingUser: {
-              rules: [
+          queries : {
+            executingUser : {
+              rules : [
                 {
-                  value: "user",
-                  operator: "=",
-                  property: "$blueprint"
+                  value : "user",
+                  operator : "=",
+                  property : "$blueprint"
                 },
                 {
-                    value: "true",
-                    operator: "=",
-                    property: "$owned_by_team"
+                  value : "true",
+                  operator : "=",
+                  property : "$owned_by_team"
 
                 }
               ],
-              combinator: "and"
+              combinator : "and"
             }
           },
-          conditions: [
+          conditions : [
           "true"]
         }
       )
@@ -183,10 +179,10 @@ resource "port_action_permissions" "restart_microservice_permissions" {
 ### Required
 
 - `action_identifier` (String) The ID of the action
-- `blueprint_identifier` (String) The ID of the blueprint
 
 ### Optional
 
+- `blueprint_identifier` (String, Deprecated) The ID of the blueprint
 - `permissions` (Attributes) The permissions for the action (see [below for nested schema](#nestedatt--permissions))
 
 ### Read-Only
@@ -222,3 +218,5 @@ Optional:
 - `roles` (List of String) The roles with execution permission
 - `teams` (List of String) The teams with execution permission
 - `users` (List of String) The users with execution permission
+
+

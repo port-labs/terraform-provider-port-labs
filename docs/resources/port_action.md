@@ -17,26 +17,26 @@ Action resource
 
 ### Required
 
-- `blueprint` (String) The blueprint identifier the action relates to
 - `identifier` (String) Identifier
-- `title` (String) Title
-- `trigger` (String) The trigger type of the action
 
 ### Optional
 
 - `approval_email_notification` (Object) The email notification of the approval (see [below for nested schema](#nestedatt--approval_email_notification))
 - `approval_webhook_notification` (Attributes) The webhook notification of the approval (see [below for nested schema](#nestedatt--approval_webhook_notification))
-- `azure_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--azure_method))
+- `automation_trigger` (Attributes) Automation trigger for the action (see [below for nested schema](#nestedatt--automation_trigger))
+- `azure_method` (Attributes) Azure DevOps invocation method (see [below for nested schema](#nestedatt--azure_method))
+- `blueprint` (String, Deprecated) The blueprint identifier the action relates to
 - `description` (String) Description
-- `github_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--github_method))
-- `gitlab_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--gitlab_method))
+- `github_method` (Attributes) GitHub invocation method (see [below for nested schema](#nestedatt--github_method))
+- `gitlab_method` (Attributes) Gitlab invocation method (see [below for nested schema](#nestedatt--gitlab_method))
 - `icon` (String) Icon
-- `kafka_method` (Object) The invocation method of the action (see [below for nested schema](#nestedatt--kafka_method))
-- `order_properties` (List of String) Order properties
+- `kafka_method` (Attributes) Kafka invocation method (see [below for nested schema](#nestedatt--kafka_method))
+- `publish` (Boolean) Publish action
 - `required_approval` (Boolean) Require approval before invoking the action
-- `required_jq_query` (String) The required jq query of the property
-- `user_properties` (Attributes) User properties (see [below for nested schema](#nestedatt--user_properties))
-- `webhook_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--webhook_method))
+- `self_service_trigger` (Attributes) Self service trigger for the action (see [below for nested schema](#nestedatt--self_service_trigger))
+- `title` (String) Title
+- `upsert_entity_method` (Attributes) Upsert Entity invocation method (see [below for nested schema](#nestedatt--upsert_entity_method))
+- `webhook_method` (Attributes) Webhook invocation method (see [below for nested schema](#nestedatt--webhook_method))
 
 ### Read-Only
 
@@ -57,6 +57,72 @@ Required:
 - `url` (String) The URL to invoke the webhook
 
 
+<a id="nestedatt--automation_trigger"></a>
+### Nested Schema for `automation_trigger`
+
+Optional:
+
+- `any_entity_change_event` (Attributes) Any entity change event trigger (see [below for nested schema](#nestedatt--automation_trigger--any_entity_change_event))
+- `entity_created_event` (Attributes) Entity created event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_created_event))
+- `entity_deleted_event` (Attributes) Entity deleted event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_deleted_event))
+- `entity_updated_event` (Attributes) Entity updated event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_updated_event))
+- `jq_condition` (Attributes) JQ condition for automation trigger (see [below for nested schema](#nestedatt--automation_trigger--jq_condition))
+- `timer_property_expired_event` (Attributes) Timer property expired event trigger (see [below for nested schema](#nestedatt--automation_trigger--timer_property_expired_event))
+
+<a id="nestedatt--automation_trigger--any_entity_change_event"></a>
+### Nested Schema for `automation_trigger.any_entity_change_event`
+
+Required:
+
+- `blueprint_identifier` (String) The blueprint identifier of the changed entity
+
+
+<a id="nestedatt--automation_trigger--entity_created_event"></a>
+### Nested Schema for `automation_trigger.entity_created_event`
+
+Required:
+
+- `blueprint_identifier` (String) The blueprint identifier of the created entity
+
+
+<a id="nestedatt--automation_trigger--entity_deleted_event"></a>
+### Nested Schema for `automation_trigger.entity_deleted_event`
+
+Required:
+
+- `blueprint_identifier` (String) The blueprint identifier of the deleted entity
+
+
+<a id="nestedatt--automation_trigger--entity_updated_event"></a>
+### Nested Schema for `automation_trigger.entity_updated_event`
+
+Required:
+
+- `blueprint_identifier` (String) The blueprint identifier of the updated entity
+
+
+<a id="nestedatt--automation_trigger--jq_condition"></a>
+### Nested Schema for `automation_trigger.jq_condition`
+
+Required:
+
+- `expressions` (List of String) The jq expressions of the condition
+
+Optional:
+
+- `combinator` (String) The combinator of the condition
+
+
+<a id="nestedatt--automation_trigger--timer_property_expired_event"></a>
+### Nested Schema for `automation_trigger.timer_property_expired_event`
+
+Required:
+
+- `blueprint_identifier` (String) The blueprint identifier of the expired timer property
+- `property_identifier` (String) The property identifier of the expired timer property
+
+
+
 <a id="nestedatt--azure_method"></a>
 ### Nested Schema for `azure_method`
 
@@ -64,6 +130,10 @@ Required:
 
 - `org` (String) Required when selecting type AZURE. The Azure org that the workflow belongs to
 - `webhook` (String) Required when selecting type AZURE. The Azure webhook that the workflow belongs to
+
+Optional:
+
+- `payload` (String) The Azure Devops workflow payload (array or object encoded to a string)
 
 
 <a id="nestedatt--github_method"></a>
@@ -77,9 +147,8 @@ Required:
 
 Optional:
 
-- `omit_payload` (Boolean) Omit the payload when invoking the action
-- `omit_user_inputs` (Boolean) Omit the user inputs when invoking the action
-- `report_workflow_status` (Boolean) Report the workflow status when invoking the action
+- `report_workflow_status` (String) Report the workflow status when invoking the action
+- `workflow_inputs` (String) The GitHub workflow inputs (key-value object encoded to a string)
 
 
 <a id="nestedatt--gitlab_method"></a>
@@ -92,10 +161,8 @@ Required:
 
 Optional:
 
-- `agent` (Boolean) Use the agent to invoke the action
 - `default_ref` (String) The default ref of the action
-- `omit_payload` (Boolean) Omit the payload when invoking the action
-- `omit_user_inputs` (Boolean) Omit the user inputs when invoking the action
+- `pipeline_variables` (String) The Gitlab pipeline variables (key-value object encoded to a string)
 
 
 <a id="nestedatt--kafka_method"></a>
@@ -103,71 +170,86 @@ Optional:
 
 Optional:
 
+- `payload` (String) The Kafka message payload (array or object encoded to a string)
 
 
-<a id="nestedatt--user_properties"></a>
-### Nested Schema for `user_properties`
+<a id="nestedatt--self_service_trigger"></a>
+### Nested Schema for `self_service_trigger`
 
-Optional:
+Required:
 
-- `array_props` (Attributes Map) The array property of the action (see [below for nested schema](#nestedatt--user_properties--array_props))
-- `boolean_props` (Attributes Map) The boolean property of the action (see [below for nested schema](#nestedatt--user_properties--boolean_props))
-- `number_props` (Attributes Map) The number property of the action (see [below for nested schema](#nestedatt--user_properties--number_props))
-- `object_props` (Attributes Map) The object property of the action (see [below for nested schema](#nestedatt--user_properties--object_props))
-- `string_props` (Attributes Map) The string property of the action (see [below for nested schema](#nestedatt--user_properties--string_props))
-
-<a id="nestedatt--user_properties--array_props"></a>
-### Nested Schema for `user_properties.array_props`
+- `operation` (String) The operation type of the action
 
 Optional:
 
-- `boolean_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--boolean_items))
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--array_props--dataset))
+- `blueprint_identifier` (String) The ID of the blueprint
+- `order_properties` (List of String) Order properties
+- `required_jq_query` (String) The required jq query of the property
+- `user_properties` (Attributes) User properties (see [below for nested schema](#nestedatt--self_service_trigger--user_properties))
+
+<a id="nestedatt--self_service_trigger--user_properties"></a>
+### Nested Schema for `self_service_trigger.user_properties`
+
+Optional:
+
+- `array_props` (Attributes Map) The array property of the action (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props))
+- `boolean_props` (Attributes Map) The boolean property of the action (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--boolean_props))
+- `number_props` (Attributes Map) The number property of the action (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--number_props))
+- `object_props` (Attributes Map) The object property of the action (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--object_props))
+- `string_props` (Attributes Map) The string property of the action (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props))
+
+<a id="nestedatt--self_service_trigger--user_properties--array_props"></a>
+### Nested Schema for `self_service_trigger.user_properties.array_props`
+
+Optional:
+
+- `boolean_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--boolean_items))
+- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--dataset))
 - `default_jq_query` (String) The default jq query of the array property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
 - `icon` (String) The icon of the property
 - `max_items` (Number) The max items of the array property
 - `min_items` (Number) The min items of the array property
-- `number_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--number_items))
-- `object_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--object_items))
+- `number_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--number_items))
+- `object_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--object_items))
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
-- `string_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--string_items))
+- `string_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--string_items))
 - `title` (String) The title of the property
 - `visible` (Boolean) The visibility of the array property
 - `visible_jq_query` (String) The visibility condition jq query of the array property
 
-<a id="nestedatt--user_properties--array_props--boolean_items"></a>
-### Nested Schema for `user_properties.array_props.boolean_items`
+<a id="nestedatt--self_service_trigger--user_properties--array_props--boolean_items"></a>
+### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
 
 Optional:
 
 - `default` (List of Boolean) The default of the items
 
 
-<a id="nestedatt--user_properties--array_props--dataset"></a>
-### Nested Schema for `user_properties.array_props.dataset`
+<a id="nestedatt--self_service_trigger--user_properties--array_props--dataset"></a>
+### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
 
 Required:
 
 - `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--array_props--dataset--rules))
+- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--visible_jq_query--rules))
 
-<a id="nestedatt--user_properties--array_props--dataset--rules"></a>
-### Nested Schema for `user_properties.array_props.dataset.rules`
+<a id="nestedatt--self_service_trigger--user_properties--array_props--visible_jq_query--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query.rules`
 
 Required:
 
 - `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--array_props--dataset--rules--value))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--visible_jq_query--rules--value))
 
 Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `property` (String) The property identifier of the rule
 
-<a id="nestedatt--user_properties--array_props--dataset--rules--value"></a>
-### Nested Schema for `user_properties.array_props.dataset.rules.value`
+<a id="nestedatt--self_service_trigger--user_properties--array_props--visible_jq_query--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query.rules.property`
 
 Optional:
 
@@ -176,8 +258,8 @@ Optional:
 
 
 
-<a id="nestedatt--user_properties--array_props--number_items"></a>
-### Nested Schema for `user_properties.array_props.number_items`
+<a id="nestedatt--self_service_trigger--user_properties--array_props--number_items"></a>
+### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
 
 Optional:
 
@@ -186,16 +268,16 @@ Optional:
 - `enum_jq_query` (String) The enum jq query of the number items
 
 
-<a id="nestedatt--user_properties--array_props--object_items"></a>
-### Nested Schema for `user_properties.array_props.object_items`
+<a id="nestedatt--self_service_trigger--user_properties--array_props--object_items"></a>
+### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
 
 Optional:
 
 - `default` (List of Map of String) The default of the items
 
 
-<a id="nestedatt--user_properties--array_props--string_items"></a>
-### Nested Schema for `user_properties.array_props.string_items`
+<a id="nestedatt--self_service_trigger--user_properties--array_props--string_items"></a>
+### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
 
 Optional:
 
@@ -207,12 +289,12 @@ Optional:
 
 
 
-<a id="nestedatt--user_properties--boolean_props"></a>
-### Nested Schema for `user_properties.boolean_props`
+<a id="nestedatt--self_service_trigger--user_properties--boolean_props"></a>
+### Nested Schema for `self_service_trigger.user_properties.boolean_props`
 
 Optional:
 
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--boolean_props--dataset))
+- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--boolean_props--dataset))
 - `default` (Boolean) The default of the boolean property
 - `default_jq_query` (String) The default jq query of the boolean property
 - `depends_on` (List of String) The properties that this property depends on
@@ -223,29 +305,29 @@ Optional:
 - `visible` (Boolean) The visibility of the boolean property
 - `visible_jq_query` (String) The visibility condition jq query of the boolean property
 
-<a id="nestedatt--user_properties--boolean_props--dataset"></a>
-### Nested Schema for `user_properties.boolean_props.dataset`
+<a id="nestedatt--self_service_trigger--user_properties--boolean_props--dataset"></a>
+### Nested Schema for `self_service_trigger.user_properties.boolean_props.visible_jq_query`
 
 Required:
 
 - `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--boolean_props--dataset--rules))
+- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--boolean_props--visible_jq_query--rules))
 
-<a id="nestedatt--user_properties--boolean_props--dataset--rules"></a>
-### Nested Schema for `user_properties.boolean_props.dataset.rules`
+<a id="nestedatt--self_service_trigger--user_properties--boolean_props--visible_jq_query--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.boolean_props.visible_jq_query.rules`
 
 Required:
 
 - `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--boolean_props--dataset--rules--value))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--boolean_props--visible_jq_query--rules--value))
 
 Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `property` (String) The property identifier of the rule
 
-<a id="nestedatt--user_properties--boolean_props--dataset--rules--value"></a>
-### Nested Schema for `user_properties.boolean_props.dataset.rules.value`
+<a id="nestedatt--self_service_trigger--user_properties--boolean_props--visible_jq_query--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.boolean_props.visible_jq_query.rules.property`
 
 Optional:
 
@@ -255,12 +337,12 @@ Optional:
 
 
 
-<a id="nestedatt--user_properties--number_props"></a>
-### Nested Schema for `user_properties.number_props`
+<a id="nestedatt--self_service_trigger--user_properties--number_props"></a>
+### Nested Schema for `self_service_trigger.user_properties.number_props`
 
 Optional:
 
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--number_props--dataset))
+- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--number_props--dataset))
 - `default` (Number) The default of the number property
 - `default_jq_query` (String) The default jq query of the number property
 - `depends_on` (List of String) The properties that this property depends on
@@ -275,29 +357,29 @@ Optional:
 - `visible` (Boolean) The visibility of the number property
 - `visible_jq_query` (String) The visibility condition jq query of the number property
 
-<a id="nestedatt--user_properties--number_props--dataset"></a>
-### Nested Schema for `user_properties.number_props.dataset`
+<a id="nestedatt--self_service_trigger--user_properties--number_props--dataset"></a>
+### Nested Schema for `self_service_trigger.user_properties.number_props.visible_jq_query`
 
 Required:
 
 - `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--number_props--dataset--rules))
+- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--number_props--visible_jq_query--rules))
 
-<a id="nestedatt--user_properties--number_props--dataset--rules"></a>
-### Nested Schema for `user_properties.number_props.dataset.rules`
+<a id="nestedatt--self_service_trigger--user_properties--number_props--visible_jq_query--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.number_props.visible_jq_query.rules`
 
 Required:
 
 - `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--number_props--dataset--rules--value))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--number_props--visible_jq_query--rules--value))
 
 Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `property` (String) The property identifier of the rule
 
-<a id="nestedatt--user_properties--number_props--dataset--rules--value"></a>
-### Nested Schema for `user_properties.number_props.dataset.rules.value`
+<a id="nestedatt--self_service_trigger--user_properties--number_props--visible_jq_query--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.number_props.visible_jq_query.rules.property`
 
 Optional:
 
@@ -307,12 +389,12 @@ Optional:
 
 
 
-<a id="nestedatt--user_properties--object_props"></a>
-### Nested Schema for `user_properties.object_props`
+<a id="nestedatt--self_service_trigger--user_properties--object_props"></a>
+### Nested Schema for `self_service_trigger.user_properties.object_props`
 
 Optional:
 
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--object_props--dataset))
+- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--object_props--dataset))
 - `default` (String) The default of the object property
 - `default_jq_query` (String) The default jq query of the object property
 - `depends_on` (List of String) The properties that this property depends on
@@ -324,29 +406,29 @@ Optional:
 - `visible` (Boolean) The visibility of the object property
 - `visible_jq_query` (String) The visibility condition jq query of the object property
 
-<a id="nestedatt--user_properties--object_props--dataset"></a>
-### Nested Schema for `user_properties.object_props.dataset`
+<a id="nestedatt--self_service_trigger--user_properties--object_props--dataset"></a>
+### Nested Schema for `self_service_trigger.user_properties.object_props.visible_jq_query`
 
 Required:
 
 - `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--object_props--dataset--rules))
+- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--object_props--visible_jq_query--rules))
 
-<a id="nestedatt--user_properties--object_props--dataset--rules"></a>
-### Nested Schema for `user_properties.object_props.dataset.rules`
+<a id="nestedatt--self_service_trigger--user_properties--object_props--visible_jq_query--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.object_props.visible_jq_query.rules`
 
 Required:
 
 - `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--object_props--dataset--rules--value))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--object_props--visible_jq_query--rules--value))
 
 Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `property` (String) The property identifier of the rule
 
-<a id="nestedatt--user_properties--object_props--dataset--rules--value"></a>
-### Nested Schema for `user_properties.object_props.dataset.rules.value`
+<a id="nestedatt--self_service_trigger--user_properties--object_props--visible_jq_query--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.object_props.visible_jq_query.rules.property`
 
 Optional:
 
@@ -356,13 +438,13 @@ Optional:
 
 
 
-<a id="nestedatt--user_properties--string_props"></a>
-### Nested Schema for `user_properties.string_props`
+<a id="nestedatt--self_service_trigger--user_properties--string_props"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props`
 
 Optional:
 
 - `blueprint` (String) The blueprint identifier the string property relates to
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--string_props--dataset))
+- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset))
 - `default` (String) The default of the string property
 - `default_jq_query` (String) The default jq query of the string property
 - `depends_on` (List of String) The properties that this property depends on
@@ -380,29 +462,29 @@ Optional:
 - `visible` (Boolean) The visibility of the string property
 - `visible_jq_query` (String) The visibility condition jq query of the string property
 
-<a id="nestedatt--user_properties--string_props--dataset"></a>
-### Nested Schema for `user_properties.string_props.dataset`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query`
 
 Required:
 
 - `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--string_props--dataset--rules))
+- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules))
 
-<a id="nestedatt--user_properties--string_props--dataset--rules"></a>
-### Nested Schema for `user_properties.string_props.dataset.rules`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules`
 
 Required:
 
 - `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--string_props--dataset--rules--value))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value))
 
 Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `property` (String) The property identifier of the rule
 
-<a id="nestedatt--user_properties--string_props--dataset--rules--value"></a>
-### Nested Schema for `user_properties.string_props.dataset.rules.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.property`
 
 Optional:
 
@@ -411,6 +493,24 @@ Optional:
 
 
 
+
+
+
+<a id="nestedatt--upsert_entity_method"></a>
+### Nested Schema for `upsert_entity_method`
+
+Required:
+
+- `blueprint_identifier` (String) Required when selecting type Upsert Entity. The blueprint identifier of the entity for the upsert
+- `identifier` (String) Required when selecting type Upsert Entity. The entity identifier for the upsert
+
+Optional:
+
+- `icon` (String) The icon of the entity
+- `properties` (String) The properties of the entity (key-value object encoded to a string)
+- `relations` (String) The relations of the entity (key-value object encoded to a string)
+- `teams` (List of String) The teams the entity belongs to
+- `title` (String) The title of the entity
 
 
 <a id="nestedatt--webhook_method"></a>
@@ -422,6 +522,10 @@ Required:
 
 Optional:
 
-- `agent` (Boolean) Use the agent to invoke the action
+- `agent` (String) Use the agent to invoke the action
+- `body` (String) The Webhook body (array or object encoded to a string)
+- `headers` (Map of String) The HTTP method to invoke the action
 - `method` (String) The HTTP method to invoke the action
-- `synchronized` (Boolean) Synchronize the action
+- `synchronized` (String) Synchronize the action
+
+

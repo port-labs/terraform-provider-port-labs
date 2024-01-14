@@ -39,7 +39,7 @@ func (r *AggregationPropertyResource) ImportState(ctx context.Context, req resou
 	}
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("blueprint_identifier"), idParts[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("identifier"), idParts[1])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("aggregation_identifier"), idParts[1])...)
 
 }
 
@@ -109,7 +109,7 @@ func (r *AggregationPropertyResource) Create(ctx context.Context, req resource.C
 
 	_, ok := b.AggregationProperties[state.AggregationIdentifier.ValueString()]
 	if ok {
-		resp.Diagnostics.AddError("Aggregation property already exists", err.Error())
+		resp.Diagnostics.AddError("Aggregation property already exists", `Aggregation property with identifier "`+state.AggregationIdentifier.ValueString()+`" already exists`)
 		return
 	}
 
@@ -124,7 +124,7 @@ func (r *AggregationPropertyResource) Create(ctx context.Context, req resource.C
 
 	aggregationProperty, ok := bp.AggregationProperties[state.AggregationIdentifier.ValueString()]
 	if !ok {
-		resp.Diagnostics.AddError("failed to create aggregation property", err.Error())
+		resp.Diagnostics.AddError("failed to create aggregation property", `Aggregation property with identifier "`+state.AggregationIdentifier.ValueString()+`" doesn't exists after creation`)
 		return
 	}
 
@@ -176,7 +176,7 @@ func (r *AggregationPropertyResource) Update(ctx context.Context, req resource.U
 
 	aggregationProperty, ok := bp.AggregationProperties[state.AggregationIdentifier.ValueString()]
 	if !ok {
-		resp.Diagnostics.AddError("failed to update aggregation property", err.Error())
+		resp.Diagnostics.AddError("failed to update aggregation property", `Aggregation property with identifier "`+state.AggregationIdentifier.ValueString()+`" doesn't exists after update`)
 		return
 	}
 
@@ -219,7 +219,7 @@ func (r *AggregationPropertyResource) Delete(ctx context.Context, req resource.D
 
 	_, ok := bp.AggregationProperties[state.AggregationIdentifier.ValueString()]
 	if ok {
-		resp.Diagnostics.AddError("failed to delete aggregation property", err.Error())
+		resp.Diagnostics.AddError("failed to delete aggregation property", `Aggregation property with identifier "`+state.AggregationIdentifier.ValueString()+`" still exists after deletion`)
 		return
 	}
 

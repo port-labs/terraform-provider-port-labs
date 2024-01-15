@@ -657,6 +657,7 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 				title = "Calculation for microservice1"
 				calculation = "test-rel.$identifier"
 				type = "string"
+				icon = "Terraform"
 			}
 		}
 	}`, identifier1)
@@ -670,6 +671,7 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.title", "Calculation for microservice1"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.calculation", "test-rel.$identifier"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.icon", "Terraform"),
 				),
 			},
 		},

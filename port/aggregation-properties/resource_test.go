@@ -9,128 +9,8 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func TestAccPortAggregationPropertyWithCycleRelation(t *testing.T) {
-	// Test checks that a cycle aggregation property works.
-	// The cycle is created by creating a parent blueprint and a child blueprint.
-	// The child blueprint has a relation to the parent blueprint.
-	// The parent blueprint has an aggregation property that counts the children of the parent.
-	// The aggregation property is created with a cycle relation to the child blueprint, which is allowed.
-	parentBlueprintIdentifier := utils.GenID()
-	childBlueprintIdentifier := utils.GenID()
-	var testAccActionConfigCreate = fmt.Sprintf(`
-	resource "port_blueprint" "parent_blueprint" {
-		title = "Parent Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		properties = {
-			number_props = {
-				"age" = {
-					title = "Age"
-				}
-			}
-		}
-	}
-
-	resource "port_blueprint" "child_blueprint" {
-		title = "Child Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-       	relations = {
-            "parent" = {
-				 title = "Parent"
-				 target = port_blueprint.parent_blueprint.identifier
-			 }
-		}
-	}
-
-	resource "port_aggregation_properties" "child_aggregation_properties" {
-		blueprint_identifier = port_blueprint.parent_blueprint.identifier
-		properties = {
-			"count_entities" = {
-				target_blueprint_identifier = port_blueprint.child_blueprint.identifier
-				title = "Count Childrens"
-				icon = "Terraform"
-				description = "Count Childrens"
-				method = {	
-					count_entities = true	
-				}
-			}
-		}
-	}
-`, parentBlueprintIdentifier, childBlueprintIdentifier)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: acctest.ProviderConfig + testAccActionConfigCreate,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "blueprint_identifier", parentBlueprintIdentifier),
-					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_entities.title", "Count Childrens"),
-					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_entities.icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_entities.description", "Count Childrens"),
-					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_entities.target_blueprint_identifier", childBlueprintIdentifier),
-					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_entities.method.count_entities", "true"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccCreateAggregationPropertyAverageEntities(t *testing.T) {
-	parentBlueprintIdentifier := utils.GenID()
-	childBlueprintIdentifier := utils.GenID()
-	var testAccActionConfigCreate = fmt.Sprintf(`
-	resource "port_blueprint" "parent_blueprint" {
-		title = "Parent Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		properties = {
-			number_props = {
-				"age" = {
-					title = "Age"
-				}
-			}
-		}
-	}
-
-	resource "port_blueprint" "child_blueprint" {
-		title = "Child Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-       	relations = {
-            "parent" = {
-				 title = "Parent"
-				 target = port_blueprint.parent_blueprint.identifier
-			 }
-		}
-	}
-
-	resource "port_aggregation_properties" "parent_aggregation_properties" {
-		blueprint_identifier = port_blueprint.parent_blueprint.identifier
-		properties = {
-			"count_entities" = {
-				target_blueprint_identifier = port_blueprint.child_blueprint.identifier
-				title = "Count Childrens"	
-				icon = "Terraform"	
-				description = "Count Childrens"	
-				method = {
-					average_entities = {
-					"average_of" = "month"
-					"measure_time_by" = "$updatedAt"
-					}
-				}
-			}
-		}	
-	}
-`, parentBlueprintIdentifier, childBlueprintIdentifier)
-
-	var testAccActionConfigUpdate = fmt.Sprintf(`
+func baseBlueprintsTemplate(parentBlueprintIdentifier string, childBlueprintIdentifier string) string {
+	return fmt.Sprintf(`
 	resource "port_blueprint" "parent_blueprint" {
 		title = "Parent Blueprint"
 		icon = "Terraform"
@@ -157,7 +37,77 @@ func TestAccCreateAggregationPropertyAverageEntities(t *testing.T) {
 			}
 		}
 	}
-	
+`, parentBlueprintIdentifier, childBlueprintIdentifier)
+}
+
+func TestAccPortAggregationPropertyWithCycleRelation(t *testing.T) {
+	// Test checks that a cycle aggregation property works.
+	// The cycle is created by creating a parent blueprint and a child blueprint.
+	// The child blueprint has a relation to the parent blueprint.
+	// The parent blueprint has an aggregation property that counts the children of the parent.
+	// The aggregation property is created with a cycle relation to the child blueprint, which is allowed.
+	parentBlueprintIdentifier := utils.GenID()
+	childBlueprintIdentifier := utils.GenID()
+	var testAccActionConfigCreate = baseBlueprintsTemplate(parentBlueprintIdentifier, childBlueprintIdentifier) + `
+	resource "port_aggregation_properties" "child_aggregation_properties" {
+		blueprint_identifier = port_blueprint.parent_blueprint.identifier
+		properties = {
+			"count_entities" = {
+				target_blueprint_identifier = port_blueprint.child_blueprint.identifier
+				title = "Count Childrens"
+				icon = "Terraform"
+				description = "Count Childrens"
+				method = {	
+					count_entities = true	
+				}
+			}
+		}
+	}
+`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "blueprint_identifier", parentBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_entities.title", "Count Childrens"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_entities.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_entities.description", "Count Childrens"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_entities.target_blueprint_identifier", childBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_entities.method.count_entities", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccCreateAggregationPropertyAverageEntities(t *testing.T) {
+	parentBlueprintIdentifier := utils.GenID()
+	childBlueprintIdentifier := utils.GenID()
+	var testAccActionConfigCreate = baseBlueprintsTemplate(parentBlueprintIdentifier, childBlueprintIdentifier) + `
+	resource "port_aggregation_properties" "parent_aggregation_properties" {
+		blueprint_identifier = port_blueprint.parent_blueprint.identifier
+		properties = {
+			"count_entities" = {
+				target_blueprint_identifier = port_blueprint.child_blueprint.identifier
+				title = "Count Childrens"	
+				icon = "Terraform"	
+				description = "Count Childrens"	
+				method = {
+					average_entities = {
+					"average_of" = "month"
+					"measure_time_by" = "$updatedAt"
+					}
+				}
+			}
+		}	
+	}
+`
+
+	var testAccActionConfigUpdate = baseBlueprintsTemplate(parentBlueprintIdentifier, childBlueprintIdentifier) + `
 	resource "port_aggregation_properties" "parent_aggregation_properties" {
 		blueprint_identifier = port_blueprint.parent_blueprint.identifier
 		properties = {
@@ -172,7 +122,7 @@ func TestAccCreateAggregationPropertyAverageEntities(t *testing.T) {
 			}
 		}	
 	}
-`, parentBlueprintIdentifier, childBlueprintIdentifier)
+`
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -209,34 +159,7 @@ func TestAccCreateAggregationPropertyAverageEntities(t *testing.T) {
 func TestAccPortCreateAggregationAverageProperties(t *testing.T) {
 	parentBlueprintIdentifier := utils.GenID()
 	childBlueprintIdentifier := utils.GenID()
-	var testAccActionConfigCreate = fmt.Sprintf(`
-	resource "port_blueprint" "parent_blueprint" {
-		title = "Parent Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		properties = {
-			number_props = {
-				"age" = {
-					title = "Age"
-				}
-			}
-		}
-	}
-
-	resource "port_blueprint" "child_blueprint" {
-		title = "Child Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		relations = {
-			"parent" = {
-				 title = "Parent"
-				 target = port_blueprint.parent_blueprint.identifier
-			}
-		}
-	}
-
+	var testAccActionConfigCreate = baseBlueprintsTemplate(parentBlueprintIdentifier, childBlueprintIdentifier) + `
 	resource "port_aggregation_properties" "child_aggregation_properties" {
 		blueprint_identifier = port_blueprint.child_blueprint.identifier
 		properties = {
@@ -255,36 +178,9 @@ func TestAccPortCreateAggregationAverageProperties(t *testing.T) {
 			}
 		}
 	}
-`, parentBlueprintIdentifier, childBlueprintIdentifier)
+`
 
-	var testAccActionConfigUpdate = fmt.Sprintf(`
-	resource "port_blueprint" "parent_blueprint" {
-		title = "Parent Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		properties = {
-			number_props = {
-				"age" = {
-					title = "Age"
-				}
-			}
-		}
-	}
-
-	resource "port_blueprint" "child_blueprint" {
-		title = "Child Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		relations = {
-			"parent" = {
-				 title = "Parent"
-				 target = port_blueprint.parent_blueprint.identifier
-			}
-		}
-	}
-
+	var testAccActionConfigUpdate = baseBlueprintsTemplate(parentBlueprintIdentifier, childBlueprintIdentifier) + `
 	resource "port_aggregation_properties" "child_aggregation_properties" {
 		blueprint_identifier = port_blueprint.child_blueprint.identifier
 		properties = {
@@ -303,7 +199,7 @@ func TestAccPortCreateAggregationAverageProperties(t *testing.T) {
 			}
 		}
 	}
-`, parentBlueprintIdentifier, childBlueprintIdentifier)
+`
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -342,193 +238,85 @@ func TestAccPortCreateAggregationAverageProperties(t *testing.T) {
 func TestAccPortCreateAggregationPropertyAggregateByProperty(t *testing.T) {
 	parentBlueprintIdentifier := utils.GenID()
 	childBlueprintIdentifier := utils.GenID()
-	var testAccActionConfigCreateAggrByPropMin = fmt.Sprintf(`
-	resource "port_blueprint" "parent_blueprint" {
-		title = "Parent Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		properties = {
-			number_props = {
-				"age" = {
-					title = "Age"
-				}
-			}
-		}
-	}
-
-	resource "port_blueprint" "child_blueprint" {
-		title = "Child Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		relations = {
-			"parent" = {
-				title = "Parent"
-				target = port_blueprint.parent_blueprint.identifier
-			}
-		}
-	}
-
+	var testAccActionConfigCreateAggrByPropMin = baseBlueprintsTemplate(parentBlueprintIdentifier, childBlueprintIdentifier) + `
 	resource "port_aggregation_properties" "child_aggregation_properties" {
 		blueprint_identifier = port_blueprint.child_blueprint.identifier
-		properties = {
-      "aggr" = {
+		properties           = {
+			"aggr" = {
 				target_blueprint_identifier = port_blueprint.parent_blueprint.identifier
-				title = "Min Age"	
-				icon = "Terraform"
-				description = "Min Age"
-				method = {
+				title                       = "Min Age"
+				icon                        = "Terraform"
+				description                 = "Min Age"
+				method                      = {
 					aggregate_by_property = {
-						"func" = "min"
+						"func"     = "min"
 						"property" = "age"
 					}
 				}
 			}
 		}
 	}
-`, parentBlueprintIdentifier, childBlueprintIdentifier)
+`
 
-	var testAccAggregatePropertyUpdateMax = fmt.Sprintf(`
-	resource "port_blueprint" "parent_blueprint" {
-		title = "Parent Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		properties = {
-			number_props = {
-				"age" = {
-					title = "Age"
-				}
-			}
-		}
-	}
-
-	resource "port_blueprint" "child_blueprint" {
-		title = "Child Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		relations = {
-			"parent" = {
-				title = "Parent"
-				target = port_blueprint.parent_blueprint.identifier
-			}
-		}
-	}
-
+	var testAccAggregatePropertyUpdateMax = baseBlueprintsTemplate(parentBlueprintIdentifier, childBlueprintIdentifier) + `
 	resource "port_aggregation_properties" "child_aggregation_properties" {
 		blueprint_identifier = port_blueprint.child_blueprint.identifier
-		properties = {
-      "aggr" = {
+		properties           = {
+			"aggr" = {
 				target_blueprint_identifier = port_blueprint.parent_blueprint.identifier
-				title = "Max Age"	
-				icon = "Terraform"
-				description = "Max Age"
-				method = {
+				title                       = "Max Age"
+				icon                        = "Terraform"
+				description                 = "Max Age"
+				method                      = {
 					aggregate_by_property = {
-						"func" = "max"
+						"func"     = "max"
 						"property" = "age"
 					}
 				}
 			}
 		}
 	}
-`, parentBlueprintIdentifier, childBlueprintIdentifier)
+`
 
-	var testAccAggregatePropertyUpdateSum = fmt.Sprintf(`
-	resource "port_blueprint" "parent_blueprint" {
-		title = "Parent Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		properties = {
-			number_props = {
-				"age" = {
-					title = "Age"
-				}
-			}
-		}
-	}
-
-	resource "port_blueprint" "child_blueprint" {
-		title = "Child Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-       	relations = {
-            "parent" = {
-				 title = "Parent"
-				 target = port_blueprint.parent_blueprint.identifier
-			 }
-		}
-	}
-
+	var testAccAggregatePropertyUpdateSum = baseBlueprintsTemplate(parentBlueprintIdentifier, childBlueprintIdentifier) + `
 	resource "port_aggregation_properties" "child_aggregation_properties" {
 		blueprint_identifier = port_blueprint.child_blueprint.identifier
-		properties = {
-      "aggr" = {
+		properties           = {
+			"aggr" = {
 				target_blueprint_identifier = port_blueprint.parent_blueprint.identifier
-				title = "Sum Age"	
-				icon = "Terraform"
-				description = "Sum Age"
-				method = {
+				title                       = "Sum Age"
+				icon                        = "Terraform"
+				description                 = "Sum Age"
+				method                      = {
 					aggregate_by_property = {
-						"func" = "sum"
+						"func"     = "sum"
 						"property" = "age"
 					}
 				}
 			}
 		}
 	}
-`, parentBlueprintIdentifier, childBlueprintIdentifier)
+`
 
-	var testAccAggregatePropertyUpdateMedian = fmt.Sprintf(`
-		resource "port_blueprint" "parent_blueprint" {
-		title = "Parent Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		properties = {
-			number_props = {
-				"age" = {
-					title = "Age"
-				}
-			}
-		}
-	}
-
-	resource "port_blueprint" "child_blueprint" {
-		title = "Child Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-       	relations = {
-            "parent" = {
-				 title = "Parent"
-				 target = port_blueprint.parent_blueprint.identifier
-			 }
-		}
-	}
-
+	var testAccAggregatePropertyUpdateMedian = baseBlueprintsTemplate(parentBlueprintIdentifier, childBlueprintIdentifier) + `
 	resource "port_aggregation_properties" "child_aggregation_properties" {
 		blueprint_identifier = port_blueprint.child_blueprint.identifier
-		properties = {
-      "aggr" = {
+		properties           = {
+			"aggr" = {
 				target_blueprint_identifier = port_blueprint.parent_blueprint.identifier
-				title = "Median Age"	
-				icon = "Terraform"
-				description = "Median Age"
-				method = {
+				title                       = "Median Age"
+				icon                        = "Terraform"
+				description                 = "Median Age"
+				method                      = {
 					aggregate_by_property = {
-						"func" = "median"
+						"func"     = "median"
 						"property" = "age"
 					}
 				}
 			}
 		}
 	}
-`, parentBlueprintIdentifier, childBlueprintIdentifier)
+`
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -589,56 +377,30 @@ func TestAccPortCreateAggregationPropertyAggregateByProperty(t *testing.T) {
 func TestAccPortCreateBlueprintWithAggregationByPropertyWithFilter(t *testing.T) {
 	parentBlueprintIdentifier := utils.GenID()
 	childBlueprintIdentifier := utils.GenID()
-	var testAccActionConfigCreate = fmt.Sprintf(`
-	resource "port_blueprint" "parent_blueprint" {
-		title = "Parent Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		properties = {
-			number_props = {
-				"age" = {
-					title = "Age"
-				}
-			}
-		}
-	}
-
-	resource "port_blueprint" "child_blueprint" {
-		title = "Child Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		relations = {
-			"parent" = {
-				title = "Parent"
-				target = port_blueprint.parent_blueprint.identifier
-		 	}
-		}
-	}
+	var testAccActionConfigCreate = baseBlueprintsTemplate(parentBlueprintIdentifier, childBlueprintIdentifier) + `
 
 	resource "port_aggregation_properties" "child_aggregation_properties" {
 		blueprint_identifier = port_blueprint.child_blueprint.identifier
-		properties = {
+		properties           = {
 			"aggr" = {
 				target_blueprint_identifier = port_blueprint.parent_blueprint.identifier
-				title = "Min Age"
-				icon = "Terraform"
-				description = "Min Age"
-				method = {
+				title                       = "Min Age"
+				icon                        = "Terraform"
+				description                 = "Min Age"
+				method                      = {
 					aggregate_by_property = {
-						"func" = "min"
+						"func"     = "min"
 						"property" = "age"
 					}
 				}
 				query = jsonencode(
 					{
-						"combinator": "and",
-						"rules": [
+						"combinator" : "and",
+						"rules" : [
 							{
-								"property": "age",
-									"operator": "=",
-									"value": 10
+								"property" : "age",
+								"operator" : "=",
+								"value" : 10
 							}
 						]
 					}
@@ -646,7 +408,7 @@ func TestAccPortCreateBlueprintWithAggregationByPropertyWithFilter(t *testing.T)
 			}
 		}
 	}
-`, parentBlueprintIdentifier, childBlueprintIdentifier)
+`
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -672,59 +434,29 @@ func TestAccPortCreateBlueprintWithAggregationByPropertyWithFilter(t *testing.T)
 func TestAccMultipleAggregationPropertiesForBlueprintCreate(t *testing.T) {
 	parentBlueprintIdentifier := utils.GenID()
 	childBlueprintIdentifier := utils.GenID()
-	var testAccActionConfigCreate = fmt.Sprintf(`
-	resource "port_blueprint" "parent_blueprint" {
-		title = "Parent Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-		properties = {
-			number_props = {
-				"age" = {
-					title = "Age"
-				}
-				"height" = {
-					title = "Height"
-				}
-			}
-		}
-	}
-
-	resource "port_blueprint" "child_blueprint" {
-		title = "Child Blueprint"
-		icon = "Terraform"
-		identifier = "%s"
-		description = ""
-			 	relations = {
-						"parent" = {
-				 title = "Parent"
-				 target = port_blueprint.parent_blueprint.identifier
-			 }
-		}
-	}
-
+	var testAccActionConfigCreate = baseBlueprintsTemplate(parentBlueprintIdentifier, childBlueprintIdentifier) + `
 	resource "port_aggregation_properties" "child_aggregation_properties" {
 		blueprint_identifier = port_blueprint.child_blueprint.identifier
-		properties = {
+		properties           = {
 			"aggr" = {
 				target_blueprint_identifier = port_blueprint.parent_blueprint.identifier
-				title = "Min Age"
-				icon = "Terraform"
-				description = "Min Age"
-				method = {
+				title                       = "Min Age"
+				icon                        = "Terraform"
+				description                 = "Min Age"
+				method                      = {
 					aggregate_by_property = {
-						"func" = "min"
+						"func"     = "min"
 						"property" = "age"
 					}
 				}
 				query = jsonencode(
 					{
-						"combinator": "and",
-						"rules": [
+						"combinator" : "and",
+						"rules" : [
 							{
-								"property": "age",
-									"operator": "=",
-									"value": 10
+								"property" : "age",
+								"operator" : "=",
+								"value" : 10
 							}
 						]
 					}
@@ -732,23 +464,23 @@ func TestAccMultipleAggregationPropertiesForBlueprintCreate(t *testing.T) {
 			}
 			"aggr2" = {
 				target_blueprint_identifier = port_blueprint.parent_blueprint.identifier
-				title = "Min Height"
-				icon = "Terraform"
-				description = "Min Height"
-				method = {
+				title                       = "Max age"
+				icon                        = "Terraform"
+				description                 = "Max age"
+				method                      = {
 					aggregate_by_property = {
-						"func" = "min"
-						"property" = "height"
+						"func"     = "max"
+						"property" = "age"
 					}
 				}
 				query = jsonencode(
 					{
-						"combinator": "and",
-						"rules": [
+						"combinator" : "and",
+						"rules" : [
 							{
-								"property": "height",
-									"operator": "=",
-									"value": 10
+								"property" : "age",
+								"operator" : "=",
+								"value" : 10
 							}
 						]
 					}
@@ -756,7 +488,7 @@ func TestAccMultipleAggregationPropertiesForBlueprintCreate(t *testing.T) {
 			}
 		}
 	}
-`, parentBlueprintIdentifier, childBlueprintIdentifier)
+`
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -773,13 +505,13 @@ func TestAccMultipleAggregationPropertiesForBlueprintCreate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr.method.aggregate_by_property.func", "min"),
 					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr.method.aggregate_by_property.property", "age"),
 					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr.query", "{\"combinator\":\"and\",\"rules\":[{\"operator\":\"=\",\"property\":\"age\",\"value\":10}]}"),
-					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr2.title", "Min Height"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr2.title", "Max age"),
 					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr2.icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr2.description", "Min Height"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr2.description", "Max age"),
 					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr2.target_blueprint_identifier", parentBlueprintIdentifier),
-					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr2.method.aggregate_by_property.func", "min"),
-					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr2.method.aggregate_by_property.property", "height"),
-					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr2.query", "{\"combinator\":\"and\",\"rules\":[{\"operator\":\"=\",\"property\":\"height\",\"value\":10}]}"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr2.method.aggregate_by_property.func", "max"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr2.method.aggregate_by_property.property", "age"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.aggr2.query", "{\"combinator\":\"and\",\"rules\":[{\"operator\":\"=\",\"property\":\"age\",\"value\":10}]}"),
 				),
 			},
 		},

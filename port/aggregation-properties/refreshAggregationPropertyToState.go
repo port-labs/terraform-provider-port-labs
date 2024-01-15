@@ -14,12 +14,12 @@ func refreshAggregationPropertyState(state *AggregationPropertiesModel, aggregat
 	for aggregationPropertyIdentifier, aggregationProperty := range aggregationProperties {
 
 		state.Properties[aggregationPropertyIdentifier] = &AggregationPropertyModel{
-			types.StringPointerValue(aggregationProperty.Title),
-			types.StringPointerValue(aggregationProperty.Icon),
-			types.StringPointerValue(aggregationProperty.Description),
-			types.StringValue(aggregationProperty.Target),
-			nil,
-			types.StringPointerValue(nil),
+			Title:                     types.StringPointerValue(aggregationProperty.Title),
+			Icon:                      types.StringPointerValue(aggregationProperty.Icon),
+			Description:               types.StringPointerValue(aggregationProperty.Description),
+			TargetBlueprintIdentifier: types.StringValue(aggregationProperty.Target),
+			Method:                    nil,
+			Query:                     types.StringPointerValue(nil),
 		}
 
 		if aggregationProperty.Query != nil {

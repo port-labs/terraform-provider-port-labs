@@ -49,8 +49,6 @@ func (r *AggregationPropertiesResource) Read(ctx context.Context, req resource.R
 		return
 	}
 
-	//blueprintIdentifier := state.BlueprintIdentifier.ValueString()
-
 	b, statusCode, err := r.portClient.ReadBlueprint(ctx, state.BlueprintIdentifier.ValueString())
 
 	if err != nil {
@@ -96,20 +94,27 @@ func (r *AggregationPropertiesResource) Create(ctx context.Context, req resource
 		resp.Diagnostics.AddError("failed reading blueprint", err.Error())
 	}
 
+	// check if the aggregation properties already exists
+	if b.AggregationProperties != nil {
+		for aggregationPropertyIdentifier := range *aggregationProperties {
+			if _, ok := b.AggregationProperties[aggregationPropertyIdentifier]; ok {
+				resp.Diagnostics.AddError("aggregation property already exists", aggregationPropertyIdentifier)
+				return
+			}
+		}
+	}
+
 	b.AggregationProperties = *aggregationProperties
 
-	bp, err := r.portClient.UpdateBlueprint(ctx, b, state.BlueprintIdentifier.ValueString())
+	_, err = r.portClient.UpdateBlueprint(ctx, b, state.BlueprintIdentifier.ValueString())
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create aggregation properties", err.Error())
 		return
 	}
 
-	err = refreshAggregationPropertyState(state, bp.AggregationProperties)
-	if err != nil {
-		resp.Diagnostics.AddError("failed writing aggregation property fields to resource", err.Error())
-		return
-	}
+	// set the ID to the blueprint identifier
+	state.ID = state.BlueprintIdentifier
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -126,6 +131,7 @@ func (r *AggregationPropertiesResource) Update(ctx context.Context, req resource
 	}
 
 	aggregationProperties, err := aggregationPropertyToBody(state)
+	previousStateAggregationProperties, err := aggregationPropertyToBody(previousState)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert aggregation property to port valid request", err.Error())
@@ -142,20 +148,27 @@ func (r *AggregationPropertiesResource) Update(ctx context.Context, req resource
 		resp.Diagnostics.AddError("failed reading blueprint", err.Error())
 	}
 
+	// check that there is no aggregation property that isn't in the state
+	if b.AggregationProperties != nil {
+		for aggregationPropertyIdentifier := range b.AggregationProperties {
+			if _, ok := (*previousStateAggregationProperties)[aggregationPropertyIdentifier]; !ok {
+				resp.Diagnostics.AddError("found aggregation property that isn't in the state", aggregationPropertyIdentifier)
+				return
+			}
+		}
+	}
+
 	b.AggregationProperties = *aggregationProperties
 
-	bp, err := r.portClient.UpdateBlueprint(ctx, b, state.BlueprintIdentifier.ValueString())
+	_, err = r.portClient.UpdateBlueprint(ctx, b, state.BlueprintIdentifier.ValueString())
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update aggregation property", err.Error())
 		return
 	}
 
-	err = refreshAggregationPropertyState(state, bp.AggregationProperties)
-	if err != nil {
-		resp.Diagnostics.AddError("failed writing aggregation property fields to resource", err.Error())
-		return
-	}
+	// set the ID to the blueprint identifier
+	state.ID = state.BlueprintIdentifier
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

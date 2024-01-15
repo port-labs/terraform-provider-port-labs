@@ -66,27 +66,6 @@ func (c *PortClient) UpdateBlueprint(ctx context.Context, b *Blueprint, id strin
 	return &pb.Blueprint, nil
 }
 
-func (c *PortClient) PatchBlueprint(ctx context.Context, b *Blueprint, id string) (*Blueprint, error) {
-	url := "v1/blueprints/{identifier}"
-	resp, err := c.Client.R().
-		SetBody(b).
-		SetContext(ctx).
-		SetPathParam("identifier", id).
-		Patch(url)
-	if err != nil {
-		return nil, err
-	}
-	var pb PortBody
-	err = json.Unmarshal(resp.Body(), &pb)
-	if err != nil {
-		return nil, err
-	}
-	if !pb.OK {
-		return nil, fmt.Errorf("failed to patch blueprint, got: %s", resp.Body())
-	}
-	return &pb.Blueprint, nil
-}
-
 func (c *PortClient) DeleteBlueprint(ctx context.Context, id string) error {
 	url := "v1/blueprints/{identifier}"
 	resp, err := c.Client.R().

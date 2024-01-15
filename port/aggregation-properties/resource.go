@@ -131,7 +131,7 @@ func (r *AggregationPropertiesResource) Update(ctx context.Context, req resource
 	}
 
 	aggregationProperties, err := aggregationPropertyToBody(state)
-	previousStateAggregationProperties, err := aggregationPropertyToBody(previousState)
+	previousStateAggregationProperties, _ := aggregationPropertyToBody(previousState)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert aggregation property to port valid request", err.Error())

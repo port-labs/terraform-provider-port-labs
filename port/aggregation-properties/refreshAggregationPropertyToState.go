@@ -1,9 +1,9 @@
 package aggregation_properties
 
 import (
-	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
 func refreshAggregationPropertyState(state *AggregationPropertiesModel, aggregationProperties map[string]cli.BlueprintAggregationProperty) error {
@@ -22,13 +22,11 @@ func refreshAggregationPropertyState(state *AggregationPropertiesModel, aggregat
 			Query:                     types.StringPointerValue(nil),
 		}
 
-		if aggregationProperty.Query != nil {
-			query, err := json.Marshal(aggregationProperty.Query)
-			if err != nil {
-				return err
-			}
-			state.Properties[aggregationPropertyIdentifier].Query = types.StringValue(string(query))
+		query, err := utils.GoObjectToTerraformString(aggregationProperty.Query)
+		if err != nil {
+			return err
 		}
+		state.Properties[aggregationPropertyIdentifier].Query = query
 
 		if aggregationProperty.CalculationSpec != nil {
 			if calculationBy, ok := aggregationProperty.CalculationSpec["calculationBy"]; ok {

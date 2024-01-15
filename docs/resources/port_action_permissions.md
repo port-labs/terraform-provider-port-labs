@@ -26,7 +26,7 @@ description: |-
       }
     }
   }
-  
+
   Example Usage with Policy
   Port allows setting dynamic permissions for executing and/or approving execution of self-service actions, based on any properties/relations of an action's corresponding blueprint.
   Docs about the Policy language can be found here https://docs.getport.io/create-self-service-experiences/set-self-service-actions-rbac/dynamic-permissions#configuring-permissions.
@@ -75,7 +75,7 @@ description: |-
       }
     )
   }
-  
+
   }
   }
   ```
@@ -170,7 +170,7 @@ resource "port_action_permissions" "restart_microservice_permissions" {
 }
 ```
 
-## Disclaimer 
+## Disclaimer
 
 - Action permissions are created by default when creating a new action, this means that you should use this resource when you want to change the default permissions of an action.
 - When deleting an action permissions resource using terraform, the action permissions will not be deleted from Port, as they are required for the action to work, instead, the action permissions will be removed from the terraform state.

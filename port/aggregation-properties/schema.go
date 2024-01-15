@@ -69,13 +69,6 @@ func AggregationPropertySchema() schema.Attribute {
 									Default:             stringdefault.StaticString("$createdAt"),
 								},
 							},
-							//Validators: []validator.Object{
-							//	objectvalidator.ConflictsWith(
-							//		path.MatchRelative().AtParent().AtName("count_entities"),
-							//		path.MatchRelative().AtParent().AtName("average_by_property"),
-							//		path.MatchRelative().AtParent().AtName("aggregate_by_property"),
-							//	),
-							//},
 						},
 						"average_by_property": schema.SingleNestedAttribute{
 							MarkdownDescription: "Function to calculate the average by property value of the target entities",
@@ -97,13 +90,6 @@ func AggregationPropertySchema() schema.Attribute {
 									Required:            true,
 								},
 							},
-							//Validators: []validator.Object{
-							//	objectvalidator.ConflictsWith(
-							//		path.MatchRelative().AtParent().AtName("count_entities"),
-							//		path.MatchRelative().AtParent().AtName("average_entities"),
-							//		path.MatchRelative().AtParent().AtName("aggregate_by_property"),
-							//	),
-							//},
 						},
 						"aggregate_by_property": schema.SingleNestedAttribute{
 							MarkdownDescription: "Function to calculate the aggregate by property value of the target entities, such as sum, min, max, median",
@@ -121,13 +107,6 @@ func AggregationPropertySchema() schema.Attribute {
 									Required:            true,
 								},
 							},
-							//Validators: []validator.Object{
-							//	objectvalidator.ConflictsWith(
-							//		path.MatchRelative().AtParent().AtName("count_entities"),
-							//		path.MatchRelative().AtParent().AtName("average_entities"),
-							//		path.MatchRelative().AtParent().AtName("average_by_property"),
-							//	),
-							//},
 						},
 					},
 				},

@@ -60,7 +60,7 @@ func (r *AggregationPropertiesResource) Read(ctx context.Context, req resource.R
 		return
 	}
 
-	err = refreshAggregationPropertyState(state, b.AggregationProperties)
+	err = refreshAggregationPropertiesState(state, b.AggregationProperties)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing aggregation property fields to resource", err.Error())
 		return
@@ -77,7 +77,7 @@ func (r *AggregationPropertiesResource) Create(ctx context.Context, req resource
 		return
 	}
 
-	aggregationProperties, err := aggregationPropertyToBody(state)
+	aggregationProperties, err := aggregationPropertiesToBody(state)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert aggregation property to port valid request", err.Error())
@@ -130,8 +130,7 @@ func (r *AggregationPropertiesResource) Update(ctx context.Context, req resource
 		return
 	}
 
-	aggregationProperties, err := aggregationPropertyToBody(state)
-	previousStateAggregationProperties, _ := aggregationPropertyToBody(previousState)
+	aggregationProperties, err := aggregationPropertiesToBody(state)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert aggregation property to port valid request", err.Error())
@@ -146,16 +145,6 @@ func (r *AggregationPropertiesResource) Update(ctx context.Context, req resource
 			return
 		}
 		resp.Diagnostics.AddError("failed reading blueprint", err.Error())
-	}
-
-	// check that there is no aggregation property that isn't in the state
-	if b.AggregationProperties != nil {
-		for aggregationPropertyIdentifier := range b.AggregationProperties {
-			if _, ok := (*previousStateAggregationProperties)[aggregationPropertyIdentifier]; !ok {
-				resp.Diagnostics.AddError("found aggregation property that isn't in the state", aggregationPropertyIdentifier)
-				return
-			}
-		}
 	}
 
 	b.AggregationProperties = *aggregationProperties

@@ -6,7 +6,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func refreshAggregationPropertyState(state *AggregationPropertiesModel, aggregationProperties map[string]cli.BlueprintAggregationProperty) error {
+func refreshAggregationPropertiesState(state *AggregationPropertiesModel, aggregationProperties map[string]cli.BlueprintAggregationProperty) error {
 	state.ID = state.BlueprintIdentifier
 
 	state.Properties = map[string]*AggregationPropertyModel{}

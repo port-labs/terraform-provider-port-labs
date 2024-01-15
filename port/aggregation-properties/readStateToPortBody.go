@@ -5,7 +5,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 )
 
-func aggregationPropertyToBody(state *AggregationPropertiesModel) (*map[string]cli.BlueprintAggregationProperty, error) {
+func aggregationPropertiesToBody(state *AggregationPropertiesModel) (*map[string]cli.BlueprintAggregationProperty, error) {
 	if state == nil {
 		return nil, nil
 	}

@@ -101,6 +101,11 @@ func calculationPropertiesToBody(ctx context.Context, state *BlueprintModel) map
 			calculationProp.Title = &title
 		}
 
+		if !state.Icon.IsNull() {
+			icon := prop.Icon.ValueString()
+			calculationProp.Icon = &icon
+		}
+
 		if !prop.Description.IsNull() {
 			description := prop.Description.ValueString()
 			calculationProp.Description = &description

@@ -141,9 +141,9 @@ func (r *AggregationPropertiesResource) Schema(ctx context.Context, req resource
 
 var AggregationPropertyResourceMarkdownDescription = `
 
-# Aggregation Property
+# Aggregation Properties
 
-This resource allows you to manage an aggregation property.
+This resource allows you to manage aggregation properties of a blueprint.
 
 See the [Port documentation](https://docs.getport.io/build-your-software-catalog/define-your-data-model/setup-blueprint/properties/aggregation-properties/) for more information about aggregation properties.
 

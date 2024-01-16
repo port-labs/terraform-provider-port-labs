@@ -39,22 +39,12 @@ func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
 func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action, error) {
 	var err error
 	action := &cli.Action{
-		Identifier: data.Identifier.ValueString(),
-	}
-
-	if !data.Title.IsNull() {
-		title := data.Title.ValueString()
-		action.Title = &title
-	}
-
-	if !data.Icon.IsNull() {
-		icon := data.Icon.ValueString()
-		action.Icon = &icon
-	}
-
-	if !data.Description.IsNull() {
-		description := data.Description.ValueString()
-		action.Description = &description
+		Identifier:       data.Identifier.ValueString(),
+		Title:            data.Title.ValueStringPointer(),
+		Icon:             data.Icon.ValueStringPointer(),
+		Description:      data.Description.ValueStringPointer(),
+		RequiredApproval: data.RequiredApproval.ValueBoolPointer(),
+		Publish:          data.Publish.ValueBoolPointer(),
 	}
 
 	action.Trigger, err = triggerToBody(ctx, data)
@@ -67,11 +57,6 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action,
 		return nil, err
 	}
 
-	if !data.RequiredApproval.IsNull() {
-		requiredApproval := data.RequiredApproval.ValueBool()
-		action.RequiredApproval = &requiredApproval
-	}
-
 	if !data.ApprovalEmailNotification.IsNull() {
 		action.ApprovalNotification = &cli.ApprovalNotification{
 			Type: "email",
@@ -79,19 +64,10 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action,
 	}
 	if data.ApprovalWebhookNotification != nil {
 		action.ApprovalNotification = &cli.ApprovalNotification{
-			Type: "webhook",
-			Url:  data.ApprovalWebhookNotification.Url.ValueString(),
+			Type:   "webhook",
+			Url:    data.ApprovalWebhookNotification.Url.ValueString(),
+			Format: data.ApprovalWebhookNotification.Format.ValueStringPointer(),
 		}
-
-		if !data.ApprovalWebhookNotification.Format.IsNull() {
-			format := data.ApprovalWebhookNotification.Format.ValueString()
-			action.ApprovalNotification.Format = &format
-		}
-	}
-
-	if !data.Publish.IsNull() {
-		publish := data.Publish.ValueBool()
-		action.Publish = &publish
 	}
 
 	return action, nil

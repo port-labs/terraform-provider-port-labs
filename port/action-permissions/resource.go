@@ -47,6 +47,7 @@ func (r *ActionPermissionsResource) Read(ctx context.Context, req resource.ReadR
 
 	blueprintIdentifier := state.BlueprintIdentifier.ValueString()
 	actionIdentifier := state.ActionIdentifier.ValueString()
+	// For the first time a user is migrating from action v1 to v2
 	if blueprintIdentifier != "" {
 		actionIdentifier = fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)
 	}

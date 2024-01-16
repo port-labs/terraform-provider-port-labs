@@ -45,10 +45,10 @@ func TestAccPortScorecardBasic(t *testing.T) {
 		  level      = "Gold" 
 		  query = {
 			combinator = "and"
-			conditions = [{
+			conditions = [jsonencode({
 			  property = "$team"
 			  operator = "isNotEmpty"
-			}]
+			})]
 		  }
 		}]
 
@@ -71,8 +71,7 @@ func TestAccPortScorecardBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Gold"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.combinator", "and"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.#", "1"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.property", "$team"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.operator", "isNotEmpty"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0", "{\"operator\":\"isNotEmpty\",\"property\":\"$team\"}"),
 				),
 			},
 		},
@@ -93,15 +92,17 @@ func TestAccPortScorecard(t *testing.T) {
 		  level      = "Gold"
 		  query = {
 			combinator = "and"
-			conditions = [{
-			  property = "$team"
-			  operator = "isNotEmpty"
-			  },
-			  {
-				property = "author",
-				"operator" : "=",
-				"value" : "myValue"
-			}]
+			conditions = [
+				jsonencode({
+					property = "$team"
+					operator = "isNotEmpty"
+				}),
+				jsonencode({
+					property = "author",
+					"operator" : "=",
+					"value" : "myValue"
+				})
+			]
 		  }
 		  },
 		  {
@@ -110,10 +111,10 @@ func TestAccPortScorecard(t *testing.T) {
 			level      = "Silver"
 			query = {
 			  combinator = "and"
-			  conditions = [{
+			  conditions = [jsonencode({
 				property = "url"
 				operator = "isNotEmpty"
-			  }]
+			  })]
 			}
 		}]
 	  
@@ -136,18 +137,14 @@ func TestAccPortScorecard(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Gold"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.combinator", "and"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.#", "2"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.property", "$team"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.operator", "isNotEmpty"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.1.property", "author"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.1.operator", "="),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.1.value", "myValue"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0", "{\"operator\":\"isNotEmpty\",\"property\":\"$team\"}"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.1", "{\"operator\":\"=\",\"property\":\"author\",\"value\":\"myValue\"}"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.identifier", "test2"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.title", "Test2"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.level", "Silver"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.query.combinator", "and"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.query.conditions.#", "1"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.query.conditions.0.property", "url"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.query.conditions.0.operator", "isNotEmpty"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.query.conditions.0", "{\"operator\":\"isNotEmpty\",\"property\":\"url\"}"),
 				),
 			},
 		},
@@ -168,10 +165,10 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 		  level      = "Gold" 
 		  query = {
 			combinator = "and"
-			conditions = [{
+			conditions = [jsonencode({
 			  property = "$team"
 			  operator = "isNotEmpty"
-			}]
+			})]
 		  }
 		}]
 
@@ -191,10 +188,10 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 					level      = "Bronze"
 					query = {
 						combinator = "or"
-						conditions = [{
+						conditions = [jsonencode({
 							property = "$team"
 							operator = "isNotEmpty"
-						}]
+						})]
 					}
 				}]
 		depends_on = [
@@ -218,8 +215,7 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Gold"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.combinator", "and"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.#", "1"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.property", "$team"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.operator", "isNotEmpty"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0", "{\"operator\":\"isNotEmpty\",\"property\":\"$team\"}"),
 				),
 			},
 			{
@@ -233,8 +229,7 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Bronze"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.combinator", "or"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.#", "1"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.property", "$team"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.operator", "isNotEmpty"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0", "{\"operator\":\"isNotEmpty\",\"property\":\"$team\"}"),
 				),
 			},
 		},
@@ -255,10 +250,10 @@ func TestAccPortScorecardImport(t *testing.T) {
 		  level      = "Gold" 
 		  query = {
 			combinator = "and"
-			conditions = [{
+			conditions = [jsonencode({
 			  property = "$team"
 			  operator = "isNotEmpty"
-			}]
+			})]
 		  }
 		}]
 
@@ -283,8 +278,7 @@ func TestAccPortScorecardImport(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Gold"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.combinator", "and"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.#", "1"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.property", "$team"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.operator", "isNotEmpty"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0", "{\"operator\":\"isNotEmpty\",\"property\":\"$team\"}"),
 				),
 			},
 			{
@@ -312,10 +306,10 @@ func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
 		  level      = "Gold" 
 		  query = {
 			combinator = "and"
-			conditions = [{
+			conditions = [jsonencode({
 			  property = "$team"
 			  operator = "isNotEmpty"
-			}]
+			})]
 		  }
 		}]
 
@@ -335,10 +329,10 @@ func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
 			level      = "Gold" 
 			query = {
 			  combinator = "and"
-			  conditions = [{
+			  conditions = [jsonencode({
 				property = "$team"
 				operator = "isNotEmpty"
-			  }]
+			  })]
 			}
 		  }]
 		depends_on = [
@@ -363,8 +357,7 @@ func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Gold"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.combinator", "and"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.#", "1"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.property", "$team"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.operator", "isNotEmpty"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0", "{\"operator\":\"isNotEmpty\",\"property\":\"$team\"}"),
 				),
 			},
 			{
@@ -379,8 +372,7 @@ func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Gold"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.combinator", "and"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.#", "1"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.property", "$team"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0.operator", "isNotEmpty"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0", "{\"operator\":\"isNotEmpty\",\"property\":\"$team\"}"),
 				),
 			},
 		},

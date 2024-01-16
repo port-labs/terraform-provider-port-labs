@@ -2,6 +2,8 @@ package scorecard
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -10,23 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
-
-func ConditionSchema() map[string]schema.Attribute {
-	return map[string]schema.Attribute{
-		"operator": schema.StringAttribute{
-			MarkdownDescription: "The operator of the condition",
-			Required:            true,
-		},
-		"property": schema.StringAttribute{
-			MarkdownDescription: "The property of the condition",
-			Required:            true,
-		},
-		"value": schema.StringAttribute{
-			MarkdownDescription: "The value of the condition",
-			Optional:            true,
-		},
-	}
-}
 
 func RuleSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
@@ -56,11 +41,12 @@ func RuleSchema() map[string]schema.Attribute {
 					},
 					Required: true,
 				},
-				"conditions": schema.ListNestedAttribute{
-					MarkdownDescription: "The conditions of the query",
+				"conditions": schema.ListAttribute{
+					MarkdownDescription: "The conditions of the query. Each condition object should be encoded to a string",
 					Required:            true,
-					NestedObject: schema.NestedAttributeObject{
-						Attributes: ConditionSchema(),
+					ElementType:         types.StringType,
+					Validators: []validator.List{
+						listvalidator.SizeAtLeast(1),
 					},
 				},
 			},

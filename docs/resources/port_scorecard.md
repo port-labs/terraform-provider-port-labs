@@ -46,16 +46,6 @@ Required:
 Required:
 
 - `combinator` (String) The combinator of the query
-- `conditions` (Attributes List) The conditions of the query (see [below for nested schema](#nestedatt--rules--query--conditions))
+- `conditions` (List of String) The conditions of the query. Each condition object should be encoded to a string
 
-<a id="nestedatt--rules--query--conditions"></a>
-### Nested Schema for `rules.query.conditions`
 
-Required:
-
-- `operator` (String) The operator of the condition
-- `property` (String) The property of the condition
-
-Optional:
-
-- `value` (String) The value of the condition

@@ -1,11 +1,14 @@
-package aggregation_property
+package aggregation_properties
 
 import "github.com/hashicorp/terraform-plugin-framework/types"
 
+type AggregationPropertiesModel struct {
+	ID                  types.String                         `tfsdk:"id"`
+	BlueprintIdentifier types.String                         `tfsdk:"blueprint_identifier"`
+	Properties          map[string]*AggregationPropertyModel `tfsdk:"properties"`
+}
+
 type AggregationPropertyModel struct {
-	ID                        types.String             `tfsdk:"id"`
-	AggregationIdentifier     types.String             `tfsdk:"aggregation_identifier"`
-	BlueprintIdentifier       types.String             `tfsdk:"blueprint_identifier"`
 	Title                     types.String             `tfsdk:"title"`
 	Icon                      types.String             `tfsdk:"icon"`
 	Description               types.String             `tfsdk:"description"`

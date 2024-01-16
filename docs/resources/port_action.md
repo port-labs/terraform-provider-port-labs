@@ -4,11 +4,166 @@ page_title: "port_action Resource - terraform-provider-port-labs"
 subcategory: ""
 description: |-
   Action resource
+  Docs for the Action resource can be found here https://docs.getport.io/create-self-service-experiences/.
+  Example Usage
+  hcl
+  resource "port_action" "create_microservice" {
+      title = "Create Microservice"
+      identifier = "create-microservice"
+      icon = "Terraform"
+      self_service_trigger = {
+          operation = "CREATE"
+          blueprint_identifier = port_blueprint.microservice.identifier
+          user_properties = {
+              string_props = {
+                  myStringIdentifier = {
+                      title = "My String Identifier"
+                      required = true
+                  }
+              }
+              number_props = {
+                  myNumberIdentifier = {
+                      title = "My Number Identifier"
+                      required = true
+                      maximum = 100
+                      minimum = 0
+                  }
+              }
+              boolean_props = {
+                  myBooleanIdentifier = {
+                      title = "My Boolean Identifier"
+                      required = true
+                  }
+              }
+              object_props = {
+                  myObjectIdentifier = {
+                      title = "My Object Identifier"
+                      required = true
+                  }
+              }
+              array_props = {
+                  myArrayIdentifier = {
+                      title = "My Array Identifier"
+                      required = true
+                      string_items = {
+                          format = "email"
+                      }
+                  }
+              }
+          }
+      }
+      kafka_method = {
+          payload = jsonencode({
+            runId: "<no value>"
+          })
+      }
+  }
+  
+  Example Usage with Automation trigger
+  Port allows setting an automation trigger to an action, for executing an action based on event occurred to an entity in Port.
+  hcl
+  resource "port_action" "delete_temporary_microservice" {
+      title = "Delete Temporary Microservice"
+      identifier = "delete-temp-microservice"
+      icon = "Terraform"
+      automation_trigger = {
+          timer_property_expired_event = {
+              blueprint_identifier = port_blueprint.microservice.identifier
+              property_identifier = "ttl"
+          }
+      }
+      kafka_method = {
+          payload = jsonencode({
+            runId: "<no value>"
+          })
+      }
+  }
 ---
 
 # port_action (Resource)
 
-Action resource
+# Action resource
+
+Docs for the Action resource can be found [here](https://docs.getport.io/create-self-service-experiences/).
+
+## Example Usage
+
+```hcl
+resource "port_action" "create_microservice" {
+	title = "Create Microservice"
+	identifier = "create-microservice"
+	icon = "Terraform"
+	self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+		user_properties = {
+			string_props = {
+				myStringIdentifier = {
+					title = "My String Identifier"
+					required = true
+				}
+			}
+			number_props = {
+				myNumberIdentifier = {
+					title = "My Number Identifier"
+					required = true
+					maximum = 100
+					minimum = 0
+				}
+			}
+			boolean_props = {
+				myBooleanIdentifier = {
+					title = "My Boolean Identifier"
+					required = true
+				}
+			}
+			object_props = {
+				myObjectIdentifier = {
+					title = "My Object Identifier"
+					required = true
+				}
+			}
+			array_props = {
+				myArrayIdentifier = {
+					title = "My Array Identifier"
+					required = true
+					string_items = {
+						format = "email"
+					}
+				}
+			}
+		}
+	}
+	kafka_method = {
+		payload = jsonencode({
+		  runId: "<no value>"
+		})
+	}
+}
+```
+
+## Example Usage with Automation trigger
+
+Port allows setting an automation trigger to an action, for executing an action based on event occurred to an entity in Port.
+
+```hcl
+resource "port_action" "delete_temporary_microservice" {
+	title = "Delete Temporary Microservice"
+	identifier = "delete-temp-microservice"
+	icon = "Terraform"
+	automation_trigger = {
+		timer_property_expired_event = {
+			blueprint_identifier = port_blueprint.microservice.identifier
+			property_identifier = "ttl"
+		}
+	}
+	kafka_method = {
+		payload = jsonencode({
+		  runId: "<no value>"
+		})
+	}
+}
+```
 
 
 

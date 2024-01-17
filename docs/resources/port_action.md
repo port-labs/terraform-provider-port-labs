@@ -211,6 +211,10 @@ Required:
 
 - `url` (String) The URL to invoke the webhook
 
+Optional:
+
+- `format` (String) The format to invoke the webhook
+
 
 <a id="nestedatt--automation_trigger"></a>
 ### Nested Schema for `automation_trigger`

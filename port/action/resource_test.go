@@ -1551,8 +1551,10 @@ func TestAccPortWebhookApproval(t *testing.T) {
 		title = "TF Provider Test"
 		identifier = "%s"
 		icon = "Terraform"
-		blueprint = port_blueprint.microservice.id
-		trigger = "DAY-2"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+		}
 		kafka_method = {}
 		required_approval = true
 		approval_webhook_notification = {
@@ -1570,8 +1572,8 @@ func TestAccPortWebhookApproval(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "blueprint", identifier),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.blueprint_identifier", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "required_approval", "true"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "approval_webhook_notification.url", "https://example.com"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "approval_webhook_notification.format", "json"),
@@ -1589,8 +1591,10 @@ func TestAccPortEmailApproval(t *testing.T) {
 		title = "TF Provider Test"
 		identifier = "%s"
 		icon = "Terraform"
-		blueprint = port_blueprint.microservice.id
-		trigger = "DAY-2"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+		}
 		kafka_method = {}
 		required_approval = true
 		approval_email_notification = {}
@@ -1605,8 +1609,8 @@ func TestAccPortEmailApproval(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "blueprint", identifier),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "trigger", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.blueprint_identifier", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "required_approval", "true"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "approval_email_notification.%", "0"),
 				),

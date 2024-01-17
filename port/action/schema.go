@@ -123,6 +123,13 @@ func ActionSchema() map[string]schema.Attribute {
 					MarkdownDescription: "The URL to invoke the webhook",
 					Required:            true,
 				},
+				"format": schema.StringAttribute{
+					MarkdownDescription: "The format to invoke the webhook",
+					Optional:            true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("json", "slack"),
+					},
+				},
 			},
 		},
 		"approval_email_notification": schema.ObjectAttribute{

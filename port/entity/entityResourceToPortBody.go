@@ -12,41 +12,49 @@ import (
 func writeArrayResourceToBody(ctx context.Context, state *EntityModel, properties map[string]interface{}) error {
 	if !state.Properties.ArrayProps.StringItems.IsNull() {
 		for identifier, itemArray := range state.Properties.ArrayProps.StringItems.Elements() {
-			var stringItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "string")
-			if err != nil {
-				return err
+			if !itemArray.IsNull() {
+				var stringItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "string")
+				if err != nil {
+					return err
+				}
+				properties[identifier] = stringItems
 			}
-			properties[identifier] = stringItems
 		}
 	}
 
 	if !state.Properties.ArrayProps.NumberItems.IsNull() {
 		for identifier, itemArray := range state.Properties.ArrayProps.NumberItems.Elements() {
-			var numberItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "float64")
-			if err != nil {
-				return err
+			if !itemArray.IsNull() {
+				var numberItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "float64")
+				if err != nil {
+					return err
+				}
+				properties[identifier] = numberItems
 			}
-			properties[identifier] = numberItems
 		}
 	}
 
 	if !state.Properties.ArrayProps.BooleanItems.IsNull() {
 		for identifier, itemArray := range state.Properties.ArrayProps.BooleanItems.Elements() {
-			var booleanItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "bool")
-			if err != nil {
-				return err
+			if !itemArray.IsNull() {
+				var booleanItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "bool")
+				if err != nil {
+					return err
+				}
+				properties[identifier] = booleanItems
 			}
-			properties[identifier] = booleanItems
 		}
 	}
 
 	if !state.Properties.ArrayProps.ObjectItems.IsNull() {
 		for identifier, itemArray := range state.Properties.ArrayProps.ObjectItems.Elements() {
-			var objectItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "object")
-			if err != nil {
-				return err
+			if !itemArray.IsNull() {
+				var objectItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "object")
+				if err != nil {
+					return err
+				}
+				properties[identifier] = objectItems
 			}
-			properties[identifier] = objectItems
 		}
 	}
 	return nil
@@ -94,19 +102,25 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 	if state.Properties != nil {
 		if state.Properties.StringProps != nil {
 			for propIdentifier, prop := range state.Properties.StringProps {
-				properties[propIdentifier] = prop
+				if !prop.IsNull() {
+					properties[propIdentifier] = prop.ValueString()
+				}
 			}
 		}
 
 		if state.Properties.NumberProps != nil {
 			for propIdentifier, prop := range state.Properties.NumberProps {
-				properties[propIdentifier] = prop.ValueFloat64()
+				if !prop.IsNull() {
+					properties[propIdentifier] = prop.ValueFloat64()
+				}
 			}
 		}
 
 		if state.Properties.BooleanProps != nil {
 			for propIdentifier, prop := range state.Properties.BooleanProps {
-				properties[propIdentifier] = prop
+				if !prop.IsNull() {
+					properties[propIdentifier] = prop.ValueBool()
+				}
 			}
 		}
 
@@ -119,12 +133,14 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 
 		if state.Properties.ObjectProps != nil {
 			for identifier, prop := range state.Properties.ObjectProps {
-				obj := make(map[string]interface{})
-				err := json.Unmarshal([]byte(prop), &obj)
-				if err != nil {
-					return nil, err
+				if !prop.IsNull() {
+					obj := make(map[string]interface{})
+					err := json.Unmarshal([]byte(prop.ValueString()), &obj)
+					if err != nil {
+						return nil, err
+					}
+					properties[identifier] = obj
 				}
-				properties[identifier] = obj
 			}
 		}
 	}

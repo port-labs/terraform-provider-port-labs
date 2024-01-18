@@ -222,6 +222,16 @@ type (
 		Approve ActionApprovePermissions `json:"approve"`
 	}
 
+	PageReadPermissions struct {
+		Users []string `json:"users"`
+		Roles []string `json:"roles"`
+		Teams []string `json:"teams"`
+	}
+
+	PagePermissions struct {
+		Read PageReadPermissions `json:"read"`
+	}
+
 	Relation struct {
 		Identifier *string `json:"identifier,omitempty"`
 		Title      *string `json:"title,omitempty"`
@@ -312,6 +322,11 @@ type PortBody struct {
 	Integration       Webhook           `json:"integration"`
 	Scorecard         Scorecard         `json:"Scorecard"`
 	Team              Team              `json:"team"`
+}
+
+type PortPagePermissionsBody struct {
+	OK              bool            `json:"ok"`
+	PagePermissions PagePermissions `json:"permissions"`
 }
 
 type TeamUserBody struct {

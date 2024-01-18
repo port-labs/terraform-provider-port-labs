@@ -38,7 +38,7 @@ func TestAccPortPagePermissionsBasic(t *testing.T) {
 
 	resource "port_page_permissions" "microservice_permissions" {
 		page_identifier = port_blueprint.microservice.identifier
-		read_permissions = {
+		read = {
 			"roles": [
 				"Member",
 			],
@@ -60,10 +60,10 @@ func TestAccPortPagePermissionsBasic(t *testing.T) {
 				Config: testAccBasePagePermissionsConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "page_identifier", blueprintIdentifier),
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read_permissions.roles.#", "1"),
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read_permissions.roles.0", "Member"),
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read_permissions.users.#", "0"),
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read_permissions.teams.#", "0"),
+					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.roles.#", "1"),
+					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.roles.0", "Member"),
+					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.users.#", "0"),
+					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.teams.#", "0"),
 				),
 			},
 			{
@@ -91,7 +91,7 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 
 	resource "port_page_permissions" "microservice_permissions" {
 		page_identifier = port_blueprint.microservice.identifier
-		read_permissions = {
+		read = {
 			"roles": [
 				"Member",
 			],
@@ -114,12 +114,12 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 				Config: testAccBasePagePermissionsConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "page_identifier", blueprintIdentifier),
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read_permissions.roles.#", "1"),
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read_permissions.roles.0", "Member"),
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read_permissions.users.#", "1"),
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read_permissions.users.0", "devops-port@port-test.io"),
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read_permissions.teams.#", "1"),
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read_permissions.teams.0", teamName),
+					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.roles.#", "1"),
+					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.roles.0", "Member"),
+					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.users.#", "1"),
+					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.users.0", "devops-port@port-test.io"),
+					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.teams.#", "1"),
+					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.teams.0", teamName),
 				),
 			},
 		},

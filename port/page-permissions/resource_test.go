@@ -95,7 +95,7 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 			"roles": [
 				"Member",
 			],
-		  "users": ["devops-port@port-test.io"],
+		  "users": [],
 		  "teams": [port_team.team.name],
 			}
 	}`, teamName)
@@ -116,8 +116,7 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "page_identifier", blueprintIdentifier),
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.roles.0", "Member"),
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.users.#", "1"),
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.users.0", "devops-port@port-test.io"),
+					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.users.#", "0"),
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.teams.#", "1"),
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.teams.0", teamName),
 				),

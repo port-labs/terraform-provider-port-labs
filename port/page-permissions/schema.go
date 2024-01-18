@@ -49,7 +49,7 @@ var PagePermissionsResourceMarkdownDescription = `
 
 # Page Permissions resource
 
-Docs about assigning permissions can be found [here](https://docs.getport.io/sso-rbac/rbac).
+Docs about page permissions can be found [here](https://docs.getport.io/customize-pages-dashboards-and-plugins/page/page-permissions?view-permissions=api).
 
 ## Example Usage
 

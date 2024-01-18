@@ -4,7 +4,7 @@ page_title: "port_page_permissions Resource - terraform-provider-port-labs"
 subcategory: ""
 description: |-
   Page Permissions resource
-  Docs about assigning permissions can be found here https://docs.getport.io/sso-rbac/rbac.
+  Docs about page permissions can be found here https://docs.getport.io/customize-pages-dashboards-and-plugins/page/page-permissions?view-permissions=api.
   Example Usage
   Allow read access to all members:
   hcl
@@ -49,7 +49,7 @@ description: |-
 
 # Page Permissions resource
 
-Docs about assigning permissions can be found [here](https://docs.getport.io/sso-rbac/rbac).
+Docs about page permissions can be found [here](https://docs.getport.io/customize-pages-dashboards-and-plugins/page/page-permissions?view-permissions=api).
 
 ## Example Usage
 

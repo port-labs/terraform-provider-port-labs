@@ -5,20 +5,19 @@ import (
 	"encoding/json"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 )
 
 func refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayProperties map[string][]interface{}, blueprint *cli.Blueprint) {
-	mapStringItems := make(map[string][]string)
-	mapNumberItems := make(map[string][]float64)
-	mapBooleanItems := make(map[string][]bool)
-	mapObjectItems := make(map[string][]string)
+	mapStringItems := make(map[string][]*string)
+	mapNumberItems := make(map[string][]*float64)
+	mapBooleanItems := make(map[string][]*bool)
+	mapObjectItems := make(map[string][]*string)
 
 	if state.Properties.ArrayProps == nil {
 		state.Properties.ArrayProps = &ArrayPropsModel{
 			StringItems:  types.MapNull(types.ListType{ElemType: types.StringType}),
-			NumberItems:  types.MapNull(types.ListType{ElemType: types.NumberType}),
+			NumberItems:  types.MapNull(types.ListType{ElemType: types.Float64Type}),
 			BooleanItems: types.MapNull(types.ListType{ElemType: types.BoolType}),
 			ObjectItems:  types.MapNull(types.ListType{ElemType: types.StringType}),
 		}
@@ -27,39 +26,58 @@ func refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayPrope
 
 		switch blueprint.Schema.Properties[k].Items["type"] {
 		case "string":
-			for _, item := range t {
-				mapStringItems[k] = append(mapStringItems[k], item.(string))
-			}
-			if len(t) == 0 {
-				mapStringItems[k] = []string{}
+			if t != nil {
+				for _, item := range t {
+					stringItem := item.(string)
+					mapStringItems[k] = append(mapStringItems[k], &stringItem)
+				}
+				if len(t) == 0 {
+					mapStringItems[k] = []*string{}
+				}
+			} else {
+				mapStringItems[k] = nil
 			}
 			state.Properties.ArrayProps.StringItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, mapStringItems)
-
 		case "number":
-			for _, item := range t {
-				mapNumberItems[k] = append(mapNumberItems[k], item.(float64))
+			if t != nil {
+				for _, item := range t {
+					floatItem := item.(float64)
+					mapNumberItems[k] = append(mapNumberItems[k], &floatItem)
+				}
+				if len(t) == 0 {
+					mapNumberItems[k] = []*float64{}
+				}
+			} else {
+				mapNumberItems[k] = nil
 			}
-			if len(t) == 0 {
-				mapNumberItems[k] = []float64{}
-			}
-			state.Properties.ArrayProps.NumberItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.NumberType}, mapNumberItems)
+			state.Properties.ArrayProps.NumberItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.Float64Type}, mapNumberItems)
 
 		case "boolean":
-			for _, item := range t {
-				mapBooleanItems[k] = append(mapBooleanItems[k], item.(bool))
-			}
-			if len(t) == 0 {
-				mapBooleanItems[k] = []bool{}
+			if t != nil {
+				for _, item := range t {
+					boolItem := item.(bool)
+					mapBooleanItems[k] = append(mapBooleanItems[k], &boolItem)
+				}
+				if len(t) == 0 {
+					mapBooleanItems[k] = []*bool{}
+				}
+			} else {
+				mapBooleanItems[k] = nil
 			}
 			state.Properties.ArrayProps.BooleanItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.BoolType}, mapBooleanItems)
 
 		case "object":
-			for _, item := range t {
-				js, _ := json.Marshal(&item)
-				mapObjectItems[k] = append(mapObjectItems[k], string(js))
-			}
-			if len(t) == 0 {
-				mapObjectItems[k] = []string{}
+			if t != nil {
+				for _, item := range t {
+					js, _ := json.Marshal(&item)
+					stringJs := string(js)
+					mapObjectItems[k] = append(mapObjectItems[k], &stringJs)
+				}
+				if len(t) == 0 {
+					mapObjectItems[k] = []*string{}
+				}
+			} else {
+				mapObjectItems[k] = nil
 			}
 			state.Properties.ArrayProps.ObjectItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, mapObjectItems)
 
@@ -76,27 +94,50 @@ func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cl
 			if state.Properties.NumberProps == nil {
 				state.Properties.NumberProps = make(map[string]types.Float64)
 			}
-			state.Properties.NumberProps[k] = basetypes.NewFloat64Value(t)
+			state.Properties.NumberProps[k] = types.Float64Value(t)
 		case string:
 			if state.Properties.StringProps == nil {
-				state.Properties.StringProps = make(map[string]string)
+				state.Properties.StringProps = make(map[string]types.String)
 			}
-			state.Properties.StringProps[k] = t
-
+			state.Properties.StringProps[k] = types.StringValue(t)
 		case bool:
 			if state.Properties.BooleanProps == nil {
-				state.Properties.BooleanProps = make(map[string]bool)
+				state.Properties.BooleanProps = make(map[string]types.Bool)
 			}
-			state.Properties.BooleanProps[k] = t
-
+			state.Properties.BooleanProps[k] = types.BoolValue(t)
 		case []interface{}:
 			arrayProperties[k] = t
 		case interface{}:
 			if state.Properties.ObjectProps == nil {
-				state.Properties.ObjectProps = make(map[string]string)
+				state.Properties.ObjectProps = make(map[string]types.String)
 			}
 			js, _ := json.Marshal(&t)
-			state.Properties.ObjectProps[k] = string(js)
+			state.Properties.ObjectProps[k] = types.StringValue(string(js))
+		case nil:
+			switch blueprint.Schema.Properties[k].Type {
+			case "string":
+				if state.Properties.StringProps == nil {
+					state.Properties.StringProps = make(map[string]types.String)
+				}
+				state.Properties.StringProps[k] = types.StringNull()
+			case "number":
+				if state.Properties.NumberProps == nil {
+					state.Properties.NumberProps = make(map[string]types.Float64)
+				}
+				state.Properties.NumberProps[k] = types.Float64Null()
+			case "boolean":
+				if state.Properties.BooleanProps == nil {
+					state.Properties.BooleanProps = make(map[string]types.Bool)
+				}
+				state.Properties.BooleanProps[k] = types.BoolNull()
+			case "object":
+				if state.Properties.ObjectProps == nil {
+					state.Properties.ObjectProps = make(map[string]types.String)
+				}
+				state.Properties.ObjectProps[k] = types.StringNull()
+			case "array":
+				arrayProperties[k] = []interface{}(nil)
+			}
 		}
 	}
 	if len(arrayProperties) != 0 {

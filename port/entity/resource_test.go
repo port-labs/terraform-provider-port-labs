@@ -118,6 +118,113 @@ func TestAccPortEntity(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortEntityWithNulls(t *testing.T) {
+	identifier := utils.GenID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			"string_props" = {
+				"myStringIdentifier" =  {
+					"title" = "My String Identifier"
+				}
+			}
+			"number_props" = {
+				"myNumberIdentifier" =  {
+					"title" = "My Number Identifier"
+				}
+			}
+			"boolean_props" = {
+				"myBooleanIdentifier" =  {
+					"title" = "My Boolean Identifier"
+				}
+			}
+			"object_props" = {
+				"myObjectIdentifier" =  {
+					"title" = "My Object Identifier"
+				}
+			}
+			"array_props" = {
+				"myStringArrayIdentifier" =  {
+					"title" = "My String Array Identifier"
+					"string_items" = {}
+				}
+				"myNumberArrayIdentifier" =  {
+					"title" = "My Number Array Identifier"
+					"number_items" = {}
+				}
+				"myBooleanArrayIdentifier" =  {
+					"title" = "My Boolean Array Identifier"
+					"boolean_items" = {}
+				}
+				"myObjectArrayIdentifier" =  {
+					"title" = "My Object Array Identifier"
+					"object_items" = {}
+				}
+			}
+		}
+	}
+	resource "port_entity" "microservice" {
+		title = "TF Provider Test Entity0"
+		blueprint = port_blueprint.microservice.identifier
+		properties = {
+			"string_props" = {
+				"myStringIdentifier" = null
+			}
+			"number_props" = {
+				"myNumberIdentifier" =  null
+			}
+			"boolean_props" = {
+				"myBooleanIdentifier" =  null
+			}
+			"object_props" = {
+				"myObjectIdentifier" = null
+			}
+			"array_props" = {
+				string_items = {
+					"myStringArrayIdentifier" = null
+				}
+				number_items = {
+					"myNumberArrayIdentifier" = null
+				}
+				boolean_items = {
+					"myBooleanArrayIdentifier" = null
+				}
+				object_items = {
+					"myObjectArrayIdentifier" = null
+				}
+			}
+		}
+	}
+	`, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_entity.microservice", "title", "TF Provider Test Entity0"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "blueprint", identifier),
+					resource.TestCheckNoResourceAttr("port_entity.microservice", "properties.string_props.myStringIdentifier"),
+					resource.TestCheckNoResourceAttr("port_entity.microservice", "properties.number_props.myNumberIdentifier"),
+					resource.TestCheckNoResourceAttr("port_entity.microservice", "properties.boolean_props.myBooleanIdentifier"),
+					resource.TestCheckNoResourceAttr("port_entity.microservice", "properties.object_props.myObjectIdentifier"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.string_items.myStringArrayIdentifier.#", "0"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.number_items.myNumberArrayIdentifier.#", "0"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.boolean_items.myBooleanArrayIdentifier.#", "0"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.object_items.myObjectArrayIdentifier.#", "0"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortEntityWithRelation(t *testing.T) {
 	identifier := utils.GenID()
 	identifier2 := utils.GenID()

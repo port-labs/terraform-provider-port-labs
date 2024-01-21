@@ -56,6 +56,10 @@ Required:
 
 - `url` (String) The URL to invoke the webhook
 
+Optional:
+
+- `format` (String) The format to invoke the webhook
+
 
 <a id="nestedatt--azure_method"></a>
 ### Nested Schema for `azure_method`
@@ -425,3 +429,5 @@ Optional:
 - `agent` (Boolean) Use the agent to invoke the action
 - `method` (String) The HTTP method to invoke the action
 - `synchronized` (Boolean) Synchronize the action
+
+

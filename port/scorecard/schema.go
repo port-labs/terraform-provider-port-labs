@@ -2,6 +2,8 @@ package scorecard
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -10,23 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
-
-func ConditionSchema() map[string]schema.Attribute {
-	return map[string]schema.Attribute{
-		"operator": schema.StringAttribute{
-			MarkdownDescription: "The operator of the condition",
-			Required:            true,
-		},
-		"property": schema.StringAttribute{
-			MarkdownDescription: "The property of the condition",
-			Required:            true,
-		},
-		"value": schema.StringAttribute{
-			MarkdownDescription: "The value of the condition",
-			Optional:            true,
-		},
-	}
-}
 
 func RuleSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
@@ -56,11 +41,12 @@ func RuleSchema() map[string]schema.Attribute {
 					},
 					Required: true,
 				},
-				"conditions": schema.ListNestedAttribute{
-					MarkdownDescription: "The conditions of the query",
+				"conditions": schema.ListAttribute{
+					MarkdownDescription: "The conditions of the query. Each condition object should be encoded to a string",
 					Required:            true,
-					NestedObject: schema.NestedAttributeObject{
-						Attributes: ConditionSchema(),
+					ElementType:         types.StringType,
+					Validators: []validator.List{
+						listvalidator.SizeAtLeast(1),
 					},
 				},
 			},
@@ -118,7 +104,111 @@ func ScorecardSchema() map[string]schema.Attribute {
 
 func (r *ScorecardResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "scorecard resource",
+		MarkdownDescription: ResourceMarkdownDescription,
 		Attributes:          ScorecardSchema(),
 	}
 }
+
+var ResourceMarkdownDescription = `
+
+# Scorecard
+
+This resource allows you to manage a scorecard.
+
+See the [Port documentation](https://docs.getport.io/promote-scorecards/) for more information about scorecards.
+
+## Example Usage
+
+Create a parent blueprint with a child blueprint and an aggregation property to count the parent kids:
+
+` + "```hcl" + `
+
+resource "port_blueprint" "microservice" {
+	title = "microservice"
+	icon = "Terraform"
+	identifier = "microservice"
+	properties = {
+		string_props = {
+			"author" = {
+				title = "Author"
+			}
+			"url" = {
+				title = "URL"
+			}
+		}
+		boolean_props = {
+			"required" = {
+				type = "boolean"
+			}
+		}
+		number_props = {
+			"sum" = {
+				type = "number"
+			}
+		}
+	}
+}
+
+resource "port_scorecard" "readiness" {
+	identifier = "Readiness"
+	title      = "Readiness"
+	blueprint  = port_blueprint.microservice.identifier
+	rules = [
+		{
+			identifier = "hasOwner"
+			title      = "Has Owner"
+			level      = "Gold"
+			query = {
+				combinator = "and"
+				conditions = [
+					jsonencode({
+						property = "$team"
+						operator = "isNotEmpty"
+					}),
+					jsonencode({
+						property = "author",
+						operator : "=",
+						value : "myValue"
+					})
+				]
+			}
+		},
+		{
+			identifier = "hasUrl"
+			title      = "Has URL"
+			level      = "Silver"
+			query = {
+			  combinator = "and"
+			  conditions = [jsonencode({
+				property = "url"
+				operator = "isNotEmpty"
+			  })]
+			}
+		},
+		{
+			identifier = "checkSumIfRequired"
+			title      = "Check Sum If Required"
+			level      = "Bronze"
+			query = {
+				combinator = "or"
+				conditions = [
+					jsonencode({
+						property = "required"
+						operator : "="
+						value : false
+					}),
+					jsonencode({
+						property = "sum"
+						operator : ">"
+						value : 2
+					})
+				]
+			}
+		}
+	]
+	depends_on = [
+	  port_blueprint.microservice
+	]
+}
+
+` + "```"

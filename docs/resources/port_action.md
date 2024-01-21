@@ -56,6 +56,10 @@ Required:
 
 - `url` (String) The URL to invoke the webhook
 
+Optional:
+
+- `format` (String) The format to invoke the webhook
+
 
 <a id="nestedatt--azure_method"></a>
 ### Nested Schema for `azure_method`

@@ -2,7 +2,7 @@ package scorecard
 
 import (
 	"context"
-
+	"encoding/json"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 )
 
@@ -12,7 +12,7 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 		Title:      state.Title.ValueString(),
 	}
 
-	rules := []cli.Rule{}
+	var rules []cli.Rule
 
 	for _, stateRule := range state.Rules {
 		rule := &cli.Rule{
@@ -20,27 +20,24 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 			Identifier: stateRule.Identifier.ValueString(),
 			Title:      stateRule.Title.ValueString(),
 		}
-
 		query := &cli.Query{
 			Combinator: stateRule.Query.Combinator.ValueString(),
 		}
-
-		conditions := []cli.Condition{}
+		var conditions []interface{}
 		for _, stateCondition := range stateRule.Query.Conditions {
-			condition := &cli.Condition{
-				Property: stateCondition.Property.ValueString(),
-				Operator: stateCondition.Operator.ValueString(),
+			if !stateCondition.IsNull() {
+				stringCond := stateCondition.ValueString()
+				cond := map[string]interface{}{}
+				err := json.Unmarshal([]byte(stringCond), &cond)
+				if err != nil {
+					return nil, err
+				}
+				conditions = append(conditions, cond)
 			}
-
-			if !stateCondition.Value.IsNull() {
-				value := stateCondition.Value.ValueString()
-				condition.Value = &value
-			}
-
-			conditions = append(conditions, *condition)
 		}
 		query.Conditions = conditions
 		rule.Query = *query
+
 		rules = append(rules, *rule)
 	}
 

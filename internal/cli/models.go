@@ -222,6 +222,21 @@ type (
 		Approve ActionApprovePermissions `json:"approve"`
 	}
 
+	Page struct {
+		Meta
+		Identifier          string            `json:"identifier,omitempty"`
+		Type                string            `json:"type,omitempty"`
+		ShowInSidebar       *bool             `json:"showInSidebar,omitempty"`
+		Section             string            `json:"section,omitempty"`
+		Icon                *string           `json:"icon,omitempty"`
+		Title               *string           `json:"title,omitempty"`
+		Protected           *bool             `json:"protected,omitempty"`
+		Locked              *bool             `json:"locked,omitempty"`
+		Blueprint           *string           `json:"blueprint,omitempty"`
+		RequiredQueryParams []string          `json:"requiredQueryParams,omitempty"`
+		Widgets             *[]map[string]any `json:"widgets,omitempty"`
+	}
+
 	Relation struct {
 		Identifier *string `json:"identifier,omitempty"`
 		Title      *string `json:"title,omitempty"`
@@ -312,6 +327,7 @@ type PortBody struct {
 	Integration       Webhook           `json:"integration"`
 	Scorecard         Scorecard         `json:"Scorecard"`
 	Team              Team              `json:"team"`
+	Page              Page              `json:"page"`
 }
 
 type TeamUserBody struct {

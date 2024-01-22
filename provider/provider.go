@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"github.com/port-labs/terraform-provider-port-labs/port/page"
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -134,6 +135,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		webhook.NewWebhookResource,
 		scorecard.NewScorecardResource,
 		team.NewTeamResource,
+		page.NewPageResource,
 	}
 }
 

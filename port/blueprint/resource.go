@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -221,6 +222,10 @@ func (r *BlueprintResource) Delete(ctx context.Context, req resource.DeleteReque
 	if !forceDeleteEntitiesEnabled {
 		err := r.portClient.DeleteBlueprint(ctx, state.Identifier.ValueString())
 		if err != nil {
+			if strings.Contains(err.Error(), "has_dependents") {
+				resp.Diagnostics.AddError("failed to delete blueprint", "Blueprint has dependants entities that aren't managed by terraform, if you still wish to destroy the blueprint and delete all entities, set the environment variable PORT_FORCE_DELETE_ENTITIES=true")
+				return
+			}
 			resp.Diagnostics.AddError("failed to delete blueprint", err.Error())
 			return
 		}

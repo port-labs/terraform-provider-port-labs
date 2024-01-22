@@ -568,4 +568,14 @@ resource "port_blueprint" "microservice" {
   }
 }
 
-` + "```" + ``
+` + "```" + `
+
+## Force Deleting a Blueprint
+
+There could be cases where a blueprint will be managed by Terraform, but entities will get created from other sources (e.g. Port UI, API or other supported integrations).
+In this case, when trying to delete the blueprint, Terraform will fail because it will try to delete the blueprint without deleting the entities first as they are not managed by Terraform.
+
+To overcome this behavior, you can set the environment variable ` + "`PORT_FORCE_DELETE_ENTITIES=true`" + `. 
+This will trigger a migration that will delete all the entities in the blueprint and then delete the blueprint itself.
+
+`

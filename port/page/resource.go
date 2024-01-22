@@ -116,6 +116,10 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 		// if page is nil and err is nil this means that the page got created but the response body was empty
 		// to be forward compatible we will query the page again
 		p, _, err = r.portClient.GetPage(ctx, state.Identifier.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("failed to get page", err.Error())
+			return
+		}
 	}
 
 	state.ID = types.StringValue(p.Identifier)

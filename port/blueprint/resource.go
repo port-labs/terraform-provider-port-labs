@@ -2,18 +2,16 @@ package blueprint
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"strings"
-	"time"
-
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
+	"strings"
+	"time"
 )
 
 var _ resource.Resource = &BlueprintResource{}
@@ -240,42 +238,7 @@ func (r *BlueprintResource) Delete(ctx context.Context, req resource.DeleteReque
 			return
 		}
 	} else {
-		migrationId, err := r.portClient.DeleteBlueprintWithAllEntities(ctx, state.Identifier.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError("failed to delete blueprint", err.Error())
-			return
-		}
-		// query migration status until status is SUCCESS or FAILED
-		for {
-			migration, err := r.portClient.GetMigration(ctx, *migrationId)
-			if err != nil {
-				resp.Diagnostics.AddError("failed to get migration status", err.Error())
-				return
-			}
-			if migration.Status == consts.Failure {
-				resp.Diagnostics.AddError("failed to delete blueprint", "migration failed")
-				return
-			}
-			if migration.Status == consts.Cancelled {
-				resp.Diagnostics.AddError("failed to delete blueprint", "migration was cancelled")
-				return
-			}
-			if migration.Status == consts.Completed {
-				tflog.Info(ctx, "Migration completed successfully", map[string]interface{}{
-					"migration_id": migration.Id,
-				})
-				break
-			}
-			var migrationForLog map[string]interface{}
-			mm, _ := json.Marshal(migration)
-			err = json.Unmarshal(mm, &migrationForLog)
-			if err != nil {
-				resp.Diagnostics.AddError("failed to get migration status", err.Error())
-				return
-			}
-			tflog.Info(ctx, "Waiting for delete migration to complete", migrationForLog)
-			time.Sleep(5 * time.Second)
-		}
+		forceDeleteBlueprint(ctx, r.portClient, state, resp)
 	}
 
 }
@@ -289,6 +252,41 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 	resp.Diagnostics.Append(resp.State.SetAttribute(
 		ctx, path.Root("id"), req.ID,
 	)...)
+}
+
+func forceDeleteBlueprint(ctx context.Context, portClient *cli.PortClient, state *BlueprintModel, resp *resource.DeleteResponse) {
+	migrationId, err := portClient.DeleteBlueprintWithAllEntities(ctx, state.Identifier.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to delete blueprint", err.Error())
+		return
+	}
+	// query migration status until status is SUCCESS or FAILED
+	for {
+		migration, err := portClient.GetMigration(ctx, *migrationId)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to get migration status", err.Error())
+			return
+		}
+		if migration.Status == consts.Failure {
+			resp.Diagnostics.AddError("failed to delete blueprint", "migration failed")
+			return
+		}
+		if migration.Status == consts.Cancelled {
+			resp.Diagnostics.AddError("failed to delete blueprint", "migration was cancelled")
+			return
+		}
+		if migration.Status == consts.Completed {
+			tflog.Info(ctx, "Migration completed successfully", map[string]interface{}{
+				"migration_id": migration.Id,
+			})
+			break
+		}
+		if err != nil {
+			resp.Diagnostics.AddError("failed to get migration status", err.Error())
+			return
+		}
+		time.Sleep(5 * time.Second)
+	}
 }
 
 func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) (*cli.Blueprint, error) {

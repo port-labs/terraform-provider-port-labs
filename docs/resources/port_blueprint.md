@@ -100,8 +100,27 @@ description: |-
   Force Deleting a Blueprint
   There could be cases where a blueprint will be managed by Terraform, but entities will get created from other sources (e.g. Port UI, API or other supported integrations).
   In this case, when trying to delete the blueprint, Terraform will fail because it will try to delete the blueprint without deleting the entities first as they are not managed by Terraform.
-  To overcome this behavior, you can set the environment variable PORT_FORCE_DELETE_ENTITIES=true.
-  This will trigger a migration that will delete all the entities in the blueprint and then delete the blueprint itself.
+  To overcome this behavior, you can set the argument force_delete_entities=true.
+  On the blueprint destroy it will trigger a migration that will delete all the entities in the blueprint and then delete the blueprint itself.
+  ```hcl
+  resource "portblueprint" "microservice" {
+    title      = "Microservice"
+    icon       = "Microservice"
+    identifier = "microservice"
+    properties = {
+      stringprops = {
+        "domain" = {
+          title = "Domain"
+        }
+        "slack-channel" = {
+          title  = "Slack Channel"
+          format = "url"
+        }
+      }
+    }
+    forcedeleteentities = false
+  }
+  ```
 ---
 
 # port_blueprint (Resource)
@@ -222,8 +241,29 @@ resource "port_blueprint" "microservice" {
 There could be cases where a blueprint will be managed by Terraform, but entities will get created from other sources (e.g. Port UI, API or other supported integrations).
 In this case, when trying to delete the blueprint, Terraform will fail because it will try to delete the blueprint without deleting the entities first as they are not managed by Terraform.
 
-To overcome this behavior, you can set the environment variable `PORT_FORCE_DELETE_ENTITIES=true`. 
-This will trigger a migration that will delete all the entities in the blueprint and then delete the blueprint itself.
+To overcome this behavior, you can set the argument `force_delete_entities=true`. 
+On the blueprint destroy it will trigger a migration that will delete all the entities in the blueprint and then delete the blueprint itself.
+
+```hcl
+resource "port_blueprint" "microservice" {
+  title      = "Microservice"
+  icon       = "Microservice"
+  identifier = "microservice"
+  properties = {
+    string_props = {
+      "domain" = {
+        title = "Domain"
+      }
+      "slack-channel" = {
+        title  = "Slack Channel"
+        format = "url"
+      }
+    }
+  }
+  force_delete_entities = false
+}
+
+```
 
 
 
@@ -239,6 +279,7 @@ This will trigger a migration that will delete all the entities in the blueprint
 
 - `calculation_properties` (Attributes Map) The calculation properties of the blueprint (see [below for nested schema](#nestedatt--calculation_properties))
 - `description` (String) The description of the blueprint
+- `force_delete_entities` (Boolean) If set to true, the blueprint will be deleted with all its entities, even if they are not managed by Terraform
 - `icon` (String) The icon of the blueprint
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `mirror_properties` (Attributes Map) The mirror properties of the blueprint (see [below for nested schema](#nestedatt--mirror_properties))

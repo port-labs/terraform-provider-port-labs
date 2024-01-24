@@ -3,8 +3,8 @@ package blueprint
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"os"
 	"strings"
 	"time"
 
@@ -217,13 +217,15 @@ func (r *BlueprintResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	forceDeleteEntitiesEnabled := os.Getenv("PORT_FORCE_DELETE_ENTITIES") == "true"
+	// if deletion protection is not set, this means that the user destroyed the resource, right after upgrading to a version that supports deletion protection
+	// therefor we want to be backwards compatible and assume that the user want to have deletion protection
+	forceDeleteEntities := state.ForceDeleteEntities.ValueBool()
 
-	if !forceDeleteEntitiesEnabled {
+	if !forceDeleteEntities {
 		err := r.portClient.DeleteBlueprint(ctx, state.Identifier.ValueString())
 		if err != nil {
 			if strings.Contains(err.Error(), "has_dependents") {
-				resp.Diagnostics.AddError("failed to delete blueprint", "Blueprint has dependants entities that aren't managed by terraform, if you still wish to destroy the blueprint and delete all entities, set the environment variable PORT_FORCE_DELETE_ENTITIES=true")
+				resp.Diagnostics.AddError("failed to delete blueprint", fmt.Sprintf(`Blueprint %s has dependant entities that aren't managed by terraform, if you still wish to destroy the blueprint and delete all entities, set the force_delete_entities argument to true`, state.Identifier.ValueString()))
 				return
 			}
 			resp.Diagnostics.AddError("failed to delete blueprint", err.Error())

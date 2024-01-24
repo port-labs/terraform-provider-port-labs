@@ -447,6 +447,12 @@ func BlueprintSchema() map[string]schema.Attribute {
 				},
 			},
 		},
+		"force_delete_entities": schema.BoolAttribute{
+			MarkdownDescription: "If set to true, the blueprint will be deleted with all its entities, even if they are not managed by Terraform",
+			Optional:            true,
+			Computed:            true,
+			Default:             booldefault.StaticBool(false),
+		},
 	}
 }
 
@@ -575,7 +581,28 @@ resource "port_blueprint" "microservice" {
 There could be cases where a blueprint will be managed by Terraform, but entities will get created from other sources (e.g. Port UI, API or other supported integrations).
 In this case, when trying to delete the blueprint, Terraform will fail because it will try to delete the blueprint without deleting the entities first as they are not managed by Terraform.
 
-To overcome this behavior, you can set the environment variable ` + "`PORT_FORCE_DELETE_ENTITIES=true`" + `. 
-This will trigger a migration that will delete all the entities in the blueprint and then delete the blueprint itself.
+To overcome this behavior, you can set the argument ` + "`force_delete_entities=true`" + `. 
+On the blueprint destroy it will trigger a migration that will delete all the entities in the blueprint and then delete the blueprint itself.
+
+` + "```hcl" + `
+resource "port_blueprint" "microservice" {
+  title      = "Microservice"
+  icon       = "Microservice"
+  identifier = "microservice"
+  properties = {
+    string_props = {
+      "domain" = {
+        title = "Domain"
+      }
+      "slack-channel" = {
+        title  = "Slack Channel"
+        format = "url"
+      }
+    }
+  }
+  force_delete_entities = false
+}
+
+` + "```" + `
 
 `

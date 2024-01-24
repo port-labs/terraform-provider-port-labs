@@ -78,6 +78,10 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 	bm.Icon = flex.GoStringToFramework(b.Icon)
 	bm.Description = flex.GoStringToFramework(b.Description)
 
+	if bm.ForceDeleteEntities.IsNull() {
+		bm.ForceDeleteEntities = types.BoolValue(false)
+	}
+
 	if b.ChangelogDestination != nil {
 		if b.ChangelogDestination.Type == consts.Kafka {
 			bm.KafkaChangelogDestination, _ = types.ObjectValue(nil, nil)
@@ -151,6 +155,10 @@ func writeBlueprintComputedFieldsToState(state *BlueprintModel, bp *cli.Blueprin
 	state.CreatedBy = types.StringValue(bp.CreatedBy)
 	state.UpdatedAt = types.StringValue(bp.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(bp.UpdatedBy)
+
+	if state.ForceDeleteEntities.IsNull() {
+		state.ForceDeleteEntities = types.BoolValue(false)
+	}
 }
 
 func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {

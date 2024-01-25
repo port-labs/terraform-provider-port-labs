@@ -277,14 +277,8 @@ type (
 	}
 
 	Query struct {
-		Combinator string      `json:"combinator,omitempty"`
-		Conditions []Condition `json:"conditions,omitempty"`
-	}
-
-	Condition struct {
-		Property string  `json:"property,omitempty"`
-		Operator string  `json:"operator,omitempty"`
-		Value    *string `json:"value,omitempty"`
+		Combinator string `json:"combinator,omitempty"`
+		Conditions []any  `json:"conditions,omitempty"`
 	}
 
 	Webhook struct {

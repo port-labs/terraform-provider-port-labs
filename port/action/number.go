@@ -12,7 +12,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map[string]cli.ActionProperty, required *[]string) error {
+func numberPropResourceToBody(ctx context.Context, state *SelfServiceTriggerModel, props map[string]cli.ActionProperty, required *[]string) error {
 	for propIdentifier, prop := range state.UserProperties.NumberProps {
 		props[propIdentifier] = cli.ActionProperty{
 			Type: "number",

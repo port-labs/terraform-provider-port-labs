@@ -12,7 +12,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[string]cli.ActionProperty, required *[]string) error {
+func stringPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, props map[string]cli.ActionProperty, required *[]string) error {
 	for propIdentifier, prop := range d.UserProperties.StringProps {
 		property := cli.ActionProperty{
 			Type: "string",

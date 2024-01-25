@@ -6,15 +6,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+	"regexp"
 )
 
 func MetadataProperties() map[string]schema.Attribute {
@@ -31,7 +34,7 @@ func MetadataProperties() map[string]schema.Attribute {
 			MarkdownDescription: "Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value",
 			Optional:            true,
 			Validators: []validator.Bool{
-				boolvalidator.ConflictsWith(path.MatchRoot("required_jq_query")),
+				boolvalidator.ConflictsWith(path.MatchRoot("self_service_trigger").AtName("required_jq_query")),
 			},
 		},
 		"description": schema.StringAttribute{
@@ -86,6 +89,17 @@ func MetadataProperties() map[string]schema.Attribute {
 	}
 }
 
+func StringBooleanOrJQTemplateValidator() []validator.String {
+	return []validator.String{
+		stringvalidator.Any(
+			stringvalidator.OneOf("true", "false"),
+			stringvalidator.RegexMatches(
+				regexp.MustCompile(`^[\n\r\s]*{{.*}}[\n\r\s]*$`),
+				"must be a valid jq template: {{JQ_EXPRESSION}}",
+			)),
+	}
+}
+
 func ActionSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
@@ -97,11 +111,13 @@ func ActionSchema() map[string]schema.Attribute {
 		},
 		"blueprint": schema.StringAttribute{
 			MarkdownDescription: "The blueprint identifier the action relates to",
-			Required:            true,
+			Optional:            true,
+			DeprecationMessage:  "Action is not attached to blueprint anymore. This value is ignored",
+			Validators:          []validator.String{stringvalidator.OneOf("")},
 		},
 		"title": schema.StringAttribute{
 			MarkdownDescription: "Title",
-			Required:            true,
+			Optional:            true,
 		},
 		"icon": schema.StringAttribute{
 			MarkdownDescription: "Icon",
@@ -110,6 +126,293 @@ func ActionSchema() map[string]schema.Attribute {
 		"description": schema.StringAttribute{
 			MarkdownDescription: "Description",
 			Optional:            true,
+		},
+		"self_service_trigger": schema.SingleNestedAttribute{
+			MarkdownDescription: "Self service trigger for the action",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"blueprint_identifier": schema.StringAttribute{
+					Description: "The ID of the blueprint",
+					Optional:    true,
+				},
+				"operation": schema.StringAttribute{
+					MarkdownDescription: "The operation type of the action",
+					Required:            true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("CREATE", "DAY-2", "DELETE"),
+					},
+				},
+				"user_properties": schema.SingleNestedAttribute{
+					MarkdownDescription: "User properties",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"string_props":  StringPropertySchema(),
+						"number_props":  NumberPropertySchema(),
+						"boolean_props": BooleanPropertySchema(),
+						"object_props":  ObjectPropertySchema(),
+						"array_props":   ArrayPropertySchema(),
+					},
+				},
+				"required_jq_query": schema.StringAttribute{
+					MarkdownDescription: "The required jq query of the property",
+					Optional:            true,
+				},
+				"order_properties": schema.ListAttribute{
+					MarkdownDescription: "Order properties",
+					Optional:            true,
+					ElementType:         types.StringType,
+				},
+			},
+			Validators: []validator.Object{
+				objectvalidator.ExactlyOneOf(
+					path.MatchRoot("self_service_trigger"),
+					path.MatchRoot("automation_trigger"),
+				),
+			},
+		},
+		"automation_trigger": schema.SingleNestedAttribute{
+			MarkdownDescription: "Automation trigger for the action",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"entity_created_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Entity created event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"blueprint_identifier": schema.StringAttribute{
+							MarkdownDescription: "The blueprint identifier of the created entity",
+							Required:            true,
+						},
+					},
+					Validators: []validator.Object{
+						objectvalidator.ExactlyOneOf(
+							path.MatchRelative().AtParent().AtName("entity_created_event"),
+							path.MatchRelative().AtParent().AtName("entity_updated_event"),
+							path.MatchRelative().AtParent().AtName("entity_deleted_event"),
+							path.MatchRelative().AtParent().AtName("any_entity_change_event"),
+							path.MatchRelative().AtParent().AtName("timer_property_expired_event"),
+						),
+					},
+				},
+				"entity_updated_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Entity updated event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"blueprint_identifier": schema.StringAttribute{
+							MarkdownDescription: "The blueprint identifier of the updated entity",
+							Required:            true,
+						},
+					},
+				},
+				"entity_deleted_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Entity deleted event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"blueprint_identifier": schema.StringAttribute{
+							MarkdownDescription: "The blueprint identifier of the deleted entity",
+							Required:            true,
+						},
+					},
+				},
+				"any_entity_change_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Any entity change event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"blueprint_identifier": schema.StringAttribute{
+							MarkdownDescription: "The blueprint identifier of the changed entity",
+							Required:            true,
+						},
+					},
+				},
+				"timer_property_expired_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Timer property expired event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"blueprint_identifier": schema.StringAttribute{
+							MarkdownDescription: "The blueprint identifier of the expired timer property",
+							Required:            true,
+						},
+						"property_identifier": schema.StringAttribute{
+							MarkdownDescription: "The property identifier of the expired timer property",
+							Required:            true,
+						},
+					},
+				},
+				"jq_condition": schema.SingleNestedAttribute{
+					MarkdownDescription: "JQ condition for automation trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"expressions": schema.ListAttribute{
+							MarkdownDescription: "The jq expressions of the condition",
+							ElementType:         types.StringType,
+							Required:            true,
+						},
+						"combinator": schema.StringAttribute{
+							MarkdownDescription: "The combinator of the condition",
+							Optional:            true,
+							Computed:            true,
+							Default:             stringdefault.StaticString("and"),
+							Validators: []validator.String{
+								stringvalidator.OneOf("and", "or"),
+							},
+						},
+					},
+				},
+			},
+		},
+		"kafka_method": schema.SingleNestedAttribute{
+			MarkdownDescription: "Kafka invocation method",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"payload": schema.StringAttribute{
+					MarkdownDescription: "The Kafka message payload (array or object encoded to a string)",
+					Optional:            true,
+				},
+			},
+			Validators: []validator.Object{
+				objectvalidator.ExactlyOneOf(
+					path.MatchRoot("kafka_method"),
+					path.MatchRoot("webhook_method"),
+					path.MatchRoot("github_method"),
+					path.MatchRoot("gitlab_method"),
+					path.MatchRoot("azure_method"),
+					path.MatchRoot("upsert_entity_method"),
+				),
+			},
+		},
+		"webhook_method": schema.SingleNestedAttribute{
+			MarkdownDescription: "Webhook invocation method",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"url": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type WEBHOOK. The URL to invoke the action",
+					Required:            true,
+				},
+				"agent": schema.StringAttribute{
+					MarkdownDescription: "Use the agent to invoke the action",
+					Optional:            true,
+					Validators:          StringBooleanOrJQTemplateValidator(),
+				},
+				"synchronized": schema.StringAttribute{
+					MarkdownDescription: "Synchronize the action",
+					Optional:            true,
+					Validators:          StringBooleanOrJQTemplateValidator(),
+				},
+				"method": schema.StringAttribute{
+					MarkdownDescription: "The HTTP method to invoke the action",
+					Optional:            true,
+				},
+				"headers": schema.MapAttribute{
+					MarkdownDescription: "The HTTP method to invoke the action",
+					ElementType:         types.StringType,
+					Optional:            true,
+				},
+				"body": schema.StringAttribute{
+					MarkdownDescription: "The Webhook body (array or object encoded to a string)",
+					Optional:            true,
+				},
+			},
+		},
+		"github_method": schema.SingleNestedAttribute{
+			MarkdownDescription: "GitHub invocation method",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"org": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type GITHUB. The GitHub org that the workflow belongs to",
+					Required:            true,
+				},
+				"repo": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type GITHUB. The GitHub repo that the workflow belongs to",
+					Required:            true,
+				},
+				"workflow": schema.StringAttribute{
+					MarkdownDescription: "The GitHub workflow that the action belongs to",
+					Required:            true,
+				},
+				"workflow_inputs": schema.StringAttribute{
+					MarkdownDescription: "The GitHub workflow inputs (key-value object encoded to a string)",
+					Optional:            true,
+				},
+				"report_workflow_status": schema.StringAttribute{
+					MarkdownDescription: "Report the workflow status when invoking the action",
+					Optional:            true,
+					Validators:          StringBooleanOrJQTemplateValidator(),
+				},
+			},
+		},
+		"gitlab_method": schema.SingleNestedAttribute{
+			MarkdownDescription: "Gitlab invocation method",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"project_name": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type GITLAB. The GitLab project name that the workflow belongs to",
+					Required:            true,
+				},
+				"group_name": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type GITLAB. The GitLab group name that the workflow belongs to",
+					Required:            true,
+				},
+				"default_ref": schema.StringAttribute{
+					MarkdownDescription: "The default ref of the action",
+					Optional:            true,
+				},
+				"pipeline_variables": schema.StringAttribute{
+					MarkdownDescription: "The Gitlab pipeline variables (key-value object encoded to a string)",
+					Optional:            true,
+				},
+			},
+		},
+		"azure_method": schema.SingleNestedAttribute{
+			MarkdownDescription: "Azure DevOps invocation method",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"org": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type AZURE. The Azure org that the workflow belongs to",
+					Required:            true,
+				},
+				"webhook": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type AZURE. The Azure webhook that the workflow belongs to",
+					Required:            true,
+				},
+				"payload": schema.StringAttribute{
+					MarkdownDescription: "The Azure Devops workflow payload (array or object encoded to a string)",
+					Optional:            true,
+				},
+			},
+		},
+		"upsert_entity_method": schema.SingleNestedAttribute{
+			MarkdownDescription: "Upsert Entity invocation method",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"identifier": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type Upsert Entity. The entity identifier for the upsert",
+					Required:            true,
+				},
+				"title": schema.StringAttribute{
+					MarkdownDescription: "The title of the entity",
+					Optional:            true,
+				},
+				"blueprint_identifier": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type Upsert Entity. The blueprint identifier of the entity for the upsert",
+					Required:            true,
+				},
+				"teams": schema.ListAttribute{
+					MarkdownDescription: "The teams the entity belongs to",
+					ElementType:         types.StringType,
+					Optional:            true,
+				},
+				"icon": schema.StringAttribute{
+					MarkdownDescription: "The icon of the entity",
+					Optional:            true,
+				},
+				"properties": schema.StringAttribute{
+					MarkdownDescription: "The properties of the entity (key-value object encoded to a string)",
+					Optional:            true,
+				},
+				"relations": schema.StringAttribute{
+					MarkdownDescription: "The relations of the entity (key-value object encoded to a string)",
+					Optional:            true,
+				},
+			},
 		},
 		"required_approval": schema.BoolAttribute{
 			MarkdownDescription: "Require approval before invoking the action",
@@ -136,150 +439,17 @@ func ActionSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The email notification of the approval",
 			Optional:            true,
 			AttributeTypes:      map[string]attr.Type{},
-		},
-		"trigger": schema.StringAttribute{
-			MarkdownDescription: "The trigger type of the action",
-			Required:            true,
-			Validators: []validator.String{
-				stringvalidator.OneOf("CREATE", "DAY-2", "DELETE"),
+			Validators: []validator.Object{
+				objectvalidator.ConflictsWith(path.MatchRoot("approval_webhook_notification")),
 			},
 		},
-		"kafka_method": schema.ObjectAttribute{
-			MarkdownDescription: "The invocation method of the action",
+		"publish": schema.BoolAttribute{
+			MarkdownDescription: "Publish action",
 			Optional:            true,
-			AttributeTypes:      map[string]attr.Type{},
-		},
-		"webhook_method": schema.SingleNestedAttribute{
-			MarkdownDescription: "The invocation method of the action",
-			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"url": schema.StringAttribute{
-					MarkdownDescription: "Required when selecting type WEBHOOK. The URL to invoke the action",
-					Required:            true,
-				},
-				"agent": schema.BoolAttribute{
-					MarkdownDescription: "Use the agent to invoke the action",
-					Optional:            true,
-				},
-				"synchronized": schema.BoolAttribute{
-					MarkdownDescription: "Synchronize the action",
-					Optional:            true,
-				},
-				"method": schema.StringAttribute{
-					MarkdownDescription: "The HTTP method to invoke the action",
-					Optional:            true,
-					Validators: []validator.String{
-						stringvalidator.OneOf("POST", "PUT", "PATCH", "DELETE"),
-					},
-				},
-			},
-		},
-		"github_method": schema.SingleNestedAttribute{
-			MarkdownDescription: "The invocation method of the action",
-			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"org": schema.StringAttribute{
-					MarkdownDescription: "Required when selecting type GITHUB. The GitHub org that the workflow belongs to",
-					Required:            true,
-				},
-				"repo": schema.StringAttribute{
-					MarkdownDescription: "Required when selecting type GITHUB. The GitHub repo that the workflow belongs to",
-					Required:            true,
-				},
-				"workflow": schema.StringAttribute{
-					MarkdownDescription: "The GitHub workflow that the action belongs to",
-					Required:            true,
-				},
-				"omit_payload": schema.BoolAttribute{
-					MarkdownDescription: "Omit the payload when invoking the action",
-					Optional:            true,
-					Computed:            true,
-					Default:             booldefault.StaticBool(false),
-				},
-				"omit_user_inputs": schema.BoolAttribute{
-					MarkdownDescription: "Omit the user inputs when invoking the action",
-					Optional:            true,
-					Computed:            true,
-					Default:             booldefault.StaticBool(false),
-				},
-				"report_workflow_status": schema.BoolAttribute{
-					MarkdownDescription: "Report the workflow status when invoking the action",
-					Optional:            true,
-				},
-			},
-		},
-		"gitlab_method": schema.SingleNestedAttribute{
-			MarkdownDescription: "The invocation method of the action",
-			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"project_name": schema.StringAttribute{
-					MarkdownDescription: "Required when selecting type GITLAB. The GitLab project name that the workflow belongs to",
-					Required:            true,
-				},
-				"group_name": schema.StringAttribute{
-					MarkdownDescription: "Required when selecting type GITLAB. The GitLab group name that the workflow belongs to",
-					Required:            true,
-				},
-				"omit_payload": schema.BoolAttribute{
-					MarkdownDescription: "Omit the payload when invoking the action",
-					Optional:            true,
-					Computed:            true,
-					Default:             booldefault.StaticBool(false),
-				},
-				"omit_user_inputs": schema.BoolAttribute{
-					MarkdownDescription: "Omit the user inputs when invoking the action",
-					Optional:            true,
-					Computed:            true,
-					Default:             booldefault.StaticBool(false),
-				},
-				"default_ref": schema.StringAttribute{
-					MarkdownDescription: "The default ref of the action",
-					Optional:            true,
-				},
-				"agent": schema.BoolAttribute{
-					MarkdownDescription: "Use the agent to invoke the action",
-					Optional:            true,
-					Computed:            true,
-					Default:             booldefault.StaticBool(true),
-				},
-			},
-		},
-		"azure_method": schema.SingleNestedAttribute{
-			MarkdownDescription: "The invocation method of the action",
-			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"org": schema.StringAttribute{
-					MarkdownDescription: "Required when selecting type AZURE. The Azure org that the workflow belongs to",
-					Required:            true,
-				},
-				"webhook": schema.StringAttribute{
-					MarkdownDescription: "Required when selecting type AZURE. The Azure webhook that the workflow belongs to",
-					Required:            true,
-				},
-			},
-		},
-		"order_properties": schema.ListAttribute{
-			MarkdownDescription: "Order properties",
-			Optional:            true,
-			ElementType:         types.StringType,
-		},
-		"user_properties": schema.SingleNestedAttribute{
-			MarkdownDescription: "User properties",
-			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"string_props":  StringPropertySchema(),
-				"number_props":  NumberPropertySchema(),
-				"boolean_props": BooleanPropertySchema(),
-				"object_props":  ObjectPropertySchema(),
-				"array_props":   ArrayPropertySchema(),
-			},
-		},
-		"required_jq_query": schema.StringAttribute{
-			MarkdownDescription: "The required jq query of the property",
-			Optional:            true,
+			Computed:            true,
+			Default:             booldefault.StaticBool(true),
 		},
 	}
-
 }
 
 func StringPropertySchema() schema.Attribute {
@@ -638,13 +808,6 @@ func ArrayPropertySchema() schema.Attribute {
 	}
 }
 
-func (r *ActionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		MarkdownDescription: "Action resource",
-		Attributes:          ActionSchema(),
-	}
-}
-
 func (r *ActionResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
 	var state *ActionModel
 
@@ -662,37 +825,127 @@ func validateUserInputRequiredNotSetToFalse(state *ActionModel, resp *resource.V
 	// supported anymore
 	const errorString = "required is set to false, this is not supported anymore, if you don't want to make the stringProp required, remove the required stringProp"
 
-	if state.UserProperties == nil {
+	if state.SelfServiceTrigger == nil || state.SelfServiceTrigger.UserProperties == nil {
 		return
 	}
 
-	for _, stringProp := range state.UserProperties.StringProps {
+	for _, stringProp := range state.SelfServiceTrigger.UserProperties.StringProps {
 		if !stringProp.Required.IsNull() && !stringProp.Required.ValueBool() && stringProp.Required == types.BoolValue(false) {
 			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, stringProp.Title, ` in action: `, state.Identifier))
 		}
 	}
 
-	for _, numberProp := range state.UserProperties.NumberProps {
+	for _, numberProp := range state.SelfServiceTrigger.UserProperties.NumberProps {
 		if !numberProp.Required.IsNull() && !numberProp.Required.ValueBool() && numberProp.Required == types.BoolValue(false) {
 			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, numberProp.Title, ` in action: `, state.Identifier))
 		}
 	}
 
-	for _, boolProp := range state.UserProperties.BooleanProps {
+	for _, boolProp := range state.SelfServiceTrigger.UserProperties.BooleanProps {
 		if !boolProp.Required.IsNull() && !boolProp.Required.ValueBool() && boolProp.Required == types.BoolValue(false) {
 			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, boolProp.Title, ` in action: `, state.Identifier))
 		}
 	}
 
-	for _, objectProp := range state.UserProperties.ObjectProps {
+	for _, objectProp := range state.SelfServiceTrigger.UserProperties.ObjectProps {
 		if !objectProp.Required.IsNull() && !objectProp.Required.ValueBool() && objectProp.Required == types.BoolValue(false) {
 			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, objectProp.Title, ` in action: `, state.Identifier))
 		}
 	}
 
-	for _, arrayProp := range state.UserProperties.ArrayProps {
+	for _, arrayProp := range state.SelfServiceTrigger.UserProperties.ArrayProps {
 		if !arrayProp.Required.IsNull() && !arrayProp.Required.ValueBool() && arrayProp.Required == types.BoolValue(false) {
 			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, arrayProp.Title, ` in action: `, state.Identifier))
 		}
 	}
 }
+
+func (r *ActionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: ResourceMarkdownDescription,
+		Attributes:          ActionSchema(),
+	}
+}
+
+var ResourceMarkdownDescription = `
+
+# Action resource
+
+Docs for the Action resource can be found [here](https://docs.getport.io/create-self-service-experiences/).
+
+## Example Usage
+
+` + "```hcl" + `
+resource "port_action" "create_microservice" {
+	title = "Create Microservice"
+	identifier = "create-microservice"
+	icon = "Terraform"
+	self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+		user_properties = {
+			string_props = {
+				myStringIdentifier = {
+					title = "My String Identifier"
+					required = true
+				}
+			}
+			number_props = {
+				myNumberIdentifier = {
+					title = "My Number Identifier"
+					required = true
+					maximum = 100
+					minimum = 0
+				}
+			}
+			boolean_props = {
+				myBooleanIdentifier = {
+					title = "My Boolean Identifier"
+					required = true
+				}
+			}
+			object_props = {
+				myObjectIdentifier = {
+					title = "My Object Identifier"
+					required = true
+				}
+			}
+			array_props = {
+				myArrayIdentifier = {
+					title = "My Array Identifier"
+					required = true
+					string_items = {
+						format = "email"
+					}
+				}
+			}
+		}
+	}
+	kafka_method = {
+		payload = jsonencode({
+		  runId: "{{"{{.run.id}}"}}"
+		})
+	}
+}` + "\n```" + `
+
+## Example Usage with Automation trigger
+
+Port allows setting an automation trigger to an action, for executing an action based on event occurred to an entity in Port.
+
+` + "```hcl" + `
+resource "port_action" "delete_temporary_microservice" {
+	title = "Delete Temporary Microservice"
+	identifier = "delete-temp-microservice"
+	icon = "Terraform"
+	automation_trigger = {
+		timer_property_expired_event = {
+			blueprint_identifier = port_blueprint.microservice.identifier
+			property_identifier = "ttl"
+		}
+	}
+	kafka_method = {
+		payload = jsonencode({
+		  runId: "{{"{{.run.id}}"}}"
+		})
+	}
+}` + "\n```"

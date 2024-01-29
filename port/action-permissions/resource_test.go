@@ -465,7 +465,6 @@ func TestAccPortActionPermissionsImportState(t *testing.T) {
 					value: "true",
 					operator: "=",
 					property: "$owned_by_team"
-
 				}
 			  ],
 			  combinator: "and"
@@ -501,6 +500,43 @@ func TestAccPortActionPermissionsImportState(t *testing.T) {
 				ResourceName:      "port_action_permissions.create_microservice_permissions",
 				ImportState:       true,
 				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+func TestAccPortActionWithEmptyFieldsExpectDefaultsToApply(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
+	resource "port_action_permissions" "create_microservice_permissions" {
+	  action_identifier = port_action.create_microservice.identifier
+	  blueprint_identifier = port_blueprint.microservice.identifier	
+	  permissions = {
+		"execute": {}
+		"approve": {}
+		}
+	}
+`
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccActionPermissionsConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "blueprint_identifier", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.#", "0"),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "0"),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.teams.#", "0"),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.owned_by_team", "true"),
+					resource.TestCheckNoResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.approve.policy"),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.approve.roles.#", "0"),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.approve.users.#", "0"),
+					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.approve.teams.#", "0"),
+					resource.TestCheckNoResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.approve.policy"),
+				),
 			},
 		},
 	})

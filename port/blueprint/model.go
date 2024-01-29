@@ -173,4 +173,5 @@ type BlueprintModel struct {
 	Relations                   map[string]RelationModel            `tfsdk:"relations"`
 	MirrorProperties            map[string]MirrorPropertyModel      `tfsdk:"mirror_properties"`
 	CalculationProperties       map[string]CalculationPropertyModel `tfsdk:"calculation_properties"`
+	ForceDeleteEntities         types.Bool                          `tfsdk:"force_delete_entities"`
 }

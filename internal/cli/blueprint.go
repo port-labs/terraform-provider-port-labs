@@ -86,3 +86,26 @@ func (c *PortClient) DeleteBlueprint(ctx context.Context, id string) error {
 	}
 	return nil
 }
+
+func (c *PortClient) DeleteBlueprintWithAllEntities(ctx context.Context, id string) (*string, error) {
+	url := "v1/blueprints/{identifier}/all-entities?delete_blueprint=true"
+	resp, err := c.Client.R().
+		SetContext(ctx).
+		SetHeader("Accept", "application/json").
+		SetPathParam("identifier", id).
+		Delete(url)
+	if err != nil {
+		return nil, err
+	}
+	var pb PortBody
+	err = json.Unmarshal(resp.Body(), &pb)
+	if err != nil {
+		return nil, err
+	}
+	if !pb.OK {
+		return nil, fmt.Errorf("failed to trigger blueprint deletion with all entities, got: %s", resp.Body())
+	}
+
+	return &pb.MigrationId, nil
+
+}

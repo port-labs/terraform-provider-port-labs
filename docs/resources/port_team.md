@@ -30,5 +30,3 @@ Team resource
 - `id` (String) The ID of this resource.
 - `provider_name` (String) The provider of the team
 - `updated_at` (String) The last update date of the team
-
-

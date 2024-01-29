@@ -2,9 +2,11 @@ package action_permissions
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -31,17 +33,23 @@ func ActionPermissionsSchema() map[string]schema.Attribute {
 					Attributes: map[string]schema.Attribute{
 						"users": schema.ListAttribute{
 							MarkdownDescription: "The users with execution permission",
-							Required:            true,
+							Optional:            true,
+							Computed:            true,
+							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"roles": schema.ListAttribute{
 							MarkdownDescription: "The roles with execution permission",
-							Required:            true,
+							Optional:            true,
+							Computed:            true,
+							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"teams": schema.ListAttribute{
 							MarkdownDescription: "The teams with execution permission",
-							Required:            true,
+							Optional:            true,
+							Computed:            true,
+							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"owned_by_team": schema.BoolAttribute{
@@ -62,17 +70,23 @@ func ActionPermissionsSchema() map[string]schema.Attribute {
 					Attributes: map[string]schema.Attribute{
 						"users": schema.ListAttribute{
 							MarkdownDescription: "The users with approval permission",
-							Required:            true,
+							Optional:            true,
+							Computed:            true,
+							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"roles": schema.ListAttribute{
 							MarkdownDescription: "The roles with approval permission",
-							Required:            true,
+							Optional:            true,
+							Computed:            true,
+							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"teams": schema.ListAttribute{
 							MarkdownDescription: "The teams with approval permission",
-							Required:            true,
+							Optional:            true,
+							Computed:            true,
+							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"policy": schema.StringAttribute{

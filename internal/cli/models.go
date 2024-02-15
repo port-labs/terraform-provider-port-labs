@@ -310,6 +310,19 @@ type (
 		Users       []string   `json:"users,omitempty"`
 		Provider    string     `json:"provider,omitempty"`
 	}
+
+	Migration struct {
+		Meta
+		Id              string `json:"id,omitempty"`
+		Actor           string `json:"actor,omitempty"`
+		SourceBlueprint string `json:"sourceBlueprint,omitempty"`
+		Mapping         any    `json:"mapping,omitempty"`
+		Status          string `json:"status,omitempty"`
+		DeleteBlueprint bool   `json:"deleteBlueprint,omitempty"`
+		DeleteEntities  bool   `json:"deleteEntities,omitempty"`
+		FailureCount    int    `json:"failureCount,omitempty"`
+		SuccessCount    int    `json:"successCount,omitempty"`
+	}
 )
 
 type PortBody struct {
@@ -322,6 +335,8 @@ type PortBody struct {
 	Scorecard         Scorecard         `json:"Scorecard"`
 	Team              Team              `json:"team"`
 	Page              Page              `json:"page"`
+	MigrationId       string            `json:"migrationId"`
+	Migration         Migration         `json:"migration"`
 }
 
 type TeamUserBody struct {

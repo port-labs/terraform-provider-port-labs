@@ -143,7 +143,7 @@ func TestAccPortPageResourceCreateDashboardPage(t *testing.T) {
 
 resource "port_page" "microservice_dashboard_page" {
   identifier            = "%s"
-  title                 = "Microservices"
+  title                 = "dashboards"
   icon                  = "GitHub"
   type                  = "dashboard"
   widgets               = [
@@ -206,7 +206,7 @@ func TestAccPortPageResourceCreatePageAfterPage(t *testing.T) {
 
 resource "port_page" "microservice_dashboard_page" {
   identifier            = "%s"
-  title                 = "Microservices"
+  title                 = "dashboards"
   icon                  = "GitHub"
   type                  = "dashboard"
   widgets               = [

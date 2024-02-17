@@ -12,13 +12,9 @@ description: |-
   resource "portpage" "microserviceblueprintpage" {
     identifier            = "microserviceblueprintpage"
     title                 = "Microservices"
-    icon                  = "Microservice"
-    protected             = true
-    showinsidebar       = true
-    blueprint             = portblueprint.baseblueprint.identifier
     type                  = "blueprint-entities"
-    section               = "softwarecatalog"
-    requiredqueryparams = []
+    icon                  = "Microservice"
+    blueprint             = portblueprint.base_blueprint.identifier
     widgets               = [
       jsonencode(
         {
@@ -42,13 +38,90 @@ description: |-
   Dashboard Page
   ```hcl
   resource "portpage" "microservicedashboardpage" {
+    identifier            = "microservicedashboard_page"
+    title                 = "Microservices"
+    icon                  = "GitHub"
+    type                  = "dashboard"
+    widgets               = [
+      jsonencode(
+        {
+          "id" : "dashboardWidget",
+          "layout" : [
+            {
+              "height" : 400,
+              "columns" : [
+                {
+                  "id" : "microserviceGuide",
+                  "size" : 12
+                }
+              ]
+            }
+          ],
+          "type" : "dashboard-widget",
+          "widgets" : [
+            {
+              "title" : "Microservices Guide",
+              "icon" : "BlankPage",
+              "markdown" : "# This is the new Microservice Dashboard",
+              "type" : "markdown",
+              "description" : "",
+              "id" : "microserviceGuide"
+            }
+          ],
+        }
+      )
+    ]
+  }
+  ```
+  Page with parent
+  Create a page inside a folder.
+  ```hcl
+  resource "portpage" "microservicedashboardpage" {
+    identifier            = "microservicedashboard_page"
+    title                 = "Microservices"
+    icon                  = "GitHub"
+    type                  = "dashboard"
+    parent                = "microservices-folder"
+    widgets               = [
+      jsonencode(
+        {
+          "id" : "dashboardWidget",
+          "layout" : [
+            {
+              "height" : 400,
+              "columns" : [
+                {
+                  "id" : "microserviceGuide",
+                  "size" : 12
+                }
+              ]
+            }
+          ],
+          "type" : "dashboard-widget",
+          "widgets" : [
+            {
+              "title" : "Microservices Guide",
+              "icon" : "BlankPage",
+              "markdown" : "# This is the new Microservice Dashboard",
+              "type" : "markdown",
+              "description" : "",
+              "id" : "microserviceGuide"
+            }
+          ],
+        }
+      )
+    ]
+  }
+  ```
+  Page with after
+  Create a page after another page.
+  ```hcl
+  resource "portpage" "microservicedashboardpage" {
     identifier            = "microservicedashboardpage"
     title                 = "Microservices"
     icon                  = "GitHub"
-    showinsidebar       = true
     type                  = "dashboard"
-    section               = "softwarecatalog"
-    requiredqueryparams = []
+    after                 = "microservicesentities_page"
     widgets               = [
       jsonencode(
         {
@@ -85,10 +158,7 @@ description: |-
   resource "portpage" "homepage" {
     identifier            = "$home"
     title                 = "Home"
-    showinsidebar       = false
     type                  = "home"
-    section               = "organization"
-    requiredqueryparams = []
     widgets               = [
       jsonencode(
         {
@@ -157,13 +227,9 @@ If this Environment Variable isn't specified, you won't be able to use the resou
 resource "port_page" "microservice_blueprint_page" {
   identifier            = "microservice_blueprint_page"
   title                 = "Microservices"
-  icon                  = "Microservice"
-  protected             = true
-  show_in_sidebar       = true
-  blueprint             = port_blueprint.base_blueprint.identifier
   type                  = "blueprint-entities"
-  section               = "software_catalog"
-  required_query_params = []
+  icon                  = "Microservice"
+  blueprint             = port_blueprint.base_blueprint.identifier
   widgets               = [
     jsonencode(
       {
@@ -194,10 +260,99 @@ resource "port_page" "microservice_dashboard_page" {
   identifier            = "microservice_dashboard_page"
   title                 = "Microservices"
   icon                  = "GitHub"
-  show_in_sidebar       = true
   type                  = "dashboard"
-  section               = "software_catalog"
-  required_query_params = []
+  widgets               = [
+    jsonencode(
+      {
+        "id" : "dashboardWidget",
+        "layout" : [
+          {
+            "height" : 400,
+            "columns" : [
+              {
+                "id" : "microserviceGuide",
+                "size" : 12
+              }
+            ]
+          }
+        ],
+        "type" : "dashboard-widget",
+        "widgets" : [
+          {
+            "title" : "Microservices Guide",
+            "icon" : "BlankPage",
+            "markdown" : "# This is the new Microservice Dashboard",
+            "type" : "markdown",
+            "description" : "",
+            "id" : "microserviceGuide"
+          }
+        ],
+      }
+    )
+  ]
+}
+
+```
+
+
+### Page with parent
+
+Create a page inside a folder.
+
+```hcl
+
+resource "port_page" "microservice_dashboard_page" {
+  identifier            = "microservice_dashboard_page"
+  title                 = "Microservices"
+  icon                  = "GitHub"
+  type                  = "dashboard"
+  parent                = "microservices-folder"
+  widgets               = [
+    jsonencode(
+      {
+        "id" : "dashboardWidget",
+        "layout" : [
+          {
+            "height" : 400,
+            "columns" : [
+              {
+                "id" : "microserviceGuide",
+                "size" : 12
+              }
+            ]
+          }
+        ],
+        "type" : "dashboard-widget",
+        "widgets" : [
+          {
+            "title" : "Microservices Guide",
+            "icon" : "BlankPage",
+            "markdown" : "# This is the new Microservice Dashboard",
+            "type" : "markdown",
+            "description" : "",
+            "id" : "microserviceGuide"
+          }
+        ],
+      }
+    )
+  ]
+}
+
+```
+
+
+### Page with after
+
+Create a page after another page.
+
+```hcl
+
+resource "port_page" "microservice_dashboard_page" {
+  identifier            = "microservice_dashboard_page"
+  title                 = "Microservices"
+  icon                  = "GitHub"
+  type                  = "dashboard"
+  after                 = "microservices_entities_page"
   widgets               = [
     jsonencode(
       {
@@ -238,10 +393,7 @@ resource "port_page" "microservice_dashboard_page" {
 resource "port_page" "home_page" {
   identifier            = "$home"
   title                 = "Home"
-  show_in_sidebar       = false
   type                  = "home"
-  section               = "organization"
-  required_query_params = []
   widgets               = [
     jsonencode(
       {
@@ -303,16 +455,15 @@ terraform import port_page.home_page "\$home"
 ### Required
 
 - `identifier` (String) The Identifier of the page
-- `section` (String) The section of the page
 - `type` (String) The type of the page, can be one of "blueprint-entities", "dashboard" or "home"
 
 ### Optional
 
+- `after` (String) The identifier of the page/folder after which the page should be placed
 - `blueprint` (String) The blueprint for which the page is created, relevant only for pages of type "blueprint-entities"
 - `icon` (String) The icon of the page
 - `locked` (Boolean) Whether the page is locked, if true, viewers will not be able to edit the page widgets and filters
-- `required_query_params` (List of String) The required query params for the page
-- `show_in_sidebar` (Boolean) Whether the page should be shown in the sidebar
+- `parent` (String) The identifier of the folder in which the page is in, default is the root of the sidebar
 - `title` (String) The title of the page
 - `widgets` (List of String) The widgets of the page
 

@@ -42,11 +42,8 @@ resource "port_page" "microservice_blueprint_page" {
   identifier            = "%s"
   title                 = "Microservices"
   icon                  = "Microservice"
-  show_in_sidebar       = true
   blueprint             = port_blueprint.microservice.identifier
   type                  = "blueprint-entities"
-  section               = "software_catalog"
-  required_query_params = []
   widgets               = [
     jsonencode(
       {
@@ -78,11 +75,8 @@ resource "port_page" "microservice_blueprint_page" {
 					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "identifier", pageIdentifier),
 					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "title", "Microservices"),
 					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "icon", "Microservice"),
-					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "show_in_sidebar", "true"),
 					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "blueprint", blueprintIdentifier),
 					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "type", "blueprint-entities"),
-					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "section", "software_catalog"),
-					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "required_query_params.#", "0"),
 					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "widgets.#", "1"),
 				),
 			},
@@ -103,11 +97,8 @@ resource "port_page" "microservice_blueprint_page" {
   identifier            = "%s"
   title                 = "Microservices"
   icon                  = "Microservice"
-  show_in_sidebar       = true
   blueprint             = port_blueprint.microservice.identifier
   type                  = "blueprint-entities"
-  section               = "software_catalog"
-  required_query_params = []
   widgets               = [
     jsonencode(
       {
@@ -154,10 +145,7 @@ resource "port_page" "microservice_dashboard_page" {
   identifier            = "%s"
   title                 = "Microservices"
   icon                  = "GitHub"
-  show_in_sidebar       = true
   type                  = "dashboard"
-  section               = "software_catalog"
-  required_query_params = []
   widgets               = [
     jsonencode(
       {
@@ -200,11 +188,118 @@ resource "port_page" "microservice_dashboard_page" {
 					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "identifier", pageIdentifier),
 					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "title", "Microservices"),
 					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "icon", "GitHub"),
-					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "show_in_sidebar", "true"),
 					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "type", "dashboard"),
-					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "section", "software_catalog"),
-					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "required_query_params.#", "0"),
 					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "widgets.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortPageResourceCreatePageAfterPage(t *testing.T) {
+	pageIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testAccPortPageResourceBasic = fmt.Sprintf(`
+
+resource "port_page" "microservice_dashboard_page" {
+  identifier            = "%s"
+  title                 = "Microservices"
+  icon                  = "GitHub"
+  type                  = "dashboard"
+  widgets               = [
+    jsonencode(
+      {
+        "id" : "dashboardWidget",
+        "layout" : [
+          {
+            "height" : 400,
+            "columns" : [
+              {
+                "id" : "microserviceGuide",
+                "size" : 12
+              }
+            ]
+          }
+        ],
+        "type" : "dashboard-widget",
+        "widgets" : [
+          {
+            "title" : "Microservices Guide",
+            "icon" : "BlankPage",
+            "markdown" : "# This is the new Microservice Dashboard",
+            "type" : "markdown",
+            "description" : "",
+            "id" : "microserviceGuide"
+          }
+        ],
+      }
+    )
+  ]
+}
+`, pageIdentifier)
+
+	pageIdentifier2 := utils.GenID()
+	var testAccPortPageResourceBasic2 = fmt.Sprintf(`
+
+resource "port_page" "microservice_dashboard_page_2" {
+  identifier            = "%s"
+  title                 = "Microservices_2"
+  icon                  = "GitHub"
+	after								 	= port_page.microservice_dashboard_page.identifier
+  type                  = "dashboard"
+  widgets               = [
+    jsonencode(
+      {
+        "id" : "dashboardWidget",
+        "layout" : [
+          {
+            "height" : 400,
+            "columns" : [
+              {
+                "id" : "microserviceGuide",
+                "size" : 12
+              }
+            ]
+          }
+        ],
+        "type" : "dashboard-widget",
+        "widgets" : [
+          {
+            "title" : "Microservices Guide",
+            "icon" : "BlankPage",
+            "markdown" : "# This is the new Microservice Dashboard",
+            "type" : "markdown",
+            "description" : "",
+            "id" : "microserviceGuide"
+          }
+        ],
+      }
+    )
+  ]
+}
+`, pageIdentifier2)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccPortPageResourceBasic + testAccPortPageResourceBasic2,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "identifier", pageIdentifier),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "title", "Microservices"),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "icon", "GitHub"),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "type", "dashboard"),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "widgets.#", "1"),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page_2", "identifier", pageIdentifier2),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page_2", "title", "Microservices_2"),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page_2", "after", pageIdentifier),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page_2", "icon", "GitHub"),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page_2", "type", "dashboard"),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page_2", "widgets.#", "1"),
 				),
 			},
 		},

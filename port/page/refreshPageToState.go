@@ -10,17 +10,12 @@ func refreshPageToState(pm *PageModel, b *cli.Page) error {
 	pm.ID = types.StringValue(b.Identifier)
 	pm.Identifier = types.StringValue(b.Identifier)
 	pm.Type = types.StringValue(b.Type)
-	pm.ShowInSidebar = types.BoolPointerValue(b.ShowInSidebar)
-	pm.Section = types.StringValue(b.Section)
 	pm.Icon = types.StringPointerValue(b.Icon)
+	pm.Parent = types.StringPointerValue(b.Parent)
+	pm.After = types.StringPointerValue(b.After)
 	pm.Title = types.StringPointerValue(b.Title)
 	pm.Locked = types.BoolPointerValue(b.Locked)
 	pm.Blueprint = types.StringPointerValue(b.Blueprint)
-
-	pm.RequiredQueryParams = make([]types.String, len(b.RequiredQueryParams))
-	for i, u := range b.RequiredQueryParams {
-		pm.RequiredQueryParams[i] = types.StringValue(u)
-	}
 
 	pm.Widgets = make([]types.String, len(*b.Widgets))
 	if b.Widgets != nil {

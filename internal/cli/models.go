@@ -224,17 +224,15 @@ type (
 
 	Page struct {
 		Meta
-		Identifier          string            `json:"identifier,omitempty"`
-		Type                string            `json:"type,omitempty"`
-		ShowInSidebar       *bool             `json:"showInSidebar,omitempty"`
-		Section             string            `json:"section,omitempty"`
-		Icon                *string           `json:"icon,omitempty"`
-		Title               *string           `json:"title,omitempty"`
-		Protected           *bool             `json:"protected,omitempty"`
-		Locked              *bool             `json:"locked,omitempty"`
-		Blueprint           *string           `json:"blueprint,omitempty"`
-		RequiredQueryParams []string          `json:"requiredQueryParams,omitempty"`
-		Widgets             *[]map[string]any `json:"widgets,omitempty"`
+		Identifier string            `json:"identifier,omitempty"`
+		Type       string            `json:"type,omitempty"`
+		Icon       *string           `json:"icon,omitempty"`
+		Parent     *string           `json:"parent,omitempty"`
+		After      *string           `json:"after,omitempty"`
+		Title      *string           `json:"title,omitempty"`
+		Locked     *bool             `json:"locked,omitempty"`
+		Blueprint  *string           `json:"blueprint,omitempty"`
+		Widgets    *[]map[string]any `json:"widgets,omitempty"`
 	}
 
 	Relation struct {

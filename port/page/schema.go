@@ -5,7 +5,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -33,15 +32,13 @@ func PageSchema() map[string]schema.Attribute {
 				),
 			},
 		},
-		"show_in_sidebar": schema.BoolAttribute{
-			Description: "Whether the page should be shown in the sidebar",
+		"parent": schema.StringAttribute{
+			Description: "The identifier of the folder in which the page is in, default is the root of the sidebar",
 			Optional:    true,
-			Computed:    true,
-			Default:     booldefault.StaticBool(true),
 		},
-		"section": schema.StringAttribute{
-			Description: "The section of the page",
-			Required:    true,
+		"after": schema.StringAttribute{
+			Description: "The identifier of the page/folder after which the page should be placed",
+			Optional:    true,
 		},
 		"icon": schema.StringAttribute{
 			Description: "The icon of the page",
@@ -59,11 +56,11 @@ func PageSchema() map[string]schema.Attribute {
 			Description: "The blueprint for which the page is created, relevant only for pages of type \"blueprint-entities\"",
 			Optional:    true,
 		},
-		"required_query_params": schema.ListAttribute{
-			Description: "The required query params for the page",
-			Optional:    true,
-			ElementType: types.StringType,
-		},
+		//"required_query_params": schema.ListAttribute{
+		//	Description: "The required query params for the page",
+		//	Optional:    true,
+		//	ElementType: types.StringType,
+		//},
 		"widgets": schema.ListAttribute{
 			Description: "The widgets of the page",
 			Optional:    true,
@@ -136,13 +133,9 @@ If this Environment Variable isn't specified, you won't be able to use the resou
 resource "port_page" "microservice_blueprint_page" {
   identifier            = "microservice_blueprint_page"
   title                 = "Microservices"
-  icon                  = "Microservice"
-  protected             = true
-  show_in_sidebar       = true
-  blueprint             = port_blueprint.base_blueprint.identifier
   type                  = "blueprint-entities"
-  section               = "software_catalog"
-  required_query_params = []
+  icon                  = "Microservice"
+  blueprint             = port_blueprint.base_blueprint.identifier
   widgets               = [
     jsonencode(
       {
@@ -173,10 +166,99 @@ resource "port_page" "microservice_dashboard_page" {
   identifier            = "microservice_dashboard_page"
   title                 = "Microservices"
   icon                  = "GitHub"
-  show_in_sidebar       = true
   type                  = "dashboard"
-  section               = "software_catalog"
-  required_query_params = []
+  widgets               = [
+    jsonencode(
+      {
+        "id" : "dashboardWidget",
+        "layout" : [
+          {
+            "height" : 400,
+            "columns" : [
+              {
+                "id" : "microserviceGuide",
+                "size" : 12
+              }
+            ]
+          }
+        ],
+        "type" : "dashboard-widget",
+        "widgets" : [
+          {
+            "title" : "Microservices Guide",
+            "icon" : "BlankPage",
+            "markdown" : "# This is the new Microservice Dashboard",
+            "type" : "markdown",
+            "description" : "",
+            "id" : "microserviceGuide"
+          }
+        ],
+      }
+    )
+  ]
+}
+
+` + "```" + `
+
+
+### Page with parent
+
+Create a page inside a folder.
+
+` + "```hcl" + `
+
+resource "port_page" "microservice_dashboard_page" {
+  identifier            = "microservice_dashboard_page"
+  title                 = "Microservices"
+  icon                  = "GitHub"
+  type                  = "dashboard"
+  parent                = "microservices-folder"
+  widgets               = [
+    jsonencode(
+      {
+        "id" : "dashboardWidget",
+        "layout" : [
+          {
+            "height" : 400,
+            "columns" : [
+              {
+                "id" : "microserviceGuide",
+                "size" : 12
+              }
+            ]
+          }
+        ],
+        "type" : "dashboard-widget",
+        "widgets" : [
+          {
+            "title" : "Microservices Guide",
+            "icon" : "BlankPage",
+            "markdown" : "# This is the new Microservice Dashboard",
+            "type" : "markdown",
+            "description" : "",
+            "id" : "microserviceGuide"
+          }
+        ],
+      }
+    )
+  ]
+}
+
+` + "```" + `
+
+
+### Page with after
+
+Create a page after another page.
+
+` + "```hcl" + `
+
+resource "port_page" "microservice_dashboard_page" {
+  identifier            = "microservice_dashboard_page"
+  title                 = "Microservices"
+  icon                  = "GitHub"
+  type                  = "dashboard"
+  after                 = "microservices_entities_page"
   widgets               = [
     jsonencode(
       {
@@ -217,10 +299,7 @@ resource "port_page" "microservice_dashboard_page" {
 resource "port_page" "home_page" {
   identifier            = "$home"
   title                 = "Home"
-  show_in_sidebar       = false
   type                  = "home"
-  section               = "organization"
-  required_query_params = []
   widgets               = [
     jsonencode(
       {

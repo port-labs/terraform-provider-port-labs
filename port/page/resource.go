@@ -51,9 +51,13 @@ func (r *PageResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	p, _, err := r.portClient.GetPage(ctx, state.Identifier.ValueString())
+	p, statusCode, err := r.portClient.GetPage(ctx, state.Identifier.ValueString())
 
 	if err != nil {
+		if statusCode == 404 {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("failed to get page", err.Error())
 		return
 	}
@@ -83,8 +87,12 @@ func (r *PageResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		resp.State.RemoveResource(ctx)
 		return
 	}
-	err := r.portClient.DeletePage(ctx, state.Identifier.ValueString())
+	statusCode, err := r.portClient.DeletePage(ctx, state.Identifier.ValueString())
 	if err != nil {
+		if statusCode == 404 {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("failed to delete page", err.Error())
 		return
 	}

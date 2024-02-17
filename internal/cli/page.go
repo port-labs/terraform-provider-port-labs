@@ -69,22 +69,22 @@ func (c *PortClient) UpdatePage(ctx context.Context, pageId string, page *Page) 
 	return &pb.Page, nil
 }
 
-func (c *PortClient) DeletePage(ctx context.Context, pageId string) error {
+func (c *PortClient) DeletePage(ctx context.Context, pageId string) (int, error) {
 	url := "v1/pages/{page_identifier}"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetPathParam("page_identifier", pageId).
 		Delete(url)
 	if err != nil {
-		return err
+		return resp.StatusCode(), err
 	}
 	var pb PortBody
 	err = json.Unmarshal(resp.Body(), &pb)
 	if err != nil {
-		return err
+		return resp.StatusCode(), err
 	}
 	if !pb.OK {
-		return fmt.Errorf("failed to delete page, got: %s", resp.Body())
+		return resp.StatusCode(), fmt.Errorf("failed to delete page, got: %s", resp.Body())
 	}
-	return nil
+	return resp.StatusCode(), nil
 }

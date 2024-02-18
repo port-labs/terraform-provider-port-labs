@@ -22,7 +22,7 @@ func GenID() string {
 	if err != nil {
 		panic(err)
 	}
-	return fmt.Sprintf("t-%s", id[len(id)-18])
+	return fmt.Sprintf("t-%s", id[len(id)-18:])
 }
 
 func TerraformListToGoArray(ctx context.Context, list types.List, arrayType string) ([]interface{}, error) {

@@ -41,7 +41,7 @@ func (c *PortClient) CreatePage(ctx context.Context, page *Page, retry bool) (*P
 		return nil, err
 	}
 	if !pb.OK {
-		if retry == true {
+		if retry {
 			time.Sleep(5 * time.Second)
 			return c.CreatePage(ctx, page, false)
 		}

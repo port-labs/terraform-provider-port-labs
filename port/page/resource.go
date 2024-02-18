@@ -115,7 +115,7 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	p, err := r.portClient.CreatePage(ctx, page)
+	p, err := r.portClient.CreatePage(ctx, page, true)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create page", err.Error())
 		return

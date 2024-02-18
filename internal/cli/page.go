@@ -41,13 +41,13 @@ func (c *PortClient) CreatePage(ctx context.Context, page *Page, retry bool) (*P
 		return nil, err
 	}
 	if !pb.OK {
-		if retry {
-			time.Sleep(5 * time.Second)
-			return c.CreatePage(ctx, page, false)
-		}
 
 		if resp.IsSuccess() {
 			return nil, nil
+		}
+		if retry {
+			time.Sleep(5 * time.Second)
+			return c.CreatePage(ctx, page, false)
 		}
 		return nil, fmt.Errorf("failed to create page, got: %s", resp.Body())
 	}

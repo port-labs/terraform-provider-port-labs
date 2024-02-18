@@ -29,6 +29,9 @@ jobs:
         run: make setup
   
   acctest:
+    concurrency:
+      group: acctest
+      cancel-in-progress: true
     runs-on: ubuntu-20.04
     strategy:
       matrix:

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"time"
 )
 
 func (c *PortClient) GetPage(ctx context.Context, pageId string) (*Page, int, error) {
@@ -26,7 +25,7 @@ func (c *PortClient) GetPage(ctx context.Context, pageId string) (*Page, int, er
 
 }
 
-func (c *PortClient) CreatePage(ctx context.Context, page *Page, retry bool) (*Page, error) {
+func (c *PortClient) CreatePage(ctx context.Context, page *Page) (*Page, error) {
 	url := "v1/pages"
 	resp, err := c.Client.R().
 		SetBody(page).
@@ -44,10 +43,6 @@ func (c *PortClient) CreatePage(ctx context.Context, page *Page, retry bool) (*P
 
 		if resp.IsSuccess() {
 			return nil, nil
-		}
-		if retry {
-			time.Sleep(5 * time.Second)
-			return c.CreatePage(ctx, page, false)
 		}
 		return nil, fmt.Errorf("failed to create page, got: %s", resp.Body())
 	}

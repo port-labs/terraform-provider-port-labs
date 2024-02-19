@@ -2,6 +2,7 @@ package page_permissions_test
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -9,35 +10,59 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func generateBlueprintPluralIdentifier() string {
-	// set the blueprint identifier to end with plural so the page identifier won't add plural to the page identifier
-	return fmt.Sprintf("%s-tests", utils.GenID()[:10])
-}
-
-func testAccCreateBlueprintConfig(blueprintIdentifier string) string {
+func createPage(identifier string) string {
 	return fmt.Sprintf(`
-	resource "port_blueprint" "microservice" {
-		title = "TF test microservice"
-		icon = "Terraform"
-		identifier = "%s"
-		properties = {
-			string_props = {
-			"text" = {
-				type = "string"
-				title = "text"
-				}
-			}
-		}
-	}`, blueprintIdentifier)
-}
-func TestAccPortPagePermissionsBasic(t *testing.T) {
-	blueprintIdentifier := generateBlueprintPluralIdentifier()
-	var testAccBaseBlueprintConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier)
 
-	var testAccBasePagePermissionsConfigUpdate = testAccCreateBlueprintConfig(blueprintIdentifier) + `
+resource "port_page" "microservice_dashboard_page" {
+  identifier            = "%s"
+  title                 = "dashboards"
+  icon                  = "GitHub"
+  type                  = "dashboard"
+  widgets               = [
+    jsonencode(
+      {
+        "id" : "dashboardWidget",
+        "layout" : [
+          {
+            "height" : 400,
+            "columns" : [
+              {
+                "id" : "microserviceGuide",
+                "size" : 12
+              }
+            ]
+          }
+        ],
+        "type" : "dashboard-widget",
+        "widgets" : [
+          {
+            "title" : "Microservices Guide",
+            "icon" : "BlankPage",
+            "markdown" : "# This is the new Microservice Dashboard",
+            "type" : "markdown",
+            "description" : "",
+            "id" : "microserviceGuide"
+          }
+        ],
+      }
+    )
+  ]
+}
+`, identifier)
+}
+
+func TestAccPortPagePermissionsBasic(t *testing.T) {
+	pageIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testAccPortPageResourceBasic = createPage(pageIdentifier)
+
+	var testAccBasePagePermissionsConfigUpdate = `
 
 	resource "port_page_permissions" "microservice_permissions" {
-		page_identifier = port_blueprint.microservice.identifier
+		page_identifier = port_page.microservice_dashboard_page.identifier
 		read = {
 			"roles": [
 				"Member",
@@ -46,30 +71,24 @@ func TestAccPortPagePermissionsBasic(t *testing.T) {
 			"teams": []
 			}
 	}`
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBaseBlueprintConfigCreate,
+				Config: testAccPortPageResourceBasic + testAccBasePagePermissionsConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", blueprintIdentifier),
-				),
-			},
-			{
-				Config: testAccBasePagePermissionsConfigUpdate,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "page_identifier", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "identifier", pageIdentifier),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "title", "dashboards"),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "icon", "GitHub"),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "type", "dashboard"),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "widgets.#", "1"),
+					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "page_identifier", pageIdentifier),
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.roles.0", "Member"),
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.users.#", "0"),
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.teams.#", "0"),
-				),
-			},
-			{
-				Config: testAccBaseBlueprintConfigCreate,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", blueprintIdentifier),
 				),
 			},
 		},
@@ -77,11 +96,16 @@ func TestAccPortPagePermissionsBasic(t *testing.T) {
 }
 
 func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
-	blueprintIdentifier := generateBlueprintPluralIdentifier()
+	pageIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testAccPortPageResourceBasic = createPage(pageIdentifier)
+
 	teamName := utils.GenID()
 
-	var testAccBasePagePermissionsConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier)
-	var testAccBasePagePermissionsConfigUpdate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	var testAccBasePagePermissionsConfigUpdate = fmt.Sprintf(`
 	
 	resource "port_team" "team" {
 		name = "%s"
@@ -90,7 +114,7 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 	}
 
 	resource "port_page_permissions" "microservice_permissions" {
-		page_identifier = port_blueprint.microservice.identifier
+		page_identifier = port_page.microservice_dashboard_page.identifier
 		read = {
 			"roles": [
 				"Member",
@@ -105,15 +129,14 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccBasePagePermissionsConfigCreate,
+				Config: testAccPortPageResourceBasic + testAccBasePagePermissionsConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", blueprintIdentifier),
-				),
-			},
-			{
-				Config: testAccBasePagePermissionsConfigUpdate,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "page_identifier", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "identifier", pageIdentifier),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "title", "dashboards"),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "icon", "GitHub"),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "type", "dashboard"),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "widgets.#", "1"),
+					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "page_identifier", pageIdentifier),
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.roles.#", "1"),
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.roles.0", "Member"),
 					resource.TestCheckResourceAttr("port_page_permissions.microservice_permissions", "read.users.#", "0"),

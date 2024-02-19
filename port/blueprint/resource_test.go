@@ -1,7 +1,13 @@
 package blueprint_test
 
 import (
+	"context"
 	"fmt"
+	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/version"
+	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -721,4 +727,114 @@ func TestAccPortUpdateBlueprintIdentifier(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccPortDestroyDeleteAllEntities(t *testing.T) {
+	identifier := utils.GenID()
+	title := "Blueprint with entities1"
+	icon := "Terraform"
+	var testAccBlueprintConfigImport = fmt.Sprintf(`
+		resource "port_blueprint" "microservice" {
+			identifier = "%s"
+			icon = "%s"
+			title = "%s"
+		}
+	`, identifier, icon, title)
+
+	var testAccBlueprintConfigForceDeleteEntitiesTrue = fmt.Sprintf(`
+		resource "port_blueprint" "microservice" {
+			identifier = "%s"
+			icon = "%s"
+			title = "%s"
+			force_delete_entities = true
+		}
+	`, identifier, icon, title)
+
+	portClient, ctx, err := initializePortTestClient(t)
+	if err != nil {
+		t.Fatalf("Failed to initialize port client: %s", err.Error())
+		return
+	}
+
+	blueprint := &cli.Blueprint{
+		Identifier: identifier,
+		Icon:       &icon,
+		Title:      title,
+		Schema: cli.BlueprintSchema{
+			Properties: map[string]cli.BlueprintProperty{},
+		},
+		CalculationProperties: map[string]cli.BlueprintCalculationProperty{},
+		AggregationProperties: map[string]cli.BlueprintAggregationProperty{},
+		MirrorProperties:      map[string]cli.BlueprintMirrorProperty{},
+		Relations:             map[string]cli.Relation{},
+	}
+
+	_, err = portClient.CreateBlueprint(ctx, blueprint)
+
+	if err != nil {
+		t.Fatalf("Failed to create blueprint: %s", err.Error())
+		return
+	}
+
+	entity := &cli.Entity{
+		Blueprint:  identifier,
+		Properties: map[string]interface{}{},
+		Relations:  map[string]any{},
+	}
+
+	// create entity
+	_, err = portClient.CreateEntity(ctx, entity, "")
+	if err != nil {
+		t.Fatalf("Failed to create entity: %s", err.Error())
+		return
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:             acctest.ProviderConfig + testAccBlueprintConfigImport,
+				ResourceName:       "port_blueprint.microservice",
+				ImportStateId:      identifier,
+				ImportState:        true,
+				ImportStatePersist: true,
+			},
+			{
+				Config:      acctest.ProviderConfig + testAccBlueprintConfigImport,
+				Destroy:     true,
+				ExpectError: regexp.MustCompile(".* has dependant entities*"),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccBlueprintConfigForceDeleteEntitiesTrue,
+				Check:  resource.TestCheckResourceAttr("port_blueprint.microservice", "force_delete_entities", "true"),
+			},
+			{
+				Config:  acctest.ProviderConfig + testAccBlueprintConfigForceDeleteEntitiesTrue,
+				Destroy: true,
+			},
+		},
+	})
+
+}
+
+func initializePortTestClient(t *testing.T) (*cli.PortClient, context.Context, error) {
+	baseUrl := os.Getenv("PORT_BASE_URL")
+	clientId := os.Getenv("PORT_CLIENT_ID")
+	clientSecret := os.Getenv("PORT_CLIENT_SECRET")
+
+	if baseUrl == "" {
+		baseUrl = consts.DefaultBaseUrl
+	}
+	c, err := cli.New(baseUrl, cli.WithHeader("User-Agent", version.ProviderVersion))
+	if err != nil {
+		t.Fatalf("Failed to create Port-labs client: %s", err.Error())
+	}
+	ctx := context.Background()
+	_, err = c.Authenticate(ctx, clientId, clientSecret)
+	if err != nil {
+		t.Fatalf("Failed to authenticate with Port-labs: %s", err.Error())
+		return nil, ctx, err
+	}
+	return c, ctx, nil
 }

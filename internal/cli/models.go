@@ -222,6 +222,19 @@ type (
 		Approve ActionApprovePermissions `json:"approve"`
 	}
 
+	Page struct {
+		Meta
+		Identifier string            `json:"identifier,omitempty"`
+		Type       string            `json:"type,omitempty"`
+		Icon       *string           `json:"icon,omitempty"`
+		Parent     *string           `json:"parent,omitempty"`
+		After      *string           `json:"after,omitempty"`
+		Title      *string           `json:"title,omitempty"`
+		Locked     *bool             `json:"locked,omitempty"`
+		Blueprint  *string           `json:"blueprint,omitempty"`
+		Widgets    *[]map[string]any `json:"widgets,omitempty"`
+	}
+
 	PageReadPermissions struct {
 		Users []string `json:"users"`
 		Roles []string `json:"roles"`
@@ -256,14 +269,8 @@ type (
 	}
 
 	Query struct {
-		Combinator string      `json:"combinator,omitempty"`
-		Conditions []Condition `json:"conditions,omitempty"`
-	}
-
-	Condition struct {
-		Property string  `json:"property,omitempty"`
-		Operator string  `json:"operator,omitempty"`
-		Value    *string `json:"value,omitempty"`
+		Combinator string `json:"combinator,omitempty"`
+		Conditions []any  `json:"conditions,omitempty"`
 	}
 
 	Webhook struct {
@@ -311,6 +318,19 @@ type (
 		Users       []string   `json:"users,omitempty"`
 		Provider    string     `json:"provider,omitempty"`
 	}
+
+	Migration struct {
+		Meta
+		Id              string `json:"id,omitempty"`
+		Actor           string `json:"actor,omitempty"`
+		SourceBlueprint string `json:"sourceBlueprint,omitempty"`
+		Mapping         any    `json:"mapping,omitempty"`
+		Status          string `json:"status,omitempty"`
+		DeleteBlueprint bool   `json:"deleteBlueprint,omitempty"`
+		DeleteEntities  bool   `json:"deleteEntities,omitempty"`
+		FailureCount    int    `json:"failureCount,omitempty"`
+		SuccessCount    int    `json:"successCount,omitempty"`
+	}
 )
 
 type PortBody struct {
@@ -322,6 +342,9 @@ type PortBody struct {
 	Integration       Webhook           `json:"integration"`
 	Scorecard         Scorecard         `json:"Scorecard"`
 	Team              Team              `json:"team"`
+	Page              Page              `json:"page"`
+	MigrationId       string            `json:"migrationId"`
+	Migration         Migration         `json:"migration"`
 }
 
 type PortPagePermissionsBody struct {

@@ -3,10 +3,10 @@ package scorecard
 import (
 	"context"
 	"fmt"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 )
 
 func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string) {
@@ -29,16 +29,12 @@ func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Sc
 		stateQuery := &Query{
 			Combinator: types.StringValue(rule.Query.Combinator),
 		}
-		stateConditions := []Condition{}
-		for _, condition := range rule.Query.Conditions {
-			stateCondition := &Condition{
-				Operator: types.StringValue(condition.Operator),
-				Property: types.StringValue(condition.Property),
-				Value:    flex.GoStringToFramework(condition.Value),
-			}
-			stateConditions = append(stateConditions, *stateCondition)
+
+		stateQuery.Conditions = make([]types.String, len(rule.Query.Conditions))
+		for i, u := range rule.Query.Conditions {
+			cond, _ := utils.GoObjectToTerraformString(u)
+			stateQuery.Conditions[i] = cond
 		}
-		stateQuery.Conditions = stateConditions
 
 		stateRule.Query = stateQuery
 

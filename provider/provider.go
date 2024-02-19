@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"github.com/port-labs/terraform-provider-port-labs/port/page"
 	page_permissions "github.com/port-labs/terraform-provider-port-labs/port/page-permissions"
 	"os"
 
@@ -135,6 +136,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		webhook.NewWebhookResource,
 		scorecard.NewScorecardResource,
 		team.NewTeamResource,
+		page.NewPageResource,
 		page_permissions.NewPagePermissionsResource,
 	}
 }

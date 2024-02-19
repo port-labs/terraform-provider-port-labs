@@ -17,7 +17,7 @@ func PagePermissionsSchema() map[string]schema.Attribute {
 		},
 		"read": schema.SingleNestedAttribute{
 			MarkdownDescription: "The permission to read the page",
-			Optional:            true,
+			Required:            true,
 			Attributes: map[string]schema.Attribute{
 				"users": schema.ListAttribute{
 					MarkdownDescription: "The users with read permission",

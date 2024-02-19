@@ -2,10 +2,6 @@ package provider
 
 import (
 	"context"
-	"github.com/port-labs/terraform-provider-port-labs/port/page"
-	page_permissions "github.com/port-labs/terraform-provider-port-labs/port/page-permissions"
-	"os"
-
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -17,10 +13,13 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/port/aggregation-properties"
 	"github.com/port-labs/terraform-provider-port-labs/port/blueprint"
 	"github.com/port-labs/terraform-provider-port-labs/port/entity"
+	"github.com/port-labs/terraform-provider-port-labs/port/page"
+	"github.com/port-labs/terraform-provider-port-labs/port/page-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/port/scorecard"
 	"github.com/port-labs/terraform-provider-port-labs/port/team"
 	"github.com/port-labs/terraform-provider-port-labs/port/webhook"
 	"github.com/port-labs/terraform-provider-port-labs/version"
+	"os"
 )
 
 var (

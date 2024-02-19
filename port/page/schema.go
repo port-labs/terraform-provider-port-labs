@@ -56,11 +56,6 @@ func PageSchema() map[string]schema.Attribute {
 			Description: "The blueprint for which the page is created, relevant only for pages of type \"blueprint-entities\"",
 			Optional:    true,
 		},
-		//"required_query_params": schema.ListAttribute{
-		//	Description: "The required query params for the page",
-		//	Optional:    true,
-		//	ElementType: types.StringType,
-		//},
 		"widgets": schema.ListAttribute{
 			Description: "The widgets of the page",
 			Optional:    true,

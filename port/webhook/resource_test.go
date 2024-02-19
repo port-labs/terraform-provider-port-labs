@@ -107,7 +107,6 @@ func TestAccPortWebhook(t *testing.T) {
 		]
 		lifecycle {
 			ignore_changes = [
-			  //security.secret
 			]
 		  }
 		  depends_on = [
@@ -192,7 +191,6 @@ func TestAccPortWebhookImport(t *testing.T) {
 		]
 		lifecycle {
 			ignore_changes = [
-			  //security.secret
 			]
 		  }
 		depends_on = [

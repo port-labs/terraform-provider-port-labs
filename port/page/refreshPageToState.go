@@ -19,8 +19,7 @@ func refreshPageToState(pm *PageModel, b *cli.Page) error {
 
 	pm.Widgets = make([]types.String, len(*b.Widgets))
 	if b.Widgets != nil {
-		// b.Widgets is a *[]map[string]any which can be recursive, so we need to remove the created_at and updated_at fields from all the widgets
-		// before we can marshal it into a string, each widget is a map[string]any and can contain widget key which is a *[]map[string]any
+		// go over each widget and convert it to a string and store it in the widgets array
 		for i, widget := range *b.Widgets {
 			bWidget, err := json.Marshal(widget)
 			if err != nil {

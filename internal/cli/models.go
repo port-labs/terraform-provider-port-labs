@@ -235,6 +235,16 @@ type (
 		Widgets    *[]map[string]any `json:"widgets,omitempty"`
 	}
 
+	PageReadPermissions struct {
+		Users []string `json:"users"`
+		Roles []string `json:"roles"`
+		Teams []string `json:"teams"`
+	}
+
+	PagePermissions struct {
+		Read PageReadPermissions `json:"read"`
+	}
+
 	Relation struct {
 		Identifier *string `json:"identifier,omitempty"`
 		Title      *string `json:"title,omitempty"`
@@ -335,6 +345,11 @@ type PortBody struct {
 	Page              Page              `json:"page"`
 	MigrationId       string            `json:"migrationId"`
 	Migration         Migration         `json:"migration"`
+}
+
+type PortPagePermissionsBody struct {
+	OK              bool            `json:"ok"`
+	PagePermissions PagePermissions `json:"permissions"`
 }
 
 type TeamUserBody struct {

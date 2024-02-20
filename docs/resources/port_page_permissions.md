@@ -107,9 +107,6 @@ resource "port_page_permissions" "microservices_permissions" {
 ### Required
 
 - `page_identifier` (String)
-
-### Optional
-
 - `read` (Attributes) The permission to read the page (see [below for nested schema](#nestedatt--read))
 
 ### Read-Only

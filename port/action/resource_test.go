@@ -511,6 +511,30 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 				]
 			  }
 			}
+			array_props = {
+				myArrayPropIdentifier = {
+					title      = "myArrayPropIdentifier"
+					required   = true
+					format     = "array"
+					blueprint  = port_blueprint.microservice.id
+					string_items ={
+						blueprint = port_blueprint.microservice.id
+						format = "entity"
+						dataset = {
+							"combinator" : "and",
+							"rules" : [
+							  {
+								"property" : "$identifier",
+								"operator" : "containsAny",
+								"value" : {
+								  "jq_query" : "Test"
+								}
+							  }
+							]
+						}
+					}
+				}
+			}
 		  }
 		}
 	  }`, actionIdentifier)
@@ -544,6 +568,10 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.property", "$team"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.operator", "containsAny"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.value.jq_query", "Test"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.array_props.myArrayPropIdentifier.string_items.dataset.combinator", "and"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.array_props.myArrayPropIdentifier.string_items.dataset.rules.0.property", "$identifier"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.array_props.myArrayPropIdentifier.string_items.dataset.rules.0.operator", "containsAny"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.array_props.myArrayPropIdentifier.string_items.dataset.rules.0.value.jq_query", "Test"),
 				),
 			},
 		},

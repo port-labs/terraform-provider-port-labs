@@ -401,7 +401,14 @@ func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interfa
 				case *BooleanPropModel:
 					p.Dataset = dataset
 				case *ArrayPropModel:
-					p.Dataset = dataset
+					if (!p.StringItems.IsNull()) 
+						p.StringItems.Dataset = dataset
+					if (!p.NumberItems.IsNull()) 
+						p.NumberItems.Dataset = dataset
+					if (!p.ObjectItems.IsNull()) 
+						p.ObjectItems.Dataset = dataset
+					if (!p.BooleanItems.IsNull()) 
+						p.BooleanItems.Dataset = dataset
 				case *ObjectPropModel:
 					p.Dataset = dataset
 				}

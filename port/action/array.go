@@ -38,6 +38,10 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.ActionProperty, p
 			items["enum"] = enumList
 		}
 
+		if !prop.StringItems.Dataset.IsNull() {
+			items["dataset"] = actionDataSetToPortBody(prop.StringItems.Dataset)
+		}
+
 		if !prop.StringItems.Format.IsNull() {
 			items["format"] = prop.StringItems.Format.ValueString()
 		}
@@ -76,6 +80,10 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.ActionProperty, p
 			items["enum"] = enumList
 		}
 
+		if !prop.NumberItems.Dataset.IsNull() {
+			items["dataset"] = actionDataSetToPortBody(prop.NumberItems.Dataset)
+		}
+
 		if !prop.NumberItems.EnumJqQuery.IsNull() {
 			enumJqQueryMap := map[string]string{
 				"jqQuery": prop.NumberItems.EnumJqQuery.ValueString(),
@@ -98,6 +106,10 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.ActionProperty, p
 			items["default"] = defaultList
 		}
 
+		if !prop.BooleanItems.Dataset.IsNull() {
+			items["dataset"] = actionDataSetToPortBody(prop.BooleanItems.Dataset)
+		}
+
 		property.Items = items
 	}
 
@@ -110,6 +122,10 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.ActionProperty, p
 				return err
 			}
 			items["default"] = defaultList
+		}
+
+		if !prop.ObjectItems.Dataset.IsNull() {
+			items["dataset"] = actionDataSetToPortBody(prop.ObjectItems.Dataset)
 		}
 
 		property.Items = items
@@ -164,9 +180,6 @@ func arrayPropResourceToBody(ctx context.Context, d *ActionModel, props map[stri
 				}
 				property.DependsOn = utils.InterfaceToStringArray(dependsOn)
 
-			}
-			if prop.Dataset != nil {
-				property.Dataset = actionDataSetToPortBody(prop.Dataset)
 			}
 
 			err := handleArrayItemsToBody(ctx, &property, prop, required)

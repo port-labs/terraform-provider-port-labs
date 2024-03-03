@@ -3,6 +3,7 @@ package action
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -42,46 +43,6 @@ func MetadataProperties() map[string]schema.Attribute {
 			MarkdownDescription: "The properties that this property depends on",
 			Optional:            true,
 			ElementType:         types.StringType,
-		},
-		"dataset": schema.SingleNestedAttribute{
-			MarkdownDescription: "The dataset of the property",
-			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"combinator": schema.StringAttribute{
-					MarkdownDescription: "The combinator of the dataset",
-					Required:            true,
-					Validators: []validator.String{
-						stringvalidator.OneOf("and", "or"),
-					},
-				},
-				"rules": schema.ListNestedAttribute{
-					MarkdownDescription: "The rules of the dataset",
-					Required:            true,
-					NestedObject: schema.NestedAttributeObject{
-						Attributes: map[string]schema.Attribute{
-							"blueprint": schema.StringAttribute{
-								MarkdownDescription: "The blueprint identifier of the rule",
-								Optional:            true,
-							},
-							"property": schema.StringAttribute{
-								MarkdownDescription: "The property identifier of the rule",
-								Optional:            true,
-							},
-							"operator": schema.StringAttribute{
-								MarkdownDescription: "The operator of the rule",
-								Required:            true,
-							},
-							"value": schema.ObjectAttribute{
-								MarkdownDescription: "The value of the rule",
-								Required:            true,
-								AttributeTypes: map[string]attr.Type{
-									"jq_query": types.StringType,
-								},
-							},
-						},
-					},
-				},
-			},
 		},
 	}
 }
@@ -355,6 +316,46 @@ func StringPropertySchema() schema.Attribute {
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("visible")),
 			},
 		},
+		"dataset": schema.SingleNestedAttribute{
+			MarkdownDescription: "The dataset of an the entity-format property",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"combinator": schema.StringAttribute{
+					MarkdownDescription: "The combinator of the dataset",
+					Required:            true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("and", "or"),
+					},
+				},
+				"rules": schema.ListNestedAttribute{
+					MarkdownDescription: "The rules of the dataset",
+					Required:            true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"blueprint": schema.StringAttribute{
+								MarkdownDescription: "The blueprint identifier of the rule",
+								Optional:            true,
+							},
+							"property": schema.StringAttribute{
+								MarkdownDescription: "The property identifier of the rule",
+								Optional:            true,
+							},
+							"operator": schema.StringAttribute{
+								MarkdownDescription: "The operator of the rule",
+								Required:            true,
+							},
+							"value": schema.ObjectAttribute{
+								MarkdownDescription: "The value of the rule",
+								Required:            true,
+								AttributeTypes: map[string]attr.Type{
+									"jq_query": types.StringType,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	utils.CopyMaps(stringPropertySchema, MetadataProperties())
@@ -557,8 +558,15 @@ func ArrayPropertySchema() schema.Attribute {
 						listvalidator.SizeAtLeast(1),
 					},
 				},
+				"enum_jq_query": schema.StringAttribute{
+					MarkdownDescription: "The enum jq query of the string items",
+					Optional:            true,
+					Validators: []validator.String{
+						stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
+					},
+				},
 				"dataset": schema.SingleNestedAttribute{
-					MarkdownDescription: "The dataset of the property",
+					MarkdownDescription: "The dataset of an the entity-format property",
 					Optional:            true,
 					Attributes: map[string]schema.Attribute{
 						"combinator": schema.StringAttribute{
@@ -595,13 +603,6 @@ func ArrayPropertySchema() schema.Attribute {
 								},
 							},
 						},
-					},
-				},
-				"enum_jq_query": schema.StringAttribute{
-					MarkdownDescription: "The enum jq query of the string items",
-					Optional:            true,
-					Validators: []validator.String{
-						stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
 					},
 				},
 			},
@@ -624,46 +625,6 @@ func ArrayPropertySchema() schema.Attribute {
 						listvalidator.SizeAtLeast(1),
 					},
 				},
-				"dataset": schema.SingleNestedAttribute{
-					MarkdownDescription: "The dataset of the property",
-					Optional:            true,
-					Attributes: map[string]schema.Attribute{
-						"combinator": schema.StringAttribute{
-							MarkdownDescription: "The combinator of the dataset",
-							Required:            true,
-							Validators: []validator.String{
-								stringvalidator.OneOf("and", "or"),
-							},
-						},
-						"rules": schema.ListNestedAttribute{
-							MarkdownDescription: "The rules of the dataset",
-							Required:            true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"blueprint": schema.StringAttribute{
-										MarkdownDescription: "The blueprint identifier of the rule",
-										Optional:            true,
-									},
-									"property": schema.StringAttribute{
-										MarkdownDescription: "The property identifier of the rule",
-										Optional:            true,
-									},
-									"operator": schema.StringAttribute{
-										MarkdownDescription: "The operator of the rule",
-										Required:            true,
-									},
-									"value": schema.ObjectAttribute{
-										MarkdownDescription: "The value of the rule",
-										Required:            true,
-										AttributeTypes: map[string]attr.Type{
-											"jq_query": types.StringType,
-										},
-									},
-								},
-							},
-						},
-					},
-				},
 				"enum_jq_query": schema.StringAttribute{
 					MarkdownDescription: "The enum jq query of the number items",
 					Optional:            true,
@@ -682,46 +643,6 @@ func ArrayPropertySchema() schema.Attribute {
 					Optional:            true,
 					ElementType:         types.BoolType,
 				},
-				"dataset": schema.SingleNestedAttribute{
-					MarkdownDescription: "The dataset of the property",
-					Optional:            true,
-					Attributes: map[string]schema.Attribute{
-						"combinator": schema.StringAttribute{
-							MarkdownDescription: "The combinator of the dataset",
-							Required:            true,
-							Validators: []validator.String{
-								stringvalidator.OneOf("and", "or"),
-							},
-						},
-						"rules": schema.ListNestedAttribute{
-							MarkdownDescription: "The rules of the dataset",
-							Required:            true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"blueprint": schema.StringAttribute{
-										MarkdownDescription: "The blueprint identifier of the rule",
-										Optional:            true,
-									},
-									"property": schema.StringAttribute{
-										MarkdownDescription: "The property identifier of the rule",
-										Optional:            true,
-									},
-									"operator": schema.StringAttribute{
-										MarkdownDescription: "The operator of the rule",
-										Required:            true,
-									},
-									"value": schema.ObjectAttribute{
-										MarkdownDescription: "The value of the rule",
-										Required:            true,
-										AttributeTypes: map[string]attr.Type{
-											"jq_query": types.StringType,
-										},
-									},
-								},
-							},
-						},
-					},
-				},
 			},
 		},
 		"object_items": schema.SingleNestedAttribute{
@@ -732,46 +653,6 @@ func ArrayPropertySchema() schema.Attribute {
 					MarkdownDescription: "The default of the items",
 					Optional:            true,
 					ElementType:         types.MapType{ElemType: types.StringType},
-				},
-				"dataset": schema.SingleNestedAttribute{
-					MarkdownDescription: "The dataset of the property",
-					Optional:            true,
-					Attributes: map[string]schema.Attribute{
-						"combinator": schema.StringAttribute{
-							MarkdownDescription: "The combinator of the dataset",
-							Required:            true,
-							Validators: []validator.String{
-								stringvalidator.OneOf("and", "or"),
-							},
-						},
-						"rules": schema.ListNestedAttribute{
-							MarkdownDescription: "The rules of the dataset",
-							Required:            true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"blueprint": schema.StringAttribute{
-										MarkdownDescription: "The blueprint identifier of the rule",
-										Optional:            true,
-									},
-									"property": schema.StringAttribute{
-										MarkdownDescription: "The property identifier of the rule",
-										Optional:            true,
-									},
-									"operator": schema.StringAttribute{
-										MarkdownDescription: "The operator of the rule",
-										Required:            true,
-									},
-									"value": schema.ObjectAttribute{
-										MarkdownDescription: "The value of the rule",
-										Required:            true,
-										AttributeTypes: map[string]attr.Type{
-											"jq_query": types.StringType,
-										},
-									},
-								},
-							},
-						},
-					},
 				},
 			},
 		},

@@ -405,15 +405,6 @@ func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interfa
 					if p.StringItems != nil {
 						p.StringItems.Dataset = dataset
 					}
-					if p.NumberItems != nil {
-						p.NumberItems.Dataset = dataset
-					}
-					if p.ObjectItems != nil {
-						p.ObjectItems.Dataset = dataset
-					}
-					if p.BooleanItems != nil {
-						p.BooleanItems.Dataset = dataset
-					}
 				case *ObjectPropModel:
 					p.Dataset = dataset
 				}

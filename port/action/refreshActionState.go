@@ -3,8 +3,9 @@ package action
 import (
 	"context"
 	"fmt"
-	"github.com/samber/lo"
 	"reflect"
+
+	"github.com/samber/lo"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
@@ -401,14 +402,18 @@ func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interfa
 				case *BooleanPropModel:
 					p.Dataset = dataset
 				case *ArrayPropModel:
-					if (!p.StringItems.IsNull()) 
+					if p.StringItems != nil {
 						p.StringItems.Dataset = dataset
-					if (!p.NumberItems.IsNull()) 
+					}
+					if p.NumberItems != nil {
 						p.NumberItems.Dataset = dataset
-					if (!p.ObjectItems.IsNull()) 
+					}
+					if p.ObjectItems != nil {
 						p.ObjectItems.Dataset = dataset
-					if (!p.BooleanItems.IsNull()) 
+					}
+					if p.BooleanItems != nil {
 						p.BooleanItems.Dataset = dataset
+					}
 				case *ObjectPropModel:
 					p.Dataset = dataset
 				}

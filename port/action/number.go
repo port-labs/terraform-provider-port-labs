@@ -81,10 +81,6 @@ func numberPropResourceToBody(ctx context.Context, state *ActionModel, props map
 
 			}
 
-			if prop.Dataset != nil {
-				property.Dataset = actionDataSetToPortBody(prop.Dataset)
-			}
-
 			if !prop.Visible.IsNull() {
 				property.Visible = prop.Visible.ValueBoolPointer()
 			}

@@ -234,6 +234,9 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 				if value, ok := v.Items["blueprint"]; ok && value != nil {
 					arrayProp.StringItems.Blueprint = types.StringValue(v.Items["blueprint"].(string))
 				}
+				if value, ok := v.Items["dataset"]; ok && value != nil {
+					arrayProp.StringItems.Dataset = writeDatasetToResource(v.Items["dataset"].(*cli.Dataset))
+				}
 
 				if value, ok := v.Items["enum"]; ok && value != nil {
 					v := reflect.ValueOf(value)

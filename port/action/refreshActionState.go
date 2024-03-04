@@ -58,18 +58,16 @@ func writeInvocationMethodToResource(a *cli.Action, state *ActionModel) {
 	}
 }
 
-func writeDatasetToResource(v cli.ActionProperty) *DatasetModel {
-	if v.Dataset == nil {
+func writeDatasetToResource(ds *cli.Dataset) *DatasetModel {
+	if ds == nil {
 		return nil
 	}
 
-	dataset := v.Dataset
-
 	datasetModel := &DatasetModel{
-		Combinator: types.StringValue(dataset.Combinator),
+		Combinator: types.StringValue(ds.Combinator),
 	}
 
-	for _, v := range dataset.Rules {
+	for _, v := range ds.Rules {
 		rule := &Rule{
 			Blueprint: flex.GoStringToFramework(v.Blueprint),
 			Property:  flex.GoStringToFramework(v.Property),
@@ -389,25 +387,6 @@ func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interfa
 				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
 			case *ObjectPropModel:
 				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
-			}
-
-		case "Dataset":
-			dataset := writeDatasetToResource(v)
-			if dataset != nil {
-				switch p := prop.(type) {
-				case *StringPropModel:
-					p.Dataset = dataset
-				case *NumberPropModel:
-					p.Dataset = dataset
-				case *BooleanPropModel:
-					p.Dataset = dataset
-				case *ArrayPropModel:
-					if p.StringItems != nil {
-						p.StringItems.Dataset = dataset
-					}
-				case *ObjectPropModel:
-					p.Dataset = dataset
-				}
 			}
 
 		case "Visible":

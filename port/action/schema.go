@@ -566,7 +566,7 @@ func ArrayPropertySchema() schema.Attribute {
 					},
 				},
 				"dataset": schema.SingleNestedAttribute{
-					MarkdownDescription: "The dataset of an the entity-format property",
+					MarkdownDescription: "The dataset of an the entity-format items",
 					Optional:            true,
 					Attributes: map[string]schema.Attribute{
 						"combinator": schema.StringAttribute{

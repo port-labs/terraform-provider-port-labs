@@ -515,9 +515,8 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 				myArrayPropIdentifier = {
 					title      = "myArrayPropIdentifier"
 					required   = true
-					format     = "array"
 					blueprint  = port_blueprint.microservice.id
-					string_items ={
+					string_items = {
 						blueprint = port_blueprint.microservice.id
 						format = "entity"
 						dataset = {

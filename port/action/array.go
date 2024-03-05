@@ -38,8 +38,13 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.ActionProperty, p
 			items["enum"] = enumList
 		}
 
-		if prop.StringItems.Dataset != nil {
-			items["dataset"] = actionDataSetToPortBody(prop.StringItems.Dataset)
+		if !prop.StringItems.Dataset.IsNull() {
+			v, err := utils.TerraformJsonStringToGoObject(prop.StringItems.Dataset.ValueStringPointer())
+			if err != nil {
+				return err
+			}
+
+			items["dataset"] = v
 		}
 
 		if !prop.StringItems.Format.IsNull() {
@@ -235,7 +240,11 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 					arrayProp.StringItems.Blueprint = types.StringValue(v.Items["blueprint"].(string))
 				}
 				if value, ok := v.Items["dataset"]; ok && value != nil {
-					arrayProp.StringItems.Dataset = writeDatasetToResource(v.Items["dataset"].(*cli.Dataset))
+					ds, err := utils.GoObjectToTerraformString(v.Items["dataset"])
+					if err != nil {
+						return nil, err
+					}
+					arrayProp.StringItems.Dataset = ds
 				}
 
 				if value, ok := v.Items["enum"]; ok && value != nil {

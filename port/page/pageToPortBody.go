@@ -1,9 +1,9 @@
 package page
 
 import (
-	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
 func PageToPortBody(pm *PageModel) (*cli.Page, error) {
@@ -33,11 +33,13 @@ func widgetsToPortBody(widgets []types.String) (*[]map[string]any, error) {
 	}
 	widgetsBody := make([]map[string]any, len(widgets))
 	for i, w := range widgets {
-		var widgetObject map[string]any
-		if err := json.Unmarshal([]byte(w.ValueString()), &widgetObject); err != nil {
+		v, err := utils.TerraformJsonStringToGoObject(w.ValueStringPointer())
+
+		if err != nil {
 			return nil, err
 		}
-		widgetsBody[i] = widgetObject
+
+		widgetsBody[i] = *v
 	}
 
 	return &widgetsBody, nil

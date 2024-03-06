@@ -645,7 +645,7 @@ func ArrayPropertySchema() schema.Attribute {
 
 func (r *ActionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Action resource",
+		MarkdownDescription: actionResourceMarkdownDescription,
 		Attributes:          ActionSchema(),
 	}
 }

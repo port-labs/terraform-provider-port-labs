@@ -3,12 +3,221 @@
 page_title: "port_action Resource - terraform-provider-port-labs"
 subcategory: ""
 description: |-
-  Action resource
+  Action
+  This resource allows you to manage self-service action.
+  See the Port documentation https://docs.getport.io/create-self-service-experiences/ for more information about self-service actions.
+  Example Usage
+  Create a blueprint and an action relating to that blueprint which triggers a github workflow:
+  ```hcl
+  resource "portblueprint" "myBlueprint" {
+    icon       = "Terraform"
+    identifier = "myBlueprint"
+    title      = "My Blueprint"
+    properties = {
+      numberprops = {
+        "numberProp" = {
+          title    = "Number Property"
+          required = false
+        }
+      }
+    }
+  }
+  resource "portaction" "myAction" {
+    title             = "My Action"
+    blueprint         = portblueprint.myBlueprint.identifier
+    identifier        = "myAction"
+    trigger           = "CREATE"
+    requiredapproval = false
+    githubmethod = {
+      org      = "your-org"
+      repo     = "your-repo"
+      workflow = "your-workflow"
+    }
+    userproperties = {
+      stringprops = {
+        stringValue = {
+          title = "String Value"
+        }
+      }
+      number_props = {
+        "numberProp" = {
+          title    = "Number Value"
+          required = true
+        }
+      }
+    }
+  }
+  ```
+  Create related "parent" and "child" blueprints and a CREATE action for the child blueprint with user inputs to select entities from the parent blueprint and triggers a github workflow:
+  ```hcl
+  resource "port_blueprint" "parent" {
+    icon       = "Terraform"
+    title      = "Parent"
+    identifier = "parent"
+    properties = {}
+  }
+  resource "portblueprint" "child" {
+    icon       = "Terraform"
+    title      = "Child"
+    identifier = "child"
+    properties = {}
+    relations = {
+      "childOf" = {
+        title    = "Child Of"
+        many     = true
+        required = false
+        target   = portblueprint.parent.identifier
+      }
+    }
+  }
+  resource "portaction" "myAction" {
+    title             = "My Action"
+    blueprint         = portblueprint.child.identifier
+    identifier        = "myAction"
+    trigger           = "CREATE"
+    requiredapproval = false
+    githubmethod = {
+      org      = "your-org"
+      repo     = "your-repo"
+      workflow = "your-workflow"
+    }
+    userproperties = {
+      stringprops = {
+        singleParent = {
+          title     = "Single Parent Entity Selection"
+          format    = "entity"
+          blueprint = portblueprint.parent.identifier
+        }
+      }
+      arrayprops = {
+        miltipleParents = {
+          title = "Single Parent Entity Selection"
+          stringitems = {
+            format    = "entity"
+            blueprint = portblueprint.parent.identifier
+          }
+        }
+      }
+    }
+  }
+  ```
 ---
 
 # port_action (Resource)
 
-Action resource
+# Action
+
+This resource allows you to manage self-service action.
+
+See the [Port documentation](https://docs.getport.io/create-self-service-experiences/) for more information about self-service actions.
+
+## Example Usage
+
+Create a blueprint and an action relating to that blueprint which triggers a github workflow:
+
+```hcl
+
+resource "port_blueprint" "myBlueprint" {
+  icon       = "Terraform"
+  identifier = "myBlueprint"
+  title      = "My Blueprint"
+  properties = {
+	number_props = {
+	  "numberProp" = {
+		title    = "Number Property"
+		required = false
+	  }
+	}
+  }
+}
+
+resource "port_action" "myAction" {
+  title             = "My Action"
+  blueprint         = port_blueprint.myBlueprint.identifier
+  identifier        = "myAction"
+  trigger           = "CREATE"
+  required_approval = false
+  github_method = {
+	org      = "your-org"
+	repo     = "your-repo"
+	workflow = "your-workflow"
+  }
+  user_properties = {
+	string_props = {
+	  stringValue = {
+		title = "String Value"
+	  }
+	}
+	number_props = {
+	  "numberProp" = {
+		title    = "Number Value"
+		required = true
+	  }
+	}
+  }
+}
+
+```
+
+Create related "parent" and "child" blueprints and a CREATE action for the child blueprint with user inputs to select entities from the parent blueprint and triggers a github workflow:
+
+```hcl
+
+
+resource "port_blueprint" "parent" {
+  icon       = "Terraform"
+  title      = "Parent"
+  identifier = "parent"
+  properties = {}
+}
+
+resource "port_blueprint" "child" {
+  icon       = "Terraform"
+  title      = "Child"
+  identifier = "child"
+  properties = {}
+  relations = {
+	"childOf" = {
+	  title    = "Child Of"
+	  many     = true
+	  required = false
+	  target   = port_blueprint.parent.identifier
+	}
+  }
+}
+
+resource "port_action" "myAction" {
+  title             = "My Action"
+  blueprint         = port_blueprint.child.identifier
+  identifier        = "myAction"
+  trigger           = "CREATE"
+  required_approval = false
+  github_method = {
+	org      = "your-org"
+	repo     = "your-repo"
+	workflow = "your-workflow"
+  }
+  user_properties = {
+	string_props = {
+	  singleParent = {
+		title     = "Single Parent Entity Selection"
+		format    = "entity"
+		blueprint = port_blueprint.parent.identifier
+	  }
+	}
+	array_props = {
+	  miltipleParents = {
+		title = "Single Parent Entity Selection"
+		string_items = {
+		  format    = "entity"
+		  blueprint = port_blueprint.parent.identifier
+		}
+	  }
+	}
+  }
+}
+
+```
 
 
 
@@ -126,7 +335,6 @@ Optional:
 Optional:
 
 - `boolean_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--boolean_items))
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--array_props--dataset))
 - `default_jq_query` (String) The default jq query of the array property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
@@ -147,37 +355,6 @@ Optional:
 Optional:
 
 - `default` (List of Boolean) The default of the items
-
-
-<a id="nestedatt--user_properties--array_props--dataset"></a>
-### Nested Schema for `user_properties.array_props.dataset`
-
-Required:
-
-- `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--array_props--dataset--rules))
-
-<a id="nestedatt--user_properties--array_props--dataset--rules"></a>
-### Nested Schema for `user_properties.array_props.dataset.rules`
-
-Required:
-
-- `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--array_props--dataset--rules--value))
-
-Optional:
-
-- `blueprint` (String) The blueprint identifier of the rule
-- `property` (String) The property identifier of the rule
-
-<a id="nestedatt--user_properties--array_props--dataset--rules--value"></a>
-### Nested Schema for `user_properties.array_props.dataset.rules.value`
-
-Optional:
-
-- `jq_query` (String)
-
-
 
 
 <a id="nestedatt--user_properties--array_props--number_items"></a>
@@ -204,6 +381,7 @@ Optional:
 Optional:
 
 - `blueprint` (String) The blueprint identifier the property relates to
+- `dataset` (String) The dataset of an the entity-format items
 - `default` (List of String) The default of the items
 - `enum` (List of String) The enum of the items
 - `enum_jq_query` (String) The enum jq query of the string items
@@ -216,7 +394,6 @@ Optional:
 
 Optional:
 
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--boolean_props--dataset))
 - `default` (Boolean) The default of the boolean property
 - `default_jq_query` (String) The default jq query of the boolean property
 - `depends_on` (List of String) The properties that this property depends on
@@ -227,44 +404,12 @@ Optional:
 - `visible` (Boolean) The visibility of the boolean property
 - `visible_jq_query` (String) The visibility condition jq query of the boolean property
 
-<a id="nestedatt--user_properties--boolean_props--dataset"></a>
-### Nested Schema for `user_properties.boolean_props.dataset`
-
-Required:
-
-- `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--boolean_props--dataset--rules))
-
-<a id="nestedatt--user_properties--boolean_props--dataset--rules"></a>
-### Nested Schema for `user_properties.boolean_props.dataset.rules`
-
-Required:
-
-- `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--boolean_props--dataset--rules--value))
-
-Optional:
-
-- `blueprint` (String) The blueprint identifier of the rule
-- `property` (String) The property identifier of the rule
-
-<a id="nestedatt--user_properties--boolean_props--dataset--rules--value"></a>
-### Nested Schema for `user_properties.boolean_props.dataset.rules.value`
-
-Optional:
-
-- `jq_query` (String)
-
-
-
-
 
 <a id="nestedatt--user_properties--number_props"></a>
 ### Nested Schema for `user_properties.number_props`
 
 Optional:
 
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--number_props--dataset))
 - `default` (Number) The default of the number property
 - `default_jq_query` (String) The default jq query of the number property
 - `depends_on` (List of String) The properties that this property depends on
@@ -279,44 +424,12 @@ Optional:
 - `visible` (Boolean) The visibility of the number property
 - `visible_jq_query` (String) The visibility condition jq query of the number property
 
-<a id="nestedatt--user_properties--number_props--dataset"></a>
-### Nested Schema for `user_properties.number_props.dataset`
-
-Required:
-
-- `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--number_props--dataset--rules))
-
-<a id="nestedatt--user_properties--number_props--dataset--rules"></a>
-### Nested Schema for `user_properties.number_props.dataset.rules`
-
-Required:
-
-- `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--number_props--dataset--rules--value))
-
-Optional:
-
-- `blueprint` (String) The blueprint identifier of the rule
-- `property` (String) The property identifier of the rule
-
-<a id="nestedatt--user_properties--number_props--dataset--rules--value"></a>
-### Nested Schema for `user_properties.number_props.dataset.rules.value`
-
-Optional:
-
-- `jq_query` (String)
-
-
-
-
 
 <a id="nestedatt--user_properties--object_props"></a>
 ### Nested Schema for `user_properties.object_props`
 
 Optional:
 
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--object_props--dataset))
 - `default` (String) The default of the object property
 - `default_jq_query` (String) The default jq query of the object property
 - `depends_on` (List of String) The properties that this property depends on
@@ -328,37 +441,6 @@ Optional:
 - `visible` (Boolean) The visibility of the object property
 - `visible_jq_query` (String) The visibility condition jq query of the object property
 
-<a id="nestedatt--user_properties--object_props--dataset"></a>
-### Nested Schema for `user_properties.object_props.dataset`
-
-Required:
-
-- `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--object_props--dataset--rules))
-
-<a id="nestedatt--user_properties--object_props--dataset--rules"></a>
-### Nested Schema for `user_properties.object_props.dataset.rules`
-
-Required:
-
-- `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--object_props--dataset--rules--value))
-
-Optional:
-
-- `blueprint` (String) The blueprint identifier of the rule
-- `property` (String) The property identifier of the rule
-
-<a id="nestedatt--user_properties--object_props--dataset--rules--value"></a>
-### Nested Schema for `user_properties.object_props.dataset.rules.value`
-
-Optional:
-
-- `jq_query` (String)
-
-
-
-
 
 <a id="nestedatt--user_properties--string_props"></a>
 ### Nested Schema for `user_properties.string_props`
@@ -366,7 +448,7 @@ Optional:
 Optional:
 
 - `blueprint` (String) The blueprint identifier the string property relates to
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--user_properties--string_props--dataset))
+- `dataset` (Attributes) The dataset of an the entity-format property (see [below for nested schema](#nestedatt--user_properties--string_props--dataset))
 - `default` (String) The default of the string property
 - `default_jq_query` (String) The default jq query of the string property
 - `depends_on` (List of String) The properties that this property depends on

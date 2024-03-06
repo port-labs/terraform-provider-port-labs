@@ -818,4 +818,87 @@ resource "port_action" "myAction" {
 
 ` + "```" + `
 
+
+Create the same resources as in the previous example, but the action's entity selection properties will only allow entities which pass the ` + "`dataset`s" + `:
+
+` + "```hcl" + `
+
+resource "port_blueprint" "parent" {
+  icon       = "Terraform"
+  title      = "Parent"
+  identifier = "parent"
+  properties = {}
+}
+
+resource "port_blueprint" "child" {
+  icon       = "Terraform"
+  title      = "Child"
+  identifier = "child"
+  properties = {}
+  relations = {
+	"childOf" = {
+	  title    = "Child Of"
+	  many     = true
+	  required = false
+	  target   = port_blueprint.parent.identifier
+	}
+  }
+}
+
+resource "port_action" "myAction" {
+  title             = "My Action"
+  blueprint         = port_blueprint.child.identifier
+  identifier        = "myAction"
+  trigger           = "CREATE"
+  required_approval = false
+  github_method = {
+	org                    = "your-org"
+	repo                   = "your-repo"
+	workflow               = "your-workflow"
+	omit_payload           = true
+	omit_user_inputs       = true
+	report_workflow_status = true
+  }
+  user_properties = {
+	string_props = {
+	  singleParent = {
+		title     = "Single Parent Entity Selection"
+		format    = "entity"
+		blueprint = port_blueprint.parent.identifier
+		dataset = {
+		  combinator = "and"
+		  rules = [{
+			property = "$title"
+			operator = "contains"
+			value = {
+			  jq_query = "\"specificValue\""
+			}
+		  }]
+		}
+	  }
+	}
+	array_props = {
+	  miltipleParents = {
+		title = "Single Parent Entity Selection"
+		string_items = {
+		  format    = "entity"
+		  blueprint = port_blueprint.parent.identifier
+		  dataset = jsonencode({
+			combinator = "and"
+			rules = [{
+			  property = "$title"
+			  operator = "contains"
+			  value    = "specificValue"
+			}]
+		  })
+		}
+	  }
+	}
+  }
+}
+
+` + "```" + `
+
+
+
 `

@@ -1,8 +1,8 @@
 package aggregation_properties
 
 import (
-	"encoding/json"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
 func aggregationPropertiesToBody(state *AggregationPropertiesModel) (*map[string]cli.BlueprintAggregationProperty, error) {
@@ -49,7 +49,7 @@ func aggregationPropertiesToBody(state *AggregationPropertiesModel) (*map[string
 			}
 		}
 
-		query, err := queryToPortBody(aggregationProperty.Query.ValueStringPointer())
+		query, err := utils.TerraformJsonStringToGoObject(aggregationProperty.Query.ValueStringPointer())
 
 		if err != nil {
 			return nil, err
@@ -65,17 +65,4 @@ func aggregationPropertiesToBody(state *AggregationPropertiesModel) (*map[string
 	}
 
 	return &aggregationProperties, nil
-}
-
-func queryToPortBody(query *string) (*map[string]any, error) {
-	if query == nil || *query == "" {
-		return nil, nil
-	}
-
-	queryMap := make(map[string]any)
-	if err := json.Unmarshal([]byte(*query), &queryMap); err != nil {
-		return nil, err
-	}
-
-	return &queryMap, nil
 }

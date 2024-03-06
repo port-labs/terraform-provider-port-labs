@@ -85,6 +85,19 @@ func GoObjectToTerraformString(v interface{}) (types.String, error) {
 	return types.StringValue(value), nil
 }
 
+func TerraformJsonStringToGoObject(v *string) (*map[string]any, error) {
+	if v == nil || *v == "" {
+		return nil, nil
+	}
+
+	vMap := make(map[string]any)
+	if err := json.Unmarshal([]byte(*v), &vMap); err != nil {
+		return nil, err
+	}
+
+	return &vMap, nil
+}
+
 func InterfaceToStringArray(o interface{}) []string {
 	items := o.([]interface{})
 	res := make([]string, len(items))

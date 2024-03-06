@@ -3,6 +3,7 @@ package action
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -42,46 +43,6 @@ func MetadataProperties() map[string]schema.Attribute {
 			MarkdownDescription: "The properties that this property depends on",
 			Optional:            true,
 			ElementType:         types.StringType,
-		},
-		"dataset": schema.SingleNestedAttribute{
-			MarkdownDescription: "The dataset of the property",
-			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"combinator": schema.StringAttribute{
-					MarkdownDescription: "The combinator of the dataset",
-					Required:            true,
-					Validators: []validator.String{
-						stringvalidator.OneOf("and", "or"),
-					},
-				},
-				"rules": schema.ListNestedAttribute{
-					MarkdownDescription: "The rules of the dataset",
-					Required:            true,
-					NestedObject: schema.NestedAttributeObject{
-						Attributes: map[string]schema.Attribute{
-							"blueprint": schema.StringAttribute{
-								MarkdownDescription: "The blueprint identifier of the rule",
-								Optional:            true,
-							},
-							"property": schema.StringAttribute{
-								MarkdownDescription: "The property identifier of the rule",
-								Optional:            true,
-							},
-							"operator": schema.StringAttribute{
-								MarkdownDescription: "The operator of the rule",
-								Required:            true,
-							},
-							"value": schema.ObjectAttribute{
-								MarkdownDescription: "The value of the rule",
-								Required:            true,
-								AttributeTypes: map[string]attr.Type{
-									"jq_query": types.StringType,
-								},
-							},
-						},
-					},
-				},
-			},
 		},
 	}
 }
@@ -355,6 +316,46 @@ func StringPropertySchema() schema.Attribute {
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("visible")),
 			},
 		},
+		"dataset": schema.SingleNestedAttribute{
+			MarkdownDescription: "The dataset of an the entity-format property",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"combinator": schema.StringAttribute{
+					MarkdownDescription: "The combinator of the dataset",
+					Required:            true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("and", "or"),
+					},
+				},
+				"rules": schema.ListNestedAttribute{
+					MarkdownDescription: "The rules of the dataset",
+					Required:            true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"blueprint": schema.StringAttribute{
+								MarkdownDescription: "The blueprint identifier of the rule",
+								Optional:            true,
+							},
+							"property": schema.StringAttribute{
+								MarkdownDescription: "The property identifier of the rule",
+								Optional:            true,
+							},
+							"operator": schema.StringAttribute{
+								MarkdownDescription: "The operator of the rule",
+								Required:            true,
+							},
+							"value": schema.ObjectAttribute{
+								MarkdownDescription: "The value of the rule",
+								Required:            true,
+								AttributeTypes: map[string]attr.Type{
+									"jq_query": types.StringType,
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	utils.CopyMaps(stringPropertySchema, MetadataProperties())
@@ -564,6 +565,10 @@ func ArrayPropertySchema() schema.Attribute {
 						stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
 					},
 				},
+				"dataset": schema.StringAttribute{
+					MarkdownDescription: "The dataset of an the entity-format items",
+					Optional:            true,
+				},
 			},
 		},
 		"number_items": schema.SingleNestedAttribute{
@@ -640,7 +645,7 @@ func ArrayPropertySchema() schema.Attribute {
 
 func (r *ActionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Action resource",
+		MarkdownDescription: actionResourceMarkdownDescription,
 		Attributes:          ActionSchema(),
 	}
 }
@@ -696,3 +701,204 @@ func validateUserInputRequiredNotSetToFalse(state *ActionModel, resp *resource.V
 		}
 	}
 }
+
+var actionResourceMarkdownDescription = `
+
+# Action
+
+This resource allows you to manage self-service action.
+
+See the [Port documentation](https://docs.getport.io/create-self-service-experiences/) for more information about self-service actions.
+
+## Example Usage
+
+Create a blueprint and an action relating to that blueprint which triggers a github workflow:
+
+` + "```hcl" + `
+
+resource "port_blueprint" "myBlueprint" {
+  icon       = "Terraform"
+  identifier = "myBlueprint"
+  title      = "My Blueprint"
+  properties = {
+	number_props = {
+	  "numberProp" = {
+		title    = "Number Property"
+		required = false
+	  }
+	}
+  }
+}
+
+resource "port_action" "myAction" {
+  title             = "My Action"
+  blueprint         = port_blueprint.myBlueprint.identifier
+  identifier        = "myAction"
+  trigger           = "CREATE"
+  required_approval = false
+  github_method = {
+	org      = "your-org"
+	repo     = "your-repo"
+	workflow = "your-workflow"
+  }
+  user_properties = {
+	string_props = {
+	  stringValue = {
+		title = "String Value"
+	  }
+	}
+	number_props = {
+	  "numberProp" = {
+		title    = "Number Value"
+		required = true
+	  }
+	}
+  }
+}
+
+` + "```" + `
+
+Create related "parent" and "child" blueprints and a CREATE action for the child blueprint with user inputs to select entities from the parent blueprint and triggers a github workflow:
+
+` + "```hcl" + `
+
+
+resource "port_blueprint" "parent" {
+  icon       = "Terraform"
+  title      = "Parent"
+  identifier = "parent"
+  properties = {}
+}
+
+resource "port_blueprint" "child" {
+  icon       = "Terraform"
+  title      = "Child"
+  identifier = "child"
+  properties = {}
+  relations = {
+	"childOf" = {
+	  title    = "Child Of"
+	  many     = true
+	  required = false
+	  target   = port_blueprint.parent.identifier
+	}
+  }
+}
+
+resource "port_action" "myAction" {
+  title             = "My Action"
+  blueprint         = port_blueprint.child.identifier
+  identifier        = "myAction"
+  trigger           = "CREATE"
+  required_approval = false
+  github_method = {
+	org      = "your-org"
+	repo     = "your-repo"
+	workflow = "your-workflow"
+  }
+  user_properties = {
+	string_props = {
+	  singleParent = {
+		title     = "Single Parent Entity Selection"
+		format    = "entity"
+		blueprint = port_blueprint.parent.identifier
+	  }
+	}
+	array_props = {
+	  miltipleParents = {
+		title = "Single Parent Entity Selection"
+		string_items = {
+		  format    = "entity"
+		  blueprint = port_blueprint.parent.identifier
+		}
+	  }
+	}
+  }
+}
+
+` + "```" + `
+
+
+Create the same resources as in the previous example, but the action's entity selection properties will only allow entities which pass the ` + "`dataset`s" + `:
+
+` + "```hcl" + `
+
+resource "port_blueprint" "parent" {
+  icon       = "Terraform"
+  title      = "Parent"
+  identifier = "parent"
+  properties = {}
+}
+
+resource "port_blueprint" "child" {
+  icon       = "Terraform"
+  title      = "Child"
+  identifier = "child"
+  properties = {}
+  relations = {
+	"childOf" = {
+	  title    = "Child Of"
+	  many     = true
+	  required = false
+	  target   = port_blueprint.parent.identifier
+	}
+  }
+}
+
+resource "port_action" "myAction" {
+  title             = "My Action"
+  blueprint         = port_blueprint.child.identifier
+  identifier        = "myAction"
+  trigger           = "CREATE"
+  required_approval = false
+  github_method = {
+	org                    = "your-org"
+	repo                   = "your-repo"
+	workflow               = "your-workflow"
+	omit_payload           = true
+	omit_user_inputs       = true
+	report_workflow_status = true
+  }
+  user_properties = {
+	string_props = {
+	  singleParent = {
+		title     = "Single Parent Entity Selection"
+		format    = "entity"
+		blueprint = port_blueprint.parent.identifier
+		dataset = {
+		  combinator = "and"
+		  rules = [{
+			property = "$title"
+			operator = "contains"
+			value = {
+			  jq_query = "\"specificValue\""
+			}
+		  }]
+		}
+	  }
+	}
+	array_props = {
+	  miltipleParents = {
+		title = "Single Parent Entity Selection"
+		string_items = {
+		  format    = "entity"
+		  blueprint = port_blueprint.parent.identifier
+		  dataset = jsonencode({
+			combinator = "and"
+			rules = [{
+			  property = "$title"
+			  operator = "contains"
+			  value    = "specificValue"
+			}]
+		  })
+		}
+	  }
+	}
+  }
+}
+
+` + "```" + `
+
+
+
+`

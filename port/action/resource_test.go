@@ -470,50 +470,72 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()
 	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
-	resource "port_action" "action1" {
-		title             = "Action 1"
-		blueprint         =  port_blueprint.microservice.id
-		identifier        = "%s"
-		trigger           = "DAY-2"
-		description       = "This is a test action"
-		required_approval = true
-		github_method = {
-		  org      = "port-labs"
-		  repo     = "Port"
-		  workflow = "lint"
+	
+resource "port_action" "action1" {
+	title             = "Action 1"
+	blueprint         = port_blueprint.microservice.id
+	identifier        = "%s"
+	trigger           = "DAY-2"
+	description       = "This is a test action"
+	required_approval = true
+	github_method = {
+	  org      = "port-labs"
+	  repo     = "Port"
+	  workflow = "lint"
+	}
+	user_properties = {
+	  string_props = {
+		myStringIdentifier = {
+		  title   = "myStringIdentifier"
+		  default = "default"
 		}
-		user_properties = {
-		  string_props = {
-			myStringIdentifier = {
-			  title      = "myStringIdentifier"
-			  default    = "default"
-			}
-			myStringIdentifier2 = {
-			  title      = "myStringIdentifier2"
-			  default    = "default"
-			  depends_on = ["myStringIdentifier"]
-			}
-			myStringIdentifier3 = {
-			  title      = "myStringIdentifier3"
-			  required   = true
-			  format     = "entity"
-			  blueprint  = port_blueprint.microservice.id
-			  dataset = {
-				"combinator" : "and",
-				"rules" : [
-				  {
-					"property" : "$team",
-					"operator" : "containsAny",
-					"value" : {
-					  "jq_query" : "Test"
-					}
-				  }
-				]
+		myStringIdentifier2 = {
+		  title      = "myStringIdentifier2"
+		  default    = "default"
+		  depends_on = ["myStringIdentifier"]
+		}
+		myStringIdentifier3 = {
+		  title     = "myStringIdentifier3"
+		  required  = true
+		  format    = "entity"
+		  blueprint = port_blueprint.microservice.id
+		  dataset = {
+			"combinator" : "and",
+			"rules" : [
+			  {
+				"property" : "$team",
+				"operator" : "containsAny",
+				"value" : {
+				  "jq_query" : "Test"
+				}
 			  }
-			}
+			]
 		  }
 		}
-	  }`, actionIdentifier)
+	  }
+	  array_props = {
+		myArrayPropIdentifier = {
+		  title     = "myArrayPropIdentifier"
+		  required  = true
+		  blueprint = port_blueprint.microservice.id
+		  string_items = {
+			blueprint = port_blueprint.microservice.id
+			format    = "entity"
+			dataset = jsonencode({
+			  "combinator" : "and",
+			  "rules" : [
+				{
+				  "property" : "$identifier",
+				  "operator" : "containsAny",
+				  "value" : "Test"
+				}
+			  ]
+			})
+		  }
+		}
+	  }
+	}
+  }`, actionIdentifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -544,7 +566,7 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.property", "$team"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.operator", "containsAny"),
 					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.myStringIdentifier3.dataset.rules.0.value.jq_query", "Test"),
-				),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.array_props.myArrayPropIdentifier.string_items.dataset", "{\"combinator\":\"and\",\"rules\":[{\"operator\":\"containsAny\",\"property\":\"$identifier\",\"value\":\"Test\"}]}")),
 			},
 		},
 	})

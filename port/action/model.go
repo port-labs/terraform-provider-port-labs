@@ -71,15 +71,14 @@ type StringPropModel struct {
 }
 
 type NumberPropModel struct {
-	Title          types.String  `tfsdk:"title"`
-	Icon           types.String  `tfsdk:"icon"`
-	Description    types.String  `tfsdk:"description"`
-	Required       types.Bool    `tfsdk:"required"`
-	DependsOn      types.List    `tfsdk:"depends_on"`
-	Dataset        *DatasetModel `tfsdk:"dataset"`
-	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
-	Visible        types.Bool    `tfsdk:"visible"`
-	VisibleJqQuery types.String  `tfsdk:"visible_jq_query"`
+	Title          types.String `tfsdk:"title"`
+	Icon           types.String `tfsdk:"icon"`
+	Description    types.String `tfsdk:"description"`
+	Required       types.Bool   `tfsdk:"required"`
+	DependsOn      types.List   `tfsdk:"depends_on"`
+	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
+	Visible        types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
 
 	Default     types.Float64 `tfsdk:"default"`
 	Maximum     types.Float64 `tfsdk:"maximum"`
@@ -89,29 +88,27 @@ type NumberPropModel struct {
 }
 
 type BooleanPropModel struct {
-	Title          types.String  `tfsdk:"title"`
-	Icon           types.String  `tfsdk:"icon"`
-	Description    types.String  `tfsdk:"description"`
-	Required       types.Bool    `tfsdk:"required"`
-	DependsOn      types.List    `tfsdk:"depends_on"`
-	Dataset        *DatasetModel `tfsdk:"dataset"`
-	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
-	Visible        types.Bool    `tfsdk:"visible"`
-	VisibleJqQuery types.String  `tfsdk:"visible_jq_query"`
+	Title          types.String `tfsdk:"title"`
+	Icon           types.String `tfsdk:"icon"`
+	Description    types.String `tfsdk:"description"`
+	Required       types.Bool   `tfsdk:"required"`
+	DependsOn      types.List   `tfsdk:"depends_on"`
+	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
+	Visible        types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
 
 	Default types.Bool `tfsdk:"default"`
 }
 
 type ArrayPropModel struct {
-	Title          types.String  `tfsdk:"title"`
-	Icon           types.String  `tfsdk:"icon"`
-	Description    types.String  `tfsdk:"description"`
-	Required       types.Bool    `tfsdk:"required"`
-	DependsOn      types.List    `tfsdk:"depends_on"`
-	Dataset        *DatasetModel `tfsdk:"dataset"`
-	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
-	Visible        types.Bool    `tfsdk:"visible"`
-	VisibleJqQuery types.String  `tfsdk:"visible_jq_query"`
+	Title          types.String `tfsdk:"title"`
+	Icon           types.String `tfsdk:"icon"`
+	Description    types.String `tfsdk:"description"`
+	Required       types.Bool   `tfsdk:"required"`
+	DependsOn      types.List   `tfsdk:"depends_on"`
+	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
+	Visible        types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
 
 	MaxItems     types.Int64   `tfsdk:"max_items"`
 	MinItems     types.Int64   `tfsdk:"min_items"`
@@ -122,15 +119,14 @@ type ArrayPropModel struct {
 }
 
 type ObjectPropModel struct {
-	Title          types.String  `tfsdk:"title"`
-	Icon           types.String  `tfsdk:"icon"`
-	Description    types.String  `tfsdk:"description"`
-	Required       types.Bool    `tfsdk:"required"`
-	DependsOn      types.List    `tfsdk:"depends_on"`
-	Dataset        *DatasetModel `tfsdk:"dataset"`
-	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
-	Visible        types.Bool    `tfsdk:"visible"`
-	VisibleJqQuery types.String  `tfsdk:"visible_jq_query"`
+	Title          types.String `tfsdk:"title"`
+	Icon           types.String `tfsdk:"icon"`
+	Description    types.String `tfsdk:"description"`
+	Required       types.Bool   `tfsdk:"required"`
+	DependsOn      types.List   `tfsdk:"depends_on"`
+	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
+	Visible        types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
 
 	Default    types.String `tfsdk:"default"`
 	Encryption types.String `tfsdk:"encryption"`
@@ -142,6 +138,7 @@ type StringItems struct {
 	Default     types.List   `tfsdk:"default"`
 	Enum        types.List   `tfsdk:"enum"`
 	EnumJqQuery types.String `tfsdk:"enum_jq_query"`
+	Dataset     types.String `tfsdk:"dataset"`
 }
 
 type NumberItems struct {

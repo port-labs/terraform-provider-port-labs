@@ -701,3 +701,121 @@ func validateUserInputRequiredNotSetToFalse(state *ActionModel, resp *resource.V
 		}
 	}
 }
+
+var actionResourceMarkdownDescription = `
+
+# Action
+
+This resource allows you to manage self-service action.
+
+See the [Port documentation](https://docs.getport.io/create-self-service-experiences/) for more information about self-service actions.
+
+## Example Usage
+
+Create a blueprint and an action relating to that blueprint which triggers a github workflow:
+
+` + "```hcl" + `
+
+resource "port_blueprint" "myBlueprint" {
+  icon       = "Terraform"
+  identifier = "myBlueprint"
+  title      = "My Blueprint"
+  properties = {
+	number_props = {
+	  "numberProp" = {
+		title    = "Number Property"
+		required = false
+	  }
+	}
+  }
+}
+
+resource "port_action" "myAction" {
+  title             = "My Action"
+  blueprint         = port_blueprint.myBlueprint.identifier
+  identifier        = "myAction"
+  trigger           = "CREATE"
+  required_approval = false
+  github_method = {
+	org      = "your-org"
+	repo     = "your-repo"
+	workflow = "your-workflow"
+  }
+  user_properties = {
+	string_props = {
+	  stringValue = {
+		title = "String Value"
+	  }
+	}
+	number_props = {
+	  "numberProp" = {
+		title    = "Number Value"
+		required = true
+	  }
+	}
+  }
+}
+
+` + "```" + `
+
+Create related "parent" and "child" blueprints and a CREATE action for the child blueprint with user inputs to select entities from the parent blueprint and triggers a github workflow:
+
+` + "```hcl" + `
+
+
+resource "port_blueprint" "parent" {
+  icon       = "Terraform"
+  title      = "Parent"
+  identifier = "parent"
+  properties = {}
+}
+
+resource "port_blueprint" "child" {
+  icon       = "Terraform"
+  title      = "Child"
+  identifier = "child"
+  properties = {}
+  relations = {
+	"childOf" = {
+	  title    = "Child Of"
+	  many     = true
+	  required = false
+	  target   = port_blueprint.parent.identifier
+	}
+  }
+}
+
+resource "port_action" "myAction" {
+  title             = "My Action"
+  blueprint         = port_blueprint.child.identifier
+  identifier        = "myAction"
+  trigger           = "CREATE"
+  required_approval = false
+  github_method = {
+	org      = "your-org"
+	repo     = "your-repo"
+	workflow = "your-workflow"
+  }
+  user_properties = {
+	string_props = {
+	  singleParent = {
+		title     = "Single Parent Entity Selection"
+		format    = "entity"
+		blueprint = port_blueprint.parent.identifier
+	  }
+	}
+	array_props = {
+	  miltipleParents = {
+		title = "Single Parent Entity Selection"
+		string_items = {
+		  format    = "entity"
+		  blueprint = port_blueprint.parent.identifier
+		}
+	  }
+	}
+  }
+}
+
+` + "```" + `
+
+`

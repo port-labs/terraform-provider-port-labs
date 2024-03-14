@@ -191,3 +191,24 @@ type ActionModel struct {
 	OrderProperties             types.List                        `tfsdk:"order_properties"`
 	RequiredJqQuery             types.String                      `tfsdk:"required_jq_query"`
 }
+
+type ActionValidationModel struct {
+	ID                          types.String         `tfsdk:"id"`
+	Identifier                  types.String         `tfsdk:"identifier"`
+	Blueprint                   types.String         `tfsdk:"blueprint"`
+	Title                       types.String         `tfsdk:"title"`
+	Icon                        types.String         `tfsdk:"icon"`
+	Description                 types.String         `tfsdk:"description"`
+	RequiredApproval            types.Bool           `tfsdk:"required_approval"`
+	Trigger                     types.String         `tfsdk:"trigger"`
+	KafkaMethod                 types.Object         `tfsdk:"kafka_method"`
+	WebhookMethod               types.Object         `tfsdk:"webhook_method"`
+	GithubMethod                types.Object         `tfsdk:"github_method"`
+	AzureMethod                 types.Object         `tfsdk:"azure_method"`
+	GitlabMethod                types.Object         `tfsdk:"gitlab_method"`
+	UserProperties              *UserPropertiesModel `tfsdk:"user_properties"`
+	ApprovalWebhookNotification types.Object         `tfsdk:"approval_webhook_notification"`
+	ApprovalEmailNotification   types.Object         `tfsdk:"approval_email_notification"`
+	OrderProperties             types.List           `tfsdk:"order_properties"`
+	RequiredJqQuery             types.String         `tfsdk:"required_jq_query"`
+}

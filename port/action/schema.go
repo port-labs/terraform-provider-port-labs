@@ -3,6 +3,7 @@ package action
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -646,7 +647,7 @@ func (r *ActionResource) Schema(ctx context.Context, req resource.SchemaRequest,
 }
 
 func (r *ActionResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var state *ActionModel
+	var state *ActionValidationModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
@@ -657,7 +658,7 @@ func (r *ActionResource) ValidateConfig(ctx context.Context, req resource.Valida
 	validateUserInputRequiredNotSetToFalse(state, resp)
 }
 
-func validateUserInputRequiredNotSetToFalse(state *ActionModel, resp *resource.ValidateConfigResponse) {
+func validateUserInputRequiredNotSetToFalse(state *ActionValidationModel, resp *resource.ValidateConfigResponse) {
 	// go over all the properties and check if required is set to false, is its false, raise an error that false is not
 	// supported anymore
 	const errorString = "required is set to false, this is not supported anymore, if you don't want to make the stringProp required, remove the required stringProp"

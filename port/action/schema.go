@@ -15,6 +15,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
@@ -655,45 +657,60 @@ func (r *ActionResource) ValidateConfig(ctx context.Context, req resource.Valida
 		return
 	}
 
-	validateUserInputRequiredNotSetToFalse(state, resp)
+	validateUserInputRequiredNotSetToFalse(ctx, state, resp)
 }
 
-func validateUserInputRequiredNotSetToFalse(state *ActionValidationModel, resp *resource.ValidateConfigResponse) {
+func validateUserInputRequiredNotSetToFalse(ctx context.Context, state *ActionValidationModel, resp *resource.ValidateConfigResponse) {
 	// go over all the properties and check if required is set to false, is its false, raise an error that false is not
 	// supported anymore
 	const errorString = "required is set to false, this is not supported anymore, if you don't want to make the stringProp required, remove the required stringProp"
 
-	if state.UserProperties == nil {
+	if state.UserProperties.IsNull() {
 		return
 	}
 
-	for _, stringProp := range state.UserProperties.StringProps {
-		if !stringProp.Required.IsNull() && !stringProp.Required.ValueBool() && stringProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, stringProp.Title, ` in action: `, state.Identifier))
-		}
+	var userProps *UserPropertiesModel
+	var asdf = state.UserProperties.As(ctx, userProps, basetypes.ObjectAsOptions{
+		UnhandledNullAsEmpty:    true,
+		UnhandledUnknownAsEmpty: true,
+	})
+	if asdf == nil {
+		return
 	}
+	var userProperties = state.UserProperties.Attributes()
+	if userProperties != nil {
+		var stringProperties, _ = userProperties["string_props"]
 
-	for _, numberProp := range state.UserProperties.NumberProps {
-		if !numberProp.Required.IsNull() && !numberProp.Required.ValueBool() && numberProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, numberProp.Title, ` in action: `, state.Identifier))
-		}
-	}
+		if stringProperties != nil {
+			var val, err = stringProperties.ToTerraformValue(ctx)
+			if err != nil {
+				return
+			}
 
-	for _, boolProp := range state.UserProperties.BooleanProps {
-		if !boolProp.Required.IsNull() && !boolProp.Required.ValueBool() && boolProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, boolProp.Title, ` in action: `, state.Identifier))
-		}
-	}
+			v := map[string]tftypes.Value{}
 
-	for _, objectProp := range state.UserProperties.ObjectProps {
-		if !objectProp.Required.IsNull() && !objectProp.Required.ValueBool() && objectProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, objectProp.Title, ` in action: `, state.Identifier))
-		}
-	}
+			err = val.As(&v)
+			if err != nil {
+				return
+			}
 
-	for _, arrayProp := range state.UserProperties.ArrayProps {
-		if !arrayProp.Required.IsNull() && !arrayProp.Required.ValueBool() && arrayProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, arrayProp.Title, ` in action: `, state.Identifier))
+			stringPropValidationsObjects := make(map[string]StringPropValidationModel, len(v))
+			for key := range v {
+				var val StringPropValidationModel
+				err = v[key].As(&val)
+
+				if err != nil {
+					return
+				}
+
+				stringPropValidationsObjects[key] = val
+			}
+
+			for _, stringProp := range stringPropValidationsObjects {
+				if stringProp.Required != nil && !*stringProp.Required {
+					resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, stringProp.Title, ` in action: `, state.Identifier))
+				}
+			}
 		}
 	}
 }

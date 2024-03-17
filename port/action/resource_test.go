@@ -1312,3 +1312,300 @@ func TestAccPortEmailApproval(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortActionStringGitlabMethodSetConditionally(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+resource "port_action" "action1" {
+  title             = "Action 1"
+  blueprint         = port_blueprint.microservice.id
+  identifier        = "%s"
+  trigger           = "CREATE"
+  required_approval = false
+  webhook_method = port_blueprint.microservice.identifier == "%s" ? {
+	url = "https://getport.io"
+  } : null
+  user_properties = {}
+}	
+	`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "CREATE"),
+					resource.TestCheckResourceAttr("port_action.action1", "webhook_method.url", "https://getport.io"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionStringUserPropertiesConditional(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+resource "port_action" "action1" {
+  title             = "Action 1"
+  blueprint         = port_blueprint.microservice.id
+  identifier        = "%s"
+  trigger           = "CREATE"
+  required_approval = false
+  kafka_method = {}
+  user_properties = {
+	string_props = port_blueprint.microservice.identifier == "%s" ? {
+	  strProp = {
+	    title = "Prop"
+	  }
+	} : null
+  }
+}	
+	`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "CREATE"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.string_props.strProp.title", "Prop"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionNumberUserPropertiesConditional(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+resource "port_action" "action1" {
+  title             = "Action 1"
+  blueprint         = port_blueprint.microservice.id
+  identifier        = "%s"
+  trigger           = "CREATE"
+  required_approval = false
+  kafka_method = {}
+  user_properties = {
+	number_props = port_blueprint.microservice.identifier == "%s" ? {
+	  numProp = {
+	    title = "Prop"
+	  }
+	} : null
+  }
+}	
+	`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "CREATE"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.number_props.numProp.title", "Prop"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionBoolUserPropertiesConditional(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+resource "port_action" "action1" {
+  title             = "Action 1"
+  blueprint         = port_blueprint.microservice.id
+  identifier        = "%s"
+  trigger           = "CREATE"
+  required_approval = false
+  kafka_method = {}
+  user_properties = {
+	boolean_props = port_blueprint.microservice.identifier == "%s" ? {
+	  boolProp = {
+	    title = "Prop"
+	  }
+	} : null
+  }
+}	
+	`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "CREATE"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.boolean_props.boolProp.title", "Prop"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionObjectUserPropertiesConditional(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+resource "port_action" "action1" {
+  title             = "Action 1"
+  blueprint         = port_blueprint.microservice.id
+  identifier        = "%s"
+  trigger           = "CREATE"
+  required_approval = false
+  kafka_method = {}
+  user_properties = {
+	object_props = port_blueprint.microservice.identifier == "%s" ? {
+	  objProp = {
+	    title = "Prop"
+	  }
+	} : null
+  }
+}	
+	`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "CREATE"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.object_props.objProp.title", "Prop"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionArrayUserPropertiesConditional(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+resource "port_action" "action1" {
+  title             = "Action 1"
+  blueprint         = port_blueprint.microservice.id
+  identifier        = "%s"
+  trigger           = "CREATE"
+  required_approval = false
+  kafka_method = {}
+  user_properties = {
+	array_props = port_blueprint.microservice.identifier == "%s" ? {
+	  arrProp = {
+	    title = "Prop"
+	  }
+	} : null
+  }
+}	
+	`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "CREATE"),
+					resource.TestCheckResourceAttr("port_action.action1", "user_properties.array_props.arrProp.title", "Prop"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionNoUserPropertiesConditional(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+resource "port_action" "action1" {
+  title             = "Action 1"
+  blueprint         = port_blueprint.microservice.id
+  identifier        = "%s"
+  trigger           = "CREATE"
+  required_approval = false
+  kafka_method = {}
+  user_properties = {
+	string_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
+	  strProp = {
+		title = "Prop"
+	  }
+	} : null
+
+	number_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
+	  numProp = {
+		title = "Prop"
+	  }
+	} : null
+
+	boolean_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
+	  boolProp = {
+		title = "Prop"
+	  }
+	} : null
+	
+	object_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
+	  objProp = {
+		title = "Prop"
+	  }
+	} : null
+
+	array_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
+	  arrProp = {
+		title = "Prop"
+	  }
+	} : null
+  }
+}	
+	`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "trigger", "CREATE"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "user_properties.string_props"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "user_properties.number_props"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "user_properties.boolean_props"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "user_properties.object_props"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "user_properties.array_props"),
+				),
+			},
+		},
+	})
+}

@@ -98,6 +98,114 @@ func (e *StringPropValidationModel) FromTerraform5Value(val tftypes.Value) error
 	return nil
 }
 
+// NumberPropValidationModel is a model used for the validation of StringPropModel resources
+type NumberPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *NumberPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// BooleanPropValidationModel is a model used for the validation of StringPropModel resources
+type BooleanPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *BooleanPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ObjectPropValidationModel is a model used for the validation of StringPropModel resources
+type ObjectPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *ObjectPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ArrayPropValidationModel is a model used for the validation of StringPropModel resources
+type ArrayPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *ArrayPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type NumberPropModel struct {
 	Title          types.String  `tfsdk:"title"`
 	Icon           types.String  `tfsdk:"icon"`
@@ -220,6 +328,7 @@ type ActionModel struct {
 	RequiredJqQuery             types.String                      `tfsdk:"required_jq_query"`
 }
 
+// ActionValidationModel is a model used for the validation of ActionModel resources
 type ActionValidationModel struct {
 	ID                          types.String `tfsdk:"id"`
 	Identifier                  types.String `tfsdk:"identifier"`

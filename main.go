@@ -9,6 +9,8 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/provider"
 )
 
+//go:generate go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+
 func main() {
 	var debug bool
 

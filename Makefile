@@ -43,4 +43,4 @@ acctest:
 	TF_ACC=1 PORT_CLIENT_ID=$(PORT_CLIENT_ID) PORT_CLIENT_SECRET=$(PORT_CLIENT_SECRET) go test -p 1 ./...
 
 gen-docs:
-	tfplugindocs
+	go generate

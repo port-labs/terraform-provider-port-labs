@@ -730,12 +730,20 @@ func TestAccPortActionEnum(t *testing.T) {
 				myStringIdentifier = {
 					title      = "myStringIdentifier"
 					enum = ["test1", "test2"]
+					enum_colors = {
+						test1 = "red"
+						test2 = "green"
+					}
 				}
 			}
 			number_props = {
 				myNumberIdentifier = {
 					title 	= "myNumberIdentifier"
 					enum = [1, 2]
+					enum_colors ={
+						1 = "red"
+						2 = "green"
+					}
 				}
 			}
 			array_props = {
@@ -767,6 +775,10 @@ func TestAccPortActionEnum(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.number_props.myNumberIdentifier.title", "myNumberIdentifier"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.number_props.myNumberIdentifier.enum.0", "1"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.number_props.myNumberIdentifier.enum.1", "2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier.enum_colors.test1", "red"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.string_props.myStringIdentifier.enum_colors.test2", "green"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.number_props.myNumberIdentifier.enum_colors.1", "red"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "user_properties.number_props.myNumberIdentifier.enum_colors.2", "green"),
 				),
 			},
 		},

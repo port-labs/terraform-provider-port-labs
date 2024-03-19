@@ -58,7 +58,7 @@ type StringPropModel struct {
 	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
 	Visible        types.Bool    `tfsdk:"visible"`
 	VisibleJqQuery types.String  `tfsdk:"visible_jq_query"`
-
+	EnumColors  types.Map    `tfsdk:"enum_colors"`
 	Default     types.String `tfsdk:"default"`
 	Blueprint   types.String `tfsdk:"blueprint"`
 	Format      types.String `tfsdk:"format"`
@@ -79,7 +79,7 @@ type NumberPropModel struct {
 	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
 	Visible        types.Bool   `tfsdk:"visible"`
 	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
-
+	EnumColors  types.Map     `tfsdk:"enum_colors"`
 	Default     types.Float64 `tfsdk:"default"`
 	Maximum     types.Float64 `tfsdk:"maximum"`
 	Minimum     types.Float64 `tfsdk:"minimum"`

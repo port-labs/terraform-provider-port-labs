@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
@@ -669,14 +668,6 @@ func validateUserInputRequiredNotSetToFalse(ctx context.Context, state *ActionVa
 		return
 	}
 
-	var userProps *UserPropertiesModel
-	var asdf = state.UserProperties.As(ctx, userProps, basetypes.ObjectAsOptions{
-		UnhandledNullAsEmpty:    true,
-		UnhandledUnknownAsEmpty: true,
-	})
-	if asdf == nil {
-		return
-	}
 	var userProperties = state.UserProperties.Attributes()
 	if userProperties != nil {
 		var stringProperties, _ = userProperties["string_props"]

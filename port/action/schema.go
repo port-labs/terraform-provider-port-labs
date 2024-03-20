@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
@@ -651,7 +652,7 @@ func (r *ActionResource) Schema(ctx context.Context, req resource.SchemaRequest,
 }
 
 func (r *ActionResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var state *ActionModel
+	var state *ActionValidationModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
@@ -659,45 +660,188 @@ func (r *ActionResource) ValidateConfig(ctx context.Context, req resource.Valida
 		return
 	}
 
-	validateUserInputRequiredNotSetToFalse(state, resp)
+	validateUserInputRequiredNotSetToFalse(ctx, state, resp)
 }
 
-func validateUserInputRequiredNotSetToFalse(state *ActionModel, resp *resource.ValidateConfigResponse) {
-	// go over all the properties and check if required is set to false, is its false, raise an error that false is not
+func validateUserInputRequiredNotSetToFalse(ctx context.Context, state *ActionValidationModel, resp *resource.ValidateConfigResponse) {
+	// go over all the properties and check if required is set to false, it is false, raise an error that false is not
 	// supported anymore
 	const errorString = "required is set to false, this is not supported anymore, if you don't want to make the stringProp required, remove the required stringProp"
 
-	if state.UserProperties == nil {
+	if state.UserProperties.IsNull() {
 		return
 	}
 
-	for _, stringProp := range state.UserProperties.StringProps {
-		if !stringProp.Required.IsNull() && !stringProp.Required.ValueBool() && stringProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, stringProp.Title, ` in action: `, state.Identifier))
-		}
-	}
+	var userProperties = state.UserProperties.Attributes()
+	if userProperties != nil {
+		var stringProperties, _ = userProperties["string_props"]
 
-	for _, numberProp := range state.UserProperties.NumberProps {
-		if !numberProp.Required.IsNull() && !numberProp.Required.ValueBool() && numberProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, numberProp.Title, ` in action: `, state.Identifier))
-		}
-	}
+		if stringProperties != nil {
+			var val, err = stringProperties.ToTerraformValue(ctx)
+			if err != nil {
+				return
+			}
 
-	for _, boolProp := range state.UserProperties.BooleanProps {
-		if !boolProp.Required.IsNull() && !boolProp.Required.ValueBool() && boolProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, boolProp.Title, ` in action: `, state.Identifier))
-		}
-	}
+			v := map[string]tftypes.Value{}
 
-	for _, objectProp := range state.UserProperties.ObjectProps {
-		if !objectProp.Required.IsNull() && !objectProp.Required.ValueBool() && objectProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, objectProp.Title, ` in action: `, state.Identifier))
-		}
-	}
+			err = val.As(&v)
+			if err != nil {
+				return
+			}
 
-	for _, arrayProp := range state.UserProperties.ArrayProps {
-		if !arrayProp.Required.IsNull() && !arrayProp.Required.ValueBool() && arrayProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, arrayProp.Title, ` in action: `, state.Identifier))
+			stringPropValidationsObjects := make(map[string]StringPropValidationModel, len(v))
+			for key := range v {
+				var val StringPropValidationModel
+				err = v[key].As(&val)
+
+				if err != nil {
+					return
+				}
+
+				stringPropValidationsObjects[key] = val
+			}
+
+			for _, stringProp := range stringPropValidationsObjects {
+				if stringProp.Required != nil && !*stringProp.Required {
+					resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, stringProp.Title, ` in action: `, state.Identifier))
+				}
+			}
+		}
+
+		var numberProperties, _ = userProperties["number_props"]
+
+		if numberProperties != nil {
+			var val, err = numberProperties.ToTerraformValue(ctx)
+			if err != nil {
+				return
+			}
+
+			v := map[string]tftypes.Value{}
+
+			err = val.As(&v)
+			if err != nil {
+				return
+			}
+
+			numberPropValidationsObjects := make(map[string]NumberPropValidationModel, len(v))
+			for key := range v {
+				var val NumberPropValidationModel
+				err = v[key].As(&val)
+
+				if err != nil {
+					return
+				}
+
+				numberPropValidationsObjects[key] = val
+			}
+
+			for _, numberProp := range numberPropValidationsObjects {
+				if numberProp.Required != nil && !*numberProp.Required {
+					resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, numberProp.Title, ` in action: `, state.Identifier))
+				}
+			}
+		}
+
+		var booleanProperties, _ = userProperties["boolean_props"]
+
+		if booleanProperties != nil {
+			var val, err = booleanProperties.ToTerraformValue(ctx)
+			if err != nil {
+				return
+			}
+
+			v := map[string]tftypes.Value{}
+
+			err = val.As(&v)
+			if err != nil {
+				return
+			}
+
+			booleanPropValidationsObjects := make(map[string]BooleanPropValidationModel, len(v))
+			for key := range v {
+				var val BooleanPropValidationModel
+				err = v[key].As(&val)
+
+				if err != nil {
+					return
+				}
+
+				booleanPropValidationsObjects[key] = val
+			}
+
+			for _, booleanProp := range booleanPropValidationsObjects {
+				if booleanProp.Required != nil && !*booleanProp.Required {
+					resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, booleanProp.Title, ` in action: `, state.Identifier))
+				}
+			}
+		}
+
+		var objectProperties, _ = userProperties["object_props"]
+
+		if objectProperties != nil {
+			var val, err = objectProperties.ToTerraformValue(ctx)
+			if err != nil {
+				return
+			}
+
+			v := map[string]tftypes.Value{}
+
+			err = val.As(&v)
+			if err != nil {
+				return
+			}
+
+			objectPropValidationsObjects := make(map[string]ObjectPropValidationModel, len(v))
+			for key := range v {
+				var val ObjectPropValidationModel
+				err = v[key].As(&val)
+
+				if err != nil {
+					return
+				}
+
+				objectPropValidationsObjects[key] = val
+			}
+
+			for _, objectProp := range objectPropValidationsObjects {
+				if objectProp.Required != nil && !*objectProp.Required {
+					resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, objectProp.Title, ` in action: `, state.Identifier))
+				}
+			}
+		}
+
+		var arrayProperties, _ = userProperties["array_props"]
+
+		if arrayProperties != nil {
+			var val, err = arrayProperties.ToTerraformValue(ctx)
+			if err != nil {
+				return
+			}
+
+			v := map[string]tftypes.Value{}
+
+			err = val.As(&v)
+			if err != nil {
+				return
+			}
+
+			arrayPropValidationsObjects := make(map[string]ArrayPropValidationModel, len(v))
+			for key := range v {
+				var val ArrayPropValidationModel
+				err = v[key].As(&val)
+
+				if err != nil {
+					return
+				}
+
+				arrayPropValidationsObjects[key] = val
+			}
+
+			for _, arrayProp := range arrayPropValidationsObjects {
+				if arrayProp.Required != nil && !*arrayProp.Required {
+					resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, arrayProp.Title, ` in action: `, state.Identifier))
+				}
+			}
 		}
 	}
 }

@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 type WebhookMethodModel struct {
@@ -68,6 +69,141 @@ type StringPropModel struct {
 	Enum        types.List   `tfsdk:"enum"`
 	EnumJqQuery types.String `tfsdk:"enum_jq_query"`
 	Encryption  types.String `tfsdk:"encryption"`
+}
+
+// StringPropValidationModel is a model used for the validation of StringPropModel resources
+type StringPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *StringPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// NumberPropValidationModel is a model used for the validation of StringPropModel resources
+type NumberPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *NumberPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// BooleanPropValidationModel is a model used for the validation of StringPropModel resources
+type BooleanPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *BooleanPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ObjectPropValidationModel is a model used for the validation of StringPropModel resources
+type ObjectPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *ObjectPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ArrayPropValidationModel is a model used for the validation of StringPropModel resources
+type ArrayPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *ArrayPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 type NumberPropModel struct {
@@ -187,4 +323,26 @@ type ActionModel struct {
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
 	OrderProperties             types.List                        `tfsdk:"order_properties"`
 	RequiredJqQuery             types.String                      `tfsdk:"required_jq_query"`
+}
+
+// ActionValidationModel is a model used for the validation of ActionModel resources
+type ActionValidationModel struct {
+	ID                          types.String `tfsdk:"id"`
+	Identifier                  types.String `tfsdk:"identifier"`
+	Blueprint                   types.String `tfsdk:"blueprint"`
+	Title                       types.String `tfsdk:"title"`
+	Icon                        types.String `tfsdk:"icon"`
+	Description                 types.String `tfsdk:"description"`
+	RequiredApproval            types.Bool   `tfsdk:"required_approval"`
+	Trigger                     types.String `tfsdk:"trigger"`
+	KafkaMethod                 types.Object `tfsdk:"kafka_method"`
+	WebhookMethod               types.Object `tfsdk:"webhook_method"`
+	GithubMethod                types.Object `tfsdk:"github_method"`
+	AzureMethod                 types.Object `tfsdk:"azure_method"`
+	GitlabMethod                types.Object `tfsdk:"gitlab_method"`
+	UserProperties              types.Object `tfsdk:"user_properties"`
+	ApprovalWebhookNotification types.Object `tfsdk:"approval_webhook_notification"`
+	ApprovalEmailNotification   types.Object `tfsdk:"approval_email_notification"`
+	OrderProperties             types.List   `tfsdk:"order_properties"`
+	RequiredJqQuery             types.String `tfsdk:"required_jq_query"`
 }

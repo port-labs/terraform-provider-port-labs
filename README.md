@@ -1,4 +1,5 @@
-<img align="right" src="https://port-graphical-assets.s3.eu-west-1.amazonaws.com/Logo+Typo+%2B+Logo+Symbol+-+white.png#gh-dark-mode-only" height="40" /> <img align="right" height="40" src="https://port-graphical-assets.s3.eu-west-1.amazonaws.com/Logo+Typo+%2B+Logo+Symbol.png#gh-light-mode-only" />
+<img align="right" src="https://port-graphical-assets.s3.eu-west-1.amazonaws.com/Logo+Typo+%2B+Logo+Symbol+-+white.png#gh-dark-mode-only" height="40" />
+<img align="right" height="40" src="https://port-graphical-assets.s3.eu-west-1.amazonaws.com/Logo+Typo+%2B+Logo+Symbol.png#gh-light-mode-only" />
 
 # Port Terraform Provider
 

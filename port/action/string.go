@@ -79,6 +79,21 @@ func stringPropResourceToBody(ctx context.Context, d *ActionModel, props map[str
 			property.Enum = enumList
 		}
 
+		if !prop.EnumColors.IsNull() {
+			enumColor := map[string]string{}
+			for k, v := range prop.EnumColors.Elements() {
+				value, _ := v.ToTerraformValue(ctx)
+				var keyValue string
+				err := value.As(&keyValue)
+				if err != nil {
+					return err
+				}
+				enumColor[k] = keyValue
+			}
+
+			property.EnumColors = enumColor
+		}
+
 		if !prop.EnumJqQuery.IsNull() {
 			enumJqQueryMap := map[string]string{
 				"jqQuery": prop.EnumJqQuery.ValueString(),

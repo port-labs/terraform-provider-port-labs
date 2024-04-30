@@ -3,8 +3,11 @@ package action_permissions
 import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -26,30 +29,38 @@ func ActionPermissionsSchema() map[string]schema.Attribute {
 		},
 		"permissions": schema.SingleNestedAttribute{
 			MarkdownDescription: "The permissions for the action",
-			Optional:            true,
+			Required:            true,
 			Attributes: map[string]schema.Attribute{
 				"execute": schema.SingleNestedAttribute{
 					MarkdownDescription: "The permission to execute the action",
-					Optional:            true,
+					Required:            true,
 					Attributes: map[string]schema.Attribute{
 						"users": schema.ListAttribute{
 							MarkdownDescription: "The users with execution permission",
 							Optional:            true,
+							Computed:            true,
+							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"roles": schema.ListAttribute{
 							MarkdownDescription: "The roles with execution permission",
 							Optional:            true,
+							Computed:            true,
+							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"teams": schema.ListAttribute{
 							MarkdownDescription: "The teams with execution permission",
 							Optional:            true,
+							Computed:            true,
+							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"owned_by_team": schema.BoolAttribute{
 							MarkdownDescription: "Give execution permission to the teams who own the entity",
 							Optional:            true,
+							Computed:            true,
+							Default:             booldefault.StaticBool(true),
 						},
 						"policy": schema.StringAttribute{
 							MarkdownDescription: "The policy to use for execution",
@@ -59,21 +70,27 @@ func ActionPermissionsSchema() map[string]schema.Attribute {
 				},
 				"approve": schema.SingleNestedAttribute{
 					MarkdownDescription: "The permission to approve the action's runs",
-					Optional:            true,
+					Required:            true,
 					Attributes: map[string]schema.Attribute{
 						"users": schema.ListAttribute{
 							MarkdownDescription: "The users with approval permission",
 							Optional:            true,
+							Computed:            true,
+							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"roles": schema.ListAttribute{
 							MarkdownDescription: "The roles with approval permission",
 							Optional:            true,
+							Computed:            true,
+							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"teams": schema.ListAttribute{
 							MarkdownDescription: "The teams with approval permission",
 							Optional:            true,
+							Computed:            true,
+							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"policy": schema.StringAttribute{

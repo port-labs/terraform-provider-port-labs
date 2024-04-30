@@ -398,53 +398,54 @@ func TestAccPortActionAzureInvocation(t *testing.T) {
 	})
 }
 
-func TestAccPortActionUpsertEntityInvocation(t *testing.T) {
-	identifier := utils.GenID()
-	actionIdentifier := utils.GenID()
-	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
-	resource "port_action" "create_microservice" {
-		title = "TF Provider Test"
-		identifier = "%s"
-		icon = "Terraform"
-		self_service_trigger = {
-			operation = "DAY-2"
-			blueprint_identifier = port_blueprint.microservice.identifier
-		}
-		upsert_entity_method = {
-		  identifier = "test-entity"
-		  title = "Test Entity"
-		  blueprint_identifier = port_blueprint.microservice.identifier
-		  teams = []
-		  icon = "Terraform"
-		  properties = jsonencode({"text": "test"})
-		  relations = jsonencode({"test-rel": "target-bp"})
-		}
-	}`, actionIdentifier)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: acctest.ProviderConfig + testAccActionConfigCreate,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.blueprint_identifier", identifier),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.identifier", "test-entity"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.title", "Test Entity"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.blueprint_identifier", identifier),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.teams.#", "0"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.properties", "{\"text\":\"test\"}"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.relations", "{\"test-rel\":\"target-bp\"}"),
-				),
-			},
-		},
-	})
-}
+// TODO: return when frontend for upsert entity is ready
+//func TestAccPortActionUpsertEntityInvocation(t *testing.T) {
+//	identifier := utils.GenID()
+//	actionIdentifier := utils.GenID()
+//	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+//	resource "port_action" "create_microservice" {
+//		title = "TF Provider Test"
+//		identifier = "%s"
+//		icon = "Terraform"
+//		self_service_trigger = {
+//			operation = "DAY-2"
+//			blueprint_identifier = port_blueprint.microservice.identifier
+//		}
+//		upsert_entity_method = {
+//		  identifier = "test-entity"
+//		  title = "Test Entity"
+//		  blueprint_identifier = port_blueprint.microservice.identifier
+//		  teams = []
+//		  icon = "Terraform"
+//		  properties = jsonencode({"text": "test"})
+//		  relations = jsonencode({"test-rel": "target-bp"})
+//		}
+//	}`, actionIdentifier)
+//
+//	resource.Test(t, resource.TestCase{
+//		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+//		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+//		Steps: []resource.TestStep{
+//			{
+//				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+//				Check: resource.ComposeTestCheckFunc(
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.blueprint_identifier", identifier),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.identifier", "test-entity"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.title", "Test Entity"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.blueprint_identifier", identifier),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.teams.#", "0"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.icon", "Terraform"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.properties", "{\"text\":\"test\"}"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.relations", "{\"test-rel\":\"target-bp\"}"),
+//				),
+//			},
+//		},
+//	})
+//}
 
 func TestAccPortActionImport(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
@@ -620,6 +621,27 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 				  }
 				}
 			  }
+              array_props = {
+		        myArrayPropIdentifier = {
+		          title     = "myArrayPropIdentifier"
+		          required  = true
+		          blueprint = port_blueprint.microservice.id
+		          string_items = {
+			        blueprint = port_blueprint.microservice.id
+			        format    = "entity"
+			        dataset = jsonencode({
+			          "combinator" : "and",
+			          "rules" : [
+				        {
+				          "property" : "$identifier",
+				          "operator" : "containsAny",
+				          "value" : "Test"
+				        }
+			          ]
+			        })
+		          }
+		        }
+	          }
 			}
 		}
 		description       = "This is a test action"
@@ -660,6 +682,7 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.string_props.myStringIdentifier3.dataset.rules.0.property", "$team"),
 					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.string_props.myStringIdentifier3.dataset.rules.0.operator", "containsAny"),
 					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.string_props.myStringIdentifier3.dataset.rules.0.value.jq_query", "Test"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.array_props.myArrayPropIdentifier.string_items.dataset", "{\"combinator\":\"and\",\"rules\":[{\"operator\":\"containsAny\",\"property\":\"$identifier\",\"value\":\"Test\"}]}"),
 				),
 			},
 		},
@@ -1381,167 +1404,168 @@ func TestAccPortActionRequiredFalseAndNull(t *testing.T) {
 	})
 }
 
-func TestAccPortAutomationEntityCreated(t *testing.T) {
-	identifier := utils.GenID()
-	actionIdentifier := utils.GenID()
-	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
-	resource "port_action" "create_microservice" {
-		title = "TF Provider Test"
-		identifier = "%s"
-		icon = "Terraform"
-		automation_trigger = {
-			entity_created_event = {
-				blueprint_identifier = port_blueprint.microservice.identifier
-			}
-		}
-		kafka_method = {}
-	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: acctest.ProviderConfig + testAccActionConfigCreate,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.entity_created_event.blueprint_identifier", identifier),
-				),
-			},
-		},
-	})
-}
-
-func TestAccPortAutomationEntityUpdated(t *testing.T) {
-	identifier := utils.GenID()
-	actionIdentifier := utils.GenID()
-	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
-	resource "port_action" "create_microservice" {
-		title = "TF Provider Test"
-		identifier = "%s"
-		icon = "Terraform"
-		automation_trigger = {
-			entity_updated_event = {
-				blueprint_identifier = port_blueprint.microservice.identifier
-			}
-		}
-		kafka_method = {}
-	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: acctest.ProviderConfig + testAccActionConfigCreate,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.entity_updated_event.blueprint_identifier", identifier),
-				),
-			},
-		},
-	})
-}
-
-func TestAccPortAutomationEntityDeleted(t *testing.T) {
-	identifier := utils.GenID()
-	actionIdentifier := utils.GenID()
-	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
-	resource "port_action" "create_microservice" {
-		title = "TF Provider Test"
-		identifier = "%s"
-		icon = "Terraform"
-		automation_trigger = {
-			entity_deleted_event = {
-				blueprint_identifier = port_blueprint.microservice.identifier
-			}
-		}
-		kafka_method = {}
-	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: acctest.ProviderConfig + testAccActionConfigCreate,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.entity_deleted_event.blueprint_identifier", identifier),
-				),
-			},
-		},
-	})
-}
-
-func TestAccPortAutomationAnyEntityChange(t *testing.T) {
-	identifier := utils.GenID()
-	actionIdentifier := utils.GenID()
-	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
-	resource "port_action" "create_microservice" {
-		title = "TF Provider Test"
-		identifier = "%s"
-		icon = "Terraform"
-		automation_trigger = {
-			any_entity_change_event = {
-				blueprint_identifier = port_blueprint.microservice.identifier
-			}
-		}
-		kafka_method = {}
-	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: acctest.ProviderConfig + testAccActionConfigCreate,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.any_entity_change_event.blueprint_identifier", identifier),
-				),
-			},
-		},
-	})
-}
-
-func TestAccPortAutomationTimerPropertyExpired(t *testing.T) {
-	identifier := utils.GenID()
-	actionIdentifier := utils.GenID()
-	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
-	resource "port_action" "create_microservice" {
-		title = "TF Provider Test"
-		identifier = "%s"
-		icon = "Terraform"
-		automation_trigger = {
-			timer_property_expired_event = {
-				blueprint_identifier = port_blueprint.microservice.identifier
-				property_identifier = "timer"
-			}
-		}
-		kafka_method = {}
-	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: acctest.ProviderConfig + testAccActionConfigCreate,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.timer_property_expired_event.blueprint_identifier", identifier),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.timer_property_expired_event.property_identifier", "timer"),
-				),
-			},
-		},
-	})
-}
+// TODO: return when frontend for automations is ready
+//func TestAccPortAutomationEntityCreated(t *testing.T) {
+//	identifier := utils.GenID()
+//	actionIdentifier := utils.GenID()
+//	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+//	resource "port_action" "create_microservice" {
+//		title = "TF Provider Test"
+//		identifier = "%s"
+//		icon = "Terraform"
+//		automation_trigger = {
+//			entity_created_event = {
+//				blueprint_identifier = port_blueprint.microservice.identifier
+//			}
+//		}
+//		kafka_method = {}
+//	}`, actionIdentifier)
+//	resource.Test(t, resource.TestCase{
+//		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+//		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+//		Steps: []resource.TestStep{
+//			{
+//				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+//				Check: resource.ComposeTestCheckFunc(
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.entity_created_event.blueprint_identifier", identifier),
+//				),
+//			},
+//		},
+//	})
+//}
+//
+//func TestAccPortAutomationEntityUpdated(t *testing.T) {
+//	identifier := utils.GenID()
+//	actionIdentifier := utils.GenID()
+//	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+//	resource "port_action" "create_microservice" {
+//		title = "TF Provider Test"
+//		identifier = "%s"
+//		icon = "Terraform"
+//		automation_trigger = {
+//			entity_updated_event = {
+//				blueprint_identifier = port_blueprint.microservice.identifier
+//			}
+//		}
+//		kafka_method = {}
+//	}`, actionIdentifier)
+//	resource.Test(t, resource.TestCase{
+//		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+//		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+//		Steps: []resource.TestStep{
+//			{
+//				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+//				Check: resource.ComposeTestCheckFunc(
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.entity_updated_event.blueprint_identifier", identifier),
+//				),
+//			},
+//		},
+//	})
+//}
+//
+//func TestAccPortAutomationEntityDeleted(t *testing.T) {
+//	identifier := utils.GenID()
+//	actionIdentifier := utils.GenID()
+//	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+//	resource "port_action" "create_microservice" {
+//		title = "TF Provider Test"
+//		identifier = "%s"
+//		icon = "Terraform"
+//		automation_trigger = {
+//			entity_deleted_event = {
+//				blueprint_identifier = port_blueprint.microservice.identifier
+//			}
+//		}
+//		kafka_method = {}
+//	}`, actionIdentifier)
+//	resource.Test(t, resource.TestCase{
+//		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+//		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+//		Steps: []resource.TestStep{
+//			{
+//				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+//				Check: resource.ComposeTestCheckFunc(
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.entity_deleted_event.blueprint_identifier", identifier),
+//				),
+//			},
+//		},
+//	})
+//}
+//
+//func TestAccPortAutomationAnyEntityChange(t *testing.T) {
+//	identifier := utils.GenID()
+//	actionIdentifier := utils.GenID()
+//	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+//	resource "port_action" "create_microservice" {
+//		title = "TF Provider Test"
+//		identifier = "%s"
+//		icon = "Terraform"
+//		automation_trigger = {
+//			any_entity_change_event = {
+//				blueprint_identifier = port_blueprint.microservice.identifier
+//			}
+//		}
+//		kafka_method = {}
+//	}`, actionIdentifier)
+//	resource.Test(t, resource.TestCase{
+//		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+//		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+//		Steps: []resource.TestStep{
+//			{
+//				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+//				Check: resource.ComposeTestCheckFunc(
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.any_entity_change_event.blueprint_identifier", identifier),
+//				),
+//			},
+//		},
+//	})
+//}
+//
+//func TestAccPortAutomationTimerPropertyExpired(t *testing.T) {
+//	identifier := utils.GenID()
+//	actionIdentifier := utils.GenID()
+//	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+//	resource "port_action" "create_microservice" {
+//		title = "TF Provider Test"
+//		identifier = "%s"
+//		icon = "Terraform"
+//		automation_trigger = {
+//			timer_property_expired_event = {
+//				blueprint_identifier = port_blueprint.microservice.identifier
+//				property_identifier = "timer"
+//			}
+//		}
+//		kafka_method = {}
+//	}`, actionIdentifier)
+//	resource.Test(t, resource.TestCase{
+//		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+//		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+//		Steps: []resource.TestStep{
+//			{
+//				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+//				Check: resource.ComposeTestCheckFunc(
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.timer_property_expired_event.blueprint_identifier", identifier),
+//					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.timer_property_expired_event.property_identifier", "timer"),
+//				),
+//			},
+//		},
+//	})
+//}
 
 func TestAccPortWebhookApproval(t *testing.T) {
 	identifier := utils.GenID()
@@ -1613,6 +1637,310 @@ func TestAccPortEmailApproval(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "required_approval", "true"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "approval_email_notification.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionStringGitlabMethodSetConditionally(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+	  title             = "Action 1"
+	  identifier        = "%s"
+	  required_approval = false
+	  self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+		user_properties = {}
+	  }
+	  webhook_method = port_blueprint.microservice.identifier == "%s" ? {
+		url = "https://getport.io"
+	  } : null
+	}`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.operation", "CREATE"),
+					resource.TestCheckResourceAttr("port_action.action1", "webhook_method.url", "https://getport.io"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionStringUserPropertiesConditional(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+	  title             = "Action 1"
+	  identifier        = "%s"
+	  required_approval = false
+      self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+		user_properties = {
+		  string_props = port_blueprint.microservice.identifier == "%s" ? {
+		    strProp = {
+			  title = "Prop"
+		    }
+		  } : null
+        }
+	  }
+	  kafka_method = {}
+	}`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.operation", "CREATE"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.string_props.strProp.title", "Prop"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionNumberUserPropertiesConditional(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+	  title             = "Action 1"
+	  identifier        = "%s"
+	  required_approval = false
+	  self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+		user_properties = {
+		  number_props = port_blueprint.microservice.identifier == "%s" ? {
+			numProp = {
+			  title = "Prop"
+			}
+		  } : null
+		}
+	  }
+	  kafka_method = {}
+	}`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.operation", "CREATE"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.number_props.numProp.title", "Prop"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionBoolUserPropertiesConditional(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+	  title             = "Action 1"
+	  identifier        = "%s"
+	  required_approval = false
+	  self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+		user_properties = {
+		  boolean_props = port_blueprint.microservice.identifier == "%s" ? {
+			boolProp = {
+			  title = "Prop"
+			}
+		  } : null
+		}
+	  }
+	  kafka_method = {}
+	}`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.operation", "CREATE"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.boolean_props.boolProp.title", "Prop"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionObjectUserPropertiesConditional(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+	  title             = "Action 1"
+	  identifier        = "%s"
+	  required_approval = false
+      self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+		user_properties = {
+		  object_props = port_blueprint.microservice.identifier == "%s" ? {
+			objProp = {
+			  title = "Prop"
+			}
+		  } : null
+		}
+	  }
+	  kafka_method = {}
+	}`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.operation", "CREATE"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.object_props.objProp.title", "Prop"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionArrayUserPropertiesConditional(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+	  title             = "Action 1"
+	  identifier        = "%s"
+	  required_approval = false
+      self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+		user_properties = {
+		  array_props = port_blueprint.microservice.identifier == "%s" ? {
+			arrProp = {
+			  title = "Prop"
+			}
+		  } : null
+		}
+	  }
+	  kafka_method = {}
+	}`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.operation", "CREATE"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.array_props.arrProp.title", "Prop"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionNoUserPropertiesConditional(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+	  title             = "Action 1"
+	  identifier        = "%s"
+	  required_approval = false
+      self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+        user_properties = {
+        	string_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
+        	  strProp = {
+        		title = "Prop"
+        	  }
+        	} : null
+        
+        	number_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
+        	  numProp = {
+        		title = "Prop"
+        	  }
+        	} : null
+        
+        	boolean_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
+        	  boolProp = {
+        		title = "Prop"
+        	  }
+        	} : null
+        	
+        	object_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
+        	  objProp = {
+        		title = "Prop"
+        	  }
+        	} : null
+        
+        	array_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
+        	  arrProp = {
+        		title = "Prop"
+        	  }
+        	} : null
+        }
+	  }
+	  kafka_method = {}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.operation", "CREATE"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "self_service_trigger.user_properties.string_props"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "self_service_trigger.user_properties.number_props"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "self_service_trigger.user_properties.boolean_props"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "self_service_trigger.user_properties.object_props"),
+					resource.TestCheckNoResourceAttr("port_action.action1", "self_service_trigger.user_properties.array_props"),
 				),
 			},
 		},

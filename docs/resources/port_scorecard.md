@@ -10,90 +10,92 @@ description: |-
   Create a parent blueprint with a child blueprint and an aggregation property to count the parent kids:
   ```hcl
   resource "portblueprint" "microservice" {
-      title = "microservice"
-      icon = "Terraform"
-      identifier = "microservice"
-      properties = {
-          stringprops = {
-              "author" = {
-                  title = "Author"
-              }
-              "url" = {
-                  title = "URL"
-              }
-          }
-          booleanprops = {
-              "required" = {
-                  type = "boolean"
-              }
-          }
-          numberprops = {
-              "sum" = {
-                  type = "number"
-              }
-          }
+    title      = "microservice"
+    icon       = "Terraform"
+    identifier = "microservice"
+    properties = {
+      stringprops = {
+        "author" = {
+          title = "Author"
+        }
+        "url" = {
+          title = "URL"
+        }
       }
+      booleanprops = {
+        "required" = {
+          type = "boolean"
+        }
+      }
+      numberprops = {
+        "sum" = {
+          type = "number"
+        }
+      }
+    }
   }
   resource "portscorecard" "readiness" {
-      identifier = "Readiness"
-      title      = "Readiness"
-      blueprint  = portblueprint.microservice.identifier
-      rules = [
-          {
-              identifier = "hasOwner"
-              title      = "Has Owner"
-              level      = "Gold"
-              query = {
-                  combinator = "and"
-                  conditions = [
-                      jsonencode({
-                          property = "$team"
-                          operator = "isNotEmpty"
-                      }),
-                      jsonencode({
-                          property = "author",
-                          operator : "=",
-                          value : "myValue"
-                      })
-                  ]
-              }
-          },
-          {
-              identifier = "hasUrl"
-              title      = "Has URL"
-              level      = "Silver"
-              query = {
-                combinator = "and"
-                conditions = [jsonencode({
-                  property = "url"
-                  operator = "isNotEmpty"
-                })]
-              }
-          },
-          {
-              identifier = "checkSumIfRequired"
-              title      = "Check Sum If Required"
-              level      = "Bronze"
-              query = {
-                  combinator = "or"
-                  conditions = [
-                      jsonencode({
-                          property = "required"
-                          operator : "="
-                          value : false
-                      }),
-                      jsonencode({
-                          property = "sum"
-                          operator : ">"
-                          value : 2
-                      })
-                  ]
-              }
-          }
-      ]
-      dependson = [
-        portblueprint.microservice
-      ]
+    identifier = "Readiness"
+    title      = "Readiness"
+    blueprint  = portblueprint.microservice.identifier
+    rules      = [
+      {
+        identifier = "hasOwner"
+        title      = "Has Owner"
+        level      = "Gold"
+        query      = {
+          combinator = "and"
+          conditions = [
+            jsonencode({
+              property = "$team"
+              operator = "isNotEmpty"
+            }),
+            jsonencode({
+              property = "author",
+              operator : "=",
+              value : "myValue"
+            })
+          ]
+        }
+      },
+      {
+        identifier = "hasUrl"
+        title      = "Has URL"
+        level      = "Silver"
+        query      = {
+          combinator = "and"
+          conditions = [
+            jsonencode({
+              property = "url"
+              operator = "isNotEmpty"
+            })
+          ]
+        }
+      },
+      {
+        identifier = "checkSumIfRequired"
+        title      = "Check Sum If Required"
+        level      = "Bronze"
+        query      = {
+          combinator = "or"
+          conditions = [
+            jsonencode({
+              property = "required"
+              operator : "="
+              value : false
+            }),
+            jsonencode({
+              property = "sum"
+              operator : ">"
+              value : 2
+            })
+          ]
+        }
+      }
+    ]
+    dependson = [
+      portblueprint.microservice
+    ]
   }
   ```
 ---
@@ -113,91 +115,93 @@ Create a parent blueprint with a child blueprint and an aggregation property to 
 ```hcl
 
 resource "port_blueprint" "microservice" {
-	title = "microservice"
-	icon = "Terraform"
-	identifier = "microservice"
-	properties = {
-		string_props = {
-			"author" = {
-				title = "Author"
-			}
-			"url" = {
-				title = "URL"
-			}
-		}
-		boolean_props = {
-			"required" = {
-				type = "boolean"
-			}
-		}
-		number_props = {
-			"sum" = {
-				type = "number"
-			}
-		}
-	}
+  title      = "microservice"
+  icon       = "Terraform"
+  identifier = "microservice"
+  properties = {
+    string_props = {
+      "author" = {
+        title = "Author"
+      }
+      "url" = {
+        title = "URL"
+      }
+    }
+    boolean_props = {
+      "required" = {
+        type = "boolean"
+      }
+    }
+    number_props = {
+      "sum" = {
+        type = "number"
+      }
+    }
+  }
 }
 
 resource "port_scorecard" "readiness" {
-	identifier = "Readiness"
-	title      = "Readiness"
-	blueprint  = port_blueprint.microservice.identifier
-	rules = [
-		{
-			identifier = "hasOwner"
-			title      = "Has Owner"
-			level      = "Gold"
-			query = {
-				combinator = "and"
-				conditions = [
-					jsonencode({
-						property = "$team"
-						operator = "isNotEmpty"
-					}),
-					jsonencode({
-						property = "author",
-						operator : "=",
-						value : "myValue"
-					})
-				]
-			}
-		},
-		{
-			identifier = "hasUrl"
-			title      = "Has URL"
-			level      = "Silver"
-			query = {
-			  combinator = "and"
-			  conditions = [jsonencode({
-				property = "url"
-				operator = "isNotEmpty"
-			  })]
-			}
-		},
-		{
-			identifier = "checkSumIfRequired"
-			title      = "Check Sum If Required"
-			level      = "Bronze"
-			query = {
-				combinator = "or"
-				conditions = [
-					jsonencode({
-						property = "required"
-						operator : "="
-						value : false
-					}),
-					jsonencode({
-						property = "sum"
-						operator : ">"
-						value : 2
-					})
-				]
-			}
-		}
-	]
-	depends_on = [
-	  port_blueprint.microservice
-	]
+  identifier = "Readiness"
+  title      = "Readiness"
+  blueprint  = port_blueprint.microservice.identifier
+  rules      = [
+    {
+      identifier = "hasOwner"
+      title      = "Has Owner"
+      level      = "Gold"
+      query      = {
+        combinator = "and"
+        conditions = [
+          jsonencode({
+            property = "$team"
+            operator = "isNotEmpty"
+          }),
+          jsonencode({
+            property = "author",
+            operator : "=",
+            value : "myValue"
+          })
+        ]
+      }
+    },
+    {
+      identifier = "hasUrl"
+      title      = "Has URL"
+      level      = "Silver"
+      query      = {
+        combinator = "and"
+        conditions = [
+          jsonencode({
+            property = "url"
+            operator = "isNotEmpty"
+          })
+        ]
+      }
+    },
+    {
+      identifier = "checkSumIfRequired"
+      title      = "Check Sum If Required"
+      level      = "Bronze"
+      query      = {
+        combinator = "or"
+        conditions = [
+          jsonencode({
+            property = "required"
+            operator : "="
+            value : false
+          }),
+          jsonencode({
+            property = "sum"
+            operator : ">"
+            value : 2
+          })
+        ]
+      }
+    }
+  ]
+  depends_on = [
+    port_blueprint.microservice
+  ]
 }
 
 ```

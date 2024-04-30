@@ -179,11 +179,11 @@ resource "port_action_permissions" "restart_microservice_permissions" {
 ### Required
 
 - `action_identifier` (String) The ID of the action
+- `permissions` (Attributes) The permissions for the action (see [below for nested schema](#nestedatt--permissions))
 
 ### Optional
 
 - `blueprint_identifier` (String, Deprecated) The ID of the blueprint
-- `permissions` (Attributes) The permissions for the action (see [below for nested schema](#nestedatt--permissions))
 
 ### Read-Only
 
@@ -192,7 +192,7 @@ resource "port_action_permissions" "restart_microservice_permissions" {
 <a id="nestedatt--permissions"></a>
 ### Nested Schema for `permissions`
 
-Optional:
+Required:
 
 - `approve` (Attributes) The permission to approve the action's runs (see [below for nested schema](#nestedatt--permissions--approve))
 - `execute` (Attributes) The permission to execute the action (see [below for nested schema](#nestedatt--permissions--execute))

@@ -19,6 +19,18 @@ description: |-
                   myStringIdentifier = {
                       title = "My String Identifier"
                       required = true
+                      format = "entity"
+                      blueprint = port_blueprint.parent.identifier
+                      dataset = {
+                          combinator = "and"
+                          rules = [{
+                              property = "$title"
+                              operator = "contains"
+                              value = {
+                                  jq_query = "\"specificValue\""
+                              }
+                          }]
+                      }
                   }
               }
               number_props = {
@@ -46,7 +58,16 @@ description: |-
                       title = "My Array Identifier"
                       required = true
                       string_items = {
-                          format = "email"
+                          format = "entity"
+                          blueprint = port_blueprint.parent.identifier
+                          dataset = jsonencode({
+                              combinator = "and"
+                              rules = [{
+                                  property = "$title"
+                                  operator = "contains"
+                                  value    = "specificValue"
+                              }]
+                          })
                       }
                   }
               }
@@ -101,6 +122,18 @@ resource "port_action" "create_microservice" {
 				myStringIdentifier = {
 					title = "My String Identifier"
 					required = true
+                    format = "entity"
+                    blueprint = port_blueprint.parent.identifier
+					dataset = {
+		            	combinator = "and"
+		            	rules = [{
+                        	property = "$title"
+			            	operator = "contains"
+			            	value = {
+			                	jq_query = "\"specificValue\""
+			            	}
+		            	}]
+		        	}
 				}
 			}
 			number_props = {
@@ -128,7 +161,16 @@ resource "port_action" "create_microservice" {
 					title = "My Array Identifier"
 					required = true
 					string_items = {
-						format = "email"
+						format = "entity"
+                        blueprint = port_blueprint.parent.identifier
+						dataset = jsonencode({
+			            	combinator = "and"
+			            	rules = [{
+			                	property = "$title"
+			                	operator = "contains"
+			                	value    = "specificValue"
+			                }]
+		                })
 					}
 				}
 			}
@@ -363,7 +405,6 @@ Optional:
 Optional:
 
 - `boolean_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--boolean_items))
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--dataset))
 - `default_jq_query` (String) The default jq query of the array property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
@@ -384,37 +425,6 @@ Optional:
 Optional:
 
 - `default` (List of Boolean) The default of the items
-
-
-<a id="nestedatt--self_service_trigger--user_properties--array_props--dataset"></a>
-### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
-
-Required:
-
-- `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--visible_jq_query--rules))
-
-<a id="nestedatt--self_service_trigger--user_properties--array_props--visible_jq_query--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query.rules`
-
-Required:
-
-- `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--visible_jq_query--rules--value))
-
-Optional:
-
-- `blueprint` (String) The blueprint identifier of the rule
-- `property` (String) The property identifier of the rule
-
-<a id="nestedatt--self_service_trigger--user_properties--array_props--visible_jq_query--rules--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query.rules.property`
-
-Optional:
-
-- `jq_query` (String)
-
-
 
 
 <a id="nestedatt--self_service_trigger--user_properties--array_props--number_items"></a>
@@ -441,6 +451,7 @@ Optional:
 Optional:
 
 - `blueprint` (String) The blueprint identifier the property relates to
+- `dataset` (String) The dataset of an the entity-format items
 - `default` (List of String) The default of the items
 - `enum` (List of String) The enum of the items
 - `enum_jq_query` (String) The enum jq query of the string items
@@ -453,7 +464,6 @@ Optional:
 
 Optional:
 
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--boolean_props--dataset))
 - `default` (Boolean) The default of the boolean property
 - `default_jq_query` (String) The default jq query of the boolean property
 - `depends_on` (List of String) The properties that this property depends on
@@ -464,44 +474,12 @@ Optional:
 - `visible` (Boolean) The visibility of the boolean property
 - `visible_jq_query` (String) The visibility condition jq query of the boolean property
 
-<a id="nestedatt--self_service_trigger--user_properties--boolean_props--dataset"></a>
-### Nested Schema for `self_service_trigger.user_properties.boolean_props.visible_jq_query`
-
-Required:
-
-- `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--boolean_props--visible_jq_query--rules))
-
-<a id="nestedatt--self_service_trigger--user_properties--boolean_props--visible_jq_query--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.boolean_props.visible_jq_query.rules`
-
-Required:
-
-- `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--boolean_props--visible_jq_query--rules--value))
-
-Optional:
-
-- `blueprint` (String) The blueprint identifier of the rule
-- `property` (String) The property identifier of the rule
-
-<a id="nestedatt--self_service_trigger--user_properties--boolean_props--visible_jq_query--rules--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.boolean_props.visible_jq_query.rules.property`
-
-Optional:
-
-- `jq_query` (String)
-
-
-
-
 
 <a id="nestedatt--self_service_trigger--user_properties--number_props"></a>
 ### Nested Schema for `self_service_trigger.user_properties.number_props`
 
 Optional:
 
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--number_props--dataset))
 - `default` (Number) The default of the number property
 - `default_jq_query` (String) The default jq query of the number property
 - `depends_on` (List of String) The properties that this property depends on
@@ -516,44 +494,12 @@ Optional:
 - `visible` (Boolean) The visibility of the number property
 - `visible_jq_query` (String) The visibility condition jq query of the number property
 
-<a id="nestedatt--self_service_trigger--user_properties--number_props--dataset"></a>
-### Nested Schema for `self_service_trigger.user_properties.number_props.visible_jq_query`
-
-Required:
-
-- `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--number_props--visible_jq_query--rules))
-
-<a id="nestedatt--self_service_trigger--user_properties--number_props--visible_jq_query--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.number_props.visible_jq_query.rules`
-
-Required:
-
-- `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--number_props--visible_jq_query--rules--value))
-
-Optional:
-
-- `blueprint` (String) The blueprint identifier of the rule
-- `property` (String) The property identifier of the rule
-
-<a id="nestedatt--self_service_trigger--user_properties--number_props--visible_jq_query--rules--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.number_props.visible_jq_query.rules.property`
-
-Optional:
-
-- `jq_query` (String)
-
-
-
-
 
 <a id="nestedatt--self_service_trigger--user_properties--object_props"></a>
 ### Nested Schema for `self_service_trigger.user_properties.object_props`
 
 Optional:
 
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--object_props--dataset))
 - `default` (String) The default of the object property
 - `default_jq_query` (String) The default jq query of the object property
 - `depends_on` (List of String) The properties that this property depends on
@@ -565,37 +511,6 @@ Optional:
 - `visible` (Boolean) The visibility of the object property
 - `visible_jq_query` (String) The visibility condition jq query of the object property
 
-<a id="nestedatt--self_service_trigger--user_properties--object_props--dataset"></a>
-### Nested Schema for `self_service_trigger.user_properties.object_props.visible_jq_query`
-
-Required:
-
-- `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--object_props--visible_jq_query--rules))
-
-<a id="nestedatt--self_service_trigger--user_properties--object_props--visible_jq_query--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.object_props.visible_jq_query.rules`
-
-Required:
-
-- `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--object_props--visible_jq_query--rules--value))
-
-Optional:
-
-- `blueprint` (String) The blueprint identifier of the rule
-- `property` (String) The property identifier of the rule
-
-<a id="nestedatt--self_service_trigger--user_properties--object_props--visible_jq_query--rules--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.object_props.visible_jq_query.rules.property`
-
-Optional:
-
-- `jq_query` (String)
-
-
-
-
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props`
@@ -603,7 +518,7 @@ Optional:
 Optional:
 
 - `blueprint` (String) The blueprint identifier the string property relates to
-- `dataset` (Attributes) The dataset of the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset))
+- `dataset` (Attributes) The dataset of an the entity-format property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset))
 - `default` (String) The default of the string property
 - `default_jq_query` (String) The default jq query of the string property
 - `depends_on` (List of String) The properties that this property depends on

@@ -23,7 +23,7 @@ func GenID() string {
 	if err != nil {
 		panic(err)
 	}
-	return fmt.Sprintf("t-%s", id[:18])
+	return fmt.Sprintf("t-%s", id[len(id)-18:])
 }
 
 func TerraformListToGoArray(ctx context.Context, list types.List, arrayType string) ([]interface{}, error) {
@@ -105,6 +105,19 @@ func TerraformStringToGoObject(s types.String) (interface{}, error) {
 	}
 
 	return obj, nil
+}
+
+func TerraformJsonStringToGoObject(v *string) (*map[string]any, error) {
+	if v == nil || *v == "" {
+		return nil, nil
+	}
+
+	vMap := make(map[string]any)
+	if err := json.Unmarshal([]byte(*v), &vMap); err != nil {
+		return nil, err
+	}
+
+	return &vMap, nil
 }
 
 func InterfaceToStringArray(o interface{}) []string {

@@ -131,6 +131,7 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 		Format:     flex.GoStringToFramework(v.Format),
 		Blueprint:  flex.GoStringToFramework(v.Blueprint),
 		Encryption: flex.GoStringToFramework(v.Encryption),
+		Dataset:    writeDatasetToResource(v.Dataset),
 	}
 
 	if v.Enum != nil {

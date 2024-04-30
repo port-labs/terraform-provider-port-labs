@@ -3,6 +3,8 @@ package action
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -13,9 +15,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 	"regexp"
 )
@@ -45,46 +47,6 @@ func MetadataProperties() map[string]schema.Attribute {
 			MarkdownDescription: "The properties that this property depends on",
 			Optional:            true,
 			ElementType:         types.StringType,
-		},
-		"dataset": schema.SingleNestedAttribute{
-			MarkdownDescription: "The dataset of the property",
-			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"combinator": schema.StringAttribute{
-					MarkdownDescription: "The combinator of the dataset",
-					Required:            true,
-					Validators: []validator.String{
-						stringvalidator.OneOf("and", "or"),
-					},
-				},
-				"rules": schema.ListNestedAttribute{
-					MarkdownDescription: "The rules of the dataset",
-					Required:            true,
-					NestedObject: schema.NestedAttributeObject{
-						Attributes: map[string]schema.Attribute{
-							"blueprint": schema.StringAttribute{
-								MarkdownDescription: "The blueprint identifier of the rule",
-								Optional:            true,
-							},
-							"property": schema.StringAttribute{
-								MarkdownDescription: "The property identifier of the rule",
-								Optional:            true,
-							},
-							"operator": schema.StringAttribute{
-								MarkdownDescription: "The operator of the rule",
-								Required:            true,
-							},
-							"value": schema.ObjectAttribute{
-								MarkdownDescription: "The value of the rule",
-								Required:            true,
-								AttributeTypes: map[string]attr.Type{
-									"jq_query": types.StringType,
-								},
-							},
-						},
-					},
-				},
-			},
 		},
 	}
 }
@@ -145,6 +107,8 @@ func ActionSchema() map[string]schema.Attribute {
 				"user_properties": schema.SingleNestedAttribute{
 					MarkdownDescription: "User properties",
 					Optional:            true,
+					Computed:            true,
+					Default:             objectdefault.StaticValue(types.ObjectValueMust(map[string]attr.Type{}, map[string]attr.Value{})),
 					Attributes: map[string]schema.Attribute{
 						"string_props":  StringPropertySchema(),
 						"number_props":  NumberPropertySchema(),
@@ -166,99 +130,101 @@ func ActionSchema() map[string]schema.Attribute {
 			Validators: []validator.Object{
 				objectvalidator.ExactlyOneOf(
 					path.MatchRoot("self_service_trigger"),
-					path.MatchRoot("automation_trigger"),
+					// TODO: return when frontend for automations is ready
+					//path.MatchRoot("automation_trigger"),
 				),
 			},
 		},
-		"automation_trigger": schema.SingleNestedAttribute{
-			MarkdownDescription: "Automation trigger for the action",
-			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"entity_created_event": schema.SingleNestedAttribute{
-					MarkdownDescription: "Entity created event trigger",
-					Optional:            true,
-					Attributes: map[string]schema.Attribute{
-						"blueprint_identifier": schema.StringAttribute{
-							MarkdownDescription: "The blueprint identifier of the created entity",
-							Required:            true,
-						},
-					},
-					Validators: []validator.Object{
-						objectvalidator.ExactlyOneOf(
-							path.MatchRelative().AtParent().AtName("entity_created_event"),
-							path.MatchRelative().AtParent().AtName("entity_updated_event"),
-							path.MatchRelative().AtParent().AtName("entity_deleted_event"),
-							path.MatchRelative().AtParent().AtName("any_entity_change_event"),
-							path.MatchRelative().AtParent().AtName("timer_property_expired_event"),
-						),
-					},
-				},
-				"entity_updated_event": schema.SingleNestedAttribute{
-					MarkdownDescription: "Entity updated event trigger",
-					Optional:            true,
-					Attributes: map[string]schema.Attribute{
-						"blueprint_identifier": schema.StringAttribute{
-							MarkdownDescription: "The blueprint identifier of the updated entity",
-							Required:            true,
-						},
-					},
-				},
-				"entity_deleted_event": schema.SingleNestedAttribute{
-					MarkdownDescription: "Entity deleted event trigger",
-					Optional:            true,
-					Attributes: map[string]schema.Attribute{
-						"blueprint_identifier": schema.StringAttribute{
-							MarkdownDescription: "The blueprint identifier of the deleted entity",
-							Required:            true,
-						},
-					},
-				},
-				"any_entity_change_event": schema.SingleNestedAttribute{
-					MarkdownDescription: "Any entity change event trigger",
-					Optional:            true,
-					Attributes: map[string]schema.Attribute{
-						"blueprint_identifier": schema.StringAttribute{
-							MarkdownDescription: "The blueprint identifier of the changed entity",
-							Required:            true,
-						},
-					},
-				},
-				"timer_property_expired_event": schema.SingleNestedAttribute{
-					MarkdownDescription: "Timer property expired event trigger",
-					Optional:            true,
-					Attributes: map[string]schema.Attribute{
-						"blueprint_identifier": schema.StringAttribute{
-							MarkdownDescription: "The blueprint identifier of the expired timer property",
-							Required:            true,
-						},
-						"property_identifier": schema.StringAttribute{
-							MarkdownDescription: "The property identifier of the expired timer property",
-							Required:            true,
-						},
-					},
-				},
-				"jq_condition": schema.SingleNestedAttribute{
-					MarkdownDescription: "JQ condition for automation trigger",
-					Optional:            true,
-					Attributes: map[string]schema.Attribute{
-						"expressions": schema.ListAttribute{
-							MarkdownDescription: "The jq expressions of the condition",
-							ElementType:         types.StringType,
-							Required:            true,
-						},
-						"combinator": schema.StringAttribute{
-							MarkdownDescription: "The combinator of the condition",
-							Optional:            true,
-							Computed:            true,
-							Default:             stringdefault.StaticString("and"),
-							Validators: []validator.String{
-								stringvalidator.OneOf("and", "or"),
-							},
-						},
-					},
-				},
-			},
-		},
+		// TODO: return when frontend for automations is ready
+		//"automation_trigger": schema.SingleNestedAttribute{
+		//	MarkdownDescription: "Automation trigger for the action",
+		//	Optional:            true,
+		//	Attributes: map[string]schema.Attribute{
+		//		"entity_created_event": schema.SingleNestedAttribute{
+		//			MarkdownDescription: "Entity created event trigger",
+		//			Optional:            true,
+		//			Attributes: map[string]schema.Attribute{
+		//				"blueprint_identifier": schema.StringAttribute{
+		//					MarkdownDescription: "The blueprint identifier of the created entity",
+		//					Required:            true,
+		//				},
+		//			},
+		//			Validators: []validator.Object{
+		//				objectvalidator.ExactlyOneOf(
+		//					path.MatchRelative().AtParent().AtName("entity_created_event"),
+		//					path.MatchRelative().AtParent().AtName("entity_updated_event"),
+		//					path.MatchRelative().AtParent().AtName("entity_deleted_event"),
+		//					path.MatchRelative().AtParent().AtName("any_entity_change_event"),
+		//					path.MatchRelative().AtParent().AtName("timer_property_expired_event"),
+		//				),
+		//			},
+		//		},
+		//		"entity_updated_event": schema.SingleNestedAttribute{
+		//			MarkdownDescription: "Entity updated event trigger",
+		//			Optional:            true,
+		//			Attributes: map[string]schema.Attribute{
+		//				"blueprint_identifier": schema.StringAttribute{
+		//					MarkdownDescription: "The blueprint identifier of the updated entity",
+		//					Required:            true,
+		//				},
+		//			},
+		//		},
+		//		"entity_deleted_event": schema.SingleNestedAttribute{
+		//			MarkdownDescription: "Entity deleted event trigger",
+		//			Optional:            true,
+		//			Attributes: map[string]schema.Attribute{
+		//				"blueprint_identifier": schema.StringAttribute{
+		//					MarkdownDescription: "The blueprint identifier of the deleted entity",
+		//					Required:            true,
+		//				},
+		//			},
+		//		},
+		//		"any_entity_change_event": schema.SingleNestedAttribute{
+		//			MarkdownDescription: "Any entity change event trigger",
+		//			Optional:            true,
+		//			Attributes: map[string]schema.Attribute{
+		//				"blueprint_identifier": schema.StringAttribute{
+		//					MarkdownDescription: "The blueprint identifier of the changed entity",
+		//					Required:            true,
+		//				},
+		//			},
+		//		},
+		//		"timer_property_expired_event": schema.SingleNestedAttribute{
+		//			MarkdownDescription: "Timer property expired event trigger",
+		//			Optional:            true,
+		//			Attributes: map[string]schema.Attribute{
+		//				"blueprint_identifier": schema.StringAttribute{
+		//					MarkdownDescription: "The blueprint identifier of the expired timer property",
+		//					Required:            true,
+		//				},
+		//				"property_identifier": schema.StringAttribute{
+		//					MarkdownDescription: "The property identifier of the expired timer property",
+		//					Required:            true,
+		//				},
+		//			},
+		//		},
+		//		"jq_condition": schema.SingleNestedAttribute{
+		//			MarkdownDescription: "JQ condition for automation trigger",
+		//			Optional:            true,
+		//			Attributes: map[string]schema.Attribute{
+		//				"expressions": schema.ListAttribute{
+		//					MarkdownDescription: "The jq expressions of the condition",
+		//					ElementType:         types.StringType,
+		//					Required:            true,
+		//				},
+		//				"combinator": schema.StringAttribute{
+		//					MarkdownDescription: "The combinator of the condition",
+		//					Optional:            true,
+		//					Computed:            true,
+		//					Default:             stringdefault.StaticString("and"),
+		//					Validators: []validator.String{
+		//						stringvalidator.OneOf("and", "or"),
+		//					},
+		//				},
+		//			},
+		//		},
+		//	},
+		//},
 		"kafka_method": schema.SingleNestedAttribute{
 			MarkdownDescription: "Kafka invocation method",
 			Optional:            true,
@@ -275,7 +241,8 @@ func ActionSchema() map[string]schema.Attribute {
 					path.MatchRoot("github_method"),
 					path.MatchRoot("gitlab_method"),
 					path.MatchRoot("azure_method"),
-					path.MatchRoot("upsert_entity_method"),
+					// TODO: return when frontend for upsert entity is ready
+					//path.MatchRoot("upsert_entity_method"),
 				),
 			},
 		},
@@ -379,41 +346,42 @@ func ActionSchema() map[string]schema.Attribute {
 				},
 			},
 		},
-		"upsert_entity_method": schema.SingleNestedAttribute{
-			MarkdownDescription: "Upsert Entity invocation method",
-			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"identifier": schema.StringAttribute{
-					MarkdownDescription: "Required when selecting type Upsert Entity. The entity identifier for the upsert",
-					Required:            true,
-				},
-				"title": schema.StringAttribute{
-					MarkdownDescription: "The title of the entity",
-					Optional:            true,
-				},
-				"blueprint_identifier": schema.StringAttribute{
-					MarkdownDescription: "Required when selecting type Upsert Entity. The blueprint identifier of the entity for the upsert",
-					Required:            true,
-				},
-				"teams": schema.ListAttribute{
-					MarkdownDescription: "The teams the entity belongs to",
-					ElementType:         types.StringType,
-					Optional:            true,
-				},
-				"icon": schema.StringAttribute{
-					MarkdownDescription: "The icon of the entity",
-					Optional:            true,
-				},
-				"properties": schema.StringAttribute{
-					MarkdownDescription: "The properties of the entity (key-value object encoded to a string)",
-					Optional:            true,
-				},
-				"relations": schema.StringAttribute{
-					MarkdownDescription: "The relations of the entity (key-value object encoded to a string)",
-					Optional:            true,
-				},
-			},
-		},
+		// TODO: return when frontend for upsert entity is ready
+		//"upsert_entity_method": schema.SingleNestedAttribute{
+		//	MarkdownDescription: "Upsert Entity invocation method",
+		//	Optional:            true,
+		//	Attributes: map[string]schema.Attribute{
+		//		"identifier": schema.StringAttribute{
+		//			MarkdownDescription: "Required when selecting type Upsert Entity. The entity identifier for the upsert",
+		//			Required:            true,
+		//		},
+		//		"title": schema.StringAttribute{
+		//			MarkdownDescription: "The title of the entity",
+		//			Optional:            true,
+		//		},
+		//		"blueprint_identifier": schema.StringAttribute{
+		//			MarkdownDescription: "Required when selecting type Upsert Entity. The blueprint identifier of the entity for the upsert",
+		//			Required:            true,
+		//		},
+		//		"teams": schema.ListAttribute{
+		//			MarkdownDescription: "The teams the entity belongs to",
+		//			ElementType:         types.StringType,
+		//			Optional:            true,
+		//		},
+		//		"icon": schema.StringAttribute{
+		//			MarkdownDescription: "The icon of the entity",
+		//			Optional:            true,
+		//		},
+		//		"properties": schema.StringAttribute{
+		//			MarkdownDescription: "The properties of the entity (key-value object encoded to a string)",
+		//			Optional:            true,
+		//		},
+		//		"relations": schema.StringAttribute{
+		//			MarkdownDescription: "The relations of the entity (key-value object encoded to a string)",
+		//			Optional:            true,
+		//		},
+		//	},
+		//},
 		"required_approval": schema.BoolAttribute{
 			MarkdownDescription: "Require approval before invoking the action",
 			Optional:            true,
@@ -523,6 +491,46 @@ func StringPropertySchema() schema.Attribute {
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("visible")),
+			},
+		},
+		"dataset": schema.SingleNestedAttribute{
+			MarkdownDescription: "The dataset of an the entity-format property",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"combinator": schema.StringAttribute{
+					MarkdownDescription: "The combinator of the dataset",
+					Required:            true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("and", "or"),
+					},
+				},
+				"rules": schema.ListNestedAttribute{
+					MarkdownDescription: "The rules of the dataset",
+					Required:            true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"blueprint": schema.StringAttribute{
+								MarkdownDescription: "The blueprint identifier of the rule",
+								Optional:            true,
+							},
+							"property": schema.StringAttribute{
+								MarkdownDescription: "The property identifier of the rule",
+								Optional:            true,
+							},
+							"operator": schema.StringAttribute{
+								MarkdownDescription: "The operator of the rule",
+								Required:            true,
+							},
+							"value": schema.ObjectAttribute{
+								MarkdownDescription: "The value of the rule",
+								Required:            true,
+								AttributeTypes: map[string]attr.Type{
+									"jq_query": types.StringType,
+								},
+							},
+						},
+					},
+				},
 			},
 		},
 	}
@@ -734,6 +742,10 @@ func ArrayPropertySchema() schema.Attribute {
 						stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
 					},
 				},
+				"dataset": schema.StringAttribute{
+					MarkdownDescription: "The dataset of an the entity-format items",
+					Optional:            true,
+				},
 			},
 		},
 		"number_items": schema.SingleNestedAttribute{
@@ -808,8 +820,15 @@ func ArrayPropertySchema() schema.Attribute {
 	}
 }
 
+func (r *ActionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: ResourceMarkdownDescription,
+		Attributes:          ActionSchema(),
+	}
+}
+
 func (r *ActionResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var state *ActionModel
+	var state *ActionValidationModel
 
 	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
 
@@ -817,53 +836,183 @@ func (r *ActionResource) ValidateConfig(ctx context.Context, req resource.Valida
 		return
 	}
 
-	validateUserInputRequiredNotSetToFalse(state, resp)
+	validateUserInputRequiredNotSetToFalse(ctx, state, resp)
 }
 
-func validateUserInputRequiredNotSetToFalse(state *ActionModel, resp *resource.ValidateConfigResponse) {
-	// go over all the properties and check if required is set to false, is its false, raise an error that false is not
+func validateUserInputRequiredNotSetToFalse(ctx context.Context, state *ActionValidationModel, resp *resource.ValidateConfigResponse) {
+	// go over all the properties and check if required is set to false, it is false, raise an error that false is not
 	// supported anymore
 	const errorString = "required is set to false, this is not supported anymore, if you don't want to make the stringProp required, remove the required stringProp"
 
-	if state.SelfServiceTrigger == nil || state.SelfServiceTrigger.UserProperties == nil {
+	if state.SelfServiceTrigger.IsNull() {
 		return
 	}
 
-	for _, stringProp := range state.SelfServiceTrigger.UserProperties.StringProps {
-		if !stringProp.Required.IsNull() && !stringProp.Required.ValueBool() && stringProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, stringProp.Title, ` in action: `, state.Identifier))
+	var sst = state.SelfServiceTrigger.Attributes()
+	if sst == nil {
+		return
+	}
+
+	var up, _ = sst["user_properties"]
+	if up == nil {
+		return
+	}
+
+	var val, err = up.ToTerraformValue(ctx)
+	if err != nil {
+		return
+	}
+
+	userProperties := map[string]tftypes.Value{}
+
+	err = val.As(&userProperties)
+	if err != nil {
+		return
+	}
+
+	var stringProperties, _ = userProperties["string_props"]
+
+	if !stringProperties.IsNull() {
+		v := map[string]tftypes.Value{}
+
+		err = val.As(&v)
+		if err != nil {
+			return
+		}
+
+		stringPropValidationsObjects := make(map[string]StringPropValidationModel, len(v))
+		for key := range v {
+			var val StringPropValidationModel
+			err = v[key].As(&val)
+
+			if err != nil {
+				return
+			}
+
+			stringPropValidationsObjects[key] = val
+		}
+
+		for _, stringProp := range stringPropValidationsObjects {
+			if stringProp.Required != nil && !*stringProp.Required {
+				resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, stringProp.Title, ` in action: `, state.Identifier))
+			}
 		}
 	}
 
-	for _, numberProp := range state.SelfServiceTrigger.UserProperties.NumberProps {
-		if !numberProp.Required.IsNull() && !numberProp.Required.ValueBool() && numberProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, numberProp.Title, ` in action: `, state.Identifier))
+	var numberProperties, _ = userProperties["number_props"]
+
+	if !numberProperties.IsNull() {
+		v := map[string]tftypes.Value{}
+
+		err = val.As(&v)
+		if err != nil {
+			return
+		}
+
+		numberPropValidationsObjects := make(map[string]NumberPropValidationModel, len(v))
+		for key := range v {
+			var val NumberPropValidationModel
+			err = v[key].As(&val)
+
+			if err != nil {
+				return
+			}
+
+			numberPropValidationsObjects[key] = val
+		}
+
+		for _, numberProp := range numberPropValidationsObjects {
+			if numberProp.Required != nil && !*numberProp.Required {
+				resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, numberProp.Title, ` in action: `, state.Identifier))
+			}
 		}
 	}
 
-	for _, boolProp := range state.SelfServiceTrigger.UserProperties.BooleanProps {
-		if !boolProp.Required.IsNull() && !boolProp.Required.ValueBool() && boolProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, boolProp.Title, ` in action: `, state.Identifier))
+	var booleanProperties, _ = userProperties["boolean_props"]
+
+	if !booleanProperties.IsNull() {
+		v := map[string]tftypes.Value{}
+
+		err = val.As(&v)
+		if err != nil {
+			return
+		}
+
+		booleanPropValidationsObjects := make(map[string]BooleanPropValidationModel, len(v))
+		for key := range v {
+			var val BooleanPropValidationModel
+			err = v[key].As(&val)
+
+			if err != nil {
+				return
+			}
+
+			booleanPropValidationsObjects[key] = val
+		}
+
+		for _, booleanProp := range booleanPropValidationsObjects {
+			if booleanProp.Required != nil && !*booleanProp.Required {
+				resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, booleanProp.Title, ` in action: `, state.Identifier))
+			}
 		}
 	}
 
-	for _, objectProp := range state.SelfServiceTrigger.UserProperties.ObjectProps {
-		if !objectProp.Required.IsNull() && !objectProp.Required.ValueBool() && objectProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, objectProp.Title, ` in action: `, state.Identifier))
+	var objectProperties, _ = userProperties["object_props"]
+
+	if !objectProperties.IsNull() {
+		v := map[string]tftypes.Value{}
+
+		err = val.As(&v)
+		if err != nil {
+			return
+		}
+
+		objectPropValidationsObjects := make(map[string]ObjectPropValidationModel, len(v))
+		for key := range v {
+			var val ObjectPropValidationModel
+			err = v[key].As(&val)
+
+			if err != nil {
+				return
+			}
+
+			objectPropValidationsObjects[key] = val
+		}
+
+		for _, objectProp := range objectPropValidationsObjects {
+			if objectProp.Required != nil && !*objectProp.Required {
+				resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, objectProp.Title, ` in action: `, state.Identifier))
+			}
 		}
 	}
 
-	for _, arrayProp := range state.SelfServiceTrigger.UserProperties.ArrayProps {
-		if !arrayProp.Required.IsNull() && !arrayProp.Required.ValueBool() && arrayProp.Required == types.BoolValue(false) {
-			resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, arrayProp.Title, ` in action: `, state.Identifier))
-		}
-	}
-}
+	var arrayProperties, _ = userProperties["array_props"]
 
-func (r *ActionResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		MarkdownDescription: ResourceMarkdownDescription,
-		Attributes:          ActionSchema(),
+	if !arrayProperties.IsNull() {
+		v := map[string]tftypes.Value{}
+
+		err = val.As(&v)
+		if err != nil {
+			return
+		}
+
+		arrayPropValidationsObjects := make(map[string]ArrayPropValidationModel, len(v))
+		for key := range v {
+			var val ArrayPropValidationModel
+			err = v[key].As(&val)
+
+			if err != nil {
+				return
+			}
+
+			arrayPropValidationsObjects[key] = val
+		}
+
+		for _, arrayProp := range arrayPropValidationsObjects {
+			if arrayProp.Required != nil && !*arrayProp.Required {
+				resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, arrayProp.Title, ` in action: `, state.Identifier))
+			}
+		}
 	}
 }
 
@@ -888,6 +1037,18 @@ resource "port_action" "create_microservice" {
 				myStringIdentifier = {
 					title = "My String Identifier"
 					required = true
+                    format = "entity"
+                    blueprint = port_blueprint.parent.identifier
+					dataset = {
+		            	combinator = "and"
+		            	rules = [{
+                        	property = "$title"
+			            	operator = "contains"
+			            	value = {
+			                	jq_query = "\"specificValue\""
+			            	}
+		            	}]
+		        	}
 				}
 			}
 			number_props = {
@@ -915,7 +1076,16 @@ resource "port_action" "create_microservice" {
 					title = "My Array Identifier"
 					required = true
 					string_items = {
-						format = "email"
+						format = "entity"
+                        blueprint = port_blueprint.parent.identifier
+						dataset = jsonencode({
+			            	combinator = "and"
+			            	rules = [{
+			                	property = "$title"
+			                	operator = "contains"
+			                	value    = "specificValue"
+			                }]
+		                })
 					}
 				}
 			}
@@ -926,26 +1096,29 @@ resource "port_action" "create_microservice" {
 		  runId: "{{"{{.run.id}}"}}"
 		})
 	}
-}` + "\n```" + `
-
-## Example Usage with Automation trigger
-
-Port allows setting an automation trigger to an action, for executing an action based on event occurred to an entity in Port.
-
-` + "```hcl" + `
-resource "port_action" "delete_temporary_microservice" {
-	title = "Delete Temporary Microservice"
-	identifier = "delete-temp-microservice"
-	icon = "Terraform"
-	automation_trigger = {
-		timer_property_expired_event = {
-			blueprint_identifier = port_blueprint.microservice.identifier
-			property_identifier = "ttl"
-		}
-	}
-	kafka_method = {
-		payload = jsonencode({
-		  runId: "{{"{{.run.id}}"}}"
-		})
-	}
 }` + "\n```"
+
+// TODO: return when frontend for automations is ready
+//+ `
+//
+//## Example Usage with Automation trigger
+//
+//Port allows setting an automation trigger to an action, for executing an action based on event occurred to an entity in Port.
+//
+//` + "```hcl" + `
+//resource "port_action" "delete_temporary_microservice" {
+//	title = "Delete Temporary Microservice"
+//	identifier = "delete-temp-microservice"
+//	icon = "Terraform"
+//	automation_trigger = {
+//		timer_property_expired_event = {
+//			blueprint_identifier = port_blueprint.microservice.identifier
+//			property_identifier = "ttl"
+//		}
+//	}
+//	kafka_method = {
+//		payload = jsonencode({
+//		  runId: "{{"{{.run.id}}"}}"
+//		})
+//	}
+//}` + "\n```"

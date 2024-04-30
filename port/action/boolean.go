@@ -49,9 +49,6 @@ func booleanPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, 
 				property.DependsOn = utils.InterfaceToStringArray(dependsOn)
 
 			}
-			if prop.Dataset != nil {
-				property.Dataset = actionDataSetToPortBody(prop.Dataset)
-			}
 
 			if !prop.Visible.IsNull() {
 				property.Visible = prop.Visible.ValueBoolPointer()

@@ -3,8 +3,9 @@ package action
 import (
 	"context"
 	"fmt"
-	"github.com/samber/lo"
 	"reflect"
+
+	"github.com/samber/lo"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
@@ -96,52 +97,51 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 		}
 	}
 
-	if a.InvocationMethod.Type == consts.UpsertEntity {
-		var teams []types.String
-		switch team := a.InvocationMethod.Team.(type) {
-		case string:
-			teams = append(teams, types.StringValue(team))
-		case []interface{}:
-			teams = make([]types.String, 0)
-			for _, t := range team {
-				teams = append(teams, types.StringValue(t.(string)))
-			}
-		}
-		properties, err := utils.GoObjectToTerraformString(a.InvocationMethod.Properties)
-		if err != nil {
-			return err
-		}
-		relations, err := utils.GoObjectToTerraformString(a.InvocationMethod.Relations)
-		if err != nil {
-			return err
-		}
-
-		state.UpsertEntityMethod = &UpsertEntityMethodModel{
-			Identifier:          types.StringValue(*a.InvocationMethod.Identifier),
-			Title:               flex.GoStringToFramework(a.InvocationMethod.Title),
-			BlueprintIdentifier: types.StringValue(*a.InvocationMethod.BlueprintIdentifier),
-			Teams:               teams,
-			Icon:                flex.GoStringToFramework(a.InvocationMethod.Icon),
-			Properties:          properties,
-			Relations:           relations,
-		}
-	}
+	// TODO: return when frontend for upsert entity is ready
+	//if a.InvocationMethod.Type == consts.UpsertEntity {
+	//	var teams []types.String
+	//	switch team := a.InvocationMethod.Team.(type) {
+	//	case string:
+	//		teams = append(teams, types.StringValue(team))
+	//	case []interface{}:
+	//		teams = make([]types.String, 0)
+	//		for _, t := range team {
+	//			teams = append(teams, types.StringValue(t.(string)))
+	//		}
+	//	}
+	//	properties, err := utils.GoObjectToTerraformString(a.InvocationMethod.Properties)
+	//	if err != nil {
+	//		return err
+	//	}
+	//	relations, err := utils.GoObjectToTerraformString(a.InvocationMethod.Relations)
+	//	if err != nil {
+	//		return err
+	//	}
+	//
+	//	state.UpsertEntityMethod = &UpsertEntityMethodModel{
+	//		Identifier:          types.StringValue(*a.InvocationMethod.Identifier),
+	//		Title:               flex.GoStringToFramework(a.InvocationMethod.Title),
+	//		BlueprintIdentifier: types.StringValue(*a.InvocationMethod.BlueprintIdentifier),
+	//		Teams:               teams,
+	//		Icon:                flex.GoStringToFramework(a.InvocationMethod.Icon),
+	//		Properties:          properties,
+	//		Relations:           relations,
+	//	}
+	//}
 
 	return nil
 }
 
-func writeDatasetToResource(v cli.ActionProperty) *DatasetModel {
-	if v.Dataset == nil {
+func writeDatasetToResource(ds *cli.Dataset) *DatasetModel {
+	if ds == nil {
 		return nil
 	}
 
-	dataset := v.Dataset
-
 	datasetModel := &DatasetModel{
-		Combinator: types.StringValue(dataset.Combinator),
+		Combinator: types.StringValue(ds.Combinator),
 	}
 
-	for _, v := range dataset.Rules {
+	for _, v := range ds.Rules {
 		rule := &Rule{
 			Blueprint: flex.GoStringToFramework(v.Blueprint),
 			Property:  flex.GoStringToFramework(v.Property),
@@ -204,8 +204,8 @@ func buildRequired(v *cli.ActionUserInputs) (types.String, []string) {
 }
 
 func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesModel, error) {
+	properties := &UserPropertiesModel{}
 	if len(a.Trigger.UserInputs.Properties) > 0 {
-		properties := &UserPropertiesModel{}
 		requiredJq, required := buildRequired(a.Trigger.UserInputs)
 		for k, v := range a.Trigger.UserInputs.Properties {
 			switch v.Type {
@@ -303,11 +303,9 @@ func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesMod
 
 			}
 		}
-
-		return properties, nil
 	}
 
-	return nil, nil
+	return properties, nil
 }
 
 func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
@@ -331,53 +329,54 @@ func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionMod
 		}
 	}
 
-	if a.Trigger.Type == consts.Automation {
-		automationTrigger := &AutomationTriggerModel{}
-
-		var expressions []types.String
-		if a.Trigger.Condition != nil {
-			for _, e := range a.Trigger.Condition.Expressions {
-				expressions = append(expressions, types.StringValue(e))
-			}
-			automationTrigger.JqCondition = &JqConditionModel{
-				Expressions: expressions,
-				Combinator:  flex.GoStringToFramework(a.Trigger.Condition.Combinator),
-			}
-		}
-
-		if a.Trigger.Event.Type == consts.EntityCreated {
-			automationTrigger.EntityCreatedEvent = &EntityCreatedEventModel{
-				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
-			}
-		}
-
-		if a.Trigger.Event.Type == consts.EntityUpdated {
-			automationTrigger.EntityUpdatedEvent = &EntityUpdatedEventModel{
-				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
-			}
-		}
-
-		if a.Trigger.Event.Type == consts.EntityDeleted {
-			automationTrigger.EntityDeletedEvent = &EntityDeletedEventModel{
-				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
-			}
-		}
-
-		if a.Trigger.Event.Type == consts.AnyEntityChange {
-			automationTrigger.AnyEntityChangeEvent = &AnyEntityChangeEventModel{
-				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
-			}
-		}
-
-		if a.Trigger.Event.Type == consts.TimerPropertyExpired {
-			automationTrigger.TimerPropertyExpiredEvent = &TimerPropertyExpiredEventModel{
-				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
-				PropertyIdentifier:  types.StringValue(*a.Trigger.Event.PropertyIdentifier),
-			}
-		}
-
-		state.AutomationTrigger = automationTrigger
-	}
+	// TODO: return when frontend for automations is ready
+	//if a.Trigger.Type == consts.Automation {
+	//	automationTrigger := &AutomationTriggerModel{}
+	//
+	//	var expressions []types.String
+	//	if a.Trigger.Condition != nil {
+	//		for _, e := range a.Trigger.Condition.Expressions {
+	//			expressions = append(expressions, types.StringValue(e))
+	//		}
+	//		automationTrigger.JqCondition = &JqConditionModel{
+	//			Expressions: expressions,
+	//			Combinator:  flex.GoStringToFramework(a.Trigger.Condition.Combinator),
+	//		}
+	//	}
+	//
+	//	if a.Trigger.Event.Type == consts.EntityCreated {
+	//		automationTrigger.EntityCreatedEvent = &EntityCreatedEventModel{
+	//			BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+	//		}
+	//	}
+	//
+	//	if a.Trigger.Event.Type == consts.EntityUpdated {
+	//		automationTrigger.EntityUpdatedEvent = &EntityUpdatedEventModel{
+	//			BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+	//		}
+	//	}
+	//
+	//	if a.Trigger.Event.Type == consts.EntityDeleted {
+	//		automationTrigger.EntityDeletedEvent = &EntityDeletedEventModel{
+	//			BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+	//		}
+	//	}
+	//
+	//	if a.Trigger.Event.Type == consts.AnyEntityChange {
+	//		automationTrigger.AnyEntityChangeEvent = &AnyEntityChangeEventModel{
+	//			BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+	//		}
+	//	}
+	//
+	//	if a.Trigger.Event.Type == consts.TimerPropertyExpired {
+	//		automationTrigger.TimerPropertyExpiredEvent = &TimerPropertyExpiredEventModel{
+	//			BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+	//			PropertyIdentifier:  types.StringValue(*a.Trigger.Event.PropertyIdentifier),
+	//		}
+	//	}
+	//
+	//	state.AutomationTrigger = automationTrigger
+	//}
 
 	return nil
 }
@@ -531,23 +530,6 @@ func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interfa
 				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
 			case *ObjectPropModel:
 				p.DependsOn = flex.GoArrayStringToTerraformList(ctx, v.DependsOn)
-			}
-
-		case "Dataset":
-			dataset := writeDatasetToResource(v)
-			if dataset != nil {
-				switch p := prop.(type) {
-				case *StringPropModel:
-					p.Dataset = dataset
-				case *NumberPropModel:
-					p.Dataset = dataset
-				case *BooleanPropModel:
-					p.Dataset = dataset
-				case *ArrayPropModel:
-					p.Dataset = dataset
-				case *ObjectPropModel:
-					p.Dataset = dataset
-				}
 			}
 
 		case "Visible":

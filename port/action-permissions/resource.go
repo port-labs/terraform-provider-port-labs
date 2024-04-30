@@ -94,16 +94,10 @@ func (r *ActionPermissionsResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	a, err := r.portClient.UpdateActionPermissions(ctx, actionIdentifier, permissions)
+	_, err = r.portClient.UpdateActionPermissions(ctx, actionIdentifier, permissions)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update action permissions", err.Error())
-		return
-	}
-
-	err = refreshActionPermissionsState(ctx, state, a, actionIdentifier)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to refresh action permissions state", err.Error())
 		return
 	}
 

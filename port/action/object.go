@@ -63,10 +63,6 @@ func objectPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 				property.Encryption = &encryption
 			}
 
-			if prop.Dataset != nil {
-				property.Dataset = actionDataSetToPortBody(prop.Dataset)
-			}
-
 			if !prop.Visible.IsNull() {
 				property.Visible = prop.Visible.ValueBoolPointer()
 			}

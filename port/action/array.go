@@ -38,6 +38,15 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.ActionProperty, p
 			items["enum"] = enumList
 		}
 
+		if !prop.StringItems.Dataset.IsNull() {
+			v, err := utils.TerraformJsonStringToGoObject(prop.StringItems.Dataset.ValueStringPointer())
+			if err != nil {
+				return err
+			}
+
+			items["dataset"] = v
+		}
+
 		if !prop.StringItems.Format.IsNull() {
 			items["format"] = prop.StringItems.Format.ValueString()
 		}
@@ -165,9 +174,6 @@ func arrayPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, pr
 				property.DependsOn = utils.InterfaceToStringArray(dependsOn)
 
 			}
-			if prop.Dataset != nil {
-				property.Dataset = actionDataSetToPortBody(prop.Dataset)
-			}
 
 			err := handleArrayItemsToBody(ctx, &property, prop, required)
 			if err != nil {
@@ -232,6 +238,13 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 				}
 				if value, ok := v.Items["blueprint"]; ok && value != nil {
 					arrayProp.StringItems.Blueprint = types.StringValue(v.Items["blueprint"].(string))
+				}
+				if value, ok := v.Items["dataset"]; ok && value != nil {
+					ds, err := utils.GoObjectToTerraformString(v.Items["dataset"])
+					if err != nil {
+						return nil, err
+					}
+					arrayProp.StringItems.Dataset = ds
 				}
 
 				if value, ok := v.Items["enum"]; ok && value != nil {

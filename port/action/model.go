@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 type Value struct {
@@ -40,16 +41,150 @@ type StringPropModel struct {
 	Encryption  types.String `tfsdk:"encryption"`
 }
 
+// StringPropValidationModel is a model used for the validation of StringPropModel resources
+type StringPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *StringPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// NumberPropValidationModel is a model used for the validation of StringPropModel resources
+type NumberPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *NumberPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// BooleanPropValidationModel is a model used for the validation of StringPropModel resources
+type BooleanPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *BooleanPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ObjectPropValidationModel is a model used for the validation of StringPropModel resources
+type ObjectPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *ObjectPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ArrayPropValidationModel is a model used for the validation of StringPropModel resources
+type ArrayPropValidationModel struct {
+	Title    string
+	Required *bool
+}
+
+func (e *ArrayPropValidationModel) FromTerraform5Value(val tftypes.Value) error {
+	v := map[string]tftypes.Value{}
+
+	err := val.As(&v)
+	if err != nil {
+		return err
+	}
+
+	err = v["title"].As(&e.Title)
+	if err != nil {
+		return err
+	}
+
+	err = v["required"].As(&e.Required)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type NumberPropModel struct {
-	Title          types.String  `tfsdk:"title"`
-	Icon           types.String  `tfsdk:"icon"`
-	Description    types.String  `tfsdk:"description"`
-	Required       types.Bool    `tfsdk:"required"`
-	DependsOn      types.List    `tfsdk:"depends_on"`
-	Dataset        *DatasetModel `tfsdk:"dataset"`
-	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
-	Visible        types.Bool    `tfsdk:"visible"`
-	VisibleJqQuery types.String  `tfsdk:"visible_jq_query"`
+	Title          types.String `tfsdk:"title"`
+	Icon           types.String `tfsdk:"icon"`
+	Description    types.String `tfsdk:"description"`
+	Required       types.Bool   `tfsdk:"required"`
+	DependsOn      types.List   `tfsdk:"depends_on"`
+	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
+	Visible        types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
 
 	Default     types.Float64 `tfsdk:"default"`
 	Maximum     types.Float64 `tfsdk:"maximum"`
@@ -59,29 +194,27 @@ type NumberPropModel struct {
 }
 
 type BooleanPropModel struct {
-	Title          types.String  `tfsdk:"title"`
-	Icon           types.String  `tfsdk:"icon"`
-	Description    types.String  `tfsdk:"description"`
-	Required       types.Bool    `tfsdk:"required"`
-	DependsOn      types.List    `tfsdk:"depends_on"`
-	Dataset        *DatasetModel `tfsdk:"dataset"`
-	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
-	Visible        types.Bool    `tfsdk:"visible"`
-	VisibleJqQuery types.String  `tfsdk:"visible_jq_query"`
+	Title          types.String `tfsdk:"title"`
+	Icon           types.String `tfsdk:"icon"`
+	Description    types.String `tfsdk:"description"`
+	Required       types.Bool   `tfsdk:"required"`
+	DependsOn      types.List   `tfsdk:"depends_on"`
+	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
+	Visible        types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
 
 	Default types.Bool `tfsdk:"default"`
 }
 
 type ArrayPropModel struct {
-	Title          types.String  `tfsdk:"title"`
-	Icon           types.String  `tfsdk:"icon"`
-	Description    types.String  `tfsdk:"description"`
-	Required       types.Bool    `tfsdk:"required"`
-	DependsOn      types.List    `tfsdk:"depends_on"`
-	Dataset        *DatasetModel `tfsdk:"dataset"`
-	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
-	Visible        types.Bool    `tfsdk:"visible"`
-	VisibleJqQuery types.String  `tfsdk:"visible_jq_query"`
+	Title          types.String `tfsdk:"title"`
+	Icon           types.String `tfsdk:"icon"`
+	Description    types.String `tfsdk:"description"`
+	Required       types.Bool   `tfsdk:"required"`
+	DependsOn      types.List   `tfsdk:"depends_on"`
+	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
+	Visible        types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
 
 	MaxItems     types.Int64   `tfsdk:"max_items"`
 	MinItems     types.Int64   `tfsdk:"min_items"`
@@ -92,15 +225,14 @@ type ArrayPropModel struct {
 }
 
 type ObjectPropModel struct {
-	Title          types.String  `tfsdk:"title"`
-	Icon           types.String  `tfsdk:"icon"`
-	Description    types.String  `tfsdk:"description"`
-	Required       types.Bool    `tfsdk:"required"`
-	DependsOn      types.List    `tfsdk:"depends_on"`
-	Dataset        *DatasetModel `tfsdk:"dataset"`
-	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
-	Visible        types.Bool    `tfsdk:"visible"`
-	VisibleJqQuery types.String  `tfsdk:"visible_jq_query"`
+	Title          types.String `tfsdk:"title"`
+	Icon           types.String `tfsdk:"icon"`
+	Description    types.String `tfsdk:"description"`
+	Required       types.Bool   `tfsdk:"required"`
+	DependsOn      types.List   `tfsdk:"depends_on"`
+	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
+	Visible        types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
 
 	Default    types.String `tfsdk:"default"`
 	Encryption types.String `tfsdk:"encryption"`
@@ -112,6 +244,7 @@ type StringItems struct {
 	Default     types.List   `tfsdk:"default"`
 	Enum        types.List   `tfsdk:"enum"`
 	EnumJqQuery types.String `tfsdk:"enum_jq_query"`
+	Dataset     types.String `tfsdk:"dataset"`
 }
 
 type NumberItems struct {
@@ -170,14 +303,15 @@ type JqConditionModel struct {
 	Combinator  types.String   `tfsdk:"combinator"`
 }
 
-type AutomationTriggerModel struct {
-	EntityCreatedEvent        *EntityCreatedEventModel        `tfsdk:"entity_created_event"`
-	EntityUpdatedEvent        *EntityUpdatedEventModel        `tfsdk:"entity_updated_event"`
-	EntityDeletedEvent        *EntityDeletedEventModel        `tfsdk:"entity_deleted_event"`
-	AnyEntityChangeEvent      *AnyEntityChangeEventModel      `tfsdk:"any_entity_change_event"`
-	TimerPropertyExpiredEvent *TimerPropertyExpiredEventModel `tfsdk:"timer_property_expired_event"`
-	JqCondition               *JqConditionModel               `tfsdk:"jq_condition"`
-}
+// TODO: return when frontend for automations is ready
+//type AutomationTriggerModel struct {
+//	EntityCreatedEvent        *EntityCreatedEventModel        `tfsdk:"entity_created_event"`
+//	EntityUpdatedEvent        *EntityUpdatedEventModel        `tfsdk:"entity_updated_event"`
+//	EntityDeletedEvent        *EntityDeletedEventModel        `tfsdk:"entity_deleted_event"`
+//	AnyEntityChangeEvent      *AnyEntityChangeEventModel      `tfsdk:"any_entity_change_event"`
+//	TimerPropertyExpiredEvent *TimerPropertyExpiredEventModel `tfsdk:"timer_property_expired_event"`
+//	JqCondition               *JqConditionModel               `tfsdk:"jq_condition"`
+//}
 
 type KafkaMethodModel struct {
 	Payload types.String `tfsdk:"payload"`
@@ -213,15 +347,16 @@ type AzureMethodModel struct {
 	Payload types.String `tfsdk:"payload"`
 }
 
-type UpsertEntityMethodModel struct {
-	Identifier          types.String   `tfsdk:"identifier"`
-	Title               types.String   `tfsdk:"title"`
-	BlueprintIdentifier types.String   `tfsdk:"blueprint_identifier"`
-	Teams               []types.String `tfsdk:"teams"`
-	Icon                types.String   `tfsdk:"icon"`
-	Properties          types.String   `tfsdk:"properties"`
-	Relations           types.String   `tfsdk:"relations"`
-}
+// TODO: return when frontend for upsert entity is ready
+//type UpsertEntityMethodModel struct {
+//	Identifier          types.String   `tfsdk:"identifier"`
+//	Title               types.String   `tfsdk:"title"`
+//	BlueprintIdentifier types.String   `tfsdk:"blueprint_identifier"`
+//	Teams               []types.String `tfsdk:"teams"`
+//	Icon                types.String   `tfsdk:"icon"`
+//	Properties          types.String   `tfsdk:"properties"`
+//	Relations           types.String   `tfsdk:"relations"`
+//}
 
 type ApprovalWebhookNotificationModel struct {
 	Url    types.String `tfsdk:"url"`
@@ -229,22 +364,48 @@ type ApprovalWebhookNotificationModel struct {
 }
 
 type ActionModel struct {
-	ID                          types.String                      `tfsdk:"id"`
-	Identifier                  types.String                      `tfsdk:"identifier"`
-	Blueprint                   types.String                      `tfsdk:"blueprint"`
-	Title                       types.String                      `tfsdk:"title"`
-	Icon                        types.String                      `tfsdk:"icon"`
-	Description                 types.String                      `tfsdk:"description"`
-	SelfServiceTrigger          *SelfServiceTriggerModel          `tfsdk:"self_service_trigger"`
-	AutomationTrigger           *AutomationTriggerModel           `tfsdk:"automation_trigger"`
-	KafkaMethod                 *KafkaMethodModel                 `tfsdk:"kafka_method"`
-	WebhookMethod               *WebhookMethodModel               `tfsdk:"webhook_method"`
-	GithubMethod                *GithubMethodModel                `tfsdk:"github_method"`
-	GitlabMethod                *GitlabMethodModel                `tfsdk:"gitlab_method"`
-	AzureMethod                 *AzureMethodModel                 `tfsdk:"azure_method"`
-	UpsertEntityMethod          *UpsertEntityMethodModel          `tfsdk:"upsert_entity_method"`
+	ID                 types.String             `tfsdk:"id"`
+	Identifier         types.String             `tfsdk:"identifier"`
+	Blueprint          types.String             `tfsdk:"blueprint"`
+	Title              types.String             `tfsdk:"title"`
+	Icon               types.String             `tfsdk:"icon"`
+	Description        types.String             `tfsdk:"description"`
+	SelfServiceTrigger *SelfServiceTriggerModel `tfsdk:"self_service_trigger"`
+	// TODO: return when frontend for automations is ready
+	//AutomationTrigger           *AutomationTriggerModel           `tfsdk:"automation_trigger"`
+	KafkaMethod   *KafkaMethodModel   `tfsdk:"kafka_method"`
+	WebhookMethod *WebhookMethodModel `tfsdk:"webhook_method"`
+	GithubMethod  *GithubMethodModel  `tfsdk:"github_method"`
+	GitlabMethod  *GitlabMethodModel  `tfsdk:"gitlab_method"`
+	AzureMethod   *AzureMethodModel   `tfsdk:"azure_method"`
+	// TODO: return when frontend for upsert entity is ready
+	//UpsertEntityMethod          *UpsertEntityMethodModel          `tfsdk:"upsert_entity_method"`
 	RequiredApproval            types.Bool                        `tfsdk:"required_approval"`
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
 	Publish                     types.Bool                        `tfsdk:"publish"`
+}
+
+// ActionValidationModel is a model used for the validation of ActionModel resources
+type ActionValidationModel struct {
+	ID                 types.String `tfsdk:"id"`
+	Identifier         types.String `tfsdk:"identifier"`
+	Blueprint          types.String `tfsdk:"blueprint"`
+	Title              types.String `tfsdk:"title"`
+	Icon               types.String `tfsdk:"icon"`
+	Description        types.String `tfsdk:"description"`
+	SelfServiceTrigger types.Object `tfsdk:"self_service_trigger"`
+	// TODO: return when frontend for automations is ready
+	//AutomationTrigger           types.Object `tfsdk:"automation_trigger"`
+	KafkaMethod   types.Object `tfsdk:"kafka_method"`
+	WebhookMethod types.Object `tfsdk:"webhook_method"`
+	GithubMethod  types.Object `tfsdk:"github_method"`
+	GitlabMethod  types.Object `tfsdk:"gitlab_method"`
+	AzureMethod   types.Object `tfsdk:"azure_method"`
+	// TODO: return when frontend for upsert entity is ready
+	//UpsertEntityMethod          types.Object `tfsdk:"upsert_entity_method"`
+	RequiredApproval            types.Bool   `tfsdk:"required_approval"`
+	ApprovalWebhookNotification types.Object `tfsdk:"approval_webhook_notification"`
+	ApprovalEmailNotification   types.Object `tfsdk:"approval_email_notification"`
+	Publish                     types.Bool   `tfsdk:"publish"`
 }

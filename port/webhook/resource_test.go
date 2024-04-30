@@ -82,22 +82,22 @@ func TestAccPortWebhook(t *testing.T) {
 		icon       = "Terraform"
 		enabled    = true
 		security = {
-			secret                  = "test"
+			//secret                  = "test"
 			signature_header_name   = "X-Hub-Signature-256"
 			signature_algorithm     = "sha256"
 			signature_prefix        = "sha256="
-			request_identifier_path = "body.repository.full_name"
+			request_identifier_path = ".body.repository.full_name"
 		  }
 		mappings = [
 			{
 			"blueprint" = "%s",
 			"filter" = ".headers.\"X-GitHub-Event\" == \"pull_request\"",
-			"items_to_parse" = "body.pull_request",
+			"items_to_parse" = ".body.pull_request",
 			"entity" = {
 					"identifier" = ".body.pull_request.id | tostring",
 					"title" = ".body.pull_request.title",
-					"icon" = "Terraform",
-					"team" = "port",
+					"icon" = "\"Terraform\"",
+					"team" = "\"port\"",
 					"properties" = {
 						"author" = ".body.pull_request.user.login",
 						"url" = ".body.pull_request.html_url"
@@ -107,7 +107,6 @@ func TestAccPortWebhook(t *testing.T) {
 		]
 		lifecycle {
 			ignore_changes = [
-			  security.secret
 			]
 		  }
 		  depends_on = [
@@ -143,14 +142,14 @@ func TestAccPortWebhook(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_header_name", "X-Hub-Signature-256"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_algorithm", "sha256"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_prefix", "sha256="),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.request_identifier_path", "body.repository.full_name"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.request_identifier_path", ".body.repository.full_name"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.blueprint", identifier),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.filter", ".headers.\"X-GitHub-Event\" == \"pull_request\""),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.items_to_parse", "body.pull_request"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.items_to_parse", ".body.pull_request"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.identifier", ".body.pull_request.id | tostring"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.title", ".body.pull_request.title"),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.team", "port"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.icon", "\"Terraform\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.team", "\"port\""),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.properties.author", ".body.pull_request.user.login"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.properties.url", ".body.pull_request.html_url"),
 				),
@@ -172,7 +171,7 @@ func TestAccPortWebhookImport(t *testing.T) {
 			signature_header_name   = "X-Hub-Signature-256"
 			signature_algorithm     = "sha256"
 			signature_prefix        = "sha256="
-			request_identifier_path = "body.repository.full_name"
+			request_identifier_path = ".body.repository.full_name"
 		  }
 		mappings = [
 			{
@@ -181,8 +180,8 @@ func TestAccPortWebhookImport(t *testing.T) {
 			"entity" = {
 					"identifier" = ".body.pull_request.id | tostring",
 					"title" = ".body.pull_request.title",
-					"icon" = "Terraform",
-					"team" = "port",
+					"icon" = "\"Terraform\"",
+					"team" = "\"port\"",
 					"properties" = {
 						"author" = ".body.pull_request.user.login",
 						"url" = ".body.pull_request.html_url"
@@ -192,7 +191,6 @@ func TestAccPortWebhookImport(t *testing.T) {
 		]
 		lifecycle {
 			ignore_changes = [
-			  security.secret
 			]
 		  }
 		depends_on = [
@@ -228,13 +226,13 @@ func TestAccPortWebhookImport(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_header_name", "X-Hub-Signature-256"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_algorithm", "sha256"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_prefix", "sha256="),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.request_identifier_path", "body.repository.full_name"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.request_identifier_path", ".body.repository.full_name"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.blueprint", identifier),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.filter", ".headers.\"X-GitHub-Event\" == \"pull_request\""),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.identifier", ".body.pull_request.id | tostring"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.title", ".body.pull_request.title"),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.team", "port"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.icon", "\"Terraform\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.team", "\"port\""),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.properties.author", ".body.pull_request.user.login"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.properties.url", ".body.pull_request.html_url"),
 				),

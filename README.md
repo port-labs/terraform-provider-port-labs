@@ -1,4 +1,8 @@
-<img align="right" src="https://user-images.githubusercontent.com/8277210/183290078-f38cdfd2-e5da-4562-82e6-f274d0330825.svg#gh-dark-mode-only" width="100" height="74" /> <img align="right" width="100" height="74" src="https://user-images.githubusercontent.com/8277210/183290025-d7b24277-dfb4-4ce1-bece-7fe0ecd5efd4.svg#gh-light-mode-only" />
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://port-graphical-assets.s3.eu-west-1.amazonaws.com/Logo+Typo+%2B+Logo+Symbol+-+white.png">
+  <source media="(prefers-color-scheme: light)" srcset="https://port-graphical-assets.s3.eu-west-1.amazonaws.com/Logo+Typo+%2B+Logo+Symbol.svg">
+  <img align="right" height="54" src="https://port-graphical-assets.s3.eu-west-1.amazonaws.com/Logo+Typo+%2B+Logo+Symbol.svg">
+</picture>
 
 # Port Terraform Provider
 

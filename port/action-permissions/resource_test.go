@@ -496,7 +496,6 @@ func TestAccPortActionWithEmptyFieldsExpectDefaultsToApply(t *testing.T) {
 	var testAccActionPermissionsConfigCreate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + `
 	resource "port_action_permissions" "create_microservice_permissions" {
 	  action_identifier = port_action.create_microservice.identifier
-	  blueprint_identifier = port_blueprint.microservice.identifier	
 	  permissions = {
 		"execute": {}
 		"approve": {}
@@ -511,7 +510,6 @@ func TestAccPortActionWithEmptyFieldsExpectDefaultsToApply(t *testing.T) {
 				Config: testAccActionPermissionsConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "action_identifier", actionIdentifier),
-					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "blueprint_identifier", blueprintIdentifier),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.roles.#", "0"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.users.#", "0"),
 					resource.TestCheckResourceAttr("port_action_permissions.create_microservice_permissions", "permissions.execute.teams.#", "0"),

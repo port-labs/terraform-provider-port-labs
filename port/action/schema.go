@@ -1039,16 +1039,16 @@ resource "port_action" "create_microservice" {
 					required = true
                     format = "entity"
                     blueprint = port_blueprint.parent.identifier
-					dataset = {
-		            	combinator = "and"
-		            	rules = [{
-                        	property = "$title"
-			            	operator = "contains"
-			            	value = {
-			                	jq_query = "\"specificValue\""
-			            	}
-		            	}]
-		        	}
+                    dataset = {
+                        combinator = "and"
+                        rules = [{
+                            property = "$title"
+                            operator = "contains"
+                            value = {
+                                jq_query = "\"specificValue\""
+                            }
+                        }]
+                    }
 				}
 			}
 			number_props = {
@@ -1078,14 +1078,14 @@ resource "port_action" "create_microservice" {
 					string_items = {
 						format = "entity"
                         blueprint = port_blueprint.parent.identifier
-						dataset = jsonencode({
-			            	combinator = "and"
-			            	rules = [{
-			                	property = "$title"
-			                	operator = "contains"
-			                	value    = "specificValue"
-			                }]
-		                })
+                        dataset = jsonencode({
+                            combinator = "and"
+                            rules = [{
+                                property = "$title"
+                                operator = "contains"
+                                value    = "specificValue"
+                            }]
+                        })
 					}
 				}
 			}

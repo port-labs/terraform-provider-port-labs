@@ -97,6 +97,37 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 		}
 	}
 
+	if a.InvocationMethod.Type == consts.UpsertEntity {
+		var teams []types.String
+		switch team := a.InvocationMethod.Team.(type) {
+		case string:
+			teams = append(teams, types.StringValue(team))
+		case []interface{}:
+			teams = make([]types.String, 0)
+			for _, t := range team {
+				teams = append(teams, types.StringValue(t.(string)))
+			}
+		}
+		properties, err := utils.GoObjectToTerraformString(a.InvocationMethod.Properties)
+		if err != nil {
+			return err
+		}
+		relations, err := utils.GoObjectToTerraformString(a.InvocationMethod.Relations)
+		if err != nil {
+			return err
+		}
+
+		state.UpsertEntityMethod = &UpsertEntityMethodModel{
+			Identifier:          types.StringValue(*a.InvocationMethod.Identifier),
+			Title:               flex.GoStringToFramework(a.InvocationMethod.Title),
+			BlueprintIdentifier: types.StringValue(*a.InvocationMethod.BlueprintIdentifier),
+			Teams:               teams,
+			Icon:                flex.GoStringToFramework(a.InvocationMethod.Icon),
+			Properties:          properties,
+			Relations:           relations,
+		}
+	}
+
 	return nil
 }
 
@@ -295,6 +326,54 @@ func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionMod
 			RequiredJqQuery:     requiredJqQuery,
 			OrderProperties:     orderProperties,
 		}
+	}
+
+	if a.Trigger.Type == consts.Automation {
+		automationTrigger := &AutomationTriggerModel{}
+
+		var expressions []types.String
+		if a.Trigger.Condition != nil {
+			for _, e := range a.Trigger.Condition.Expressions {
+				expressions = append(expressions, types.StringValue(e))
+			}
+			automationTrigger.JqCondition = &JqConditionModel{
+				Expressions: expressions,
+				Combinator:  flex.GoStringToFramework(a.Trigger.Condition.Combinator),
+			}
+		}
+
+		if a.Trigger.Event.Type == consts.EntityCreated {
+			automationTrigger.EntityCreatedEvent = &EntityCreatedEventModel{
+				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+			}
+		}
+
+		if a.Trigger.Event.Type == consts.EntityUpdated {
+			automationTrigger.EntityUpdatedEvent = &EntityUpdatedEventModel{
+				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+			}
+		}
+
+		if a.Trigger.Event.Type == consts.EntityDeleted {
+			automationTrigger.EntityDeletedEvent = &EntityDeletedEventModel{
+				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+			}
+		}
+
+		if a.Trigger.Event.Type == consts.AnyEntityChange {
+			automationTrigger.AnyEntityChangeEvent = &AnyEntityChangeEventModel{
+				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+			}
+		}
+
+		if a.Trigger.Event.Type == consts.TimerPropertyExpired {
+			automationTrigger.TimerPropertyExpiredEvent = &TimerPropertyExpiredEventModel{
+				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+				PropertyIdentifier:  types.StringValue(*a.Trigger.Event.PropertyIdentifier),
+			}
+		}
+
+		state.AutomationTrigger = automationTrigger
 	}
 
 	return nil

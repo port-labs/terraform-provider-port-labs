@@ -11,10 +11,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func CopyMaps(target map[string]schema.Attribute, source map[string]schema.Attribute) {
+func CopyGenericMaps[T any](target map[string]T, source map[string]T) {
 	for key, value := range source {
 		target[key] = value
 	}
+}
+
+func CopyMaps(target map[string]schema.Attribute, source map[string]schema.Attribute) {
+	CopyGenericMaps(target, source)
 }
 
 func GenID() string {

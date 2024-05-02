@@ -12,6 +12,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/port/action-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/port/aggregation-properties"
 	"github.com/port-labs/terraform-provider-port-labs/port/blueprint"
+	"github.com/port-labs/terraform-provider-port-labs/port/blueprint-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/port/entity"
 	"github.com/port-labs/terraform-provider-port-labs/port/page"
 	"github.com/port-labs/terraform-provider-port-labs/port/page-permissions"
@@ -128,6 +129,7 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		blueprint.NewBlueprintResource,
+		blueprint_permissions.NewBlueprintPermissionsResource,
 		aggregation_properties.NewAggregationPropertiesResource,
 		entity.NewEntityResource,
 		action.NewActionResource,

@@ -245,6 +245,27 @@ type (
 		Read PageReadPermissions `json:"read"`
 	}
 
+	BlueprintPermissionsBlock struct {
+		Users       []string `json:"users"`
+		Roles       []string `json:"roles"`
+		Teams       []string `json:"teams"`
+		OwnedByTeam *bool    `json:"ownedByTeam"`
+	}
+
+	BlueprintRolesOrPropertiesPermissionsBlock map[string]BlueprintPermissionsBlock
+
+	BlueprintPermissionsEntities struct {
+		Register         BlueprintPermissionsBlock                  `json:"register"`
+		Unregister       BlueprintPermissionsBlock                  `json:"unregister"`
+		Update           BlueprintPermissionsBlock                  `json:"update"`
+		UpdateProperties BlueprintRolesOrPropertiesPermissionsBlock `json:"updateProperties,omitempty"`
+		UpdateRelations  BlueprintRolesOrPropertiesPermissionsBlock `json:"updateRelations,omitempty"`
+	}
+
+	BlueprintPermissions struct {
+		Entities BlueprintPermissionsEntities `json:"entities"`
+	}
+
 	Relation struct {
 		Identifier *string `json:"identifier,omitempty"`
 		Title      *string `json:"title,omitempty"`
@@ -334,22 +355,28 @@ type (
 )
 
 type PortBody struct {
-	OK                bool              `json:"ok"`
-	Entity            Entity            `json:"entity"`
-	Blueprint         Blueprint         `json:"blueprint"`
-	Action            Action            `json:"action"`
-	ActionPermissions ActionPermissions `json:"permissions"`
-	Integration       Webhook           `json:"integration"`
-	Scorecard         Scorecard         `json:"Scorecard"`
-	Team              Team              `json:"team"`
-	Page              Page              `json:"page"`
-	MigrationId       string            `json:"migrationId"`
-	Migration         Migration         `json:"migration"`
+	OK                   bool              `json:"ok"`
+	Entity               Entity            `json:"entity"`
+	Blueprint            Blueprint         `json:"blueprint"`
+	BlueprintPermissions Blueprint         `json:"blueprint_permissions"`
+	Action               Action            `json:"action"`
+	ActionPermissions    ActionPermissions `json:"permissions"`
+	Integration          Webhook           `json:"integration"`
+	Scorecard            Scorecard         `json:"Scorecard"`
+	Team                 Team              `json:"team"`
+	Page                 Page              `json:"page"`
+	MigrationId          string            `json:"migrationId"`
+	Migration            Migration         `json:"migration"`
 }
 
 type PortPagePermissionsBody struct {
 	OK              bool            `json:"ok"`
 	PagePermissions PagePermissions `json:"permissions"`
+}
+
+type PortBlueprintPermissionsBody struct {
+	OK                   bool                 `json:"ok"`
+	BlueprintPermissions BlueprintPermissions `json:"permissions"`
 }
 
 type TeamUserBody struct {

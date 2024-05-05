@@ -40,7 +40,7 @@ setup:
 	cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 
 acctest:
-	TF_ACC=1 PORT_CLIENT_ID=$(PORT_CLIENT_ID) PORT_CLIENT_SECRET=$(PORT_CLIENT_SECRET) go test -p 1 ./...
+	TF_ACC=1 PORT_CLIENT_ID=$(PORT_CLIENT_ID) PORT_CLIENT_SECRET=$(PORT_CLIENT_SECRET) PORT_BASE_URL=$(PORT_BASE_URL) go test -p 1 ./...
 
 gen-docs:
 	tfplugindocs

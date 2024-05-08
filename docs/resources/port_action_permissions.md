@@ -8,8 +8,7 @@ description: |-
   Example Usage
   hcl
   resource "port_action_permissions" "restart_microservice_permissions" {
-    action_identifier    = port_action.restart_microservice.identifier
-    blueprint_identifier = port_blueprint.microservice.identifier
+    action_identifier = port_action.restart_microservice.identifier
     permissions = {
       "execute" : {
         "roles" : [
@@ -34,8 +33,7 @@ description: |-
   To pass a JSON string to Terraform, you can use the jsonencode https://developer.hashicorp.com/terraform/language/functions/jsonencode function.
   ```hcl
   resource "portactionpermissions" "restartmicroservicepermissions" {
-    actionidentifier    = portaction.restartmicroservice.identifier
-    blueprintidentifier = portblueprint.microservice.identifier
+    actionidentifier = portaction.restartmicroservice.identifier
     permissions = {
       "execute" : {
         "roles" : [
@@ -93,8 +91,7 @@ Docs for the Action Permissions resource can be found [here](https://docs.getpor
 
 ```hcl
 resource "port_action_permissions" "restart_microservice_permissions" {
-  action_identifier    = port_action.restart_microservice.identifier
-  blueprint_identifier = port_blueprint.microservice.identifier
+  action_identifier = port_action.restart_microservice.identifier
   permissions = {
     "execute" : {
       "roles" : [
@@ -124,8 +121,7 @@ To pass a JSON string to Terraform, you can use the [jsonencode](https://develop
 
 ```hcl
 resource "port_action_permissions" "restart_microservice_permissions" {
-  action_identifier    = port_action.restart_microservice.identifier
-  blueprint_identifier = port_blueprint.microservice.identifier
+  action_identifier = port_action.restart_microservice.identifier
   permissions = {
     "execute" : {
       "roles" : [
@@ -183,8 +179,11 @@ resource "port_action_permissions" "restart_microservice_permissions" {
 ### Required
 
 - `action_identifier` (String) The ID of the action
-- `blueprint_identifier` (String) The ID of the blueprint
 - `permissions` (Attributes) The permissions for the action (see [below for nested schema](#nestedatt--permissions))
+
+### Optional
+
+- `blueprint_identifier` (String, Deprecated) The ID of the blueprint
 
 ### Read-Only
 
@@ -219,3 +218,5 @@ Optional:
 - `roles` (List of String) The roles with execution permission
 - `teams` (List of String) The teams with execution permission
 - `users` (List of String) The users with execution permission
+
+

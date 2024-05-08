@@ -134,22 +134,32 @@ type (
 	}
 
 	InvocationMethod struct {
-		Type                 string  `json:"type,omitempty"`
-		Url                  *string `json:"url,omitempty"`
-		Agent                *bool   `json:"agent,omitempty"`
-		Synchronized         *bool   `json:"synchronized,omitempty"`
-		Method               *string `json:"method,omitempty"`
-		Org                  *string `json:"org,omitempty"`
-		Repo                 *string `json:"repo,omitempty"`
-		Webhook              *string `json:"webhook,omitempty"`
-		Workflow             *string `json:"workflow,omitempty"`
-		OmitPayload          *bool   `json:"omitPayload,omitempty"`
-		OmitUserInputs       *bool   `json:"omitUserInputs,omitempty"`
-		ReportWorkflowStatus *bool   `json:"reportWorkflowStatus,omitempty"`
-		Branch               *string `json:"branch,omitempty"`
-		ProjectName          *string `json:"projectName,omitempty"`
-		GroupName            *string `json:"groupName,omitempty"`
-		DefaultRef           *string `json:"defaultRef,omitempty"`
+		Type                 string            `json:"type"`
+		Payload              any               `json:"payload,omitempty"`
+		Url                  *string           `json:"url,omitempty"`
+		Agent                any               `json:"agent,omitempty"`
+		Synchronized         any               `json:"synchronized,omitempty"`
+		Method               *string           `json:"method,omitempty"`
+		Headers              map[string]string `json:"headers,omitempty"`
+		Body                 any               `json:"body,omitempty"`
+		Org                  *string           `json:"org,omitempty"`
+		Repo                 *string           `json:"repo,omitempty"`
+		Workflow             *string           `json:"workflow,omitempty"`
+		WorkflowInputs       map[string]any    `json:"workflowInputs,omitempty"`
+		ReportWorkflowStatus any               `json:"reportWorkflowStatus,omitempty"`
+		Branch               *string           `json:"branch,omitempty"`
+		ProjectName          *string           `json:"projectName,omitempty"`
+		GroupName            *string           `json:"groupName,omitempty"`
+		DefaultRef           *string           `json:"defaultRef,omitempty"`
+		PipelineVariables    map[string]any    `json:"pipelineVariables,omitempty"`
+		Webhook              *string           `json:"webhook,omitempty"`
+		Identifier           *string           `json:"identifier,omitempty"`
+		Title                *string           `json:"title,omitempty"`
+		BlueprintIdentifier  *string           `json:"blueprintIdentifier,omitempty"`
+		Team                 any               `json:"team,omitempty"`
+		Icon                 *string           `json:"icon,omitempty"`
+		Properties           map[string]any    `json:"properties,omitempty"`
+		Relations            map[string]any    `json:"relations,omitempty"`
 	}
 
 	ApprovalNotification struct {
@@ -174,6 +184,27 @@ type (
 		Order      []string                  `json:"order,omitempty"`
 	}
 
+	TriggerEvent struct {
+		Type                string  `json:"type"`
+		BlueprintIdentifier *string `json:"blueprintIdentifier,omitempty"`
+		PropertyIdentifier  *string `json:"propertyIdentifier,omitempty"`
+	}
+
+	TriggerCondition struct {
+		Type        string   `json:"type"`
+		Expressions []string `json:"expressions"`
+		Combinator  *string  `json:"combinator,omitempty"`
+	}
+
+	Trigger struct {
+		Type                string            `json:"type"`
+		BlueprintIdentifier *string           `json:"blueprintIdentifier,omitempty"`
+		Operation           *string           `json:"operation,omitempty"`
+		UserInputs          *ActionUserInputs `json:"userInputs,omitempty"`
+		Event               *TriggerEvent     `json:"event,omitempty"`
+		Condition           *TriggerCondition `json:"condition,omitempty"`
+	}
+
 	Blueprint struct {
 		Meta
 		Identifier            string                                  `json:"identifier,omitempty"`
@@ -191,15 +222,15 @@ type (
 
 	Action struct {
 		ID                   string                `json:"id,omitempty"`
-		Identifier           string                `json:"identifier,omitempty"`
-		Description          *string               `json:"description,omitempty"`
-		Title                string                `json:"title,omitempty"`
+		Identifier           string                `json:"identifier"`
+		Title                *string               `json:"title,omitempty"`
 		Icon                 *string               `json:"icon,omitempty"`
-		UserInputs           ActionUserInputs      `json:"userInputs"`
-		Trigger              string                `json:"trigger"`
-		RequiredApproval     *bool                 `json:"requiredApproval,omitempty"`
+		Description          *string               `json:"description,omitempty"`
+		Trigger              *Trigger              `json:"trigger"`
 		InvocationMethod     *InvocationMethod     `json:"invocationMethod,omitempty"`
+		RequiredApproval     *bool                 `json:"requiredApproval,omitempty"`
 		ApprovalNotification *ApprovalNotification `json:"approvalNotification,omitempty"`
+		Publish              *bool                 `json:"publish,omitempty"`
 	}
 
 	ActionExecutePermissions struct {

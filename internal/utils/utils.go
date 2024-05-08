@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"reflect"
 
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -76,6 +77,14 @@ func GoObjectToTerraformString(v interface{}) (types.String, error) {
 	if v == nil {
 		return types.StringNull(), nil
 	}
+
+	switch reflect.TypeOf(v).Kind() {
+	case reflect.Ptr, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice:
+		if reflect.ValueOf(v).IsNil() {
+			return types.StringNull(), nil
+		}
+	}
+
 	js, err := json.Marshal(v)
 	if err != nil {
 		return types.StringNull(), err
@@ -83,6 +92,19 @@ func GoObjectToTerraformString(v interface{}) (types.String, error) {
 
 	value := string(js)
 	return types.StringValue(value), nil
+}
+
+func TerraformStringToGoObject(s types.String) (interface{}, error) {
+	if s.IsNull() {
+		return nil, nil
+	}
+
+	var obj interface{}
+	if err := json.Unmarshal([]byte(s.ValueString()), &obj); err != nil {
+		return nil, err
+	}
+
+	return obj, nil
 }
 
 func TerraformJsonStringToGoObject(v *string) (*map[string]any, error) {

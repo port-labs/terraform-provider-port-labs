@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"strings"
 )
 
 var _ resource.Resource = &ActionPermissionsResource{}
@@ -34,15 +33,7 @@ func (r *ActionPermissionsResource) Configure(ctx context.Context, req resource.
 }
 
 func (r *ActionPermissionsResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	idParts := strings.Split(req.ID, ":")
-
-	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
-		resp.Diagnostics.AddError("invalid import ID", "import ID must be in the format <blueprint_identifier>:<action_identifier>")
-		return
-	}
-
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("blueprint_identifier"), idParts[0])...)
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("action_identifier"), idParts[1])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("action_identifier"), req.ID)...)
 }
 
 func (r *ActionPermissionsResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -56,8 +47,12 @@ func (r *ActionPermissionsResource) Read(ctx context.Context, req resource.ReadR
 
 	blueprintIdentifier := state.BlueprintIdentifier.ValueString()
 	actionIdentifier := state.ActionIdentifier.ValueString()
+	// For the first time a user is migrating from action v1 to v2
+	if blueprintIdentifier != "" {
+		actionIdentifier = fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)
+	}
 
-	a, statusCode, err := r.portClient.GetActionPermissions(ctx, blueprintIdentifier, actionIdentifier)
+	a, statusCode, err := r.portClient.GetActionPermissions(ctx, actionIdentifier)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read action permissions", err.Error())
 		return
@@ -68,7 +63,7 @@ func (r *ActionPermissionsResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	err = refreshActionPermissionsState(ctx, state, a, blueprintIdentifier, actionIdentifier)
+	err = refreshActionPermissionsState(ctx, state, a, actionIdentifier)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to refresh action permissions state", err.Error())
 		return
@@ -89,6 +84,9 @@ func (r *ActionPermissionsResource) Update(ctx context.Context, req resource.Upd
 
 	blueprintIdentifier := state.BlueprintIdentifier.ValueString()
 	actionIdentifier := state.ActionIdentifier.ValueString()
+	if blueprintIdentifier != "" {
+		actionIdentifier = fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)
+	}
 
 	permissions, err := actionPermissionsToPortBody(state.Permissions)
 	if err != nil {
@@ -96,16 +94,16 @@ func (r *ActionPermissionsResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	_, err = r.portClient.UpdateActionPermissions(ctx, blueprintIdentifier, actionIdentifier, permissions)
+	_, err = r.portClient.UpdateActionPermissions(ctx, actionIdentifier, permissions)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update action permissions", err.Error())
 		return
 	}
 
-	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintIdentifier, actionIdentifier))
+	state.ID = types.StringValue(actionIdentifier)
 	state.ActionIdentifier = types.StringValue(actionIdentifier)
-	state.BlueprintIdentifier = types.StringValue(blueprintIdentifier)
+	state.BlueprintIdentifier = types.StringNull()
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -131,6 +129,9 @@ func (r *ActionPermissionsResource) Create(ctx context.Context, req resource.Cre
 
 	blueprintIdentifier := state.BlueprintIdentifier.ValueString()
 	actionIdentifier := state.ActionIdentifier.ValueString()
+	if blueprintIdentifier != "" {
+		actionIdentifier = fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)
+	}
 
 	permissions, err := actionPermissionsToPortBody(state.Permissions)
 	if err != nil {
@@ -138,16 +139,16 @@ func (r *ActionPermissionsResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	_, err = r.portClient.UpdateActionPermissions(ctx, blueprintIdentifier, actionIdentifier, permissions)
+	_, err = r.portClient.UpdateActionPermissions(ctx, actionIdentifier, permissions)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update action permissions", err.Error())
 		return
 	}
 
-	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintIdentifier, actionIdentifier))
+	state.ID = types.StringValue(actionIdentifier)
 	state.ActionIdentifier = types.StringValue(actionIdentifier)
-	state.BlueprintIdentifier = types.StringValue(blueprintIdentifier)
+	state.BlueprintIdentifier = types.StringNull()
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 

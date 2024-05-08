@@ -6,14 +6,13 @@ import (
 	"fmt"
 )
 
-func (c *PortClient) GetActionPermissions(ctx context.Context, blueprintID string, actionID string) (*ActionPermissions, int, error) {
+func (c *PortClient) GetActionPermissions(ctx context.Context, actionID string) (*ActionPermissions, int, error) {
 	pb := &PortBody{}
-	url := "v1/blueprints/{blueprint_identifier}/actions/{action_identifier}/permissions"
+	url := "v1/actions/{action_identifier}/permissions"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
 		SetResult(pb).
-		SetPathParam("blueprint_identifier", blueprintID).
 		SetPathParam("action_identifier", actionID).
 		Get(url)
 	if err != nil {
@@ -26,13 +25,12 @@ func (c *PortClient) GetActionPermissions(ctx context.Context, blueprintID strin
 
 }
 
-func (c *PortClient) UpdateActionPermissions(ctx context.Context, blueprintID string, actionID string, permissions *ActionPermissions) (*ActionPermissions, error) {
-	url := "v1/blueprints/{blueprint_identifier}/actions/{action_identifier}/permissions"
+func (c *PortClient) UpdateActionPermissions(ctx context.Context, actionID string, permissions *ActionPermissions) (*ActionPermissions, error) {
+	url := "v1/actions/{action_identifier}/permissions"
 
 	resp, err := c.Client.R().
 		SetBody(permissions).
 		SetContext(ctx).
-		SetPathParam("blueprint_identifier", blueprintID).
 		SetPathParam("action_identifier", actionID).
 		Patch(url)
 	if err != nil {

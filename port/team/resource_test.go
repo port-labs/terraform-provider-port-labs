@@ -47,7 +47,7 @@ func TestAccPortTeamUpdate(t *testing.T) {
 	resource "port_team" "team" {
 		name = "%s"
 		description = "Test description2"
-		users = ["devops-port@port-test.io"]
+		users = ["pluacbcqsnsqhfvcqs@cazlg.com"]
 	}`, teamName)
 
 	resource.Test(t, resource.TestCase{
@@ -68,7 +68,7 @@ func TestAccPortTeamUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_team.team", "name", teamName),
 					resource.TestCheckResourceAttr("port_team.team", "description", "Test description2"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "1"),
-					resource.TestCheckResourceAttr("port_team.team", "users.0", "devops-port@port-test.io"),
+					resource.TestCheckResourceAttr("port_team.team", "users.0", "pluacbcqsnsqhfvcqs@cazlg.com"),
 				),
 			},
 		},
@@ -119,7 +119,7 @@ func TestAccPortTeamImport(t *testing.T) {
 	resource "port_team" "team" {
 		name = "%s"
 		description = "Test description"
-		users = ["devops-port@port-test.io"]
+		users = ["pluacbcqsnsqhfvcqs@cazlg.com"]
 	}`, teamName)
 
 	resource.Test(t, resource.TestCase{
@@ -132,7 +132,7 @@ func TestAccPortTeamImport(t *testing.T) {
 					resource.TestCheckResourceAttr("port_team.team", "name", teamName),
 					resource.TestCheckResourceAttr("port_team.team", "description", "Test description"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "1"),
-					resource.TestCheckResourceAttr("port_team.team", "users.0", "devops-port@port-test.io"),
+					resource.TestCheckResourceAttr("port_team.team", "users.0", "pluacbcqsnsqhfvcqs@cazlg.com"),
 				),
 			},
 			{

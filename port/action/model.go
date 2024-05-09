@@ -5,13 +5,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-type WebhookMethodModel struct {
-	Url          types.String `tfsdk:"url"`
-	Agent        types.Bool   `tfsdk:"agent"`
-	Synchronized types.Bool   `tfsdk:"synchronized"`
-	Method       types.String `tfsdk:"method"`
-}
-
 type Value struct {
 	JqQuery types.String `tfsdk:"jq_query"`
 }
@@ -24,29 +17,6 @@ type Rule struct {
 type DatasetModel struct {
 	Combinator types.String `tfsdk:"combinator"`
 	Rules      []Rule       `tfsdk:"rules"`
-}
-
-type GithubMethodModel struct {
-	Org                  types.String `tfsdk:"org"`
-	Repo                 types.String `tfsdk:"repo"`
-	Workflow             types.String `tfsdk:"workflow"`
-	OmitPayload          types.Bool   `tfsdk:"omit_payload"`
-	OmitUserInputs       types.Bool   `tfsdk:"omit_user_inputs"`
-	ReportWorkflowStatus types.Bool   `tfsdk:"report_workflow_status"`
-}
-
-type AzureMethodModel struct {
-	Org     types.String `tfsdk:"org"`
-	Webhook types.String `tfsdk:"webhook"`
-}
-
-type GitlabMethodModel struct {
-	ProjectName    types.String `tfsdk:"project_name"`
-	GroupName      types.String `tfsdk:"group_name"`
-	OmitPayload    types.Bool   `tfsdk:"omit_payload"`
-	OmitUserInputs types.Bool   `tfsdk:"omit_user_inputs"`
-	DefaultRef     types.String `tfsdk:"default_ref"`
-	Agent          types.Bool   `tfsdk:"agent"`
 }
 
 type StringPropModel struct {
@@ -299,6 +269,74 @@ type UserPropertiesModel struct {
 	ObjectProps  map[string]ObjectPropModel  `tfsdk:"object_props"`
 }
 
+type SelfServiceTriggerModel struct {
+	BlueprintIdentifier types.String         `tfsdk:"blueprint_identifier"`
+	Operation           types.String         `tfsdk:"operation"`
+	UserProperties      *UserPropertiesModel `tfsdk:"user_properties"`
+	RequiredJqQuery     types.String         `tfsdk:"required_jq_query"`
+	OrderProperties     types.List           `tfsdk:"order_properties"`
+}
+
+type EntityCreatedEventModel struct {
+	BlueprintIdentifier types.String `tfsdk:"blueprint_identifier"`
+}
+
+type EntityUpdatedEventModel struct {
+	BlueprintIdentifier types.String `tfsdk:"blueprint_identifier"`
+}
+
+type EntityDeletedEventModel struct {
+	BlueprintIdentifier types.String `tfsdk:"blueprint_identifier"`
+}
+
+type AnyEntityChangeEventModel struct {
+	BlueprintIdentifier types.String `tfsdk:"blueprint_identifier"`
+}
+
+type TimerPropertyExpiredEventModel struct {
+	BlueprintIdentifier types.String `tfsdk:"blueprint_identifier"`
+	PropertyIdentifier  types.String `tfsdk:"property_identifier"`
+}
+
+type JqConditionModel struct {
+	Expressions []types.String `tfsdk:"expressions"`
+	Combinator  types.String   `tfsdk:"combinator"`
+}
+
+type KafkaMethodModel struct {
+	Payload types.String `tfsdk:"payload"`
+}
+
+type WebhookMethodModel struct {
+	Url          types.String `tfsdk:"url"`
+	Agent        types.String `tfsdk:"agent"`
+	Synchronized types.String `tfsdk:"synchronized"`
+	Method       types.String `tfsdk:"method"`
+	Headers      types.Map    `tfsdk:"headers"`
+	Body         types.String `tfsdk:"body"`
+}
+
+type GithubMethodModel struct {
+	Org                  types.String `tfsdk:"org"`
+	Repo                 types.String `tfsdk:"repo"`
+	Workflow             types.String `tfsdk:"workflow"`
+	WorkflowInputs       types.String `tfsdk:"workflow_inputs"`
+	ReportWorkflowStatus types.String `tfsdk:"report_workflow_status"`
+}
+
+type GitlabMethodModel struct {
+	ProjectName       types.String `tfsdk:"project_name"`
+	GroupName         types.String `tfsdk:"group_name"`
+	DefaultRef        types.String `tfsdk:"default_ref"`
+	PipelineVariables types.String `tfsdk:"pipeline_variables"`
+}
+
+type AzureMethodModel struct {
+	Org     types.String `tfsdk:"org"`
+	Webhook types.String `tfsdk:"webhook"`
+	Payload types.String `tfsdk:"payload"`
+}
+
 type ApprovalWebhookNotificationModel struct {
 	Url    types.String `tfsdk:"url"`
 	Format types.String `tfsdk:"format"`
@@ -311,18 +349,16 @@ type ActionModel struct {
 	Title                       types.String                      `tfsdk:"title"`
 	Icon                        types.String                      `tfsdk:"icon"`
 	Description                 types.String                      `tfsdk:"description"`
-	RequiredApproval            types.Bool                        `tfsdk:"required_approval"`
-	Trigger                     types.String                      `tfsdk:"trigger"`
-	KafkaMethod                 types.Object                      `tfsdk:"kafka_method"`
+	SelfServiceTrigger          *SelfServiceTriggerModel          `tfsdk:"self_service_trigger"`
+	KafkaMethod                 *KafkaMethodModel                 `tfsdk:"kafka_method"`
 	WebhookMethod               *WebhookMethodModel               `tfsdk:"webhook_method"`
 	GithubMethod                *GithubMethodModel                `tfsdk:"github_method"`
-	AzureMethod                 *AzureMethodModel                 `tfsdk:"azure_method"`
 	GitlabMethod                *GitlabMethodModel                `tfsdk:"gitlab_method"`
-	UserProperties              *UserPropertiesModel              `tfsdk:"user_properties"`
+	AzureMethod                 *AzureMethodModel                 `tfsdk:"azure_method"`
+	RequiredApproval            types.Bool                        `tfsdk:"required_approval"`
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
-	OrderProperties             types.List                        `tfsdk:"order_properties"`
-	RequiredJqQuery             types.String                      `tfsdk:"required_jq_query"`
+	Publish                     types.Bool                        `tfsdk:"publish"`
 }
 
 // ActionValidationModel is a model used for the validation of ActionModel resources
@@ -333,16 +369,14 @@ type ActionValidationModel struct {
 	Title                       types.String `tfsdk:"title"`
 	Icon                        types.String `tfsdk:"icon"`
 	Description                 types.String `tfsdk:"description"`
-	RequiredApproval            types.Bool   `tfsdk:"required_approval"`
-	Trigger                     types.String `tfsdk:"trigger"`
+	SelfServiceTrigger          types.Object `tfsdk:"self_service_trigger"`
 	KafkaMethod                 types.Object `tfsdk:"kafka_method"`
 	WebhookMethod               types.Object `tfsdk:"webhook_method"`
 	GithubMethod                types.Object `tfsdk:"github_method"`
-	AzureMethod                 types.Object `tfsdk:"azure_method"`
 	GitlabMethod                types.Object `tfsdk:"gitlab_method"`
-	UserProperties              types.Object `tfsdk:"user_properties"`
+	AzureMethod                 types.Object `tfsdk:"azure_method"`
+	RequiredApproval            types.Bool   `tfsdk:"required_approval"`
 	ApprovalWebhookNotification types.Object `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object `tfsdk:"approval_email_notification"`
-	OrderProperties             types.List   `tfsdk:"order_properties"`
-	RequiredJqQuery             types.String `tfsdk:"required_jq_query"`
+	Publish                     types.Bool   `tfsdk:"publish"`
 }

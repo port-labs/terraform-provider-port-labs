@@ -243,3 +243,5 @@ Required:
 
 - `combinator` (String) The combinator of the query
 - `conditions` (List of String) The conditions of the query. Each condition object should be encoded to a string
+
+

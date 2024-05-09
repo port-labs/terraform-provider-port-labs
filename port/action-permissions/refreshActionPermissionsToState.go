@@ -3,15 +3,16 @@ package action_permissions
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
 )
 
-func refreshActionPermissionsState(ctx context.Context, state *ActionPermissionsModel, a *cli.ActionPermissions, actionId string) error {
-	state.ID = types.StringValue(actionId)
+func refreshActionPermissionsState(ctx context.Context, state *ActionPermissionsModel, a *cli.ActionPermissions, blueprintId string, actionId string) error {
+	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintId, actionId))
 	state.ActionIdentifier = types.StringValue(actionId)
-	state.BlueprintIdentifier = types.StringNull()
+	state.BlueprintIdentifier = types.StringValue(blueprintId)
 	state.Permissions = &PermissionsModel{}
 
 	state.Permissions.Execute = &ExecuteModel{}

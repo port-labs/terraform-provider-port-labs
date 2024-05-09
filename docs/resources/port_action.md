@@ -3,165 +3,375 @@
 page_title: "port_action Resource - terraform-provider-port-labs"
 subcategory: ""
 description: |-
-  Action resource
-  Docs for the Action resource can be found here https://docs.getport.io/create-self-service-experiences/.
+  Action
+  This resource allows you to manage self-service action.
+  See the Port documentation https://docs.getport.io/create-self-service-experiences/ for more information about self-service actions.
   Example Usage
-  hcl
-  resource "port_action" "create_microservice" {
-      title = "Create Microservice"
-      identifier = "create-microservice"
-      icon = "Terraform"
-      self_service_trigger = {
-          operation = "CREATE"
-          blueprint_identifier = port_blueprint.microservice.identifier
-          user_properties = {
-              string_props = {
-                  myStringIdentifier = {
-                      title = "My String Identifier"
-                      required = true
-                      format = "entity"
-                      blueprint = port_blueprint.parent.identifier
-                      dataset = {
-                          combinator = "and"
-                          rules = [{
-                              property = "$title"
-                              operator = "contains"
-                              value = {
-                                  jq_query = "\"specificValue\""
-                              }
-                          }]
-                      }
-                  }
-              }
-              number_props = {
-                  myNumberIdentifier = {
-                      title = "My Number Identifier"
-                      required = true
-                      maximum = 100
-                      minimum = 0
-                  }
-              }
-              boolean_props = {
-                  myBooleanIdentifier = {
-                      title = "My Boolean Identifier"
-                      required = true
-                  }
-              }
-              object_props = {
-                  myObjectIdentifier = {
-                      title = "My Object Identifier"
-                      required = true
-                  }
-              }
-              array_props = {
-                  myArrayIdentifier = {
-                      title = "My Array Identifier"
-                      required = true
-                      string_items = {
-                          format = "entity"
-                          blueprint = port_blueprint.parent.identifier
-                          dataset = jsonencode({
-                              combinator = "and"
-                              rules = [{
-                                  property = "$title"
-                                  operator = "contains"
-                                  value    = "specificValue"
-                              }]
-                          })
-                      }
-                  }
-              }
-          }
+  Create a blueprint and an action relating to that blueprint which triggers a github workflow:
+  ```hcl
+  resource "portblueprint" "myBlueprint" {
+    icon       = "Terraform"
+    identifier = "myBlueprint"
+    title      = "My Blueprint"
+    properties = {
+      numberprops = {
+        "numberProp" = {
+          title    = "Number Property"
+          required = false
+        }
       }
-      kafka_method = {
-          payload = jsonencode({
-            runId: "{{.run.id}}"
-          })
-      }
+    }
   }
+  resource "portaction" "myAction" {
+    title             = "My Action"
+    blueprint         = portblueprint.myBlueprint.identifier
+    identifier        = "myAction"
+    trigger           = "CREATE"
+    requiredapproval = false
+    githubmethod = {
+      org      = "your-org"
+      repo     = "your-repo"
+      workflow = "your-workflow"
+    }
+    userproperties = {
+      stringprops = {
+        stringValue = {
+          title = "String Value"
+        }
+      }
+      number_props = {
+        "numberProp" = {
+          title    = "Number Value"
+          required = true
+        }
+      }
+    }
+  }
+  ```
+  Create related "parent" and "child" blueprints and a CREATE action for the child blueprint with user inputs to select entities from the parent blueprint and triggers a github workflow:
+  ```hcl
+  resource "port_blueprint" "parent" {
+    icon       = "Terraform"
+    title      = "Parent"
+    identifier = "parent"
+    properties = {}
+  }
+  resource "portblueprint" "child" {
+    icon       = "Terraform"
+    title      = "Child"
+    identifier = "child"
+    properties = {}
+    relations = {
+      "childOf" = {
+        title    = "Child Of"
+        many     = true
+        required = false
+        target   = portblueprint.parent.identifier
+      }
+    }
+  }
+  resource "portaction" "myAction" {
+    title             = "My Action"
+    blueprint         = portblueprint.child.identifier
+    identifier        = "myAction"
+    trigger           = "CREATE"
+    requiredapproval = false
+    githubmethod = {
+      org      = "your-org"
+      repo     = "your-repo"
+      workflow = "your-workflow"
+    }
+    userproperties = {
+      stringprops = {
+        singleParent = {
+          title     = "Single Parent Entity Selection"
+          format    = "entity"
+          blueprint = portblueprint.parent.identifier
+        }
+      }
+      arrayprops = {
+        miltipleParents = {
+          title = "Single Parent Entity Selection"
+          stringitems = {
+            format    = "entity"
+            blueprint = portblueprint.parent.identifier
+          }
+        }
+      }
+    }
+  }
+  ```
+  Create the same resources as in the previous example, but the action's entity selection properties will only allow entities which pass the datasets:
+  ```hcl
+  resource "port_blueprint" "parent" {
+    icon       = "Terraform"
+    title      = "Parent"
+    identifier = "parent"
+    properties = {}
+  }
+  resource "portblueprint" "child" {
+    icon       = "Terraform"
+    title      = "Child"
+    identifier = "child"
+    properties = {}
+    relations = {
+      "childOf" = {
+        title    = "Child Of"
+        many     = true
+        required = false
+        target   = portblueprint.parent.identifier
+      }
+    }
+  }
+  resource "portaction" "myAction" {
+    title             = "My Action"
+    blueprint         = portblueprint.child.identifier
+    identifier        = "myAction"
+    trigger           = "CREATE"
+    requiredapproval = false
+    githubmethod = {
+      org                    = "your-org"
+      repo                   = "your-repo"
+      workflow               = "your-workflow"
+      omitpayload           = true
+      omituserinputs       = true
+      reportworkflowstatus = true
+    }
+    userproperties = {
+      stringprops = {
+        singleParent = {
+          title     = "Single Parent Entity Selection"
+          format    = "entity"
+          blueprint = portblueprint.parent.identifier
+          dataset = {
+            combinator = "and"
+            rules = [{
+              property = "$title"
+              operator = "contains"
+              value = {
+                jqquery = "\"specificValue\""
+              }
+            }]
+          }
+        }
+      }
+      arrayprops = {
+        miltipleParents = {
+          title = "Single Parent Entity Selection"
+          stringitems = {
+            format    = "entity"
+            blueprint = portblueprint.parent.identifier
+            dataset = jsonencode({
+              combinator = "and"
+              rules = [{
+                property = "$title"
+                operator = "contains"
+                value    = "specificValue"
+              }]
+            })
+          }
+        }
+      }
+    }
+  }
+  ```
 ---
 
 # port_action (Resource)
 
-# Action resource
+# Action
 
-Docs for the Action resource can be found [here](https://docs.getport.io/create-self-service-experiences/).
+This resource allows you to manage self-service action.
+
+See the [Port documentation](https://docs.getport.io/create-self-service-experiences/) for more information about self-service actions.
 
 ## Example Usage
 
+Create a blueprint and an action relating to that blueprint which triggers a github workflow:
+
 ```hcl
-resource "port_action" "create_microservice" {
-	title = "Create Microservice"
-	identifier = "create-microservice"
-	icon = "Terraform"
-	self_service_trigger = {
-		operation = "CREATE"
-		blueprint_identifier = port_blueprint.microservice.identifier
-		user_properties = {
-			string_props = {
-				myStringIdentifier = {
-					title = "My String Identifier"
-					required = true
-                    format = "entity"
-                    blueprint = port_blueprint.parent.identifier
-                    dataset = {
-                        combinator = "and"
-                        rules = [{
-                            property = "$title"
-                            operator = "contains"
-                            value = {
-                                jq_query = "\"specificValue\""
-                            }
-                        }]
-                    }
-				}
-			}
-			number_props = {
-				myNumberIdentifier = {
-					title = "My Number Identifier"
-					required = true
-					maximum = 100
-					minimum = 0
-				}
-			}
-			boolean_props = {
-				myBooleanIdentifier = {
-					title = "My Boolean Identifier"
-					required = true
-				}
-			}
-			object_props = {
-				myObjectIdentifier = {
-					title = "My Object Identifier"
-					required = true
-				}
-			}
-			array_props = {
-				myArrayIdentifier = {
-					title = "My Array Identifier"
-					required = true
-					string_items = {
-						format = "entity"
-                        blueprint = port_blueprint.parent.identifier
-                        dataset = jsonencode({
-                            combinator = "and"
-                            rules = [{
-                                property = "$title"
-                                operator = "contains"
-                                value    = "specificValue"
-                            }]
-                        })
-					}
-				}
-			}
-		}
+
+resource "port_blueprint" "myBlueprint" {
+  icon       = "Terraform"
+  identifier = "myBlueprint"
+  title      = "My Blueprint"
+  properties = {
+	number_props = {
+	  "numberProp" = {
+		title    = "Number Property"
+		required = false
+	  }
 	}
-	kafka_method = {
-		payload = jsonencode({
-		  runId: "{{.run.id}}"
-		})
-	}
+  }
 }
+
+resource "port_action" "myAction" {
+  title             = "My Action"
+  blueprint         = port_blueprint.myBlueprint.identifier
+  identifier        = "myAction"
+  trigger           = "CREATE"
+  required_approval = false
+  github_method = {
+	org      = "your-org"
+	repo     = "your-repo"
+	workflow = "your-workflow"
+  }
+  user_properties = {
+	string_props = {
+	  stringValue = {
+		title = "String Value"
+	  }
+	}
+	number_props = {
+	  "numberProp" = {
+		title    = "Number Value"
+		required = true
+	  }
+	}
+  }
+}
+
+```
+
+Create related "parent" and "child" blueprints and a CREATE action for the child blueprint with user inputs to select entities from the parent blueprint and triggers a github workflow:
+
+```hcl
+
+
+resource "port_blueprint" "parent" {
+  icon       = "Terraform"
+  title      = "Parent"
+  identifier = "parent"
+  properties = {}
+}
+
+resource "port_blueprint" "child" {
+  icon       = "Terraform"
+  title      = "Child"
+  identifier = "child"
+  properties = {}
+  relations = {
+	"childOf" = {
+	  title    = "Child Of"
+	  many     = true
+	  required = false
+	  target   = port_blueprint.parent.identifier
+	}
+  }
+}
+
+resource "port_action" "myAction" {
+  title             = "My Action"
+  blueprint         = port_blueprint.child.identifier
+  identifier        = "myAction"
+  trigger           = "CREATE"
+  required_approval = false
+  github_method = {
+	org      = "your-org"
+	repo     = "your-repo"
+	workflow = "your-workflow"
+  }
+  user_properties = {
+	string_props = {
+	  singleParent = {
+		title     = "Single Parent Entity Selection"
+		format    = "entity"
+		blueprint = port_blueprint.parent.identifier
+	  }
+	}
+	array_props = {
+	  miltipleParents = {
+		title = "Single Parent Entity Selection"
+		string_items = {
+		  format    = "entity"
+		  blueprint = port_blueprint.parent.identifier
+		}
+	  }
+	}
+  }
+}
+
+```
+
+
+Create the same resources as in the previous example, but the action's entity selection properties will only allow entities which pass the `dataset`s:
+
+```hcl
+
+resource "port_blueprint" "parent" {
+  icon       = "Terraform"
+  title      = "Parent"
+  identifier = "parent"
+  properties = {}
+}
+
+resource "port_blueprint" "child" {
+  icon       = "Terraform"
+  title      = "Child"
+  identifier = "child"
+  properties = {}
+  relations = {
+	"childOf" = {
+	  title    = "Child Of"
+	  many     = true
+	  required = false
+	  target   = port_blueprint.parent.identifier
+	}
+  }
+}
+
+resource "port_action" "myAction" {
+  title             = "My Action"
+  blueprint         = port_blueprint.child.identifier
+  identifier        = "myAction"
+  trigger           = "CREATE"
+  required_approval = false
+  github_method = {
+	org                    = "your-org"
+	repo                   = "your-repo"
+	workflow               = "your-workflow"
+	omit_payload           = true
+	omit_user_inputs       = true
+	report_workflow_status = true
+  }
+  user_properties = {
+	string_props = {
+	  singleParent = {
+		title     = "Single Parent Entity Selection"
+		format    = "entity"
+		blueprint = port_blueprint.parent.identifier
+		dataset = {
+		  combinator = "and"
+		  rules = [{
+			property = "$title"
+			operator = "contains"
+			value = {
+			  jq_query = "\"specificValue\""
+			}
+		  }]
+		}
+	  }
+	}
+	array_props = {
+	  miltipleParents = {
+		title = "Single Parent Entity Selection"
+		string_items = {
+		  format    = "entity"
+		  blueprint = port_blueprint.parent.identifier
+		  dataset = jsonencode({
+			combinator = "and"
+			rules = [{
+			  property = "$title"
+			  operator = "contains"
+			  value    = "specificValue"
+			}]
+		  })
+		}
+	  }
+	}
+  }
+}
+
 ```
 
 
@@ -171,24 +381,26 @@ resource "port_action" "create_microservice" {
 
 ### Required
 
+- `blueprint` (String) The blueprint identifier the action relates to
 - `identifier` (String) Identifier
+- `title` (String) Title
+- `trigger` (String) The trigger type of the action
 
 ### Optional
 
 - `approval_email_notification` (Object) The email notification of the approval (see [below for nested schema](#nestedatt--approval_email_notification))
 - `approval_webhook_notification` (Attributes) The webhook notification of the approval (see [below for nested schema](#nestedatt--approval_webhook_notification))
-- `azure_method` (Attributes) Azure DevOps invocation method (see [below for nested schema](#nestedatt--azure_method))
-- `blueprint` (String, Deprecated) The blueprint identifier the action relates to
+- `azure_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--azure_method))
 - `description` (String) Description
-- `github_method` (Attributes) GitHub invocation method (see [below for nested schema](#nestedatt--github_method))
-- `gitlab_method` (Attributes) Gitlab invocation method (see [below for nested schema](#nestedatt--gitlab_method))
+- `github_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--github_method))
+- `gitlab_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--gitlab_method))
 - `icon` (String) Icon
-- `kafka_method` (Attributes) Kafka invocation method (see [below for nested schema](#nestedatt--kafka_method))
-- `publish` (Boolean) Publish action
+- `kafka_method` (Object) The invocation method of the action (see [below for nested schema](#nestedatt--kafka_method))
+- `order_properties` (List of String) Order properties
 - `required_approval` (Boolean) Require approval before invoking the action
-- `self_service_trigger` (Attributes) Self service trigger for the action (see [below for nested schema](#nestedatt--self_service_trigger))
-- `title` (String) Title
-- `webhook_method` (Attributes) Webhook invocation method (see [below for nested schema](#nestedatt--webhook_method))
+- `required_jq_query` (String) The required jq query of the property
+- `user_properties` (Attributes) User properties (see [below for nested schema](#nestedatt--user_properties))
+- `webhook_method` (Attributes) The invocation method of the action (see [below for nested schema](#nestedatt--webhook_method))
 
 ### Read-Only
 
@@ -221,10 +433,6 @@ Required:
 - `org` (String) Required when selecting type AZURE. The Azure org that the workflow belongs to
 - `webhook` (String) Required when selecting type AZURE. The Azure webhook that the workflow belongs to
 
-Optional:
-
-- `payload` (String) The Azure Devops workflow payload (array or object encoded to a string)
-
 
 <a id="nestedatt--github_method"></a>
 ### Nested Schema for `github_method`
@@ -237,8 +445,9 @@ Required:
 
 Optional:
 
-- `report_workflow_status` (String) Report the workflow status when invoking the action
-- `workflow_inputs` (String) The GitHub workflow inputs (key-value object encoded to a string)
+- `omit_payload` (Boolean) Omit the payload when invoking the action
+- `omit_user_inputs` (Boolean) Omit the user inputs when invoking the action
+- `report_workflow_status` (Boolean) Report the workflow status when invoking the action
 
 
 <a id="nestedatt--gitlab_method"></a>
@@ -251,8 +460,10 @@ Required:
 
 Optional:
 
+- `agent` (Boolean) Use the agent to invoke the action
 - `default_ref` (String) The default ref of the action
-- `pipeline_variables` (String) The Gitlab pipeline variables (key-value object encoded to a string)
+- `omit_payload` (Boolean) Omit the payload when invoking the action
+- `omit_user_inputs` (Boolean) Omit the user inputs when invoking the action
 
 
 <a id="nestedatt--kafka_method"></a>
@@ -260,64 +471,49 @@ Optional:
 
 Optional:
 
-- `payload` (String) The Kafka message payload (array or object encoded to a string)
 
 
-<a id="nestedatt--self_service_trigger"></a>
-### Nested Schema for `self_service_trigger`
-
-Required:
-
-- `operation` (String) The operation type of the action
+<a id="nestedatt--user_properties"></a>
+### Nested Schema for `user_properties`
 
 Optional:
 
-- `blueprint_identifier` (String) The ID of the blueprint
-- `order_properties` (List of String) Order properties
-- `required_jq_query` (String) The required jq query of the property
-- `user_properties` (Attributes) User properties (see [below for nested schema](#nestedatt--self_service_trigger--user_properties))
+- `array_props` (Attributes Map) The array property of the action (see [below for nested schema](#nestedatt--user_properties--array_props))
+- `boolean_props` (Attributes Map) The boolean property of the action (see [below for nested schema](#nestedatt--user_properties--boolean_props))
+- `number_props` (Attributes Map) The number property of the action (see [below for nested schema](#nestedatt--user_properties--number_props))
+- `object_props` (Attributes Map) The object property of the action (see [below for nested schema](#nestedatt--user_properties--object_props))
+- `string_props` (Attributes Map) The string property of the action (see [below for nested schema](#nestedatt--user_properties--string_props))
 
-<a id="nestedatt--self_service_trigger--user_properties"></a>
-### Nested Schema for `self_service_trigger.user_properties`
-
-Optional:
-
-- `array_props` (Attributes Map) The array property of the action (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props))
-- `boolean_props` (Attributes Map) The boolean property of the action (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--boolean_props))
-- `number_props` (Attributes Map) The number property of the action (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--number_props))
-- `object_props` (Attributes Map) The object property of the action (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--object_props))
-- `string_props` (Attributes Map) The string property of the action (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props))
-
-<a id="nestedatt--self_service_trigger--user_properties--array_props"></a>
-### Nested Schema for `self_service_trigger.user_properties.array_props`
+<a id="nestedatt--user_properties--array_props"></a>
+### Nested Schema for `user_properties.array_props`
 
 Optional:
 
-- `boolean_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--boolean_items))
+- `boolean_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--boolean_items))
 - `default_jq_query` (String) The default jq query of the array property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
 - `icon` (String) The icon of the property
 - `max_items` (Number) The max items of the array property
 - `min_items` (Number) The min items of the array property
-- `number_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--number_items))
-- `object_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--object_items))
+- `number_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--number_items))
+- `object_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--object_items))
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
-- `string_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--string_items))
+- `string_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--user_properties--array_props--string_items))
 - `title` (String) The title of the property
 - `visible` (Boolean) The visibility of the array property
 - `visible_jq_query` (String) The visibility condition jq query of the array property
 
-<a id="nestedatt--self_service_trigger--user_properties--array_props--boolean_items"></a>
-### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
+<a id="nestedatt--user_properties--array_props--boolean_items"></a>
+### Nested Schema for `user_properties.array_props.boolean_items`
 
 Optional:
 
 - `default` (List of Boolean) The default of the items
 
 
-<a id="nestedatt--self_service_trigger--user_properties--array_props--number_items"></a>
-### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
+<a id="nestedatt--user_properties--array_props--number_items"></a>
+### Nested Schema for `user_properties.array_props.number_items`
 
 Optional:
 
@@ -326,16 +522,16 @@ Optional:
 - `enum_jq_query` (String) The enum jq query of the number items
 
 
-<a id="nestedatt--self_service_trigger--user_properties--array_props--object_items"></a>
-### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
+<a id="nestedatt--user_properties--array_props--object_items"></a>
+### Nested Schema for `user_properties.array_props.object_items`
 
 Optional:
 
 - `default` (List of Map of String) The default of the items
 
 
-<a id="nestedatt--self_service_trigger--user_properties--array_props--string_items"></a>
-### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
+<a id="nestedatt--user_properties--array_props--string_items"></a>
+### Nested Schema for `user_properties.array_props.string_items`
 
 Optional:
 
@@ -348,8 +544,8 @@ Optional:
 
 
 
-<a id="nestedatt--self_service_trigger--user_properties--boolean_props"></a>
-### Nested Schema for `self_service_trigger.user_properties.boolean_props`
+<a id="nestedatt--user_properties--boolean_props"></a>
+### Nested Schema for `user_properties.boolean_props`
 
 Optional:
 
@@ -364,8 +560,8 @@ Optional:
 - `visible_jq_query` (String) The visibility condition jq query of the boolean property
 
 
-<a id="nestedatt--self_service_trigger--user_properties--number_props"></a>
-### Nested Schema for `self_service_trigger.user_properties.number_props`
+<a id="nestedatt--user_properties--number_props"></a>
+### Nested Schema for `user_properties.number_props`
 
 Optional:
 
@@ -384,8 +580,8 @@ Optional:
 - `visible_jq_query` (String) The visibility condition jq query of the number property
 
 
-<a id="nestedatt--self_service_trigger--user_properties--object_props"></a>
-### Nested Schema for `self_service_trigger.user_properties.object_props`
+<a id="nestedatt--user_properties--object_props"></a>
+### Nested Schema for `user_properties.object_props`
 
 Optional:
 
@@ -401,13 +597,13 @@ Optional:
 - `visible_jq_query` (String) The visibility condition jq query of the object property
 
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props`
+<a id="nestedatt--user_properties--string_props"></a>
+### Nested Schema for `user_properties.string_props`
 
 Optional:
 
 - `blueprint` (String) The blueprint identifier the string property relates to
-- `dataset` (Attributes) The dataset of an the entity-format property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset))
+- `dataset` (Attributes) The dataset of an the entity-format property (see [below for nested schema](#nestedatt--user_properties--string_props--dataset))
 - `default` (String) The default of the string property
 - `default_jq_query` (String) The default jq query of the string property
 - `depends_on` (List of String) The properties that this property depends on
@@ -425,34 +621,33 @@ Optional:
 - `visible` (Boolean) The visibility of the string property
 - `visible_jq_query` (String) The visibility condition jq query of the string property
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query`
+<a id="nestedatt--user_properties--string_props--dataset"></a>
+### Nested Schema for `user_properties.string_props.dataset`
 
 Required:
 
 - `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules))
+- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--user_properties--string_props--dataset--rules))
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules`
+<a id="nestedatt--user_properties--string_props--dataset--rules"></a>
+### Nested Schema for `user_properties.string_props.dataset.rules`
 
 Required:
 
 - `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--user_properties--string_props--dataset--rules--value))
 
 Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `property` (String) The property identifier of the rule
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.property`
+<a id="nestedatt--user_properties--string_props--dataset--rules--value"></a>
+### Nested Schema for `user_properties.string_props.dataset.rules.value`
 
 Optional:
 
 - `jq_query` (String)
-
 
 
 
@@ -468,10 +663,6 @@ Required:
 
 Optional:
 
-- `agent` (String) Use the agent to invoke the action
-- `body` (String) The Webhook body (array or object encoded to a string)
-- `headers` (Map of String) The HTTP method to invoke the action
+- `agent` (Boolean) Use the agent to invoke the action
 - `method` (String) The HTTP method to invoke the action
-- `synchronized` (String) Synchronize the action
-
-
+- `synchronized` (Boolean) Synchronize the action

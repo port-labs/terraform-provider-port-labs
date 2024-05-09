@@ -3,6 +3,7 @@ package action
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -34,7 +35,16 @@ func (r *ActionResource) Configure(ctx context.Context, req resource.ConfigureRe
 }
 
 func (r *ActionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("identifier"), req.ID)...)
+	idParts := strings.Split(req.ID, ":")
+
+	if len(idParts) != 2 || idParts[0] == "" || idParts[1] == "" {
+		resp.Diagnostics.AddError("invalid import ID", "import ID must be in the format <blueprint_id>:<action_id>")
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("blueprint"), idParts[0])...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("identifier"), idParts[1])...)
+
 }
 
 func (r *ActionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -47,12 +57,7 @@ func (r *ActionResource) Read(ctx context.Context, req resource.ReadRequest, res
 	}
 
 	blueprintIdentifier := state.Blueprint.ValueString()
-	actionIdentifier := state.Identifier.ValueString()
-	if blueprintIdentifier != "" {
-		actionIdentifier = fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)
-	}
-
-	a, statusCode, err := r.portClient.ReadAction(ctx, actionIdentifier)
+	a, statusCode, err := r.portClient.ReadAction(ctx, blueprintIdentifier, state.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.State.RemoveResource(ctx)
@@ -62,7 +67,7 @@ func (r *ActionResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	err = refreshActionState(ctx, state, a)
+	err = refreshActionState(ctx, state, a, blueprintIdentifier)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing action fields to resource", err.Error())
 		return
@@ -79,13 +84,7 @@ func (r *ActionResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	blueprintIdentifier := state.Blueprint.ValueString()
-	actionIdentifier := state.Identifier.ValueString()
-	if blueprintIdentifier != "" {
-		actionIdentifier = fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)
-	}
-
-	err := r.portClient.DeleteAction(ctx, actionIdentifier)
+	err := r.portClient.DeleteAction(ctx, state.Blueprint.ValueString(), state.Identifier.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete action", err.Error())
 		return
@@ -102,19 +101,25 @@ func (r *ActionResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	action, err := actionStateToPortBody(ctx, state)
+	bp, _, err := r.portClient.ReadBlueprint(ctx, state.Blueprint.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read blueprint", err.Error())
+		return
+	}
+
+	action, err := actionStateToPortBody(ctx, state, bp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert action resource to body", err.Error())
 		return
 	}
 
-	a, err := r.portClient.CreateAction(ctx, action)
+	a, err := r.portClient.CreateAction(ctx, bp.Identifier, action)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create action", err.Error())
 		return
 	}
 
-	state.ID = types.StringValue(a.Identifier)
+	state.ID = types.StringValue(fmt.Sprintf("%s:%s", bp.Identifier, a.Identifier))
 	state.Identifier = types.StringValue(a.Identifier)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -131,30 +136,30 @@ func (r *ActionResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	action, err := actionStateToPortBody(ctx, state)
+	bp, _, err := r.portClient.ReadBlueprint(ctx, state.Blueprint.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read blueprint", err.Error())
+		return
+	}
+
+	action, err := actionStateToPortBody(ctx, state, bp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert entity resource to body", err.Error())
 		return
 	}
 
-	blueprintIdentifier := previousState.Blueprint.ValueString()
-	actionIdentifier := previousState.Identifier.ValueString()
-	if blueprintIdentifier != "" {
-		actionIdentifier = fmt.Sprintf("%s_%s", blueprintIdentifier, actionIdentifier)
-	}
-
 	var a *cli.Action
 	if previousState.Identifier.IsNull() {
-		a, err = r.portClient.CreateAction(ctx, action)
+		a, err = r.portClient.CreateAction(ctx, bp.Identifier, action)
 	} else {
-		a, err = r.portClient.UpdateAction(ctx, actionIdentifier, action)
+		a, err = r.portClient.UpdateAction(ctx, bp.Identifier, previousState.Identifier.ValueString(), action)
 	}
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create action", err.Error())
 		return
 	}
 
-	state.ID = types.StringValue(a.Identifier)
+	state.ID = types.StringValue(fmt.Sprintf("%s:%s", bp.Identifier, a.Identifier))
 	state.Identifier = types.StringValue(a.Identifier)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)

@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
@@ -34,25 +35,26 @@ func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
 	return cliDateSet
 }
 
-func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action, error) {
-	var err error
+func actionStateToPortBody(ctx context.Context, data *ActionModel, bp *cli.Blueprint) (*cli.Action, error) {
 	action := &cli.Action{
-		Identifier:       data.Identifier.ValueString(),
-		Title:            data.Title.ValueStringPointer(),
-		Icon:             data.Icon.ValueStringPointer(),
-		Description:      data.Description.ValueStringPointer(),
-		RequiredApproval: data.RequiredApproval.ValueBoolPointer(),
-		Publish:          data.Publish.ValueBoolPointer(),
+		Identifier: data.Identifier.ValueString(),
+		Title:      data.Title.ValueString(),
+		Trigger:    data.Trigger.ValueString(),
 	}
 
-	action.Trigger, err = triggerToBody(ctx, data)
-	if err != nil {
-		return nil, err
+	if !data.Icon.IsNull() {
+		icon := data.Icon.ValueString()
+		action.Icon = &icon
 	}
 
-	action.InvocationMethod, err = invocationMethodToBody(ctx, data)
-	if err != nil {
-		return nil, err
+	if !data.Description.IsNull() {
+		description := data.Description.ValueString()
+		action.Description = &description
+	}
+
+	if !data.RequiredApproval.IsNull() {
+		requiredApproval := data.RequiredApproval.ValueBool()
+		action.RequiredApproval = &requiredApproval
 	}
 
 	if !data.ApprovalEmailNotification.IsNull() {
@@ -60,51 +62,43 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action,
 			Type: "email",
 		}
 	}
+
 	if data.ApprovalWebhookNotification != nil {
 		action.ApprovalNotification = &cli.ApprovalNotification{
-			Type:   "webhook",
-			Url:    data.ApprovalWebhookNotification.Url.ValueString(),
-			Format: data.ApprovalWebhookNotification.Format.ValueStringPointer(),
+			Type: "webhook",
+			Url:  data.ApprovalWebhookNotification.Url.ValueString(),
 		}
+
+		if !data.ApprovalWebhookNotification.Format.IsNull() {
+			format := data.ApprovalWebhookNotification.Format.ValueString()
+			action.ApprovalNotification.Format = &format
+		}
+	}
+
+	action.InvocationMethod = invocationMethodToBody(data)
+
+	if data.UserProperties != nil {
+		err := actionPropertiesToBody(ctx, action, data)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		action.UserInputs.Properties = make(map[string]cli.ActionProperty)
+	}
+
+	if !data.OrderProperties.IsNull() {
+		order, err := utils.TerraformListToGoArray(ctx, data.OrderProperties, "string")
+		if err != nil {
+			return nil, err
+		}
+		orderString := utils.InterfaceToStringArray(order)
+		action.UserInputs.Order = orderString
 	}
 
 	return action, nil
 }
 
-func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error) {
-	if data.SelfServiceTrigger != nil {
-		selfServiceTrigger := &cli.Trigger{
-			Type:                consts.SelfService,
-			BlueprintIdentifier: data.SelfServiceTrigger.BlueprintIdentifier.ValueStringPointer(),
-			Operation:           data.SelfServiceTrigger.Operation.ValueStringPointer(),
-			UserInputs: &cli.ActionUserInputs{
-				Properties: make(map[string]cli.ActionProperty),
-			},
-		}
-
-		if data.SelfServiceTrigger.UserProperties != nil {
-			err := actionPropertiesToBody(ctx, selfServiceTrigger, data.SelfServiceTrigger)
-			if err != nil {
-				return nil, err
-			}
-		}
-
-		if !data.SelfServiceTrigger.OrderProperties.IsNull() {
-			order, err := utils.TerraformListToGoArray(ctx, data.SelfServiceTrigger.OrderProperties, "string")
-			if err != nil {
-				return nil, err
-			}
-			orderString := utils.InterfaceToStringArray(order)
-			selfServiceTrigger.UserInputs.Order = orderString
-		}
-
-		return selfServiceTrigger, nil
-	}
-
-	return nil, nil
-}
-
-func actionPropertiesToBody(ctx context.Context, actionTrigger *cli.Trigger, data *SelfServiceTriggerModel) error {
+func actionPropertiesToBody(ctx context.Context, action *cli.Action, data *ActionModel) error {
 	required := []string{}
 	props := map[string]cli.ActionProperty{}
 	var err error
@@ -129,124 +123,118 @@ func actionPropertiesToBody(ctx context.Context, actionTrigger *cli.Trigger, dat
 		return err
 	}
 
-	actionTrigger.UserInputs.Properties = props
+	action.UserInputs.Properties = props
 
 	// if requiredJqQuery is set, required shouldn't be set and vice versa
 	if !data.RequiredJqQuery.IsNull() {
 		RequiredJqQueryMap := map[string]string{
 			"jqQuery": data.RequiredJqQuery.ValueString(),
 		}
-		actionTrigger.UserInputs.Required = RequiredJqQueryMap
+		action.UserInputs.Required = RequiredJqQueryMap
 	} else {
-		actionTrigger.UserInputs.Required = required
+		action.UserInputs.Required = required
 	}
 
 	return nil
 }
-
-func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.InvocationMethod, error) {
-	if data.KafkaMethod != nil {
-		payload, err := utils.TerraformStringToGoObject(data.KafkaMethod.Payload)
-		if err != nil {
-			return nil, err
+func invocationMethodToBody(data *ActionModel) *cli.InvocationMethod {
+	if data.AzureMethod != nil {
+		org := data.AzureMethod.Org.ValueString()
+		webhook := data.AzureMethod.Webhook.ValueString()
+		return &cli.InvocationMethod{
+			Type:    consts.AzureDevops,
+			Org:     &org,
+			Webhook: &webhook,
 		}
-
-		return &cli.InvocationMethod{Type: consts.Kafka, Payload: payload}, nil
-	}
-
-	if data.WebhookMethod != nil {
-		agent, err := utils.TerraformStringToGoObject(data.WebhookMethod.Agent)
-		if err != nil {
-			return nil, err
-		}
-		synchronized, err := utils.TerraformStringToGoObject(data.WebhookMethod.Synchronized)
-		if err != nil {
-			return nil, err
-		}
-		headers := make(map[string]string)
-		for key, value := range data.WebhookMethod.Headers.Elements() {
-			tv, _ := value.ToTerraformValue(ctx)
-			var keyValue string
-			err = tv.As(&keyValue)
-			if err != nil {
-				return nil, err
-			}
-			headers[key] = keyValue
-		}
-		body, err := utils.TerraformStringToGoObject(data.WebhookMethod.Body)
-		if err != nil {
-			return nil, err
-		}
-
-		webhookInvocation := &cli.InvocationMethod{
-			Type:         consts.Webhook,
-			Url:          data.WebhookMethod.Url.ValueStringPointer(),
-			Agent:        agent,
-			Synchronized: synchronized,
-			Method:       data.WebhookMethod.Method.ValueStringPointer(),
-			Headers:      headers,
-			Body:         body,
-		}
-
-		return webhookInvocation, nil
 	}
 
 	if data.GithubMethod != nil {
-		reportWorkflowStatus, err := utils.TerraformStringToGoObject(data.GithubMethod.ReportWorkflowStatus)
-		if err != nil {
-			return nil, err
-		}
-		wi, err := utils.TerraformStringToGoObject(data.GithubMethod.WorkflowInputs)
-		if err != nil {
-			return nil, err
-		}
-		workflowInputs, _ := wi.(map[string]interface{})
-
+		org := data.GithubMethod.Org.ValueString()
+		repo := data.GithubMethod.Repo.ValueString()
+		workflow := data.GithubMethod.Workflow.ValueString()
 		githubInvocation := &cli.InvocationMethod{
-			Type:                 consts.Github,
-			Org:                  data.GithubMethod.Org.ValueStringPointer(),
-			Repo:                 data.GithubMethod.Repo.ValueStringPointer(),
-			Workflow:             data.GithubMethod.Workflow.ValueStringPointer(),
-			WorkflowInputs:       workflowInputs,
-			ReportWorkflowStatus: reportWorkflowStatus,
+			Type:     consts.Github,
+			Org:      &org,
+			Repo:     &repo,
+			Workflow: &workflow,
 		}
 
-		return githubInvocation, nil
+		if !data.GithubMethod.OmitPayload.IsNull() {
+			omitPayload := data.GithubMethod.OmitPayload.ValueBool()
+			githubInvocation.OmitPayload = &omitPayload
+		}
+
+		if !data.GithubMethod.OmitUserInputs.IsNull() {
+			omitUserInputs := data.GithubMethod.OmitUserInputs.ValueBool()
+			githubInvocation.OmitUserInputs = &omitUserInputs
+		}
+
+		if !data.GithubMethod.ReportWorkflowStatus.IsNull() {
+			reportWorkflowStatus := data.GithubMethod.ReportWorkflowStatus.ValueBool()
+			githubInvocation.ReportWorkflowStatus = &reportWorkflowStatus
+		}
+		return githubInvocation
+	}
+
+	if !data.KafkaMethod.IsNull() {
+		return &cli.InvocationMethod{
+			Type: consts.Kafka,
+		}
+	}
+
+	if data.WebhookMethod != nil {
+		url := data.WebhookMethod.Url.ValueString()
+		webhookInvocation := &cli.InvocationMethod{
+			Type: consts.Webhook,
+			Url:  &url,
+		}
+		if !data.WebhookMethod.Agent.IsNull() {
+			agent := data.WebhookMethod.Agent.ValueBool()
+			webhookInvocation.Agent = &agent
+		}
+		if !data.WebhookMethod.Synchronized.IsNull() {
+			synchronized := data.WebhookMethod.Synchronized.ValueBool()
+			webhookInvocation.Synchronized = &synchronized
+		}
+		if !data.WebhookMethod.Method.IsNull() {
+			method := data.WebhookMethod.Method.ValueString()
+			webhookInvocation.Method = &method
+		}
+
+		return webhookInvocation
 	}
 
 	if data.GitlabMethod != nil {
-		pv, err := utils.TerraformStringToGoObject(data.GitlabMethod.PipelineVariables)
-		if err != nil {
-			return nil, err
-		}
-		pipelineVariables, _ := pv.(map[string]interface{})
-
+		projectName := data.GitlabMethod.ProjectName.ValueString()
+		groupName := data.GitlabMethod.GroupName.ValueString()
 		gitlabInvocation := &cli.InvocationMethod{
-			Type:              consts.Gitlab,
-			ProjectName:       data.GitlabMethod.ProjectName.ValueStringPointer(),
-			GroupName:         data.GitlabMethod.GroupName.ValueStringPointer(),
-			DefaultRef:        data.GitlabMethod.DefaultRef.ValueStringPointer(),
-			PipelineVariables: pipelineVariables,
+			Type:        consts.Gitlab,
+			ProjectName: &projectName,
+			GroupName:   &groupName,
 		}
 
-		return gitlabInvocation, nil
+		if !data.GitlabMethod.OmitPayload.IsNull() {
+			omitPayload := data.GitlabMethod.OmitPayload.ValueBool()
+			gitlabInvocation.OmitPayload = &omitPayload
+		}
+
+		if !data.GitlabMethod.OmitUserInputs.IsNull() {
+			omitUserInputs := data.GitlabMethod.OmitUserInputs.ValueBool()
+			gitlabInvocation.OmitUserInputs = &omitUserInputs
+		}
+
+		if !data.GitlabMethod.DefaultRef.IsNull() {
+			defaultRef := data.GitlabMethod.DefaultRef.ValueString()
+			gitlabInvocation.DefaultRef = &defaultRef
+		}
+
+		if !data.GitlabMethod.Agent.IsNull() {
+			agent := data.GitlabMethod.Agent.ValueBool()
+			gitlabInvocation.Agent = &agent
+		}
+
+		return gitlabInvocation
 	}
 
-	if data.AzureMethod != nil {
-		payload, err := utils.TerraformStringToGoObject(data.AzureMethod.Payload)
-		if err != nil {
-			return nil, err
-		}
-
-		azureInvocation := &cli.InvocationMethod{
-			Type:    consts.AzureDevops,
-			Org:     data.AzureMethod.Org.ValueStringPointer(),
-			Webhook: data.AzureMethod.Webhook.ValueStringPointer(),
-			Payload: payload,
-		}
-
-		return azureInvocation, nil
-	}
-
-	return nil, nil
+	return nil
 }

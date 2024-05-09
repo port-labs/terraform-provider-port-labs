@@ -6,13 +6,14 @@ import (
 	"fmt"
 )
 
-func (c *PortClient) ReadAction(ctx context.Context, id string) (*Action, int, error) {
+func (c *PortClient) ReadAction(ctx context.Context, blueprintID, id string) (*Action, int, error) {
 	pb := &PortBody{}
-	url := "v1/actions/{action_identifier}"
+	url := "v1/blueprints/{blueprint_identifier}/actions/{action_identifier}"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
 		SetResult(pb).
+		SetPathParam("blueprint_identifier", blueprintID).
 		SetPathParam("action_identifier", id).
 		Get(url)
 	if err != nil {
@@ -24,10 +25,11 @@ func (c *PortClient) ReadAction(ctx context.Context, id string) (*Action, int, e
 	return &pb.Action, resp.StatusCode(), nil
 }
 
-func (c *PortClient) CreateAction(ctx context.Context, action *Action) (*Action, error) {
-	url := "v1/actions"
+func (c *PortClient) CreateAction(ctx context.Context, blueprintID string, action *Action) (*Action, error) {
+	url := "v1/blueprints/{blueprint_identifier}/actions"
 	resp, err := c.Client.R().
 		SetBody(action).
+		SetPathParam("blueprint_identifier", blueprintID).
 		SetContext(ctx).
 		Post(url)
 	if err != nil {
@@ -44,11 +46,12 @@ func (c *PortClient) CreateAction(ctx context.Context, action *Action) (*Action,
 	return &pb.Action, nil
 }
 
-func (c *PortClient) UpdateAction(ctx context.Context, actionID string, action *Action) (*Action, error) {
-	url := "v1/actions/{action_identifier}"
+func (c *PortClient) UpdateAction(ctx context.Context, blueprintID, actionID string, action *Action) (*Action, error) {
+	url := "v1/blueprints/{blueprint_identifier}/actions/{action_identifier}"
 	resp, err := c.Client.R().
 		SetBody(action).
 		SetContext(ctx).
+		SetPathParam("blueprint_identifier", blueprintID).
 		SetPathParam("action_identifier", actionID).
 		Put(url)
 	if err != nil {
@@ -65,11 +68,12 @@ func (c *PortClient) UpdateAction(ctx context.Context, actionID string, action *
 	return &pb.Action, nil
 }
 
-func (c *PortClient) DeleteAction(ctx context.Context, actionID string) error {
-	url := "v1/actions/{action_identifier}"
+func (c *PortClient) DeleteAction(ctx context.Context, blueprintID string, actionID string) error {
+	url := "v1/blueprints/{blueprint_identifier}/actions/{action_identifier}"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
+		SetPathParam("blueprint_identifier", blueprintID).
 		SetPathParam("action_identifier", actionID).
 		Delete(url)
 	if err != nil {

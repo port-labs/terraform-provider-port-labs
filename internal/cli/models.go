@@ -255,15 +255,16 @@ type (
 
 	Page struct {
 		Meta
-		Identifier string            `json:"identifier,omitempty"`
-		Type       string            `json:"type,omitempty"`
-		Icon       *string           `json:"icon,omitempty"`
-		Parent     *string           `json:"parent,omitempty"`
-		After      *string           `json:"after,omitempty"`
-		Title      *string           `json:"title,omitempty"`
-		Locked     *bool             `json:"locked,omitempty"`
-		Blueprint  *string           `json:"blueprint,omitempty"`
-		Widgets    *[]map[string]any `json:"widgets,omitempty"`
+		Identifier  string            `json:"identifier,omitempty"`
+		Type        string            `json:"type,omitempty"`
+		Icon        *string           `json:"icon,omitempty"`
+		Parent      *string           `json:"parent,omitempty"`
+		After       *string           `json:"after,omitempty"`
+		Title       *string           `json:"title,omitempty"`
+		Locked      *bool             `json:"locked,omitempty"`
+		Blueprint   *string           `json:"blueprint,omitempty"`
+		Widgets     *[]map[string]any `json:"widgets,omitempty"`
+		Description *string           `json:"description,omitempty"`
 	}
 
 	PageReadPermissions struct {

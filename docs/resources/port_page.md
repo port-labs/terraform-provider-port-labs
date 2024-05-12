@@ -5,7 +5,10 @@ subcategory: ""
 description: |-
   Page resource
   Docs about the different page types can be found here https://docs.getport.io/customize-pages-dashboards-and-plugins/page/catalog-page.
-  ~> WARNINGThe page resource is currently in beta and is subject to change in future versions.Use it by setting the Environment Variable PORT_BETA_FEATURES_ENABLED=true.If this Environment Variable isn't specified, you won't be able to use the resource.
+  ~> WARNING
+  The page resource is currently in beta and is subject to change in future versions.
+  Use it by setting the Environment Variable PORT_BETA_FEATURES_ENABLED=true.
+  If this Environment Variable isn't specified, you won't be able to use the resource.
   Example Usage
   Blueprint Entities Page
   ```hcl
@@ -213,10 +216,10 @@ description: |-
 
 Docs about the different page types can be found [here](https://docs.getport.io/customize-pages-dashboards-and-plugins/page/catalog-page).
 
-~> **WARNING**  
-The page resource is currently in beta and is subject to change in future versions.  
-Use it by setting the Environment Variable `PORT_BETA_FEATURES_ENABLED=true`.  
-If this Environment Variable isn't specified, you won't be able to use the resource. 
+~> **WARNING**
+The page resource is currently in beta and is subject to change in future versions.
+Use it by setting the Environment Variable `PORT_BETA_FEATURES_ENABLED=true`.
+If this Environment Variable isn't specified, you won't be able to use the resource.
 
 ## Example Usage
 
@@ -440,7 +443,7 @@ resource "port_page" "home_page" {
 
 The home page is a special page, which is created by default when you create a new organization.
 
-- When deleting the home page resource using terraform, the home page will not be deleted from Port as it isn't deletable page, instead, the home page will be removed from the terraform state. 
+- When deleting the home page resource using terraform, the home page will not be deleted from Port as it isn't deletable page, instead, the home page will be removed from the terraform state.
 - Due to only having one home page you'll have to import the state of the home page manually.
 
 ```
@@ -461,6 +464,7 @@ terraform import port_page.home_page "\$home"
 
 - `after` (String) The identifier of the page/folder after which the page should be placed
 - `blueprint` (String) The blueprint for which the page is created, relevant only for pages of type "blueprint-entities"
+- `description` (String) The page description
 - `icon` (String) The icon of the page
 - `locked` (Boolean) Whether the page is locked, if true, viewers will not be able to edit the page widgets and filters
 - `parent` (String) The identifier of the folder in which the page is in, default is the root of the sidebar
@@ -474,5 +478,3 @@ terraform import port_page.home_page "\$home"
 - `id` (String) The ID of this resource.
 - `updated_at` (String) The last update date of the page
 - `updated_by` (String) The last updater of the page
-
-

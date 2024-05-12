@@ -146,6 +146,7 @@ resource "port_page" "microservice_dashboard_page" {
   title                 = "dashboards"
   icon                  = "GitHub"
   type                  = "dashboard"
+  description           = "My Dashboard Page Description"
   widgets               = [
     jsonencode(
       {
@@ -186,6 +187,7 @@ resource "port_page" "microservice_dashboard_page" {
 				Config: acctest.ProviderConfig + testAccPortPageResourceBasic,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "identifier", pageIdentifier),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "description", "My Dashboard Page Description"),
 					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "title", "dashboards"),
 					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "icon", "GitHub"),
 					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "type", "dashboard"),

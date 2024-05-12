@@ -4,6 +4,7 @@ resource "port_page" "microservice_blueprint_page" {
   type                  = "blueprint-entities"
   icon                  = "Microservice"
   blueprint             = port_blueprint.base_blueprint.identifier
+  description           = "My microservice blueprint page"
   widgets               = [
     jsonencode(
       {

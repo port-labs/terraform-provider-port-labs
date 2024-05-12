@@ -135,6 +135,7 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 	state.CreatedBy = types.StringValue(p.CreatedBy)
 	state.UpdatedAt = types.StringValue(p.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(p.UpdatedBy)
+	state.Description = types.StringPointerValue(p.Description)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -172,6 +173,7 @@ func (r *PageResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	state.CreatedBy = types.StringValue(p.CreatedBy)
 	state.UpdatedAt = types.StringValue(p.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(p.UpdatedBy)
+	state.Description = types.StringPointerValue(p.Description)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 

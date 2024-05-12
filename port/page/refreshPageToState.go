@@ -16,6 +16,7 @@ func refreshPageToState(pm *PageModel, b *cli.Page) error {
 	pm.Title = types.StringPointerValue(b.Title)
 	pm.Locked = types.BoolPointerValue(b.Locked)
 	pm.Blueprint = types.StringPointerValue(b.Blueprint)
+	pm.Description = types.StringPointerValue(b.Description)
 
 	pm.Widgets = make([]types.String, len(*b.Widgets))
 	if b.Widgets != nil {

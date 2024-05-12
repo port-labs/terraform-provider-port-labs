@@ -6,6 +6,7 @@ VERSION=0.9.6
 OS=$(shell go env GOOS)
 ARCH=$(shell go env GOARCH)
 OS_ARCH=${OS}_${ARCH}
+TEST_FILTER?=.*
 
 default: install
 
@@ -40,7 +41,9 @@ setup:
 	cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 
 acctest:
-	TF_ACC=1 PORT_CLIENT_ID=$(PORT_CLIENT_ID) PORT_CLIENT_SECRET=$(PORT_CLIENT_SECRET) PORT_BASE_URL=$(PORT_BASE_URL) go test -p 1 ./...
+	# TEST_FILTER can be any regex, E.g: .*PageResource.*
+	# TEST_FILTER='TestAccPortPageResource*' make acctest
+	TF_ACC=1 PORT_CLIENT_ID=$(PORT_CLIENT_ID) PORT_CLIENT_SECRET=$(PORT_CLIENT_SECRET) PORT_BASE_URL=$(PORT_BASE_URL) go test -p 1 ./... -run "$(TEST_FILTER)"
 
 gen-docs:
 	tfplugindocs

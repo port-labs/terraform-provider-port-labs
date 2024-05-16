@@ -223,7 +223,7 @@ Required:
 
 Optional:
 
-- `payload` (String) The Azure Devops workflow [payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) (array or object encoded to a string use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode)). Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
+- `payload` (String) The Azure Devops workflow [payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in JSON format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 
 
 <a id="nestedatt--github_method"></a>
@@ -252,7 +252,7 @@ Required:
 Optional:
 
 - `default_ref` (String) The default ref of the action
-- `pipeline_variables` (String) The Gitlab pipeline variables (key-value object encoded to a string use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode)). Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
+- `pipeline_variables` (String) The Gitlab pipeline variables should be in JSON format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 
 
 <a id="nestedatt--kafka_method"></a>

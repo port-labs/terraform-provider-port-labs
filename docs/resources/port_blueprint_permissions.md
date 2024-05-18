@@ -7,63 +7,64 @@ description: |-
   Docs about blueprint permissions can be found here https://docs.getport.io/build-your-software-catalog/set-catalog-rbac/examples/#setting-blueprint-permissions
   Example Usage
   Allow access to all members:
-  hcl
-  resource "port_blueprint_permissions" "microservices_permissions" {
-    blueprint_identifier = "my_blueprint_identifier"
-    entities= {
+  ```hcl
+  resource "portblueprintpermissions" "microservicespermissions" {
+    blueprintidentifier = "myblueprintidentifier"
+    entities             = {
       "register" = {
-          "roles": [
-              "Member",
-          ],
-          "users": [],
-          "teams": []
+        "roles" : [
+          "Member",
+        ],
+        "users" : [],
+        "teams" : []
       },
       "unregister" = {
-          "roles": [
-              "Member",
-          ],
-          "users": [],
-          "teams": []
+        "roles" : [
+          "Member",
+        ],
+        "users" : [],
+        "teams" : []
       },
       "update" = {
-          "roles": [
-              "Member",
+        "roles" : [
+          "Member",
+        ],
+        "users" : ["test-admin-user@test.com"],
+        "teams" : []
+      },
+      "updatemetadataproperties" = {
+        "icon" = {
+          "roles" : [
+            "Member",
           ],
-          "users": ["test-admin-user@test.com"],
-          "teams": []
-      },
-      "update_metadata_properties" = {
-          "icon" = {
-              "roles": [
-                  "Member",
-              ],
-              "users": [],
-              "teams": []
-          },
-          "identifier" = {
-              "roles": [
-                  "Member",
-              ],
-              "users": [],
-              "teams": ["Team Spiderman"]
-          },
-          "team" = {
-              "roles": [
-                  "Admin",
-              ],
-              "users": [],
-              "teams": []
-          },
-          "title" = {
-              "roles": [
-                  "Member",
-              ],
-              "users": [],
-              "teams": []
-          },
-      },
+          "users" : [],
+          "teams" : []
+        },
+        "identifier" = {
+          "roles" : [
+            "Member",
+          ],
+          "users" : [],
+          "teams" : ["Team Spiderman"]
+        },
+        "team" = {
+          "roles" : [
+            "Admin",
+          ],
+          "users" : [],
+          "teams" : []
+        },
+        "title" = {
+          "roles" : [
+            "Member",
+          ],
+          "users" : [],
+          "teams" : []
+        }
+      }
+    }
   }
-  
+  ```
   NOTE:
   You always need to explicity set register|unregister|update|update_metadata_propertiesproperties
   Allow update myStringProperty` for admins and a specific user and team:
@@ -120,59 +121,61 @@ Docs about blueprint permissions can be found [here](https://docs.getport.io/bui
 ```hcl
 resource "port_blueprint_permissions" "microservices_permissions" {
   blueprint_identifier = "my_blueprint_identifier"
-  entities= {
-	"register" = {
-		"roles": [
-			"Member",
-		],
-		"users": [],
-		"teams": []
-	},
-	"unregister" = {
-		"roles": [
-			"Member",
-		],
-		"users": [],
-		"teams": []
-	},
-	"update" = {
-		"roles": [
-			"Member",
-		],
-		"users": ["test-admin-user@test.com"],
-		"teams": []
-	},
-	"update_metadata_properties" = {
-		"icon" = {
-			"roles": [
-				"Member",
-			],
-			"users": [],
-			"teams": []
-		},
-		"identifier" = {
-			"roles": [
-				"Member",
-			],
-			"users": [],
-			"teams": ["Team Spiderman"]
-		},
-		"team" = {
-			"roles": [
-				"Admin",
-			],
-			"users": [],
-			"teams": []
-		},
-		"title" = {
-			"roles": [
-				"Member",
-			],
-			"users": [],
-			"teams": []
-		},
-	},
+  entities             = {
+    "register" = {
+      "roles" : [
+        "Member",
+      ],
+      "users" : [],
+      "teams" : []
+    },
+    "unregister" = {
+      "roles" : [
+        "Member",
+      ],
+      "users" : [],
+      "teams" : []
+    },
+    "update" = {
+      "roles" : [
+        "Member",
+      ],
+      "users" : ["test-admin-user@test.com"],
+      "teams" : []
+    },
+    "update_metadata_properties" = {
+      "icon" = {
+        "roles" : [
+          "Member",
+        ],
+        "users" : [],
+        "teams" : []
+      },
+      "identifier" = {
+        "roles" : [
+          "Member",
+        ],
+        "users" : [],
+        "teams" : ["Team Spiderman"]
+      },
+      "team" = {
+        "roles" : [
+          "Admin",
+        ],
+        "users" : [],
+        "teams" : []
+      },
+      "title" = {
+        "roles" : [
+          "Member",
+        ],
+        "users" : [],
+        "teams" : []
+      }
+    }
+  }
 }
+
 ```
 
 #### NOTE:
@@ -244,17 +247,17 @@ resource "port_blueprint_permissions" "microservices_permissions" {
 
 Required:
 
-- `register` (Attributes) Enable permissions to register entities of the blueprint (see [below for nested schema](#nestedatt--entities--register))
-- `unregister` (Attributes) Enable permissions to unregister entities of the blueprint (see [below for nested schema](#nestedatt--entities--unregister))
-- `update` (Attributes) Enable permissions to update entities of the blueprint (see [below for nested schema](#nestedatt--entities--update))
+- `register` (Attributes) Manage permissions to register entities of the blueprint (see [below for nested schema](#nestedatt--entities--register))
+- `unregister` (Attributes) Manage permissions to unregister entities of the blueprint (see [below for nested schema](#nestedatt--entities--unregister))
+- `update` (Attributes) Manage permissions to update entities of the blueprint (see [below for nested schema](#nestedatt--entities--update))
 - `update_metadata_properties` (Attributes) Manage permissions to the metadata properties (`$icon|$title|$team|$identifier`)
 These are translated to the updateProperties in the Port Api, proxied since we can't have Terraform properties starting with `$`signs.
 See [here](https://docs.getport.io/build-your-software-catalog/customize-integrations/configure-data-model/setup-blueprint/properties/meta-properties/) for more details. (see [below for nested schema](#nestedatt--entities--update_metadata_properties))
 
 Optional:
 
-- `update_properties` (Attributes Map) Enable permissions to update the entity properties (see [below for nested schema](#nestedatt--entities--update_properties))
-- `update_relations` (Attributes Map) Enable permissions to update the entity relations (see [below for nested schema](#nestedatt--entities--update_relations))
+- `update_properties` (Attributes Map) Manage permissions to update the entity properties (see [below for nested schema](#nestedatt--entities--update_properties))
+- `update_relations` (Attributes Map) Manage permissions to update the entity relations (see [below for nested schema](#nestedatt--entities--update_relations))
 
 <a id="nestedatt--entities--register"></a>
 ### Nested Schema for `entities.register`

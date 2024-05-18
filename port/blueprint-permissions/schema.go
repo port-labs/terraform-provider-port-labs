@@ -55,18 +55,18 @@ func BlueprintPermissionsSchema() map[string]schema.Attribute {
 			Attributes: map[string]schema.Attribute{
 				"register": schema.SingleNestedAttribute{
 					MarkdownDescription: "Manage permissions to register entities of the blueprint",
-					Required:   true,
-					Attributes: getAssigneeProps("register"),
+					Required:            true,
+					Attributes:          getAssigneeProps("register"),
 				},
 				"unregister": schema.SingleNestedAttribute{
 					MarkdownDescription: "Manage permissions to unregister entities of the blueprint",
-					Required:   true,
-					Attributes: getAssigneeProps("unregister"),
+					Required:            true,
+					Attributes:          getAssigneeProps("unregister"),
 				},
 				"update": schema.SingleNestedAttribute{
 					MarkdownDescription: "Manage permissions to update entities of the blueprint",
-					Required:   true,
-					Attributes: getAssigneeProps("update"),
+					Required:            true,
+					Attributes:          getAssigneeProps("update"),
 				},
 				"update_metadata_properties": schema.SingleNestedAttribute{
 					Required: true,
@@ -76,29 +76,29 @@ See [here](https://docs.getport.io/build-your-software-catalog/customize-integra
 					Attributes: map[string]schema.Attribute{
 						"icon": schema.SingleNestedAttribute{
 							MarkdownDescription: "The entity's icon",
-							Required:   true,
-							Attributes: getAssigneeProps("update $icon metadata"),
+							Required:            true,
+							Attributes:          getAssigneeProps("update $icon metadata"),
 						},
 						"title": schema.SingleNestedAttribute{
 							MarkdownDescription: "A human-readable name for the entity",
-							Required:   true,
-							Attributes: getAssigneeProps("update $title metadata"),
+							Required:            true,
+							Attributes:          getAssigneeProps("update $title metadata"),
 						},
 						"team": schema.SingleNestedAttribute{
 							MarkdownDescription: "The team this entity belongs to",
-							Required:   true,
-							Attributes: getAssigneeProps("update $team metadata"),
+							Required:            true,
+							Attributes:          getAssigneeProps("update $team metadata"),
 						},
 						"identifier": schema.SingleNestedAttribute{
 							MarkdownDescription: "Unique Entity identifier, used for API calls, programmatic access and distinguishing between different entities",
-							Required:   true,
-							Attributes: getAssigneeProps("update $identifier metadata"),
+							Required:            true,
+							Attributes:          getAssigneeProps("update $identifier metadata"),
 						},
 					},
 				},
 				"update_properties": schema.MapNestedAttribute{
 					MarkdownDescription: "Manage permissions to update the entity properties",
-					Optional: true,
+					Optional:            true,
 					NestedObject: schema.NestedAttributeObject{
 						Attributes: getAssigneeProps("update specific property"),
 					},
@@ -113,7 +113,7 @@ See [here](https://docs.getport.io/build-your-software-catalog/customize-integra
 				},
 				"update_relations": schema.MapNestedAttribute{
 					MarkdownDescription: "Manage permissions to update the entity relations",
-					Optional: true,
+					Optional:            true,
 					NestedObject: schema.NestedAttributeObject{
 						Attributes: getAssigneeProps("update specific relation"),
 					},
@@ -143,59 +143,61 @@ Docs about blueprint permissions can be found [here](https://docs.getport.io/bui
 ` + "```hcl" + `
 resource "port_blueprint_permissions" "microservices_permissions" {
   blueprint_identifier = "my_blueprint_identifier"
-  entities= {
-	"register" = {
-		"roles": [
-			"Member",
-		],
-		"users": [],
-		"teams": []
-	},
-	"unregister" = {
-		"roles": [
-			"Member",
-		],
-		"users": [],
-		"teams": []
-	},
-	"update" = {
-		"roles": [
-			"Member",
-		],
-		"users": ["test-admin-user@test.com"],
-		"teams": []
-	},
-	"update_metadata_properties" = {
-		"icon" = {
-			"roles": [
-				"Member",
-			],
-			"users": [],
-			"teams": []
-		},
-		"identifier" = {
-			"roles": [
-				"Member",
-			],
-			"users": [],
-			"teams": ["Team Spiderman"]
-		},
-		"team" = {
-			"roles": [
-				"Admin",
-			],
-			"users": [],
-			"teams": []
-		},
-		"title" = {
-			"roles": [
-				"Member",
-			],
-			"users": [],
-			"teams": []
-		},
-	},
-}` + "\n```" + `
+  entities             = {
+    "register" = {
+      "roles" : [
+        "Member",
+      ],
+      "users" : [],
+      "teams" : []
+    },
+    "unregister" = {
+      "roles" : [
+        "Member",
+      ],
+      "users" : [],
+      "teams" : []
+    },
+    "update" = {
+      "roles" : [
+        "Member",
+      ],
+      "users" : ["test-admin-user@test.com"],
+      "teams" : []
+    },
+    "update_metadata_properties" = {
+      "icon" = {
+        "roles" : [
+          "Member",
+        ],
+        "users" : [],
+        "teams" : []
+      },
+      "identifier" = {
+        "roles" : [
+          "Member",
+        ],
+        "users" : [],
+        "teams" : ["Team Spiderman"]
+      },
+      "team" = {
+        "roles" : [
+          "Admin",
+        ],
+        "users" : [],
+        "teams" : []
+      },
+      "title" = {
+        "roles" : [
+          "Member",
+        ],
+        "users" : [],
+        "teams" : []
+      }
+    }
+  }
+}
+` + "\n```" + `
 
 #### NOTE:
 

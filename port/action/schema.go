@@ -138,7 +138,7 @@ func ActionSchema() map[string]schema.Attribute {
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"payload": schema.StringAttribute{
-					MarkdownDescription: "The Kafka message payload (array or object encoded to a string)",
+					MarkdownDescription: "The Kafka message [payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					Optional:            true,
 				},
 			},
@@ -175,12 +175,12 @@ func ActionSchema() map[string]schema.Attribute {
 					Optional:            true,
 				},
 				"headers": schema.MapAttribute{
-					MarkdownDescription: "The HTTP method to invoke the action",
+					MarkdownDescription: "The HTTP headers for invoking the action. They should be encoded as a key-value object to a string using [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					ElementType:         types.StringType,
 					Optional:            true,
 				},
 				"body": schema.StringAttribute{
-					MarkdownDescription: "The Webhook body (array or object encoded to a string)",
+					MarkdownDescription: "The Webhook body should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					Optional:            true,
 				},
 			},
@@ -202,7 +202,7 @@ func ActionSchema() map[string]schema.Attribute {
 					Required:            true,
 				},
 				"workflow_inputs": schema.StringAttribute{
-					MarkdownDescription: "The GitHub workflow inputs (key-value object encoded to a string)",
+					MarkdownDescription: "The GitHub [workflow inputs](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					Optional:            true,
 				},
 				"report_workflow_status": schema.StringAttribute{
@@ -229,7 +229,7 @@ func ActionSchema() map[string]schema.Attribute {
 					Optional:            true,
 				},
 				"pipeline_variables": schema.StringAttribute{
-					MarkdownDescription: "The Gitlab pipeline variables (key-value object encoded to a string)",
+					MarkdownDescription: "The Gitlab pipeline variables should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					Optional:            true,
 				},
 			},
@@ -247,7 +247,7 @@ func ActionSchema() map[string]schema.Attribute {
 					Required:            true,
 				},
 				"payload": schema.StringAttribute{
-					MarkdownDescription: "The Azure Devops workflow payload (array or object encoded to a string)",
+					MarkdownDescription: "The Azure Devops workflow [payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					Optional:            true,
 				},
 			},

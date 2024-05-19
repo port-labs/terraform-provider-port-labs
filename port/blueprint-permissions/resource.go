@@ -55,12 +55,11 @@ func (r *BlueprintPermissionsResource) Read(ctx context.Context, req resource.Re
 	a, statusCode, err := r.portClient.GetBlueprintPermissions(ctx, blueprintIdentifier)
 
 	if err != nil {
+		if statusCode == 404 {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("failed to read blueprint permissions", err.Error())
-		return
-	}
-
-	if statusCode == 404 {
-		resp.State.RemoveResource(ctx)
 		return
 	}
 

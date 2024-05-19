@@ -54,12 +54,11 @@ func (r *ActionPermissionsResource) Read(ctx context.Context, req resource.ReadR
 
 	a, statusCode, err := r.portClient.GetActionPermissions(ctx, actionIdentifier)
 	if err != nil {
+		if statusCode == 404 {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("failed to read action permissions", err.Error())
-		return
-	}
-
-	if statusCode == 404 {
-		resp.State.RemoveResource(ctx)
 		return
 	}
 

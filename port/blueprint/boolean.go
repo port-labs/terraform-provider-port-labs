@@ -1,6 +1,6 @@
 package blueprint
 
-import "github.com/port-labs/terraform-provider-port-labs/internal/cli"
+import "github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 
 func booleanPropResourceToBody(state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
 	for propIdentifier, prop := range state.Properties.BooleanProps {

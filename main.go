@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/port-labs/terraform-provider-port-labs/provider"
+	"github.com/port-labs/terraform-provider-port-labs/v2/provider"
 )
 
 func main() {

@@ -1,8 +1,8 @@
 package page_permissions
 
 import (
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
 )
 
 func pagePermissionsToPortBody(state *PagePermissionsModel) (*cli.PagePermissions, error) {

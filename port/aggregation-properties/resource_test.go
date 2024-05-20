@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/port-labs/terraform-provider-port-labs/internal/acctest"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func baseBlueprintsTemplate(parentBlueprintIdentifier string, childBlueprintIdentifier string) string {
@@ -57,8 +57,8 @@ func TestAccPortAggregationPropertyWithCycleRelation(t *testing.T) {
 				title = "Count Childrens"
 				icon = "Terraform"
 				description = "Count Childrens"
-				method = {	
-					count_entities = true	
+				method = {
+					count_entities = true
 				}
 			}
 		}
@@ -93,9 +93,9 @@ func TestAccCreateAggregationPropertyAverageEntities(t *testing.T) {
 		properties = {
 			"count_entities" = {
 				target_blueprint_identifier = port_blueprint.child_blueprint.identifier
-				title = "Count Childrens"	
-				icon = "Terraform"	
-				description = "Count Childrens"	
+				title = "Count Childrens"
+				icon = "Terraform"
+				description = "Count Childrens"
 				method = {
 					average_entities = {
 					"average_of" = "month"
@@ -103,7 +103,7 @@ func TestAccCreateAggregationPropertyAverageEntities(t *testing.T) {
 					}
 				}
 			}
-		}	
+		}
 	}
 `
 
@@ -113,14 +113,14 @@ func TestAccCreateAggregationPropertyAverageEntities(t *testing.T) {
 		properties = {
 			"count_entities" = {
 				target_blueprint_identifier = port_blueprint.child_blueprint.identifier
-				title = "Count Childrens"	
-				icon = "Terraform"	
-				description = "Count Childrens"	
+				title = "Count Childrens"
+				icon = "Terraform"
+				description = "Count Childrens"
 				method = {
 					average_entities = {}
 				}
 			}
-		}	
+		}
 	}
 `
 

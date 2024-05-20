@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/port-labs/terraform-provider-port-labs/internal/acctest"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func TestAccPortEntity(t *testing.T) {
@@ -245,7 +245,7 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 				"title" = "Test Relation"
 				"target" = port_blueprint.microservice2.identifier
 			}
-		}	
+		}
 	}
 	resource "port_blueprint" "microservice2" {
 		title = "TF Provider Test BP1"
@@ -274,7 +274,7 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 			}
 		}
 	}
-	
+
 	resource "port_entity" "microservice2" {
 		title = "TF Provider Test Entity1"
 		identifier = "tf-entity-2"
@@ -418,7 +418,7 @@ func TestAccPortEntityWithEmptyRelation(t *testing.T) {
 				"title" = "Test Relation"
 				"target" = port_blueprint.microservice2.identifier
 			}
-		}	
+		}
 	}
 	resource "port_blueprint" "microservice2" {
 		title = "TF Provider Test BP1"

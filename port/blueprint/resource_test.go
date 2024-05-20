@@ -3,16 +3,16 @@ package blueprint_test
 import (
 	"context"
 	"fmt"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
-	"github.com/port-labs/terraform-provider-port-labs/version"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/v2/version"
 	"os"
 	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/port-labs/terraform-provider-port-labs/internal/acctest"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func TestAccPortBlueprintBasic(t *testing.T) {
@@ -392,7 +392,7 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 		relations = {
 			"test-rel" = {
 				title = "Test Relation"
-				target = port_blueprint.microservice1.identifier	
+				target = port_blueprint.microservice1.identifier
 			}
 		}
 	}

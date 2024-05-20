@@ -3,7 +3,7 @@ package team
 import (
 	"context"
 
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
 func TeamResourceToPortBody(ctx context.Context, state *TeamModel) (*cli.Team, error) {

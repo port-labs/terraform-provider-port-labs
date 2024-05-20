@@ -1,54 +1,47 @@
-resource "port_blueprint" "repository_blueprint" {
-  title       = "Repository Blueprint"
+resource "port_blueprint" "parent_blueprint" {
+  title       = "Parent Blueprint"
   icon        = "Terraform"
-  identifier  = "repository"
-  description = ""
-}
-
-resource "port_blueprint" "pull_request_blueprint" {
-  title       = "Pull Request Blueprint"
-  icon        = "Terraform"
-  identifier  = "pull_request"
+  identifier  = "parent"
   description = ""
   properties = {
-    string_props = {
-      "status" = {
-        title = "Status"
+    number_props = {
+      "age" = {
+        title = "Age"
+      }
+    }
+  }
+}
+
+resource "port_blueprint" "child_blueprint" {
+  title       = "Child Blueprint"
+  icon        = "Terraform"
+  identifier  = "child"
+  description = ""
+  properties = {
+    number_props = {
+      "age" = {
+        title = "Age"
       }
     }
   }
   relations = {
-    "repository" = {
-      title  = "Repository"
-      target = port_blueprint.repository_blueprint.identifier
+    "parent" = {
+      title  = "Parent"
+      target = port_blueprint.parent_blueprint.identifier
     }
   }
 }
-
-resource "port_aggregation_property" "fix_pull_requests_per_day" {
-  aggregation_identifier      = "fix_pull_requests_count"
-  blueprint_identifier        = port_blueprint.repository_blueprint.identifier
-  target_blueprint_identifier = port_blueprint.pull_request_blueprint.identifier
-  title                       = "Pull Requests Per Day"
-  icon                        = "Terraform"
-  description                 = "Pull Requests Per Day"
-  method = {
-    average_entities = {
-      average_of      = "month"
-      measure_time_by = "$createdAt"
+resource "port_aggregation_properties" "parent_aggregation_properties" {
+  blueprint_identifier = port_blueprint.parent_blueprint.identifier
+  properties = {
+    "count_kids" = {
+      target_blueprint_identifier = port_blueprint.child_blueprint.identifier
+      title                       = "Count Kids"
+      icon                        = "Terraform"
+      description                 = "Count Kids"
+      method = {
+        count_entities = true
+      }
     }
   }
-  query = jsonencode(
-    {
-      "combinator" : "and",
-      "rules" : [
-        {
-          "property" : "$title",
-          "operator" : "ContainsAny",
-          "value" : ["fix", "fixed", "fixing", "Fix"]
-        }
-      ]
-    }
-  )
 }
-

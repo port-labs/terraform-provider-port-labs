@@ -1,7 +1,7 @@
 resource "port_blueprint" "environment" {
-  title      = "Env from Port TF examples"
+  title      = "Environment"
   icon       = "Environment"
-  identifier = "fenrir-env"
+  identifier = "examples-blueprint-perms-env"
   properties = {
     string_props = {
       "name" = {
@@ -16,8 +16,9 @@ resource "port_blueprint" "environment" {
   }
 }
 
+
 resource "port_blueprint" "microservice" {
-  identifier  = "fenrir-microservice"
+  identifier  = "examples-blueprint-perms-srvc"
   title       = "Microsvc from Port TF Examples"
   icon        = "Terraform"
   description = ""
@@ -82,7 +83,7 @@ resource "port_blueprint_permissions" "microservice_permissions" {
       "icon" = {
         "roles" = [
           "Admin",
-          "fenrir-microservice-moderator",
+          "${port_blueprint.microservice.identifier}-moderator",
         ],
         "users" = [],
         "teams" = [],
@@ -92,7 +93,7 @@ resource "port_blueprint_permissions" "microservice_permissions" {
         "roles" = [
           "Admin",
           "Member",
-          "fenrir-microservice-moderator",
+          "${port_blueprint.microservice.identifier}-moderator",
         ],
         "users" = [],
         "teams" = [],
@@ -102,7 +103,7 @@ resource "port_blueprint_permissions" "microservice_permissions" {
         "roles" = [
           "Admin",
           "Member",
-          "fenrir-microservice-moderator",
+          "${port_blueprint.microservice.identifier}-moderator",
         ],
         "users" = [],
         "teams" = [],
@@ -112,7 +113,7 @@ resource "port_blueprint_permissions" "microservice_permissions" {
         "roles" = [
           "Admin",
           "Member",
-          "fenrir-microservice-moderator",
+          "${port_blueprint.microservice.identifier}-moderator",
         ],
         "users" = [],
         "teams" = [],
@@ -124,7 +125,7 @@ resource "port_blueprint_permissions" "microservice_permissions" {
         "roles" = [
           "Admin",
           "Member",
-          "fenrir-microservice-moderator",
+          "${port_blueprint.microservice.identifier}-moderator",
         ],
         "users" = [],
         "teams" = [],
@@ -136,7 +137,7 @@ resource "port_blueprint_permissions" "microservice_permissions" {
         "roles" = [
           "Admin",
           "Member",
-          "fenrir-microservice-moderator",
+          "${port_blueprint.microservice.identifier}-moderator",
         ],
         "users" = [],
         "teams" = [],

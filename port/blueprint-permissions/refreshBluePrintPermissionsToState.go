@@ -1,16 +1,14 @@
 package blueprint_permissions
 
 import (
-	"sort"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 )
 
-func goStringListToSortedTFList(list []string) []types.String {
+func goStringListToTFList(list []string) []types.String {
 	var result = make([]types.String, len(list))
-	sort.Strings(list)
 	for i, u := range list {
 		result[i] = types.StringValue(u)
 	}
@@ -20,9 +18,9 @@ func goStringListToSortedTFList(list []string) []types.String {
 
 func blueprintPermissionsBlockToBlueprintPermissionsTFBlock(block cli.BlueprintPermissionsBlock) *BlueprintPermissionsTFBlock {
 	return &BlueprintPermissionsTFBlock{
-		Users:       goStringListToSortedTFList(block.Users),
-		Roles:       goStringListToSortedTFList(block.Roles),
-		Teams:       goStringListToSortedTFList(block.Teams),
+		Users:       goStringListToTFList(block.Users),
+		Roles:       goStringListToTFList(block.Roles),
+		Teams:       goStringListToTFList(block.Teams),
 		OwnedByTeam: types.BoolValue(*block.OwnedByTeam),
 	}
 }

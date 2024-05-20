@@ -77,22 +77,22 @@ See [here](https://docs.getport.io/build-your-software-catalog/customize-integra
 						"icon": schema.SingleNestedAttribute{
 							MarkdownDescription: "The entity's icon",
 							Required:            true,
-							Attributes:          getAssigneeProps("update $icon metadata"),
+							Attributes:          getAssigneeProps("update `$icon` metadata"),
 						},
 						"title": schema.SingleNestedAttribute{
 							MarkdownDescription: "A human-readable name for the entity",
 							Required:            true,
-							Attributes:          getAssigneeProps("update $title metadata"),
+							Attributes:          getAssigneeProps("update `$title` metadata"),
 						},
 						"team": schema.SingleNestedAttribute{
 							MarkdownDescription: "The team this entity belongs to",
 							Required:            true,
-							Attributes:          getAssigneeProps("update $team metadata"),
+							Attributes:          getAssigneeProps("update `$team` metadata"),
 						},
 						"identifier": schema.SingleNestedAttribute{
 							MarkdownDescription: "Unique Entity identifier, used for API calls, programmatic access and distinguishing between different entities",
 							Required:            true,
-							Attributes:          getAssigneeProps("update $identifier metadata"),
+							Attributes:          getAssigneeProps("update `$identifier` metadata"),
 						},
 					},
 				},
@@ -136,87 +136,99 @@ var BlueprintPermissionsResourceMarkdownDescription = `
 
 Docs about blueprint permissions can be found [here](https://docs.getport.io/build-your-software-catalog/set-catalog-rbac/examples/#setting-blueprint-permissions)
 
+` + "```hcl" + `
+resource "port_blueprint_permissions" "microservices_permissions" {
+	blueprint_identifier = "my_blueprint_identifier"
+		entities             = {
+			"register" = {
+				"roles" : [
+					"Member",
+				],
+				"users" : [],
+				"teams" : []
+			},
+		}
+	}
+}` + "\n```" + `
+
 ## Example Usage
 
 ### Allow access to all members:
 
 ` + "```hcl" + `
 resource "port_blueprint_permissions" "microservices_permissions" {
-  blueprint_identifier = "my_blueprint_identifier"
-  entities             = {
-    "register" = {
-      "roles" : [
-        "Member",
-      ],
-      "users" : [],
-      "teams" : []
-    },
-    "unregister" = {
-      "roles" : [
-        "Member",
-      ],
-      "users" : [],
-      "teams" : []
-    },
-    "update" = {
-      "roles" : [
-        "Member",
-      ],
-      "users" : ["test-admin-user@test.com"],
-      "teams" : []
-    },
-    "update_metadata_properties" = {
-      "icon" = {
-        "roles" : [
-          "Member",
-        ],
-        "users" : [],
-        "teams" : []
-      },
-      "identifier" = {
-        "roles" : [
-          "Member",
-        ],
-        "users" : [],
-        "teams" : ["Team Spiderman"]
-      },
-      "team" = {
-        "roles" : [
-          "Admin",
-        ],
-        "users" : [],
-        "teams" : []
-      },
-      "title" = {
-        "roles" : [
-          "Member",
-        ],
-        "users" : [],
-        "teams" : []
-      }
-    }
-  }
-}
-` + "\n```" + `
+	blueprint_identifier = "my_blueprint_identifier"
+		entities             = {
+			"register" = {
+				"roles" : [
+					"Member",
+				],
+				"users" : [],
+				"teams" : []
+			},
+			"unregister" = {
+				"roles" : [
+					"Member",
+				],
+				"users" : [],
+				"teams" : []
+			},
+			"update" = {
+				"roles" : [
+					"Member",
+				],
+				"users" : ["test-admin-user@test.com"],
+				"teams" : []
+			},
+			"update_metadata_properties" = {
+				"icon" = {
+					"roles" : [
+						"Member",
+					],
+					"users" : [],
+					"teams" : []
+				},
+				"identifier" = {
+					"roles" : [
+						"Member",
+					],
+					"users" : [],
+					"teams" : ["Team Spiderman"]
+				},
+				"team" = {
+					"roles" : [
+						"Admin",
+					],
+					"users" : [],
+					"teams" : []
+				},
+				"title" = {
+					"roles" : [
+						"Member",
+					],
+					"users" : [],
+					"teams" : []
+				}
+			}
+		}
+}` + "\n```" + `
 
-#### NOTE:
-
-You always need to explicity set ` + "`" + `register|unregister|update|update_metadata_properties` + "`" + `properties
 
 ### Allow update ` + "`" + `myStringProperty` + "``" + ` for admins and a specific user and team:
 
 ` + "```hcl" + `
 resource "port_blueprint_permissions" "microservices_permissions" {
-  blueprint_identifier = "my_blueprint_identifier"
-  entities = {
-	  # all properties from the previous example...
-	  "update_properties" = {
-		  "myStringProperty" = {
-				"roles": [
-				  "Admin",
-				],
-				"users": ["test-admin-user@test.com"],
-				"teams": ["Team Spiderman"],
+	blueprint_identifier = "my_blueprint_identifier"
+		entities = {
+			# all properties from the previous example...
+			"update_properties" = {
+				"myStringProperty" = {
+					"roles": [
+						"Admin",
+					],
+					"users": ["test-admin-user@test.com"],
+					"teams": ["Team Spiderman"],
+				}
 			}
 		}
 	}
@@ -226,23 +238,52 @@ resource "port_blueprint_permissions" "microservices_permissions" {
 
 ` + "```hcl" + `
 resource "port_blueprint_permissions" "microservices_permissions" {
-  blueprint_identifier = "my_blueprint_identifier"
-  entities = {
-	  # all properties from the first example...
-	  "update_relations" = {
-		  "myRelations" = {
-			  "roles": [
-				  "Admin",
-				],
-				"users": ["test-admin-user@test.com"],
-				"teams": ["Team Spiderman"],
+	blueprint_identifier = "my_blueprint_identifier"
+		entities = {
+			# all properties from the first example...
+			"update_relations" = {
+				"myRelations" = {
+					"roles": [
+						"Admin",
+					],
+					"users": ["test-admin-user@test.com"],
+					"teams": ["Team Spiderman"],
+				}
 			}
 		}
-	}
-}` + "\n```" + "\n```" + `
+}` + "\n```" + `
 
 ## Disclaimer
 
 - Blueprint permissions are created by default when blueprint is first created, this means that you should use this resource when you want to change the default permissions of a blueprint.
 - When deleting a blueprint permissions resource using terraform, the blueprint permissions will not be deleted from Port, as they are required for the action to work, instead, the blueprint permissions will be removed from the terraform state.
-`
+- You always need to explicity set ` + "`" + `register|unregister|update|update_metadata_properties` + "`" + ` properties.
+- All the permission lists (roles, users, teams) are managed by Port in a sorted manner, this means that if your ` + "`" + `.tf` + "`" + ` has for example roles defined out of order, your state will be invalid
+    E.g:
+
+    ` + "```hcl" + `
+	resource "port_blueprint_permissions" "microservices_permissions" {
+		blueprint_identifier = "my_blueprint_identifier"
+			entities             = {
+				# invalid:
+				"register" = {
+					"roles" : [
+						"Member",
+					"Admin",
+					],
+					"users" : [],
+					"teams" : []
+				},
+				# valid
+				"register" = {
+					"roles" : [
+						"Admin",
+					"Member",
+					],
+					"users" : [],
+					"teams" : []
+				},
+				...
+			},
+		},
+	}` + "\n```"

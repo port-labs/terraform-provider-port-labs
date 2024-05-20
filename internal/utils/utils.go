@@ -133,3 +133,12 @@ func InterfaceToStringArray(o interface{}) []string {
 
 	return res
 }
+
+func TFStringListToStringArray(list []types.String) []string {
+	res := make([]string, len(list))
+	for i, item := range list{
+		res[i] = item.ValueString()
+	}
+
+	return res
+}

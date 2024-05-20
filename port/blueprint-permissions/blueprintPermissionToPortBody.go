@@ -1,31 +1,15 @@
 package blueprint_permissions
 
 import (
-	"sort"
-
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
 )
 
-func terraformListToSortedGoArray(list []types.String) []string {
-	// We're syncing with the state from the api, where the different permissions are always sorted.
-	// This causes unnecessary changes when running `terraform pla`
-	// To mitigate this issue, we simply sort the lists here
-	var result = make([]string, len(list))
-	for i, u := range list {
-		result[i] = u.ValueString()
-	}
-
-	sort.Strings(result)
-	return result
-}
-
 func blueprintPermissionsTFBlockToBlueprintPermissionsBlock(block BlueprintPermissionsTFBlock) cli.BlueprintPermissionsBlock {
 	return cli.BlueprintPermissionsBlock{
-		Users:       terraformListToSortedGoArray(block.Users),
-		Roles:       terraformListToSortedGoArray(block.Roles),
-		Teams:       terraformListToSortedGoArray(block.Teams),
+		Users:       utils.TFStringListToStringArray(block.Users),
+		Roles:       utils.TFStringListToStringArray(block.Roles),
+		Teams:       utils.TFStringListToStringArray(block.Teams),
 		OwnedByTeam: block.OwnedByTeam.ValueBoolPointer(),
 	}
 }
@@ -39,12 +23,7 @@ func blueprintPermissionsToPortBody(state *BlueprintPermissionsModel) (*cli.Blue
 	if state.Entities.UpdateRelations != nil {
 		updateRelations = make(cli.BlueprintRolesOrPropertiesPermissionsBlock, len(*state.Entities.UpdateRelations))
 		for updateRelationKey, updateRelationValue := range *state.Entities.UpdateRelations {
-			updateRelations[updateRelationKey] = cli.BlueprintPermissionsBlock{
-				Roles:       terraformListToSortedGoArray(updateRelationValue.Roles),
-				Teams:       terraformListToSortedGoArray(updateRelationValue.Teams),
-				Users:       terraformListToSortedGoArray(updateRelationValue.Users),
-				OwnedByTeam: updateRelationValue.OwnedByTeam.ValueBoolPointer(),
-			}
+			updateRelations[updateRelationKey] = blueprintPermissionsTFBlockToBlueprintPermissionsBlock(updateRelationValue)
 		}
 	}
 

@@ -8,16 +8,6 @@ import (
 	"strings"
 )
 
-//type EntityModel struct {
-//	Identifier types.String `tfsdk:"identifier"`
-//	//Blueprint  types.String      `tfsdk:"blueprint"`
-//	Title      types.String      `tfsdk:"title"`
-//	Icon       types.String      `tfsdk:"icon"`
-//	Teams      []types.String    `tfsdk:"teams"`
-//	Properties map[string]string `tfsdk:"properties"`
-//	Relations  map[string]string `tfsdk:"relations"`
-//}
-
 type ArrayPropsModel struct {
 	StringItems  types.Map `tfsdk:"string_items"`
 	NumberItems  types.Map `tfsdk:"number_items"`

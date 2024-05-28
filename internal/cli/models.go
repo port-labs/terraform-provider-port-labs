@@ -384,6 +384,14 @@ type (
 		FailureCount    int    `json:"failureCount,omitempty"`
 		SuccessCount    int    `json:"successCount,omitempty"`
 	}
+
+	SearchRequestQuery struct {
+		Query                       *map[string]any `json:"query"`
+		ExcludeCalculatedProperties *bool           `json:"exclude_calculated_properties,omitempty"`
+		Include                     []string        `json:"include,omitempty"`
+		Exclude                     []string        `json:"exclude,omitempty"`
+		AttachTitleToRelation       *bool           `json:"attach_title_to_relation,omitempty"`
+	}
 )
 
 type PortBody struct {
@@ -399,6 +407,22 @@ type PortBody struct {
 	Page                 Page              `json:"page"`
 	MigrationId          string            `json:"migrationId"`
 	Migration            Migration         `json:"migration"`
+}
+
+type SearchEntityResult struct {
+	Meta
+	Identifier string         `json:"identifier,omitempty"`
+	Title      string         `json:"title,omitempty"`
+	Icon       *string        `json:"icon,omitempty"`
+	Team       []string       `json:"team,omitempty"`
+	Properties map[string]any `json:"properties,omitempty"`
+	Relations  map[string]any `json:"relations,omitempty"`
+}
+
+type SearchResult struct {
+	OK                 bool     `json:"ok"`
+	MatchingBlueprints []string `json:"matchingBlueprints"`
+	Entities           []Entity `json:"entities"`
 }
 
 type PortPagePermissionsBody struct {

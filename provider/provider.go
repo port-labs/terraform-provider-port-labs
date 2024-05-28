@@ -17,6 +17,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/page"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/search"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/team"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/webhook"
 	"github.com/port-labs/terraform-provider-port-labs/v2/version"
@@ -123,6 +124,7 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 	}
 
 	resp.ResourceData = c
+	resp.DataSourceData = c
 
 }
 
@@ -143,5 +145,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 }
 
 func (p *PortLabsProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		search.NewSearchDataSource,
+	}
 }

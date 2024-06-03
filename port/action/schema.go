@@ -129,7 +129,7 @@ func ActionSchema() map[string]schema.Attribute {
 					ElementType:         types.StringType,
 				},
 				"condition": schema.StringAttribute{
-					Description: "The condition of the availability of the action on a specific entity",
+					MarkdownDescription: "The `condition` field allows you to define rules using Port's [search & query syntax](https://docs.getport.io/search-and-query/#rules) to determine which entities the action will be available for.",
 					Optional:    true,
 				},
 			},

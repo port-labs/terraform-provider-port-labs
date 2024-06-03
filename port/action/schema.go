@@ -130,7 +130,7 @@ func ActionSchema() map[string]schema.Attribute {
 				},
 				"condition": schema.StringAttribute{
 					MarkdownDescription: "The `condition` field allows you to define rules using Port's [search & query syntax](https://docs.getport.io/search-and-query/#rules) to determine which entities the action will be available for.",
-					Optional:    true,
+					Optional:            true,
 				},
 			},
 			Validators: []validator.Object{
@@ -908,17 +908,6 @@ resource "port_action" "create_microservice" {
 	self_service_trigger = {
 		operation = "CREATE"
 		blueprint_identifier = port_blueprint.microservice.identifier
-		condition = jsonencode({
-			type = "SEARCH"
-			combinator = "and"
-			rules = [
-				{
-					property = "$title"
-					operator = "!="
-					value = "Test"
-				}
-			]
-		})
 		user_properties = {
 			string_props = {
 				myStringIdentifier = {
@@ -983,4 +972,45 @@ resource "port_action" "create_microservice" {
 		  runId: "{{"{{.run.id}}"}}"
 		})
 	}
-}` + "\n```"
+}
+` + "\n```" + `
+
+## Example Usage With Condition
+
+` + "```hcl" + `
+resource "port_action" "create_microservice" {
+	title = "Create Microservice"
+	identifier = "create-microservice"
+	icon = "Terraform"
+	self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+		condition = jsonencode({
+			type = "SEARCH"
+			combinator = "and"
+			rules = [
+				{
+					property = "$title"
+					operator = "!="
+					value = "Test"
+				}
+			]
+		})
+		user_properties = {
+			string_props = {
+				myStringIdentifier = {
+					title = "My String Identifier"
+					required = true
+				}
+			}
+		}
+	}
+	kafka_method = {
+		payload = jsonencode({
+		  runId: "{{"{{.run.id}}"}}"
+		})
+	}
+	
+` + "```" + `
+
+`

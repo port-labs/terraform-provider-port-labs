@@ -6,34 +6,34 @@ description: |-
   Action resource
   Docs for the Action resource can be found here https://docs.getport.io/create-self-service-experiences/.
   Example Usage
-  hcl
-  resource "port_action" "create_microservice" {
+  ```hcl
+  resource "portaction" "createmicroservice" {
       title = "Create Microservice"
       identifier = "create-microservice"
       icon = "Terraform"
-      self_service_trigger = {
+      selfservicetrigger = {
           operation = "CREATE"
-          blueprint_identifier = port_blueprint.microservice.identifier
-          user_properties = {
-              string_props = {
+          blueprintidentifier = portblueprint.microservice.identifier
+          userproperties = {
+              stringprops = {
                   myStringIdentifier = {
                       title = "My String Identifier"
                       required = true
                       format = "entity"
-                      blueprint = port_blueprint.parent.identifier
+                      blueprint = portblueprint.parent.identifier
                       dataset = {
                           combinator = "and"
                           rules = [{
                               property = "$title"
                               operator = "contains"
                               value = {
-                                  jq_query = "\"specificValue\""
+                                  jqquery = "\"specificValue\""
                               }
                           }]
                       }
                   }
               }
-              number_props = {
+              numberprops = {
                   myNumberIdentifier = {
                       title = "My Number Identifier"
                       required = true
@@ -41,25 +41,25 @@ description: |-
                       minimum = 0
                   }
               }
-              boolean_props = {
+              booleanprops = {
                   myBooleanIdentifier = {
                       title = "My Boolean Identifier"
                       required = true
                   }
               }
-              object_props = {
+              objectprops = {
                   myObjectIdentifier = {
                       title = "My Object Identifier"
                       required = true
                   }
               }
-              array_props = {
+              arrayprops = {
                   myArrayIdentifier = {
                       title = "My Array Identifier"
                       required = true
-                      string_items = {
+                      stringitems = {
                           format = "entity"
-                          blueprint = port_blueprint.parent.identifier
+                          blueprint = portblueprint.parent.identifier
                           dataset = jsonencode({
                               combinator = "and"
                               rules = [{
@@ -79,6 +79,42 @@ description: |-
           })
       }
   }
+  ```
+  Example Usage With Condition
+  ```hcl
+  resource "portaction" "createmicroservice" {
+      title = "Create Microservice"
+      identifier = "create-microservice"
+      icon = "Terraform"
+      selfservicetrigger = {
+          operation = "CREATE"
+          blueprintidentifier = portblueprint.microservice.identifier
+          condition = jsonencode({
+              type = "SEARCH"
+              combinator = "and"
+              rules = [
+                  {
+                      property = "$title"
+                      operator = "!="
+                      value = "Test"
+                  }
+              ]
+          })
+          userproperties = {
+              stringprops = {
+                  myStringIdentifier = {
+                      title = "My String Identifier"
+                      required = true
+                  }
+              }
+          }
+      }
+      kafka_method = {
+          payload = jsonencode({
+            runId: "{{.run.id}}"
+          })
+      }
+  ```
 ---
 
 # port_action (Resource)
@@ -162,6 +198,45 @@ resource "port_action" "create_microservice" {
 		})
 	}
 }
+
+```
+
+## Example Usage With Condition
+
+```hcl
+resource "port_action" "create_microservice" {
+	title = "Create Microservice"
+	identifier = "create-microservice"
+	icon = "Terraform"
+	self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+		condition = jsonencode({
+			type = "SEARCH"
+			combinator = "and"
+			rules = [
+				{
+					property = "$title"
+					operator = "!="
+					value = "Test"
+				}
+			]
+		})
+		user_properties = {
+			string_props = {
+				myStringIdentifier = {
+					title = "My String Identifier"
+					required = true
+				}
+			}
+		}
+	}
+	kafka_method = {
+		payload = jsonencode({
+		  runId: "{{.run.id}}"
+		})
+	}
+	
 ```
 
 
@@ -273,6 +348,7 @@ Required:
 Optional:
 
 - `blueprint_identifier` (String) The ID of the blueprint
+- `condition` (String) The `condition` field allows you to define rules using Port's [search & query syntax](https://docs.getport.io/search-and-query/#rules) to determine which entities the action will be available for.
 - `order_properties` (List of String) Order properties
 - `required_jq_query` (String) The required jq query of the property
 - `user_properties` (Attributes) User properties (see [below for nested schema](#nestedatt--self_service_trigger--user_properties))

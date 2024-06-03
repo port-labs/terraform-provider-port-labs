@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -295,6 +296,14 @@ func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionMod
 			RequiredJqQuery:     requiredJqQuery,
 			OrderProperties:     orderProperties,
 		}
+	}
+
+	if a.Trigger.Condition != nil {
+		triggerCondition, err := json.Marshal(a.Trigger.Condition)
+		if err != nil {
+			return err
+		}
+		state.SelfServiceTrigger.Condition = types.StringValue(string(triggerCondition))
 	}
 
 	return nil

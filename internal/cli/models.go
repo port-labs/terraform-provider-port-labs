@@ -191,9 +191,10 @@ type (
 	}
 
 	TriggerCondition struct {
-		Type        string   `json:"type"`
-		Expressions []string `json:"expressions"`
+		Expressions []string `json:"expressions,omitempty"`
 		Combinator  *string  `json:"combinator,omitempty"`
+		Rules       []any    `json:"rules,omitempty"`
+		Type        string   `json:"type"`
 	}
 
 	Trigger struct {

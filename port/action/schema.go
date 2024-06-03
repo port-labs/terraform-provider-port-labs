@@ -3,7 +3,10 @@ package action
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -19,7 +22,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
-	"regexp"
 )
 
 func MetadataProperties() map[string]schema.Attribute {
@@ -125,6 +127,10 @@ func ActionSchema() map[string]schema.Attribute {
 					MarkdownDescription: "Order properties",
 					Optional:            true,
 					ElementType:         types.StringType,
+				},
+				"condition": schema.StringAttribute{
+					MarkdownDescription: "The `condition` field allows you to define rules using Port's [search & query syntax](https://docs.getport.io/search-and-query/#rules) to determine which entities the action will be available for.",
+					Optional:            true,
 				},
 			},
 			Validators: []validator.Object{
@@ -966,4 +972,45 @@ resource "port_action" "create_microservice" {
 		  runId: "{{"{{.run.id}}"}}"
 		})
 	}
-}` + "\n```"
+}
+` + "\n```" + `
+
+## Example Usage With Condition
+
+` + "```hcl" + `
+resource "port_action" "create_microservice" {
+	title = "Create Microservice"
+	identifier = "create-microservice"
+	icon = "Terraform"
+	self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+		condition = jsonencode({
+			type = "SEARCH"
+			combinator = "and"
+			rules = [
+				{
+					property = "$title"
+					operator = "!="
+					value = "Test"
+				}
+			]
+		})
+		user_properties = {
+			string_props = {
+				myStringIdentifier = {
+					title = "My String Identifier"
+					required = true
+				}
+			}
+		}
+	}
+	kafka_method = {
+		payload = jsonencode({
+		  runId: "{{"{{.run.id}}"}}"
+		})
+	}
+	
+` + "```" + `
+
+`

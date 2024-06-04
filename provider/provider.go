@@ -14,6 +14,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/entity"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/integration"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/page"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
@@ -132,6 +133,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		blueprint_permissions.NewBlueprintPermissionsResource,
 		aggregation_properties.NewAggregationPropertiesResource,
 		entity.NewEntityResource,
+		integration.NewIntegrationResource,
 		action.NewActionResource,
 		action_permissions.NewActionPermissionsResource,
 		webhook.NewWebhookResource,

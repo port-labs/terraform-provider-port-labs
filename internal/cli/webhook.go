@@ -21,7 +21,7 @@ func (c *PortClient) ReadWebhook(ctx context.Context, webhookID string) (*Webhoo
 	if !pb.OK {
 		return nil, resp.StatusCode(), fmt.Errorf("failed to read webhook, got: %s", resp.Body())
 	}
-	return &pb.Integration, resp.StatusCode(), nil
+	return &pb.Webhook, resp.StatusCode(), nil
 }
 
 func (c *PortClient) CreateWebhook(ctx context.Context, webhook *Webhook) (*Webhook, error) {
@@ -41,7 +41,8 @@ func (c *PortClient) CreateWebhook(ctx context.Context, webhook *Webhook) (*Webh
 	if !pb.OK {
 		return nil, fmt.Errorf("failed to create webhook, got: %s", resp.Body())
 	}
-	return &pb.Integration, nil
+
+	return &pb.Webhook, nil
 }
 
 func (c *PortClient) UpdateWebhook(ctx context.Context, webhookID string, webhook *Webhook) (*Webhook, error) {
@@ -62,7 +63,8 @@ func (c *PortClient) UpdateWebhook(ctx context.Context, webhookID string, webhoo
 	if !pb.OK {
 		return nil, fmt.Errorf("failed to create webhook, got: %s", resp.Body())
 	}
-	return &pb.Integration, nil
+
+	return &pb.Webhook, nil
 }
 
 func (c *PortClient) DeleteWebhook(ctx context.Context, webhookID string) error {

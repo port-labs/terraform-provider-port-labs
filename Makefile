@@ -30,9 +30,6 @@ release:
 clean:
 	rm -rf examples/.terraform examples/.terraform.lock.hcl examples/terraform*
 
-run-example:
-	cd examples && terraform init && terraform apply
-
 install: build
 	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
@@ -47,3 +44,17 @@ acctest:
 
 gen-docs:
 	tfplugindocs
+
+lint: build
+	# https://golangci-lint.run/welcome/install/#local-installation
+	golangci-lint run
+
+dev-run-integration: build
+	PORT_BETA_FEATURES_ENABLED=true go run . --debug
+
+dev-setup: setup
+	wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.59.0
+
+dev-debug: build
+	PORT_BETA_FEATURES_ENABLED=true dlv exec --accept-multiclient --continue --headless ./terraform-provider-port-labs -- --debug
+

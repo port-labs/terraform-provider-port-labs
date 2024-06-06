@@ -1734,3 +1734,81 @@ func TestAccPortActionNoUserPropertiesConditional(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortActionConditionalTrigger(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			condition = jsonencode({
+				type = "SEARCH"
+				combinator = "and"
+				rules = [
+					{
+						property = "$identifier"
+						operator = "="
+						value = "Test"
+					}
+				]
+			})
+		}
+		kafka_method = {}
+	}`, actionIdentifier)
+
+	var testAccActionConfigUpdate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			condition = jsonencode({
+				type = "SEARCH"
+				combinator = "and"
+				rules = [
+					{
+						property = "$title"
+						operator = "="
+						value = "Test"
+					}
+				]
+			})
+		}
+		kafka_method = {}
+	}`, actionIdentifier)
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.blueprint_identifier", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.condition", `{"combinator":"and","rules":[{"operator":"=","property":"$identifier","value":"Test"}],"type":"SEARCH"}`),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.blueprint_identifier", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.condition", `{"combinator":"and","rules":[{"operator":"=","property":"$title","value":"Test"}],"type":"SEARCH"}`),
+				),
+			},
+		},
+	})
+}

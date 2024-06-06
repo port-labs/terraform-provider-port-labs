@@ -191,9 +191,10 @@ type (
 	}
 
 	TriggerCondition struct {
-		Type        string   `json:"type"`
-		Expressions []string `json:"expressions"`
+		Expressions []string `json:"expressions,omitempty"`
 		Combinator  *string  `json:"combinator,omitempty"`
+		Rules       []any    `json:"rules,omitempty"`
+		Type        string   `json:"type"`
 	}
 
 	Trigger struct {
@@ -401,7 +402,7 @@ type PortBody struct {
 	BlueprintPermissions Blueprint         `json:"blueprint_permissions"`
 	Action               Action            `json:"action"`
 	ActionPermissions    ActionPermissions `json:"permissions"`
-	Integration          Webhook           `json:"integration"`
+	Webhook              Webhook           `json:"integration"`
 	Scorecard            Scorecard         `json:"Scorecard"`
 	Team                 Team              `json:"team"`
 	Page                 Page              `json:"page"`
@@ -462,4 +463,13 @@ type PortProviderModel struct {
 
 type PortBodyDelete struct {
 	Ok bool `json:"ok"`
+}
+
+type Integration struct {
+	Title                string                `json:"title"`
+	InstallationId       string                `json:"installationId,omitempty"`
+	InstallationAppType  *string               `json:"installationAppType,omitempty"`
+	Version              string                `json:"version,omitempty"`
+	Config               *map[string]any       `json:"config,omitempty"`
+	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
 }

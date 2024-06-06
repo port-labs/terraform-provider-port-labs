@@ -25,12 +25,15 @@ func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, 
 	return &pb.Blueprint, resp.StatusCode(), nil
 }
 
-func (c *PortClient) CreateBlueprint(ctx context.Context, b *Blueprint) (*Blueprint, error) {
+func (c *PortClient) CreateBlueprint(ctx context.Context, b *Blueprint, createCatalogPage *bool) (*Blueprint, error) {
 	url := "v1/blueprints"
-	resp, err := c.Client.R().
+	request := c.Client.R().
 		SetBody(b).
-		SetContext(ctx).
-		Post(url)
+		SetContext(ctx)
+	if createCatalogPage != nil {
+		request.SetQueryParam("create_catalog_page", fmt.Sprintf("%t", *createCatalogPage))
+	}
+	resp, err := request.Post(url)
 	if err != nil {
 		return nil, err
 	}

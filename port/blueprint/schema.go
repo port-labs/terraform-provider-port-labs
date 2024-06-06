@@ -454,6 +454,12 @@ func BlueprintSchema() map[string]schema.Attribute {
 			Computed:            true,
 			Default:             booldefault.StaticBool(false),
 		},
+		"create_catalog_page": schema.BoolAttribute{
+			MarkdownDescription: "This flag is only relevant for blueprint creation, by default if not set, a catalog page will be created for the blueprint",
+			Optional:            true,
+			Computed:            true,
+			Default:             booldefault.StaticBool(true),
+		},
 	}
 }
 

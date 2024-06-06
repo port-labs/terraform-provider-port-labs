@@ -278,6 +278,7 @@ resource "port_blueprint" "microservice" {
 ### Optional
 
 - `calculation_properties` (Attributes Map) The calculation properties of the blueprint (see [below for nested schema](#nestedatt--calculation_properties))
+- `create_catalog_page` (Boolean) This flag is only relevant for blueprint creation, by default if not set, a catalog page will be created for the blueprint
 - `description` (String) The description of the blueprint
 - `force_delete_entities` (Boolean) If set to true, the blueprint will be deleted with all its entities, even if they are not managed by Terraform
 - `icon` (String) The icon of the blueprint

@@ -769,7 +769,7 @@ func TestAccPortDestroyDeleteAllEntities(t *testing.T) {
 		Relations:             map[string]cli.Relation{},
 	}
 
-	_, err = portClient.CreateBlueprint(ctx, blueprint)
+	_, err = portClient.CreateBlueprint(ctx, blueprint, nil)
 
 	if err != nil {
 		t.Fatalf("Failed to create blueprint: %s", err.Error())

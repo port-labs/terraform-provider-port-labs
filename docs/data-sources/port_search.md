@@ -19,13 +19,23 @@ description: |-
   ```
   Search for entity with specific identifier in a specific blueprint to create another resource based on the values of the entity:
   ```hcl
-  data "portsearch" "allservice" {
+  data "portsearch" "adsservice" {
     query = jsonencode({
       "combinator" : "and", "rules" : [
         { "operator" : "=", "property" : "$blueprint", "value" : "Service" },
         { "operator" : "=", "property" : "$identifier", "value" : "Ads" },
       ]
     })
+  }
+  ```
+  Another use case example:
+  ```hcl
+  locals {
+      hasservices = length(data.portsearch.allservices.Entities) > 0
+  }
+  myothermodule "identifier" {
+     count = locals.hasservices
+     ...
   }
   ```
 ---
@@ -60,13 +70,27 @@ data "port_search" "all_service" {
 
 ```hcl
 
-data "port_search" "all_service" {
+data "port_search" "ads_service" {
   query = jsonencode({
     "combinator" : "and", "rules" : [
       { "operator" : "=", "property" : "$blueprint", "value" : "Service" },
       { "operator" : "=", "property" : "$identifier", "value" : "Ads" },
     ]
   })
+}
+
+
+```
+
+Another use case example: 
+
+```hcl
+locals {
+    has_services = length(data.port_search.all_services.Entities) > 0
+}
+my_other_module "identifier" {
+   count = locals.has_services
+   ...
 }
 
 

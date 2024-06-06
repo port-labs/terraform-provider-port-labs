@@ -3,6 +3,7 @@ package search
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -145,7 +146,7 @@ func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cl
 	}
 }
 
-func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli.Entity) {
+func refreshRelationsEntityState(state *EntityModel, e *cli.Entity) {
 	relations := &RelationModel{
 		SingleRelation: make(map[string]*string),
 		ManyRelations:  make(map[string][]string),
@@ -153,14 +154,21 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 
 	for identifier, r := range e.Relations {
 		switch v := r.(type) {
-		case []string:
+		case []interface{}:
 			if len(v) != 0 {
-				relations.ManyRelations[identifier] = v
+				switch v[0].(type) {
+				case string:
+					relations.ManyRelations[identifier] = make([]string, len(v))
+					for i, s := range v {
+						relations.ManyRelations[identifier][i] = s.(string)
+					}
+				}
 			}
 
-		case string:
-			if len(v) != 0 {
-				relations.SingleRelation[identifier] = &v
+		case interface{}:
+			if v != nil {
+				value := fmt.Sprintf("%v", v)
+				relations.SingleRelation[identifier] = &value
 			}
 		}
 	}
@@ -190,7 +198,7 @@ func refreshEntityState(ctx context.Context, e *cli.Entity, b *cli.Blueprint) *E
 	}
 
 	if len(e.Relations) != 0 {
-		refreshRelationsEntityState(ctx, state, e)
+		refreshRelationsEntityState(state, e)
 	}
 
 	return state

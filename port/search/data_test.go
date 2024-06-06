@@ -356,9 +356,9 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 	 query = jsonencode({
 	   "combinator" : "and", "rules" : [
 			 { "operator" : "=", "property" : "$blueprint", "value" : "%s" },
-			 { "operator" : "=", "property" : "$identifier", "value" : port_entity.microservice2.identifier }	
+			 { "operator" : "=", "property" : "$identifier", "value" : port_entity.microservice2.identifier }
 	   ]
-	 })	
+	 })
 	}`, identifier2)
 
 	resource.Test(t, resource.TestCase{
@@ -459,6 +459,7 @@ func TestAccPortEntityWithManyRelation(t *testing.T) {
 	}
 
 	resource "port_entity" "microservice3" {
+		depends_on = [port_entity.microservice2]
 		title = "TF Provider Test Entity2"
 		identifier = "tf-entity-3"
 		blueprint = port_blueprint.microservice2.identifier
@@ -480,24 +481,24 @@ func TestAccPortEntityWithManyRelation(t *testing.T) {
 	 })
 	}`, identifier1)
 
-	var testSearchActionQuery2 = fmt.Sprintf(`	
+	var testSearchActionQuery2 = fmt.Sprintf(`
 	data "port_search" "microservice2" {
 	 query = jsonencode({
-	   "combinator" : "and", "rules" : [	
+	   "combinator" : "and", "rules" : [
 			 { "operator" : "=", "property" : "$blueprint", "value" : "%s" },
 			 { "operator" : "=", "property" : "$identifier", "value" : port_entity.microservice2.identifier }
-	   ]	
+	   ]
 	 })
 	}`, identifier2)
 
-	var testSearchActionQuery3 = fmt.Sprintf(`	
+	var testSearchActionQuery3 = fmt.Sprintf(`
 	data "port_search" "microservice3" {
-	 query = jsonencode({	
-	   "combinator" : "and", "rules" : [	
+	 query = jsonencode({
+	   "combinator" : "and", "rules" : [
 			 { "operator" : "=", "property" : "$blueprint", "value" : "%s" },
 			 { "operator" : "=", "property" : "$identifier", "value" : port_entity.microservice3.identifier }
-	   ]	
-	 })	
+	   ]
+	 })
 	}`, identifier2)
 
 	resource.Test(t, resource.TestCase{
@@ -599,10 +600,10 @@ func TestAccPortEntityWithEmptyRelation(t *testing.T) {
 	var testSearchActionQuery = fmt.Sprintf(`
 	data "port_search" "microservice" {
 	 query = jsonencode({
-	   "combinator" : "and", "rules" : [	
+	   "combinator" : "and", "rules" : [
 			 { "operator" : "=", "property" : "$blueprint", "value" : "%s" },
-			 { "operator" : "=", "property" : "$identifier", "value" : port_entity.microservice.identifier }	
-	   ]	
+			 { "operator" : "=", "property" : "$identifier", "value" : port_entity.microservice.identifier }
+	   ]
 	 })
 	}`, identifier)
 
@@ -663,10 +664,10 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 	var testSearchActionQuery = fmt.Sprintf(`
 	data "port_search" "microservice" {
 	 query = jsonencode({
-	   "combinator" : "and", "rules" : [	
+	   "combinator" : "and", "rules" : [
 			 { "operator" : "=", "property" : "$blueprint", "value" : "%s" },
-			 { "operator" : "=", "property" : "$identifier", "value" : port_entity.microservice.identifier }	
-	   ]	
+			 { "operator" : "=", "property" : "$identifier", "value" : port_entity.microservice.identifier }
+	   ]
 	 })
 	}`, identifier)
 

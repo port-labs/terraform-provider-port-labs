@@ -19,14 +19,27 @@ type (
 		ExpiresIn   int64  `json:"expiresIn"`
 		TokenType   string `json:"tokenType"`
 	}
+
+	ScorecardRulesModel struct {
+		Identifier string `tfsdk:"identifier"`
+		Status     string `tfsdk:"status"`
+		Level      string `tfsdk:"level"`
+	}
+
+	ScorecardModel struct {
+		Rules []ScorecardRulesModel `tfsdk:"rules"`
+		Level string                `tfsdk:"level"`
+	}
+
 	Entity struct {
 		Meta
-		Identifier string         `json:"identifier,omitempty"`
-		Title      string         `json:"title"`
-		Blueprint  string         `json:"blueprint"`
-		Team       []string       `json:"team,omitempty"`
-		Properties map[string]any `json:"properties"`
-		Relations  map[string]any `json:"relations"`
+		Identifier string                    `json:"identifier,omitempty"`
+		Title      string                    `json:"title"`
+		Blueprint  string                    `json:"blueprint"`
+		Team       []string                  `json:"team,omitempty"`
+		Properties map[string]any            `json:"properties"`
+		Relations  map[string]any            `json:"relations"`
+		Scorecards map[string]ScorecardModel `json:"scorecards,omitempty"`
 		// TODO: add the rest of the fields.
 	}
 

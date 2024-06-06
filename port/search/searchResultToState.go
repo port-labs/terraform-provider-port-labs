@@ -176,6 +176,28 @@ func refreshRelationsEntityState(state *EntityModel, e *cli.Entity) {
 	state.Relations = relations
 }
 
+func refreshScorecardsEntityState(state *EntityModel, e *cli.Entity) {
+	if len(e.Scorecards) != 0 {
+		state.Scorecards = &map[string]ScorecardModel{}
+		*state.Scorecards = make(map[string]ScorecardModel)
+
+		for k, v := range e.Scorecards {
+			rules := make([]ScorecardRulesModel, len(v.Rules))
+			for i, r := range v.Rules {
+				rules[i] = ScorecardRulesModel{
+					Identifier: types.StringValue(r.Identifier),
+					Status:     types.StringValue(r.Status),
+					Level:      types.StringValue(r.Level),
+				}
+			}
+			(*state.Scorecards)[k] = ScorecardModel{
+				Rules: rules,
+				Level: types.StringValue(v.Level),
+			}
+		}
+	}
+}
+
 func refreshEntityState(ctx context.Context, e *cli.Entity, b *cli.Blueprint) *EntityModel {
 	state := &EntityModel{}
 	state.Identifier = types.StringValue(e.Identifier)
@@ -199,6 +221,10 @@ func refreshEntityState(ctx context.Context, e *cli.Entity, b *cli.Blueprint) *E
 
 	if len(e.Relations) != 0 {
 		refreshRelationsEntityState(state, e)
+	}
+
+	if len(e.Scorecards) != 0 {
+		refreshScorecardsEntityState(state, e)
 	}
 
 	return state

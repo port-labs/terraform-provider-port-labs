@@ -2,6 +2,7 @@ package search
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -93,6 +94,25 @@ func EntitySchema() map[string]schema.Attribute {
 							Optional:    true,
 						},
 					},
+				},
+			},
+		},
+		"scorecards": schema.MapAttribute{
+			MarkdownDescription: "The scorecards of the entity",
+			Computed:            true,
+			Optional:            true,
+			ElementType: types.ObjectType{
+				AttrTypes: map[string]attr.Type{
+					"rules": types.ListType{
+						ElemType: types.ObjectType{
+							AttrTypes: map[string]attr.Type{
+								"identifier": types.StringType,
+								"status":     types.StringType,
+								"level":      types.StringType,
+							},
+						},
+					},
+					"level": types.StringType,
 				},
 			},
 		},
@@ -223,15 +243,36 @@ data "port_search" "ads_service" {
 
 ` + "\n```" + `
 
-Another use case example: 
+### Scorecards automation example
+In this example we are creating a jira task for each service that its Ownership Scorecard hasn't reached Gold level : 
 
 ` + "```hcl" + `
-locals {
-    has_services = length(data.port_search.all_services.Entities) > 0
+
+data "port_search" "all_services" {
+  query = jsonencode({
+    "combinator" : "and", "rules" : [
+      { "operator" : "=", "property" : "$blueprint", "value" : "microservice" },
+    ]
+  })
 }
-my_other_module "identifier" {
-   count = locals.has_services
-   ...
+
+locals {
+  // Count the number of services that are not owned by a team with a Gold level
+  microservice_ownership_without_gold_level = length([
+    for entity in data.port_search.all_services.entities : entity.scorecards["ownership"].level
+    if entity.scorecards["ownership"].level != "Gold"
+  ])
+}
+
+// create jira issue per service that is not owned by a team with a Gold level
+resource "jira_issue" "microservice_ownership_without_gold_level" {
+  count      = local.microservice_ownership_without_gold_level
+  issue_type = "Task"
+
+  project_key = "PORT"
+
+  summary     = "Service ${data.port_search.backend_services.entities[count.index].title} hasn't reached Gold level in Ownership Scorecard"
+  description = "[Service](https://app.getport.io/${port_blueprint.microservice.identifier}Entity/${data.port_search.backend_services.entities[count.index].identifier}) is not owned by a team with a Gold level, please assign a team with a Gold level to the service"
 }
 
 ` + "\n```" + ``

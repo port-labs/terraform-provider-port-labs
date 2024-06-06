@@ -28,14 +28,30 @@ description: |-
     })
   }
   ```
-  Another use case example:
+  Scorecards automation example
+  In this example we are creating a jira task for each service that its Ownership Scorecard hasn't reached Gold level :
   ```hcl
-  locals {
-      hasservices = length(data.portsearch.allservices.Entities) > 0
+  data "portsearch" "allservices" {
+    query = jsonencode({
+      "combinator" : "and", "rules" : [
+        { "operator" : "=", "property" : "$blueprint", "value" : "microservice" },
+      ]
+    })
   }
-  myothermodule "identifier" {
-     count = locals.hasservices
-     ...
+  locals {
+    // Count the number of services that are not owned by a team with a Gold level
+    microserviceownershipwithoutgoldlevel = length([
+      for entity in data.portsearch.allservices.entities : entity.scorecards["ownership"].level
+      if entity.scorecards["ownership"].level != "Gold"
+    ])
+  }
+  // create jira issue per service that is not owned by a team with a Gold level
+  resource "jiraissue" "microserviceownershipwithoutgoldlevel" {
+    count      = local.microserviceownershipwithoutgoldlevel
+    issuetype = "Task"
+  project_key = "PORT"
+  summary     = "Service ${data.portsearch.backendservices.entities[count.index].title} hasn't reached Gold level in Ownership Scorecard"
+    description = "Service https://app.getport.io/${port_blueprint.microservice.identifier}Entity/${data.port_search.backend_services.entities[count.index].identifier} is not owned by a team with a Gold level, please assign a team with a Gold level to the service"
   }
   ```
 ---
@@ -82,15 +98,36 @@ data "port_search" "ads_service" {
 
 ```
 
-Another use case example: 
+### Scorecards automation example
+In this example we are creating a jira task for each service that its Ownership Scorecard hasn't reached Gold level : 
 
 ```hcl
-locals {
-    has_services = length(data.port_search.all_services.Entities) > 0
+
+data "port_search" "all_services" {
+  query = jsonencode({
+    "combinator" : "and", "rules" : [
+      { "operator" : "=", "property" : "$blueprint", "value" : "microservice" },
+    ]
+  })
 }
-my_other_module "identifier" {
-   count = locals.has_services
-   ...
+
+locals {
+  // Count the number of services that are not owned by a team with a Gold level
+  microservice_ownership_without_gold_level = length([
+    for entity in data.port_search.all_services.entities : entity.scorecards["ownership"].level
+    if entity.scorecards["ownership"].level != "Gold"
+  ])
+}
+
+// create jira issue per service that is not owned by a team with a Gold level
+resource "jira_issue" "microservice_ownership_without_gold_level" {
+  count      = local.microservice_ownership_without_gold_level
+  issue_type = "Task"
+
+  project_key = "PORT"
+
+  summary     = "Service ${data.port_search.backend_services.entities[count.index].title} hasn't reached Gold level in Ownership Scorecard"
+  description = "[Service](https://app.getport.io/${port_blueprint.microservice.identifier}Entity/${data.port_search.backend_services.entities[count.index].identifier}) is not owned by a team with a Gold level, please assign a team with a Gold level to the service"
 }
 
 
@@ -127,6 +164,7 @@ Optional:
 - `properties` (Attributes) The properties of the entity (see [below for nested schema](#nestedatt--entities--properties))
 - `relations` (Attributes) The relations of the entity (see [below for nested schema](#nestedatt--entities--relations))
 - `run_id` (String) The runID of the action run that created the entity
+- `scorecards` (Map of Object) The scorecards of the entity (see [below for nested schema](#nestedatt--entities--scorecards))
 - `teams` (List of String) The teams the entity belongs to
 - `title` (String) The title of the entity
 
@@ -169,3 +207,21 @@ Optional:
 
 - `many_relations` (Map of List of String) The many relation of the entity
 - `single_relations` (Map of String) The single relation of the entity
+
+
+<a id="nestedatt--entities--scorecards"></a>
+### Nested Schema for `entities.scorecards`
+
+Read-Only:
+
+- `level` (String)
+- `rules` (List of Object) (see [below for nested schema](#nestedobjatt--entities--scorecards--rules))
+
+<a id="nestedobjatt--entities--scorecards--rules"></a>
+### Nested Schema for `entities.scorecards.rules`
+
+Read-Only:
+
+- `identifier` (String)
+- `level` (String)
+- `status` (String)

@@ -6,9 +6,12 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/version"
+	"net/http"
 	"os"
 	"regexp"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
@@ -815,7 +818,95 @@ func TestAccPortDestroyDeleteAllEntities(t *testing.T) {
 			},
 		},
 	})
+}
 
+func TestAccPortBlueprintCatalogPageCreation(t *testing.T) {
+	testCases := []struct {
+		name               string
+		createCatalogPage  bool
+		expectedPageStatus int
+	}{
+		{
+			name:               "CatalogPageCreationTrue",
+			createCatalogPage:  true,
+			expectedPageStatus: http.StatusOK,
+		},
+		{
+			name:               "CatalogPageCreationFalse",
+			createCatalogPage:  false,
+			expectedPageStatus: http.StatusNotFound,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			// add `s` to handle the plural default page that is being created by port
+			identifier := fmt.Sprintf("test-%ss", utils.GenID()[:10])
+			title := "Microservices"
+			icon := "Terraform"
+			testAccBlueprintConfig := fmt.Sprintf(`
+                resource "port_blueprint" "microservices" {
+                    identifier = "%s"
+                    icon = "%s"
+                    title = "%s"
+                    create_catalog_page = %t
+                }
+            `, identifier, icon, title, tc.createCatalogPage)
+
+			portClient, ctx, err := initializePortTestClient(t)
+			if err != nil {
+				t.Fatalf("Failed to initialize port client: %s", err.Error())
+				return
+			}
+
+			blueprint := &cli.Blueprint{
+				Identifier: identifier,
+				Icon:       &icon,
+				Title:      title,
+				Schema: cli.BlueprintSchema{
+					Properties: map[string]cli.BlueprintProperty{},
+				},
+				CalculationProperties: map[string]cli.BlueprintCalculationProperty{},
+				AggregationProperties: map[string]cli.BlueprintAggregationProperty{},
+				MirrorProperties:      map[string]cli.BlueprintMirrorProperty{},
+				Relations:             map[string]cli.Relation{},
+			}
+
+			_, err = portClient.CreateBlueprint(ctx, blueprint, &tc.createCatalogPage)
+
+			if err != nil {
+				t.Fatalf("Failed to create blueprint: %s", err.Error())
+				return
+			}
+
+			// give grace time for page creation
+			time.Sleep(3 * time.Second)
+
+			_, statusCode, err := portClient.GetPage(ctx, identifier)
+			if err != nil {
+				if statusCode != tc.expectedPageStatus {
+					t.Fatalf("Unexpected status code: got %v want %v", statusCode, tc.expectedPageStatus)
+				}
+			}
+
+			resource.Test(t, resource.TestCase{
+				PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+				ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config:             acctest.ProviderConfig + testAccBlueprintConfig,
+						ResourceName:       "port_blueprint.microservices",
+						ImportStateId:      identifier,
+						ImportState:        true,
+						ImportStatePersist: true,
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("port_blueprint.microservice", "create_catalog_page", strconv.FormatBool(tc.createCatalogPage)),
+						),
+					},
+				},
+			})
+		})
+	}
 }
 
 func initializePortTestClient(t *testing.T) (*cli.PortClient, context.Context, error) {

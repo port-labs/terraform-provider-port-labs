@@ -51,10 +51,6 @@ func IntegrationSchema() map[string]schema.Attribute {
 	}
 }
 
-func StaticString(s string) {
-	panic("unimplemented")
-}
-
 func (r *IntegrationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: IntegrationResourceMarkdownDescription,

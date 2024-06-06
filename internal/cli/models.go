@@ -19,14 +19,27 @@ type (
 		ExpiresIn   int64  `json:"expiresIn"`
 		TokenType   string `json:"tokenType"`
 	}
+
+	ScorecardRulesModel struct {
+		Identifier string `tfsdk:"identifier"`
+		Status     string `tfsdk:"status"`
+		Level      string `tfsdk:"level"`
+	}
+
+	ScorecardModel struct {
+		Rules []ScorecardRulesModel `tfsdk:"rules"`
+		Level string                `tfsdk:"level"`
+	}
+
 	Entity struct {
 		Meta
-		Identifier string         `json:"identifier,omitempty"`
-		Title      string         `json:"title"`
-		Blueprint  string         `json:"blueprint"`
-		Team       []string       `json:"team,omitempty"`
-		Properties map[string]any `json:"properties"`
-		Relations  map[string]any `json:"relations"`
+		Identifier string                    `json:"identifier,omitempty"`
+		Title      string                    `json:"title"`
+		Blueprint  string                    `json:"blueprint"`
+		Team       []string                  `json:"team,omitempty"`
+		Properties map[string]any            `json:"properties"`
+		Relations  map[string]any            `json:"relations"`
+		Scorecards map[string]ScorecardModel `json:"scorecards,omitempty"`
 		// TODO: add the rest of the fields.
 	}
 
@@ -385,6 +398,14 @@ type (
 		FailureCount    int    `json:"failureCount,omitempty"`
 		SuccessCount    int    `json:"successCount,omitempty"`
 	}
+
+	SearchRequestQuery struct {
+		Query                       *map[string]any `json:"query"`
+		ExcludeCalculatedProperties *bool           `json:"exclude_calculated_properties,omitempty"`
+		Include                     []string        `json:"include,omitempty"`
+		Exclude                     []string        `json:"exclude,omitempty"`
+		AttachTitleToRelation       *bool           `json:"attach_title_to_relation,omitempty"`
+	}
 )
 
 type PortBody struct {
@@ -400,6 +421,22 @@ type PortBody struct {
 	Page                 Page              `json:"page"`
 	MigrationId          string            `json:"migrationId"`
 	Migration            Migration         `json:"migration"`
+}
+
+type SearchEntityResult struct {
+	Meta
+	Identifier string         `json:"identifier,omitempty"`
+	Title      string         `json:"title,omitempty"`
+	Icon       *string        `json:"icon,omitempty"`
+	Team       []string       `json:"team,omitempty"`
+	Properties map[string]any `json:"properties,omitempty"`
+	Relations  map[string]any `json:"relations,omitempty"`
+}
+
+type SearchResult struct {
+	OK                 bool     `json:"ok"`
+	MatchingBlueprints []string `json:"matchingBlueprints"`
+	Entities           []Entity `json:"entities"`
 }
 
 type PortPagePermissionsBody struct {

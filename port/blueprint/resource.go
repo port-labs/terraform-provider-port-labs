@@ -7,9 +7,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
-	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
 	"strings"
 	"time"
 )
@@ -72,6 +72,11 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 	bm.UpdatedAt = types.StringValue(b.UpdatedAt.String())
 	bm.UpdatedBy = types.StringValue(b.UpdatedBy)
 
+	if bm.CreateCatalogPage.IsNull() {
+		// backwards compatibility, if the field is not set, we assume that the user wants to create a catalog page
+		bm.CreateCatalogPage = types.BoolValue(true)
+	}
+
 	bm.Title = types.StringValue(b.Title)
 	bm.Icon = flex.GoStringToFramework(b.Icon)
 	bm.Description = flex.GoStringToFramework(b.Description)
@@ -130,12 +135,14 @@ func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateReque
 
 	b, err := blueprintResourceToPortRequest(ctx, state)
 
+	createCatalogPage := state.CreateCatalogPage.ValueBoolPointer()
+
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create blueprint", err.Error())
 		return
 	}
 
-	bp, err := r.portClient.CreateBlueprint(ctx, b)
+	bp, err := r.portClient.CreateBlueprint(ctx, b, createCatalogPage)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create blueprint", err.Error())
 		return
@@ -177,9 +184,9 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 	}
 
 	var bp *cli.Blueprint
-
+	createCatalogPage := state.CreateCatalogPage.ValueBoolPointer()
 	if previousState.Identifier.IsNull() {
-		bp, err = r.portClient.CreateBlueprint(ctx, b)
+		bp, err = r.portClient.CreateBlueprint(ctx, b, createCatalogPage)
 		if err != nil {
 			resp.Diagnostics.AddError("failed to create blueprint", err.Error())
 			return

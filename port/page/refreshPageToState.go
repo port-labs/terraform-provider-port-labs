@@ -3,7 +3,7 @@ package page
 import (
 	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
 func refreshPageToState(pm *PageModel, b *cli.Page) error {
@@ -16,6 +16,7 @@ func refreshPageToState(pm *PageModel, b *cli.Page) error {
 	pm.Title = types.StringPointerValue(b.Title)
 	pm.Locked = types.BoolPointerValue(b.Locked)
 	pm.Blueprint = types.StringPointerValue(b.Blueprint)
+	pm.Description = types.StringPointerValue(b.Description)
 
 	pm.Widgets = make([]types.String, len(*b.Widgets))
 	if b.Widgets != nil {

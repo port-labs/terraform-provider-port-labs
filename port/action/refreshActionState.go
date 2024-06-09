@@ -2,16 +2,17 @@ package action
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 
 	"github.com/samber/lo"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
-	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
@@ -325,6 +326,14 @@ func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionMod
 			UserProperties:      userProperties,
 			RequiredJqQuery:     requiredJqQuery,
 			OrderProperties:     orderProperties,
+		}
+
+		if a.Trigger.Condition != nil {
+			triggerCondition, err := json.Marshal(a.Trigger.Condition)
+			if err != nil {
+				return err
+			}
+			state.SelfServiceTrigger.Condition = types.StringValue(string(triggerCondition))
 		}
 	}
 

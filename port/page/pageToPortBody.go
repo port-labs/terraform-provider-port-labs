@@ -2,20 +2,21 @@ package page
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func PageToPortBody(pm *PageModel) (*cli.Page, error) {
 	pb := &cli.Page{
-		Identifier: pm.Identifier.ValueString(),
-		Type:       pm.Type.ValueString(),
-		Icon:       pm.Icon.ValueStringPointer(),
-		Title:      pm.Title.ValueStringPointer(),
-		Locked:     pm.Locked.ValueBoolPointer(),
-		Blueprint:  pm.Blueprint.ValueStringPointer(),
-		Parent:     pm.Parent.ValueStringPointer(),
-		After:      pm.After.ValueStringPointer(),
+		Identifier:  pm.Identifier.ValueString(),
+		Type:        pm.Type.ValueString(),
+		Icon:        pm.Icon.ValueStringPointer(),
+		Title:       pm.Title.ValueStringPointer(),
+		Locked:      pm.Locked.ValueBoolPointer(),
+		Blueprint:   pm.Blueprint.ValueStringPointer(),
+		Parent:      pm.Parent.ValueStringPointer(),
+		After:       pm.After.ValueStringPointer(),
+		Description: pm.Description.ValueStringPointer(),
 	}
 
 	widgets, err := widgetsToPortBody(pm.Widgets)

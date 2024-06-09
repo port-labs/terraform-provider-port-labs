@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func writeArrayResourceToBody(ctx context.Context, state *EntityModel, properties map[string]interface{}) error {

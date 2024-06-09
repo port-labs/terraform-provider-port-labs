@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
 func refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayProperties map[string][]interface{}, blueprint *cli.Blueprint) {
@@ -147,7 +147,7 @@ func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cl
 
 func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli.Entity) {
 	relations := &RelationModel{
-		SingleRelation: make(map[string]string),
+		SingleRelation: make(map[string]*string),
 		ManyRelations:  make(map[string][]string),
 	}
 
@@ -160,7 +160,7 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 
 		case string:
 			if len(v) != 0 {
-				relations.SingleRelation[identifier] = v
+				relations.SingleRelation[identifier] = &v
 			}
 		}
 	}

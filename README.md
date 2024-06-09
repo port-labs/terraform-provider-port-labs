@@ -12,7 +12,7 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 
 ## Documentation
 
-- [Terraform registry docs](https://registry.terraform.io/providers/port-labs/port/latest/docs)
+- [Terraform registry docs](https://registry.terraform.io/providers/port-labs/port-labs/latest/docs)
 - [Port docs](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/iac/terraform)
 
 ## Requirements
@@ -30,7 +30,7 @@ terraform {
   required_providers {
     port = {
       source  = "port-labs/port-labs"
-      version = "~> 1.0.0"
+      version = "~> 2.0.0"
     }
   }
 }
@@ -49,4 +49,8 @@ terraform init
 
 ## Examples
 
-please refer to the [examples](./examples) directory
+Please refer to the [examples](./examples) directory
+
+## Contributing
+
+Please refer to [contributing.md](./CONTRIBUTING.md)

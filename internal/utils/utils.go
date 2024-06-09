@@ -12,10 +12,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func CopyMaps(target map[string]schema.Attribute, source map[string]schema.Attribute) {
+func CopyGenericMaps[T any](target map[string]T, source map[string]T) {
 	for key, value := range source {
 		target[key] = value
 	}
+}
+
+func CopyMaps(target map[string]schema.Attribute, source map[string]schema.Attribute) {
+	CopyGenericMaps(target, source)
 }
 
 func GenID() string {
@@ -94,14 +98,15 @@ func GoObjectToTerraformString(v interface{}) (types.String, error) {
 	return types.StringValue(value), nil
 }
 
-func TerraformStringToGoObject(s types.String) (interface{}, error) {
+func TerraformStringToGoType[T any](s types.String) (T, error) {
+	var obj T
+
 	if s.IsNull() {
-		return nil, nil
+		return obj, nil
 	}
 
-	var obj interface{}
 	if err := json.Unmarshal([]byte(s.ValueString()), &obj); err != nil {
-		return nil, err
+		return obj, err
 	}
 
 	return obj, nil
@@ -125,6 +130,15 @@ func InterfaceToStringArray(o interface{}) []string {
 	res := make([]string, len(items))
 	for i, item := range items {
 		res[i] = item.(string)
+	}
+
+	return res
+}
+
+func TFStringListToStringArray(list []types.String) []string {
+	res := make([]string, len(list))
+	for i, item := range list {
+		res[i] = item.ValueString()
 	}
 
 	return res

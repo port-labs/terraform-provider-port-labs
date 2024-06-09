@@ -1,4 +1,4 @@
-module github.com/port-labs/terraform-provider-port-labs
+module github.com/port-labs/terraform-provider-port-labs/v2
 
 go 1.18
 

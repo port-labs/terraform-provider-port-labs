@@ -174,4 +174,5 @@ type BlueprintModel struct {
 	MirrorProperties            map[string]MirrorPropertyModel      `tfsdk:"mirror_properties"`
 	CalculationProperties       map[string]CalculationPropertyModel `tfsdk:"calculation_properties"`
 	ForceDeleteEntities         types.Bool                          `tfsdk:"force_delete_entities"`
+	CreateCatalogPage           types.Bool                          `tfsdk:"create_catalog_page"`
 }

@@ -275,6 +275,7 @@ type SelfServiceTriggerModel struct {
 	UserProperties      *UserPropertiesModel `tfsdk:"user_properties"`
 	RequiredJqQuery     types.String         `tfsdk:"required_jq_query"`
 	OrderProperties     types.List           `tfsdk:"order_properties"`
+	Condition           types.String         `tfsdk:"condition"`
 }
 
 type EntityCreatedEventModel struct {

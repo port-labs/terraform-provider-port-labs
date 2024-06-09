@@ -5,7 +5,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
 var _ resource.Resource = &PagePermissionsResource{}
@@ -54,12 +54,12 @@ func (r *PagePermissionsResource) Read(ctx context.Context, req resource.ReadReq
 
 	a, statusCode, err := r.portClient.GetPagePermissions(ctx, pageIdentifier)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to read page permissions", err.Error())
-		return
-	}
+		if statusCode == 404 {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 
-	if statusCode == 404 {
-		resp.State.RemoveResource(ctx)
+		resp.Diagnostics.AddError("failed to read page permissions", err.Error())
 		return
 	}
 

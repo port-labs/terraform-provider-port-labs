@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/port-labs/terraform-provider-port-labs/internal/acctest"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func testAccCreateBlueprintConfig(identifier string) string {
@@ -76,7 +76,7 @@ func TestAccPortAction(t *testing.T) {
 					"myStringIdentifier" = {
 						"title" = "My String Identifier"
 						"required" = true
-	
+
 					}
 				}
 				"number_props" = {
@@ -800,7 +800,7 @@ func TestAccPortActionEnumJqQuery(t *testing.T) {
 							enum_jq_query = "[1, 2]"
 						}
 					}
-	
+
 				}
 			}
 		}
@@ -1260,7 +1260,7 @@ func TestAccPortActionRequiredConflictsWithRequiredJQ(t *testing.T) {
 		self_service_trigger = {
 			operation = "DAY-2"
 			blueprint_identifier = port_blueprint.microservice.identifier
-			user_properties = {	
+			user_properties = {
 				"string_props" = {
 					"equalsOne" = {
 						"title" = "equalsOne"
@@ -1361,13 +1361,13 @@ func TestAccPortActionRequiredFalseAndNull(t *testing.T) {
 		self_service_trigger = {
 			operation = "DAY-2"
 			blueprint_identifier = port_blueprint.microservice.identifier
-			user_properties = {	
+			user_properties = {
 				"string_props" = {
 					"notRequiredExist" = {
 						"title" = "notEqualsOne"
 					}
 					"requiredTrue" = {
-						"title" = "notEqualsOne"	
+						"title" = "notEqualsOne"
 						"required" = true
 					}
 				}
@@ -1894,25 +1894,25 @@ func TestAccPortActionNoUserPropertiesConditional(t *testing.T) {
         		title = "Prop"
         	  }
         	} : null
-        
+
         	number_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
         	  numProp = {
         		title = "Prop"
         	  }
         	} : null
-        
+
         	boolean_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
         	  boolProp = {
         		title = "Prop"
         	  }
         	} : null
-        	
+
         	object_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
         	  objProp = {
         		title = "Prop"
         	  }
         	} : null
-        
+
         	array_props = port_blueprint.microservice.identifier == "notTheRealIdentifier" ? {
         	  arrProp = {
         		title = "Prop"
@@ -1939,6 +1939,84 @@ func TestAccPortActionNoUserPropertiesConditional(t *testing.T) {
 					resource.TestCheckNoResourceAttr("port_action.action1", "self_service_trigger.user_properties.boolean_props"),
 					resource.TestCheckNoResourceAttr("port_action.action1", "self_service_trigger.user_properties.object_props"),
 					resource.TestCheckNoResourceAttr("port_action.action1", "self_service_trigger.user_properties.array_props"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionConditionalTrigger(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			condition = jsonencode({
+				type = "SEARCH"
+				combinator = "and"
+				rules = [
+					{
+						property = "$identifier"
+						operator = "="
+						value = "Test"
+					}
+				]
+			})
+		}
+		kafka_method = {}
+	}`, actionIdentifier)
+
+	var testAccActionConfigUpdate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			condition = jsonencode({
+				type = "SEARCH"
+				combinator = "and"
+				rules = [
+					{
+						property = "$title"
+						operator = "="
+						value = "Test"
+					}
+				]
+			})
+		}
+		kafka_method = {}
+	}`, actionIdentifier)
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.blueprint_identifier", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.condition", `{"combinator":"and","rules":[{"operator":"=","property":"$identifier","value":"Test"}],"type":"SEARCH"}`),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.blueprint_identifier", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.condition", `{"combinator":"and","rules":[{"operator":"=","property":"$title","value":"Test"}],"type":"SEARCH"}`),
 				),
 			},
 		},

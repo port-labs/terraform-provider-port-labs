@@ -2,7 +2,7 @@ package blueprint
 
 import (
 	"context"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
 func propsResourceToBody(ctx context.Context, state *BlueprintModel) (map[string]cli.BlueprintProperty, []string, error) {

@@ -2,7 +2,7 @@ package page_permissions
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
 func refreshPagePermissionsState(state *PagePermissionsModel, a *cli.PagePermissions, pageId string) error {

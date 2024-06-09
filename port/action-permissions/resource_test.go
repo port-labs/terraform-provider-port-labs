@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/port-labs/terraform-provider-port-labs/internal/acctest"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func testAccCreateBlueprintAndActionConfig(blueprintIdentifier string, actionIdentifier string) string {
@@ -178,13 +178,13 @@ func TestAccPortActionPermissionsWithPolicy(t *testing.T) {
 	  permissions = {
 		"execute": {
 		  "roles": [
-			"Member",	
-		  ],	
+			"Member",
+		  ],
 		  "users": [],
 		  "teams": [],
 		  "owned_by_team": false
-		},	
-		"approve": {	
+		},
+		"approve": {
 		  "roles": [],
 		  "users": [],
 		  "teams": [],
@@ -226,13 +226,13 @@ func TestAccPortActionPermissionsWithPolicy(t *testing.T) {
 	  permissions = {
 		"execute": {
 		  "roles": [
-			"Member",	
-		  ],	
+			"Member",
+		  ],
 		  "users": [],
 		  "teams": [],
 		  "owned_by_team": false
-		},	
-		"approve": {	
+		},
+		"approve": {
 		  "roles": [],
 		  "users": [],
 		  "teams": []
@@ -286,13 +286,13 @@ func TestAccPortActionPermissionsWithPolicyUpdate(t *testing.T) {
 	  permissions = {
 		"execute": {
 		  "roles": [
-			"Member",	
-		  ],	
+			"Member",
+		  ],
 		  "users": [],
 		  "teams": [],
 		  "owned_by_team": false
-		},	
-		"approve": {	
+		},
+		"approve": {
 		  "roles": [],
 		  "users": [],
 		  "teams": [],
@@ -334,13 +334,13 @@ func TestAccPortActionPermissionsWithPolicyUpdate(t *testing.T) {
 	  permissions = {
 		"execute": {
 		  "roles": [
-			"Member",	
-		  ],	
+			"Member",
+		  ],
 		  "users": [],
 		  "teams": [],
 		  "owned_by_team": false
-		},	
-		"approve": {	
+		},
+		"approve": {
 		  "roles": [],
 		  "users": [],
 		  "teams": [],
@@ -370,9 +370,9 @@ func TestAccPortActionPermissionsWithPolicyUpdate(t *testing.T) {
 			}
 		  },
 		  conditions: [
-		  "true"]	
+		  "true"]
 		  })
-		}	
+		}
 	  }
 	}`
 	resource.Test(t, resource.TestCase{
@@ -422,13 +422,13 @@ func TestAccPortActionPermissionsImportState(t *testing.T) {
 	  permissions = {
 		"execute": {
 		  "roles": [
-			"Member",	
-		  ],	
+			"Member",
+		  ],
 		  "users": [],
 		  "teams": [],
 		  "owned_by_team": false
-		},	
-		"approve": {	
+		},
+		"approve": {
 		  "roles": [],
 		  "users": [],
 		  "teams": [],

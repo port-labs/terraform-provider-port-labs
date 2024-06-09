@@ -6,34 +6,34 @@ description: |-
   Action resource
   Docs for the Action resource can be found here https://docs.getport.io/create-self-service-experiences/.
   Example Usage
-  hcl
-  resource "port_action" "create_microservice" {
+  ```hcl
+  resource "portaction" "createmicroservice" {
       title = "Create Microservice"
       identifier = "create-microservice"
       icon = "Terraform"
-      self_service_trigger = {
+      selfservicetrigger = {
           operation = "CREATE"
-          blueprint_identifier = port_blueprint.microservice.identifier
-          user_properties = {
-              string_props = {
+          blueprintidentifier = portblueprint.microservice.identifier
+          userproperties = {
+              stringprops = {
                   myStringIdentifier = {
                       title = "My String Identifier"
                       required = true
                       format = "entity"
-                      blueprint = port_blueprint.parent.identifier
+                      blueprint = portblueprint.parent.identifier
                       dataset = {
                           combinator = "and"
                           rules = [{
                               property = "$title"
                               operator = "contains"
                               value = {
-                                  jq_query = "\"specificValue\""
+                                  jqquery = "\"specificValue\""
                               }
                           }]
                       }
                   }
               }
-              number_props = {
+              numberprops = {
                   myNumberIdentifier = {
                       title = "My Number Identifier"
                       required = true
@@ -41,25 +41,25 @@ description: |-
                       minimum = 0
                   }
               }
-              boolean_props = {
+              booleanprops = {
                   myBooleanIdentifier = {
                       title = "My Boolean Identifier"
                       required = true
                   }
               }
-              object_props = {
+              objectprops = {
                   myObjectIdentifier = {
                       title = "My Object Identifier"
                       required = true
                   }
               }
-              array_props = {
+              arrayprops = {
                   myArrayIdentifier = {
                       title = "My Array Identifier"
                       required = true
-                      string_items = {
+                      stringitems = {
                           format = "entity"
-                          blueprint = port_blueprint.parent.identifier
+                          blueprint = portblueprint.parent.identifier
                           dataset = jsonencode({
                               combinator = "and"
                               rules = [{
@@ -79,6 +79,42 @@ description: |-
           })
       }
   }
+  ```
+  Example Usage With Condition
+  ```hcl
+  resource "portaction" "createmicroservice" {
+      title = "Create Microservice"
+      identifier = "create-microservice"
+      icon = "Terraform"
+      selfservicetrigger = {
+          operation = "CREATE"
+          blueprintidentifier = portblueprint.microservice.identifier
+          condition = jsonencode({
+              type = "SEARCH"
+              combinator = "and"
+              rules = [
+                  {
+                      property = "$title"
+                      operator = "!="
+                      value = "Test"
+                  }
+              ]
+          })
+          userproperties = {
+              stringprops = {
+                  myStringIdentifier = {
+                      title = "My String Identifier"
+                      required = true
+                  }
+              }
+          }
+      }
+      kafka_method = {
+          payload = jsonencode({
+            runId: "{{.run.id}}"
+          })
+      }
+  ```
 ---
 
 # port_action (Resource)
@@ -162,6 +198,45 @@ resource "port_action" "create_microservice" {
 		})
 	}
 }
+
+```
+
+## Example Usage With Condition
+
+```hcl
+resource "port_action" "create_microservice" {
+	title = "Create Microservice"
+	identifier = "create-microservice"
+	icon = "Terraform"
+	self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+		condition = jsonencode({
+			type = "SEARCH"
+			combinator = "and"
+			rules = [
+				{
+					property = "$title"
+					operator = "!="
+					value = "Test"
+				}
+			]
+		})
+		user_properties = {
+			string_props = {
+				myStringIdentifier = {
+					title = "My String Identifier"
+					required = true
+				}
+			}
+		}
+	}
+	kafka_method = {
+		payload = jsonencode({
+		  runId: "{{.run.id}}"
+		})
+	}
+	
 ```
 
 
@@ -223,7 +298,7 @@ Required:
 
 Optional:
 
-- `payload` (String) The Azure Devops workflow payload (array or object encoded to a string)
+- `payload` (String) The Azure Devops workflow [payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 
 
 <a id="nestedatt--github_method"></a>
@@ -238,7 +313,7 @@ Required:
 Optional:
 
 - `report_workflow_status` (String) Report the workflow status when invoking the action
-- `workflow_inputs` (String) The GitHub workflow inputs (key-value object encoded to a string)
+- `workflow_inputs` (String) The GitHub [workflow inputs](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 
 
 <a id="nestedatt--gitlab_method"></a>
@@ -252,7 +327,7 @@ Required:
 Optional:
 
 - `default_ref` (String) The default ref of the action
-- `pipeline_variables` (String) The Gitlab pipeline variables (key-value object encoded to a string)
+- `pipeline_variables` (String) The Gitlab pipeline variables should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 
 
 <a id="nestedatt--kafka_method"></a>
@@ -260,7 +335,7 @@ Optional:
 
 Optional:
 
-- `payload` (String) The Kafka message payload (array or object encoded to a string)
+- `payload` (String) The Kafka message [payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 
 
 <a id="nestedatt--self_service_trigger"></a>
@@ -273,6 +348,7 @@ Required:
 Optional:
 
 - `blueprint_identifier` (String) The ID of the blueprint
+- `condition` (String) The `condition` field allows you to define rules using Port's [search & query syntax](https://docs.getport.io/search-and-query/#rules) to determine which entities the action will be available for.
 - `order_properties` (List of String) Order properties
 - `required_jq_query` (String) The required jq query of the property
 - `user_properties` (Attributes) User properties (see [below for nested schema](#nestedatt--self_service_trigger--user_properties))
@@ -469,9 +545,7 @@ Required:
 Optional:
 
 - `agent` (String) Use the agent to invoke the action
-- `body` (String) The Webhook body (array or object encoded to a string)
-- `headers` (Map of String) The HTTP method to invoke the action
+- `body` (String) The Webhook body should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
+- `headers` (Map of String) The HTTP headers for invoking the action. They should be encoded as a key-value object to a string using [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 - `method` (String) The HTTP method to invoke the action
 - `synchronized` (String) Synchronize the action
-
-

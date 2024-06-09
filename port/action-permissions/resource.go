@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
 var _ resource.Resource = &ActionPermissionsResource{}
@@ -54,16 +54,15 @@ func (r *ActionPermissionsResource) Read(ctx context.Context, req resource.ReadR
 
 	a, statusCode, err := r.portClient.GetActionPermissions(ctx, actionIdentifier)
 	if err != nil {
+		if statusCode == 404 {
+			resp.State.RemoveResource(ctx)
+			return
+		}
 		resp.Diagnostics.AddError("failed to read action permissions", err.Error())
 		return
 	}
 
-	if statusCode == 404 {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-
-	err = refreshActionPermissionsState(ctx, state, a, actionIdentifier)
+	err = refreshActionPermissionsState(state, a, actionIdentifier)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to refresh action permissions state", err.Error())
 		return

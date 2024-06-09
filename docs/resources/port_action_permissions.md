@@ -8,22 +8,22 @@ description: |-
   Example Usage
   hcl
   resource "port_action_permissions" "restart_microservice_permissions" {
-    action_identifier = port_action.restart_microservice.identifier
-    permissions = {
-      "execute" : {
-        "roles" : [
-          "Admin"
-        ],
-        "users" : [],
-        "teams" : [],
-        "owned_by_team" : true
-      },
-      "approve" : {
-        "roles" : ["Member", "Admin"],
-        "users" : [],
-        "teams" : []
+      action_identifier = port_action.restart_microservice.identifier
+      permissions = {
+          "execute" : {
+              "roles" : [
+                  "admin"
+              ],
+              "users" : [],
+              "teams" : [],
+              "owned_by_team" : true
+          },
+          "approve" : {
+              "roles" : ["member", "admin"],
+              "users" : [],
+              "teams" : []
+          }
       }
-    }
   }
   
   Example Usage with Policy
@@ -78,7 +78,29 @@ description: |-
   }
   ```
   Disclaimer
-  Action permissions are created by default when creating a new action, this means that you should use this resource when you want to change the default permissions of an action.When deleting an action permissions resource using terraform, the action permissions will not be deleted from Port, as they are required for the action to work, instead, the action permissions will be removed from the terraform state.
+  Action permissions are created by default when creating a new action, this means that you should use this resource when you want to change the default permissions of an action.When deleting an action permissions resource using terraform, the action permissions will not be deleted from Port, as they are required for the action to work, instead, the action permissions will be removed from the terraform state.All the permission lists (roles, users, teams) are managed by Port in a sorted manner, this means that if your .tf has for example roles defined out of order, your state will be invalid
+  E.g:
+  hcl
+  resource "port_action_permissions" "restart_microservice_permissions" {
+      action_identifier = port_action.restart_microservice.identifier
+      permissions = {
+          # invalid
+          "execute" : {
+              "roles" : [
+                  "member",
+                  "admin",
+              ],
+              ...
+          },
+          # valid
+          "approve" : {
+              "roles" : [
+                  "admin",
+                  "member",
+              ],
+          }
+      }
+  }
 ---
 
 # port_action_permissions (Resource)
@@ -91,22 +113,22 @@ Docs for the Action Permissions resource can be found [here](https://docs.getpor
 
 ```hcl
 resource "port_action_permissions" "restart_microservice_permissions" {
-  action_identifier = port_action.restart_microservice.identifier
-  permissions = {
-    "execute" : {
-      "roles" : [
-        "Admin"
-      ],
-      "users" : [],
-      "teams" : [],
-      "owned_by_team" : true
-    },
-    "approve" : {
-      "roles" : ["Member", "Admin"],
-      "users" : [],
-      "teams" : []
-    }
-  }
+	action_identifier = port_action.restart_microservice.identifier
+	permissions = {
+		"execute" : {
+			"roles" : [
+				"admin"
+			],
+			"users" : [],
+			"teams" : [],
+			"owned_by_team" : true
+		},
+		"approve" : {
+			"roles" : ["member", "admin"],
+			"users" : [],
+			"teams" : []
+		}
+	}
 }
 ```
 
@@ -166,10 +188,35 @@ resource "port_action_permissions" "restart_microservice_permissions" {
 }
 ```
 
-## Disclaimer 
+## Disclaimer
 
 - Action permissions are created by default when creating a new action, this means that you should use this resource when you want to change the default permissions of an action.
 - When deleting an action permissions resource using terraform, the action permissions will not be deleted from Port, as they are required for the action to work, instead, the action permissions will be removed from the terraform state.
+- All the permission lists (roles, users, teams) are managed by Port in a sorted manner, this means that if your `.tf` has for example roles defined out of order, your state will be invalid
+    E.g:
+
+    ```hcl
+	resource "port_action_permissions" "restart_microservice_permissions" {
+		action_identifier = port_action.restart_microservice.identifier
+		permissions = {
+			# invalid
+			"execute" : {
+				"roles" : [
+					"member",
+					"admin",
+				],
+				...
+			},
+			# valid
+			"approve" : {
+				"roles" : [
+					"admin",
+					"member",
+				],
+			}
+		}
+	}
+```
 
 
 
@@ -218,5 +265,3 @@ Optional:
 - `roles` (List of String) The roles with execution permission
 - `teams` (List of String) The teams with execution permission
 - `users` (List of String) The users with execution permission
-
-

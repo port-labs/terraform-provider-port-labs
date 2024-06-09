@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/port-labs/terraform-provider-port-labs/internal/acctest"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func createPage(identifier string) string {
@@ -106,7 +106,7 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 	teamName := utils.GenID()
 
 	var testAccBasePagePermissionsConfigUpdate = fmt.Sprintf(`
-	
+
 	resource "port_team" "team" {
 		name = "%s"
 		description = "Test description"

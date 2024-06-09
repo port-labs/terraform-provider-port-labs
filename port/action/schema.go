@@ -3,8 +3,11 @@ package action
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
+
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -19,8 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
-	"regexp"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func MetadataProperties() map[string]schema.Attribute {
@@ -127,6 +129,10 @@ func ActionSchema() map[string]schema.Attribute {
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
+				"condition": schema.StringAttribute{
+					MarkdownDescription: "The `condition` field allows you to define rules using Port's [search & query syntax](https://docs.getport.io/search-and-query/#rules) to determine which entities the action will be available for.",
+					Optional:            true,
+				},
 			},
 			Validators: []validator.Object{
 				objectvalidator.ExactlyOneOf(
@@ -229,7 +235,7 @@ func ActionSchema() map[string]schema.Attribute {
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"payload": schema.StringAttribute{
-					MarkdownDescription: "The Kafka message payload (array or object encoded to a string)",
+					MarkdownDescription: "The Kafka message [payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					Optional:            true,
 				},
 			},
@@ -267,12 +273,12 @@ func ActionSchema() map[string]schema.Attribute {
 					Optional:            true,
 				},
 				"headers": schema.MapAttribute{
-					MarkdownDescription: "The HTTP method to invoke the action",
+					MarkdownDescription: "The HTTP headers for invoking the action. They should be encoded as a key-value object to a string using [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					ElementType:         types.StringType,
 					Optional:            true,
 				},
 				"body": schema.StringAttribute{
-					MarkdownDescription: "The Webhook body (array or object encoded to a string)",
+					MarkdownDescription: "The Webhook body should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					Optional:            true,
 				},
 			},
@@ -294,7 +300,7 @@ func ActionSchema() map[string]schema.Attribute {
 					Required:            true,
 				},
 				"workflow_inputs": schema.StringAttribute{
-					MarkdownDescription: "The GitHub workflow inputs (key-value object encoded to a string)",
+					MarkdownDescription: "The GitHub [workflow inputs](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					Optional:            true,
 				},
 				"report_workflow_status": schema.StringAttribute{
@@ -321,7 +327,7 @@ func ActionSchema() map[string]schema.Attribute {
 					Optional:            true,
 				},
 				"pipeline_variables": schema.StringAttribute{
-					MarkdownDescription: "The Gitlab pipeline variables (key-value object encoded to a string)",
+					MarkdownDescription: "The Gitlab pipeline variables should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					Optional:            true,
 				},
 			},
@@ -339,7 +345,7 @@ func ActionSchema() map[string]schema.Attribute {
 					Required:            true,
 				},
 				"payload": schema.StringAttribute{
-					MarkdownDescription: "The Azure Devops workflow payload (array or object encoded to a string)",
+					MarkdownDescription: "The Azure Devops workflow [payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					Optional:            true,
 				},
 			},
@@ -1115,4 +1121,45 @@ resource "port_action" "delete_temporary_microservice" {
 		  runId: "{{"{{.run.id}}"}}"
 		})
 	}
-}` + "\n```"
+}
+` + "\n```" + `
+
+## Example Usage With Condition
+
+` + "```hcl" + `
+resource "port_action" "create_microservice" {
+	title = "Create Microservice"
+	identifier = "create-microservice"
+	icon = "Terraform"
+	self_service_trigger = {
+		operation = "CREATE"
+		blueprint_identifier = port_blueprint.microservice.identifier
+		condition = jsonencode({
+			type = "SEARCH"
+			combinator = "and"
+			rules = [
+				{
+					property = "$title"
+					operator = "!="
+					value = "Test"
+				}
+			]
+		})
+		user_properties = {
+			string_props = {
+				myStringIdentifier = {
+					title = "My String Identifier"
+					required = true
+				}
+			}
+		}
+	}
+	kafka_method = {
+		payload = jsonencode({
+		  runId: "{{"{{.run.id}}"}}"
+		})
+	}
+	
+` + "```" + `
+
+`

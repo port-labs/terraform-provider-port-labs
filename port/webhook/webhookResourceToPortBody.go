@@ -3,7 +3,7 @@ package webhook
 import (
 	"context"
 
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
 func webhookResourceToPortBody(ctx context.Context, state *WebhookModel) (*cli.Webhook, error) {

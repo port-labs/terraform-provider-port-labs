@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/port-labs/terraform-provider-port-labs/internal/acctest"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func testAccCreateBlueprintConfig(identifier string) string {
@@ -50,7 +50,7 @@ func TestAccPortScorecardBasic(t *testing.T) {
 		rules = [{
 		  identifier = "hasTeam"
 		  title      = "Has Team"
-		  level      = "Gold" 
+		  level      = "Gold"
 		  query = {
 			combinator = "and"
 			conditions = [jsonencode({
@@ -62,7 +62,7 @@ func TestAccPortScorecardBasic(t *testing.T) {
 
 		depends_on = [
 		port_blueprint.microservice
-		]		
+		]
 	  }`, scorecardIdentifier, blueprintIdentifier)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -195,7 +195,7 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 		rules = [{
 		  identifier = "hasTeam"
 		  title      = "Has Team"
-		  level      = "Gold" 
+		  level      = "Gold"
 		  query = {
 			combinator = "and"
 			conditions = [jsonencode({
@@ -207,7 +207,7 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 
 		depends_on = [
 		port_blueprint.microservice
-		]		
+		]
 	  }`, scorecardIdentifier, blueprintIdentifier)
 
 	var testAccActionConfigUpdate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
@@ -280,7 +280,7 @@ func TestAccPortScorecardImport(t *testing.T) {
 		rules = [{
 		  identifier = "hasTeam"
 		  title      = "Has Team"
-		  level      = "Gold" 
+		  level      = "Gold"
 		  query = {
 			combinator = "and"
 			conditions = [jsonencode({
@@ -292,7 +292,7 @@ func TestAccPortScorecardImport(t *testing.T) {
 
 		depends_on = [
 		port_blueprint.microservice
-		]		
+		]
 	  }`, scorecardIdentifier, blueprintIdentifier)
 
 	resource.Test(t, resource.TestCase{
@@ -336,7 +336,7 @@ func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
 		rules = [{
 		  identifier = "hasTeam"
 		  title      = "Has Team"
-		  level      = "Gold" 
+		  level      = "Gold"
 		  query = {
 			combinator = "and"
 			conditions = [jsonencode({
@@ -348,7 +348,7 @@ func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
 
 		depends_on = [
 		port_blueprint.microservice
-		]		
+		]
 	  }`, scorecardIdentifier, blueprintIdentifier)
 
 	var testAccActionConfigUpdate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
@@ -359,7 +359,7 @@ func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
 		rules = [{
 			identifier = "hasTeam"
 			title      = "Has Team"
-			level      = "Gold" 
+			level      = "Gold"
 			query = {
 			  combinator = "and"
 			  conditions = [jsonencode({

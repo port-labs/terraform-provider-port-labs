@@ -1,14 +1,13 @@
 package action_permissions
 
 import (
-	"context"
 	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
 )
 
-func refreshActionPermissionsState(ctx context.Context, state *ActionPermissionsModel, a *cli.ActionPermissions, actionId string) error {
+func refreshActionPermissionsState(state *ActionPermissionsModel, a *cli.ActionPermissions, actionId string) error {
 	state.ID = types.StringValue(actionId)
 	state.ActionIdentifier = types.StringValue(actionId)
 	state.BlueprintIdentifier = types.StringNull()

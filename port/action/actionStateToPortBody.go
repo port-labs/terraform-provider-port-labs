@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+
 	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
@@ -97,6 +98,14 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 			}
 			orderString := utils.InterfaceToStringArray(order)
 			selfServiceTrigger.UserInputs.Order = orderString
+		}
+
+		if !data.SelfServiceTrigger.Condition.IsNull() {
+			condition, err := utils.TerraformStringToGoType[cli.TriggerCondition](data.SelfServiceTrigger.Condition)
+			if err != nil {
+				return nil, err
+			}
+			selfServiceTrigger.Condition = &condition
 		}
 
 		return selfServiceTrigger, nil
@@ -199,7 +208,7 @@ func actionPropertiesToBody(ctx context.Context, actionTrigger *cli.Trigger, dat
 
 func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.InvocationMethod, error) {
 	if data.KafkaMethod != nil {
-		payload, err := utils.TerraformStringToGoObject(data.KafkaMethod.Payload)
+		payload, err := utils.TerraformStringToGoType[interface{}](data.KafkaMethod.Payload)
 		if err != nil {
 			return nil, err
 		}
@@ -208,11 +217,11 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 	}
 
 	if data.WebhookMethod != nil {
-		agent, err := utils.TerraformStringToGoObject(data.WebhookMethod.Agent)
+		agent, err := utils.TerraformStringToGoType[interface{}](data.WebhookMethod.Agent)
 		if err != nil {
 			return nil, err
 		}
-		synchronized, err := utils.TerraformStringToGoObject(data.WebhookMethod.Synchronized)
+		synchronized, err := utils.TerraformStringToGoType[interface{}](data.WebhookMethod.Synchronized)
 		if err != nil {
 			return nil, err
 		}
@@ -226,7 +235,7 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 			}
 			headers[key] = keyValue
 		}
-		body, err := utils.TerraformStringToGoObject(data.WebhookMethod.Body)
+		body, err := utils.TerraformStringToGoType[interface{}](data.WebhookMethod.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -245,11 +254,11 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 	}
 
 	if data.GithubMethod != nil {
-		reportWorkflowStatus, err := utils.TerraformStringToGoObject(data.GithubMethod.ReportWorkflowStatus)
+		reportWorkflowStatus, err := utils.TerraformStringToGoType[interface{}](data.GithubMethod.ReportWorkflowStatus)
 		if err != nil {
 			return nil, err
 		}
-		wi, err := utils.TerraformStringToGoObject(data.GithubMethod.WorkflowInputs)
+		wi, err := utils.TerraformStringToGoType[interface{}](data.GithubMethod.WorkflowInputs)
 		if err != nil {
 			return nil, err
 		}
@@ -268,7 +277,7 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 	}
 
 	if data.GitlabMethod != nil {
-		pv, err := utils.TerraformStringToGoObject(data.GitlabMethod.PipelineVariables)
+		pv, err := utils.TerraformStringToGoType[interface{}](data.GitlabMethod.PipelineVariables)
 		if err != nil {
 			return nil, err
 		}
@@ -286,7 +295,7 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 	}
 
 	if data.AzureMethod != nil {
-		payload, err := utils.TerraformStringToGoObject(data.AzureMethod.Payload)
+		payload, err := utils.TerraformStringToGoType[interface{}](data.AzureMethod.Payload)
 		if err != nil {
 			return nil, err
 		}

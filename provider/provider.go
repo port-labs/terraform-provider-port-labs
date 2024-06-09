@@ -6,19 +6,22 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
-	"github.com/port-labs/terraform-provider-port-labs/port/action"
-	"github.com/port-labs/terraform-provider-port-labs/port/action-permissions"
-	"github.com/port-labs/terraform-provider-port-labs/port/aggregation-properties"
-	"github.com/port-labs/terraform-provider-port-labs/port/blueprint"
-	"github.com/port-labs/terraform-provider-port-labs/port/entity"
-	"github.com/port-labs/terraform-provider-port-labs/port/page"
-	"github.com/port-labs/terraform-provider-port-labs/port/page-permissions"
-	"github.com/port-labs/terraform-provider-port-labs/port/scorecard"
-	"github.com/port-labs/terraform-provider-port-labs/port/team"
-	"github.com/port-labs/terraform-provider-port-labs/port/webhook"
-	"github.com/port-labs/terraform-provider-port-labs/version"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/action"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/action-permissions"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/aggregation-properties"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-permissions"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/entity"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/integration"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/page"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/search"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/team"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/webhook"
+	"github.com/port-labs/terraform-provider-port-labs/v2/version"
 	"os"
 )
 
@@ -122,14 +125,17 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 	}
 
 	resp.ResourceData = c
+	resp.DataSourceData = c
 
 }
 
 func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		blueprint.NewBlueprintResource,
+		blueprint_permissions.NewBlueprintPermissionsResource,
 		aggregation_properties.NewAggregationPropertiesResource,
 		entity.NewEntityResource,
+		integration.NewIntegrationResource,
 		action.NewActionResource,
 		action_permissions.NewActionPermissionsResource,
 		webhook.NewWebhookResource,
@@ -141,5 +147,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 }
 
 func (p *PortLabsProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		search.NewSearchDataSource,
+	}
 }

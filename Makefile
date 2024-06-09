@@ -6,6 +6,7 @@ VERSION=0.9.6
 OS=$(shell go env GOOS)
 ARCH=$(shell go env GOARCH)
 OS_ARCH=${OS}_${ARCH}
+TEST_FILTER?=.*
 
 default: install
 
@@ -29,9 +30,6 @@ release:
 clean:
 	rm -rf examples/.terraform examples/.terraform.lock.hcl examples/terraform*
 
-run-example:
-	cd examples && terraform init && terraform apply
-
 install: build
 	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
@@ -40,7 +38,23 @@ setup:
 	cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
 
 acctest:
-	TF_ACC=1 PORT_CLIENT_ID=$(PORT_CLIENT_ID) PORT_CLIENT_SECRET=$(PORT_CLIENT_SECRET) go test -p 1 ./...
+	# TEST_FILTER can be any regex, E.g: .*PageResource.*
+	# TEST_FILTER='TestAccPortPageResource*' make acctest
+	TF_ACC=1 PORT_CLIENT_ID=$(PORT_CLIENT_ID) PORT_CLIENT_SECRET=$(PORT_CLIENT_SECRET) PORT_BASE_URL=$(PORT_BASE_URL) go test -p 1 ./... -run "$(TEST_FILTER)"
 
 gen-docs:
 	tfplugindocs
+
+lint: build
+	# https://golangci-lint.run/welcome/install/#local-installation
+	golangci-lint run
+
+dev-run-integration: build
+	PORT_BETA_FEATURES_ENABLED=true go run . --debug
+
+dev-setup: setup
+	wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.59.0
+
+dev-debug: build
+	PORT_BETA_FEATURES_ENABLED=true dlv exec --accept-multiclient --continue --headless ./terraform-provider-port-labs -- --debug
+

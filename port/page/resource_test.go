@@ -7,8 +7,8 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/port-labs/terraform-provider-port-labs/internal/acctest"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func testAccCreateBlueprintConfig(identifier string) string {
@@ -146,6 +146,7 @@ resource "port_page" "microservice_dashboard_page" {
   title                 = "dashboards"
   icon                  = "GitHub"
   type                  = "dashboard"
+  description           = "My Dashboard Page Description"
   widgets               = [
     jsonencode(
       {
@@ -186,6 +187,7 @@ resource "port_page" "microservice_dashboard_page" {
 				Config: acctest.ProviderConfig + testAccPortPageResourceBasic,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "identifier", pageIdentifier),
+					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "description", "My Dashboard Page Description"),
 					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "title", "dashboards"),
 					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "icon", "GitHub"),
 					resource.TestCheckResourceAttr("port_page.microservice_dashboard_page", "type", "dashboard"),

@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
 var _ resource.Resource = &PageResource{}
@@ -135,6 +135,7 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 	state.CreatedBy = types.StringValue(p.CreatedBy)
 	state.UpdatedAt = types.StringValue(p.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(p.UpdatedBy)
+	state.Description = types.StringPointerValue(p.Description)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -172,6 +173,7 @@ func (r *PageResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	state.CreatedBy = types.StringValue(p.CreatedBy)
 	state.UpdatedAt = types.StringValue(p.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(p.UpdatedBy)
+	state.Description = types.StringPointerValue(p.Description)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 

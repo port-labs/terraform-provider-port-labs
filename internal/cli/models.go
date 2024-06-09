@@ -19,14 +19,27 @@ type (
 		ExpiresIn   int64  `json:"expiresIn"`
 		TokenType   string `json:"tokenType"`
 	}
+
+	ScorecardRulesModel struct {
+		Identifier string `tfsdk:"identifier"`
+		Status     string `tfsdk:"status"`
+		Level      string `tfsdk:"level"`
+	}
+
+	ScorecardModel struct {
+		Rules []ScorecardRulesModel `tfsdk:"rules"`
+		Level string                `tfsdk:"level"`
+	}
+
 	Entity struct {
 		Meta
-		Identifier string         `json:"identifier,omitempty"`
-		Title      string         `json:"title"`
-		Blueprint  string         `json:"blueprint"`
-		Team       []string       `json:"team,omitempty"`
-		Properties map[string]any `json:"properties"`
-		Relations  map[string]any `json:"relations"`
+		Identifier string                    `json:"identifier,omitempty"`
+		Title      string                    `json:"title"`
+		Blueprint  string                    `json:"blueprint"`
+		Team       []string                  `json:"team,omitempty"`
+		Properties map[string]any            `json:"properties"`
+		Relations  map[string]any            `json:"relations"`
+		Scorecards map[string]ScorecardModel `json:"scorecards,omitempty"`
 		// TODO: add the rest of the fields.
 	}
 
@@ -191,9 +204,10 @@ type (
 	}
 
 	TriggerCondition struct {
-		Type        string   `json:"type"`
-		Expressions []string `json:"expressions"`
+		Expressions []string `json:"expressions,omitempty"`
 		Combinator  *string  `json:"combinator,omitempty"`
+		Rules       []any    `json:"rules,omitempty"`
+		Type        string   `json:"type"`
 	}
 
 	Trigger struct {
@@ -255,15 +269,16 @@ type (
 
 	Page struct {
 		Meta
-		Identifier string            `json:"identifier,omitempty"`
-		Type       string            `json:"type,omitempty"`
-		Icon       *string           `json:"icon,omitempty"`
-		Parent     *string           `json:"parent,omitempty"`
-		After      *string           `json:"after,omitempty"`
-		Title      *string           `json:"title,omitempty"`
-		Locked     *bool             `json:"locked,omitempty"`
-		Blueprint  *string           `json:"blueprint,omitempty"`
-		Widgets    *[]map[string]any `json:"widgets,omitempty"`
+		Identifier  string            `json:"identifier,omitempty"`
+		Type        string            `json:"type,omitempty"`
+		Icon        *string           `json:"icon,omitempty"`
+		Parent      *string           `json:"parent,omitempty"`
+		After       *string           `json:"after,omitempty"`
+		Title       *string           `json:"title,omitempty"`
+		Locked      *bool             `json:"locked,omitempty"`
+		Blueprint   *string           `json:"blueprint,omitempty"`
+		Widgets     *[]map[string]any `json:"widgets,omitempty"`
+		Description *string           `json:"description,omitempty"`
 	}
 
 	PageReadPermissions struct {
@@ -274,6 +289,27 @@ type (
 
 	PagePermissions struct {
 		Read PageReadPermissions `json:"read"`
+	}
+
+	BlueprintPermissionsBlock struct {
+		Users       []string `json:"users"`
+		Roles       []string `json:"roles"`
+		Teams       []string `json:"teams"`
+		OwnedByTeam *bool    `json:"ownedByTeam"`
+	}
+
+	BlueprintRolesOrPropertiesPermissionsBlock map[string]BlueprintPermissionsBlock
+
+	BlueprintPermissionsEntities struct {
+		Register         BlueprintPermissionsBlock                  `json:"register"`
+		Unregister       BlueprintPermissionsBlock                  `json:"unregister"`
+		Update           BlueprintPermissionsBlock                  `json:"update"`
+		UpdateProperties BlueprintRolesOrPropertiesPermissionsBlock `json:"updateProperties,omitempty"`
+		UpdateRelations  BlueprintRolesOrPropertiesPermissionsBlock `json:"updateRelations,omitempty"`
+	}
+
+	BlueprintPermissions struct {
+		Entities BlueprintPermissionsEntities `json:"entities"`
 	}
 
 	Relation struct {
@@ -362,25 +398,55 @@ type (
 		FailureCount    int    `json:"failureCount,omitempty"`
 		SuccessCount    int    `json:"successCount,omitempty"`
 	}
+
+	SearchRequestQuery struct {
+		Query                       *map[string]any `json:"query"`
+		ExcludeCalculatedProperties *bool           `json:"exclude_calculated_properties,omitempty"`
+		Include                     []string        `json:"include,omitempty"`
+		Exclude                     []string        `json:"exclude,omitempty"`
+		AttachTitleToRelation       *bool           `json:"attach_title_to_relation,omitempty"`
+	}
 )
 
 type PortBody struct {
-	OK                bool              `json:"ok"`
-	Entity            Entity            `json:"entity"`
-	Blueprint         Blueprint         `json:"blueprint"`
-	Action            Action            `json:"action"`
-	ActionPermissions ActionPermissions `json:"permissions"`
-	Integration       Webhook           `json:"integration"`
-	Scorecard         Scorecard         `json:"Scorecard"`
-	Team              Team              `json:"team"`
-	Page              Page              `json:"page"`
-	MigrationId       string            `json:"migrationId"`
-	Migration         Migration         `json:"migration"`
+	OK                   bool              `json:"ok"`
+	Entity               Entity            `json:"entity"`
+	Blueprint            Blueprint         `json:"blueprint"`
+	BlueprintPermissions Blueprint         `json:"blueprint_permissions"`
+	Action               Action            `json:"action"`
+	ActionPermissions    ActionPermissions `json:"permissions"`
+	Webhook              Webhook           `json:"integration"`
+	Scorecard            Scorecard         `json:"Scorecard"`
+	Team                 Team              `json:"team"`
+	Page                 Page              `json:"page"`
+	MigrationId          string            `json:"migrationId"`
+	Migration            Migration         `json:"migration"`
+}
+
+type SearchEntityResult struct {
+	Meta
+	Identifier string         `json:"identifier,omitempty"`
+	Title      string         `json:"title,omitempty"`
+	Icon       *string        `json:"icon,omitempty"`
+	Team       []string       `json:"team,omitempty"`
+	Properties map[string]any `json:"properties,omitempty"`
+	Relations  map[string]any `json:"relations,omitempty"`
+}
+
+type SearchResult struct {
+	OK                 bool     `json:"ok"`
+	MatchingBlueprints []string `json:"matchingBlueprints"`
+	Entities           []Entity `json:"entities"`
 }
 
 type PortPagePermissionsBody struct {
 	OK              bool            `json:"ok"`
 	PagePermissions PagePermissions `json:"permissions"`
+}
+
+type PortBlueprintPermissionsBody struct {
+	OK                   bool                 `json:"ok"`
+	BlueprintPermissions BlueprintPermissions `json:"permissions"`
 }
 
 type TeamUserBody struct {
@@ -410,4 +476,13 @@ type PortProviderModel struct {
 
 type PortBodyDelete struct {
 	Ok bool `json:"ok"`
+}
+
+type Integration struct {
+	Title                string                `json:"title"`
+	InstallationId       string                `json:"installationId,omitempty"`
+	InstallationAppType  *string               `json:"installationAppType,omitempty"`
+	Version              string                `json:"version,omitempty"`
+	Config               *map[string]any       `json:"config,omitempty"`
+	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
 }

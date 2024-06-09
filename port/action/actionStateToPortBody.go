@@ -3,10 +3,10 @@ package action
 import (
 	"context"
 
-	"github.com/port-labs/terraform-provider-port-labs/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/internal/consts"
-	"github.com/port-labs/terraform-provider-port-labs/internal/flex"
-	"github.com/port-labs/terraform-provider-port-labs/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
@@ -315,16 +315,15 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 		if data.UpsertEntityMethod.Teams != nil {
 			team = flex.TerraformStringListToGoArray(data.UpsertEntityMethod.Teams)
 		}
-		p, err := utils.TerraformStringToGoObject(data.UpsertEntityMethod.Properties)
+		properties, err := utils.TerraformJsonStringToGoObject(data.UpsertEntityMethod.Properties.ValueStringPointer())
 		if err != nil {
 			return nil, err
 		}
-		properties, _ := p.(map[string]interface{})
-		r, err := utils.TerraformStringToGoObject(data.UpsertEntityMethod.Relations)
+
+		relations, err := utils.TerraformJsonStringToGoObject(data.UpsertEntityMethod.Relations.ValueStringPointer())
 		if err != nil {
 			return nil, err
 		}
-		relations, _ := r.(map[string]interface{})
 
 		upsertEntityInvocation := &cli.InvocationMethod{
 			Type:                consts.UpsertEntity,
@@ -333,8 +332,8 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 			BlueprintIdentifier: data.UpsertEntityMethod.BlueprintIdentifier.ValueStringPointer(),
 			Team:                team,
 			Icon:                data.UpsertEntityMethod.Icon.ValueStringPointer(),
-			Properties:          properties,
-			Relations:           relations,
+			Properties:          *properties,
+			Relations:           *relations,
 		}
 
 		return upsertEntityInvocation, nil

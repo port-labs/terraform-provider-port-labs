@@ -311,29 +311,36 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 	}
 
 	if data.UpsertEntityMethod != nil {
-		var team interface{}
-		if data.UpsertEntityMethod.Teams != nil {
-			team = flex.TerraformStringListToGoArray(data.UpsertEntityMethod.Teams)
-		}
-		properties, err := utils.TerraformJsonStringToGoObject(data.UpsertEntityMethod.Properties.ValueStringPointer())
-		if err != nil {
-			return nil, err
-		}
+		var mapping cli.MappingSchema
+		if data.UpsertEntityMethod.Mapping != nil {
+			var team interface{}
+			if data.UpsertEntityMethod.Mapping.Teams != nil {
+				team = flex.TerraformStringListToGoArray(data.UpsertEntityMethod.Mapping.Teams)
+			}
+			properties, err := utils.TerraformJsonStringToGoObject(data.UpsertEntityMethod.Mapping.Properties.ValueStringPointer())
+			if err != nil {
+				return nil, err
+			}
 
-		relations, err := utils.TerraformJsonStringToGoObject(data.UpsertEntityMethod.Relations.ValueStringPointer())
-		if err != nil {
-			return nil, err
+			relations, err := utils.TerraformJsonStringToGoObject(data.UpsertEntityMethod.Mapping.Relations.ValueStringPointer())
+			if err != nil {
+				return nil, err
+			}
+
+			mapping = cli.MappingSchema{
+				Team:       team,
+				Identifier: data.UpsertEntityMethod.Mapping.Identifier.ValueStringPointer(),
+				Title:      data.UpsertEntityMethod.Title.ValueStringPointer(),
+				Icon:       data.UpsertEntityMethod.Mapping.Icon.ValueStringPointer(),
+				Properties: *properties,
+				Relations:  *relations,
+			}
 		}
 
 		upsertEntityInvocation := &cli.InvocationMethod{
 			Type:                consts.UpsertEntity,
-			Identifier:          data.UpsertEntityMethod.Identifier.ValueStringPointer(),
-			Title:               data.UpsertEntityMethod.Title.ValueStringPointer(),
 			BlueprintIdentifier: data.UpsertEntityMethod.BlueprintIdentifier.ValueStringPointer(),
-			Team:                team,
-			Icon:                data.UpsertEntityMethod.Icon.ValueStringPointer(),
-			Properties:          *properties,
-			Relations:           *relations,
+			Mapping:             mapping,
 		}
 
 		return upsertEntityInvocation, nil

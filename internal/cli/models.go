@@ -146,6 +146,15 @@ type (
 		Required   []string                     `json:"required,omitempty"`
 	}
 
+	MappingSchema struct {
+		Identifier *string        `json:"identifier,omitempty"`
+		Title      *string        `json:"title,omitempty"`
+		Team       any            `json:"team,omitempty"`
+		Icon       *string        `json:"icon,omitempty"`
+		Properties map[string]any `json:"properties,omitempty"`
+		Relations  map[string]any `json:"relations,omitempty"`
+	}
+
 	InvocationMethod struct {
 		Type                 string            `json:"type"`
 		Payload              any               `json:"payload,omitempty"`
@@ -166,13 +175,8 @@ type (
 		DefaultRef           *string           `json:"defaultRef,omitempty"`
 		PipelineVariables    map[string]any    `json:"pipelineVariables,omitempty"`
 		Webhook              *string           `json:"webhook,omitempty"`
-		Identifier           *string           `json:"identifier,omitempty"`
-		Title                *string           `json:"title,omitempty"`
 		BlueprintIdentifier  *string           `json:"blueprintIdentifier,omitempty"`
-		Team                 any               `json:"team,omitempty"`
-		Icon                 *string           `json:"icon,omitempty"`
-		Properties           map[string]any    `json:"properties,omitempty"`
-		Relations            map[string]any    `json:"relations,omitempty"`
+		Mapping              MappingSchema     `json:"mapping,omitempty"`
 	}
 
 	ApprovalNotification struct {

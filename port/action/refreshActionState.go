@@ -100,7 +100,7 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 
 	if a.InvocationMethod.Type == consts.UpsertEntity {
 		var teams []types.String
-		switch team := a.InvocationMethod.Team.(type) {
+		switch team := a.InvocationMethod.Mapping.Team.(type) {
 		case string:
 			teams = append(teams, types.StringValue(team))
 		case []interface{}:
@@ -109,23 +109,25 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 				teams = append(teams, types.StringValue(t.(string)))
 			}
 		}
-		properties, err := utils.GoObjectToTerraformString(a.InvocationMethod.Properties)
+		properties, err := utils.GoObjectToTerraformString(a.InvocationMethod.Mapping.Properties)
 		if err != nil {
 			return err
 		}
-		relations, err := utils.GoObjectToTerraformString(a.InvocationMethod.Relations)
+		relations, err := utils.GoObjectToTerraformString(a.InvocationMethod.Mapping.Relations)
 		if err != nil {
 			return err
 		}
 
 		state.UpsertEntityMethod = &UpsertEntityMethodModel{
-			Identifier:          types.StringValue(*a.InvocationMethod.Identifier),
-			Title:               flex.GoStringToFramework(a.InvocationMethod.Title),
+			Title:               flex.GoStringToFramework(a.InvocationMethod.Mapping.Title),
 			BlueprintIdentifier: types.StringValue(*a.InvocationMethod.BlueprintIdentifier),
-			Teams:               teams,
-			Icon:                flex.GoStringToFramework(a.InvocationMethod.Icon),
-			Properties:          properties,
-			Relations:           relations,
+			Mapping: &MappingModel{
+				Properties: properties,
+				Relations:  relations,
+				Icon:       flex.GoStringToFramework(a.InvocationMethod.Mapping.Icon),
+				Teams:      teams,
+				Identifier: types.StringValue(*a.InvocationMethod.Mapping.Identifier),
+			},
 		}
 	}
 

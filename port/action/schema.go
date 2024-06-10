@@ -354,10 +354,6 @@ func ActionSchema() map[string]schema.Attribute {
 			MarkdownDescription: "Upsert Entity invocation method",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
-				"identifier": schema.StringAttribute{
-					MarkdownDescription: "Required when selecting type Upsert Entity. The entity identifier for the upsert",
-					Required:            true,
-				},
 				"title": schema.StringAttribute{
 					MarkdownDescription: "The title of the entity",
 					Optional:            true,
@@ -366,22 +362,32 @@ func ActionSchema() map[string]schema.Attribute {
 					MarkdownDescription: "Required when selecting type Upsert Entity. The blueprint identifier of the entity for the upsert",
 					Required:            true,
 				},
-				"teams": schema.ListAttribute{
-					MarkdownDescription: "The teams the entity belongs to",
-					ElementType:         types.StringType,
+				"mapping": schema.SingleNestedAttribute{
+					MarkdownDescription: "Upsert Entity invocation method",
 					Optional:            true,
-				},
-				"icon": schema.StringAttribute{
-					MarkdownDescription: "The icon of the entity",
-					Optional:            true,
-				},
-				"properties": schema.StringAttribute{
-					MarkdownDescription: "The properties of the entity (key-value object encoded to a string)",
-					Optional:            true,
-				},
-				"relations": schema.StringAttribute{
-					MarkdownDescription: "The relations of the entity (key-value object encoded to a string)",
-					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"identifier": schema.StringAttribute{
+							MarkdownDescription: "Required when selecting type Upsert Entity. The entity identifier for the upsert",
+							Required:            true,
+						},
+						"teams": schema.ListAttribute{
+							MarkdownDescription: "The teams the entity belongs to",
+							ElementType:         types.StringType,
+							Optional:            true,
+						},
+						"icon": schema.StringAttribute{
+							MarkdownDescription: "The icon of the entity",
+							Optional:            true,
+						},
+						"properties": schema.StringAttribute{
+							MarkdownDescription: "The properties of the entity (key-value object encoded to a string)",
+							Optional:            true,
+						},
+						"relations": schema.StringAttribute{
+							MarkdownDescription: "The relations of the entity (key-value object encoded to a string)",
+							Optional:            true,
+						},
+					},
 				},
 			},
 		},

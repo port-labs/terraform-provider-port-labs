@@ -347,14 +347,18 @@ type AzureMethodModel struct {
 	Payload types.String `tfsdk:"payload"`
 }
 
+type MappingModel struct {
+	Properties types.String   `tfsdk:"properties"`
+	Relations  types.String   `tfsdk:"relations"`
+	Identifier types.String   `tfsdk:"identifier"`
+	Teams      []types.String `tfsdk:"teams"`
+	Icon       types.String   `tfsdk:"icon"`
+}
+
 type UpsertEntityMethodModel struct {
-	Identifier          types.String   `tfsdk:"identifier"`
-	Title               types.String   `tfsdk:"title"`
-	BlueprintIdentifier types.String   `tfsdk:"blueprint_identifier"`
-	Teams               []types.String `tfsdk:"teams"`
-	Icon                types.String   `tfsdk:"icon"`
-	Properties          types.String   `tfsdk:"properties"`
-	Relations           types.String   `tfsdk:"relations"`
+	Title               types.String  `tfsdk:"title"`
+	BlueprintIdentifier types.String  `tfsdk:"blueprint_identifier"`
+	Mapping             *MappingModel `tfsdk:"mapping"`
 }
 
 type ApprovalWebhookNotificationModel struct {

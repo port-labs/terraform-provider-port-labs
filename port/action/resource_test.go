@@ -411,13 +411,15 @@ func TestAccPortActionUpsertEntityInvocation(t *testing.T) {
 			blueprint_identifier = port_blueprint.microservice.identifier
 		}
 		upsert_entity_method = {
-		  identifier = "test-entity"
-		  title = "Test Entity"
-		  blueprint_identifier = port_blueprint.microservice.identifier
-		  teams = []
-		  icon = "Terraform"
-		  properties = jsonencode({"text": "test"})
-		  relations = jsonencode({"test-rel": "target-bp"})
+			title = "Test Entity"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			mapping = {
+				identifier = "test-entity"
+				teams = []
+				icon = "Terraform"
+				properties = jsonencode({"text": "test"})
+				relations = jsonencode({"test-rel": "target-bp"})
+			}
 		}
 	}`, actionIdentifier)
 
@@ -433,13 +435,13 @@ func TestAccPortActionUpsertEntityInvocation(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.blueprint_identifier", identifier),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.identifier", "test-entity"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.title", "Test Entity"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.blueprint_identifier", identifier),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.teams.#", "0"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.properties", "{\"text\":\"test\"}"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.relations", "{\"test-rel\":\"target-bp\"}"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.mapping.identifier", "test-entity"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.mapping.teams.#", "0"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.mapping.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.mapping.properties", "{\"text\":\"test\"}"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "upsert_entity_method.mapping.relations", "{\"test-rel\":\"target-bp\"}"),
 				),
 			},
 		},

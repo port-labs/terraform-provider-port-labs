@@ -176,7 +176,7 @@ type (
 		PipelineVariables    map[string]any    `json:"pipelineVariables,omitempty"`
 		Webhook              *string           `json:"webhook,omitempty"`
 		BlueprintIdentifier  *string           `json:"blueprintIdentifier,omitempty"`
-		Mapping              MappingSchema     `json:"mapping,omitempty"`
+		Mapping              *MappingSchema    `json:"mapping,omitempty"`
 	}
 
 	ApprovalNotification struct {

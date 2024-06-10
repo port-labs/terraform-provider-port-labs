@@ -340,7 +340,7 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 		upsertEntityInvocation := &cli.InvocationMethod{
 			Type:                consts.UpsertEntity,
 			BlueprintIdentifier: data.UpsertEntityMethod.BlueprintIdentifier.ValueStringPointer(),
-			Mapping:             mapping,
+			Mapping:             &mapping,
 		}
 
 		return upsertEntityInvocation, nil

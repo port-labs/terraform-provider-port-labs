@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 
 	"regexp"
 
@@ -136,7 +137,97 @@ func ActionSchema() map[string]schema.Attribute {
 			Validators: []validator.Object{
 				objectvalidator.ExactlyOneOf(
 					path.MatchRoot("self_service_trigger"),
+					path.MatchRoot("automation_trigger"),
 				),
+			},
+		},
+		"automation_trigger": schema.SingleNestedAttribute{
+			MarkdownDescription: "Automation trigger for the action",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"entity_created_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Entity created event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"blueprint_identifier": schema.StringAttribute{
+							MarkdownDescription: "The blueprint identifier of the created entity",
+							Required:            true,
+						},
+					},
+					Validators: []validator.Object{
+						objectvalidator.ExactlyOneOf(
+							path.MatchRelative().AtParent().AtName("entity_created_event"),
+							path.MatchRelative().AtParent().AtName("entity_updated_event"),
+							path.MatchRelative().AtParent().AtName("entity_deleted_event"),
+							path.MatchRelative().AtParent().AtName("any_entity_change_event"),
+							path.MatchRelative().AtParent().AtName("timer_property_expired_event"),
+						),
+					},
+				},
+				"entity_updated_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Entity updated event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"blueprint_identifier": schema.StringAttribute{
+							MarkdownDescription: "The blueprint identifier of the updated entity",
+							Required:            true,
+						},
+					},
+				},
+				"entity_deleted_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Entity deleted event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"blueprint_identifier": schema.StringAttribute{
+							MarkdownDescription: "The blueprint identifier of the deleted entity",
+							Required:            true,
+						},
+					},
+				},
+				"any_entity_change_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Any entity change event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"blueprint_identifier": schema.StringAttribute{
+							MarkdownDescription: "The blueprint identifier of the changed entity",
+							Required:            true,
+						},
+					},
+				},
+				"timer_property_expired_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Timer property expired event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"blueprint_identifier": schema.StringAttribute{
+							MarkdownDescription: "The blueprint identifier of the expired timer property",
+							Required:            true,
+						},
+						"property_identifier": schema.StringAttribute{
+							MarkdownDescription: "The property identifier of the expired timer property",
+							Required:            true,
+						},
+					},
+				},
+				"jq_condition": schema.SingleNestedAttribute{
+					MarkdownDescription: "JQ condition for automation trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"expressions": schema.ListAttribute{
+							MarkdownDescription: "The jq expressions of the condition",
+							ElementType:         types.StringType,
+							Required:            true,
+						},
+						"combinator": schema.StringAttribute{
+							MarkdownDescription: "The combinator of the condition",
+							Optional:            true,
+							Computed:            true,
+							Default:             stringdefault.StaticString("and"),
+							Validators: []validator.String{
+								stringvalidator.OneOf("and", "or"),
+							},
+						},
+					},
+				},
 			},
 		},
 		"kafka_method": schema.SingleNestedAttribute{
@@ -155,6 +246,7 @@ func ActionSchema() map[string]schema.Attribute {
 					path.MatchRoot("github_method"),
 					path.MatchRoot("gitlab_method"),
 					path.MatchRoot("azure_method"),
+					path.MatchRoot("upsert_entity_method"),
 				),
 			},
 		},
@@ -255,6 +347,47 @@ func ActionSchema() map[string]schema.Attribute {
 				"payload": schema.StringAttribute{
 					MarkdownDescription: "The Azure Devops workflow [payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					Optional:            true,
+				},
+			},
+		},
+		"upsert_entity_method": schema.SingleNestedAttribute{
+			MarkdownDescription: "Upsert Entity invocation method",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"title": schema.StringAttribute{
+					MarkdownDescription: "The title of the entity",
+					Optional:            true,
+				},
+				"blueprint_identifier": schema.StringAttribute{
+					MarkdownDescription: "Required when selecting type Upsert Entity. The blueprint identifier of the entity for the upsert",
+					Required:            true,
+				},
+				"mapping": schema.SingleNestedAttribute{
+					MarkdownDescription: "Upsert Entity invocation method",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"identifier": schema.StringAttribute{
+							MarkdownDescription: "Required when selecting type Upsert Entity. The entity identifier for the upsert",
+							Required:            true,
+						},
+						"teams": schema.ListAttribute{
+							MarkdownDescription: "The teams the entity belongs to",
+							ElementType:         types.StringType,
+							Optional:            true,
+						},
+						"icon": schema.StringAttribute{
+							MarkdownDescription: "The icon of the entity",
+							Optional:            true,
+						},
+						"properties": schema.StringAttribute{
+							MarkdownDescription: "The properties of the entity (key-value object encoded to a string)",
+							Optional:            true,
+						},
+						"relations": schema.StringAttribute{
+							MarkdownDescription: "The relations of the entity (key-value object encoded to a string)",
+							Optional:            true,
+						},
+					},
 				},
 			},
 		},
@@ -965,6 +1098,28 @@ resource "port_action" "create_microservice" {
 					}
 				}
 			}
+		}
+	}
+	kafka_method = {
+		payload = jsonencode({
+		  runId: "{{"{{.run.id}}"}}"
+		})
+	}
+}` + "\n```" + `
+
+## Example Usage with Automation trigger
+
+Port allows setting an automation trigger to an action, for executing an action based on event occurred to an entity in Port.
+
+` + "```hcl" + `
+resource "port_action" "delete_temporary_microservice" {
+	title = "Delete Temporary Microservice"
+	identifier = "delete-temp-microservice"
+	icon = "Terraform"
+	automation_trigger = {
+		timer_property_expired_event = {
+			blueprint_identifier = port_blueprint.microservice.identifier
+			property_identifier = "ttl"
 		}
 	}
 	kafka_method = {

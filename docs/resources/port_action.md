@@ -6,34 +6,34 @@ description: |-
   Action resource
   Docs for the Action resource can be found here https://docs.getport.io/create-self-service-experiences/.
   Example Usage
-  ```hcl
-  resource "portaction" "createmicroservice" {
+  hcl
+  resource "port_action" "create_microservice" {
       title = "Create Microservice"
       identifier = "create-microservice"
       icon = "Terraform"
-      selfservicetrigger = {
+      self_service_trigger = {
           operation = "CREATE"
-          blueprintidentifier = portblueprint.microservice.identifier
-          userproperties = {
-              stringprops = {
+          blueprint_identifier = port_blueprint.microservice.identifier
+          user_properties = {
+              string_props = {
                   myStringIdentifier = {
                       title = "My String Identifier"
                       required = true
                       format = "entity"
-                      blueprint = portblueprint.parent.identifier
+                      blueprint = port_blueprint.parent.identifier
                       dataset = {
                           combinator = "and"
                           rules = [{
                               property = "$title"
                               operator = "contains"
                               value = {
-                                  jqquery = "\"specificValue\""
+                                  jq_query = "\"specificValue\""
                               }
                           }]
                       }
                   }
               }
-              numberprops = {
+              number_props = {
                   myNumberIdentifier = {
                       title = "My Number Identifier"
                       required = true
@@ -41,25 +41,25 @@ description: |-
                       minimum = 0
                   }
               }
-              booleanprops = {
+              boolean_props = {
                   myBooleanIdentifier = {
                       title = "My Boolean Identifier"
                       required = true
                   }
               }
-              objectprops = {
+              object_props = {
                   myObjectIdentifier = {
                       title = "My Object Identifier"
                       required = true
                   }
               }
-              arrayprops = {
+              array_props = {
                   myArrayIdentifier = {
                       title = "My Array Identifier"
                       required = true
-                      stringitems = {
+                      string_items = {
                           format = "entity"
-                          blueprint = portblueprint.parent.identifier
+                          blueprint = port_blueprint.parent.identifier
                           dataset = jsonencode({
                               combinator = "and"
                               rules = [{
@@ -71,6 +71,26 @@ description: |-
                       }
                   }
               }
+          }
+      }
+      kafka_method = {
+          payload = jsonencode({
+            runId: "{{.run.id}}"
+          })
+      }
+  }
+  
+  Example Usage with Automation trigger
+  Port allows setting an automation trigger to an action, for executing an action based on event occurred to an entity in Port.
+  ```hcl
+  resource "portaction" "deletetemporarymicroservice" {
+      title = "Delete Temporary Microservice"
+      identifier = "delete-temp-microservice"
+      icon = "Terraform"
+      automationtrigger = {
+          timerpropertyexpiredevent = {
+              blueprintidentifier = portblueprint.microservice.identifier
+              propertyidentifier = "ttl"
           }
       }
       kafka_method = {
@@ -198,6 +218,29 @@ resource "port_action" "create_microservice" {
 		})
 	}
 }
+```
+
+## Example Usage with Automation trigger
+
+Port allows setting an automation trigger to an action, for executing an action based on event occurred to an entity in Port.
+
+```hcl
+resource "port_action" "delete_temporary_microservice" {
+	title = "Delete Temporary Microservice"
+	identifier = "delete-temp-microservice"
+	icon = "Terraform"
+	automation_trigger = {
+		timer_property_expired_event = {
+			blueprint_identifier = port_blueprint.microservice.identifier
+			property_identifier = "ttl"
+		}
+	}
+	kafka_method = {
+		payload = jsonencode({
+		  runId: "{{.run.id}}"
+		})
+	}
+}
 
 ```
 
@@ -252,6 +295,7 @@ resource "port_action" "create_microservice" {
 
 - `approval_email_notification` (Object) The email notification of the approval (see [below for nested schema](#nestedatt--approval_email_notification))
 - `approval_webhook_notification` (Attributes) The webhook notification of the approval (see [below for nested schema](#nestedatt--approval_webhook_notification))
+- `automation_trigger` (Attributes) Automation trigger for the action (see [below for nested schema](#nestedatt--automation_trigger))
 - `azure_method` (Attributes) Azure DevOps invocation method (see [below for nested schema](#nestedatt--azure_method))
 - `blueprint` (String, Deprecated) The blueprint identifier the action relates to
 - `description` (String) Description
@@ -263,6 +307,7 @@ resource "port_action" "create_microservice" {
 - `required_approval` (Boolean) Require approval before invoking the action
 - `self_service_trigger` (Attributes) Self service trigger for the action (see [below for nested schema](#nestedatt--self_service_trigger))
 - `title` (String) Title
+- `upsert_entity_method` (Attributes) Upsert Entity invocation method (see [below for nested schema](#nestedatt--upsert_entity_method))
 - `webhook_method` (Attributes) Webhook invocation method (see [below for nested schema](#nestedatt--webhook_method))
 
 ### Read-Only
@@ -286,6 +331,72 @@ Required:
 Optional:
 
 - `format` (String) The format to invoke the webhook
+
+
+<a id="nestedatt--automation_trigger"></a>
+### Nested Schema for `automation_trigger`
+
+Optional:
+
+- `any_entity_change_event` (Attributes) Any entity change event trigger (see [below for nested schema](#nestedatt--automation_trigger--any_entity_change_event))
+- `entity_created_event` (Attributes) Entity created event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_created_event))
+- `entity_deleted_event` (Attributes) Entity deleted event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_deleted_event))
+- `entity_updated_event` (Attributes) Entity updated event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_updated_event))
+- `jq_condition` (Attributes) JQ condition for automation trigger (see [below for nested schema](#nestedatt--automation_trigger--jq_condition))
+- `timer_property_expired_event` (Attributes) Timer property expired event trigger (see [below for nested schema](#nestedatt--automation_trigger--timer_property_expired_event))
+
+<a id="nestedatt--automation_trigger--any_entity_change_event"></a>
+### Nested Schema for `automation_trigger.any_entity_change_event`
+
+Required:
+
+- `blueprint_identifier` (String) The blueprint identifier of the changed entity
+
+
+<a id="nestedatt--automation_trigger--entity_created_event"></a>
+### Nested Schema for `automation_trigger.entity_created_event`
+
+Required:
+
+- `blueprint_identifier` (String) The blueprint identifier of the created entity
+
+
+<a id="nestedatt--automation_trigger--entity_deleted_event"></a>
+### Nested Schema for `automation_trigger.entity_deleted_event`
+
+Required:
+
+- `blueprint_identifier` (String) The blueprint identifier of the deleted entity
+
+
+<a id="nestedatt--automation_trigger--entity_updated_event"></a>
+### Nested Schema for `automation_trigger.entity_updated_event`
+
+Required:
+
+- `blueprint_identifier` (String) The blueprint identifier of the updated entity
+
+
+<a id="nestedatt--automation_trigger--jq_condition"></a>
+### Nested Schema for `automation_trigger.jq_condition`
+
+Required:
+
+- `expressions` (List of String) The jq expressions of the condition
+
+Optional:
+
+- `combinator` (String) The combinator of the condition
+
+
+<a id="nestedatt--automation_trigger--timer_property_expired_event"></a>
+### Nested Schema for `automation_trigger.timer_property_expired_event`
+
+Required:
+
+- `blueprint_identifier` (String) The blueprint identifier of the expired timer property
+- `property_identifier` (String) The property identifier of the expired timer property
+
 
 
 <a id="nestedatt--azure_method"></a>
@@ -533,6 +644,23 @@ Optional:
 
 
 
+
+
+<a id="nestedatt--upsert_entity_method"></a>
+### Nested Schema for `upsert_entity_method`
+
+Required:
+
+- `blueprint_identifier` (String) Required when selecting type Upsert Entity. The blueprint identifier of the entity for the upsert
+- `identifier` (String) Required when selecting type Upsert Entity. The entity identifier for the upsert
+
+Optional:
+
+- `icon` (String) The icon of the entity
+- `properties` (String) The properties of the entity (key-value object encoded to a string)
+- `relations` (String) The relations of the entity (key-value object encoded to a string)
+- `teams` (List of String) The teams the entity belongs to
+- `title` (String) The title of the entity
 
 
 <a id="nestedatt--webhook_method"></a>

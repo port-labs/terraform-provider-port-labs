@@ -5,6 +5,7 @@ import (
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
@@ -108,6 +109,58 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 		}
 
 		return selfServiceTrigger, nil
+	}
+
+	if data.AutomationTrigger != nil {
+		automationTrigger := &cli.Trigger{
+			Type: consts.Automation,
+		}
+
+		if data.AutomationTrigger.JqCondition != nil {
+			automationTrigger.Condition = &cli.TriggerCondition{
+				Type:        consts.JqCondition,
+				Expressions: flex.TerraformStringListToGoArray(data.AutomationTrigger.JqCondition.Expressions),
+				Combinator:  data.AutomationTrigger.JqCondition.Combinator.ValueStringPointer(),
+			}
+		}
+
+		if data.AutomationTrigger.EntityCreatedEvent != nil {
+			automationTrigger.Event = &cli.TriggerEvent{
+				Type:                consts.EntityCreated,
+				BlueprintIdentifier: data.AutomationTrigger.EntityCreatedEvent.BlueprintIdentifier.ValueStringPointer(),
+			}
+		}
+
+		if data.AutomationTrigger.EntityUpdatedEvent != nil {
+			automationTrigger.Event = &cli.TriggerEvent{
+				Type:                consts.EntityUpdated,
+				BlueprintIdentifier: data.AutomationTrigger.EntityUpdatedEvent.BlueprintIdentifier.ValueStringPointer(),
+			}
+		}
+
+		if data.AutomationTrigger.EntityDeletedEvent != nil {
+			automationTrigger.Event = &cli.TriggerEvent{
+				Type:                consts.EntityDeleted,
+				BlueprintIdentifier: data.AutomationTrigger.EntityDeletedEvent.BlueprintIdentifier.ValueStringPointer(),
+			}
+		}
+
+		if data.AutomationTrigger.AnyEntityChangeEvent != nil {
+			automationTrigger.Event = &cli.TriggerEvent{
+				Type:                consts.AnyEntityChange,
+				BlueprintIdentifier: data.AutomationTrigger.AnyEntityChangeEvent.BlueprintIdentifier.ValueStringPointer(),
+			}
+		}
+
+		if data.AutomationTrigger.TimerPropertyExpiredEvent != nil {
+			automationTrigger.Event = &cli.TriggerEvent{
+				Type:                consts.TimerPropertyExpired,
+				BlueprintIdentifier: data.AutomationTrigger.TimerPropertyExpiredEvent.BlueprintIdentifier.ValueStringPointer(),
+				PropertyIdentifier:  data.AutomationTrigger.TimerPropertyExpiredEvent.PropertyIdentifier.ValueStringPointer(),
+			}
+		}
+
+		return automationTrigger, nil
 	}
 
 	return nil, nil
@@ -255,6 +308,42 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 		}
 
 		return azureInvocation, nil
+	}
+
+	if data.UpsertEntityMethod != nil {
+		var mapping cli.MappingSchema
+		if data.UpsertEntityMethod.Mapping != nil {
+			var team interface{}
+			if data.UpsertEntityMethod.Mapping.Teams != nil {
+				team = flex.TerraformStringListToGoArray(data.UpsertEntityMethod.Mapping.Teams)
+			}
+			properties, err := utils.TerraformJsonStringToGoObject(data.UpsertEntityMethod.Mapping.Properties.ValueStringPointer())
+			if err != nil {
+				return nil, err
+			}
+
+			relations, err := utils.TerraformJsonStringToGoObject(data.UpsertEntityMethod.Mapping.Relations.ValueStringPointer())
+			if err != nil {
+				return nil, err
+			}
+
+			mapping = cli.MappingSchema{
+				Team:       team,
+				Identifier: data.UpsertEntityMethod.Mapping.Identifier.ValueStringPointer(),
+				Title:      data.UpsertEntityMethod.Title.ValueStringPointer(),
+				Icon:       data.UpsertEntityMethod.Mapping.Icon.ValueStringPointer(),
+				Properties: *properties,
+				Relations:  *relations,
+			}
+		}
+
+		upsertEntityInvocation := &cli.InvocationMethod{
+			Type:                consts.UpsertEntity,
+			BlueprintIdentifier: data.UpsertEntityMethod.BlueprintIdentifier.ValueStringPointer(),
+			Mapping:             &mapping,
+		}
+
+		return upsertEntityInvocation, nil
 	}
 
 	return nil, nil

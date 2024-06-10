@@ -304,6 +304,15 @@ type JqConditionModel struct {
 	Combinator  types.String   `tfsdk:"combinator"`
 }
 
+type AutomationTriggerModel struct {
+	EntityCreatedEvent        *EntityCreatedEventModel        `tfsdk:"entity_created_event"`
+	EntityUpdatedEvent        *EntityUpdatedEventModel        `tfsdk:"entity_updated_event"`
+	EntityDeletedEvent        *EntityDeletedEventModel        `tfsdk:"entity_deleted_event"`
+	AnyEntityChangeEvent      *AnyEntityChangeEventModel      `tfsdk:"any_entity_change_event"`
+	TimerPropertyExpiredEvent *TimerPropertyExpiredEventModel `tfsdk:"timer_property_expired_event"`
+	JqCondition               *JqConditionModel               `tfsdk:"jq_condition"`
+}
+
 type KafkaMethodModel struct {
 	Payload types.String `tfsdk:"payload"`
 }
@@ -338,6 +347,20 @@ type AzureMethodModel struct {
 	Payload types.String `tfsdk:"payload"`
 }
 
+type MappingModel struct {
+	Properties types.String   `tfsdk:"properties"`
+	Relations  types.String   `tfsdk:"relations"`
+	Identifier types.String   `tfsdk:"identifier"`
+	Teams      []types.String `tfsdk:"teams"`
+	Icon       types.String   `tfsdk:"icon"`
+}
+
+type UpsertEntityMethodModel struct {
+	Title               types.String  `tfsdk:"title"`
+	BlueprintIdentifier types.String  `tfsdk:"blueprint_identifier"`
+	Mapping             *MappingModel `tfsdk:"mapping"`
+}
+
 type ApprovalWebhookNotificationModel struct {
 	Url    types.String `tfsdk:"url"`
 	Format types.String `tfsdk:"format"`
@@ -351,11 +374,13 @@ type ActionModel struct {
 	Icon                        types.String                      `tfsdk:"icon"`
 	Description                 types.String                      `tfsdk:"description"`
 	SelfServiceTrigger          *SelfServiceTriggerModel          `tfsdk:"self_service_trigger"`
+	AutomationTrigger           *AutomationTriggerModel           `tfsdk:"automation_trigger"`
 	KafkaMethod                 *KafkaMethodModel                 `tfsdk:"kafka_method"`
 	WebhookMethod               *WebhookMethodModel               `tfsdk:"webhook_method"`
 	GithubMethod                *GithubMethodModel                `tfsdk:"github_method"`
 	GitlabMethod                *GitlabMethodModel                `tfsdk:"gitlab_method"`
 	AzureMethod                 *AzureMethodModel                 `tfsdk:"azure_method"`
+	UpsertEntityMethod          *UpsertEntityMethodModel          `tfsdk:"upsert_entity_method"`
 	RequiredApproval            types.Bool                        `tfsdk:"required_approval"`
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
@@ -371,11 +396,13 @@ type ActionValidationModel struct {
 	Icon                        types.String `tfsdk:"icon"`
 	Description                 types.String `tfsdk:"description"`
 	SelfServiceTrigger          types.Object `tfsdk:"self_service_trigger"`
+	AutomationTrigger           types.Object `tfsdk:"automation_trigger"`
 	KafkaMethod                 types.Object `tfsdk:"kafka_method"`
 	WebhookMethod               types.Object `tfsdk:"webhook_method"`
 	GithubMethod                types.Object `tfsdk:"github_method"`
 	GitlabMethod                types.Object `tfsdk:"gitlab_method"`
 	AzureMethod                 types.Object `tfsdk:"azure_method"`
+	UpsertEntityMethod          types.Object `tfsdk:"upsert_entity_method"`
 	RequiredApproval            types.Bool   `tfsdk:"required_approval"`
 	ApprovalWebhookNotification types.Object `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object `tfsdk:"approval_email_notification"`

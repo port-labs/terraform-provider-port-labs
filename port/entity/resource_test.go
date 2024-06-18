@@ -769,5 +769,60 @@ func TestAccPortEntityUpdateBlueprintIdentifier(t *testing.T) {
 			},
 		},
 	})
+}
 
+func TestAccPortEntityWithDefaultArrayProp(t *testing.T) {
+	identifier := utils.GenID()
+	entityIdentifier := utils.GenID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF Provider Test BP0"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			"array_props" = {
+				"myArrayIdentifier" =  {
+					"title" = "My Array Identifier"
+				}
+			}
+		}	
+	}
+	resource "port_entity" "microservice" {
+		title = "TF Provider Test Entity0"	
+		blueprint = port_blueprint.microservice.identifier	
+		identifier = "%s"	
+		properties = {	
+			array_props = {
+				string_items = {
+					"myArrayIdentifier" =  ["My Array Value", "My Array Value2"]
+				}
+			}
+		}
+	}`, identifier, entityIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_entity.microservice", "title", "TF Provider Test Entity0"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "blueprint", identifier),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.string_items.myArrayIdentifier.0", "My Array Value"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.string_items.myArrayIdentifier.1", "My Array Value2"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_entity.microservice", "title", "TF Provider Test Entity0"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "blueprint", identifier),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.string_items.myArrayIdentifier.0", "My Array Value"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.array_props.string_items.myArrayIdentifier.1", "My Array Value2"),
+				),
+			},
+		},
+	})
 }

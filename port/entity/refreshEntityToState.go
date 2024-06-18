@@ -25,7 +25,8 @@ func refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayPrope
 	for k, t := range arrayProperties {
 
 		switch blueprint.Schema.Properties[k].Items["type"] {
-		case "string":
+		// array without items type is array of string by default
+		case "string", nil:
 			if t != nil {
 				for _, item := range t {
 					stringItem := item.(string)
@@ -80,7 +81,6 @@ func refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayPrope
 				mapObjectItems[k] = nil
 			}
 			state.Properties.ArrayProps.ObjectItems, _ = types.MapValueFrom(ctx, types.ListType{ElemType: types.StringType}, mapObjectItems)
-
 		}
 	}
 }

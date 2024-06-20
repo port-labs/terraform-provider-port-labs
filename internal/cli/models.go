@@ -26,9 +26,15 @@ type (
 		Level      string `tfsdk:"level"`
 	}
 
+	ScorecardLevelModel struct {
+		Title string `tfsdk:"title"`
+		Color string `tfsdk:"color"`
+	}
+
 	ScorecardModel struct {
-		Rules []ScorecardRulesModel `tfsdk:"rules"`
-		Level string                `tfsdk:"level"`
+		Rules  []ScorecardRulesModel `tfsdk:"rules"`
+		Levels []ScorecardLevelModel `tfsdk:"levels"`
+		Level  string                `tfsdk:"level"`
 	}
 
 	Entity struct {

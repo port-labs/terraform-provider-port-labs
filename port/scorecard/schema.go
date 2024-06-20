@@ -13,6 +13,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
+func LevelSchema() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"color": schema.StringAttribute{
+			MarkdownDescription: "The color of the level",
+			Required:            true,
+		},
+		"title": schema.StringAttribute{
+			MarkdownDescription: "The title of the level",
+			Required:            true,
+		},
+	}
+}
+
 func RuleSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"identifier": schema.StringAttribute{
@@ -26,9 +39,6 @@ func RuleSchema() map[string]schema.Attribute {
 		"level": schema.StringAttribute{
 			MarkdownDescription: "The level of the rule",
 			Required:            true,
-			Validators: []validator.String{
-				stringvalidator.OneOf("Bronze", "Silver", "Gold"),
-			},
 		},
 		"query": schema.SingleNestedAttribute{
 			MarkdownDescription: "The query of the rule",
@@ -69,6 +79,14 @@ func ScorecardSchema() map[string]schema.Attribute {
 		"title": schema.StringAttribute{
 			MarkdownDescription: "The title of the scorecard",
 			Required:            true,
+		},
+		"levels": schema.ListNestedAttribute{
+			MarkdownDescription: "The Levels of the scorecard",
+			Optional:            true,
+			Computed:            true,
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: LevelSchema(),
+			},
 		},
 		"rules": schema.ListNestedAttribute{
 			MarkdownDescription: "The rules of the scorecard",

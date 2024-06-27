@@ -4,6 +4,7 @@ page_title: "port_integration Resource - terraform-provider-port-labs"
 subcategory: ""
 description: |-
   Integration resource
+  NOTE: This resource manages existing integration and integration mappings, not for creating new integrations.
   Docs about integration and be found here https://docs.getport.io/integrations-index/.
   ```hcl
   resource "portintegration" "mycustomintegration" {
@@ -42,6 +43,8 @@ description: |-
 # port_integration (Resource)
 
 # Integration resource
+
+**NOTE:** This resource manages existing integration and integration mappings, not for creating new integrations.
 
 Docs about integration and be found [here](https://docs.getport.io/integrations-index/).
 

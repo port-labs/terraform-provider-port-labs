@@ -652,6 +652,17 @@ Optional:
 Required:
 
 - `blueprint_identifier` (String) Required when selecting type Upsert Entity. The blueprint identifier of the entity for the upsert
+
+Optional:
+
+- `mapping` (Attributes) Upsert Entity invocation method (see [below for nested schema](#nestedatt--upsert_entity_method--mapping))
+- `title` (String) The title of the entity
+
+<a id="nestedatt--upsert_entity_method--mapping"></a>
+### Nested Schema for `upsert_entity_method.mapping`
+
+Required:
+
 - `identifier` (String) Required when selecting type Upsert Entity. The entity identifier for the upsert
 
 Optional:
@@ -660,7 +671,7 @@ Optional:
 - `properties` (String) The properties of the entity (key-value object encoded to a string)
 - `relations` (String) The relations of the entity (key-value object encoded to a string)
 - `teams` (List of String) The teams the entity belongs to
-- `title` (String) The title of the entity
+
 
 
 <a id="nestedatt--webhook_method"></a>

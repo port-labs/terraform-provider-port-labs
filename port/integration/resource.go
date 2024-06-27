@@ -33,6 +33,10 @@ func (r *IntegrationResource) Configure(ctx context.Context, req resource.Config
 
 func (r *IntegrationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resp.Diagnostics.Append(resp.State.SetAttribute(
+		ctx, path.Root("installation_id"), req.ID,
+	)...)
+
+	resp.Diagnostics.Append(resp.State.SetAttribute(
 		ctx, path.Root("id"), req.ID,
 	)...)
 }

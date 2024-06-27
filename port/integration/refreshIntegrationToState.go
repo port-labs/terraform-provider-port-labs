@@ -25,11 +25,13 @@ func refreshIntegrationState(state *IntegrationModel, a *cli.Integration, integr
 		if a.ChangelogDestination.Type == consts.Kafka {
 			state.KafkaChangelogDestination, _ = types.ObjectValue(nil, nil)
 		} else {
-			state.WebhookChangelogDestination = &WebhookChangelogDestinationModel{
-				Url: types.StringValue(a.ChangelogDestination.Url),
-			}
-			if a.ChangelogDestination.Agent != nil {
-				state.WebhookChangelogDestination.Agent = types.BoolValue(*a.ChangelogDestination.Agent)
+			if a.ChangelogDestination.Url != "" {
+				state.WebhookChangelogDestination = &WebhookChangelogDestinationModel{
+					Url: types.StringValue(a.ChangelogDestination.Url),
+				}
+				if a.ChangelogDestination.Agent != nil {
+					state.WebhookChangelogDestination.Agent = types.BoolValue(*a.ChangelogDestination.Agent)
+				}
 			}
 		}
 	}

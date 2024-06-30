@@ -4,8 +4,8 @@ page_title: "port_page Resource - terraform-provider-port-labs"
 subcategory: ""
 description: |-
   Page resource
-  Docs about the different page types can be found here https://docs.getport.io/customize-pages-dashboards-and-plugins/page/catalog-page.
-  Docs about the different widget types can be found here https://docs.getport.io/customize-pages-dashboards-and-plugins/dashboards/#widget-type-identifiers-terraform.
+  A full list of the available page types and their identifiers can be found here https://docs.getport.io/customize-pages-dashboards-and-plugins/page/catalog-page.
+  A full list of widget types and their identifiers can be found here https://docs.getport.io/customize-pages-dashboards-and-plugins/dashboards/#widget-type-identifiers-terraform.
   ~> WARNING
   The page resource is currently in beta and is subject to change in future versions.
   Use it by setting the Environment Variable PORT_BETA_FEATURES_ENABLED=true.
@@ -215,9 +215,9 @@ description: |-
 
 # Page resource
 
-Docs about the different page types can be found [here](https://docs.getport.io/customize-pages-dashboards-and-plugins/page/catalog-page).
+A full list of the available page types and their identifiers can be found [here](https://docs.getport.io/customize-pages-dashboards-and-plugins/page/catalog-page).
 
-Docs about the different widget types can be found [here](https://docs.getport.io/customize-pages-dashboards-and-plugins/dashboards/#widget-type-identifiers-terraform).
+A full list of widget types and their identifiers can be found [here](https://docs.getport.io/customize-pages-dashboards-and-plugins/dashboards/#widget-type-identifiers-terraform).
 
 ~> **WARNING**
 The page resource is currently in beta and is subject to change in future versions.

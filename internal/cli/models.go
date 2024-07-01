@@ -21,14 +21,20 @@ type (
 	}
 
 	ScorecardRulesModel struct {
-		Identifier string `tfsdk:"identifier"`
-		Status     string `tfsdk:"status"`
-		Level      string `tfsdk:"level"`
+		Identifier string `json:"identifier"`
+		Status     string `json:"status"`
+		Level      string `json:"level"`
+	}
+
+	ScorecardLevelModel struct {
+		Title string `json:"title"`
+		Color string `json:"color"`
 	}
 
 	ScorecardModel struct {
-		Rules []ScorecardRulesModel `tfsdk:"rules"`
-		Level string                `tfsdk:"level"`
+		Rules  []ScorecardRulesModel `json:"rules"`
+		Levels []ScorecardLevelModel `json:"levels,omitempty"`
+		Level  string                `json:"level"`
 	}
 
 	Entity struct {
@@ -326,10 +332,11 @@ type (
 
 	Scorecard struct {
 		Meta
-		Identifier string `json:"identifier,omitempty"`
-		Title      string `json:"title,omitempty"`
-		Blueprint  string `json:"blueprint,omitempty"`
-		Rules      []Rule `json:"rules,omitempty"`
+		Identifier string  `json:"identifier,omitempty"`
+		Title      string  `json:"title,omitempty"`
+		Blueprint  string  `json:"blueprint,omitempty"`
+		Levels     []Level `json:"levels,omitempty"`
+		Rules      []Rule  `json:"rules,omitempty"`
 	}
 
 	Rule struct {
@@ -337,6 +344,11 @@ type (
 		Title      string `json:"title,omitempty"`
 		Level      string `json:"level,omitempty"`
 		Query      Query  `json:"query,omitempty"`
+	}
+
+	Level struct {
+		Title string `json:"title"`
+		Color string `json:"color"`
 	}
 
 	Query struct {

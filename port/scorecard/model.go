@@ -16,11 +16,17 @@ type Rule struct {
 	Query      *Query       `tfsdk:"query"`
 }
 
+type Level struct {
+	Title types.String `tfsdk:"title"`
+	Color types.String `tfsdk:"color"`
+}
+
 type ScorecardModel struct {
 	ID         types.String `tfsdk:"id"`
 	Identifier types.String `tfsdk:"identifier"`
 	Blueprint  types.String `tfsdk:"blueprint"`
 	Title      types.String `tfsdk:"title"`
+	Levels     []Level      `tfsdk:"levels"`
 	Rules      []Rule       `tfsdk:"rules"`
 	CreatedAt  types.String `tfsdk:"created_at"`
 	CreatedBy  types.String `tfsdk:"created_by"`

@@ -38,7 +38,7 @@ resource "port_blueprint" "vm" {
 }
 
 resource "port_blueprint" "microservice" {
-  title      = "VM"
+  title      = "Microservice"
   icon       = "GPU"
   identifier = "hedwig-microservice"
   properties = {

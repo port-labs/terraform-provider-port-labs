@@ -83,7 +83,6 @@ func ScorecardSchema() map[string]schema.Attribute {
 		"levels": schema.ListNestedAttribute{
 			MarkdownDescription: "The Levels of the scorecard",
 			Optional:            true,
-			Computed:            true,
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: LevelSchema(),
 			},

@@ -33,7 +33,7 @@ type (
 
 	ScorecardModel struct {
 		Rules  []ScorecardRulesModel `json:"rules"`
-		Levels []ScorecardLevelModel `json:"levels,omitempty"`
+		Levels []ScorecardLevelModel `json:"levels"`
 		Level  string                `json:"level"`
 	}
 
@@ -347,8 +347,8 @@ type (
 	}
 
 	Level struct {
-		Title string `json:"title"`
-		Color string `json:"color"`
+		Title string `json:"title,omitempty"`
+		Color string `json:"color,omitempty"`
 	}
 
 	Query struct {

@@ -5,9 +5,24 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
+
+func printResourceAttributes(resourceName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[resourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", resourceName)
+		}
+
+		for key, value := range rs.Primary.Attributes {
+			fmt.Printf("%s: %s\n", key, value)
+		}
+		return nil
+	}
+}
 
 func testAccCreateBlueprintConfig(identifier string) string {
 	return fmt.Sprintf(`
@@ -71,6 +86,7 @@ func TestAccPortScorecardBasic(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccActionConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
+					printResourceAttributes("port_scorecard.test"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "title", "Scorecard 1"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "blueprint", blueprintIdentifier),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
@@ -80,6 +96,11 @@ func TestAccPortScorecardBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.combinator", "and"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.#", "1"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.0", "{\"operator\":\"isNotEmpty\",\"property\":\"$team\"}"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "levels.#", "4"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "levels.0", "{\"color\":\"paleBlue\",\"title\":\"Basic\"}"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "levels.1", "{\"color\":\"bronze\",\"title\":\"Bronze\"}"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "levels.2", "{\"color\":\"silver\",\"title\":\"Silver\"}"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "levels.3", "{\"color\":\"gold\",\"title\":\"Gold\"}"),
 				),
 			},
 		},

@@ -57,7 +57,6 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 
 	refreshScorecardState(ctx, state, s, blueprintIdentifier)
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -81,7 +80,7 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	writeScorecardComputedFieldsToState(state, sp)
+	refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -93,6 +92,16 @@ func writeScorecardComputedFieldsToState(state *ScorecardModel, wp *cli.Scorecar
 	state.CreatedBy = types.StringValue(wp.CreatedBy)
 	state.UpdatedAt = types.StringValue(wp.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(wp.UpdatedBy)
+	stateLevels := []Level{}
+	cliLevels := wp.Levels
+	for _, cliLevel := range cliLevels {
+		level := &Level{
+			Color: types.StringValue(cliLevel.Color),
+			Title: types.StringValue(cliLevel.Title),
+		}
+		stateLevels = append(stateLevels, *level)
+	}
+	state.Levels = stateLevels
 }
 
 func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -125,7 +134,7 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	writeScorecardComputedFieldsToState(state, sp)
+	refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

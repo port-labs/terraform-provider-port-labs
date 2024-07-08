@@ -43,4 +43,21 @@ func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Sc
 
 	state.Rules = stateRules
 
+	var cliLevels []cli.Level
+	if len(s.Levels) == 0 {
+		cliLevels = DefaultLevels()
+	} else {
+		cliLevels = s.Levels
+	}
+
+	stateLevels := []Level{}
+	for _, cliLevel := range cliLevels {
+		level := &Level{
+			Color: types.StringValue(cliLevel.Color),
+			Title: types.StringValue(cliLevel.Title),
+		}
+		stateLevels = append(stateLevels, *level)
+	}
+	fmt.Sprintf("============================================================================================================================ %s", stateLevels)
+	state.Levels = stateLevels
 }

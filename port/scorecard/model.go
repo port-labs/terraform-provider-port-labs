@@ -26,7 +26,7 @@ type ScorecardModel struct {
 	Identifier types.String `tfsdk:"identifier"`
 	Blueprint  types.String `tfsdk:"blueprint"`
 	Title      types.String `tfsdk:"title"`
-	Levels     []Level      `tfsdk:"levels"`
+	Levels     []Level   `tfsdk:"levels"`
 	Rules      []Rule       `tfsdk:"rules"`
 	CreatedAt  types.String `tfsdk:"created_at"`
 	CreatedBy  types.String `tfsdk:"created_by"`

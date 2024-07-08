@@ -9,7 +9,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
-func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string) {
+func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string, expectLevels *bool) {
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintIdentifier, s.Identifier))
 	state.Identifier = types.StringValue(s.Identifier)
 	state.Blueprint = types.StringValue(blueprintIdentifier)
@@ -42,6 +42,10 @@ func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Sc
 	}
 
 	state.Rules = stateRules
+
+	if expectLevels != nil && !*expectLevels {
+		return
+	}
 
 	var cliLevels []cli.Level
 	if len(s.Levels) == 0 {

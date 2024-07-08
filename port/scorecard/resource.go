@@ -56,7 +56,7 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	refreshScorecardState(ctx, state, s, blueprintIdentifier)
+	refreshScorecardState(ctx, state, s, blueprintIdentifier, nil)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -80,7 +80,11 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString())
+	expectLevels := false
+	if len(s.Levels) > 0 {
+		expectLevels = true
+	}
+	refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString(), &expectLevels)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -134,7 +138,7 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString())
+	refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString(), nil)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

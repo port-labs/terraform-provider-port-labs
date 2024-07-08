@@ -6,7 +6,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
-
 func DefaultLevels() []cli.Level {
 	return []cli.Level{
 		{
@@ -64,10 +63,8 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 	}
 
 	s.Rules = rules
-	
-	if len(state.Levels) == 0 {
-		s.Levels = DefaultLevels()
-	} else {
+
+	if len(state.Levels) > 0 {
 		var levels []cli.Level
 		for _, stateLevel := range state.Levels {
 			level := &cli.Level{

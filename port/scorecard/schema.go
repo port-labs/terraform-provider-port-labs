@@ -39,9 +39,6 @@ func RuleSchema() map[string]schema.Attribute {
 		"level": schema.StringAttribute{
 			MarkdownDescription: "The level of the rule",
 			Required:            true,
-			Validators: []validator.String{
-				stringvalidator.OneOf("Bronze", "Silver", "Gold"),
-			},
 		},
 		"query": schema.SingleNestedAttribute{
 			MarkdownDescription: "The query of the rule",

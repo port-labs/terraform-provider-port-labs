@@ -6,6 +6,18 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
+func fromTerraformLevelsToCliLevels(tfLevels []Level) []cli.Level {
+	var levels []cli.Level
+	for _, stateLevel := range tfLevels {
+		level := &cli.Level{
+			Color: stateLevel.Color.ValueString(),
+			Title: stateLevel.Title.ValueString(),
+		}
+		levels = append(levels, *level)
+	}
+	return levels
+}
+
 func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*cli.Scorecard, error) {
 	s := &cli.Scorecard{
 		Identifier: state.Identifier.ValueString(),
@@ -42,6 +54,10 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 	}
 
 	s.Rules = rules
+
+	if len(state.Levels) > 0 {
+		s.Levels = fromTerraformLevelsToCliLevels(state.Levels)
+	}
 
 	return s, nil
 }

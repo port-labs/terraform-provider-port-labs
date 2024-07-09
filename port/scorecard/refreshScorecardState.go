@@ -9,7 +9,40 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
-func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string) {
+func fromCliLevelsToTerraformLevels(cliLevels []cli.Level) []Level {
+	terraformLevels := []Level{}
+	for _, cliLevel := range cliLevels {
+		level := &Level{
+			Color: types.StringValue(cliLevel.Color),
+			Title: types.StringValue(cliLevel.Title),
+		}
+		terraformLevels = append(terraformLevels, *level)
+	}
+	return terraformLevels
+}
+
+func DefaultCliLevels() []cli.Level {
+	return []cli.Level{
+		{
+			Color: "paleBlue",
+			Title: "Basic",
+		},
+		{
+			Color: "bronze",
+			Title: "Bronze",
+		},
+		{
+			Color: "silver",
+			Title: "Silver",
+		},
+		{
+			Color: "gold",
+			Title: "Gold",
+		},
+	}
+}
+
+func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string, includeLevels ...bool) {
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintIdentifier, s.Identifier))
 	state.Identifier = types.StringValue(s.Identifier)
 	state.Blueprint = types.StringValue(blueprintIdentifier)
@@ -42,5 +75,13 @@ func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Sc
 	}
 
 	state.Rules = stateRules
-
+	if len(includeLevels) > 0 && includeLevels[0] {
+		var cliLevels []cli.Level
+		if len(s.Levels) == 0 {
+			cliLevels = DefaultCliLevels()
+		} else {
+			cliLevels = s.Levels
+		}
+		state.Levels = fromCliLevelsToTerraformLevels(cliLevels)
+	}
 }

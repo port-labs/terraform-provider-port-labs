@@ -26,15 +26,9 @@ type (
 		Level      string `json:"level"`
 	}
 
-	ScorecardLevelModel struct {
-		Title string `json:"title"`
-		Color string `json:"color"`
-	}
-
 	ScorecardModel struct {
-		Rules  []ScorecardRulesModel `json:"rules"`
-		Levels []ScorecardLevelModel `json:"levels"`
-		Level  string                `json:"level"`
+		Rules []ScorecardRulesModel `json:"rules"`
+		Level string                `json:"level"`
 	}
 
 	Entity struct {

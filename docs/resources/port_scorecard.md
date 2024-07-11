@@ -38,11 +38,25 @@ description: |-
     identifier = "Readiness"
     title      = "Readiness"
     blueprint  = portblueprint.microservice.identifier
-    rules      = [
+    levels     = [
+      {
+        title = "Not Ready"
+        color = "red"
+      },
+      {
+        title = "Partially Ready",
+        color = "yellow"
+      },
+      {
+        title = "Ready",
+        color = "green"
+      }
+    ]
+    rules = [
       {
         identifier = "hasOwner"
         title      = "Has Owner"
-        level      = "Gold"
+        level      = "Ready"
         query      = {
           combinator = "and"
           conditions = [
@@ -61,7 +75,7 @@ description: |-
       {
         identifier = "hasUrl"
         title      = "Has URL"
-        level      = "Silver"
+        level      = "Partially Ready"
         query      = {
           combinator = "and"
           conditions = [
@@ -75,7 +89,7 @@ description: |-
       {
         identifier = "checkSumIfRequired"
         title      = "Check Sum If Required"
-        level      = "Bronze"
+        level      = "Partially Ready"
         query      = {
           combinator = "or"
           conditions = [
@@ -144,11 +158,25 @@ resource "port_scorecard" "readiness" {
   identifier = "Readiness"
   title      = "Readiness"
   blueprint  = port_blueprint.microservice.identifier
-  rules      = [
+  levels = [
+    {
+      title = "Not Ready"
+      color = "red"
+    },
+    {
+      title = "Partially Ready",
+      color = "yellow"
+    },
+    {
+      title = "Ready",
+      color = "green"
+    }
+  ]
+  rules = [
     {
       identifier = "hasOwner"
       title      = "Has Owner"
-      level      = "Gold"
+      level      = "Ready"
       query      = {
         combinator = "and"
         conditions = [
@@ -167,7 +195,7 @@ resource "port_scorecard" "readiness" {
     {
       identifier = "hasUrl"
       title      = "Has URL"
-      level      = "Silver"
+      level      = "Partially Ready"
       query      = {
         combinator = "and"
         conditions = [
@@ -181,7 +209,7 @@ resource "port_scorecard" "readiness" {
     {
       identifier = "checkSumIfRequired"
       title      = "Check Sum If Required"
-      level      = "Bronze"
+      level      = "Partially Ready"
       query      = {
         combinator = "or"
         conditions = [
@@ -218,6 +246,10 @@ resource "port_scorecard" "readiness" {
 - `rules` (Attributes List) The rules of the scorecard (see [below for nested schema](#nestedatt--rules))
 - `title` (String) The title of the scorecard
 
+### Optional
+
+- `levels` (Attributes List) The levels of the scorecard. This overrides the default levels (Basic, Bronze, Silver, Gold) if provided (see [below for nested schema](#nestedatt--levels))
+
 ### Read-Only
 
 - `created_at` (String) The creation date of the scorecard
@@ -243,3 +275,13 @@ Required:
 
 - `combinator` (String) The combinator of the query
 - `conditions` (List of String) The conditions of the query. Each condition object should be encoded to a string
+
+
+
+<a id="nestedatt--levels"></a>
+### Nested Schema for `levels`
+
+Required:
+
+- `color` (String) The color of the level
+- `title` (String) The title of the level

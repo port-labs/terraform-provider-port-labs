@@ -81,12 +81,12 @@ func ScorecardSchema() map[string]schema.Attribute {
 			Required:            true,
 		},
 		"levels": schema.ListNestedAttribute{
-			MarkdownDescription: "The Levels of the scorecard",
+			MarkdownDescription: "The levels of the scorecard. This overrides the default levels (Basic, Bronze, Silver, Gold) if provided",
 			Optional:            true,
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: LevelSchema(),
 			},
-		}, 
+		},
 		"rules": schema.ListNestedAttribute{
 			MarkdownDescription: "The rules of the scorecard",
 			Required:            true,
@@ -170,12 +170,26 @@ resource "port_scorecard" "readiness" {
   identifier = "Readiness"
   title      = "Readiness"
   blueprint  = port_blueprint.microservice.identifier
-  rules      = [
+  levels = [
+    {
+      title = "Not Ready"
+      color = "red"
+    },
+    {
+      title = "Partially Ready",
+      color = "yellow"
+    },
+    {
+      title = "Ready",
+      color = "green"
+    }
+  ]
+  rules = [
     {
       identifier = "hasOwner"
       title      = "Has Owner"
-      level      = "Gold"
-      query      = {
+      level      = "Ready"
+      query = {
         combinator = "and"
         conditions = [
           jsonencode({
@@ -193,8 +207,8 @@ resource "port_scorecard" "readiness" {
     {
       identifier = "hasUrl"
       title      = "Has URL"
-      level      = "Silver"
-      query      = {
+      level      = "Partially Ready"
+      query = {
         combinator = "and"
         conditions = [
           jsonencode({
@@ -207,8 +221,8 @@ resource "port_scorecard" "readiness" {
     {
       identifier = "checkSumIfRequired"
       title      = "Check Sum If Required"
-      level      = "Bronze"
-      query      = {
+      level      = "Partially Ready"
+      query = {
         combinator = "or"
         conditions = [
           jsonencode({

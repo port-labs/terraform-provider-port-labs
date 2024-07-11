@@ -136,7 +136,106 @@ See the [Port documentation](https://docs.getport.io/promote-scorecards/) for mo
 
 ## Example Usage
 
-Create a parent blueprint with a child blueprint and an aggregation property to count the parent kids:
+This will create a blueprint with a Scorecard measuring the readiness of a microservice.
+
+` + "```hcl" + `
+
+resource "port_blueprint" "microservice" {
+  title      = "microservice"
+  icon       = "Terraform"
+  identifier = "microservice"
+  properties = {
+    string_props = {
+      "author" = {
+        title = "Author"
+      }
+      "url" = {
+        title = "URL"
+      }
+    }
+    boolean_props = {
+      "required" = {
+        type = "boolean"
+      }
+    }
+    number_props = {
+      "sum" = {
+        type = "number"
+      }
+    }
+  }
+}
+
+resource "port_scorecard" "readiness" {
+  identifier = "Readiness"
+  title      = "Readiness"
+  blueprint  = port_blueprint.microservice.identifier
+  rules      = [
+    {
+      identifier = "hasOwner"
+      title      = "Has Owner"
+      level      = "Gold"
+      query      = {
+        combinator = "and"
+        conditions = [
+          jsonencode({
+            property = "$team"
+            operator = "isNotEmpty"
+          }),
+          jsonencode({
+            property = "author",
+            operator : "=",
+            value : "myValue"
+          })
+        ]
+      }
+    },
+    {
+      identifier = "hasUrl"
+      title      = "Has URL"
+      level      = "Silver"
+      query      = {
+        combinator = "and"
+        conditions = [
+          jsonencode({
+            property = "url"
+            operator = "isNotEmpty"
+          })
+        ]
+      }
+    },
+    {
+      identifier = "checkSumIfRequired"
+      title      = "Check Sum If Required"
+      level      = "Bronze"
+      query      = {
+        combinator = "or"
+        conditions = [
+          jsonencode({
+            property = "required"
+            operator : "="
+            value : false
+          }),
+          jsonencode({
+            property = "sum"
+            operator : ">"
+            value : 2
+          })
+        ]
+      }
+    }
+  ]
+  depends_on = [
+    port_blueprint.microservice
+  ]
+}
+
+
+
+## Example Usage with Levels
+
+This will override the default levels (Basic, Bronze, Silver, Gold) with the provided levels: Not Ready, Partially Ready, Ready.
+
 
 ` + "```hcl" + `
 
@@ -172,16 +271,16 @@ resource "port_scorecard" "readiness" {
   blueprint  = port_blueprint.microservice.identifier
   levels = [
     {
-      title = "Not Ready"
       color = "red"
+      title = "No Ready"
     },
     {
-      title = "Partially Ready",
       color = "yellow"
+      title = "Partially Ready"
     },
     {
-      title = "Ready",
       color = "green"
+      title = "Ready"
     }
   ]
   rules = [

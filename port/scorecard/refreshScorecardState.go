@@ -14,13 +14,8 @@ func shouldRefreshLevels(stateLevels []Level, cliLevels []cli.Level) bool {
 	if len(stateLevels) == 0 && reflect.DeepEqual(cliLevels, DefaultCliLevels()) {
 		return false
 	}
-	if len(stateLevels) > 0 && len(stateLevels) != len(cliLevels) {
+	if len(stateLevels) > 0 || (len(stateLevels) == 0 && !reflect.DeepEqual(cliLevels, DefaultCliLevels())) {
 		return true
-	}
-	for i, stateLevel := range stateLevels {
-		if stateLevel.Color != types.StringValue(cliLevels[i].Color) || stateLevel.Title != types.StringValue(cliLevels[i].Title) {
-			return true
-		}
 	}
 	return false
 }

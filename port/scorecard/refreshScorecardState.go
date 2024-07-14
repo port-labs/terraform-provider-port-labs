@@ -7,7 +7,23 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"reflect"
 )
+
+func shouldRefreshLevels(stateLevels []Level, cliLevels []cli.Level) bool {
+	if len(stateLevels) == 0 && reflect.DeepEqual(cliLevels, DefaultCliLevels()) {
+		return false
+	}
+	if len(stateLevels) > 0 && len(stateLevels) != len(cliLevels) {
+		return true
+	}
+	for i, stateLevel := range stateLevels {
+		if stateLevel.Color != types.StringValue(cliLevels[i].Color) || stateLevel.Title != types.StringValue(cliLevels[i].Title) {
+			return true
+		}
+	}
+	return false
+}
 
 func fromCliLevelsToTerraformLevels(cliLevels []cli.Level) []Level {
 	terraformLevels := []Level{}
@@ -75,13 +91,7 @@ func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Sc
 	}
 
 	state.Rules = stateRules
-	if len(includeLevels) > 0 && includeLevels[0] {
-		var cliLevels []cli.Level
-		if len(s.Levels) == 0 {
-			cliLevels = DefaultCliLevels()
-		} else {
-			cliLevels = s.Levels
-		}
-		state.Levels = fromCliLevelsToTerraformLevels(cliLevels)
+	if len(includeLevels) > 0 && includeLevels[0] || (shouldRefreshLevels(state.Levels, s.Levels)) {
+		state.Levels = fromCliLevelsToTerraformLevels(s.Levels)
 	}
 }

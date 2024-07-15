@@ -53,7 +53,7 @@ func DefaultCliLevels() []cli.Level {
 	}
 }
 
-func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string, includeLevels ...bool) {
+func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string) {
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintIdentifier, s.Identifier))
 	state.Identifier = types.StringValue(s.Identifier)
 	state.Blueprint = types.StringValue(blueprintIdentifier)
@@ -86,7 +86,7 @@ func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Sc
 	}
 
 	state.Rules = stateRules
-	if len(includeLevels) > 0 && includeLevels[0] || (shouldRefreshLevels(state.Levels, s.Levels)) {
+	if shouldRefreshLevels(state.Levels, s.Levels) {
 		state.Levels = fromCliLevelsToTerraformLevels(s.Levels)
 	}
 }

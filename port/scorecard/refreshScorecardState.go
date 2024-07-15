@@ -11,9 +11,12 @@ import (
 )
 
 func shouldRefreshLevels(stateLevels []Level, cliLevels []cli.Level) bool {
+	// If the TF state has no levels and the Port existing levels are the default levels, we don't need to refresh the TF state
 	if len(stateLevels) == 0 && reflect.DeepEqual(cliLevels, DefaultCliLevels()) {
 		return false
 	}
+	// If the TF state has levels / TF state doesn't have levels and the Port existing levels are not the default ones
+	// We have to make sure our Terraform state aligns with the Port existing levels
 	if len(stateLevels) > 0 || (len(stateLevels) == 0 && !reflect.DeepEqual(cliLevels, DefaultCliLevels())) {
 		return true
 	}

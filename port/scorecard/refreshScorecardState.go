@@ -11,15 +11,23 @@ import (
 )
 
 func shouldRefreshLevels(stateLevels []Level, cliLevels []cli.Level) bool {
-	// If the TF state has no levels and the Port existing levels are the default levels, we don't need to refresh the TF state
+	// When you create a scorecard in Port, the scorecard gets created with default levels. 
+	// If your scorecard doesn't have the "levels" attribute, it means the scorecard is created with default levels behind the scenes.
+	//
+	// If the TF state has no levels and the Port existing levels are the default levels, This means both are considered 
+	// to have default levels, And so we don't need to update them.
 	if len(stateLevels) == 0 && reflect.DeepEqual(cliLevels, DefaultCliLevels()) {
 		return false
 	}
-	// If the TF state has levels / TF state doesn't have levels and the Port existing levels are not the default ones
-	// We have to make sure our Terraform state aligns with the Port existing levels
+	// If the TF state has defined levels, we have to make sure that Port's existing levels are the same as the TF state levels.
+	// also,
+	// If TF state doesn't have levels and the Port existing levels are not the default ones,
+	// this means we have to make sure that Port's defined levels are the default levels, 
+	// as the state without levels is considered to have default levels.
 	if len(stateLevels) > 0 || (len(stateLevels) == 0 && !reflect.DeepEqual(cliLevels, DefaultCliLevels())) {
 		return true
 	}
+
 	return false
 }
 

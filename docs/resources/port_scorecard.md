@@ -7,7 +7,7 @@ description: |-
   This resource allows you to manage a scorecard.
   See the Port documentation https://docs.getport.io/promote-scorecards/ for more information about scorecards.
   Example Usage
-  Create a parent blueprint with a child blueprint and an aggregation property to count the parent kids:
+  This will create a blueprint with a Scorecard measuring the readiness of a microservice.
   ```hcl
   resource "portblueprint" "microservice" {
     title      = "microservice"
@@ -97,6 +97,111 @@ description: |-
       portblueprint.microservice
     ]
   }
+  Example Usage with Levels
+  This will override the default levels (Basic, Bronze, Silver, Gold) with the provided levels: Not Ready, Partially Ready, Ready.
+  ```hcl
+  resource "portblueprint" "microservice" {
+    title      = "microservice"
+    icon       = "Terraform"
+    identifier = "microservice"
+    properties = {
+      stringprops = {
+        "author" = {
+          title = "Author"
+        }
+        "url" = {
+          title = "URL"
+        }
+      }
+      booleanprops = {
+        "required" = {
+          type = "boolean"
+        }
+      }
+      numberprops = {
+        "sum" = {
+          type = "number"
+        }
+      }
+    }
+  }
+  resource "portscorecard" "readiness" {
+    identifier = "Readiness"
+    title      = "Readiness"
+    blueprint  = portblueprint.microservice.identifier
+    levels = [
+      {
+        color = "red"
+        title = "No Ready"
+      },
+      {
+        color = "yellow"
+        title = "Partially Ready"
+      },
+      {
+        color = "green"
+        title = "Ready"
+      }
+    ]
+    rules = [
+      {
+        identifier = "hasOwner"
+        title      = "Has Owner"
+        level      = "Ready"
+        query = {
+          combinator = "and"
+          conditions = [
+            jsonencode({
+              property = "$team"
+              operator = "isNotEmpty"
+            }),
+            jsonencode({
+              property = "author",
+              operator : "=",
+              value : "myValue"
+            })
+          ]
+        }
+      },
+      {
+        identifier = "hasUrl"
+        title      = "Has URL"
+        level      = "Partially Ready"
+        query = {
+          combinator = "and"
+          conditions = [
+            jsonencode({
+              property = "url"
+              operator = "isNotEmpty"
+            })
+          ]
+        }
+      },
+      {
+        identifier = "checkSumIfRequired"
+        title      = "Check Sum If Required"
+        level      = "Partially Ready"
+        query = {
+          combinator = "or"
+          conditions = [
+            jsonencode({
+              property = "required"
+              operator : "="
+              value : false
+            }),
+            jsonencode({
+              property = "sum"
+              operator : ">"
+              value : 2
+            })
+          ]
+        }
+      }
+    ]
+    dependson = [
+      portblueprint.microservice
+    ]
+  }
   ```
 ---
 
@@ -110,7 +215,7 @@ See the [Port documentation](https://docs.getport.io/promote-scorecards/) for mo
 
 ## Example Usage
 
-Create a parent blueprint with a child blueprint and an aggregation property to count the parent kids:
+This will create a blueprint with a Scorecard measuring the readiness of a microservice.
 
 ```hcl
 
@@ -204,6 +309,119 @@ resource "port_scorecard" "readiness" {
   ]
 }
 
+
+
+## Example Usage with Levels
+
+This will override the default levels (Basic, Bronze, Silver, Gold) with the provided levels: Not Ready, Partially Ready, Ready.
+
+
+```hcl
+
+resource "port_blueprint" "microservice" {
+  title      = "microservice"
+  icon       = "Terraform"
+  identifier = "microservice"
+  properties = {
+    string_props = {
+      "author" = {
+        title = "Author"
+      }
+      "url" = {
+        title = "URL"
+      }
+    }
+    boolean_props = {
+      "required" = {
+        type = "boolean"
+      }
+    }
+    number_props = {
+      "sum" = {
+        type = "number"
+      }
+    }
+  }
+}
+
+resource "port_scorecard" "readiness" {
+  identifier = "Readiness"
+  title      = "Readiness"
+  blueprint  = port_blueprint.microservice.identifier
+  levels = [
+    {
+      color = "red"
+      title = "No Ready"
+    },
+    {
+      color = "yellow"
+      title = "Partially Ready"
+    },
+    {
+      color = "green"
+      title = "Ready"
+    }
+  ]
+  rules = [
+    {
+      identifier = "hasOwner"
+      title      = "Has Owner"
+      level      = "Ready"
+      query = {
+        combinator = "and"
+        conditions = [
+          jsonencode({
+            property = "$team"
+            operator = "isNotEmpty"
+          }),
+          jsonencode({
+            property = "author",
+            operator : "=",
+            value : "myValue"
+          })
+        ]
+      }
+    },
+    {
+      identifier = "hasUrl"
+      title      = "Has URL"
+      level      = "Partially Ready"
+      query = {
+        combinator = "and"
+        conditions = [
+          jsonencode({
+            property = "url"
+            operator = "isNotEmpty"
+          })
+        ]
+      }
+    },
+    {
+      identifier = "checkSumIfRequired"
+      title      = "Check Sum If Required"
+      level      = "Partially Ready"
+      query = {
+        combinator = "or"
+        conditions = [
+          jsonencode({
+            property = "required"
+            operator : "="
+            value : false
+          }),
+          jsonencode({
+            property = "sum"
+            operator : ">"
+            value : 2
+          })
+        ]
+      }
+    }
+  ]
+  depends_on = [
+    port_blueprint.microservice
+  ]
+}
+
 ```
 
 
@@ -217,6 +435,10 @@ resource "port_scorecard" "readiness" {
 - `identifier` (String) The identifier of the scorecard
 - `rules` (Attributes List) The rules of the scorecard (see [below for nested schema](#nestedatt--rules))
 - `title` (String) The title of the scorecard
+
+### Optional
+
+- `levels` (Attributes List) The levels of the scorecard. This overrides the default levels (Basic, Bronze, Silver, Gold) if provided (see [below for nested schema](#nestedatt--levels))
 
 ### Read-Only
 
@@ -243,3 +465,13 @@ Required:
 
 - `combinator` (String) The combinator of the query
 - `conditions` (List of String) The conditions of the query. Each condition object should be encoded to a string
+
+
+
+<a id="nestedatt--levels"></a>
+### Nested Schema for `levels`
+
+Required:
+
+- `color` (String) The color of the level
+- `title` (String) The title of the level

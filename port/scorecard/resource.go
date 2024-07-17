@@ -2,12 +2,10 @@ package scorecard
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
@@ -55,7 +53,6 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 		resp.Diagnostics.AddError("failed to read scorecard", err.Error())
 		return
 	}
-
 	refreshScorecardState(ctx, state, s, blueprintIdentifier)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -81,18 +78,9 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	writeScorecardComputedFieldsToState(state, sp)
+	refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
-}
-
-func writeScorecardComputedFieldsToState(state *ScorecardModel, wp *cli.Scorecard) {
-	state.ID = types.StringValue(fmt.Sprintf("%s:%s", wp.Blueprint, wp.Identifier))
-	state.Identifier = types.StringValue(wp.Identifier)
-	state.CreatedAt = types.StringValue(wp.CreatedAt.String())
-	state.CreatedBy = types.StringValue(wp.CreatedBy)
-	state.UpdatedAt = types.StringValue(wp.UpdatedAt.String())
-	state.UpdatedBy = types.StringValue(wp.UpdatedBy)
 }
 
 func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -124,8 +112,8 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		resp.Diagnostics.AddError("failed to update the scorecard", err.Error())
 		return
 	}
-
-	writeScorecardComputedFieldsToState(state, sp)
+	
+	refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

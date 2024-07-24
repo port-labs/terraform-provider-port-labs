@@ -8,7 +8,7 @@ import (
 func refreshPagePermissionsState(state *PagePermissionsModel, a *cli.PagePermissions, pageId string) error {
 	state.ID = types.StringValue(pageId)
 	state.PageIdentifier = types.StringValue(pageId)
-	state.Read = ReadPagePermissionsModel{}
+	state.Read = &ReadPagePermissionsModel{}
 
 	state.Read.Users = make([]types.String, len(a.Read.Users))
 	for i, u := range a.Read.Users {

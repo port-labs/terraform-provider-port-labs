@@ -9,7 +9,7 @@ type ReadPagePermissionsModel struct {
 }
 
 type PagePermissionsModel struct {
-	ID             types.String             `tfsdk:"id"`
-	PageIdentifier types.String             `tfsdk:"page_identifier"`
-	Read           ReadPagePermissionsModel `tfsdk:"read"`
+	ID             types.String              `tfsdk:"id"`
+	PageIdentifier types.String              `tfsdk:"page_identifier"`
+	Read           *ReadPagePermissionsModel `tfsdk:"read"`
 }

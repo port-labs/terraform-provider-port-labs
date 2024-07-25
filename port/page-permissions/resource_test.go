@@ -147,3 +147,40 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortPagePermissionsImport(t *testing.T) {
+	pageIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testAccPortPageResourceBasic = createPage(pageIdentifier)
+
+	var testAccBasePagePermissionsConfigUpdate = `
+
+	resource "port_page_permissions" "microservice_permissions" {
+		page_identifier = port_page.microservice_dashboard_page.identifier
+		read = {
+			"roles": [
+				"Member",
+			],
+			"users": [],
+			"teams": []
+			}
+	}`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPortPageResourceBasic + testAccBasePagePermissionsConfigUpdate,
+			},
+			{
+				ResourceName:      "port_page_permissions.microservice_permissions",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}

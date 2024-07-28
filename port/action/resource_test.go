@@ -1577,6 +1577,8 @@ func TestAccPortAutomationRunUpdated(t *testing.T) {
 	icon       = "Terraform"
 	self_service_trigger = {
 		operation = "CREATE"
+		user_properties = {
+		}
 	}
 	kafka_method = {}
 	}

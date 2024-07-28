@@ -165,6 +165,13 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 			}
 		}
 
+		if data.AutomationTrigger.RunUpdatedEvent != nil {
+			automationTrigger.Event = &cli.TriggerEvent{
+				Type:             consts.RunUpdated,
+				ActionIdentifier: data.AutomationTrigger.RunUpdatedEvent.ActionIdentifier.ValueStringPointer(),
+			}
+		}
+
 		return automationTrigger, nil
 	}
 

@@ -205,6 +205,7 @@ type (
 		Type                string  `json:"type"`
 		BlueprintIdentifier *string `json:"blueprintIdentifier,omitempty"`
 		PropertyIdentifier  *string `json:"propertyIdentifier,omitempty"`
+		ActionIdentifier    *string `json:"actionIdentifier,omitempty"`
 	}
 
 	TriggerCondition struct {

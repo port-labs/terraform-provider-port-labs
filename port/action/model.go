@@ -299,6 +299,10 @@ type TimerPropertyExpiredEventModel struct {
 	PropertyIdentifier  types.String `tfsdk:"property_identifier"`
 }
 
+type RunUpdatedEvent struct {
+	ActionIdentifier types.String `tfsdk:"action_identifier"`
+}
+
 type JqConditionModel struct {
 	Expressions []types.String `tfsdk:"expressions"`
 	Combinator  types.String   `tfsdk:"combinator"`
@@ -310,6 +314,7 @@ type AutomationTriggerModel struct {
 	EntityDeletedEvent        *EntityDeletedEventModel        `tfsdk:"entity_deleted_event"`
 	AnyEntityChangeEvent      *AnyEntityChangeEventModel      `tfsdk:"any_entity_change_event"`
 	TimerPropertyExpiredEvent *TimerPropertyExpiredEventModel `tfsdk:"timer_property_expired_event"`
+	RunUpdatedEvent           *RunUpdatedEvent                `tfsdk:"run_updated_event"`
 	JqCondition               *JqConditionModel               `tfsdk:"jq_condition"`
 }
 

@@ -161,6 +161,7 @@ func ActionSchema() map[string]schema.Attribute {
 							path.MatchRelative().AtParent().AtName("entity_deleted_event"),
 							path.MatchRelative().AtParent().AtName("any_entity_change_event"),
 							path.MatchRelative().AtParent().AtName("timer_property_expired_event"),
+							path.MatchRelative().AtParent().AtName("run_updated_event"),
 						),
 					},
 				},
@@ -204,6 +205,16 @@ func ActionSchema() map[string]schema.Attribute {
 						},
 						"property_identifier": schema.StringAttribute{
 							MarkdownDescription: "The property identifier of the expired timer property",
+							Required:            true,
+						},
+					},
+				},
+				"run_updated_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Run updated event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"action_identifier": schema.StringAttribute{
+							MarkdownDescription: "The action identifier of the updated run",
 							Required:            true,
 						},
 					},

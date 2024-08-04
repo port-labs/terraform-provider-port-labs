@@ -13,10 +13,12 @@ import (
 
 func createIntegration(
 	installationId string,
+	installationAppType string,
 ) string {
 	return fmt.Sprintf(`
 	resource "port_integration" "kafkush" {
 		installation_id       = "%s"
+		installation_app_type = "%s"
 		title                 = "ZOMG"
 		version               = "1.33.7"
 		config = jsonencode({
@@ -42,7 +44,7 @@ func createIntegration(
 			}]
 		})
 	}
-`, installationId)
+`, installationId, installationAppType)
 }
 
 func createIntegrationWithWebHook(
@@ -87,11 +89,12 @@ func createIntegrationWithWebHook(
 
 func TestPortIntegrationBasic(t *testing.T) {
 	integrationIdentifier := utils.GenID()
+	installationAppType := "kafka"
 	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
 	if err != nil {
 		t.Fatal(err)
 	}
-	var testPortIntegrationResourceBasic = createIntegration(integrationIdentifier)
+	var testPortIntegrationResourceBasic = createIntegration(integrationIdentifier, installationAppType)
 
 	var testAccBaseIntegrationPermissionsConfigUpdate = strings.Replace(testPortIntegrationResourceBasic, "1.33.7", "1.33.8", -1)
 
@@ -103,6 +106,7 @@ func TestPortIntegrationBasic(t *testing.T) {
 				Config: testPortIntegrationResourceBasic,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "ZOMG"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
@@ -114,6 +118,45 @@ func TestPortIntegrationBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "ZOMG"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.8"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestPortIntegrationPatchTitleNull(t *testing.T) {
+	integrationIdentifier := utils.GenID()
+	installationAppType := "kafka"
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testPortIntegrationResourceBasic = createIntegration(integrationIdentifier, installationAppType)
+
+	var testAccBaseIntegrationPermissionsConfigUpdate = strings.Replace(testPortIntegrationResourceBasic, "ZOMG", "null", -1)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testPortIntegrationResourceBasic,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "ZOMG"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
+				),
+			},
+			{
+				Config: testAccBaseIntegrationPermissionsConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "null"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
 				),
 			},

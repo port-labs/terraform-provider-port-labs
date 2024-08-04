@@ -488,10 +488,10 @@ type PortBodyDelete struct {
 }
 
 type Integration struct {
-	Title                string                `json:"title"`
-	InstallationId       string                `json:"installationId,omitempty"`
-	InstallationAppType  *string               `json:"installationAppType,omitempty"`
-	Version              string                `json:"version,omitempty"`
-	Config               *map[string]any       `json:"config,omitempty"`
+	InstallationId       string                `json:"installationId"`
+	Title                *string               `json:"title"`
+	InstallationAppType  *string               `json:"installationAppType"`
+	Version              *string               `json:"version"`
+	Config               *map[string]any       `json:"config"`
 	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
 }

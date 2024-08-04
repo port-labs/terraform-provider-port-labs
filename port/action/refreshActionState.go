@@ -126,7 +126,7 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 				Relations:  relations,
 				Icon:       flex.GoStringToFramework(a.InvocationMethod.Mapping.Icon),
 				Teams:      teams,
-				Identifier: types.StringValue(*a.InvocationMethod.Mapping.Identifier),
+				Identifier: types.StringPointerValue(a.InvocationMethod.Mapping.Identifier),
 			},
 		}
 	}

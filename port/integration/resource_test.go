@@ -96,7 +96,7 @@ func TestPortIntegrationBasic(t *testing.T) {
 	}
 	var testPortIntegrationResourceBasic = createIntegration(integrationIdentifier, installationAppType)
 
-	var testAccBaseIntegrationPermissionsConfigUpdate = strings.Replace(testPortIntegrationResourceBasic, "1.33.7", "1.33.8", -1)
+	var testAccBaseIntegrationUpdate = strings.Replace(testPortIntegrationResourceBasic, "1.33.7", "1.33.8", -1)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -113,7 +113,7 @@ func TestPortIntegrationBasic(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccBaseIntegrationPermissionsConfigUpdate,
+				Config: testAccBaseIntegrationUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "my-kafka-cluster"),
@@ -134,7 +134,7 @@ func TestPortIntegrationPatchTitleNull(t *testing.T) {
 	}
 	var testPortIntegrationResourceBasic = createIntegration(integrationIdentifier, installationAppType)
 
-	var testAccBaseIntegrationPermissionsConfigUpdate = strings.Replace(testPortIntegrationResourceBasic, "\"my-kafka-cluster\"", "null", -1)
+	var testAccBaseIntegrationUpdate = strings.Replace(testPortIntegrationResourceBasic, "\"my-kafka-cluster\"", "null", -1)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -151,7 +151,7 @@ func TestPortIntegrationPatchTitleNull(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccBaseIntegrationPermissionsConfigUpdate,
+				Config: testAccBaseIntegrationUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),

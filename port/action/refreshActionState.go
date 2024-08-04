@@ -384,6 +384,12 @@ func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionMod
 			}
 		}
 
+		if a.Trigger.Event.Type == consts.RunUpdated {
+			automationTrigger.RunUpdatedEvent = &RunUpdatedEvent{
+				ActionIdentifier: types.StringValue(*a.Trigger.Event.ActionIdentifier),
+			}
+		}
+
 		state.AutomationTrigger = automationTrigger
 	}
 

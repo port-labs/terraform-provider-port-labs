@@ -4,18 +4,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
-	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func refreshIntegrationState(state *IntegrationModel, a *cli.Integration, integrationId string) error {
 	state.ID = types.StringValue(integrationId)
 	state.InstallationId = types.StringValue(integrationId)
-	if a.InstallationAppType != nil && len(*a.InstallationAppType) != 0 {
-		state.InstallationAppType = flex.GoStringToFramework(a.InstallationAppType)
-	}
-	state.Title = types.StringValue(a.Title)
-	state.Version = types.StringValue(a.Version)
+
+	state.Title = types.StringPointerValue(a.Title)
+	state.InstallationAppType = types.StringPointerValue(a.InstallationAppType)
+	state.Version = types.StringPointerValue(a.Version)
 
 	if a.Config != nil {
 		config, _ := utils.GoObjectToTerraformString(a.Config)

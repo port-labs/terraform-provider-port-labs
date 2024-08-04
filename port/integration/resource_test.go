@@ -19,7 +19,7 @@ func createIntegration(
 	resource "port_integration" "kafkush" {
 		installation_id       = "%s"
 		installation_app_type = "%s"
-		title                 = "ZOMG"
+		title                 = "my-kafka-cluster"
 		version               = "1.33.7"
 		config = jsonencode({
 			deleteDependentEntities = true,
@@ -54,7 +54,7 @@ func createIntegrationWithWebHook(
 	return fmt.Sprintf(`
 	resource "port_integration" "kafkush" {
 		installation_id       = "%s"
-		title                 = "ZOMG"
+		title                 = "my-kafka-cluster"
 		version               = "1.33.7"
 		installation_app_type = "%s"
 		config = jsonencode({
@@ -107,7 +107,7 @@ func TestPortIntegrationBasic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "ZOMG"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "my-kafka-cluster"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
 				),
@@ -116,7 +116,7 @@ func TestPortIntegrationBasic(t *testing.T) {
 				Config: testAccBaseIntegrationPermissionsConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "ZOMG"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "my-kafka-cluster"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.8"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
 				),
@@ -134,7 +134,7 @@ func TestPortIntegrationPatchTitleNull(t *testing.T) {
 	}
 	var testPortIntegrationResourceBasic = createIntegration(integrationIdentifier, installationAppType)
 
-	var testAccBaseIntegrationPermissionsConfigUpdate = strings.Replace(testPortIntegrationResourceBasic, "ZOMG", "null", -1)
+	var testAccBaseIntegrationPermissionsConfigUpdate = strings.Replace(testPortIntegrationResourceBasic, "\"my-kafka-cluster\"", "null", -1)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -145,7 +145,7 @@ func TestPortIntegrationPatchTitleNull(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "ZOMG"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "my-kafka-cluster"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
 				),
@@ -155,7 +155,7 @@ func TestPortIntegrationPatchTitleNull(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "null"),
+					resource.TestCheckNoResourceAttr("port_integration.kafkush", "title"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
 				),
@@ -170,7 +170,7 @@ func TestPortIntegrationWithWebhook(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var testPortIntegrationResourceBasic = createIntegrationWithWebHook(integrationIdentifier, "KAFKA")
+	var testPortIntegrationResourceBasic = createIntegrationWithWebHook(integrationIdentifier, "kafka")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -180,9 +180,9 @@ func TestPortIntegrationWithWebhook(t *testing.T) {
 				Config: testPortIntegrationResourceBasic,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "ZOMG"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "my-kafka-cluster"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", "KAFKA"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", "kafka"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "2"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.url", "https://google.com"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.agent", "true"),
@@ -194,7 +194,7 @@ func TestPortIntegrationWithWebhook(t *testing.T) {
 
 func TestPortIntegrationImport(t *testing.T) {
 	integrationIdentifier := utils.GenID()
-	var testPortIntegrationResourceBasic = createIntegrationWithWebHook(integrationIdentifier, "KAFKA")
+	var testPortIntegrationResourceBasic = createIntegrationWithWebHook(integrationIdentifier, "kafka")
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -202,7 +202,7 @@ func TestPortIntegrationImport(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testPortIntegrationResourceBasic,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", "KAFKA"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", "kafka"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
 				),
 			},

@@ -205,7 +205,7 @@ func buildRequired(v *cli.ActionUserInputs) (types.String, []string) {
 	return types.StringNull(), nil
 }
 
-func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesModel, error) {
+func buildUserProperties(ctx context.Context, a *cli.Action, state *ActionModel) (*UserPropertiesModel, error) {
 	properties := &UserPropertiesModel{}
 	if len(a.Trigger.UserInputs.Properties) > 0 {
 		requiredJq, required := buildRequired(a.Trigger.UserInputs)
@@ -307,6 +307,12 @@ func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesMod
 		}
 	}
 	if properties.StringProps == nil && properties.NumberProps == nil && properties.ArrayProps == nil && properties.BooleanProps == nil && properties.ObjectProps == nil {
+		// this logic is handling default initialization of user properties as there is no option to define default user properties in the action schema
+		// if there was a state defined for the user properties, return the initiated properties
+		if state.SelfServiceTrigger.UserProperties != nil {
+			return properties, nil
+		}
+		// if there are no user properties defined, return nil
 		return nil, nil
 	}
 	return properties, nil
@@ -314,7 +320,7 @@ func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesMod
 
 func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
 	if a.Trigger.Type == consts.SelfService {
-		userProperties, err := buildUserProperties(ctx, a)
+		userProperties, err := buildUserProperties(ctx, a, state)
 		if err != nil {
 			return err
 		}

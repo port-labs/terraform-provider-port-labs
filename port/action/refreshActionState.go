@@ -306,7 +306,9 @@ func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesMod
 			}
 		}
 	}
-
+	if properties.StringProps == nil && properties.NumberProps == nil && properties.ArrayProps == nil && properties.BooleanProps == nil && properties.ObjectProps == nil {
+		return nil, nil
+	}
 	return properties, nil
 }
 

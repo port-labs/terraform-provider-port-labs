@@ -645,3 +645,5 @@ Optional:
 
 - `average_of` (String) The time periods to calculate the average of, e.g. hour, day, week, month
 - `measure_time_by` (String) The property name on which to calculate the the time periods, e.g. $createdAt, $updated_at or any other date property
+
+

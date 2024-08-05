@@ -332,8 +332,14 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 				Identifier: data.UpsertEntityMethod.Mapping.Identifier.ValueStringPointer(),
 				Title:      data.UpsertEntityMethod.Title.ValueStringPointer(),
 				Icon:       data.UpsertEntityMethod.Mapping.Icon.ValueStringPointer(),
-				Properties: *properties,
-				Relations:  *relations,
+			}
+
+			if properties != nil {
+				mapping.Properties = *properties
+			}
+
+			if relations != nil {
+				mapping.Relations = *relations
 			}
 		}
 

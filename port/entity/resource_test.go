@@ -493,9 +493,6 @@ func TestAccPortEntityImport(t *testing.T) {
 				"myStringIdentifier" =  "My String Value"
 			}
 		}
-		depends_on = [
-			port_blueprint.microservice
-		]
 	}`, blueprintIdentifier, entityIdentifier)
 
 	resource.Test(t, resource.TestCase{

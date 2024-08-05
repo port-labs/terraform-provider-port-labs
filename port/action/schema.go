@@ -1020,7 +1020,6 @@ func validateUserInputRequiredNotSetToFalse(ctx context.Context, state *ActionVa
 			}
 		}
 	}
-
 }
 
 var ResourceMarkdownDescription = `

@@ -368,7 +368,7 @@ func ActionSchema() map[string]schema.Attribute {
 					Attributes: map[string]schema.Attribute{
 						"identifier": schema.StringAttribute{
 							MarkdownDescription: "Required when selecting type Upsert Entity. The entity identifier for the upsert",
-							Required:            true,
+							Optional:            true,
 						},
 						"teams": schema.ListAttribute{
 							MarkdownDescription: "The teams the entity belongs to",

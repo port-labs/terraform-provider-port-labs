@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+	"strconv"
 
 	"github.com/samber/lo"
 
@@ -408,7 +409,14 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action) 
 		return err
 	}
 
-	state.RequiredApproval = flex.GoBoolToFramework(a.RequiredApproval)
+	if a.RequiredApproval == nil {
+		state.RequiredApproval = types.StringNull()
+	} else if reflect.TypeOf(a.RequiredApproval).Kind() == reflect.Map {
+		state.RequiredApproval = types.StringValue(a.RequiredApproval.(map[string]interface{})["type"].(string))
+	} else {
+		state.RequiredApproval = types.StringValue(strconv.FormatBool(a.RequiredApproval.(bool)))
+	}
+
 	if a.ApprovalNotification != nil {
 		if a.ApprovalNotification.Type == "email" {
 			state.ApprovalEmailNotification, _ = types.ObjectValue(nil, nil)

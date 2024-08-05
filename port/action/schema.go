@@ -391,9 +391,12 @@ func ActionSchema() map[string]schema.Attribute {
 				},
 			},
 		},
-		"required_approval": schema.BoolAttribute{
-			MarkdownDescription: "Require approval before invoking the action",
+		"required_approval": schema.StringAttribute{
+			MarkdownDescription: "Require approval before invoking the action. Can be one of \"true\", \"false\", \"ANY\" or \"ALL\"",
 			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.OneOf("true", "false", "ANY", "ALL"),
+			},
 		},
 		"approval_webhook_notification": schema.SingleNestedAttribute{
 			MarkdownDescription: "The webhook notification of the approval",

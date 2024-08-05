@@ -304,7 +304,7 @@ resource "port_action" "create_microservice" {
 - `icon` (String) Icon
 - `kafka_method` (Attributes) Kafka invocation method (see [below for nested schema](#nestedatt--kafka_method))
 - `publish` (Boolean) Publish action
-- `required_approval` (Boolean) Require approval before invoking the action
+- `required_approval` (String) Require approval before invoking the action. Can be one of "true", "false", "ANY" or "ALL"
 - `self_service_trigger` (Attributes) Self service trigger for the action (see [below for nested schema](#nestedatt--self_service_trigger))
 - `title` (String) Title
 - `upsert_entity_method` (Attributes) Upsert Entity invocation method (see [below for nested schema](#nestedatt--upsert_entity_method))
@@ -661,13 +661,10 @@ Optional:
 <a id="nestedatt--upsert_entity_method--mapping"></a>
 ### Nested Schema for `upsert_entity_method.mapping`
 
-Required:
-
-- `identifier` (String) Required when selecting type Upsert Entity. The entity identifier for the upsert
-
 Optional:
 
 - `icon` (String) The icon of the entity
+- `identifier` (String) Required when selecting type Upsert Entity. The entity identifier for the upsert
 - `properties` (String) The properties of the entity (key-value object encoded to a string)
 - `relations` (String) The relations of the entity (key-value object encoded to a string)
 - `teams` (List of String) The teams the entity belongs to
@@ -688,3 +685,5 @@ Optional:
 - `headers` (Map of String) The HTTP headers for invoking the action. They should be encoded as a key-value object to a string using [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 - `method` (String) The HTTP method to invoke the action
 - `synchronized` (String) Synchronize the action
+
+

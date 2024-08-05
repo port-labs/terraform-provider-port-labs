@@ -381,7 +381,7 @@ type ActionModel struct {
 	GitlabMethod                *GitlabMethodModel                `tfsdk:"gitlab_method"`
 	AzureMethod                 *AzureMethodModel                 `tfsdk:"azure_method"`
 	UpsertEntityMethod          *UpsertEntityMethodModel          `tfsdk:"upsert_entity_method"`
-	RequiredApproval            types.Bool                        `tfsdk:"required_approval"`
+	RequiredApproval            types.String                      `tfsdk:"required_approval"`
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
 	Publish                     types.Bool                        `tfsdk:"publish"`
@@ -403,7 +403,7 @@ type ActionValidationModel struct {
 	GitlabMethod                types.Object `tfsdk:"gitlab_method"`
 	AzureMethod                 types.Object `tfsdk:"azure_method"`
 	UpsertEntityMethod          types.Object `tfsdk:"upsert_entity_method"`
-	RequiredApproval            types.Bool   `tfsdk:"required_approval"`
+	RequiredApproval            types.String `tfsdk:"required_approval"`
 	ApprovalWebhookNotification types.Object `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object `tfsdk:"approval_email_notification"`
 	Publish                     types.Bool   `tfsdk:"publish"`

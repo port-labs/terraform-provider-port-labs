@@ -143,3 +143,20 @@ func TFStringListToStringArray(list []types.String) []string {
 
 	return res
 }
+
+func TerraformStringToBooleanOrString(s types.String) interface{} {
+	var obj interface{}
+
+	if s.IsNull() {
+		return obj
+	}
+
+	value := s.ValueString()
+	if value == "true" {
+		return true
+	}
+	if value == "false" {
+		return false
+	}
+	return value
+}

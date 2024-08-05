@@ -246,7 +246,7 @@ type (
 		Description          *string               `json:"description,omitempty"`
 		Trigger              *Trigger              `json:"trigger"`
 		InvocationMethod     *InvocationMethod     `json:"invocationMethod,omitempty"`
-		RequiredApproval     *bool                 `json:"requiredApproval,omitempty"`
+		RequiredApproval     any                   `json:"requiredApproval,omitempty"`
 		ApprovalNotification *ApprovalNotification `json:"approvalNotification,omitempty"`
 		Publish              *bool                 `json:"publish,omitempty"`
 	}

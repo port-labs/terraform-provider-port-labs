@@ -409,7 +409,9 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action) 
 		return err
 	}
 
-	if reflect.TypeOf(a.RequiredApproval).Kind() == reflect.Map {
+	if a.RequiredApproval == nil {
+		state.RequiredApproval = types.StringNull()
+	} else if reflect.TypeOf(a.RequiredApproval).Kind() == reflect.Map {
 		state.RequiredApproval = types.StringValue(a.RequiredApproval.(map[string]interface{})["type"].(string))
 	} else {
 		state.RequiredApproval = types.StringValue(strconv.FormatBool(a.RequiredApproval.(bool)))

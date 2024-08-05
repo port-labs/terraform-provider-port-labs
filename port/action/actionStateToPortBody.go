@@ -48,7 +48,7 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action,
 	}
 
 	action.RequiredApproval = utils.TerraformStringToBooleanOrString(data.RequiredApproval)
-	if reflect.TypeOf(action.RequiredApproval).Kind() == reflect.String {
+	if action.RequiredApproval != nil && reflect.TypeOf(action.RequiredApproval).Kind() == reflect.String {
 		action.RequiredApproval = map[string]interface{}{"type": action.RequiredApproval}
 	}
 

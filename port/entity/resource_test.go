@@ -473,7 +473,7 @@ func TestAccPortEntityImport(t *testing.T) {
 	entityId := fmt.Sprintf("%s:%s", blueprintIdentifier, entityIdentifier)
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port_blueprint" "microservice" {
-		title = "blueprint"
+		title = "TF Provider Test BP0"
 		icon = "Terraform"
 		identifier = "%s"
 		properties = {

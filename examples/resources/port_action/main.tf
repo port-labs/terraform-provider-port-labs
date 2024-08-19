@@ -96,3 +96,41 @@ resource "port_action" "restart_microservice" {
     url  = "https://app.getport.io"
   }
 }
+
+resource "port_action" "notifiy_on_mocrosiervice_creation" {
+  title      = "Notify On Microservice Creation"
+  icon       = "Terraform"
+  identifier = "examples-automation-notify-on-microservice-creation"
+  automation_trigger = {
+    entity_created_event = {
+      blueprint_identifier = port_blueprint.microservice.identifier
+    }
+  }
+  webhook_method = {
+    type = "WEBHOOK"
+    url  = "https://example.com"
+  }
+  publish = true
+}
+
+resource "port_action" "notifiy_on_microservice_restart_failed" {
+  title      = "Notify On Microservice Restart Failed"
+  icon       = "Terraform"
+  identifier = "examples-automation-notify-on-microservice-restart-failed"
+  automation_trigger = {
+    run_updated_event = {
+      action_identifier = port_action.restart_microservice.identifier
+    }
+    jq_condition = {
+      combinator = "and"
+      expressions = [
+        ".diff.after.status == \"FAILURE\""
+      ],
+    }
+  }
+  webhook_method = {
+    type = "WEBHOOK"
+    url  = "https://example.com"
+  }
+  publish = true
+}

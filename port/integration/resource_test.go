@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/plancheck"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
@@ -156,6 +157,53 @@ func TestPortIntegrationPatchTitleNull(t *testing.T) {
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
 					resource.TestCheckNoResourceAttr("port_integration.kafkush", "title"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestPortIntegrationPatchIdentifierRequiresReplace(t *testing.T) {
+	integrationIdentifier := utils.GenID()
+	updatedIdentifier := utils.GenID()
+	installationAppType := "kafka"
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testPortIntegrationResourceBasic = createIntegration(integrationIdentifier, installationAppType)
+
+	var testAccBaseIntegrationUpdate = strings.Replace(testPortIntegrationResourceBasic, integrationIdentifier, updatedIdentifier, -1)
+
+	// var stepOneCreatedAt, stepTwoCreatedAt string
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testPortIntegrationResourceBasic,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "my-kafka-cluster"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
+				),
+			},
+			{
+				Config: testAccBaseIntegrationUpdate,
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectResourceAction("port_integration.kafkush", plancheck.ResourceActionDestroyBeforeCreate),
+					},
+				},
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", updatedIdentifier),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "my-kafka-cluster"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
 					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
 				),

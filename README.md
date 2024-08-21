@@ -13,7 +13,7 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 ## Documentation
 
 - [Terraform registry docs](https://registry.terraform.io/providers/port-labs/port-labs/latest/docs)
-- [Port docs](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/iac/terraform)
+- [Port docs](https://docs.getport.io/build-your-software-catalog/custom-integration/iac/terraform/)
 
 ## Requirements
 

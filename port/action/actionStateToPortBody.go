@@ -165,10 +165,24 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 			}
 		}
 
+		if data.AutomationTrigger.RunCreatedEvent != nil {
+			automationTrigger.Event = &cli.TriggerEvent{
+				Type:             consts.RunUpdated,
+				ActionIdentifier: data.AutomationTrigger.RunCreatedEvent.ActionIdentifier.ValueStringPointer(),
+			}
+		}
+
 		if data.AutomationTrigger.RunUpdatedEvent != nil {
 			automationTrigger.Event = &cli.TriggerEvent{
 				Type:             consts.RunUpdated,
 				ActionIdentifier: data.AutomationTrigger.RunUpdatedEvent.ActionIdentifier.ValueStringPointer(),
+			}
+		}
+
+		if data.AutomationTrigger.AnyRunChangeEvent != nil {
+			automationTrigger.Event = &cli.TriggerEvent{
+				Type:             consts.RunUpdated,
+				ActionIdentifier: data.AutomationTrigger.AnyRunChangeEvent.ActionIdentifier.ValueStringPointer(),
 			}
 		}
 

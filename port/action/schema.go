@@ -161,7 +161,9 @@ func ActionSchema() map[string]schema.Attribute {
 							path.MatchRelative().AtParent().AtName("entity_deleted_event"),
 							path.MatchRelative().AtParent().AtName("any_entity_change_event"),
 							path.MatchRelative().AtParent().AtName("timer_property_expired_event"),
+							path.MatchRelative().AtParent().AtName("run_created_event"),
 							path.MatchRelative().AtParent().AtName("run_updated_event"),
+							path.MatchRelative().AtParent().AtName("any_run_change_event"),
 						),
 					},
 				},
@@ -209,12 +211,32 @@ func ActionSchema() map[string]schema.Attribute {
 						},
 					},
 				},
+				"run_created_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Run created event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"action_identifier": schema.StringAttribute{
+							MarkdownDescription: "The action identifier of the created run",
+							Required:            true,
+						},
+					},
+				},
 				"run_updated_event": schema.SingleNestedAttribute{
 					MarkdownDescription: "Run updated event trigger",
 					Optional:            true,
 					Attributes: map[string]schema.Attribute{
 						"action_identifier": schema.StringAttribute{
 							MarkdownDescription: "The action identifier of the updated run",
+							Required:            true,
+						},
+					},
+				},
+				"any_run_change_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Any run change event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"action_identifier": schema.StringAttribute{
+							MarkdownDescription: "The action identifier of the changed run",
 							Required:            true,
 						},
 					},

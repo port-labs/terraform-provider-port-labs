@@ -247,7 +247,7 @@ type (
 		Description          *string               `json:"description,omitempty"`
 		Trigger              *Trigger              `json:"trigger"`
 		InvocationMethod     *InvocationMethod     `json:"invocationMethod,omitempty"`
-		RequiredApproval     *bool                 `json:"requiredApproval,omitempty"`
+		RequiredApproval     any                   `json:"requiredApproval,omitempty"`
 		ApprovalNotification *ApprovalNotification `json:"approvalNotification,omitempty"`
 		Publish              *bool                 `json:"publish,omitempty"`
 	}
@@ -489,10 +489,10 @@ type PortBodyDelete struct {
 }
 
 type Integration struct {
-	Title                string                `json:"title"`
-	InstallationId       string                `json:"installationId,omitempty"`
-	InstallationAppType  *string               `json:"installationAppType,omitempty"`
-	Version              string                `json:"version,omitempty"`
-	Config               *map[string]any       `json:"config,omitempty"`
+	InstallationId       string                `json:"installationId"`
+	Title                *string               `json:"title"`
+	InstallationAppType  *string               `json:"installationAppType"`
+	Version              *string               `json:"version"`
+	Config               *map[string]any       `json:"config"`
 	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
 }

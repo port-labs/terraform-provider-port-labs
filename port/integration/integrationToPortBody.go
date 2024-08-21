@@ -13,14 +13,11 @@ func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
 
 	integration := &cli.Integration{
 		InstallationId: state.InstallationId.ValueString(),
-		Version:        state.Version.ValueString(),
-		Title:          state.Title.ValueString(),
 	}
 
-	if !state.InstallationAppType.IsNull() {
-		installationAppType := state.InstallationAppType.ValueString()
-		integration.InstallationAppType = &installationAppType
-	}
+	integration.Title = state.Title.ValueStringPointer()
+	integration.Version = state.Version.ValueStringPointer()
+	integration.InstallationAppType = state.InstallationAppType.ValueStringPointer()
 
 	if !state.Config.IsNull() {
 		configStr := state.Config.ValueString()

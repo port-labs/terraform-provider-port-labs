@@ -379,7 +379,7 @@ func ActionSchema() map[string]schema.Attribute {
 					Attributes: map[string]schema.Attribute{
 						"identifier": schema.StringAttribute{
 							MarkdownDescription: "Required when selecting type Upsert Entity. The entity identifier for the upsert",
-							Required:            true,
+							Optional:            true,
 						},
 						"teams": schema.ListAttribute{
 							MarkdownDescription: "The teams the entity belongs to",
@@ -402,9 +402,12 @@ func ActionSchema() map[string]schema.Attribute {
 				},
 			},
 		},
-		"required_approval": schema.BoolAttribute{
-			MarkdownDescription: "Require approval before invoking the action",
+		"required_approval": schema.StringAttribute{
+			MarkdownDescription: "Require approval before invoking the action. Can be one of \"true\", \"false\", \"ANY\" or \"ALL\"",
 			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.OneOf("true", "false", "ANY", "ALL"),
+			},
 		},
 		"approval_webhook_notification": schema.SingleNestedAttribute{
 			MarkdownDescription: "The webhook notification of the approval",

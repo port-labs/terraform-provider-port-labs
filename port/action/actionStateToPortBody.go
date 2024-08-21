@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
@@ -39,12 +40,16 @@ func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
 func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action, error) {
 	var err error
 	action := &cli.Action{
-		Identifier:       data.Identifier.ValueString(),
-		Title:            data.Title.ValueStringPointer(),
-		Icon:             data.Icon.ValueStringPointer(),
-		Description:      data.Description.ValueStringPointer(),
-		RequiredApproval: data.RequiredApproval.ValueBoolPointer(),
-		Publish:          data.Publish.ValueBoolPointer(),
+		Identifier:  data.Identifier.ValueString(),
+		Title:       data.Title.ValueStringPointer(),
+		Icon:        data.Icon.ValueStringPointer(),
+		Description: data.Description.ValueStringPointer(),
+		Publish:     data.Publish.ValueBoolPointer(),
+	}
+
+	action.RequiredApproval = utils.TerraformStringToBooleanOrString(data.RequiredApproval)
+	if action.RequiredApproval != nil && reflect.TypeOf(action.RequiredApproval).Kind() == reflect.String {
+		action.RequiredApproval = map[string]interface{}{"type": action.RequiredApproval}
 	}
 
 	action.Trigger, err = triggerToBody(ctx, data)
@@ -339,8 +344,14 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 				Identifier: data.UpsertEntityMethod.Mapping.Identifier.ValueStringPointer(),
 				Title:      data.UpsertEntityMethod.Title.ValueStringPointer(),
 				Icon:       data.UpsertEntityMethod.Mapping.Icon.ValueStringPointer(),
-				Properties: *properties,
-				Relations:  *relations,
+			}
+
+			if properties != nil {
+				mapping.Properties = *properties
+			}
+
+			if relations != nil {
+				mapping.Relations = *relations
 			}
 		}
 

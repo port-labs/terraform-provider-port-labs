@@ -114,7 +114,7 @@ var ActionPermissionsResourceMarkdownDescription = `
 
 # Action Permissions resource
 
-Docs for the Action Permissions resource can be found [here](https://docs.getport.io/create-self-service-experiences/set-self-service-actions-rbac/examples).
+Docs for the Action Permissions resource can be found [here](https://docs.getport.io/actions-and-automations/create-self-service-experiences/set-self-service-actions-rbac/?config-method=terraform).
 
 ## Example Usage
 

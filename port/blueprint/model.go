@@ -102,10 +102,11 @@ type PropertiesModel struct {
 }
 
 type RelationModel struct {
-	Target   types.String `tfsdk:"target"`
-	Title    types.String `tfsdk:"title"`
-	Required types.Bool   `tfsdk:"required"`
-	Many     types.Bool   `tfsdk:"many"`
+	Target   	types.String `tfsdk:"target"`
+	Title    	types.String `tfsdk:"title"`
+	Description types.String `tfsdk:"description"`
+	Required 	types.Bool   `tfsdk:"required"`
+	Many     	types.Bool   `tfsdk:"many"`
 }
 
 type MirrorPropertyModel struct {

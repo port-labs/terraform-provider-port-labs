@@ -177,10 +177,11 @@ func addRelationsToState(b *cli.Blueprint, bm *BlueprintModel) {
 		}
 
 		relationModel := &RelationModel{
-			Target:   types.StringValue(*v.Target),
-			Title:    flex.GoStringToFramework(v.Title),
-			Many:     flex.GoBoolToFramework(v.Many),
-			Required: flex.GoBoolToFramework(v.Required),
+			Target:   		types.StringValue(*v.Target),
+			Title:    		flex.GoStringToFramework(v.Title),
+			Description:    flex.GoStringToFramework(v.Description),
+			Many:     		flex.GoBoolToFramework(v.Many),
+			Required: 		flex.GoBoolToFramework(v.Required),
 		}
 
 		bm.Relations[k] = *relationModel

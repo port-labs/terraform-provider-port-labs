@@ -479,6 +479,7 @@ Optional:
 - `many` (Boolean) The many of the relation
 - `required` (Boolean) The required of the relation
 - `title` (String) The title of the relation
+- `description` (String) The description of the relation
 
 
 <a id="nestedatt--team_inheritance"></a>

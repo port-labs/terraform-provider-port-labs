@@ -3,6 +3,7 @@ package entity
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -167,7 +168,7 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 }
 
 func refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) error {
-	state.ID = types.StringValue(e.Identifier)
+	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprint.Identifier, e.Identifier))
 	state.Identifier = types.StringValue(e.Identifier)
 	state.Blueprint = types.StringValue(blueprint.Identifier)
 	state.Title = types.StringValue(e.Title)

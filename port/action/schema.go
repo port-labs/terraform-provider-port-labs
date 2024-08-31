@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 
 	"regexp"
@@ -110,8 +109,6 @@ func ActionSchema() map[string]schema.Attribute {
 				"user_properties": schema.SingleNestedAttribute{
 					MarkdownDescription: "User properties",
 					Optional:            true,
-					Computed:            true,
-					Default:             objectdefault.StaticValue(types.ObjectValueMust(map[string]attr.Type{}, map[string]attr.Value{})),
 					Attributes: map[string]schema.Attribute{
 						"string_props":  StringPropertySchema(),
 						"number_props":  NumberPropertySchema(),

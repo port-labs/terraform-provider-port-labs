@@ -372,6 +372,10 @@ func BlueprintSchema() map[string]schema.Attribute {
 						MarkdownDescription: "The title of the relation",
 						Optional:            true,
 					},
+					"description": schema.StringAttribute{
+						MarkdownDescription: "The description of the relation",
+						Optional:            true,
+					},
 					"target": schema.StringAttribute{
 						MarkdownDescription: "The target of the relation",
 						Required:            true,

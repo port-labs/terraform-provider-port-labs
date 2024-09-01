@@ -481,5 +481,3 @@ terraform import port_page.home_page "\$home"
 - `id` (String) The ID of this resource.
 - `updated_at` (String) The last update date of the page
 - `updated_by` (String) The last updater of the page
-
-

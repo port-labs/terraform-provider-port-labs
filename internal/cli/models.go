@@ -318,11 +318,12 @@ type (
 	}
 
 	Relation struct {
-		Identifier *string `json:"identifier,omitempty"`
-		Title      *string `json:"title,omitempty"`
-		Target     *string `json:"target,omitempty"`
-		Required   *bool   `json:"required,omitempty"`
-		Many       *bool   `json:"many,omitempty"`
+		Identifier 		*string `json:"identifier,omitempty"`
+		Title      		*string `json:"title,omitempty"`
+		Description     	*string `json:"description,omitempty"`
+		Target     		*string `json:"target,omitempty"`
+		Required   		*bool   `json:"required,omitempty"`
+		Many       		*bool   `json:"many,omitempty"`
 	}
 
 	Scorecard struct {

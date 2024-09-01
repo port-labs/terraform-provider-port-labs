@@ -3,15 +3,16 @@ package blueprint_test
 import (
 	"context"
 	"fmt"
-	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
-	"github.com/port-labs/terraform-provider-port-labs/v2/version"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/v2/version"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
@@ -409,12 +410,14 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 				Config: acctest.ProviderConfig + testAccActionConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "title", "TF Provider Test BP2"),
+					resource.TestCheckNoResourceAttr("port_blueprint.microservice1", "description"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "identifier", identifier1),
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice2", "title", "TF Provider Test BP3"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice2", "identifier", identifier2),
 					resource.TestCheckResourceAttr("port_blueprint.microservice2", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice2", "relations.test-rel.title", "Test Relation"),
+					resource.TestCheckNoResourceAttr("port_blueprint.microservice2", "description"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice2", "relations.test-rel.target", identifier1),
 				),
 			},
@@ -625,6 +628,7 @@ func TestAccPortBlueprintWithMirrorProperty(t *testing.T) {
 		relations = {
 			"test-rel" = {
 				title = "Test Relation"
+				description = "Test Relation"
 				target = port_blueprint.microservice1.identifier
 			}
 		}
@@ -638,6 +642,7 @@ func TestAccPortBlueprintWithMirrorProperty(t *testing.T) {
 				Config: acctest.ProviderConfig + testAccActionConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_blueprint.microservice2", "relations.test-rel.title", "Test Relation"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice2", "relations.test-rel.description", "Test Relation"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice2", "relations.test-rel.target", identifier1),
 					resource.TestCheckResourceAttr("port_blueprint.microservice2", "mirror_properties.mirror-for-microservice1.title", "Mirror for microservice1"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice2", "mirror_properties.mirror-for-microservice1.path", "test-rel.$identifier"),

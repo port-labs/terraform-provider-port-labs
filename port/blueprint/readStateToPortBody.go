@@ -2,6 +2,7 @@ package blueprint
 
 import (
 	"context"
+
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
@@ -60,6 +61,11 @@ func relationsResourceToBody(state *BlueprintModel) map[string]cli.Relation {
 		if !prop.Required.IsNull() {
 			required := prop.Required.ValueBool()
 			relationProp.Required = &required
+		}
+
+		if !prop.Description.IsNull() {
+			description := prop.Description.ValueString()
+			relationProp.Description = &description
 		}
 
 		relations[identifier] = relationProp

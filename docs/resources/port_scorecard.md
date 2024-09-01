@@ -475,5 +475,3 @@ Required:
 
 - `color` (String) The color of the level
 - `title` (String) The title of the level
-
-

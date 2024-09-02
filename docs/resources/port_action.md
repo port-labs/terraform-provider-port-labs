@@ -540,7 +540,7 @@ Optional:
 - `default` (List of String) The default value of the items
 - `enum` (List of String) The enum of possible values for the string items
 - `enum_jq_query` (String) The jq query for the enum of string items
-- `format` (String) The format of the string property. Common accepted values include `email`,`hostname`,`ipv4`,`ipv6`,`uuid`,`uri`,`date-time`
+- `format` (String) The format of the string property, Common accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
 
 
 
@@ -589,7 +589,7 @@ Optional:
 - `default_jq_query` (String) The default jq query of the object property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
-- `encryption` (String) The algorithm to encrypt the property with. Accepted value: `aes256-gcm`, `aes128-gcm`
+- `encryption` (String) The algorithm to encrypt the property with. Accepted value: `aes256-gcm`
 - `icon` (String) The icon of the property
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
 - `title` (String) The title of the property
@@ -608,10 +608,10 @@ Optional:
 - `default_jq_query` (String) The default jq query of the string property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
-- `encryption` (String) The algorithm to encrypt the property with. Accepted value: `aes256-gcm`, `aes128-gcm`
+- `encryption` (String) The algorithm to encrypt the property with. Accepted value: `aes256-gcm`
 - `enum` (List of String) The enum of the string property
 - `enum_jq_query` (String) The enum jq query of the string property
-- `format` (String) The format of the string property. Common accepted values include `email`,`hostname`,`ipv4`,`ipv6`,`uuid`,`uri`,`date-time`
+- `format` (String) The format of the string property. Common accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
 - `icon` (String) The icon of the property
 - `max_length` (Number) The max length of the string property
 - `min_length` (Number) The min length of the string property
@@ -689,7 +689,7 @@ Required:
 
 Optional:
 
-- `agent` (Boolean) Use the agent to invoke the action
+- `agent` (String) Specifies whether to use an agent to invoke the action. This can be a boolean value (`'true''` or `'false'`) or a JQ if dynamic evaluation is needed.
 - `body` (String) The Webhook body should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 - `headers` (Map of String) The HTTP headers for invoking the action. They should be encoded as a key-value object to a string using [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 - `method` (String) The HTTP method to invoke the action

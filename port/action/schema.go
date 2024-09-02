@@ -269,8 +269,8 @@ func ActionSchema() map[string]schema.Attribute {
 					MarkdownDescription: "Required when selecting type WEBHOOK. The URL to invoke the action",
 					Required:            true,
 				},
-				"agent": schema.BoolAttribute{
-					MarkdownDescription: "Use the agent to invoke the action",
+				"agent": schema.StringAttribute{
+					MarkdownDescription: "Specifies whether to use an agent to invoke the action. This can be a boolean value (`'true''` or `'false'`) or a JQ if dynamic evaluation is needed.",
 					Optional:            true,
 				},
 				"synchronized": schema.StringAttribute{
@@ -460,7 +460,7 @@ func StringPropertySchema() schema.Attribute {
 			Optional:            true,
 		},
 		"format": schema.StringAttribute{
-			MarkdownDescription: "The format of the string property. Common accepted values include `email`,`hostname`,`ipv4`,`ipv6`,`uuid`,`uri`,`date-time`",
+			MarkdownDescription: "The format of the string property. Common accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`",
 			Optional:            true,
 		},
 		"min_length": schema.Int64Attribute{
@@ -498,7 +498,7 @@ func StringPropertySchema() schema.Attribute {
 			},
 		},
 		"encryption": schema.StringAttribute{
-			MarkdownDescription: "The algorithm to encrypt the property with. Accepted value: `aes256-gcm`, `aes128-gcm`",
+			MarkdownDescription: "The algorithm to encrypt the property with. Accepted value: `aes256-gcm`",
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.OneOf("aes256-gcm"),
@@ -677,7 +677,7 @@ func ObjectPropertySchema() schema.Attribute {
 			},
 		},
 		"encryption": schema.StringAttribute{
-			MarkdownDescription: "The algorithm to encrypt the property with. Accepted value: `aes256-gcm`, `aes128-gcm`",
+			MarkdownDescription: "The algorithm to encrypt the property with. Accepted value: `aes256-gcm`",
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.OneOf("aes256-gcm"),
@@ -736,7 +736,7 @@ func ArrayPropertySchema() schema.Attribute {
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"format": schema.StringAttribute{
-					MarkdownDescription: "The format of the string property. Common accepted values include `email`,`hostname`,`ipv4`,`ipv6`,`uuid`,`uri`,`date-time`",
+					MarkdownDescription: "The format of the string property, Common accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`",
 					Optional:            true,
 				},
 				"blueprint": schema.StringAttribute{

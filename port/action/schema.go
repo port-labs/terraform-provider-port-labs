@@ -460,7 +460,7 @@ func StringPropertySchema() schema.Attribute {
 			Optional:            true,
 		},
 		"format": schema.StringAttribute{
-			MarkdownDescription: "The format of the string property. Common accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`",
+			MarkdownDescription: "The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`",
 			Optional:            true,
 		},
 		"min_length": schema.Int64Attribute{
@@ -736,7 +736,7 @@ func ArrayPropertySchema() schema.Attribute {
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"format": schema.StringAttribute{
-					MarkdownDescription: "The format of the string property, Common accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`",
+					MarkdownDescription: "The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`",
 					Optional:            true,
 				},
 				"blueprint": schema.StringAttribute{

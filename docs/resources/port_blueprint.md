@@ -476,6 +476,7 @@ Required:
 
 Optional:
 
+- `description` (String) The description of the relation
 - `many` (Boolean) The many of the relation
 - `required` (Boolean) The required of the relation
 - `title` (String) The title of the relation
@@ -499,5 +500,3 @@ Required:
 Optional:
 
 - `agent` (Boolean) The agent of the webhook changelog destination
-
-

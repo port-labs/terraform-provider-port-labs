@@ -343,6 +343,7 @@ Optional:
 - `entity_deleted_event` (Attributes) Entity deleted event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_deleted_event))
 - `entity_updated_event` (Attributes) Entity updated event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_updated_event))
 - `jq_condition` (Attributes) JQ condition for automation trigger (see [below for nested schema](#nestedatt--automation_trigger--jq_condition))
+- `run_updated_event` (Attributes) Run updated event trigger (see [below for nested schema](#nestedatt--automation_trigger--run_updated_event))
 - `timer_property_expired_event` (Attributes) Timer property expired event trigger (see [below for nested schema](#nestedatt--automation_trigger--timer_property_expired_event))
 
 <a id="nestedatt--automation_trigger--any_entity_change_event"></a>
@@ -387,6 +388,14 @@ Required:
 Optional:
 
 - `combinator` (String) The combinator of the condition
+
+
+<a id="nestedatt--automation_trigger--run_updated_event"></a>
+### Nested Schema for `automation_trigger.run_updated_event`
+
+Required:
+
+- `action_identifier` (String) The action identifier of the updated run
 
 
 <a id="nestedatt--automation_trigger--timer_property_expired_event"></a>
@@ -685,5 +694,3 @@ Optional:
 - `headers` (Map of String) The HTTP headers for invoking the action. They should be encoded as a key-value object to a string using [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 - `method` (String) The HTTP method to invoke the action
 - `synchronized` (String) Synchronize the action
-
-

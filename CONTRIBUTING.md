@@ -3,6 +3,7 @@
 ## Setting up your developer workspace:
 
 * Have [golang](https://go.dev/doc/install) installed
+* Have `wget` installed
 * Run `make dev-setup`
 
 ## Verifying your contribution:
@@ -28,7 +29,7 @@ Expose the following environment variables:
 
 `PORT_CLIENT_SECRET`
 
-`PORT_BASE_URL` - Optional 
+`PORT_BASE_URL` - Optional, Port API url
 
 Then run:
 

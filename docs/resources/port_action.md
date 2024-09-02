@@ -540,7 +540,7 @@ Optional:
 - `default` (List of String) The default value of the items
 - `enum` (List of String) The enum of possible values for the string items
 - `enum_jq_query` (String) The jq query for the enum of string items
-- `format` (String) The format of the string property, Common accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
+- `format` (String) The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
 
 
 
@@ -611,7 +611,7 @@ Optional:
 - `encryption` (String) The algorithm to encrypt the property with. Accepted value: `aes256-gcm`
 - `enum` (List of String) The enum of the string property
 - `enum_jq_query` (String) The enum jq query of the string property
-- `format` (String) The format of the string property. Common accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
+- `format` (String) The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
 - `icon` (String) The icon of the property
 - `max_length` (Number) The max length of the string property
 - `min_length` (Number) The min length of the string property

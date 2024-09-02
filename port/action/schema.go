@@ -1040,6 +1040,7 @@ func validateUserInputRequiredNotSetToFalse(ctx context.Context, state *ActionVa
 
 var ResourceMarkdownDescription = `
 
+
 # Action resource
 
 Docs for the Action resource can be found [here](https://docs.getport.io/create-self-service-experiences/).

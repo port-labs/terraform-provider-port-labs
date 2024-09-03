@@ -272,6 +272,7 @@ func ActionSchema() map[string]schema.Attribute {
 				"agent": schema.StringAttribute{
 					MarkdownDescription: "Specifies whether to use an agent to invoke the action. This can be a boolean value (`'true''` or `'false'`) or a JQ if dynamic evaluation is needed.",
 					Optional:            true,
+					Validators:          StringBooleanOrJQTemplateValidator(),
 				},
 				"synchronized": schema.StringAttribute{
 					MarkdownDescription: "Synchronize the action",

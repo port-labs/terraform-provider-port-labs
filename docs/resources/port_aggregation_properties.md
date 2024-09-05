@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Aggregation Properties
   This resource allows you to manage aggregation properties of a blueprint.
-  See the Port documentation https://docs.getport.io/build-your-software-catalog/define-your-data-model/setup-blueprint/properties/aggregation-properties/ for more information about aggregation properties.
+  See the Port documentation https://docs.getport.io/build-your-software-catalog/customize-integrations/configure-data-model/setup-blueprint/properties/aggregation-property/ for more information about aggregation properties.
   Supported Methods:
   count_entities - Count the entities of the target blueprintaverage_entities - Average the entities of the target blueprint by time periodsaveragebyproperty - Calculate the average by property value of the target entitiesaggregatebyproperty - Calculate the aggregate by property value of the target entities, such as sum, min, max, median
   Example Usage
@@ -276,7 +276,7 @@ description: |-
 
 This resource allows you to manage aggregation properties of a blueprint.
 
-See the [Port documentation](https://docs.getport.io/build-your-software-catalog/define-your-data-model/setup-blueprint/properties/aggregation-properties/) for more information about aggregation properties.
+See the [Port documentation](https://docs.getport.io/build-your-software-catalog/customize-integrations/configure-data-model/setup-blueprint/properties/aggregation-property/) for more information about aggregation properties.
 
 
 Supported Methods:

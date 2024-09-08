@@ -339,10 +339,12 @@ Optional:
 Optional:
 
 - `any_entity_change_event` (Attributes) Any entity change event trigger (see [below for nested schema](#nestedatt--automation_trigger--any_entity_change_event))
+- `any_run_change_event` (Attributes) Any run change event trigger (see [below for nested schema](#nestedatt--automation_trigger--any_run_change_event))
 - `entity_created_event` (Attributes) Entity created event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_created_event))
 - `entity_deleted_event` (Attributes) Entity deleted event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_deleted_event))
 - `entity_updated_event` (Attributes) Entity updated event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_updated_event))
 - `jq_condition` (Attributes) JQ condition for automation trigger (see [below for nested schema](#nestedatt--automation_trigger--jq_condition))
+- `run_created_event` (Attributes) Run created event trigger (see [below for nested schema](#nestedatt--automation_trigger--run_created_event))
 - `run_updated_event` (Attributes) Run updated event trigger (see [below for nested schema](#nestedatt--automation_trigger--run_updated_event))
 - `timer_property_expired_event` (Attributes) Timer property expired event trigger (see [below for nested schema](#nestedatt--automation_trigger--timer_property_expired_event))
 
@@ -352,6 +354,14 @@ Optional:
 Required:
 
 - `blueprint_identifier` (String) The blueprint identifier of the changed entity
+
+
+<a id="nestedatt--automation_trigger--any_run_change_event"></a>
+### Nested Schema for `automation_trigger.any_run_change_event`
+
+Required:
+
+- `action_identifier` (String) The action identifier of the changed run
 
 
 <a id="nestedatt--automation_trigger--entity_created_event"></a>
@@ -388,6 +398,14 @@ Required:
 Optional:
 
 - `combinator` (String) The combinator of the condition
+
+
+<a id="nestedatt--automation_trigger--run_created_event"></a>
+### Nested Schema for `automation_trigger.run_created_event`
+
+Required:
+
+- `action_identifier` (String) The action identifier of the created run
 
 
 <a id="nestedatt--automation_trigger--run_updated_event"></a>

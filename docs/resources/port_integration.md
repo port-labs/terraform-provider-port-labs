@@ -11,7 +11,6 @@ description: |-
   resource "portintegration" "mycustomintegration" {
       installationid       = "my-custom-integration-id"
       title                 = "My Custom Integration"
-      version               = "1.33.7" # Optional, can be omitted
       config = jsonencode({
           createMissingRelatedEntitiesboolean = true
           deleteDependentEntities = true,
@@ -56,7 +55,6 @@ Docs about how to import existing integrations and manage their mappings can be 
 resource "port_integration" "my_custom_integration" {
 	installation_id       = "my-custom-integration-id"
 	title                 = "My Custom Integration"
-	version               = "1.33.7" # Optional, can be omitted
 	config = jsonencode({
 		createMissingRelatedEntitiesboolean = true
 		deleteDependentEntities = true,

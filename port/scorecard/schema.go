@@ -183,8 +183,8 @@ resource "port_scorecard" "readiness" {
             operator = "isNotEmpty"
           }),
           jsonencode({
-            property = "author",
-            operator : "=",
+            property = "author"
+            operator : "="
             value : "myValue"
           })
         ]
@@ -230,7 +230,7 @@ resource "port_scorecard" "readiness" {
   ]
 }
 
-
+` + "```" + `
 
 ## Example Usage with Levels
 
@@ -296,8 +296,8 @@ resource "port_scorecard" "readiness" {
             operator = "isNotEmpty"
           }),
           jsonencode({
-            property = "author",
-            operator : "=",
+            property = "author"
+            operator : "="
             value : "myValue"
           })
         ]

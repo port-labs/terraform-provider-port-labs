@@ -292,7 +292,7 @@ func ActionSchema() map[string]schema.Attribute {
 					Required:            true,
 				},
 				"agent": schema.StringAttribute{
-					MarkdownDescription: "Use the agent to invoke the action",
+					MarkdownDescription: "Specifies whether to use an agent to invoke the action. This can be a boolean value (`'true''` or `'false'`) or a JQ if dynamic evaluation is needed.",
 					Optional:            true,
 					Validators:          StringBooleanOrJQTemplateValidator(),
 				},
@@ -483,7 +483,7 @@ func StringPropertySchema() schema.Attribute {
 			Optional:            true,
 		},
 		"format": schema.StringAttribute{
-			MarkdownDescription: "The format of the string property",
+			MarkdownDescription: "The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`",
 			Optional:            true,
 		},
 		"min_length": schema.Int64Attribute{
@@ -521,7 +521,7 @@ func StringPropertySchema() schema.Attribute {
 			},
 		},
 		"encryption": schema.StringAttribute{
-			MarkdownDescription: "The algorithm to encrypt the property with",
+			MarkdownDescription: "The algorithm to encrypt the property with. Accepted value: `aes256-gcm`",
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.OneOf("aes256-gcm"),
@@ -700,7 +700,7 @@ func ObjectPropertySchema() schema.Attribute {
 			},
 		},
 		"encryption": schema.StringAttribute{
-			MarkdownDescription: "The algorithm to encrypt the property with",
+			MarkdownDescription: "The algorithm to encrypt the property with. Accepted value: `aes256-gcm`",
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.OneOf("aes256-gcm"),
@@ -755,24 +755,24 @@ func ArrayPropertySchema() schema.Attribute {
 			},
 		},
 		"string_items": schema.SingleNestedAttribute{
-			MarkdownDescription: "The items of the array property",
+			MarkdownDescription: "An array of string items within the property",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"format": schema.StringAttribute{
-					MarkdownDescription: "The format of the items",
+					MarkdownDescription: "The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`",
 					Optional:            true,
 				},
 				"blueprint": schema.StringAttribute{
-					MarkdownDescription: "The blueprint identifier the property relates to",
+					MarkdownDescription: "The blueprint identifier related to each string item",
 					Optional:            true,
 				},
 				"default": schema.ListAttribute{
-					MarkdownDescription: "The default of the items",
+					MarkdownDescription: "The default value of the items",
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
 				"enum": schema.ListAttribute{
-					MarkdownDescription: "The enum of the items",
+					MarkdownDescription: "The enum of possible values for the string items",
 					Optional:            true,
 					ElementType:         types.StringType,
 					Validators: []validator.List{
@@ -781,29 +781,29 @@ func ArrayPropertySchema() schema.Attribute {
 					},
 				},
 				"enum_jq_query": schema.StringAttribute{
-					MarkdownDescription: "The enum jq query of the string items",
+					MarkdownDescription: "The jq query for the enum of string items",
 					Optional:            true,
 					Validators: []validator.String{
 						stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
 					},
 				},
 				"dataset": schema.StringAttribute{
-					MarkdownDescription: "The dataset of an the entity-format items",
+					MarkdownDescription: "The dataset of the entity-format items",
 					Optional:            true,
 				},
 			},
 		},
 		"number_items": schema.SingleNestedAttribute{
-			MarkdownDescription: "The items of the array property",
+			MarkdownDescription: "An array of number items within the property",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"default": schema.ListAttribute{
-					MarkdownDescription: "The default of the items",
+					MarkdownDescription: "The default values for the number items",
 					Optional:            true,
 					ElementType:         types.Float64Type,
 				},
 				"enum": schema.ListAttribute{
-					MarkdownDescription: "The enum of the items",
+					MarkdownDescription: "The enum of possible values for the number items",
 					Optional:            true,
 					ElementType:         types.Float64Type,
 					Validators: []validator.List{
@@ -812,7 +812,7 @@ func ArrayPropertySchema() schema.Attribute {
 					},
 				},
 				"enum_jq_query": schema.StringAttribute{
-					MarkdownDescription: "The enum jq query of the number items",
+					MarkdownDescription: "The jq query for the enum number items",
 					Optional:            true,
 					Validators: []validator.String{
 						stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
@@ -821,22 +821,22 @@ func ArrayPropertySchema() schema.Attribute {
 			},
 		},
 		"boolean_items": schema.SingleNestedAttribute{
-			MarkdownDescription: "The items of the array property",
+			MarkdownDescription: "An array of boolean items within the property",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"default": schema.ListAttribute{
-					MarkdownDescription: "The default of the items",
+					MarkdownDescription: "The default values for the boolean items",
 					Optional:            true,
 					ElementType:         types.BoolType,
 				},
 			},
 		},
 		"object_items": schema.SingleNestedAttribute{
-			MarkdownDescription: "The items of the array property",
+			MarkdownDescription: "An array of object items within the property",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"default": schema.ListAttribute{
-					MarkdownDescription: "The default of the items",
+					MarkdownDescription: "The default values for the object items",
 					Optional:            true,
 					ElementType:         types.MapType{ElemType: types.StringType},
 				},
@@ -1062,6 +1062,7 @@ func validateUserInputRequiredNotSetToFalse(ctx context.Context, state *ActionVa
 }
 
 var ResourceMarkdownDescription = `
+
 
 # Action resource
 

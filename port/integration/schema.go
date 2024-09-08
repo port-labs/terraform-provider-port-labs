@@ -18,6 +18,7 @@ func IntegrationSchema() map[string]schema.Attribute {
 		},
 		"version": schema.StringAttribute{
 			Optional: true,
+			Computed: true,
 		},
 		"title": schema.StringAttribute{
 			Optional: true,
@@ -73,7 +74,6 @@ Docs about how to import existing integrations and manage their mappings can be 
 resource "port_integration" "my_custom_integration" {
 	installation_id       = "my-custom-integration-id"
 	title                 = "My Custom Integration"
-	version               = "1.33.7"
 	config = jsonencode({
 		createMissingRelatedEntitiesboolean = true
 		deleteDependentEntities = true,

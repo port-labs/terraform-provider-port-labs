@@ -489,6 +489,7 @@ func TestAccPortActionImport(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.url", "https://getport.io"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.title", "My String Identifier"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.required", "true"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.sort"),
 				),
 			},
 			{
@@ -2261,4 +2262,3 @@ func TestAccPortActionSort(t *testing.T) {
 		},
 	})
 }
-

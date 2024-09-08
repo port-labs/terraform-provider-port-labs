@@ -167,7 +167,7 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 
 		if data.AutomationTrigger.RunCreatedEvent != nil {
 			automationTrigger.Event = &cli.TriggerEvent{
-				Type:             consts.RunUpdated,
+				Type:             consts.RunCreated,
 				ActionIdentifier: data.AutomationTrigger.RunCreatedEvent.ActionIdentifier.ValueStringPointer(),
 			}
 		}
@@ -181,7 +181,7 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 
 		if data.AutomationTrigger.AnyRunChangeEvent != nil {
 			automationTrigger.Event = &cli.TriggerEvent{
-				Type:             consts.RunUpdated,
+				Type:             consts.AnyRunChange,
 				ActionIdentifier: data.AutomationTrigger.AnyRunChangeEvent.ActionIdentifier.ValueStringPointer(),
 			}
 		}

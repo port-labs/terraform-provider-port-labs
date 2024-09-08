@@ -1608,6 +1608,12 @@ func TestAccPortAutomationRunCreated(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.run_created_event.action_identifier", "self_serve_action"),
 				),
 			},
+			{
+				ResourceName:      "port_action.create_microservice",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     actionIdentifier,
+			},
 		},
 	})
 }
@@ -1653,6 +1659,12 @@ func TestAccPortAutomationRunUpdated(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.run_updated_event.action_identifier", "self_serve_action"),
 				),
 			},
+			{
+				ResourceName:      "port_action.create_microservice",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     actionIdentifier,
+			},
 		},
 	})
 }
@@ -1697,6 +1709,12 @@ func TestAccPortAutomationAnyRunChange(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.any_run_change_event.action_identifier", "self_serve_action"),
 				),
+			},
+			{
+				ResourceName:      "port_action.create_microservice",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     actionIdentifier,
 			},
 		},
 	})

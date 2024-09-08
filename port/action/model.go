@@ -324,7 +324,7 @@ type AutomationTriggerModel struct {
 	TimerPropertyExpiredEvent *TimerPropertyExpiredEventModel `tfsdk:"timer_property_expired_event"`
 	RunCreatedEvent           *RunCreatedEvent                `tfsdk:"run_created_event"`
 	RunUpdatedEvent           *RunUpdatedEvent                `tfsdk:"run_updated_event"`
-	AnyRunChangeEvent         *AnyRunChangeEvent              `tfsdk:"any_run_chnage_event"`
+	AnyRunChangeEvent         *AnyRunChangeEvent              `tfsdk:"any_run_change_event"`
 	JqCondition               *JqConditionModel               `tfsdk:"jq_condition"`
 }
 

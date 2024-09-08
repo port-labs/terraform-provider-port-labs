@@ -556,6 +556,25 @@ func StringPropertySchema() schema.Attribute {
 				},
 			},
 		},
+		"sort": schema.SingleNestedAttribute{
+			MarkdownDescription: "How to sort entities when in the self service action form in the UI",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"property": schema.StringAttribute{
+					MarkdownDescription: "The property to sort the entities by",
+					Required:            true,
+				},
+				"order": schema.StringAttribute{
+					MarkdownDescription: "The order to sort the entities in",
+					Computed:            true,
+					Optional:            true,
+					Default:             stringdefault.StaticString("ASC"),
+					Validators: []validator.String{
+						stringvalidator.OneOf("ASC", "DESC"),
+					},
+				},
+			},
+		},
 	}
 
 	utils.CopyMaps(stringPropertySchema, MetadataProperties())
@@ -831,6 +850,25 @@ func ArrayPropertySchema() schema.Attribute {
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("visible")),
 			},
 		},
+		"sort": schema.SingleNestedAttribute{
+			MarkdownDescription: "How to sort entities when in the self service action form in the UI",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"property": schema.StringAttribute{
+					MarkdownDescription: "The property to sort the entities by",
+					Required:            true,
+				},
+				"order": schema.StringAttribute{
+					MarkdownDescription: "The order to sort the entities in",
+					Computed:            true,
+					Optional:            true,
+					Default:             stringdefault.StaticString("ASC"),
+					Validators: []validator.String{
+						stringvalidator.OneOf("ASC", "DESC"),
+					},
+				},
+			},
+		},
 	}
 
 	utils.CopyMaps(arrayPropertySchema, MetadataProperties())
@@ -1073,6 +1111,10 @@ resource "port_action" "create_microservice" {
                             }
                         }]
                     }
+                    sort = {
+                        property = "$updatedAt"
+                        order = "DESC"
+                    }
 				}
 			}
 			number_props = {
@@ -1111,6 +1153,10 @@ resource "port_action" "create_microservice" {
                             }]
                         })
 					}
+                    sort = {
+                        property = "$updatedAt"
+                        order = "DESC"
+                    }
 				}
 			}
 		}

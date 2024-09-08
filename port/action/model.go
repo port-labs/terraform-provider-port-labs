@@ -30,15 +30,16 @@ type StringPropModel struct {
 	Visible        types.Bool    `tfsdk:"visible"`
 	VisibleJqQuery types.String  `tfsdk:"visible_jq_query"`
 
-	Default     types.String `tfsdk:"default"`
-	Blueprint   types.String `tfsdk:"blueprint"`
-	Format      types.String `tfsdk:"format"`
-	MaxLength   types.Int64  `tfsdk:"max_length"`
-	MinLength   types.Int64  `tfsdk:"min_length"`
-	Pattern     types.String `tfsdk:"pattern"`
-	Enum        types.List   `tfsdk:"enum"`
-	EnumJqQuery types.String `tfsdk:"enum_jq_query"`
-	Encryption  types.String `tfsdk:"encryption"`
+	Default     types.String       `tfsdk:"default"`
+	Blueprint   types.String       `tfsdk:"blueprint"`
+	Format      types.String       `tfsdk:"format"`
+	MaxLength   types.Int64        `tfsdk:"max_length"`
+	MinLength   types.Int64        `tfsdk:"min_length"`
+	Pattern     types.String       `tfsdk:"pattern"`
+	Enum        types.List         `tfsdk:"enum"`
+	EnumJqQuery types.String       `tfsdk:"enum_jq_query"`
+	Encryption  types.String       `tfsdk:"encryption"`
+	Sort        *EntitiesSortModel `tfsdk:"sort"`
 }
 
 // StringPropValidationModel is a model used for the validation of StringPropModel resources
@@ -206,6 +207,11 @@ type BooleanPropModel struct {
 	Default types.Bool `tfsdk:"default"`
 }
 
+type EntitiesSortModel struct {
+	Property types.String `tfsdk:"property"`
+	Order    types.String `tfsdk:"order"`
+}
+
 type ArrayPropModel struct {
 	Title          types.String `tfsdk:"title"`
 	Icon           types.String `tfsdk:"icon"`
@@ -216,12 +222,13 @@ type ArrayPropModel struct {
 	Visible        types.Bool   `tfsdk:"visible"`
 	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
 
-	MaxItems     types.Int64   `tfsdk:"max_items"`
-	MinItems     types.Int64   `tfsdk:"min_items"`
-	StringItems  *StringItems  `tfsdk:"string_items"`
-	NumberItems  *NumberItems  `tfsdk:"number_items"`
-	BooleanItems *BooleanItems `tfsdk:"boolean_items"`
-	ObjectItems  *ObjectItems  `tfsdk:"object_items"`
+	MaxItems     types.Int64        `tfsdk:"max_items"`
+	MinItems     types.Int64        `tfsdk:"min_items"`
+	StringItems  *StringItems       `tfsdk:"string_items"`
+	NumberItems  *NumberItems       `tfsdk:"number_items"`
+	BooleanItems *BooleanItems      `tfsdk:"boolean_items"`
+	ObjectItems  *ObjectItems       `tfsdk:"object_items"`
+	Sort         *EntitiesSortModel `tfsdk:"sort"`
 }
 
 type ObjectPropModel struct {

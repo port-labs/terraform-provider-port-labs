@@ -1568,6 +1568,57 @@ func TestAccPortAutomationTimerPropertyExpired(t *testing.T) {
 	})
 }
 
+func TestAccPortAutomationRunCreated(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "self_serve_action" {
+	title      = "self serve action"
+	identifier = "self_serve_action"
+	icon       = "Terraform"
+	self_service_trigger = {
+		operation = "CREATE"
+		user_properties = {
+		}
+	}
+	kafka_method = {}
+	}
+
+	resource "port_action" "create_microservice" {
+	title      = "TF Provider Test"
+	identifier = "%s"
+	icon       = "Terraform"
+	automation_trigger = {
+		run_created_event = {
+			action_identifier = "self_serve_action"
+		}
+	}
+	kafka_method = {}
+	depends_on   = [port_action.self_serve_action]
+	}`, actionIdentifier)
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.run_created_event.action_identifier", "self_serve_action"),
+				),
+			},
+			{
+				ResourceName:      "port_action.create_microservice",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     actionIdentifier,
+			},
+		},
+	})
+}
+
 func TestAccPortAutomationRunUpdated(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()
@@ -1608,6 +1659,63 @@ func TestAccPortAutomationRunUpdated(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.run_updated_event.action_identifier", "self_serve_action"),
 				),
+			},
+			{
+				ResourceName:      "port_action.create_microservice",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     actionIdentifier,
+			},
+		},
+	})
+}
+
+func TestAccPortAutomationAnyRunChange(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "self_serve_action" {
+	title      = "self serve action"
+	identifier = "self_serve_action"
+	icon       = "Terraform"
+	self_service_trigger = {
+		operation = "CREATE"
+		user_properties = {
+		}
+	}
+	kafka_method = {}
+	}
+
+	resource "port_action" "create_microservice" {
+	title      = "TF Provider Test"
+	identifier = "%s"
+	icon       = "Terraform"
+	automation_trigger = {
+		any_run_change_event = {
+			action_identifier = "self_serve_action"
+		}
+	}
+	kafka_method = {}
+	depends_on   = [port_action.self_serve_action]
+	}`, actionIdentifier)
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "automation_trigger.any_run_change_event.action_identifier", "self_serve_action"),
+				),
+			},
+			{
+				ResourceName:      "port_action.create_microservice",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     actionIdentifier,
 			},
 		},
 	})

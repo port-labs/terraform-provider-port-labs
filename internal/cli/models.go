@@ -66,6 +66,11 @@ type (
 		EnumColors         map[string]string   `json:"enumColors,omitempty"`
 	}
 
+	EntitiesSortModel struct {
+		Property string `json:"property"`
+		Order    string `json:"order"`
+	}
+
 	ActionProperty struct {
 		Type               string              `json:"type,omitempty"`
 		Title              *string             `json:"title,omitempty"`
@@ -91,6 +96,7 @@ type (
 		Dataset            *Dataset            `json:"dataset,omitempty"`
 		Encryption         *string             `json:"encryption,omitempty"`
 		Visible            any                 `json:"visible,omitempty"`
+		Sort               *EntitiesSortModel  `json:"sort,omitempty"`
 	}
 
 	SpecAuthentication struct {

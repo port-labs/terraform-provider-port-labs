@@ -191,6 +191,13 @@ func arrayPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, pr
 				property.Visible = VisibleJqQueryMap
 			}
 
+			if prop.Sort != nil {
+				property.Sort = &cli.EntitiesSortModel{
+					Property: prop.Sort.Property.ValueString(),
+					Order: prop.Sort.Order.ValueString(),
+				}
+			}
+
 			props[propIdentifier] = property
 		}
 
@@ -213,6 +220,13 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 		case map[string]interface{}:
 			arrayProp.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
 		}
+	}
+
+	if v.Sort != nil {
+			arrayProp.Sort = &EntitiesSortModel{
+				Property: types.StringValue(v.Sort.Property),
+				Order: types.StringValue(v.Sort.Order),
+			}
 	}
 
 	if v.Items != nil {

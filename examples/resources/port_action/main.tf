@@ -88,6 +88,16 @@ resource "port_action" "restart_microservice" {
           default     = "https://example.com"
           pattern     = "^https://.*"
         }
+        service = {
+          title       = "Service"
+          description = "The service to restart"
+          format      = "entity"
+          blueprint   = "service"
+          sort        = {
+            property = "$updatedAt"
+            order    = "DESC"
+          }
+        }
       }
     }
   }

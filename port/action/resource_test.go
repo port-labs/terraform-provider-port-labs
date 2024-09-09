@@ -489,6 +489,7 @@ func TestAccPortActionImport(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.url", "https://getport.io"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.title", "My String Identifier"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.required", "true"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.sort"),
 				),
 			},
 			{
@@ -2295,6 +2296,75 @@ func TestRequiredApprovalAll(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "required_approval", "ALL"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "approval_webhook_notification.url", "https://example.com"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "approval_webhook_notification.format", "json"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionSort(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%[1]v"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				"string_props" = {
+					"myEntityIdentifier" = {
+						"title" = "My entity Identifier"
+						"format" = "entity"
+						"blueprint" = "%[2]v"
+						"sort" = {
+							"order" = "DESC"
+							"property" = "timer"
+						}
+					}
+				}
+				"array_props" = {
+					"myEntityIdentifiers" = {
+						"title" = "My entity Identifiers"
+						string_items = {
+							"format" = "entity"
+							"blueprint" = "%[2]v"
+						}
+						"sort" = {
+							"order" = "ASC"
+							"property" = "timer"
+						}
+					}
+				}
+			}
+		}
+		kafka_method = {}
+	}`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.blueprint_identifier", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myEntityIdentifier.title", "My entity Identifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myEntityIdentifier.format", "entity"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myEntityIdentifier.blueprint", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myEntityIdentifier.sort.order", "DESC"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myEntityIdentifier.sort.property", "timer"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.myEntityIdentifiers.title", "My entity Identifiers"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.myEntityIdentifiers.sort.order", "ASC"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.myEntityIdentifiers.sort.property", "timer"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.myEntityIdentifiers.string_items.format", "entity"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.myEntityIdentifiers.string_items.blueprint", identifier),
 				),
 			},
 		},

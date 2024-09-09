@@ -31,6 +31,10 @@ description: |-
                               }
                           }]
                       }
+                      sort = {
+                          property = "$updatedAt"
+                          order = "DESC"
+                      }
                   }
               }
               number_props = {
@@ -68,6 +72,10 @@ description: |-
                                   value    = "specificValue"
                               }]
                           })
+                      }
+                      sort = {
+                          property = "$updatedAt"
+                          order = "DESC"
                       }
                   }
               }
@@ -170,6 +178,10 @@ resource "port_action" "create_microservice" {
                             }
                         }]
                     }
+                    sort = {
+                        property = "$updatedAt"
+                        order = "DESC"
+                    }
 				}
 			}
 			number_props = {
@@ -208,6 +220,10 @@ resource "port_action" "create_microservice" {
                             }]
                         })
 					}
+                    sort = {
+                        property = "$updatedAt"
+                        order = "DESC"
+                    }
 				}
 			}
 		}
@@ -517,6 +533,7 @@ Optional:
 - `number_items` (Attributes) An array of number items within the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--number_items))
 - `object_items` (Attributes) An array of object items within the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--object_items))
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
+- `sort` (Attributes) How to sort entities when in the self service action form in the UI (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--sort))
 - `string_items` (Attributes) An array of string items within the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--string_items))
 - `title` (String) The title of the property
 - `visible` (Boolean) The visibility of the array property
@@ -546,6 +563,18 @@ Optional:
 Optional:
 
 - `default` (List of Map of String) The default values for the object items
+
+
+<a id="nestedatt--self_service_trigger--user_properties--array_props--sort"></a>
+### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
+
+Required:
+
+- `property` (String) The property to sort the entities by
+
+Optional:
+
+- `order` (String) The order to sort the entities in
 
 
 <a id="nestedatt--self_service_trigger--user_properties--array_props--string_items"></a>
@@ -635,6 +664,7 @@ Optional:
 - `min_length` (Number) The min length of the string property
 - `pattern` (String) The pattern of the string property
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
+- `sort` (Attributes) How to sort entities when in the self service action form in the UI (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--sort))
 - `title` (String) The title of the property
 - `visible` (Boolean) The visibility of the string property
 - `visible_jq_query` (String) The visibility condition jq query of the string property
@@ -668,6 +698,18 @@ Optional:
 - `jq_query` (String)
 
 
+
+
+<a id="nestedatt--self_service_trigger--user_properties--string_props--sort"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query`
+
+Required:
+
+- `property` (String) The property to sort the entities by
+
+Optional:
+
+- `order` (String) The order to sort the entities in
 
 
 

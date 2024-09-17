@@ -10,6 +10,7 @@ import (
 	"github.com/samber/lo"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
@@ -318,17 +319,33 @@ func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionMod
 			return err
 		}
 		requiredJqQuery, _ := buildRequired(a.Trigger.UserInputs)
-		orderProperties := types.ListNull(types.StringType)
-		if len(a.Trigger.UserInputs.Order) > 0 {
-			orderProperties = flex.GoArrayStringToTerraformList(ctx, a.Trigger.UserInputs.Order)
-		}
-
 		state.SelfServiceTrigger = &SelfServiceTriggerModel{
 			BlueprintIdentifier: flex.GoStringToFramework(a.Trigger.BlueprintIdentifier),
 			Operation:           types.StringValue(*a.Trigger.Operation),
 			UserProperties:      userProperties,
 			RequiredJqQuery:     requiredJqQuery,
-			OrderProperties:     orderProperties,
+		}
+
+		if len(a.Trigger.UserInputs.Order) > 0 {
+			state.SelfServiceTrigger.OrderProperties = flex.GoArrayStringToTerraformList(ctx, a.Trigger.UserInputs.Order)
+		}
+
+		if len(a.Trigger.UserInputs.Steps) > 0 {
+			steps := make([]Step, 0, len(a.Trigger.UserInputs.Steps))
+			for _, step := range a.Trigger.UserInputs.Steps {
+				t := basetypes.NewStringValue(step.Title)
+				o := make([]types.String, 0, len(step.Order))
+				for _, p := range step.Order {
+					o = append(o, types.StringValue(p))
+				}
+				s := Step{
+					Title: t,
+					Order: o,
+				}
+				steps = append(steps, s)
+			}
+
+			state.SelfServiceTrigger.Steps = steps
 		}
 
 		if a.Trigger.Condition != nil {

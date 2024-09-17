@@ -201,10 +201,16 @@ type (
 		Path string `json:"path,omitempty"`
 	}
 
+	Step = struct {
+		Title string   `json:"title"`
+		Order []string `json:"order"`
+	}
+
 	ActionUserInputs = struct {
 		Properties map[string]ActionProperty `json:"properties"`
 		Required   any                       `json:"required,omitempty"`
 		Order      []string                  `json:"order,omitempty"`
+		Steps      []Step                    `json:"steps,omitempty"`
 	}
 
 	TriggerEvent struct {
@@ -324,12 +330,12 @@ type (
 	}
 
 	Relation struct {
-		Identifier 		*string `json:"identifier,omitempty"`
-		Title      		*string `json:"title,omitempty"`
-		Description     	*string `json:"description,omitempty"`
-		Target     		*string `json:"target,omitempty"`
-		Required   		*bool   `json:"required,omitempty"`
-		Many       		*bool   `json:"many,omitempty"`
+		Identifier  *string `json:"identifier,omitempty"`
+		Title       *string `json:"title,omitempty"`
+		Description *string `json:"description,omitempty"`
+		Target      *string `json:"target,omitempty"`
+		Required    *bool   `json:"required,omitempty"`
+		Many        *bool   `json:"many,omitempty"`
 	}
 
 	Scorecard struct {

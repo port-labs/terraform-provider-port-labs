@@ -156,10 +156,6 @@ func ActionSchema() map[string]schema.Attribute {
 					path.MatchRoot("self_service_trigger"),
 					path.MatchRoot("automation_trigger"),
 				),
-				objectvalidator.ExactlyOneOf(
-					path.MatchRelative().AtParent().AtName("steps"),
-					path.MatchRelative().AtParent().AtName("order_properties"),
-				),
 			},
 		},
 		"automation_trigger": schema.SingleNestedAttribute{

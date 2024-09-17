@@ -138,17 +138,11 @@ func ActionSchema() map[string]schema.Attribute {
 								MarkdownDescription: "The step's title",
 								Required:            true,
 							},
-							"order_properties": schema.ListAttribute{
+							"order": schema.ListAttribute{
 								MarkdownDescription: "The order of the properties in this step",
 								Required:            true,
 								ElementType:         types.StringType,
 							},
-						},
-						Validators: []validator.Object{
-							objectvalidator.ExactlyOneOf(
-								path.MatchRoot("steps"),
-								path.MatchRoot("order_properties"),
-							),
 						},
 					},
 				},
@@ -161,6 +155,10 @@ func ActionSchema() map[string]schema.Attribute {
 				objectvalidator.ExactlyOneOf(
 					path.MatchRoot("self_service_trigger"),
 					path.MatchRoot("automation_trigger"),
+				),
+				objectvalidator.ExactlyOneOf(
+					path.MatchRelative().AtParent().AtName("steps"),
+					path.MatchRelative().AtParent().AtName("order_properties"),
 				),
 			},
 		},

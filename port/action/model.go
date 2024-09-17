@@ -278,7 +278,7 @@ type UserPropertiesModel struct {
 
 type Step struct {
 	Title types.String   `tfsdk:"title"`
-	Order []types.String `tfsdk:"order_properties"`
+	Order []types.String `tfsdk:"order"`
 }
 
 type SelfServiceTriggerModel struct {

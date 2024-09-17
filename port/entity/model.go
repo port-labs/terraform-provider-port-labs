@@ -25,17 +25,18 @@ type RelationModel struct {
 }
 
 type EntityModel struct {
-	ID         types.String           `tfsdk:"id"`
-	Identifier types.String           `tfsdk:"identifier"`
-	Blueprint  types.String           `tfsdk:"blueprint"`
-	Title      types.String           `tfsdk:"title"`
-	Icon       types.String           `tfsdk:"icon"`
-	RunID      types.String           `tfsdk:"run_id"`
-	CreatedAt  types.String           `tfsdk:"created_at"`
-	CreatedBy  types.String           `tfsdk:"created_by"`
-	UpdatedAt  types.String           `tfsdk:"updated_at"`
-	UpdatedBy  types.String           `tfsdk:"updated_by"`
-	Properties *EntityPropertiesModel `tfsdk:"properties"`
-	Teams      []types.String         `tfsdk:"teams"`
-	Relations  *RelationModel         `tfsdk:"relations"`
+	ID               types.String           `tfsdk:"id"`
+	Identifier       types.String           `tfsdk:"identifier"`
+	Blueprint        types.String           `tfsdk:"blueprint"`
+	Title            types.String           `tfsdk:"title"`
+	Icon             types.String           `tfsdk:"icon"`
+	RunID            types.String           `tfsdk:"run_id"`
+	CreatedAt        types.String           `tfsdk:"created_at"`
+	CreatedBy        types.String           `tfsdk:"created_by"`
+	UpdatedAt        types.String           `tfsdk:"updated_at"`
+	UpdatedBy        types.String           `tfsdk:"updated_by"`
+	Properties       *EntityPropertiesModel `tfsdk:"properties"`
+	Teams            []types.String         `tfsdk:"teams"`
+	Relations        *RelationModel         `tfsdk:"relations"`
+	DeleteDependents types.Bool             `tfsdk:"delete_dependents"`
 }

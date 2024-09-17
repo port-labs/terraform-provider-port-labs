@@ -158,7 +158,7 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 
 	if isBlueprintChanged {
 		// Delete the old entity
-		err := r.portClient.DeleteEntity(ctx, previousState.Identifier.ValueString(), previousState.Blueprint.ValueString())
+		err := r.portClient.DeleteEntity(ctx, previousState.Identifier.ValueString(), previousState.Blueprint.ValueString(), false)
 		if err != nil {
 			resp.Diagnostics.AddError("failed to delete entity", err.Error())
 			return
@@ -177,7 +177,7 @@ func (r *EntityResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	err := r.portClient.DeleteEntity(ctx, state.Identifier.ValueString(), state.Blueprint.ValueString())
+	err := r.portClient.DeleteEntity(ctx, state.Identifier.ValueString(), state.Blueprint.ValueString(), state.DeleteDependents.ValueBool())
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete entity", err.Error())

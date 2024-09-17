@@ -68,15 +68,20 @@ func (c *PortClient) UpdateEntity(ctx context.Context, id string, blueprint stri
 	return &pb.Entity, nil
 }
 
-func (c *PortClient) DeleteEntity(ctx context.Context, id string, blueprint string) error {
+func (c *PortClient) DeleteEntity(ctx context.Context, id string, blueprint string, deleteDependents bool) error {
 	url := "v1/blueprints/{blueprint}/entities/{identifier}"
 	pb := &PortBody{}
-	resp, err := c.Client.R().
+	request := c.Client.R().
 		SetHeader("Accept", "application/json").
 		SetPathParam("blueprint", blueprint).
 		SetPathParam("identifier", id).
-		SetResult(pb).
-		Delete(url)
+		SetResult(pb)
+
+	if deleteDependents {
+		request.SetQueryParam("delete_dependents", "true")
+	}
+
+	resp, err := request.Delete(url)
 	if err != nil {
 		return err
 	}

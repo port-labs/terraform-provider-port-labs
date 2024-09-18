@@ -28,6 +28,7 @@ Entity resource
 - `run_id` (String) The runID of the action run that created the entity
 - `teams` (List of String) The teams the entity belongs to
 - `title` (String) The title of the entity
+- `delete_dependents` (Boolean) On delete, also delete the entity dependents
 
 ### Read-Only
 

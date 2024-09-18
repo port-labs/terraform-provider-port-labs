@@ -24,9 +24,9 @@ Entity resource
 - `icon` (String) The icon of the entity
 - `identifier` (String) The identifier of the entity
 - `properties` (Attributes) The properties of the entity (see [below for nested schema](#nestedatt--properties))
+- `relations` (Attributes) The relations of the entity (see [below for nested schema](#nestedatt--relations))
 - `run_id` (String) The runID of the action run that created the entity
 - `teams` (List of String) The teams the entity belongs to
-- `title` (String) The title of the entity
 - `title` (String) The title of the entity
 - `delete_dependents` (Boolean) On delete, also delete the entity dependents
 

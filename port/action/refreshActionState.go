@@ -328,6 +328,8 @@ func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionMod
 
 		if len(a.Trigger.UserInputs.Order) > 0 {
 			state.SelfServiceTrigger.OrderProperties = flex.GoArrayStringToTerraformList(ctx, a.Trigger.UserInputs.Order)
+		} else {
+			state.SelfServiceTrigger.OrderProperties = types.ListNull(types.StringType)
 		}
 
 		if len(a.Trigger.UserInputs.Steps) > 0 {

@@ -2427,3 +2427,50 @@ func TestAccPortActionSteps(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortActionStepsConflictWithOrder(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+	  title      = "TF Provider Test"
+	  identifier = "%[1]v"
+	  icon       = "Terraform"
+	  self_service_trigger = {
+	    operation            = "CREATE"
+	    user_properties = {
+	      "string_props" = {
+	        "prop1" = {
+	          "title" = "Property #1"
+	        }
+	        "prop2" = {
+	          "title" = "Property #2"
+	        }
+	      }
+	    }
+		order_properties = ["prop1", "prop2"]
+	    steps = [
+	      {
+	        title = "Step #1"
+	        order = ["prop1"]
+	      },
+	      {
+	        title = "Step #2"
+	        order = ["prop2"]
+	      }
+	    ]
+	  }
+	  kafka_method = {}
+	}`, actionIdentifier, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + testAccActionConfigCreate,
+				ExpectError: regexp.MustCompile(`.*Invalid Attribute Combination*`),
+			},
+		},
+	})
+}

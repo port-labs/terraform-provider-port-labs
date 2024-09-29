@@ -145,6 +145,11 @@ func ActionSchema() map[string]schema.Attribute {
 							},
 						},
 					},
+					Validators: []validator.List{
+						listvalidator.ConflictsWith(
+							path.MatchRelative().AtParent().AtName("order_properties"),
+						),
+					},
 				},
 				"condition": schema.StringAttribute{
 					MarkdownDescription: "The `condition` field allows you to define rules using Port's [search & query syntax](https://docs.getport.io/search-and-query/#rules) to determine which entities the action will be available for.",

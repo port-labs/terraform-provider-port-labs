@@ -93,7 +93,7 @@ func ActionSchema() map[string]schema.Attribute {
 			Optional:            true,
 		},
 		"self_service_trigger": schema.SingleNestedAttribute{
-			MarkdownDescription: "Self service trigger for the action",
+			MarkdownDescription: "Self service trigger for the action. Note: you can define only one of `order_properties` and `steps`",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"blueprint_identifier": schema.StringAttribute{

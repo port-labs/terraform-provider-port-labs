@@ -321,7 +321,7 @@ resource "port_action" "create_microservice" {
 - `kafka_method` (Attributes) Kafka invocation method (see [below for nested schema](#nestedatt--kafka_method))
 - `publish` (Boolean) Publish action
 - `required_approval` (String) Require approval before invoking the action. Can be one of "true", "false", "ANY" or "ALL"
-- `self_service_trigger` (Attributes) Self service trigger for the action (see [below for nested schema](#nestedatt--self_service_trigger))
+- `self_service_trigger` (Attributes) Self service trigger for the action. Note: you can define only one of `order_properties` and `steps` (see [below for nested schema](#nestedatt--self_service_trigger))
 - `title` (String) Title
 - `upsert_entity_method` (Attributes) Upsert Entity invocation method (see [below for nested schema](#nestedatt--upsert_entity_method))
 - `webhook_method` (Attributes) Webhook invocation method (see [below for nested schema](#nestedatt--webhook_method))

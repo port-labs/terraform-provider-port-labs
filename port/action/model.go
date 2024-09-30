@@ -276,12 +276,18 @@ type UserPropertiesModel struct {
 	ObjectProps  map[string]ObjectPropModel  `tfsdk:"object_props"`
 }
 
+type Step struct {
+	Title types.String   `tfsdk:"title"`
+	Order []types.String `tfsdk:"order"`
+}
+
 type SelfServiceTriggerModel struct {
 	BlueprintIdentifier types.String         `tfsdk:"blueprint_identifier"`
 	Operation           types.String         `tfsdk:"operation"`
 	UserProperties      *UserPropertiesModel `tfsdk:"user_properties"`
 	RequiredJqQuery     types.String         `tfsdk:"required_jq_query"`
 	OrderProperties     types.List           `tfsdk:"order_properties"`
+	Steps               []Step               `tfsdk:"steps"`
 	Condition           types.String         `tfsdk:"condition"`
 }
 

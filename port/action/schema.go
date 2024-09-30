@@ -93,7 +93,7 @@ func ActionSchema() map[string]schema.Attribute {
 			Optional:            true,
 		},
 		"self_service_trigger": schema.SingleNestedAttribute{
-			MarkdownDescription: "Self service trigger for the action",
+			MarkdownDescription: "Self service trigger for the action. Note: you can define only one of `order_properties` and `steps`",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"blueprint_identifier": schema.StringAttribute{
@@ -128,6 +128,28 @@ func ActionSchema() map[string]schema.Attribute {
 					MarkdownDescription: "Order properties",
 					Optional:            true,
 					ElementType:         types.StringType,
+				},
+				"steps": schema.ListNestedAttribute{
+					MarkdownDescription: "The steps of the action",
+					Optional:            true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"title": schema.StringAttribute{
+								MarkdownDescription: "The step's title",
+								Required:            true,
+							},
+							"order": schema.ListAttribute{
+								MarkdownDescription: "The order of the properties in this step",
+								Required:            true,
+								ElementType:         types.StringType,
+							},
+						},
+					},
+					Validators: []validator.List{
+						listvalidator.ConflictsWith(
+							path.MatchRelative().AtParent().AtName("order_properties"),
+						),
+					},
 				},
 				"condition": schema.StringAttribute{
 					MarkdownDescription: "The `condition` field allows you to define rules using Port's [search & query syntax](https://docs.getport.io/search-and-query/#rules) to determine which entities the action will be available for.",

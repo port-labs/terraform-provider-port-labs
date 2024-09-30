@@ -105,6 +105,23 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 			selfServiceTrigger.UserInputs.Order = orderString
 		}
 
+		if data.SelfServiceTrigger.Steps != nil {
+			steps := make([]cli.Step, 0, len(data.SelfServiceTrigger.Steps))
+
+			for _, s := range data.SelfServiceTrigger.Steps {
+				o := make([]string, 0, len(s.Order))
+				for _, p := range s.Order {
+					o = append(o, p.ValueString())
+				}
+				steps = append(steps, cli.Step{
+					Title: s.Title.ValueString(),
+					Order: o,
+				})
+			}
+
+			selfServiceTrigger.UserInputs.Steps = steps
+		}
+
 		if !data.SelfServiceTrigger.Condition.IsNull() {
 			condition, err := utils.TerraformStringToGoType[cli.TriggerCondition](data.SelfServiceTrigger.Condition)
 			if err != nil {

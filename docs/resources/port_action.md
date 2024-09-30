@@ -505,7 +505,17 @@ Optional:
 - `condition` (String) The `condition` field allows you to define rules using Port's [search & query syntax](https://docs.getport.io/search-and-query/#rules) to determine which entities the action will be available for.
 - `order_properties` (List of String) Order properties
 - `required_jq_query` (String) The required jq query of the property
+- `steps` (Attributes List) The steps of the action (see [below for nested schema](#nestedatt--self_service_trigger--steps))
 - `user_properties` (Attributes) User properties (see [below for nested schema](#nestedatt--self_service_trigger--user_properties))
+
+<a id="nestedatt--self_service_trigger--steps"></a>
+### Nested Schema for `self_service_trigger.steps`
+
+Required:
+
+- `order` (List of String) The order of the properties in this step
+- `title` (String) The step's title
+
 
 <a id="nestedatt--self_service_trigger--user_properties"></a>
 ### Nested Schema for `self_service_trigger.user_properties`

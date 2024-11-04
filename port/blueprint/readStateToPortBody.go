@@ -3,6 +3,7 @@ package blueprint
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
@@ -130,7 +131,9 @@ func calculationPropertiesToBody(ctx context.Context, state *BlueprintModel) map
 		if !prop.Colors.IsNull() {
 			colors := make(map[string]string)
 			for key, value := range prop.Colors.Elements() {
-				colors[key] = value.String()
+				if stringValue, ok := value.(basetypes.StringValue); ok {
+					colors[key] = stringValue.ValueString()
+				}
 			}
 
 			calculationProp.Colors = colors

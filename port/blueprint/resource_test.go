@@ -892,7 +892,7 @@ func TestAccPortBlueprintCatalogPageCreation(t *testing.T) {
 			}
 
 			// give grace time for page creation
-			time.Sleep(3 * time.Second)
+			time.Sleep(6 * time.Second)
 
 			_, statusCode, err := portClient.GetPage(ctx, identifier)
 			if err != nil {

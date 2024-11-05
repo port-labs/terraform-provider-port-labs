@@ -1595,7 +1595,7 @@ func TestAccPortAutomationRunCreated(t *testing.T) {
 		}
 	}
 	kafka_method = {}
-	depends_on   = [port_action.%s]
+	depends_on   = [port_action.self_serve_action]
 	}`, relatedActionIdentifier, mainActionIdentifier, relatedActionIdentifier, relatedActionIdentifier)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -1647,7 +1647,7 @@ func TestAccPortAutomationRunUpdated(t *testing.T) {
 		}
 	}
 	kafka_method = {}
-	depends_on   = [port_action.%s]
+	depends_on   = [port_action.self_serve_action]
 	}`, relatedActionIdentifier, mainActionIdentifier, relatedActionIdentifier, relatedActionIdentifier)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -1699,7 +1699,7 @@ func TestAccPortAutomationAnyRunChange(t *testing.T) {
 		}
 	}
 	kafka_method = {}
-	depends_on   = [port_action.%s]
+	depends_on   = [port_action.self_serve_action]
 	}`, relatedActionIdentifier, mainActionIdentifier, relatedActionIdentifier, relatedActionIdentifier)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },

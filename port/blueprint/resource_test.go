@@ -672,6 +672,12 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 				calculation = "test-rel.$identifier"
 				type = "string"
 				icon = "Terraform"
+				colors = {
+					"test1" = "red"
+					"test2" = "blue"
+					"test3" = "green"
+					"test4" = "yellow"
+				}
 			}
 		}
 	}`, identifier1)
@@ -686,6 +692,7 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.title", "Calculation for microservice1"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.calculation", "test-rel.$identifier"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.colors.test2", "blue"),
 				),
 			},
 		},
@@ -885,7 +892,7 @@ func TestAccPortBlueprintCatalogPageCreation(t *testing.T) {
 			}
 
 			// give grace time for page creation
-			time.Sleep(3 * time.Second)
+			time.Sleep(10 * time.Second)
 
 			_, statusCode, err := portClient.GetPage(ctx, identifier)
 			if err != nil {

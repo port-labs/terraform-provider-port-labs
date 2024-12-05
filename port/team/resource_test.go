@@ -3,6 +3,7 @@ package team_test
 import (
 	"fmt"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -36,6 +37,7 @@ func TestAccPortTeam(t *testing.T) {
 
 func TestAccPortTeamUpdate(t *testing.T) {
 	teamName := utils.GenID()
+	userName := os.Getenv("CI_USER_NAME")
 	var testAccTeamConfigCreate = fmt.Sprintf(`
 	resource "port_team" "team" {
 		name = "%s"
@@ -47,8 +49,8 @@ func TestAccPortTeamUpdate(t *testing.T) {
 	resource "port_team" "team" {
 		name = "%s"
 		description = "Test description2"
-		users = ["pluacbcqsnsqhfvcqs@cazlg.com"]
-	}`, teamName)
+		users = ["%s"]
+	}`, teamName, userName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -68,7 +70,7 @@ func TestAccPortTeamUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_team.team", "name", teamName),
 					resource.TestCheckResourceAttr("port_team.team", "description", "Test description2"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "1"),
-					resource.TestCheckResourceAttr("port_team.team", "users.0", "pluacbcqsnsqhfvcqs@cazlg.com"),
+					resource.TestCheckResourceAttr("port_team.team", "users.0", userName),
 				),
 			},
 		},
@@ -115,12 +117,13 @@ func TestAccPortTeamEmptyDescription(t *testing.T) {
 
 func TestAccPortTeamImport(t *testing.T) {
 	teamName := utils.GenID()
+	userName := os.Getenv("CI_USER_NAME")
 	var testAccTeamConfigCreate = fmt.Sprintf(`
 	resource "port_team" "team" {
 		name = "%s"
 		description = "Test description"
-		users = ["pluacbcqsnsqhfvcqs@cazlg.com"]
-	}`, teamName)
+		users = ["%s"]
+	}`, teamName, userName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -132,7 +135,7 @@ func TestAccPortTeamImport(t *testing.T) {
 					resource.TestCheckResourceAttr("port_team.team", "name", teamName),
 					resource.TestCheckResourceAttr("port_team.team", "description", "Test description"),
 					resource.TestCheckResourceAttr("port_team.team", "users.#", "1"),
-					resource.TestCheckResourceAttr("port_team.team", "users.0", "pluacbcqsnsqhfvcqs@cazlg.com"),
+					resource.TestCheckResourceAttr("port_team.team", "users.0", userName),
 				),
 			},
 			{

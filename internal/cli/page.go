@@ -40,13 +40,18 @@ func (c *PortClient) CreatePage(ctx context.Context, page *Page) (*Page, error) 
 		return nil, err
 	}
 	if !pb.OK {
-
 		if resp.IsSuccess() {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("failed to create page, got: %s", resp.Body())
 	}
-	return &pb.Page, nil
+	// For forward compatibility, handle cases where the response body is empty when a page is created.
+	// The current API response body is { "ok": true, "identifier": "page_identifier" },
+	// but it is expected to be the page object in the future to align with other API endpoints.
+	if pb.Page.Identifier != "" {
+		return &pb.Page, nil
+	}
+	return nil, nil
 }
 
 func (c *PortClient) UpdatePage(ctx context.Context, pageId string, page *Page) (*Page, error) {

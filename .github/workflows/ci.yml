@@ -3,7 +3,7 @@ on:
   pull_request:
 
 env:
-  GO_VERSION: "1.21"
+  GO_VERSION: "1.22"
   PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
   PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
   CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
-        go: ['1.21']
+        go: ['1.22']
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5

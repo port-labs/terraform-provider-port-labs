@@ -40,7 +40,7 @@ setup:
 acctest:
 	# TEST_FILTER can be any regex, E.g: .*PageResource.*
 	# TEST_FILTER='TestAccPortPageResource*' make acctest
-	TF_ACC=1 PORT_CLIENT_ID=$(PORT_CLIENT_ID) PORT_CLIENT_SECRET=$(PORT_CLIENT_SECRET) PORT_BASE_URL=$(PORT_BASE_URL) go test -p 1 ./... -run "$(TEST_FILTER)"
+	TF_ACC=1 PORT_CLIENT_ID=$(PORT_CLIENT_ID) PORT_CLIENT_SECRET=$(PORT_CLIENT_SECRET) PORT_BASE_URL=$(PORT_BASE_URL) go test -timeout 20m -p 1 ./... -run "$(TEST_FILTER)"
 
 gen-docs:
 	tfplugindocs

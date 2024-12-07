@@ -13,11 +13,10 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 ## Documentation
 
 - [Terraform registry docs](https://registry.terraform.io/providers/port-labs/port-labs/latest/docs)
-- [Port docs](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/iac/terraform)
+- [Port docs](https://docs.getport.io/build-your-software-catalog/custom-integration/iac/terraform/)
 
 ## Requirements
-
-- [Terraform](https://www.terraform.io/downloads.html) >= 0.13.x
+- [Terraform](https://www.terraform.io/downloads.html)
 - [Go](https://golang.org/doc/install) >= 1.19 (to build the provider plugin)
 - [Port Credentials](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/api/#find-your-port-credentials)
 

@@ -31,6 +31,10 @@ description: |-
                               }
                           }]
                       }
+                      sort = {
+                          property = "$updatedAt"
+                          order = "DESC"
+                      }
                   }
               }
               number_props = {
@@ -68,6 +72,10 @@ description: |-
                                   value    = "specificValue"
                               }]
                           })
+                      }
+                      sort = {
+                          property = "$updatedAt"
+                          order = "DESC"
                       }
                   }
               }
@@ -170,6 +178,10 @@ resource "port_action" "create_microservice" {
                             }
                         }]
                     }
+                    sort = {
+                        property = "$updatedAt"
+                        order = "DESC"
+                    }
 				}
 			}
 			number_props = {
@@ -208,6 +220,10 @@ resource "port_action" "create_microservice" {
                             }]
                         })
 					}
+                    sort = {
+                        property = "$updatedAt"
+                        order = "DESC"
+                    }
 				}
 			}
 		}
@@ -304,8 +320,8 @@ resource "port_action" "create_microservice" {
 - `icon` (String) Icon
 - `kafka_method` (Attributes) Kafka invocation method (see [below for nested schema](#nestedatt--kafka_method))
 - `publish` (Boolean) Publish action
-- `required_approval` (Boolean) Require approval before invoking the action
-- `self_service_trigger` (Attributes) Self service trigger for the action (see [below for nested schema](#nestedatt--self_service_trigger))
+- `required_approval` (String) Require approval before invoking the action. Can be one of "true", "false", "ANY" or "ALL"
+- `self_service_trigger` (Attributes) Self service trigger for the action. Note: you can define only one of `order_properties` and `steps` (see [below for nested schema](#nestedatt--self_service_trigger))
 - `title` (String) Title
 - `upsert_entity_method` (Attributes) Upsert Entity invocation method (see [below for nested schema](#nestedatt--upsert_entity_method))
 - `webhook_method` (Attributes) Webhook invocation method (see [below for nested schema](#nestedatt--webhook_method))
@@ -339,10 +355,13 @@ Optional:
 Optional:
 
 - `any_entity_change_event` (Attributes) Any entity change event trigger (see [below for nested schema](#nestedatt--automation_trigger--any_entity_change_event))
+- `any_run_change_event` (Attributes) Any run change event trigger (see [below for nested schema](#nestedatt--automation_trigger--any_run_change_event))
 - `entity_created_event` (Attributes) Entity created event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_created_event))
 - `entity_deleted_event` (Attributes) Entity deleted event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_deleted_event))
 - `entity_updated_event` (Attributes) Entity updated event trigger (see [below for nested schema](#nestedatt--automation_trigger--entity_updated_event))
 - `jq_condition` (Attributes) JQ condition for automation trigger (see [below for nested schema](#nestedatt--automation_trigger--jq_condition))
+- `run_created_event` (Attributes) Run created event trigger (see [below for nested schema](#nestedatt--automation_trigger--run_created_event))
+- `run_updated_event` (Attributes) Run updated event trigger (see [below for nested schema](#nestedatt--automation_trigger--run_updated_event))
 - `timer_property_expired_event` (Attributes) Timer property expired event trigger (see [below for nested schema](#nestedatt--automation_trigger--timer_property_expired_event))
 
 <a id="nestedatt--automation_trigger--any_entity_change_event"></a>
@@ -351,6 +370,14 @@ Optional:
 Required:
 
 - `blueprint_identifier` (String) The blueprint identifier of the changed entity
+
+
+<a id="nestedatt--automation_trigger--any_run_change_event"></a>
+### Nested Schema for `automation_trigger.any_run_change_event`
+
+Required:
+
+- `action_identifier` (String) The action identifier of the changed run
 
 
 <a id="nestedatt--automation_trigger--entity_created_event"></a>
@@ -387,6 +414,22 @@ Required:
 Optional:
 
 - `combinator` (String) The combinator of the condition
+
+
+<a id="nestedatt--automation_trigger--run_created_event"></a>
+### Nested Schema for `automation_trigger.run_created_event`
+
+Required:
+
+- `action_identifier` (String) The action identifier of the created run
+
+
+<a id="nestedatt--automation_trigger--run_updated_event"></a>
+### Nested Schema for `automation_trigger.run_updated_event`
+
+Required:
+
+- `action_identifier` (String) The action identifier of the updated run
 
 
 <a id="nestedatt--automation_trigger--timer_property_expired_event"></a>
@@ -462,7 +505,17 @@ Optional:
 - `condition` (String) The `condition` field allows you to define rules using Port's [search & query syntax](https://docs.getport.io/search-and-query/#rules) to determine which entities the action will be available for.
 - `order_properties` (List of String) Order properties
 - `required_jq_query` (String) The required jq query of the property
+- `steps` (Attributes List) The steps of the action (see [below for nested schema](#nestedatt--self_service_trigger--steps))
 - `user_properties` (Attributes) User properties (see [below for nested schema](#nestedatt--self_service_trigger--user_properties))
+
+<a id="nestedatt--self_service_trigger--steps"></a>
+### Nested Schema for `self_service_trigger.steps`
+
+Required:
+
+- `order` (List of String) The order of the properties in this step
+- `title` (String) The step's title
+
 
 <a id="nestedatt--self_service_trigger--user_properties"></a>
 ### Nested Schema for `self_service_trigger.user_properties`
@@ -480,17 +533,18 @@ Optional:
 
 Optional:
 
-- `boolean_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--boolean_items))
+- `boolean_items` (Attributes) An array of boolean items within the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--boolean_items))
 - `default_jq_query` (String) The default jq query of the array property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
 - `icon` (String) The icon of the property
 - `max_items` (Number) The max items of the array property
 - `min_items` (Number) The min items of the array property
-- `number_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--number_items))
-- `object_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--object_items))
+- `number_items` (Attributes) An array of number items within the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--number_items))
+- `object_items` (Attributes) An array of object items within the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--object_items))
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
-- `string_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--string_items))
+- `sort` (Attributes) How to sort entities when in the self service action form in the UI (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--sort))
+- `string_items` (Attributes) An array of string items within the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--string_items))
 - `title` (String) The title of the property
 - `visible` (Boolean) The visibility of the array property
 - `visible_jq_query` (String) The visibility condition jq query of the array property
@@ -500,7 +554,7 @@ Optional:
 
 Optional:
 
-- `default` (List of Boolean) The default of the items
+- `default` (List of Boolean) The default values for the boolean items
 
 
 <a id="nestedatt--self_service_trigger--user_properties--array_props--number_items"></a>
@@ -508,9 +562,9 @@ Optional:
 
 Optional:
 
-- `default` (List of Number) The default of the items
-- `enum` (List of Number) The enum of the items
-- `enum_jq_query` (String) The enum jq query of the number items
+- `default` (List of Number) The default values for the number items
+- `enum` (List of Number) The enum of possible values for the number items
+- `enum_jq_query` (String) The jq query for the enum number items
 
 
 <a id="nestedatt--self_service_trigger--user_properties--array_props--object_items"></a>
@@ -518,7 +572,19 @@ Optional:
 
 Optional:
 
-- `default` (List of Map of String) The default of the items
+- `default` (List of Map of String) The default values for the object items
+
+
+<a id="nestedatt--self_service_trigger--user_properties--array_props--sort"></a>
+### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
+
+Required:
+
+- `property` (String) The property to sort the entities by
+
+Optional:
+
+- `order` (String) The order to sort the entities in
 
 
 <a id="nestedatt--self_service_trigger--user_properties--array_props--string_items"></a>
@@ -526,12 +592,12 @@ Optional:
 
 Optional:
 
-- `blueprint` (String) The blueprint identifier the property relates to
-- `dataset` (String) The dataset of an the entity-format items
-- `default` (List of String) The default of the items
-- `enum` (List of String) The enum of the items
-- `enum_jq_query` (String) The enum jq query of the string items
-- `format` (String) The format of the items
+- `blueprint` (String) The blueprint identifier related to each string item
+- `dataset` (String) The dataset of the entity-format items
+- `default` (List of String) The default value of the items
+- `enum` (List of String) The enum of possible values for the string items
+- `enum_jq_query` (String) The jq query for the enum of string items
+- `format` (String) The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
 
 
 
@@ -580,7 +646,7 @@ Optional:
 - `default_jq_query` (String) The default jq query of the object property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
-- `encryption` (String) The algorithm to encrypt the property with
+- `encryption` (String) The algorithm to encrypt the property with. Accepted value: `aes256-gcm`
 - `icon` (String) The icon of the property
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
 - `title` (String) The title of the property
@@ -599,15 +665,16 @@ Optional:
 - `default_jq_query` (String) The default jq query of the string property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
-- `encryption` (String) The algorithm to encrypt the property with
+- `encryption` (String) The algorithm to encrypt the property with. Accepted value: `aes256-gcm`
 - `enum` (List of String) The enum of the string property
 - `enum_jq_query` (String) The enum jq query of the string property
-- `format` (String) The format of the string property
+- `format` (String) The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
 - `icon` (String) The icon of the property
 - `max_length` (Number) The max length of the string property
 - `min_length` (Number) The min length of the string property
 - `pattern` (String) The pattern of the string property
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
+- `sort` (Attributes) How to sort entities when in the self service action form in the UI (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--sort))
 - `title` (String) The title of the property
 - `visible` (Boolean) The visibility of the string property
 - `visible_jq_query` (String) The visibility condition jq query of the string property
@@ -643,6 +710,18 @@ Optional:
 
 
 
+<a id="nestedatt--self_service_trigger--user_properties--string_props--sort"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query`
+
+Required:
+
+- `property` (String) The property to sort the entities by
+
+Optional:
+
+- `order` (String) The order to sort the entities in
+
+
 
 
 
@@ -661,13 +740,10 @@ Optional:
 <a id="nestedatt--upsert_entity_method--mapping"></a>
 ### Nested Schema for `upsert_entity_method.mapping`
 
-Required:
-
-- `identifier` (String) Required when selecting type Upsert Entity. The entity identifier for the upsert
-
 Optional:
 
 - `icon` (String) The icon of the entity
+- `identifier` (String) Required when selecting type Upsert Entity. The entity identifier for the upsert
 - `properties` (String) The properties of the entity (key-value object encoded to a string)
 - `relations` (String) The relations of the entity (key-value object encoded to a string)
 - `teams` (List of String) The teams the entity belongs to
@@ -683,7 +759,7 @@ Required:
 
 Optional:
 
-- `agent` (String) Use the agent to invoke the action
+- `agent` (String) Specifies whether to use an agent to invoke the action. This can be a boolean value (`'true''` or `'false'`) or a JQ if dynamic evaluation is needed.
 - `body` (String) The Webhook body should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 - `headers` (Map of String) The HTTP headers for invoking the action. They should be encoded as a key-value object to a string using [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 - `method` (String) The HTTP method to invoke the action

@@ -30,15 +30,16 @@ type StringPropModel struct {
 	Visible        types.Bool    `tfsdk:"visible"`
 	VisibleJqQuery types.String  `tfsdk:"visible_jq_query"`
 
-	Default     types.String `tfsdk:"default"`
-	Blueprint   types.String `tfsdk:"blueprint"`
-	Format      types.String `tfsdk:"format"`
-	MaxLength   types.Int64  `tfsdk:"max_length"`
-	MinLength   types.Int64  `tfsdk:"min_length"`
-	Pattern     types.String `tfsdk:"pattern"`
-	Enum        types.List   `tfsdk:"enum"`
-	EnumJqQuery types.String `tfsdk:"enum_jq_query"`
-	Encryption  types.String `tfsdk:"encryption"`
+	Default     types.String       `tfsdk:"default"`
+	Blueprint   types.String       `tfsdk:"blueprint"`
+	Format      types.String       `tfsdk:"format"`
+	MaxLength   types.Int64        `tfsdk:"max_length"`
+	MinLength   types.Int64        `tfsdk:"min_length"`
+	Pattern     types.String       `tfsdk:"pattern"`
+	Enum        types.List         `tfsdk:"enum"`
+	EnumJqQuery types.String       `tfsdk:"enum_jq_query"`
+	Encryption  types.String       `tfsdk:"encryption"`
+	Sort        *EntitiesSortModel `tfsdk:"sort"`
 }
 
 // StringPropValidationModel is a model used for the validation of StringPropModel resources
@@ -206,6 +207,11 @@ type BooleanPropModel struct {
 	Default types.Bool `tfsdk:"default"`
 }
 
+type EntitiesSortModel struct {
+	Property types.String `tfsdk:"property"`
+	Order    types.String `tfsdk:"order"`
+}
+
 type ArrayPropModel struct {
 	Title          types.String `tfsdk:"title"`
 	Icon           types.String `tfsdk:"icon"`
@@ -216,12 +222,13 @@ type ArrayPropModel struct {
 	Visible        types.Bool   `tfsdk:"visible"`
 	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
 
-	MaxItems     types.Int64   `tfsdk:"max_items"`
-	MinItems     types.Int64   `tfsdk:"min_items"`
-	StringItems  *StringItems  `tfsdk:"string_items"`
-	NumberItems  *NumberItems  `tfsdk:"number_items"`
-	BooleanItems *BooleanItems `tfsdk:"boolean_items"`
-	ObjectItems  *ObjectItems  `tfsdk:"object_items"`
+	MaxItems     types.Int64        `tfsdk:"max_items"`
+	MinItems     types.Int64        `tfsdk:"min_items"`
+	StringItems  *StringItems       `tfsdk:"string_items"`
+	NumberItems  *NumberItems       `tfsdk:"number_items"`
+	BooleanItems *BooleanItems      `tfsdk:"boolean_items"`
+	ObjectItems  *ObjectItems       `tfsdk:"object_items"`
+	Sort         *EntitiesSortModel `tfsdk:"sort"`
 }
 
 type ObjectPropModel struct {
@@ -269,12 +276,18 @@ type UserPropertiesModel struct {
 	ObjectProps  map[string]ObjectPropModel  `tfsdk:"object_props"`
 }
 
+type Step struct {
+	Title types.String   `tfsdk:"title"`
+	Order []types.String `tfsdk:"order"`
+}
+
 type SelfServiceTriggerModel struct {
 	BlueprintIdentifier types.String         `tfsdk:"blueprint_identifier"`
 	Operation           types.String         `tfsdk:"operation"`
 	UserProperties      *UserPropertiesModel `tfsdk:"user_properties"`
 	RequiredJqQuery     types.String         `tfsdk:"required_jq_query"`
 	OrderProperties     types.List           `tfsdk:"order_properties"`
+	Steps               []Step               `tfsdk:"steps"`
 	Condition           types.String         `tfsdk:"condition"`
 }
 
@@ -299,6 +312,18 @@ type TimerPropertyExpiredEventModel struct {
 	PropertyIdentifier  types.String `tfsdk:"property_identifier"`
 }
 
+type RunCreatedEvent struct {
+	ActionIdentifier types.String `tfsdk:"action_identifier"`
+}
+
+type RunUpdatedEvent struct {
+	ActionIdentifier types.String `tfsdk:"action_identifier"`
+}
+
+type AnyRunChangeEvent struct {
+	ActionIdentifier types.String `tfsdk:"action_identifier"`
+}
+
 type JqConditionModel struct {
 	Expressions []types.String `tfsdk:"expressions"`
 	Combinator  types.String   `tfsdk:"combinator"`
@@ -310,6 +335,9 @@ type AutomationTriggerModel struct {
 	EntityDeletedEvent        *EntityDeletedEventModel        `tfsdk:"entity_deleted_event"`
 	AnyEntityChangeEvent      *AnyEntityChangeEventModel      `tfsdk:"any_entity_change_event"`
 	TimerPropertyExpiredEvent *TimerPropertyExpiredEventModel `tfsdk:"timer_property_expired_event"`
+	RunCreatedEvent           *RunCreatedEvent                `tfsdk:"run_created_event"`
+	RunUpdatedEvent           *RunUpdatedEvent                `tfsdk:"run_updated_event"`
+	AnyRunChangeEvent         *AnyRunChangeEvent              `tfsdk:"any_run_change_event"`
 	JqCondition               *JqConditionModel               `tfsdk:"jq_condition"`
 }
 
@@ -381,7 +409,7 @@ type ActionModel struct {
 	GitlabMethod                *GitlabMethodModel                `tfsdk:"gitlab_method"`
 	AzureMethod                 *AzureMethodModel                 `tfsdk:"azure_method"`
 	UpsertEntityMethod          *UpsertEntityMethodModel          `tfsdk:"upsert_entity_method"`
-	RequiredApproval            types.Bool                        `tfsdk:"required_approval"`
+	RequiredApproval            types.String                      `tfsdk:"required_approval"`
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
 	Publish                     types.Bool                        `tfsdk:"publish"`
@@ -403,7 +431,7 @@ type ActionValidationModel struct {
 	GitlabMethod                types.Object `tfsdk:"gitlab_method"`
 	AzureMethod                 types.Object `tfsdk:"azure_method"`
 	UpsertEntityMethod          types.Object `tfsdk:"upsert_entity_method"`
-	RequiredApproval            types.Bool   `tfsdk:"required_approval"`
+	RequiredApproval            types.String `tfsdk:"required_approval"`
 	ApprovalWebhookNotification types.Object `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object `tfsdk:"approval_email_notification"`
 	Publish                     types.Bool   `tfsdk:"publish"`

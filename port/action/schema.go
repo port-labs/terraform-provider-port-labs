@@ -92,7 +92,7 @@ func ActionSchema() map[string]schema.Attribute {
 			Optional:            true,
 		},
 		"self_service_trigger": schema.SingleNestedAttribute{
-			MarkdownDescription: "Self service trigger for the action",
+			MarkdownDescription: "Self service trigger for the action. Note: you can define only one of `order_properties` and `steps`",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"blueprint_identifier": schema.StringAttribute{
@@ -126,6 +126,28 @@ func ActionSchema() map[string]schema.Attribute {
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
+				"steps": schema.ListNestedAttribute{
+					MarkdownDescription: "The steps of the action",
+					Optional:            true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"title": schema.StringAttribute{
+								MarkdownDescription: "The step's title",
+								Required:            true,
+							},
+							"order": schema.ListAttribute{
+								MarkdownDescription: "The order of the properties in this step",
+								Required:            true,
+								ElementType:         types.StringType,
+							},
+						},
+					},
+					Validators: []validator.List{
+						listvalidator.ConflictsWith(
+							path.MatchRelative().AtParent().AtName("order_properties"),
+						),
+					},
+				},
 				"condition": schema.StringAttribute{
 					MarkdownDescription: "The `condition` field allows you to define rules using Port's [search & query syntax](https://docs.getport.io/search-and-query/#rules) to determine which entities the action will be available for.",
 					Optional:            true,
@@ -158,6 +180,9 @@ func ActionSchema() map[string]schema.Attribute {
 							path.MatchRelative().AtParent().AtName("entity_deleted_event"),
 							path.MatchRelative().AtParent().AtName("any_entity_change_event"),
 							path.MatchRelative().AtParent().AtName("timer_property_expired_event"),
+							path.MatchRelative().AtParent().AtName("run_created_event"),
+							path.MatchRelative().AtParent().AtName("run_updated_event"),
+							path.MatchRelative().AtParent().AtName("any_run_change_event"),
 						),
 					},
 				},
@@ -201,6 +226,36 @@ func ActionSchema() map[string]schema.Attribute {
 						},
 						"property_identifier": schema.StringAttribute{
 							MarkdownDescription: "The property identifier of the expired timer property",
+							Required:            true,
+						},
+					},
+				},
+				"run_created_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Run created event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"action_identifier": schema.StringAttribute{
+							MarkdownDescription: "The action identifier of the created run",
+							Required:            true,
+						},
+					},
+				},
+				"run_updated_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Run updated event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"action_identifier": schema.StringAttribute{
+							MarkdownDescription: "The action identifier of the updated run",
+							Required:            true,
+						},
+					},
+				},
+				"any_run_change_event": schema.SingleNestedAttribute{
+					MarkdownDescription: "Any run change event trigger",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"action_identifier": schema.StringAttribute{
+							MarkdownDescription: "The action identifier of the changed run",
 							Required:            true,
 						},
 					},
@@ -256,7 +311,7 @@ func ActionSchema() map[string]schema.Attribute {
 					Required:            true,
 				},
 				"agent": schema.StringAttribute{
-					MarkdownDescription: "Use the agent to invoke the action",
+					MarkdownDescription: "Specifies whether to use an agent to invoke the action. This can be a boolean value (`'true''` or `'false'`) or a JQ if dynamic evaluation is needed.",
 					Optional:            true,
 					Validators:          StringBooleanOrJQTemplateValidator(),
 				},
@@ -388,9 +443,12 @@ func ActionSchema() map[string]schema.Attribute {
 				},
 			},
 		},
-		"required_approval": schema.BoolAttribute{
-			MarkdownDescription: "Require approval before invoking the action",
+		"required_approval": schema.StringAttribute{
+			MarkdownDescription: "Require approval before invoking the action. Can be one of \"true\", \"false\", \"ANY\" or \"ALL\"",
 			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.OneOf("true", "false", "ANY", "ALL"),
+			},
 		},
 		"approval_webhook_notification": schema.SingleNestedAttribute{
 			MarkdownDescription: "The webhook notification of the approval",
@@ -444,7 +502,7 @@ func StringPropertySchema() schema.Attribute {
 			Optional:            true,
 		},
 		"format": schema.StringAttribute{
-			MarkdownDescription: "The format of the string property",
+			MarkdownDescription: "The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`",
 			Optional:            true,
 		},
 		"min_length": schema.Int64Attribute{
@@ -482,7 +540,7 @@ func StringPropertySchema() schema.Attribute {
 			},
 		},
 		"encryption": schema.StringAttribute{
-			MarkdownDescription: "The algorithm to encrypt the property with",
+			MarkdownDescription: "The algorithm to encrypt the property with. Accepted value: `aes256-gcm`",
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.OneOf("aes256-gcm"),
@@ -535,6 +593,25 @@ func StringPropertySchema() schema.Attribute {
 								},
 							},
 						},
+					},
+				},
+			},
+		},
+		"sort": schema.SingleNestedAttribute{
+			MarkdownDescription: "How to sort entities when in the self service action form in the UI",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"property": schema.StringAttribute{
+					MarkdownDescription: "The property to sort the entities by",
+					Required:            true,
+				},
+				"order": schema.StringAttribute{
+					MarkdownDescription: "The order to sort the entities in",
+					Computed:            true,
+					Optional:            true,
+					Default:             stringdefault.StaticString("ASC"),
+					Validators: []validator.String{
+						stringvalidator.OneOf("ASC", "DESC"),
 					},
 				},
 			},
@@ -661,7 +738,7 @@ func ObjectPropertySchema() schema.Attribute {
 			},
 		},
 		"encryption": schema.StringAttribute{
-			MarkdownDescription: "The algorithm to encrypt the property with",
+			MarkdownDescription: "The algorithm to encrypt the property with. Accepted value: `aes256-gcm`",
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.OneOf("aes256-gcm"),
@@ -716,24 +793,24 @@ func ArrayPropertySchema() schema.Attribute {
 			},
 		},
 		"string_items": schema.SingleNestedAttribute{
-			MarkdownDescription: "The items of the array property",
+			MarkdownDescription: "An array of string items within the property",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"format": schema.StringAttribute{
-					MarkdownDescription: "The format of the items",
+					MarkdownDescription: "The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`",
 					Optional:            true,
 				},
 				"blueprint": schema.StringAttribute{
-					MarkdownDescription: "The blueprint identifier the property relates to",
+					MarkdownDescription: "The blueprint identifier related to each string item",
 					Optional:            true,
 				},
 				"default": schema.ListAttribute{
-					MarkdownDescription: "The default of the items",
+					MarkdownDescription: "The default value of the items",
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
 				"enum": schema.ListAttribute{
-					MarkdownDescription: "The enum of the items",
+					MarkdownDescription: "The enum of possible values for the string items",
 					Optional:            true,
 					ElementType:         types.StringType,
 					Validators: []validator.List{
@@ -742,29 +819,29 @@ func ArrayPropertySchema() schema.Attribute {
 					},
 				},
 				"enum_jq_query": schema.StringAttribute{
-					MarkdownDescription: "The enum jq query of the string items",
+					MarkdownDescription: "The jq query for the enum of string items",
 					Optional:            true,
 					Validators: []validator.String{
 						stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
 					},
 				},
 				"dataset": schema.StringAttribute{
-					MarkdownDescription: "The dataset of an the entity-format items",
+					MarkdownDescription: "The dataset of the entity-format items",
 					Optional:            true,
 				},
 			},
 		},
 		"number_items": schema.SingleNestedAttribute{
-			MarkdownDescription: "The items of the array property",
+			MarkdownDescription: "An array of number items within the property",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"default": schema.ListAttribute{
-					MarkdownDescription: "The default of the items",
+					MarkdownDescription: "The default values for the number items",
 					Optional:            true,
 					ElementType:         types.Float64Type,
 				},
 				"enum": schema.ListAttribute{
-					MarkdownDescription: "The enum of the items",
+					MarkdownDescription: "The enum of possible values for the number items",
 					Optional:            true,
 					ElementType:         types.Float64Type,
 					Validators: []validator.List{
@@ -773,7 +850,7 @@ func ArrayPropertySchema() schema.Attribute {
 					},
 				},
 				"enum_jq_query": schema.StringAttribute{
-					MarkdownDescription: "The enum jq query of the number items",
+					MarkdownDescription: "The jq query for the enum number items",
 					Optional:            true,
 					Validators: []validator.String{
 						stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("enum")),
@@ -782,22 +859,22 @@ func ArrayPropertySchema() schema.Attribute {
 			},
 		},
 		"boolean_items": schema.SingleNestedAttribute{
-			MarkdownDescription: "The items of the array property",
+			MarkdownDescription: "An array of boolean items within the property",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"default": schema.ListAttribute{
-					MarkdownDescription: "The default of the items",
+					MarkdownDescription: "The default values for the boolean items",
 					Optional:            true,
 					ElementType:         types.BoolType,
 				},
 			},
 		},
 		"object_items": schema.SingleNestedAttribute{
-			MarkdownDescription: "The items of the array property",
+			MarkdownDescription: "An array of object items within the property",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"default": schema.ListAttribute{
-					MarkdownDescription: "The default of the items",
+					MarkdownDescription: "The default values for the object items",
 					Optional:            true,
 					ElementType:         types.MapType{ElemType: types.StringType},
 				},
@@ -812,6 +889,25 @@ func ArrayPropertySchema() schema.Attribute {
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("visible")),
+			},
+		},
+		"sort": schema.SingleNestedAttribute{
+			MarkdownDescription: "How to sort entities when in the self service action form in the UI",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"property": schema.StringAttribute{
+					MarkdownDescription: "The property to sort the entities by",
+					Required:            true,
+				},
+				"order": schema.StringAttribute{
+					MarkdownDescription: "The order to sort the entities in",
+					Computed:            true,
+					Optional:            true,
+					Default:             stringdefault.StaticString("ASC"),
+					Validators: []validator.String{
+						stringvalidator.OneOf("ASC", "DESC"),
+					},
+				},
 			},
 		},
 	}
@@ -1024,6 +1120,7 @@ func validateUserInputRequiredNotSetToFalse(ctx context.Context, state *ActionVa
 
 var ResourceMarkdownDescription = `
 
+
 # Action resource
 
 Docs for the Action resource can be found [here](https://docs.getport.io/create-self-service-experiences/).
@@ -1054,6 +1151,10 @@ resource "port_action" "create_microservice" {
                                 jq_query = "\"specificValue\""
                             }
                         }]
+                    }
+                    sort = {
+                        property = "$updatedAt"
+                        order = "DESC"
                     }
 				}
 			}
@@ -1093,6 +1194,10 @@ resource "port_action" "create_microservice" {
                             }]
                         })
 					}
+                    sort = {
+                        property = "$updatedAt"
+                        order = "DESC"
+                    }
 				}
 			}
 		}

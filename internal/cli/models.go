@@ -66,6 +66,11 @@ type (
 		EnumColors         map[string]string   `json:"enumColors,omitempty"`
 	}
 
+	EntitiesSortModel struct {
+		Property string `json:"property"`
+		Order    string `json:"order"`
+	}
+
 	ActionProperty struct {
 		Type               string              `json:"type,omitempty"`
 		Title              *string             `json:"title,omitempty"`
@@ -91,6 +96,7 @@ type (
 		Dataset            *Dataset            `json:"dataset,omitempty"`
 		Encryption         *string             `json:"encryption,omitempty"`
 		Visible            any                 `json:"visible,omitempty"`
+		Sort               *EntitiesSortModel  `json:"sort,omitempty"`
 	}
 
 	SpecAuthentication struct {
@@ -195,16 +201,23 @@ type (
 		Path string `json:"path,omitempty"`
 	}
 
+	Step = struct {
+		Title string   `json:"title"`
+		Order []string `json:"order"`
+	}
+
 	ActionUserInputs = struct {
 		Properties map[string]ActionProperty `json:"properties"`
 		Required   any                       `json:"required,omitempty"`
 		Order      []string                  `json:"order,omitempty"`
+		Steps      []Step                    `json:"steps,omitempty"`
 	}
 
 	TriggerEvent struct {
 		Type                string  `json:"type"`
 		BlueprintIdentifier *string `json:"blueprintIdentifier,omitempty"`
 		PropertyIdentifier  *string `json:"propertyIdentifier,omitempty"`
+		ActionIdentifier    *string `json:"actionIdentifier,omitempty"`
 	}
 
 	TriggerCondition struct {
@@ -246,7 +259,7 @@ type (
 		Description          *string               `json:"description,omitempty"`
 		Trigger              *Trigger              `json:"trigger"`
 		InvocationMethod     *InvocationMethod     `json:"invocationMethod,omitempty"`
-		RequiredApproval     *bool                 `json:"requiredApproval,omitempty"`
+		RequiredApproval     any                   `json:"requiredApproval,omitempty"`
 		ApprovalNotification *ApprovalNotification `json:"approvalNotification,omitempty"`
 		Publish              *bool                 `json:"publish,omitempty"`
 	}
@@ -317,11 +330,12 @@ type (
 	}
 
 	Relation struct {
-		Identifier *string `json:"identifier,omitempty"`
-		Title      *string `json:"title,omitempty"`
-		Target     *string `json:"target,omitempty"`
-		Required   *bool   `json:"required,omitempty"`
-		Many       *bool   `json:"many,omitempty"`
+		Identifier  *string `json:"identifier,omitempty"`
+		Title       *string `json:"title,omitempty"`
+		Description *string `json:"description,omitempty"`
+		Target      *string `json:"target,omitempty"`
+		Required    *bool   `json:"required,omitempty"`
+		Many        *bool   `json:"many,omitempty"`
 	}
 
 	Scorecard struct {

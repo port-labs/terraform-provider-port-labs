@@ -4,7 +4,7 @@ page_title: "port_action_permissions Resource - terraform-provider-port-labs"
 subcategory: ""
 description: |-
   Action Permissions resource
-  Docs for the Action Permissions resource can be found here https://docs.getport.io/create-self-service-experiences/set-self-service-actions-rbac/examples.
+  Docs for the Action Permissions resource can be found here https://docs.getport.io/actions-and-automations/create-self-service-experiences/set-self-service-actions-rbac/?config-method=terraform.
   Example Usage
   hcl
   resource "port_action_permissions" "restart_microservice_permissions" {
@@ -107,7 +107,7 @@ description: |-
 
 # Action Permissions resource
 
-Docs for the Action Permissions resource can be found [here](https://docs.getport.io/create-self-service-experiences/set-self-service-actions-rbac/examples).
+Docs for the Action Permissions resource can be found [here](https://docs.getport.io/actions-and-automations/create-self-service-experiences/set-self-service-actions-rbac/?config-method=terraform).
 
 ## Example Usage
 

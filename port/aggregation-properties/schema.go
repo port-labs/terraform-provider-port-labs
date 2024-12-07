@@ -145,7 +145,7 @@ var AggregationPropertyResourceMarkdownDescription = `
 
 This resource allows you to manage aggregation properties of a blueprint.
 
-See the [Port documentation](https://docs.getport.io/build-your-software-catalog/define-your-data-model/setup-blueprint/properties/aggregation-properties/) for more information about aggregation properties.
+See the [Port documentation](https://docs.getport.io/build-your-software-catalog/customize-integrations/configure-data-model/setup-blueprint/properties/aggregation-property/) for more information about aggregation properties.
 
 
 Supported Methods:

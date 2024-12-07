@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
@@ -39,12 +40,16 @@ func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
 func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action, error) {
 	var err error
 	action := &cli.Action{
-		Identifier:       data.Identifier.ValueString(),
-		Title:            data.Title.ValueStringPointer(),
-		Icon:             data.Icon.ValueStringPointer(),
-		Description:      data.Description.ValueStringPointer(),
-		RequiredApproval: data.RequiredApproval.ValueBoolPointer(),
-		Publish:          data.Publish.ValueBoolPointer(),
+		Identifier:  data.Identifier.ValueString(),
+		Title:       data.Title.ValueStringPointer(),
+		Icon:        data.Icon.ValueStringPointer(),
+		Description: data.Description.ValueStringPointer(),
+		Publish:     data.Publish.ValueBoolPointer(),
+	}
+
+	action.RequiredApproval = utils.TerraformStringToBooleanOrString(data.RequiredApproval)
+	if action.RequiredApproval != nil && reflect.TypeOf(action.RequiredApproval).Kind() == reflect.String {
+		action.RequiredApproval = map[string]interface{}{"type": action.RequiredApproval}
 	}
 
 	action.Trigger, err = triggerToBody(ctx, data)
@@ -98,6 +103,23 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 			}
 			orderString := utils.InterfaceToStringArray(order)
 			selfServiceTrigger.UserInputs.Order = orderString
+		}
+
+		if data.SelfServiceTrigger.Steps != nil {
+			steps := make([]cli.Step, 0, len(data.SelfServiceTrigger.Steps))
+
+			for _, s := range data.SelfServiceTrigger.Steps {
+				o := make([]string, 0, len(s.Order))
+				for _, p := range s.Order {
+					o = append(o, p.ValueString())
+				}
+				steps = append(steps, cli.Step{
+					Title: s.Title.ValueString(),
+					Order: o,
+				})
+			}
+
+			selfServiceTrigger.UserInputs.Steps = steps
 		}
 
 		if !data.SelfServiceTrigger.Condition.IsNull() {
@@ -157,6 +179,27 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 				Type:                consts.TimerPropertyExpired,
 				BlueprintIdentifier: data.AutomationTrigger.TimerPropertyExpiredEvent.BlueprintIdentifier.ValueStringPointer(),
 				PropertyIdentifier:  data.AutomationTrigger.TimerPropertyExpiredEvent.PropertyIdentifier.ValueStringPointer(),
+			}
+		}
+
+		if data.AutomationTrigger.RunCreatedEvent != nil {
+			automationTrigger.Event = &cli.TriggerEvent{
+				Type:             consts.RunCreated,
+				ActionIdentifier: data.AutomationTrigger.RunCreatedEvent.ActionIdentifier.ValueStringPointer(),
+			}
+		}
+
+		if data.AutomationTrigger.RunUpdatedEvent != nil {
+			automationTrigger.Event = &cli.TriggerEvent{
+				Type:             consts.RunUpdated,
+				ActionIdentifier: data.AutomationTrigger.RunUpdatedEvent.ActionIdentifier.ValueStringPointer(),
+			}
+		}
+
+		if data.AutomationTrigger.AnyRunChangeEvent != nil {
+			automationTrigger.Event = &cli.TriggerEvent{
+				Type:             consts.AnyRunChange,
+				ActionIdentifier: data.AutomationTrigger.AnyRunChangeEvent.ActionIdentifier.ValueStringPointer(),
 			}
 		}
 

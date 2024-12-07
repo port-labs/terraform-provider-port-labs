@@ -114,6 +114,13 @@ func stringPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 			property.Visible = VisibleJqQueryMap
 		}
 
+		if prop.Sort != nil {
+			property.Sort = &cli.EntitiesSortModel{
+				Property: prop.Sort.Property.ValueString(),
+				Order:    prop.Sort.Order.ValueString(),
+			}
+		}
+
 		props[propIdentifier] = property
 
 		if prop.Required.ValueBool() {
@@ -155,6 +162,13 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 	} else {
 		stringProp.Enum = types.ListNull(types.StringType)
 		stringProp.EnumJqQuery = types.StringNull()
+	}
+
+	if v.Sort != nil {
+		stringProp.Sort = &EntitiesSortModel{
+			Property: types.StringValue(v.Sort.Property),
+			Order:    types.StringValue(v.Sort.Order),
+		}
 	}
 
 	return stringProp

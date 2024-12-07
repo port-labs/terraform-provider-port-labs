@@ -18,6 +18,7 @@ func IntegrationSchema() map[string]schema.Attribute {
 		},
 		"version": schema.StringAttribute{
 			Optional: true,
+			Computed: true,
 		},
 		"title": schema.StringAttribute{
 			Optional: true,
@@ -66,14 +67,13 @@ var IntegrationResourceMarkdownDescription = `
 
 Docs about integrations can be found [here](https://docs.getport.io/integrations-index/).
 
-Docs about how to import existing integrations and manage their mappings can be found [here](https://docs.getport.io/build-your-software-catalog/custom-integration/iac/terraform/examples/import-and-manage-integration).
+Docs about how to import existing integrations and manage their mappings can be found [here](https://docs.getport.io/guides/all/import-and-manage-integration).
 
 
 ` + "```hcl" + `
 resource "port_integration" "my_custom_integration" {
 	installation_id       = "my-custom-integration-id"
 	title                 = "My Custom Integration"
-	version               = "1.33.7"
 	config = jsonencode({
 		createMissingRelatedEntitiesboolean = true
 		deleteDependentEntities = true,

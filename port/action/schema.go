@@ -109,7 +109,6 @@ func ActionSchema() map[string]schema.Attribute {
 				"user_properties": schema.SingleNestedAttribute{
 					MarkdownDescription: "User properties",
 					Optional:            true,
-					Computed:            true,
 					Attributes: map[string]schema.Attribute{
 						"string_props":  StringPropertySchema(),
 						"number_props":  NumberPropertySchema(),

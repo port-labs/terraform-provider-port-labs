@@ -194,7 +194,7 @@ func arrayPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, pr
 			if prop.Sort != nil {
 				property.Sort = &cli.EntitiesSortModel{
 					Property: prop.Sort.Property.ValueString(),
-					Order: prop.Sort.Order.ValueString(),
+					Order:    prop.Sort.Order.ValueString(),
 				}
 			}
 
@@ -223,10 +223,10 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 	}
 
 	if v.Sort != nil {
-			arrayProp.Sort = &EntitiesSortModel{
-				Property: types.StringValue(v.Sort.Property),
-				Order: types.StringValue(v.Sort.Order),
-			}
+		arrayProp.Sort = &EntitiesSortModel{
+			Property: types.StringValue(v.Sort.Property),
+			Order:    types.StringValue(v.Sort.Order),
+		}
 	}
 
 	if v.Items != nil {

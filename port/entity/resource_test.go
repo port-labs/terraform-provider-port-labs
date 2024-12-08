@@ -470,7 +470,7 @@ func TestAccPortEntityWithEmptyRelation(t *testing.T) {
 func TestAccPortEntityImport(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	entityIdentifier := utils.GenID()
-
+	entityId := fmt.Sprintf("%s:%s", blueprintIdentifier, entityIdentifier)
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port_blueprint" "microservice" {
 		title = "TF Provider Test BP0"
@@ -503,6 +503,8 @@ func TestAccPortEntityImport(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccActionConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_entity.microservice", "id", entityId),
+					resource.TestCheckResourceAttr("port_entity.microservice", "identifier", entityIdentifier),
 					resource.TestCheckResourceAttr("port_entity.microservice", "title", "TF Provider Test Entity0"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "blueprint", blueprintIdentifier),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.string_props.myStringIdentifier", "My String Value"),
@@ -512,7 +514,7 @@ func TestAccPortEntityImport(t *testing.T) {
 				ResourceName:            "port_entity.microservice",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateId:           fmt.Sprintf("%s:%s", blueprintIdentifier, entityIdentifier),
+				ImportStateId:           entityId,
 				ImportStateVerifyIgnore: []string{"identifier"},
 			},
 		},

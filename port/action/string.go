@@ -117,7 +117,7 @@ func stringPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 		if prop.Sort != nil {
 			property.Sort = &cli.EntitiesSortModel{
 				Property: prop.Sort.Property.ValueString(),
-				Order: prop.Sort.Order.ValueString(),
+				Order:    prop.Sort.Order.ValueString(),
 			}
 		}
 
@@ -165,10 +165,10 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 	}
 
 	if v.Sort != nil {
-			stringProp.Sort = &EntitiesSortModel{
-				Property: types.StringValue(v.Sort.Property),
-				Order: types.StringValue(v.Sort.Order),
-			}
+		stringProp.Sort = &EntitiesSortModel{
+			Property: types.StringValue(v.Sort.Property),
+			Order:    types.StringValue(v.Sort.Order),
+		}
 	}
 
 	return stringProp

@@ -135,8 +135,11 @@ func ActionSchema() map[string]schema.Attribute {
 					NestedObject: schema.NestedAttributeObject{
 						Attributes: map[string]schema.Attribute{
 							"title": schema.StringAttribute{
-								MarkdownDescription: "The step's title",
+								MarkdownDescription: "The step's title (max 25 characters)",
 								Required:            true,
+								Validators: []validator.String{
+									stringvalidator.LengthAtMost(25),
+								},
 							},
 							"order": schema.ListAttribute{
 								MarkdownDescription: "The order of the properties in this step",

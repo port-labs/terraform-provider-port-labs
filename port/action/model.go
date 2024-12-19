@@ -2,6 +2,7 @@ package action
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
@@ -376,11 +377,11 @@ type AzureMethodModel struct {
 }
 
 type MappingModel struct {
-	Properties types.String   `tfsdk:"properties"`
-	Relations  types.String   `tfsdk:"relations"`
-	Identifier types.String   `tfsdk:"identifier"`
-	Teams      []types.String `tfsdk:"teams"`
-	Icon       types.String   `tfsdk:"icon"`
+	Properties types.String           `tfsdk:"properties"`
+	Relations  types.String           `tfsdk:"relations"`
+	Identifier types.String           `tfsdk:"identifier"`
+	Teams      basetypes.DynamicValue `tfsdk:"teams"`
+	Icon       types.String           `tfsdk:"icon"`
 }
 
 type UpsertEntityMethodModel struct {

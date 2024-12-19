@@ -4,6 +4,7 @@ import (
 	"context"
 	"reflect"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
@@ -357,9 +358,26 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 		var mapping cli.MappingSchema
 		if data.UpsertEntityMethod.Mapping != nil {
 			var team interface{}
-			if data.UpsertEntityMethod.Mapping.Teams != nil {
-				team = flex.TerraformStringListToGoArray(data.UpsertEntityMethod.Mapping.Teams)
+
+			switch v := data.UpsertEntityMethod.Mapping.Teams.UnderlyingValue().(type) {
+			case types.String:
+				team = v.ValueString()
+			case types.Tuple:
+				team = nil
+				elements := v.Elements()
+				teamStrings := make([]string, len(elements))
+				for i := range elements {
+					element := elements[i]
+					switch castedEle := element.(type) {
+					case types.String:
+						teamStrings[i] = castedEle.ValueString()
+					}
+				}
+				team = teamStrings
+			default:
+				team = nil
 			}
+
 			properties, err := utils.TerraformJsonStringToGoObject(data.UpsertEntityMethod.Mapping.Properties.ValueStringPointer())
 			if err != nil {
 				return nil, err

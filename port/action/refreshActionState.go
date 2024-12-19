@@ -9,6 +9,7 @@ import (
 
 	"github.com/samber/lo"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -101,15 +102,19 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 	}
 
 	if a.InvocationMethod.Type == consts.UpsertEntity {
-		var teams []types.String
+		var teams basetypes.DynamicValue
 		switch team := a.InvocationMethod.Mapping.Team.(type) {
 		case string:
-			teams = append(teams, types.StringValue(team))
+			teams = basetypes.NewDynamicValue(types.StringValue(team))
 		case []interface{}:
-			teams = make([]types.String, 0)
+			teamArray := make([]attr.Value, 0)
+			typesArray := make([]attr.Type, 0)
 			for _, t := range team {
-				teams = append(teams, types.StringValue(t.(string)))
+				teamArray = append(teamArray, types.StringValue(t.(string)))
+				typesArray = append(typesArray, types.StringType)
 			}
+			teamsTupleValue, _ := types.TupleValue(typesArray, teamArray)
+			teams = basetypes.NewDynamicValue(teamsTupleValue)
 		}
 		properties, err := utils.GoObjectToTerraformString(a.InvocationMethod.Mapping.Properties)
 		if err != nil {

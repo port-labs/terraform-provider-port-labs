@@ -102,14 +102,16 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 
 	if a.InvocationMethod.Type == consts.UpsertEntity {
 		var teams []types.String
+		var teamsJQ types.String
 		switch team := a.InvocationMethod.Mapping.Team.(type) {
 		case string:
-			teams = append(teams, types.StringValue(team))
+			teamsJQ = types.StringValue(team)
 		case []interface{}:
 			teams = make([]types.String, 0)
 			for _, t := range team {
 				teams = append(teams, types.StringValue(t.(string)))
 			}
+			teamsJQ = types.StringNull()
 		}
 		properties, err := utils.GoObjectToTerraformString(a.InvocationMethod.Mapping.Properties)
 		if err != nil {
@@ -128,6 +130,7 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 				Relations:  relations,
 				Icon:       flex.GoStringToFramework(a.InvocationMethod.Mapping.Icon),
 				Teams:      teams,
+				TeamsJQ:    teamsJQ,
 				Identifier: types.StringPointerValue(a.InvocationMethod.Mapping.Identifier),
 			},
 		}

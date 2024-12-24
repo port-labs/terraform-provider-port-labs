@@ -111,7 +111,6 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 			for _, t := range team {
 				teams = append(teams, types.StringValue(t.(string)))
 			}
-			teamsJQ = types.StringNull()
 		}
 		properties, err := utils.GoObjectToTerraformString(a.InvocationMethod.Mapping.Properties)
 		if err != nil {

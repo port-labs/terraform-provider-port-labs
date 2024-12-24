@@ -360,6 +360,9 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 			if data.UpsertEntityMethod.Mapping.Teams != nil {
 				team = flex.TerraformStringListToGoArray(data.UpsertEntityMethod.Mapping.Teams)
 			}
+			if !data.UpsertEntityMethod.Mapping.TeamsJQ.IsNull() {
+				team = data.UpsertEntityMethod.Mapping.TeamsJQ.ValueString()
+			}
 			properties, err := utils.TerraformJsonStringToGoObject(data.UpsertEntityMethod.Mapping.Properties.ValueStringPointer())
 			if err != nil {
 				return nil, err

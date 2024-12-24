@@ -427,6 +427,13 @@ func ActionSchema() map[string]schema.Attribute {
 							ElementType:         types.StringType,
 							Optional:            true,
 						},
+						"teams_jq": schema.StringAttribute{
+							MarkdownDescription: "Jq that returns the teams the entity belongs to",
+							Optional:            true,
+							Validators: []validator.String{
+								stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("teams")),
+							},
+						},
 						"icon": schema.StringAttribute{
 							MarkdownDescription: "The icon of the entity",
 							Optional:            true,

@@ -380,6 +380,7 @@ type MappingModel struct {
 	Relations  types.String   `tfsdk:"relations"`
 	Identifier types.String   `tfsdk:"identifier"`
 	Teams      []types.String `tfsdk:"teams"`
+	TeamsJQ    types.String   `tfsdk:"teams_jq"`
 	Icon       types.String   `tfsdk:"icon"`
 }
 

@@ -834,17 +834,18 @@ func TestAccPortDestroyDeleteAllEntities(t *testing.T) {
 
 func TestAccPortBlueprintOwnership(t *testing.T) {
 	identifier := utils.GenID()
-	var testAccConfigPrerequisite = `
+	parentIdentifier := utils.GenID()
+	var testAccConfigPrerequisite = fmt.Sprintf(`
 	resource "port_blueprint" "parent" {
 		title = "TF Provider Test Parent"
 		icon = "Terraform"
-		identifier = "parent-service"
+		identifier = "%s"
 		description = "Parent blueprint for inheritance testing"
 		ownership = {
 			type = "Direct"
 		}
 	}
-`
+`, parentIdentifier)
 
 	var testAccConfigDirect = fmt.Sprintf(`
 	%s
@@ -872,6 +873,7 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 			"parent-relation" = {
 				title = "Parent Relation"
 				target = port_blueprint.parent.identifier
+				required = false
 			}
 		}
 		ownership = {

@@ -876,6 +876,9 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 				required = false
 			}
 		}
+		team_inheritance = {
+			path = "relations.parent-relation"
+		}
 		ownership = {
 			type = "Inherited"
 			path = "relations.parent-relation"

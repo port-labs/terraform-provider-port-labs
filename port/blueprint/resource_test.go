@@ -840,6 +840,9 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 		icon = "Terraform"
 		identifier = "parent-service"
 		description = "Parent blueprint for inheritance testing"
+		ownership = {
+			type = "Direct"
+		}
 	}
 `
 
@@ -865,9 +868,15 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 		icon = "Terraform"
 		identifier = "%s"
 		description = "Testing Inherited ownership"
+		relations = {
+			"parent-relation" = {
+				title = "Parent Relation"
+				target = port_blueprint.parent.identifier
+			}
+		}
 		ownership = {
 			type = "Inherited"
-			path = "parent-service"
+			path = "relations.parent-relation"
 		}
 	}
 `, testAccConfigPrerequisite, identifier)
@@ -893,7 +902,9 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test Inherited"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.type", "Inherited"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.path", "parent-service"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.path", "relations.parent-relation"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "relations.parent-relation.title", "Parent Relation"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "relations.parent-relation.target", "parent-service"),
 				),
 			},
 		},

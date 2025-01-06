@@ -854,7 +854,7 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 		description = "Testing Inherited ownership"
 		ownership = {
 			type = "Inherited"
-			path = "/test/path"
+			path = "microservice"
 		}
 	}
 `, identifier)

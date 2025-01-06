@@ -834,7 +834,18 @@ func TestAccPortDestroyDeleteAllEntities(t *testing.T) {
 
 func TestAccPortBlueprintOwnership(t *testing.T) {
 	identifier := utils.GenID()
+	var testAccConfigPrerequisite = `
+	resource "port_blueprint" "parent" {
+		title = "TF Provider Test Parent"
+		icon = "Terraform"
+		identifier = "parent-service"
+		description = "Parent blueprint for inheritance testing"
+	}
+`
+
 	var testAccConfigDirect = fmt.Sprintf(`
+	%s
+
 	resource "port_blueprint" "microservice" {
 		title = "TF Provider Test Direct"
 		icon = "Terraform"
@@ -844,9 +855,11 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 			type = "Direct"
 		}
 	}
-`, identifier)
+`, testAccConfigPrerequisite, identifier)
 
 	var testAccConfigInherited = fmt.Sprintf(`
+	%s
+
 	resource "port_blueprint" "microservice" {
 		title = "TF Provider Test Inherited"
 		icon = "Terraform"
@@ -854,10 +867,10 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 		description = "Testing Inherited ownership"
 		ownership = {
 			type = "Inherited"
-			path = "microservice"
+			path = "parent-service"
 		}
 	}
-`, identifier)
+`, testAccConfigPrerequisite, identifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -880,7 +893,7 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test Inherited"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.type", "Inherited"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.path", "/test/path"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.path", "parent-service"),
 				),
 			},
 		},

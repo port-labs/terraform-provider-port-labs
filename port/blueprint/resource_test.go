@@ -906,7 +906,7 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.type", "Inherited"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.path", "relations.parent-relation"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "relations.parent-relation.title", "Parent Relation"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "relations.parent-relation.target", "parent-service"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "relations.parent-relation.target", parentIdentifier),
 				),
 			},
 		},

@@ -201,6 +201,11 @@ type (
 		Path string `json:"path,omitempty"`
 	}
 
+	Ownership struct {
+		Type string  `json:"type"`
+		Path *string `json:"path,omitempty"`
+	}
+
 	Step = struct {
 		Title string   `json:"title"`
 		Order []string `json:"order"`
@@ -249,6 +254,7 @@ type (
 		ChangelogDestination  *ChangelogDestination                   `json:"changelogDestination,omitempty"`
 		TeamInheritance       *TeamInheritance                        `json:"teamInheritance,omitempty"`
 		Relations             map[string]Relation                     `json:"relations"`
+		Ownership             *Ownership                                `json:"ownership,omitempty"`
 	}
 
 	Action struct {

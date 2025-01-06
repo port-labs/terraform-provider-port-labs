@@ -832,6 +832,61 @@ func TestAccPortDestroyDeleteAllEntities(t *testing.T) {
 	})
 }
 
+func TestAccPortBlueprintOwnership(t *testing.T) {
+	identifier := utils.GenID()
+	var testAccConfigDirect = fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF Provider Test Direct"
+		icon = "Terraform"
+		identifier = "%s"
+		description = "Testing Direct ownership"
+		ownership = {
+			type = "Direct"
+		}
+	}
+`, identifier)
+
+	var testAccConfigInherited = fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF Provider Test Inherited"
+		icon = "Terraform"
+		identifier = "%s"
+		description = "Testing Inherited ownership"
+		ownership = {
+			type = "Inherited"
+			path = "/test/path"
+		}
+	}
+`, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Test Direct ownership
+			{
+				Config: acctest.ProviderConfig + testAccConfigDirect,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test Direct"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.type", "Direct"),
+					resource.TestCheckNoResourceAttr("port_blueprint.microservice", "ownership.path"),
+				),
+			},
+			// Test Inherited ownership
+			{
+				Config: acctest.ProviderConfig + testAccConfigInherited,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test Inherited"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.type", "Inherited"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.path", "/test/path"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortBlueprintCatalogPageCreation(t *testing.T) {
 	testCases := []struct {
 		name               string

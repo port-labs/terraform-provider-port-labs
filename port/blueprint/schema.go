@@ -253,6 +253,26 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 	}
 }
 
+func OwnershipSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		MarkdownDescription: "Optional ownership field for Blueprint. 'type' can be Inherited or Direct. If 'Inherited', then 'path' is required.",
+		Optional:            true,
+		Attributes: map[string]schema.Attribute{
+			"type": schema.StringAttribute{
+				MarkdownDescription: "Ownership type: either 'Inherited' or 'Direct'.",
+				Required:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("Inherited", "Direct"),
+				},
+			},
+			"path": schema.StringAttribute{
+				MarkdownDescription: "Path for the Inherited ownership type. Required when type is 'Inherited'.",
+				Optional:            true,
+			},
+		},
+	}
+}
+
 func ObjectPropertySchema() schema.MapNestedAttribute {
 
 	objectPropertySchema := map[string]schema.Attribute{
@@ -464,6 +484,7 @@ func BlueprintSchema() map[string]schema.Attribute {
 			Computed:            true,
 			Default:             booldefault.StaticBool(true),
 		},
+		"ownership": OwnershipSchema(),
 	}
 }
 

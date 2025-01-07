@@ -255,8 +255,11 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 
 func OwnershipSchema() schema.Attribute {
 	return schema.SingleNestedAttribute{
-		MarkdownDescription: "Optional ownership field for Blueprint. 'type' can be Inherited or Direct. If 'Inherited', then 'path' is required.",
+		MarkdownDescription: "Optional ownership field for Blueprint. 'type' can be Inherited or Direct. If 'Inherited', then 'path' is required and must be a valid relation identifier.",
 		Optional:            true,
+		Validators: []validator.Object{
+			objectvalidator.ExactlyOneOf(path.MatchRoot("type")),
+		},
 		Attributes: map[string]schema.Attribute{
 			"type": schema.StringAttribute{
 				MarkdownDescription: "Ownership type: either 'Inherited' or 'Direct'.",
@@ -266,8 +269,14 @@ func OwnershipSchema() schema.Attribute {
 				},
 			},
 			"path": schema.StringAttribute{
-				MarkdownDescription: "Path for the Inherited ownership type. Required when type is 'Inherited'.",
+				MarkdownDescription: "Path for the Inherited ownership type. Required when type is 'Inherited'. Must be a valid relation identifier (e.g. '$relations.parent').",
 				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						`^\$relations\.[a-zA-Z0-9_-]+$`,
+						"path must be a valid relation identifier starting with '$relations.' followed by the relation name",
+					),
+				},
 			},
 		},
 	}

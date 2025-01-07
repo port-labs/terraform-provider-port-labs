@@ -906,6 +906,29 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 	}
 `
 
+	var testAccConfigInvalidPath = `
+	resource "port_blueprint" "invalid_path_service" {
+		title = "Invalid Path Blueprint"
+		icon = "Terraform"
+		identifier = "invalid-path-service"
+		ownership = {
+			type = "Inherited"
+			path = "invalid_path_format"
+		}
+	}
+`
+
+	var testAccConfigMissingPath = `
+	resource "port_blueprint" "missing_path_service" {
+		title = "Missing Path Blueprint"
+		icon = "Terraform"
+		identifier = "missing-path-service"
+		ownership = {
+			type = "Inherited"
+		}
+	}
+`
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -927,8 +950,18 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.child_service", "title", "Child Blueprint"),
 					resource.TestCheckResourceAttr("port_blueprint.child_service", "identifier", "child-service"),
 					resource.TestCheckResourceAttr("port_blueprint.child_service", "ownership.type", "Inherited"),
-					resource.TestCheckResourceAttr("port_blueprint.child_service", "ownership.path", "parent-service"),
+					resource.TestCheckResourceAttr("port_blueprint.child_service", "ownership.path", "$relations.parent"),
 				),
+			},
+			// Test invalid path format
+			{
+				Config:      acctest.ProviderConfig + testAccConfigInvalidPath,
+				ExpectError: regexp.MustCompile(`path must be a valid relation identifier starting with '\$relations\.' followed by the relation name`),
+			},
+			// Test missing path for inherited ownership
+			{
+				Config:      acctest.ProviderConfig + testAccConfigMissingPath,
+				ExpectError: regexp.MustCompile(`path is required when type is 'Inherited'`),
 			},
 		},
 	})

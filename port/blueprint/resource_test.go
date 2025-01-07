@@ -833,58 +833,37 @@ func TestAccPortDestroyDeleteAllEntities(t *testing.T) {
 }
 
 func TestAccPortBlueprintOwnership(t *testing.T) {
-	identifier := utils.GenID()
-	parentIdentifier := utils.GenID()
-	var testAccConfigPrerequisite = fmt.Sprintf(`
-	resource "port_blueprint" "parent" {
-		title = "TF Provider Test Parent"
+	var testAccConfigDirect = `
+	resource "port_blueprint" "parent_service" {
+		title = "Parent Blueprint"
 		icon = "Terraform"
-		identifier = "%s"
-		description = "Parent blueprint for inheritance testing"
+		identifier = "parent-service"
 		ownership = {
 			type = "Direct"
 		}
 	}
-`, parentIdentifier)
+`
 
-	var testAccConfigDirect = fmt.Sprintf(`
-	%s
-
-	resource "port_blueprint" "microservice" {
-		title = "TF Provider Test Direct"
+	var testAccConfigInherited = `
+	resource "port_blueprint" "parent_service" {
+		title = "Parent Blueprint"
 		icon = "Terraform"
-		identifier = "%s"
-		description = "Testing Direct ownership"
+		identifier = "parent-service"
 		ownership = {
 			type = "Direct"
 		}
 	}
-`, testAccConfigPrerequisite, identifier)
 
-	var testAccConfigInherited = fmt.Sprintf(`
-	%s
-
-	resource "port_blueprint" "microservice" {
-		title = "TF Provider Test Inherited"
+	resource "port_blueprint" "child_service" {
+		title = "Child Blueprint"
 		icon = "Terraform"
-		identifier = "%s"
-		description = "Testing Inherited ownership"
-		relations = {
-			"parent-relation" = {
-				title = "Parent Relation"
-				target = port_blueprint.parent.identifier
-				required = false
-			}
-		}
-		team_inheritance = {
-			path = "relations.parent-relation"
-		}
+		identifier = "child-service"
 		ownership = {
 			type = "Inherited"
-			path = "relations.parent-relation"
+			path = port_blueprint.parent_service.identifier
 		}
 	}
-`, testAccConfigPrerequisite, identifier)
+`
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -894,22 +873,20 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + testAccConfigDirect,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test Direct"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.type", "Direct"),
-					resource.TestCheckNoResourceAttr("port_blueprint.microservice", "ownership.path"),
+					resource.TestCheckResourceAttr("port_blueprint.parent_service", "title", "Parent Blueprint"),
+					resource.TestCheckResourceAttr("port_blueprint.parent_service", "identifier", "parent-service"),
+					resource.TestCheckResourceAttr("port_blueprint.parent_service", "ownership.type", "Direct"),
+					resource.TestCheckNoResourceAttr("port_blueprint.parent_service", "ownership.path"),
 				),
 			},
 			// Test Inherited ownership
 			{
 				Config: acctest.ProviderConfig + testAccConfigInherited,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "TF Provider Test Inherited"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.type", "Inherited"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "ownership.path", "relations.parent-relation"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "relations.parent-relation.title", "Parent Relation"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "relations.parent-relation.target", parentIdentifier),
+					resource.TestCheckResourceAttr("port_blueprint.child_service", "title", "Child Blueprint"),
+					resource.TestCheckResourceAttr("port_blueprint.child_service", "identifier", "child-service"),
+					resource.TestCheckResourceAttr("port_blueprint.child_service", "ownership.type", "Inherited"),
+					resource.TestCheckResourceAttr("port_blueprint.child_service", "ownership.path", "parent-service"),
 				),
 			},
 		},

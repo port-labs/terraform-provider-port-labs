@@ -838,6 +838,17 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 		title = "Parent Blueprint"
 		icon = "Terraform"
 		identifier = "parent-service"
+		schema = {
+			properties = {
+				string_props = {
+					team = {
+						type = "string"
+						format = "team"
+						title = "Team"
+					}
+				}
+			}
+		}
 		ownership = {
 			type = "Direct"
 		}
@@ -849,6 +860,17 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 		title = "Parent Blueprint"
 		icon = "Terraform"
 		identifier = "parent-service"
+		schema = {
+			properties = {
+				string_props = {
+					team = {
+						type = "string"
+						format = "team"
+						title = "Team"
+					}
+				}
+			}
+		}
 		ownership = {
 			type = "Direct"
 		}
@@ -859,7 +881,15 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 		icon = "Terraform"
 		identifier = "child-service"
 		schema = {
-			properties = {}
+			properties = {
+				string_props = {
+					team = {
+						type = "string"
+						format = "team"
+						title = "Team"
+					}
+				}
+			}
 		}
 		relations = {
 			parent = {

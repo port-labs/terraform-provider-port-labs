@@ -858,9 +858,17 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 		title = "Child Blueprint"
 		icon = "Terraform"
 		identifier = "child-service"
+		properties = {}
+		relations {
+			target = port_blueprint.parent_service.identifier
+			identifier = "parent"
+			title = "Parent Service"
+			required = false
+			many = false
+		}
 		ownership = {
 			type = "Inherited"
-			path = port_blueprint.parent_service.identifier
+			path = "$relations.parent"
 		}
 	}
 `

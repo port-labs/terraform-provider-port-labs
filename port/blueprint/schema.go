@@ -2,7 +2,6 @@ package blueprint
 
 import (
 	"context"
-	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -256,7 +255,7 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 
 func OwnershipSchema() schema.Attribute {
 	return schema.SingleNestedAttribute{
-		MarkdownDescription: "Optional ownership field for Blueprint. 'type' can be Inherited or Direct. If 'Inherited', then 'path' is required and must be a valid relation identifier.",
+		MarkdownDescription: "Optional ownership field for Blueprint. 'type' can be Inherited or Direct. If 'Inherited', then 'path' is required and must be a valid relation identifiers path.",
 		Optional:            true,
 
 		Attributes: map[string]schema.Attribute{
@@ -268,14 +267,8 @@ func OwnershipSchema() schema.Attribute {
 				},
 			},
 			"path": schema.StringAttribute{
-				MarkdownDescription: "Path for the Inherited ownership type. Required when type is 'Inherited'. Must be a valid relation identifier (e.g. '$relations.parent').",
+				MarkdownDescription: "Path for the Inherited ownership type. Required when type is 'Inherited'. Must be a valid relation identifiers path.",
 				Optional:            true,
-				Validators: []validator.String{
-					stringvalidator.RegexMatches(
-						regexp.MustCompile(`^\$relations\.[a-zA-Z0-9_-]+$`),
-						"path must be a valid relation identifier starting with '$relations.' followed by the relation name",
-					),
-				},
 			},
 		},
 	}

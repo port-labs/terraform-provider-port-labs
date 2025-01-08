@@ -832,6 +832,103 @@ func TestAccPortDestroyDeleteAllEntities(t *testing.T) {
 	})
 }
 
+// Commented out until we have a way to mock feature flags in Terraform tests
+// func TestAccPortBlueprintOwnership(t *testing.T) {
+// 	parentIdentifier := utils.GenID()
+// 	var testAccConfigDirect = fmt.Sprintf(`
+// 	resource "port_blueprint" "parent_blueprint" {
+// 		title = "Parent Blueprint"
+// 		icon = "Terraform"
+// 		identifier = "%s"
+// 		properties = {
+// 			string_props = {
+// 				team = {
+// 					type = "string"
+// 					format = "team"
+// 					title = "Team"
+// 				}
+// 			}
+// 		}
+// 		ownership = {
+// 			type = "Direct"
+// 		}
+// 	}
+// `, parentIdentifier)
+
+// 	childIdentifier := utils.GenID()
+// 	var testAccConfigInherited = fmt.Sprintf(`
+// 	resource "port_blueprint" "parent_blueprint" {
+// 		title = "Parent Blueprint"
+// 		icon = "Terraform"
+// 		identifier = "%s"
+// 		properties = {
+// 			string_props = {
+// 				team = {
+// 					type = "string"
+// 					format = "team"
+// 					title = "Team"
+// 				}
+// 			}
+// 		}
+// 		ownership = {
+// 			type = "Direct"
+// 		}
+// 	}
+
+// 	resource "port_blueprint" "child_blueprint" {
+// 		title = "Child Blueprint"
+// 		icon = "Terraform"
+// 		identifier = "%s"
+// 		properties = {
+// 			string_props = {
+// 				team = {
+// 					type = "string"
+// 					format = "team"
+// 					title = "Team"
+// 				}
+// 			}
+// 		}
+// 		relations = {
+// 			parent = {
+// 				target = port_blueprint.parent_blueprint.identifier
+// 				title = "Parent Service"
+// 				required = false
+// 				many = false
+// 			}
+// 		}
+// 		ownership = {
+// 			type = "Inherited"
+// 			path = "parent"
+// 		}
+// 	}
+// `, parentIdentifier, childIdentifier)
+
+// 	resource.Test(t, resource.TestCase{
+// 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+// 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+// 		Steps: []resource.TestStep{
+// 			{
+// 				Config: acctest.ProviderConfig + testAccConfigDirect,
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr("port_blueprint.parent_blueprint", "title", "Parent Blueprint"),
+// 					resource.TestCheckResourceAttr("port_blueprint.parent_blueprint", "identifier", parentIdentifier),
+// 					resource.TestCheckResourceAttr("port_blueprint.parent_blueprint", "ownership.type", "Direct"),
+// 					resource.TestCheckNoResourceAttr("port_blueprint.parent_blueprint", "ownership.path"),
+// 				),
+// 			},
+// 			{
+// 				Config: acctest.ProviderConfig + testAccConfigInherited,
+// 				Check: resource.ComposeTestCheckFunc(
+// 					resource.TestCheckResourceAttr("port_blueprint.child_blueprint", "title", "Child Blueprint"),
+// 					resource.TestCheckResourceAttr("port_blueprint.child_blueprint", "identifier", childIdentifier),
+// 					resource.TestCheckResourceAttr("port_blueprint.child_blueprint", "ownership.type", "Inherited"),
+// 					resource.TestCheckResourceAttr("port_blueprint.child_blueprint", "ownership.path", "parent"),
+// 				),
+// 			},
+// 		},
+// 	})
+// }
+
 func TestAccPortBlueprintCatalogPageCreation(t *testing.T) {
 	testCases := []struct {
 		name               string

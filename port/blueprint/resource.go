@@ -3,6 +3,9 @@ package blueprint
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -10,8 +13,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
-	"strings"
-	"time"
 )
 
 var _ resource.Resource = &BlueprintResource{}
@@ -100,6 +101,15 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 	if b.TeamInheritance != nil {
 		bm.TeamInheritance = &TeamInheritanceModel{
 			Path: types.StringValue(b.TeamInheritance.Path),
+		}
+	}
+
+	if b.Ownership != nil {
+		bm.Ownership = &OwnershipModel{
+			Type: types.StringValue(b.Ownership.Type),
+		}
+		if b.Ownership.Path != nil {
+			bm.Ownership.Path = types.StringValue(*b.Ownership.Path)
 		}
 	}
 
@@ -333,6 +343,22 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 		b.TeamInheritance = &cli.TeamInheritance{
 			Path: state.TeamInheritance.Path.ValueString(),
 		}
+	}
+
+	if state.Ownership != nil && !state.Ownership.Type.IsNull() {
+		ownershipType := state.Ownership.Type.ValueString()
+		if ownershipType == "Inherited" && state.Ownership.Path.IsNull() {
+			return nil, fmt.Errorf("path is required when ownership type is Inherited")
+		}
+
+		ownership := &cli.Ownership{
+			Type: ownershipType,
+		}
+		if !state.Ownership.Path.IsNull() {
+			path := state.Ownership.Path.ValueString()
+			ownership.Path = &path
+		}
+		b.Ownership = ownership
 	}
 
 	required := []string{}

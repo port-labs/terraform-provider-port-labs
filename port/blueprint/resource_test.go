@@ -219,7 +219,7 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 					min_items = 1
 					max_items = 10
 					string_items = {
-						default = ["abc123", "def456", "ghi789"],
+						default = ["a", "b", "c"],
 						pattern = "^[a-zA-Z0-9]*$"
 					}
 				}

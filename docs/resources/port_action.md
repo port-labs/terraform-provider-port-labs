@@ -598,7 +598,6 @@ Optional:
 - `enum` (List of String) The enum of possible values for the string items
 - `enum_jq_query` (String) The jq query for the enum of string items
 - `format` (String) The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
-- `pattern` (String) The pattern of the string array items
 
 
 
@@ -748,7 +747,6 @@ Optional:
 - `properties` (String) The properties of the entity (key-value object encoded to a string)
 - `relations` (String) The relations of the entity (key-value object encoded to a string)
 - `teams` (List of String) The teams the entity belongs to
-- `teams_jq` (String) Jq that returns the teams the entity belongs to
 
 
 

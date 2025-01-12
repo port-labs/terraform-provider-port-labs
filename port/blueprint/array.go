@@ -50,6 +50,9 @@ func arrayPropResourceToBody(ctx context.Context, state *BlueprintModel, props m
 				if !prop.StringItems.Format.IsNull() {
 					items["format"] = prop.StringItems.Format.ValueString()
 				}
+				if !prop.StringItems.Pattern.IsNull() {
+					items["pattern"] = prop.StringItems.Pattern.ValueString()
+				}
 				if !prop.StringItems.Default.IsNull() {
 					defaultList, err := utils.TerraformListToGoArray(ctx, prop.StringItems.Default, "string")
 					if err != nil {
@@ -137,6 +140,9 @@ func addArrayPropertiesToState(v *cli.BlueprintProperty) *ArrayPropModel {
 				}
 				if value, ok := v.Items["format"]; ok && value != nil {
 					arrayProp.StringItems.Format = types.StringValue(v.Items["format"].(string))
+				}
+				if value, ok := v.Items["pattern"]; ok && value != nil {
+					arrayProp.StringItems.Pattern = types.StringValue(v.Items["pattern"].(string))
 				}
 			case "number":
 				arrayProp.NumberItems = &NumberItems{}

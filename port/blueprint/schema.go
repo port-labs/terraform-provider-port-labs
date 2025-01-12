@@ -208,6 +208,9 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 				"pattern": schema.StringAttribute{
 					MarkdownDescription: "The pattern of the string array items",
 					Optional:            true,
+					Validators: []validator.String{
+						stringvalidator.RegexMatches(regexp.MustCompile(`^.*$`), "must be a valid regular expression"),
+					},
 				},
 			},
 		},

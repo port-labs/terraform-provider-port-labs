@@ -205,6 +205,10 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
+				"pattern": schema.StringAttribute{
+					MarkdownDescription: "The pattern of the string array items",
+					Optional:            true,
+				},
 			},
 		},
 		"number_items": schema.SingleNestedAttribute{

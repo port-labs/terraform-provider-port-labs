@@ -153,6 +153,26 @@ resource "port_blueprint" "environment" {
 
 ```
 
+## Example Usage with String Array Pattern Validation
+
+```hcl
+resource "port_blueprint" "regex" {
+  title      = "Regex"
+  identifier = "regex"
+  properties = {
+    array_props = {
+      "stringArrayProp" = {
+        title = "String Array"
+        string_items = {
+          pattern = "^[a-zA-Z0-9]*$"
+          default = ["abc", "123", "test"]
+        }
+      }
+    }
+  }
+}
+```
+
 ## Example Usage with Relations
 
 ```hcl
@@ -284,6 +304,7 @@ resource "port_blueprint" "microservice" {
 - `icon` (String) The icon of the blueprint
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `mirror_properties` (Attributes Map) The mirror properties of the blueprint (see [below for nested schema](#nestedatt--mirror_properties))
+- `ownership` (Attributes) Optional ownership field for Blueprint. 'type' can be Inherited or Direct. If 'Inherited', then 'path' is required and must be a valid relation identifiers path. (see [below for nested schema](#nestedatt--ownership))
 - `properties` (Attributes) The properties of the blueprint (see [below for nested schema](#nestedatt--properties))
 - `relations` (Attributes Map) The relations of the blueprint (see [below for nested schema](#nestedatt--relations))
 - `team_inheritance` (Attributes) The team inheritance of the blueprint (see [below for nested schema](#nestedatt--team_inheritance))
@@ -332,6 +353,18 @@ Required:
 Optional:
 
 - `title` (String) The title of the mirror property
+
+
+<a id="nestedatt--ownership"></a>
+### Nested Schema for `ownership`
+
+Required:
+
+- `type` (String) Ownership type: either 'Inherited' or 'Direct'.
+
+Optional:
+
+- `path` (String) Path for the Inherited ownership type. Required when type is 'Inherited'. Must be a valid relation identifiers path.
 
 
 <a id="nestedatt--properties"></a>
@@ -392,6 +425,7 @@ Optional:
 
 - `default` (List of String) The default of the items
 - `format` (String) The format of the items
+- `pattern` (String) The pattern of the string array items
 
 
 

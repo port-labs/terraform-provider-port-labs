@@ -62,6 +62,7 @@ type BooleanPropModel struct {
 type StringItems struct {
 	Format  types.String `tfsdk:"format"`
 	Default types.List   `tfsdk:"default"`
+	Pattern types.String `tfsdk:"pattern"`
 }
 
 type NumberItems struct {

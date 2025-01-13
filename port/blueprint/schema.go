@@ -2,6 +2,7 @@ package blueprint
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -204,6 +205,13 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 					MarkdownDescription: "The default of the items",
 					Optional:            true,
 					ElementType:         types.StringType,
+				},
+				"pattern": schema.StringAttribute{
+					MarkdownDescription: "The pattern of the string array items",
+					Optional:            true,
+					Validators: []validator.String{
+						stringvalidator.RegexMatches(regexp.MustCompile(`^.*$`), "must be a valid regular expression"),
+					},
 				},
 			},
 		},

@@ -219,7 +219,8 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 					min_items = 1
 					max_items = 10
 					string_items = {
-						default = ["a", "b", "c"]
+						default = ["a", "b", "c"],
+						pattern = "^[a-zA-Z0-9]*$"
 					}
 				}
 				myNumberArrayIdentifier = {
@@ -266,6 +267,7 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.string_items.default.0", "a"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.string_items.default.1", "b"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.string_items.default.2", "c"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.string_items.pattern", "^[a-zA-Z0-9]*$"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myNumberArrayIdentifier.number_items.default.0", "1"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myNumberArrayIdentifier.number_items.default.1", "2"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myNumberArrayIdentifier.number_items.default.2", "3"),

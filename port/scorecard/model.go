@@ -10,10 +10,11 @@ type Query struct {
 }
 
 type Rule struct {
-	Identifier types.String `tfsdk:"identifier"`
-	Title      types.String `tfsdk:"title"`
-	Level      types.String `tfsdk:"level"`
-	Query      *Query       `tfsdk:"query"`
+	Identifier  types.String `tfsdk:"identifier"`
+	Title       types.String `tfsdk:"title"`
+	Description types.String `tfsdk:"description"`
+	Level       types.String `tfsdk:"level"`
+	Query       *Query       `tfsdk:"query"`
 }
 
 type Level struct {

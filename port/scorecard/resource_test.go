@@ -195,6 +195,7 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 		rules = [{
 		  identifier = "hasTeam"
 		  title      = "Has Team"
+		  description = "Checks if the entity has a team assigned"
 		  level      = "Gold"
 		  query = {
 			combinator = "and"
@@ -218,6 +219,7 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 		rules = [{
 					identifier = "hasTeam"
 					title      = "Has Team"
+					description = "Updated: Verifies team assignment"
 					level      = "Bronze"
 					query = {
 						combinator = "or"
@@ -245,6 +247,7 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.identifier", "hasTeam"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.title", "Has Team"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.description", "Checks if the entity has a team assigned"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Gold"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.combinator", "and"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.#", "1"),
@@ -259,6 +262,7 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.identifier", "hasTeam"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.title", "Has Team"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.description", "Updated: Verifies team assignment"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Bronze"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.combinator", "or"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.query.conditions.#", "1"),

@@ -2,6 +2,7 @@ package scorecard
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -35,6 +36,10 @@ func RuleSchema() map[string]schema.Attribute {
 		"title": schema.StringAttribute{
 			MarkdownDescription: "The title of the rule",
 			Required:            true,
+		},
+		"description": schema.StringAttribute{
+			MarkdownDescription: "The description of the rule",
+			Optional:            true,
 		},
 		"level": schema.StringAttribute{
 			MarkdownDescription: "The level of the rule",

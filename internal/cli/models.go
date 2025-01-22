@@ -254,7 +254,7 @@ type (
 		ChangelogDestination  *ChangelogDestination                   `json:"changelogDestination,omitempty"`
 		TeamInheritance       *TeamInheritance                        `json:"teamInheritance,omitempty"`
 		Relations             map[string]Relation                     `json:"relations"`
-		Ownership             *Ownership                                `json:"ownership,omitempty"`
+		Ownership             *Ownership                              `json:"ownership,omitempty"`
 	}
 
 	Action struct {
@@ -354,10 +354,11 @@ type (
 	}
 
 	Rule struct {
-		Identifier string `json:"identifier,omitempty"`
-		Title      string `json:"title,omitempty"`
-		Level      string `json:"level,omitempty"`
-		Query      Query  `json:"query,omitempty"`
+		Identifier  string `json:"identifier,omitempty"`
+		Title       string `json:"title,omitempty"`
+		Description string `json:"description,omitempty"`
+		Level       string `json:"level,omitempty"`
+		Query       Query  `json:"query,omitempty"`
 	}
 
 	Level struct {

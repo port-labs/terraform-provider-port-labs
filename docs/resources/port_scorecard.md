@@ -459,6 +459,10 @@ Required:
 - `query` (Attributes) The query of the rule (see [below for nested schema](#nestedatt--rules--query))
 - `title` (String) The title of the rule
 
+Optional:
+
+- `description` (String) The description of the rule
+
 <a id="nestedatt--rules--query"></a>
 ### Nested Schema for `rules.query`
 

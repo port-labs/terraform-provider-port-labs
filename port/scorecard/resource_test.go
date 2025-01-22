@@ -411,3 +411,80 @@ func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortScorecardWithDescription(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	scorecardIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_scorecard" "test" {
+		identifier = "%s"
+		title      = "Scorecard 1"
+		blueprint  = "%s"
+		rules = [{
+		  identifier = "hasTeam"
+		  title      = "Has Team"
+		  description = "Checks if the entity has a team assigned"
+		  level      = "Gold"
+		  query = {
+			combinator = "and"
+			conditions = [jsonencode({
+			  property = "$team"
+			  operator = "isNotEmpty"
+			})]
+		  }
+		}]
+
+		depends_on = [
+		port_blueprint.microservice
+		]
+	  }`, scorecardIdentifier, blueprintIdentifier)
+
+	var testAccActionConfigUpdate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_scorecard" "test" {
+		identifier = "%s"
+		title      = "Scorecard 1"
+		blueprint  = "%s"
+		rules = [{
+		  identifier = "hasTeam"
+		  title      = "Has Team"
+		  description = "Updated: Verifies team assignment"
+		  level      = "Gold"
+		  query = {
+			combinator = "and"
+			conditions = [jsonencode({
+			  property = "$team"
+			  operator = "isNotEmpty"
+			})]
+		  }
+		}]
+
+		depends_on = [
+		port_blueprint.microservice
+		]
+	  }`, scorecardIdentifier, blueprintIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.description", "Checks if the entity has a team assigned"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.identifier", "hasTeam"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.title", "Has Team"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Gold"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.description", "Updated: Verifies team assignment"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.identifier", "hasTeam"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.title", "Has Team"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Gold"),
+				),
+			},
+		},
+	})
+}

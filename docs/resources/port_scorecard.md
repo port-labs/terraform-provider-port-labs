@@ -97,6 +97,7 @@ description: |-
       portblueprint.microservice
     ]
   }
+  ```
   Example Usage with Levels
   This will override the default levels (Basic, Bronze, Silver, Gold) with the provided levels: Not Ready, Partially Ready, Ready.
   ```hcl

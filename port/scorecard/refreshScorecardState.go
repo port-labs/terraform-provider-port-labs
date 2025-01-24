@@ -76,6 +76,18 @@ func refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Sc
 	state.UpdatedAt = types.StringValue(s.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(s.UpdatedBy)
 
+	if s.Filter != nil {
+		stateFilter := &Query{
+			Combinator: types.StringValue(s.Filter.Combinator),
+		}
+		stateFilter.Conditions = make([]types.String, len(s.Filter.Conditions))
+		for i, u := range s.Filter.Conditions {
+			cond, _ := utils.GoObjectToTerraformString(u)
+			stateFilter.Conditions[i] = cond
+		}
+		state.Filter = stateFilter
+	}
+
 	stateRules := []Rule{}
 	for _, rule := range s.Rules {
 		stateRule := &Rule{

@@ -85,6 +85,27 @@ func ScorecardSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The title of the scorecard",
 			Required:            true,
 		},
+		"filter": schema.SingleNestedAttribute{
+			MarkdownDescription: "The filter to apply on the entities before calculating the scorecard",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"combinator": schema.StringAttribute{
+					MarkdownDescription: "The combinator of the filter",
+					Required:            true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("and", "or"),
+					},
+				},
+				"conditions": schema.ListAttribute{
+					MarkdownDescription: "The conditions of the filter. Each condition object should be encoded to a string",
+					Required:            true,
+					ElementType:         types.StringType,
+					Validators: []validator.List{
+						listvalidator.SizeAtLeast(1),
+					},
+				},
+			},
+		},
 		"levels": schema.ListNestedAttribute{
 			MarkdownDescription: "The levels of the scorecard. This overrides the default levels (Basic, Bronze, Silver, Gold) if provided",
 			Optional:            true,

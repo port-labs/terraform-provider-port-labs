@@ -192,6 +192,16 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 		identifier = "%s"
 		title      = "Scorecard 1"
 		blueprint  = "%s"
+		filter = {
+			combinator = "and"
+			conditions = [
+				jsonencode({
+					property = "required"
+					operator = "="
+					value = true
+				})
+			]
+		}
 		rules = [{
 		  identifier = "hasTeam"
 		  title      = "Has Team"
@@ -216,6 +226,21 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 		identifier = "%s"
 		title      = "Scorecard 2"
 		blueprint  = "%s"
+		filter = {
+			combinator = "or"
+			conditions = [
+				jsonencode({
+					property = "required"
+					operator = "="
+					value = true
+				}),
+				jsonencode({
+					property = "sum"
+					operator = ">"
+					value = 10
+				})
+			]
+		}
 		rules = [{
 					identifier = "hasTeam"
 					title      = "Has Team"
@@ -244,6 +269,9 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_scorecard.test", "title", "Scorecard 1"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_scorecard.test", "filter.combinator", "and"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "filter.conditions.#", "1"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "filter.conditions.0", "{\"operator\":\"=\",\"property\":\"required\",\"value\":true}"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.identifier", "hasTeam"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.title", "Has Team"),
@@ -259,6 +287,10 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_scorecard.test", "title", "Scorecard 2"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_scorecard.test", "filter.combinator", "or"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "filter.conditions.#", "2"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "filter.conditions.0", "{\"operator\":\"=\",\"property\":\"required\",\"value\":true}"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "filter.conditions.1", "{\"operator\":\"\\u003e\",\"property\":\"sum\",\"value\":10}"), // u003e is how > is returned
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.identifier", "hasTeam"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.title", "Has Team"),

@@ -349,6 +349,7 @@ type (
 		Identifier string  `json:"identifier,omitempty"`
 		Title      string  `json:"title,omitempty"`
 		Blueprint  string  `json:"blueprint,omitempty"`
+		Filter     *Query  `json:"filter,omitempty"`
 		Levels     []Level `json:"levels,omitempty"`
 		Rules      []Rule  `json:"rules,omitempty"`
 	}

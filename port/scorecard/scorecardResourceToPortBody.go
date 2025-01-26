@@ -25,6 +25,26 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 		Title:      state.Title.ValueString(),
 	}
 
+	if state.Filter != nil {
+		filter := &cli.Query{
+			Combinator: state.Filter.Combinator.ValueString(),
+		}
+		var conditions []interface{}
+		for _, stateCondition := range state.Filter.Conditions {
+			if !stateCondition.IsNull() {
+				stringCond := stateCondition.ValueString()
+				cond := map[string]interface{}{}
+				err := json.Unmarshal([]byte(stringCond), &cond)
+				if err != nil {
+					return nil, err
+				}
+				conditions = append(conditions, cond)
+			}
+		}
+		filter.Conditions = conditions
+		s.Filter = filter
+	}
+
 	var rules []cli.Rule
 
 	for _, stateRule := range state.Rules {

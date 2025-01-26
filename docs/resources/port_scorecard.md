@@ -312,7 +312,7 @@ resource "port_scorecard" "readiness" {
 
 ```
 
-## Example Usage with Levels
+## Example Usage with Levels and Filter
 
 This will override the default levels (Basic, Bronze, Silver, Gold) with the provided levels: Not Ready, Partially Ready, Ready.
 
@@ -349,6 +349,21 @@ resource "port_scorecard" "readiness" {
   identifier = "Readiness"
   title      = "Readiness"
   blueprint  = port_blueprint.microservice.identifier
+  filter = {
+    combinator = "and"
+    conditions = [
+      jsonencode({
+        property = "required"
+        operator = "="
+        value = true
+      }),
+      jsonencode({
+        property = "sum"
+        operator = ">"
+        value = 5
+      })
+    ]
+  }
   levels = [
     {
       color = "red"
@@ -439,6 +454,7 @@ resource "port_scorecard" "readiness" {
 
 ### Optional
 
+- `filter` (Attributes) The filter to apply on the entities before calculating the scorecard (see [below for nested schema](#nestedatt--filter))
 - `levels` (Attributes List) The levels of the scorecard. This overrides the default levels (Basic, Bronze, Silver, Gold) if provided (see [below for nested schema](#nestedatt--levels))
 
 ### Read-Only
@@ -471,6 +487,15 @@ Required:
 - `combinator` (String) The combinator of the query
 - `conditions` (List of String) The conditions of the query. Each condition object should be encoded to a string
 
+
+
+<a id="nestedatt--filter"></a>
+### Nested Schema for `filter`
+
+Required:
+
+- `combinator` (String) The combinator of the filter
+- `conditions` (List of String) The conditions of the filter. Each condition object should be encoded to a string
 
 
 <a id="nestedatt--levels"></a>

@@ -502,6 +502,44 @@ func TestAccPortActionImport(t *testing.T) {
 	})
 }
 
+func TestPortActionFalseRequiredPropShouldNotWork(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				"string_props" = {
+					"myStringIdentifier" = {
+						"title" = "My String Identifier"
+						"required" = false
+					}
+				}
+			}
+		}
+		webhook_method = {
+			url = "https://getport.io"
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + testAccActionConfigCreate,
+				ExpectError: regexp.MustCompile(`.*Invalid Attribute Value Match*`),
+			},
+		},
+	})
+}
+
 func TestAccPortActionUpdate(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()

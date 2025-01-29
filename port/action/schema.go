@@ -38,6 +38,7 @@ func MetadataProperties() map[string]schema.Attribute {
 			MarkdownDescription: "Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value",
 			Optional:            true,
 			Validators: []validator.Bool{
+				isTrueValidator{},
 				boolvalidator.ConflictsWith(path.MatchRoot("self_service_trigger").AtName("required_jq_query")),
 			},
 		},

@@ -43,6 +43,7 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 			}
 
 			mapping.Filter = flex.GoStringToFramework(v.Filter)
+			mapping.Operation = flex.GoStringToFramework(v.Operation)
 			mapping.ItemsToParse = flex.GoStringToFramework(v.ItemsToParse)
 			mapping.Entity.Icon = flex.GoStringToFramework(v.Entity.Icon)
 			mapping.Entity.Title = flex.GoStringToFramework(v.Entity.Title)

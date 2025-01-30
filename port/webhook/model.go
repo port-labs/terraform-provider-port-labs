@@ -24,6 +24,7 @@ type EntityModel struct {
 type MappingsModel struct {
 	Blueprint    types.String `tfsdk:"blueprint"`
 	Filter       types.String `tfsdk:"filter"`
+	Operation    types.String `tfsdk:"operation"`
 	ItemsToParse types.String `tfsdk:"items_to_parse"`
 	Entity       *EntityModel `tfsdk:"entity"`
 }

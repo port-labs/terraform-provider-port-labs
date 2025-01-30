@@ -26,7 +26,7 @@ jobs:
       - name: Check for changes in docs
         run: |
           DOCS_CHANGES=$(git status --porcelain docs/)
-          if [[ -n "$DOCS_CHANGES" ]]; then
+          if [[ -n "${DOCS_CHANGES}" ]]; then
             echo "Error: Documentation is out of sync with schema. Please run 'make gen-docs' locally and commit the changes."
             echo "Changes detected in docs folder:"
             echo "$DOCS_CHANGES"

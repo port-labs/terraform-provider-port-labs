@@ -17,7 +17,11 @@ make lint
 **NOTE**: Should be installed with `make dev-setup`, if you prefer manually, have a look at the [installation guide](https://golangci-lint.run/welcome/install/#local-installation).
 
 
-In addition, when changing documentation, run `make gen-docs`.
+## Documentation
+
+The resource examples are generated from the schema. This means that in order to update the examples, you will need to update the `ResourceMarkdownDescription` in the resource schema.go file.
+
+In addition, when changing schema, run `make gen-docs`.
 
 You can preview how the documentation will look in the Terraform registry with [this tool](https://registry.terraform.io/tools/doc-preview).
 

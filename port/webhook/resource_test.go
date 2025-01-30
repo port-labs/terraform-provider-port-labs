@@ -158,6 +158,131 @@ func TestAccPortWebhook(t *testing.T) {
 	})
 }
 
+func TestAccPortWebhookWithOperation(t *testing.T) {
+	identifier := utils.GenID()
+	webhookIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_webhook" "create_pr" {
+		identifier = "%s"
+		title      = "Test"
+		icon       = "Terraform"
+		enabled    = true
+		mappings = [
+			{
+			"blueprint" = port_blueprint.microservice.identifier,
+			"filter" = ".headers.\"X-GitHub-Event\" == \"pull_request\" && .body.pull_request.action == \"opened\"",
+			"items_to_parse" = ".body.pull_request",
+			"operation" = "create",
+			"entity" = {
+					"identifier" = ".body.pull_request.id | tostring",
+					"title" = ".body.pull_request.title",
+					"icon" = "\"Terraform\"",
+					"team" = "\"port\"",
+					"properties" = {
+						"author" = ".body.pull_request.user.login",
+						"url" = ".body.pull_request.html_url"
+					}
+				}
+			},
+			{
+			"blueprint" = port_blueprint.microservice.identifier,
+			"filter" = ".headers.\"X-GitHub-Event\" == \"pull_request\" && .body.pull_request.state == \"closed\"",
+			"items_to_parse" = ".body.pull_request",
+			"operation": "delete",
+			"entity" = {
+					"identifier" = ".body.pull_request.id | tostring",
+					"title" = ".body.pull_request.title",
+					"icon" = "\"Terraform\"",
+					"team" = "\"port\"",
+					"properties" = {
+						"author" = ".body.pull_request.user.login",
+						"url" = ".body.pull_request.html_url"
+					}
+				}
+			},
+			{
+			"blueprint" = port_blueprint.microservice.identifier,
+			"filter" = ".headers.\"X-GitHub-Event\" == \"pull_request\" && .body.pull_request.state == \"edited\"",
+			"items_to_parse" = ".body.pull_request",
+			"entity" = {
+					"identifier" = ".body.pull_request.id | tostring",
+					"title" = ".body.pull_request.title",
+					"icon" = "\"Terraform\"",
+					"team" = "\"port\"",
+					"properties" = {
+						"author" = ".body.pull_request.user.login",
+						"url" = ".body.pull_request.html_url"
+					}
+				}
+			}
+		]
+	}`, webhookIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "identifier", webhookIdentifier),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "title", "Test"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "enabled", "true"),
+					resource.TestCheckResourceAttrWith("port_webhook.create_pr", "url",
+						func(value string) error {
+							if value == "" {
+								return fmt.Errorf("value is empty")
+							}
+							return nil
+						}),
+					resource.TestCheckResourceAttrWith("port_webhook.create_pr", "webhook_key",
+						func(value string) error {
+							if value == "" {
+								return fmt.Errorf("value is empty")
+							}
+							return nil
+						}),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_header_name", "X-Hub-Signature-256"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_algorithm", "sha256"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_prefix", "sha256="),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.request_identifier_path", ".body.repository.full_name"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.blueprint", identifier),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.filter", ".headers.\"X-GitHub-Event\" == \"pull_request\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.operation", "create"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.items_to_parse", ".body.pull_request"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.identifier", ".body.pull_request.id | tostring"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.title", ".body.pull_request.title"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.icon", "\"Terraform\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.team", "\"port\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.properties.author", ".body.pull_request.user.login"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.properties.url", ".body.pull_request.html_url"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.1.blueprint", identifier),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.1.filter", ".headers.\"X-GitHub-Event\" == \"pull_request\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.1.operation", "delete"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.1.items_to_parse", ".body.pull_request"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.1.entity.identifier", ".body.pull_request.id | tostring"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.1.entity.title", ".body.pull_request.title"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.1.entity.icon", "\"Terraform\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.1.entity.team", "\"port\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.1.entity.properties.author", ".body.pull_request.user.login"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.1.entity.properties.url", ".body.pull_request.html_url"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.2.blueprint", identifier),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.2.filter", ".headers.\"X-GitHub-Event\" == \"pull_request\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.2.operation", ""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.2.items_to_parse", ".body.pull_request"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.2.entity.identifier", ".body.pull_request.id | tostring"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.2.entity.title", ".body.pull_request.title"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.2.entity.icon", "\"Terraform\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.2.entity.team", "\"port\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.2.entity.properties.author", ".body.pull_request.user.login"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.2.entity.properties.url", ".body.pull_request.html_url"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortWebhookImport(t *testing.T) {
 	identifier := utils.GenID()
 	webhookIdentifier := utils.GenID()

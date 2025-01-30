@@ -50,6 +50,10 @@ func WebhookMappingSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The items to parser of the mapping",
 			Optional:            true,
 		},
+		"operation": schema.StringAttribute{
+			MarkdownDescription: "The operation of the mapping",
+			Optional:            true,
+		},
 		"entity": schema.SingleNestedAttribute{
 			MarkdownDescription: "The entity of the mapping",
 			Required:            true,

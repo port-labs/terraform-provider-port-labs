@@ -18,7 +18,7 @@ jobs:
           cache: true
       
       - name: Install tfplugindocs
-        run: cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+        run: make setup
 
       - name: Generate Documentation
         run: make gen-docs

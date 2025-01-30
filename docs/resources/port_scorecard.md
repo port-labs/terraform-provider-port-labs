@@ -98,7 +98,7 @@ description: |-
     ]
   }
   ```
-  Example Usage with Levels
+  Example Usage with Levels and Filter
   This will override the default levels (Basic, Bronze, Silver, Gold) with the provided levels: Not Ready, Partially Ready, Ready.
   ```hcl
   resource "portblueprint" "microservice" {
@@ -130,6 +130,16 @@ description: |-
     identifier = "Readiness"
     title      = "Readiness"
     blueprint  = portblueprint.microservice.identifier
+    filter = {
+      combinator = "and"
+      conditions = [
+        jsonencode({
+          property = "sum"
+          operator = ">"
+          value = 0
+        })
+      ]
+    }
     levels = [
       {
         color = "red"
@@ -353,14 +363,9 @@ resource "port_scorecard" "readiness" {
     combinator = "and"
     conditions = [
       jsonencode({
-        property = "required"
-        operator = "="
-        value = true
-      }),
-      jsonencode({
         property = "sum"
         operator = ">"
-        value = 5
+        value = 0
       })
     ]
   }

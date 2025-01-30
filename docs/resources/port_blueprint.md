@@ -153,26 +153,6 @@ resource "port_blueprint" "environment" {
 
 ```
 
-## Example Usage with String Array Pattern Validation
-
-```hcl
-resource "port_blueprint" "regex" {
-  title      = "Regex"
-  identifier = "regex"
-  properties = {
-    array_props = {
-      "stringArrayProp" = {
-        title = "String Array"
-        string_items = {
-          pattern = "^[a-zA-Z0-9]*$"
-          default = ["abc", "123", "test"]
-        }
-      }
-    }
-  }
-}
-```
-
 ## Example Usage with Relations
 
 ```hcl

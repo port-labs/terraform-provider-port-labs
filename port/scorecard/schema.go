@@ -258,7 +258,7 @@ resource "port_scorecard" "readiness" {
 
 ` + "```" + `
 
-## Example Usage with Levels
+## Example Usage with Levels and Filter
 
 This will override the default levels (Basic, Bronze, Silver, Gold) with the provided levels: Not Ready, Partially Ready, Ready.
 
@@ -295,6 +295,16 @@ resource "port_scorecard" "readiness" {
   identifier = "Readiness"
   title      = "Readiness"
   blueprint  = port_blueprint.microservice.identifier
+  filter = {
+    combinator = "and"
+    conditions = [
+      jsonencode({
+        property = "sum"
+        operator = ">"
+        value = 0
+      })
+    ]
+  }
   levels = [
     {
       color = "red"

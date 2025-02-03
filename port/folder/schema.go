@@ -15,16 +15,24 @@ func FolderSchema() map[string]schema.Attribute {
 		"id": schema.StringAttribute{
 			Computed: true,
 		},
-		"identifier": schema.StringAttribute{
-			Description: "The Identifier of the folder",
+		"sidebar_identifier": schema.StringAttribute{
+			Description: "The Identifier of the sidebar",
 			Required:    true,
 		},
-		"name": schema.StringAttribute{
-			Description: "The name of the folder",
+		"folder_identifier": schema.StringAttribute{
+			Description: "The Identifier of the folder",
 			Required:    true,
 		},
 		"parent": schema.StringAttribute{
 			Description: "The identifier of the parent folder",
+			Optional:    true,
+		},
+		"after": schema.StringAttribute{
+			Description: "The identifier of the folder after which the folder should be placed",
+			Optional:    true,
+		},
+		"title": schema.StringAttribute{
+			Description: "The title of the folder",
 			Optional:    true,
 		},
 		"created_at": schema.StringAttribute{
@@ -96,8 +104,9 @@ If this Environment Variable isn't specified, you won't be able to use the resou
 ` + "```hcl" + `
 
 resource "port_folder" "example_folder" {
-  identifier            = "example_folder"
-  name                  = "Example Folder"
+  sidebar_identifier    = "example_sidebar"
+  folder_identifier     = "example_folder"
+  title                 = "Example Folder"
   description           = "This is an example folder"
 }
 
@@ -110,9 +119,10 @@ Create a folder inside another folder.
 ` + "```hcl" + `
 
 resource "port_folder" "child_folder" {
-  identifier            = "child_folder"
-  name                  = "Child Folder"
-  parent                = port_folder.example_folder.identifier
+  sidebar_identifier    = "example_sidebar"
+  folder_identifier     = "child_folder"
+  parent                = port_folder.example_folder.folder_identifier
+  title                 = "Child Folder"
   description           = "This is a child folder"
 }
 

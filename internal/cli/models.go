@@ -437,6 +437,37 @@ type (
 		Exclude                     []string        `json:"exclude,omitempty"`
 		AttachTitleToRelation       *bool           `json:"attach_title_to_relation,omitempty"`
 	}
+
+	Folder struct {
+		Meta
+		FolderIdentifier  string  `json:"folderIdentifier,omitempty"`
+		SidebarIdentifier string  `json:"sidebarIdentifier,omitempty"`
+		Title             *string `json:"title,omitempty"`
+		After             *string `json:"after,omitempty"`
+		Parent            *string `json:"parent,omitempty"`
+	}
+
+	SidebarLocation struct {
+		Sidebar string  `json:"sidebar"`
+		Parent  *string `json:"parent,omitempty"`
+		After   *string `json:"after,omitempty"`
+	}
+
+	SidebarFolderItem struct {
+		SidebarLocation
+		Identifier string  `json:"identifier"`
+		Title      *string `json:"title"`
+	}
+
+	SidebarItemDTO struct {
+		SidebarFolderItem `json:"folder,omitempty"`
+		SidebarType       string `json:"sidebarType"`
+	}
+
+	SidebarDTO struct {
+		Identifier string           `json:"identifier"`
+		Items      []SidebarItemDTO `json:"items"`
+	}
 )
 
 type PortBody struct {
@@ -452,6 +483,7 @@ type PortBody struct {
 	Page                 Page              `json:"page"`
 	MigrationId          string            `json:"migrationId"`
 	Migration            Migration         `json:"migration"`
+	Folder               Folder            `json:"folder"`
 }
 
 type SearchEntityResult struct {

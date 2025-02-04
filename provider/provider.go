@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"os"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -9,20 +11,20 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/action"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/action-permissions"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/aggregation-properties"
+	action_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/action-permissions"
+	aggregation_properties "github.com/port-labs/terraform-provider-port-labs/v2/port/aggregation-properties"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-permissions"
+	blueprint_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/entity"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/folder"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/integration"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/page"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
+	page_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/search"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/team"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/webhook"
 	"github.com/port-labs/terraform-provider-port-labs/v2/version"
-	"os"
 )
 
 var (
@@ -143,6 +145,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		team.NewTeamResource,
 		page.NewPageResource,
 		page_permissions.NewPagePermissionsResource,
+		folder.NewFolderResource,
 	}
 }
 

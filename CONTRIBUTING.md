@@ -21,6 +21,8 @@ make lint
 
 The resource examples are generated from the schema. This means that in order to update the examples, you will need to update the `ResourceMarkdownDescription` in the resource schema.go file.
 
+After adding a new resource, make sure adding it to provider/provider.go/Resources
+
 In addition, when changing schema, run `make gen-docs`.
 
 You can preview how the documentation will look in the Terraform registry with [this tool](https://registry.terraform.io/tools/doc-preview).

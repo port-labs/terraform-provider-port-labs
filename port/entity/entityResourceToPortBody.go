@@ -153,5 +153,10 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 	}
 
 	e.Relations = relations
+
+	if !state.CreateMissingRelatedEntities.IsNull() {
+		e.CreateMissingRelatedEntities = state.CreateMissingRelatedEntities.ValueBool()
+	}
+
 	return e, nil
 }

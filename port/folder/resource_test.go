@@ -100,7 +100,7 @@ resource "port_folder" "child_folder" {
   folder_identifier     = "%s"
   parent                = port_folder.parent_folder.folder_identifier
   title                 = "Child Folder"
-  description           = "This is a child folder"
+  description           = "This is a child folder" 
 }
 `, sidebarIdentifier, childFolderIdentifier)
 

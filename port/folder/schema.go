@@ -6,15 +6,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 func FolderSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
-		"id": schema.StringAttribute{
-			Computed: true,
-		},
 		"sidebar_identifier": schema.StringAttribute{
 			Description: "The Identifier of the sidebar",
 			Required:    true,
@@ -34,32 +29,6 @@ func FolderSchema() map[string]schema.Attribute {
 		"title": schema.StringAttribute{
 			Description: "The title of the folder",
 			Optional:    true,
-		},
-		"created_at": schema.StringAttribute{
-			MarkdownDescription: "The creation date of the folder",
-			Computed:            true,
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-			},
-		},
-		"created_by": schema.StringAttribute{
-			MarkdownDescription: "The creator of the folder",
-			Computed:            true,
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-			},
-		},
-		"updated_at": schema.StringAttribute{
-			MarkdownDescription: "The last update date of the folder",
-			Computed:            true,
-		},
-		"updated_by": schema.StringAttribute{
-			MarkdownDescription: "The last updater of the folder",
-			Computed:            true,
-		},
-		"description": schema.StringAttribute{
-			MarkdownDescription: "The folder description",
-			Optional:            true,
 		},
 	}
 }
@@ -107,7 +76,6 @@ resource "port_folder" "example_folder" {
   sidebar_identifier    = "example_sidebar"
   folder_identifier     = "example_folder"
   title                 = "Example Folder"
-  description           = "This is an example folder"
 }
 
 ` + "```" + `
@@ -123,7 +91,6 @@ resource "port_folder" "child_folder" {
   folder_identifier     = "child_folder"
   parent                = port_folder.example_folder.folder_identifier
   title                 = "Child Folder"
-  description           = "This is a child folder"
 }
 
 ` + "```" + `

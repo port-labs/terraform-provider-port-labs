@@ -16,7 +16,6 @@ description: |-
     sidebaridentifier    = "examplesidebar"
     folderidentifier     = "examplefolder"
     title                 = "Example Folder"
-    description           = "This is an example folder"
   }
   ```
   Folder with Parent
@@ -27,7 +26,6 @@ description: |-
     folderidentifier     = "childfolder"
     parent                = portfolder.examplefolder.folder_identifier
     title                 = "Child Folder"
-    description           = "This is a child folder"
   }
   ```
 ---
@@ -53,7 +51,6 @@ resource "port_folder" "example_folder" {
   sidebar_identifier    = "example_sidebar"
   folder_identifier     = "example_folder"
   title                 = "Example Folder"
-  description           = "This is an example folder"
 }
 
 ```
@@ -69,7 +66,6 @@ resource "port_folder" "child_folder" {
   folder_identifier     = "child_folder"
   parent                = port_folder.example_folder.folder_identifier
   title                 = "Child Folder"
-  description           = "This is a child folder"
 }
 
 ```
@@ -87,14 +83,5 @@ resource "port_folder" "child_folder" {
 ### Optional
 
 - `after` (String) The identifier of the folder after which the folder should be placed
-- `description` (String) The folder description
 - `parent` (String) The identifier of the parent folder
 - `title` (String) The title of the folder
-
-### Read-Only
-
-- `created_at` (String) The creation date of the folder
-- `created_by` (String) The creator of the folder
-- `id` (String) The ID of this resource.
-- `updated_at` (String) The last update date of the folder
-- `updated_by` (String) The last updater of the folder

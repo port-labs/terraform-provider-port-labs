@@ -439,13 +439,54 @@ type (
 	}
 
 	Folder struct {
-		FolderIdentifier  string `json:"folderIdentifier,omitempty"`
-		SidebarIdentifier string `json:"sidebarIdentifier,omitempty"`
-		Title             string `json:"title,omitempty"`
-		After             string `json:"after,omitempty"`
-		Parent            string `json:"parent,omitempty"`
+		Identifier string `json:"identifier,omitempty"`
+		Sidebar    string `json:"sidebar,omitempty"`
+		// FolderIdentifier  string  `json:"folderIdentifier,omitempty"`
+		// SidebarIdentifier string  `json:"sidebarIdentifier,omitempty"`
+		Title  *string `json:"title,omitempty"`
+		After  *string `json:"after,omitempty"`
+		Parent *string `json:"parent,omitempty"`
 	}
 
+	SidebarLocation struct {
+		Sidebar string `json:"sidebar"`
+		Parent  string `json:"parent,omitempty"`
+		After   string `json:"after,omitempty"`
+	}
+
+	SidebarFolderItem struct {
+		SidebarLocation
+		Identifier string `json:"identifier"`
+		Title      string `json:"title"`
+	}
+
+	SidebarItemDTO struct {
+		Identifier string `json:"identifier"`
+		Title      string `json:"title"`
+		Sidebar    string `json:"sidebar"`
+		After      string `json:"after,omitempty"`
+		Parent     string `json:"parent,omitempty"`
+
+		// Additional fields that appear in some sidebar items
+		Icon      string `json:"icon,omitempty"`
+		Type      string `json:"type,omitempty"`
+		Protected bool   `json:"protected,omitempty"`
+		Blueprint string `json:"blueprint,omitempty"`
+
+		SidebarType string `json:"sidebarType"`
+	}
+
+	SidebarDTO struct {
+		Identifier string           `json:"identifier"`
+		Items      []SidebarItemDTO `json:"items"`
+	}
+
+	SidebarGetResponseDTO struct {
+		Ok      bool        `json:"ok"`
+		Sidebar *SidebarDTO `json:"sidebar"`
+	}
+
+/*
 	SidebarLocation struct {
 		Sidebar string `json:"sidebar"`
 		Parent  string `json:"parent,omitempty"`
@@ -464,9 +505,15 @@ type (
 	}
 
 	SidebarDTO struct {
-		Identifier string           `json:"identifier"`
-		Items      []SidebarItemDTO `json:"items"`
+		Identifier string            `json:"identifier"`
+		Items      *[]SidebarItemDTO `json:"items"`
 	}
+
+	SidebarGetResponseDTO struct {
+		Ok      bool        `json:"ok"`
+		Sidebar *SidebarDTO `json:"sidebar"`
+	}
+*/
 )
 
 type PortBody struct {

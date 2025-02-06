@@ -8,11 +8,13 @@ import (
 )
 
 var sidebarRoute = "v1/sidebars"
+var sidebarId = "catalog"
 
-func (c *PortClient) GetFolder(ctx context.Context, sidebarId string, folderId string) (*Folder, int, error) {
-	pb := &SidebarDTO{}
+func (c *PortClient) GetFolder(ctx context.Context, folderId string) (*Folder, int, error) {
+	encodedSidebarId := url.QueryEscape(sidebarId)
+	pb := &SidebarGetResponseDTO{}
 
-	url := fmt.Sprintf("%s/%s", sidebarRoute, sidebarId)
+	url := fmt.Sprintf("%s/%s", sidebarRoute, encodedSidebarId)
 
 	resp, err := c.Client.R().
 		SetContext(ctx).
@@ -28,14 +30,16 @@ func (c *PortClient) GetFolder(ctx context.Context, sidebarId string, folderId s
 		return nil, resp.StatusCode(), fmt.Errorf("failed to get sidebar, got: %s", resp.Body())
 	}
 
-	for _, item := range pb.Items {
-		if item.SidebarType == "FOLDER" && item.Identifier == folderId {
+	fmt.Printf("******** url: [%s] - %v\n", url, pb.Sidebar.Items)
+
+	for _, item := range pb.Sidebar.Items {
+		if item.SidebarType == "folder" && item.Identifier == folderId {
 			folder := &Folder{
-				FolderIdentifier:  item.Identifier,
-				SidebarIdentifier: sidebarId,
-				Title:             item.Title,
-				After:             item.After,
-				Parent:            item.Parent,
+				Identifier: item.Identifier,
+				Sidebar:    sidebarId,
+				Title:      &item.Title,
+				After:      &item.After,
+				Parent:     &item.Parent,
 			}
 			return folder, resp.StatusCode(), nil
 		}
@@ -45,8 +49,7 @@ func (c *PortClient) GetFolder(ctx context.Context, sidebarId string, folderId s
 }
 
 func (c *PortClient) CreateFolder(ctx context.Context, folder *Folder) (*Folder, error) {
-	encodedSidebarId := url.QueryEscape(folder.SidebarIdentifier)
-	url := fmt.Sprintf("%s/%s/folders", sidebarRoute, encodedSidebarId)
+	url := fmt.Sprintf("%s/%s/folders", sidebarRoute, sidebarId)
 
 	resp, err := c.Client.R().
 		SetBody(folder).
@@ -69,15 +72,15 @@ func (c *PortClient) CreateFolder(ctx context.Context, folder *Folder) (*Folder,
 	// For forward compatibility, handle cases where the response body is empty when a folder is created.
 	// The current API response body is { "ok": true, "identifier": "folder_identifier" },
 	// but it is expected to be the folder object in the future to align with other API endpoints.
-	if pb.Folder.FolderIdentifier != "" {
+	if pb.Folder.Identifier != "" {
 		return &pb.Folder, nil
 	}
 	return nil, nil
 }
 
 func (c *PortClient) UpdateFolder(ctx context.Context, folder *Folder) (*Folder, error) {
-	encodedSidebarId := url.QueryEscape(folder.SidebarIdentifier)
-	encodedFolderId := url.QueryEscape(folder.FolderIdentifier)
+	encodedSidebarId := url.QueryEscape(sidebarId)
+	encodedFolderId := url.QueryEscape(folder.Identifier)
 
 	url := fmt.Sprintf("%s/%s/folders/%s", sidebarRoute, encodedSidebarId, encodedFolderId)
 
@@ -101,7 +104,7 @@ func (c *PortClient) UpdateFolder(ctx context.Context, folder *Folder) (*Folder,
 	return &pb.Folder, nil
 }
 
-func (c *PortClient) DeleteFolder(ctx context.Context, sidebarId string, folderId string) (int, error) {
+func (c *PortClient) DeleteFolder(ctx context.Context, folderId string) (int, error) {
 	encodedSidebarId := url.QueryEscape(sidebarId)
 	encodedFolderId := url.QueryEscape(folderId)
 

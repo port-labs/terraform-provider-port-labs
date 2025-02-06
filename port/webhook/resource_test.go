@@ -190,14 +190,7 @@ func TestAccPortWebhookWithOperation(t *testing.T) {
 			"items_to_parse" = ".body.pull_request",
 			"operation": "delete",
 			"entity" = {
-					"identifier" = ".body.pull_request.id | tostring",
-					"title" = ".body.pull_request.title",
-					"icon" = "\"Terraform\"",
-					"team" = "\"port\"",
-					"properties" = {
-						"author" = ".body.pull_request.user.login",
-						"url" = ".body.pull_request.html_url"
-					}
+					"identifier" = ".body.pull_request.id | tostring"
 				}
 			},
 			{

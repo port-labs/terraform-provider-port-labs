@@ -8,9 +8,9 @@ func FolderToPortBody(fm *FolderModel) (*cli.Folder, error) {
 	fb := &cli.Folder{
 		FolderIdentifier:  fm.FolderIdentifier.ValueString(),
 		SidebarIdentifier: fm.SidebarIdentifier.ValueString(),
-		Title:             fm.Title.ValueStringPointer(),
-		After:             fm.After.ValueStringPointer(),
-		Parent:            fm.Parent.ValueStringPointer(),
+		Title:             fm.Title.ValueString(),
+		After:             fm.After.ValueString(),
+		Parent:            fm.Parent.ValueString(),
 	}
 	return fb, nil
 }

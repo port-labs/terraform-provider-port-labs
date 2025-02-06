@@ -127,13 +127,9 @@ func (r *FolderResource) Create(ctx context.Context, req resource.CreateRequest,
 
 	state.FolderIdentifier = types.StringValue(f.FolderIdentifier)
 	state.SidebarIdentifier = types.StringValue(f.SidebarIdentifier)
-	state.Parent = ConvertStringPointerToTypesString(f.Parent)
-	state.After = ConvertStringPointerToTypesString(f.After)
-	state.Title = ConvertStringPointerToTypesString(f.Title)
-	state.CreatedAt = types.StringValue(f.CreatedAt.String())
-	state.CreatedBy = types.StringValue(f.CreatedBy)
-	state.UpdatedAt = types.StringValue(f.UpdatedAt.String())
-	state.UpdatedBy = types.StringValue(f.UpdatedBy)
+	state.Parent = types.StringValue(f.Parent)
+	state.After = types.StringValue(f.After)
+	state.Title = types.StringValue(f.Title)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -167,10 +163,7 @@ func (r *FolderResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	state.FolderIdentifier = types.StringValue(f.FolderIdentifier)
-	state.CreatedAt = types.StringValue(f.CreatedAt.String())
-	state.CreatedBy = types.StringValue(f.CreatedBy)
-	state.UpdatedAt = types.StringValue(f.UpdatedAt.String())
-	state.UpdatedBy = types.StringValue(f.UpdatedBy)
+	state.SidebarIdentifier = types.StringValue(f.SidebarIdentifier)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

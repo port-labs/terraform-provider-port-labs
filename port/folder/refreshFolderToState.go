@@ -8,20 +8,8 @@ import (
 func refreshFolderToState(fm *FolderModel, f *cli.Folder) error {
 	fm.FolderIdentifier = types.StringValue(f.FolderIdentifier)
 	fm.SidebarIdentifier = types.StringValue(f.SidebarIdentifier)
-	fm.Title = ConvertStringPointerToTypesString(f.Title)
-	fm.After = ConvertStringPointerToTypesString(f.After)
-	fm.Parent = ConvertStringPointerToTypesString(f.Parent)
-	fm.CreatedAt = types.StringValue(f.CreatedAt.String())
-	fm.CreatedBy = types.StringValue(f.CreatedBy)
-	fm.UpdatedAt = types.StringValue(f.UpdatedAt.String())
-	fm.UpdatedBy = types.StringValue(f.UpdatedBy)
+	fm.Title = types.StringValue(f.Title)
+	fm.After = types.StringValue(f.After)
+	fm.Parent = types.StringValue(f.Parent)
 	return nil
-}
-
-func ConvertStringPointerToTypesString(s *string) *types.String {
-	if s == nil {
-		return nil
-	}
-	strValue := types.StringValue(*s)
-	return &strValue
 }

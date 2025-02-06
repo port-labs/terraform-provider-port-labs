@@ -440,23 +440,23 @@ type (
 
 	Folder struct {
 		Meta
-		FolderIdentifier  string  `json:"folderIdentifier,omitempty"`
-		SidebarIdentifier string  `json:"sidebarIdentifier,omitempty"`
-		Title             *string `json:"title,omitempty"`
-		After             *string `json:"after,omitempty"`
-		Parent            *string `json:"parent,omitempty"`
+		FolderIdentifier  string `json:"folderIdentifier,omitempty"`
+		SidebarIdentifier string `json:"sidebarIdentifier,omitempty"`
+		Title             string `json:"title,omitempty"`
+		After             string `json:"after,omitempty"`
+		Parent            string `json:"parent,omitempty"`
 	}
 
 	SidebarLocation struct {
-		Sidebar string  `json:"sidebar"`
-		Parent  *string `json:"parent,omitempty"`
-		After   *string `json:"after,omitempty"`
+		Sidebar string `json:"sidebar"`
+		Parent  string `json:"parent,omitempty"`
+		After   string `json:"after,omitempty"`
 	}
 
 	SidebarFolderItem struct {
 		SidebarLocation
-		Identifier string  `json:"identifier"`
-		Title      *string `json:"title"`
+		Identifier string `json:"identifier"`
+		Title      string `json:"title"`
 	}
 
 	SidebarItemDTO struct {

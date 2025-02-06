@@ -7,7 +7,6 @@ import (
 
 func refreshFolderToState(fm *FolderModel, f *cli.Folder) error {
 	fm.ID = types.StringValue(f.Identifier)
-	fm.Identifier = types.StringValue(f.Identifier) // Matan - Should be kept?
 	fm.Sidebar = types.StringValue(f.Sidebar)
 	fm.Parent = types.StringPointerValue(f.Parent)
 	fm.After = types.StringPointerValue(f.After)

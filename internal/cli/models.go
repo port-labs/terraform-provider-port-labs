@@ -484,35 +484,6 @@ type (
 		Ok      bool        `json:"ok"`
 		Sidebar *SidebarDTO `json:"sidebar"`
 	}
-
-/*
-	SidebarLocation struct {
-		Sidebar string `json:"sidebar"`
-		Parent  string `json:"parent,omitempty"`
-		After   string `json:"after,omitempty"`
-	}
-
-	SidebarFolderItem struct {
-		SidebarLocation
-		Identifier string `json:"identifier"`
-		Title      string `json:"title"`
-	}
-
-	SidebarItemDTO struct {
-		SidebarFolderItem `json:"folder,omitempty"`
-		SidebarType       string `json:"sidebarType"`
-	}
-
-	SidebarDTO struct {
-		Identifier string            `json:"identifier"`
-		Items      *[]SidebarItemDTO `json:"items"`
-	}
-
-	SidebarGetResponseDTO struct {
-		Ok      bool        `json:"ok"`
-		Sidebar *SidebarDTO `json:"sidebar"`
-	}
-*/
 )
 
 type PortBody struct {

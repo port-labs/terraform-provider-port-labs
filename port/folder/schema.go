@@ -13,9 +13,9 @@ func FolderSchema() map[string]schema.Attribute {
 		"id": schema.StringAttribute{
 			Computed: true,
 		},
-		"identifier": schema.StringAttribute{
-			Required: true,
-		}, //Matan
+		// "identifier": schema.StringAttribute{
+		// 	Required: true,
+		// }, //Matan
 		"sidebar": schema.StringAttribute{
 			Description: "The Identifier of the sidebar",
 			Required:    true,
@@ -76,7 +76,6 @@ If this Environment Variable isn't specified, you won't be able to use the resou
 
 resource "port_folder" "example_folder" {
   sidebar    = "example_sidebar"
-  identifier     = "example_folder"
   title                 = "Example Folder"
 }
 
@@ -90,7 +89,6 @@ Create a folder inside another folder.
 
 resource "port_folder" "child_folder" {
   sidebar               = "example_sidebar"
-  identifier     		= "child_folder"
   parent                = port_folder.example_folder.folder_identifier
   title                 = "Child Folder"
 }

@@ -6,11 +6,10 @@ import (
 
 func FolderToPortBody(fm *FolderModel) (*cli.Folder, error) {
 	fb := &cli.Folder{
-		Identifier: fm.Identifier.ValueString(),
-		// Sidebar:    fm.Sidebar.ValueString(), //Matan - Should be kept?
-		Title:  fm.Title.ValueStringPointer(),
-		After:  fm.After.ValueStringPointer(),
-		Parent: fm.Parent.ValueStringPointer(),
+		Identifier: fm.ID.ValueString(),
+		Title:      fm.Title.ValueStringPointer(),
+		After:      fm.After.ValueStringPointer(),
+		Parent:     fm.Parent.ValueStringPointer(),
 	}
 	return fb, nil
 }

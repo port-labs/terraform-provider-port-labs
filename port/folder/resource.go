@@ -33,9 +33,9 @@ func (r *FolderResource) Configure(ctx context.Context, req resource.ConfigureRe
 }
 
 func (r *FolderResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resp.Diagnostics.Append(resp.State.SetAttribute(
-		ctx, path.Root("identifier"), req.ID,
-	)...)
+	// resp.Diagnostics.Append(resp.State.SetAttribute(
+	// 	ctx, path.Root("identifier"), req.ID,
+	// )...)
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(
 		ctx, path.Root("id"), req.ID,
@@ -51,7 +51,7 @@ func (r *FolderResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	f, statusCode, err := r.portClient.GetFolder(ctx, state.Identifier.ValueString())
+	f, statusCode, err := r.portClient.GetFolder(ctx, state.ID.ValueString())
 
 	if err != nil {
 		if statusCode == 404 {
@@ -82,7 +82,7 @@ func (r *FolderResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	statusCode, err := r.portClient.DeleteFolder(ctx, state.Identifier.ValueString())
+	statusCode, err := r.portClient.DeleteFolder(ctx, state.ID.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.State.RemoveResource(ctx)
@@ -116,7 +116,7 @@ func (r *FolderResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 	if f == nil {
-		f, _, err = r.portClient.GetFolder(ctx, state.Identifier.ValueString())
+		f, _, err = r.portClient.GetFolder(ctx, state.ID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("failed to get folder", err.Error())
 			return
@@ -141,7 +141,7 @@ func (r *FolderResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	f, _, err := r.portClient.GetFolder(ctx, state.Identifier.ValueString())
+	f, _, err := r.portClient.GetFolder(ctx, state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to get folder", err.Error())
 		return
@@ -160,8 +160,8 @@ func (r *FolderResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	state.Identifier = types.StringValue(f.Identifier)
 	state.Sidebar = types.StringValue(f.Sidebar)
+	refreshFolderToState(state, f)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

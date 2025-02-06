@@ -13,8 +13,7 @@ description: |-
   Basic Folder
   ```hcl
   resource "portfolder" "examplefolder" {
-    sidebar    = "examplesidebar"
-    identifier     = "examplefolder"
+    sidebar    = "example_sidebar"
     title                 = "Example Folder"
   }
   ```
@@ -23,8 +22,7 @@ description: |-
   ```hcl
   resource "portfolder" "childfolder" {
     sidebar               = "examplesidebar"
-    identifier            = "childfolder"
-    parent                = portfolder.examplefolder.folder_identifier
+    parent                = portfolder.examplefolder.folderidentifier
     title                 = "Child Folder"
   }
   ```
@@ -49,7 +47,6 @@ If this Environment Variable isn't specified, you won't be able to use the resou
 
 resource "port_folder" "example_folder" {
   sidebar    = "example_sidebar"
-  identifier     = "example_folder"
   title                 = "Example Folder"
 }
 
@@ -63,7 +60,6 @@ Create a folder inside another folder.
 
 resource "port_folder" "child_folder" {
   sidebar               = "example_sidebar"
-  identifier     		= "child_folder"
   parent                = port_folder.example_folder.folder_identifier
   title                 = "Child Folder"
 }
@@ -77,7 +73,6 @@ resource "port_folder" "child_folder" {
 
 ### Required
 
-- `identifier` (String)
 - `sidebar` (String) The Identifier of the sidebar
 
 ### Optional

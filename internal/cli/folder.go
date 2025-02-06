@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 var sidebarRoute = "v1/sidebars"
@@ -50,6 +52,9 @@ func (c *PortClient) GetFolder(ctx context.Context, folderId string) (*Folder, i
 
 func (c *PortClient) CreateFolder(ctx context.Context, folder *Folder) (*Folder, error) {
 	url := fmt.Sprintf("%s/%s/folders", sidebarRoute, sidebarId)
+	if folder.Identifier == "" {
+		folder.Identifier = utils.GenID()
+	}
 
 	resp, err := c.Client.R().
 		SetBody(folder).

@@ -51,7 +51,7 @@ func (r *FolderResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	f, statusCode, err := r.portClient.GetFolder(ctx, state.FolderIdentifier.ValueString())
+	f, statusCode, err := r.portClient.GetFolder(ctx, state.Identifier.ValueString())
 
 	if err != nil {
 		if statusCode == 404 {
@@ -82,7 +82,7 @@ func (r *FolderResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		return
 	}
 
-	statusCode, err := r.portClient.DeleteFolder(ctx, state.FolderIdentifier.ValueString())
+	statusCode, err := r.portClient.DeleteFolder(ctx, state.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.State.RemoveResource(ctx)
@@ -116,18 +116,19 @@ func (r *FolderResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 	if f == nil {
-		f, _, err = r.portClient.GetFolder(ctx, state.FolderIdentifier.ValueString())
+		f, _, err = r.portClient.GetFolder(ctx, state.Identifier.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("failed to get folder", err.Error())
 			return
 		}
 	}
 
-	state.FolderIdentifier = types.StringValue(f.Identifier)
-	state.SidebarIdentifier = types.StringValue(f.Sidebar)
-	state.Parent = types.StringPointerValue(f.Parent)
-	state.After = types.StringPointerValue(f.After)
-	state.Title = types.StringPointerValue(f.Title)
+	refreshFolderToState(state, f)
+	// state.Identifier = types.StringValue(f.Identifier)
+	// state.Sidebar = types.StringValue(f.Sidebar)
+	// state.Parent = types.StringPointerValue(f.Parent)
+	// state.After = types.StringPointerValue(f.After)
+	// state.Title = types.StringPointerValue(f.Title)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -140,7 +141,7 @@ func (r *FolderResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	f, _, err := r.portClient.GetFolder(ctx, state.FolderIdentifier.ValueString())
+	f, _, err := r.portClient.GetFolder(ctx, state.Identifier.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to get folder", err.Error())
 		return
@@ -159,8 +160,8 @@ func (r *FolderResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	state.FolderIdentifier = types.StringValue(f.Identifier)
-	state.SidebarIdentifier = types.StringValue(f.Sidebar)
+	state.Identifier = types.StringValue(f.Identifier)
+	state.Sidebar = types.StringValue(f.Sidebar)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

@@ -439,13 +439,12 @@ type (
 	}
 
 	Folder struct {
-		Identifier string `json:"identifier,omitempty"`
-		Sidebar    string `json:"sidebar,omitempty"`
-		// FolderIdentifier  string  `json:"folderIdentifier,omitempty"`
-		// SidebarIdentifier string  `json:"sidebarIdentifier,omitempty"`
-		Title  *string `json:"title,omitempty"`
-		After  *string `json:"after,omitempty"`
-		Parent *string `json:"parent,omitempty"`
+		// Id         string  `json:"id,omitempty"` //Matan: I think this is not needed
+		Identifier string  `json:"identifier,omitempty"`
+		Sidebar    string  `json:"sidebar,omitempty"`
+		Title      *string `json:"title,omitempty"`
+		After      *string `json:"after,omitempty"`
+		Parent     *string `json:"parent,omitempty"`
 	}
 
 	SidebarLocation struct {

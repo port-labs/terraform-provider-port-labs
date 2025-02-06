@@ -13,8 +13,8 @@ description: |-
   Basic Folder
   ```hcl
   resource "portfolder" "examplefolder" {
-    sidebaridentifier    = "examplesidebar"
-    folderidentifier     = "examplefolder"
+    sidebar    = "examplesidebar"
+    identifier     = "examplefolder"
     title                 = "Example Folder"
   }
   ```
@@ -22,8 +22,8 @@ description: |-
   Create a folder inside another folder.
   ```hcl
   resource "portfolder" "childfolder" {
-    sidebaridentifier    = "examplesidebar"
-    folderidentifier     = "childfolder"
+    sidebar               = "examplesidebar"
+    identifier            = "childfolder"
     parent                = portfolder.examplefolder.folder_identifier
     title                 = "Child Folder"
   }
@@ -48,8 +48,8 @@ If this Environment Variable isn't specified, you won't be able to use the resou
 ```hcl
 
 resource "port_folder" "example_folder" {
-  sidebar_identifier    = "example_sidebar"
-  folder_identifier     = "example_folder"
+  sidebar    = "example_sidebar"
+  identifier     = "example_folder"
   title                 = "Example Folder"
 }
 
@@ -62,8 +62,8 @@ Create a folder inside another folder.
 ```hcl
 
 resource "port_folder" "child_folder" {
-  sidebar_identifier    = "example_sidebar"
-  folder_identifier     = "child_folder"
+  sidebar               = "example_sidebar"
+  identifier     		= "child_folder"
   parent                = port_folder.example_folder.folder_identifier
   title                 = "Child Folder"
 }
@@ -77,11 +77,15 @@ resource "port_folder" "child_folder" {
 
 ### Required
 
-- `folder_identifier` (String) The Identifier of the folder
-- `sidebar_identifier` (String) The Identifier of the sidebar
+- `identifier` (String)
+- `sidebar` (String) The Identifier of the sidebar
 
 ### Optional
 
 - `after` (String) The identifier of the folder after which the folder should be placed
 - `parent` (String) The identifier of the parent folder
 - `title` (String) The title of the folder
+
+### Read-Only
+
+- `id` (String) The ID of this resource.

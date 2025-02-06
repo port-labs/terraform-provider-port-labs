@@ -47,6 +47,7 @@ Optional:
 
 - `filter` (String) The filter of the mapping
 - `items_to_parse` (String) The items to parser of the mapping
+- `operation` (String) The operation of the mapping
 
 <a id="nestedatt--mappings--entity"></a>
 ### Nested Schema for `mappings.entity`

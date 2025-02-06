@@ -439,7 +439,6 @@ type (
 	}
 
 	Folder struct {
-		Meta
 		FolderIdentifier  string `json:"folderIdentifier,omitempty"`
 		SidebarIdentifier string `json:"sidebarIdentifier,omitempty"`
 		Title             string `json:"title,omitempty"`

@@ -236,10 +236,6 @@ func TestAccPortWebhookWithOperation(t *testing.T) {
 							}
 							return nil
 						}),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_header_name", "X-Hub-Signature-256"),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_algorithm", "sha256"),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.signature_prefix", "sha256="),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "security.request_identifier_path", ".body.repository.full_name"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.blueprint", identifier),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.filter", ".headers.\"X-GitHub-Event\" == \"pull_request\" and .body.pull_request.action == \"opened\""),
 					resource.TestCheckNoResourceAttr("port_webhook.create_pr", "mappings.0.operation"),

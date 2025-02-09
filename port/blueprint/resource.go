@@ -358,6 +358,10 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 			path := state.Ownership.Path.ValueString()
 			ownership.Path = &path
 		}
+		if !state.Ownership.Title.IsNull() {
+			title := state.Ownership.Title.ValueString()
+			ownership.Title = &title
+		}
 		b.Ownership = ownership
 	}
 

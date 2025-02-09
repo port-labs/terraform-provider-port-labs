@@ -144,3 +144,23 @@ func calculationPropertiesToBody(ctx context.Context, state *BlueprintModel) map
 
 	return calculationProperties
 }
+
+func PropertiesToBody(ctx context.Context, state *PropertiesModel) (map[string]cli.BlueprintProperty, []string, error) {
+	bm := &BlueprintModel{Properties: state}
+	return propsResourceToBody(ctx, bm)
+}
+
+func RelationsToBody(state map[string]RelationModel) map[string]cli.Relation {
+	bm := &BlueprintModel{Relations: state}
+	return relationsResourceToBody(bm)
+}
+
+func MirrorPropertiesToBody(state map[string]MirrorPropertyModel) map[string]cli.BlueprintMirrorProperty {
+	bm := &BlueprintModel{MirrorProperties: state}
+	return mirrorPropertiesToBody(bm)
+}
+
+func CalculationPropertiesToBody(ctx context.Context, state map[string]CalculationPropertyModel) map[string]cli.BlueprintCalculationProperty {
+	bm := &BlueprintModel{CalculationProperties: state}
+	return calculationPropertiesToBody(ctx, bm)
+}

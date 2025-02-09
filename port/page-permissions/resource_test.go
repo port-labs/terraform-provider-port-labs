@@ -106,11 +106,19 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 	teamName := utils.GenID()
 
 	var testAccBasePagePermissionsConfigUpdate = fmt.Sprintf(`
+	resource "port_system_blueprint" "team" {
+		identifier = "_team"
+	}
 
-	resource "port_team" "team" {
-		name = "%s"
-		description = "Test description"
-		users = []
+	resource "port_entity" "team" {
+		identifier = "%s"
+		title = "%s"
+		blueprint = port_system_blueprint.team.identifier
+		properties = {
+			"string_props" = {
+				"description" =  "My Description"
+			}
+		}
 	}
 
 	resource "port_page_permissions" "microservice_permissions" {
@@ -120,9 +128,9 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 				"Member",
 			],
 		  "users": [],
-		  "teams": [port_team.team.name],
+		  "teams": [port_entity.team.identifier],
 			}
-	}`, teamName)
+	}`, teamName, teamName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },

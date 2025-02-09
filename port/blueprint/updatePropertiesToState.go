@@ -233,3 +233,31 @@ func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *
 
 	}
 }
+
+func UpdatePropertiesToState(ctx context.Context, b *cli.Blueprint, state *PropertiesModel) error {
+	if state == nil {
+		state = &PropertiesModel{}
+	}
+	bm := &BlueprintModel{Properties: state}
+	return updatePropertiesToState(ctx, b, bm)
+}
+
+func UpdateMirrorPropertiesToState(b *cli.Blueprint, state map[string]MirrorPropertyModel) error {
+	if state == nil {
+		state = make(map[string]MirrorPropertyModel)
+	}
+
+	bm := &BlueprintModel{MirrorProperties: state}
+	addMirrorPropertiesToState(b, bm)
+	return nil
+}
+
+func UpdateCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, state map[string]CalculationPropertyModel) error {
+	if state == nil {
+		state = make(map[string]CalculationPropertyModel)
+	}
+
+	bm := &BlueprintModel{CalculationProperties: state}
+	addCalculationPropertiesToState(ctx, b, bm)
+	return nil
+}

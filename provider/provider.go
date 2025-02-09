@@ -31,9 +31,7 @@ var (
 	_ provider.Provider = &PortLabsProvider{}
 )
 
-type PortLabsProvider struct {
-	client *cli.PortClient
-}
+type PortLabsProvider struct {}
 
 func New() provider.Provider {
 	return &PortLabsProvider{}
@@ -130,7 +128,6 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 
 	resp.ResourceData = c
 	resp.DataSourceData = c
-	p.client = c
 }
 
 func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Resource {

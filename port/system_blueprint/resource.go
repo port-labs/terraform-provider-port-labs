@@ -23,7 +23,6 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
-	// Try to read the existing system blueprint
 	b, statusCode, err := r.client.ReadBlueprint(ctx, plan.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
@@ -37,7 +36,6 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
-	// Write computed fields to state
 	writeBlueprintComputedFieldsToState(b, &plan)
 
 	if err := blueprint.UpdatePropertiesToState(ctx, b, plan.Properties); err != nil {
@@ -45,17 +43,17 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
-	if err := blueprint.UpdateRelationsToState(b, plan.Relations); err != nil {
+	if err := UpdateRelationsToState(b, plan.Relations); err != nil {
 		resp.Diagnostics.AddError("Error updating relations", err.Error())
 		return
 	}
 
-	if err := blueprint.UpdateMirrorPropertiesToState(b, plan.MirrorProperties); err != nil {
+	if err := UpdateMirrorPropertiesToState(b, plan.MirrorProperties); err != nil {
 		resp.Diagnostics.AddError("Error updating mirror properties", err.Error())
 		return
 	}
 
-	if err := blueprint.UpdateCalculationPropertiesToState(ctx, b, plan.CalculationProperties); err != nil {
+	if err := UpdateCalculationPropertiesToState(ctx, b, plan.CalculationProperties); err != nil {
 		resp.Diagnostics.AddError("Error updating calculation properties", err.Error())
 		return
 	}
@@ -80,7 +78,6 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 		return
 	}
 
-	// Write computed fields to state
 	writeBlueprintComputedFieldsToState(b, state)
 
 	if err := blueprint.UpdatePropertiesToState(ctx, b, state.Properties); err != nil {
@@ -88,17 +85,17 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 		return
 	}
 
-	if err := blueprint.UpdateRelationsToState(b, state.Relations); err != nil {
+	if err := UpdateRelationsToState(b, state.Relations); err != nil {
 		resp.Diagnostics.AddError("Error updating relations", err.Error())
 		return
 	}
 
-	if err := blueprint.UpdateMirrorPropertiesToState(b, state.MirrorProperties); err != nil {
+	if err := UpdateMirrorPropertiesToState(b, state.MirrorProperties); err != nil {
 		resp.Diagnostics.AddError("Error updating mirror properties", err.Error())
 		return
 	}
 
-	if err := blueprint.UpdateCalculationPropertiesToState(ctx, b, state.CalculationProperties); err != nil {
+	if err := UpdateCalculationPropertiesToState(ctx, b, state.CalculationProperties); err != nil {
 		resp.Diagnostics.AddError("Error updating calculation properties", err.Error())
 		return
 	}
@@ -129,15 +126,15 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 
 	// For system blueprints, we merge properties, relations, mirror properties and calculation properties
 	// Everything else should be preserved exactly as is
-	props, _, err := blueprint.MergeProperties(ctx, existingBp.Schema.Properties, plan.Properties)
+	props, _, err := MergeProperties(ctx, existingBp.Schema.Properties, plan.Properties)
 	if err != nil {
 		resp.Diagnostics.AddError("Error merging properties", err.Error())
 		return
 	}
 
-	relations := blueprint.MergeRelations(existingBp.Relations, plan.Relations)
-	mirrorProps := blueprint.MergeMirrorProperties(existingBp.MirrorProperties, plan.MirrorProperties)
-	calcProps := blueprint.MergeCalculationProperties(ctx, existingBp.CalculationProperties, plan.CalculationProperties)
+	relations := MergeRelations(existingBp.Relations, plan.Relations)
+	mirrorProps := MergeMirrorProperties(existingBp.MirrorProperties, plan.MirrorProperties)
+	calcProps := MergeCalculationProperties(ctx, existingBp.CalculationProperties, plan.CalculationProperties)
 
 	// Create update request with ALL fields from the existing blueprint
 	b := &cli.Blueprint{
@@ -176,7 +173,6 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		return
 	}
 
-	// Write computed fields to state
 	writeBlueprintComputedFieldsToState(bp, &plan)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)

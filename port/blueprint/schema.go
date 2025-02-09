@@ -278,6 +278,10 @@ func OwnershipSchema() schema.Attribute {
 				MarkdownDescription: "Path for the Inherited ownership type. Required when type is 'Inherited'. Must be a valid relation identifiers path.",
 				Optional:            true,
 			},
+			"title": schema.StringAttribute{
+				MarkdownDescription: "Optional title for the owning teams property.",
+				Optional:            true,
+			},
 		},
 	}
 }
@@ -305,6 +309,20 @@ func ObjectPropertySchema() schema.MapNestedAttribute {
 		Optional:            true,
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: objectPropertySchema,
+		},
+	}
+}
+
+func PropertiesSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		MarkdownDescription: "The properties of the blueprint",
+		Optional:           true,
+		Attributes: map[string]schema.Attribute{
+			"string_props":  StringPropertySchema(),
+			"number_props":  NumberPropertySchema(),
+			"boolean_props": BooleanPropertySchema(),
+			"array_props":   ArrayPropertySchema(),
+			"object_props":  ObjectPropertySchema(),
 		},
 	}
 }
@@ -381,17 +399,7 @@ func BlueprintSchema() map[string]schema.Attribute {
 			Optional:            true,
 			AttributeTypes:      map[string]attr.Type{},
 		},
-		"properties": schema.SingleNestedAttribute{
-			MarkdownDescription: "The properties of the blueprint",
-			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"string_props":  StringPropertySchema(),
-				"number_props":  NumberPropertySchema(),
-				"boolean_props": BooleanPropertySchema(),
-				"array_props":   ArrayPropertySchema(),
-				"object_props":  ObjectPropertySchema(),
-			},
-		},
+		"properties": PropertiesSchema(),
 		"relations": schema.MapNestedAttribute{
 			MarkdownDescription: "The relations of the blueprint",
 			Optional:            true,

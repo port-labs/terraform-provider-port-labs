@@ -202,8 +202,9 @@ type (
 	}
 
 	Ownership struct {
-		Type string  `json:"type"`
-		Path *string `json:"path,omitempty"`
+		Type  string  `json:"type"`
+		Path  *string `json:"path,omitempty"`
+		Title *string `json:"title,omitempty"`
 	}
 
 	Step = struct {

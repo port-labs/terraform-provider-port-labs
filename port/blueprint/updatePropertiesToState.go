@@ -233,3 +233,59 @@ func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *
 
 	}
 }
+
+func UpdatePropertiesToState(ctx context.Context, b *cli.Blueprint, state *PropertiesModel) error {
+	if state == nil {
+		state = &PropertiesModel{}
+	}
+	bm := &BlueprintModel{Properties: state}
+	return updatePropertiesToState(ctx, b, bm)
+}
+
+func UpdateRelationsToState(b *cli.Blueprint, state map[string]RelationModel) error {
+	if state == nil {
+		state = make(map[string]RelationModel)
+	}
+
+	// Instead of merging, just set the state to what's in the plan
+	bm := &BlueprintModel{Relations: state}
+	
+	// Clear existing relations and add only the ones from the plan
+	bm.Relations = make(map[string]RelationModel)
+	for k, v := range b.Relations {
+		if bm.Relations == nil {
+			bm.Relations = make(map[string]RelationModel)
+		}
+
+		relationModel := &RelationModel{
+			Target:      types.StringValue(*v.Target),
+			Title:       flex.GoStringToFramework(v.Title),
+			Description: flex.GoStringToFramework(v.Description),
+			Many:        flex.GoBoolToFramework(v.Many),
+			Required:    flex.GoBoolToFramework(v.Required),
+		}
+
+		bm.Relations[k] = *relationModel
+	}
+	return nil
+}
+
+func UpdateMirrorPropertiesToState(b *cli.Blueprint, state map[string]MirrorPropertyModel) error {
+	if state == nil {
+		state = make(map[string]MirrorPropertyModel)
+	}
+
+	bm := &BlueprintModel{MirrorProperties: state}
+	addMirrorPropertiesToState(b, bm)
+	return nil
+}
+
+func UpdateCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, state map[string]CalculationPropertyModel) error {
+	if state == nil {
+		state = make(map[string]CalculationPropertyModel)
+	}
+
+	bm := &BlueprintModel{CalculationProperties: state}
+	addCalculationPropertiesToState(ctx, b, bm)
+	return nil
+}

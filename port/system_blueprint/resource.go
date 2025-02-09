@@ -181,7 +181,6 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	// System blueprints cannot be deleted, so this is a no-op
 	// We just remove it from the state without trying to delete from Port
-	return
 }
 
 func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

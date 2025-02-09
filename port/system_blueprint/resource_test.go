@@ -12,17 +12,16 @@ func TestAccPortSystemBlueprintBasic(t *testing.T) {
 	identifier := "_user"
 
 	var basicConfig = fmt.Sprintf(`
-	%s
 	resource "port_system_blueprint" "test" {
 		identifier = "%s"
-	}`, acctest.ProviderConfig, identifier)
+	}`, identifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: basicConfig,
+				Config: acctest.ProviderConfig + basicConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "id", identifier),
@@ -48,7 +47,6 @@ func TestAccPortSystemBlueprintProperties(t *testing.T) {
 	identifier := "_user"
 
 	var configWithProperties = fmt.Sprintf(`
-	%s
 	resource "port_system_blueprint" "test" {
 		identifier = "%s"
 		properties = {
@@ -73,10 +71,9 @@ func TestAccPortSystemBlueprintProperties(t *testing.T) {
 				}
 			}
 		}
-	}`, acctest.ProviderConfig, identifier)
+	}`, identifier)
 
 	var configWithoutProperties = fmt.Sprintf(`
-	%s
 	resource "port_system_blueprint" "test" {
 		identifier = "%s"
 		properties = {
@@ -93,14 +90,14 @@ func TestAccPortSystemBlueprintProperties(t *testing.T) {
 				}
 			}
 		}
-	}`, acctest.ProviderConfig, identifier)
+	}`, identifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: configWithProperties,
+				Config: acctest.ProviderConfig + configWithProperties,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "properties.string_props.environment.title", "Environment"),
@@ -111,7 +108,7 @@ func TestAccPortSystemBlueprintProperties(t *testing.T) {
 				),
 			},
 			{
-				Config: configWithoutProperties,
+				Config: acctest.ProviderConfig + configWithoutProperties,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "properties.string_props.environment.title", "Environment"),
@@ -129,7 +126,6 @@ func TestAccPortSystemBlueprintRelations(t *testing.T) {
 	identifier := "_user"
 
 	var configWithRelations = fmt.Sprintf(`
-	%s
 	resource "port_system_blueprint" "test" {
 		identifier = "%s"
 		relations = {
@@ -148,10 +144,9 @@ func TestAccPortSystemBlueprintRelations(t *testing.T) {
 				required = true
 			}
 		}
-	}`, acctest.ProviderConfig, identifier)
+	}`, identifier)
 
 	var configWithoutRelations = fmt.Sprintf(`
-	%s
 	resource "port_system_blueprint" "test" {
 		identifier = "%s"
 		relations = {
@@ -163,14 +158,14 @@ func TestAccPortSystemBlueprintRelations(t *testing.T) {
 				required = false
 			}
 		}
-	}`, acctest.ProviderConfig, identifier)
+	}`, identifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: configWithRelations,
+				Config: acctest.ProviderConfig + configWithRelations,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.target", "_team"),
@@ -186,7 +181,7 @@ func TestAccPortSystemBlueprintRelations(t *testing.T) {
 				),
 			},
 			{
-				Config: configWithoutRelations,
+				Config: acctest.ProviderConfig + configWithoutRelations,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.target", "_team"),
@@ -209,7 +204,6 @@ func TestAccPortSystemBlueprintMirrorProperties(t *testing.T) {
 	identifier := "_user"
 
 	var configWithMirrorProps = fmt.Sprintf(`
-	%s
 	resource "port_system_blueprint" "test" {
 		identifier = "%s"
 		relations = {
@@ -231,10 +225,9 @@ func TestAccPortSystemBlueprintMirrorProperties(t *testing.T) {
 				title = "Team Name"
 			}
 		}
-	}`, acctest.ProviderConfig, identifier)
+	}`, identifier)
 
 	var configWithoutMirrorProps = fmt.Sprintf(`
-	%s
 	resource "port_system_blueprint" "test" {
 		identifier = "%s"
 		relations = {
@@ -252,14 +245,14 @@ func TestAccPortSystemBlueprintMirrorProperties(t *testing.T) {
 				title = "Team Size"
 			}
 		}
-	}`, acctest.ProviderConfig, identifier)
+	}`, identifier)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: configWithMirrorProps,
+				Config: acctest.ProviderConfig + configWithMirrorProps,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.target", "_team"),
@@ -274,7 +267,7 @@ func TestAccPortSystemBlueprintMirrorProperties(t *testing.T) {
 				),
 			},
 			{
-				Config: configWithoutMirrorProps,
+				Config: acctest.ProviderConfig + configWithoutMirrorProps,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.target", "_team"),

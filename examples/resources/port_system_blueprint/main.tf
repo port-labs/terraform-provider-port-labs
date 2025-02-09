@@ -15,7 +15,7 @@ resource "port_system_blueprint" "team" {
   relations = {
     "manager" = {
       title    = "Manager"
-      required = "true"
+      required = "false"
       target   = port_system_blueprint.user.identifier
     }
   }

@@ -138,7 +138,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 
 	// Create update request with ALL fields from the existing blueprint
 	b := &cli.Blueprint{
-		Identifier:            existingBp.Identifier,
+		Identifier:           existingBp.Identifier,
 		Title:                existingBp.Title,
 		Icon:                 existingBp.Icon,
 		Description:          existingBp.Description,

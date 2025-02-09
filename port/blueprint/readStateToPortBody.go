@@ -145,7 +145,6 @@ func calculationPropertiesToBody(ctx context.Context, state *BlueprintModel) map
 	return calculationProperties
 }
 
-// Exported functions
 func PropertiesToBody(ctx context.Context, state *PropertiesModel) (map[string]cli.BlueprintProperty, []string, error) {
 	bm := &BlueprintModel{Properties: state}
 	return propsResourceToBody(ctx, bm)

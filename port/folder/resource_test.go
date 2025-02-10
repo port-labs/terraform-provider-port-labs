@@ -80,7 +80,7 @@ func TestAccPortFolderResourceCreateFolderWithParent(t *testing.T) {
 	var testAccPortFolderResourceChild = fmt.Sprintf(`
     resource "port_folder" "child_folder" {
         identifier  = "%s"
-        parent             = port_folder.parent_folder.folder_identifier
+        parent             = port_folder.parent_folder.identifier
         title              = "Child Folder"
     }
     `, childFolderIdentifier)

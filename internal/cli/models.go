@@ -440,17 +440,11 @@ type (
 	}
 
 	Folder struct {
-		// Id         string  `json:"id,omitempty"` //Matan: I think this is not needed
 		Identifier string `json:"identifier,omitempty"`
 		Sidebar    string `json:"sidebar,omitempty"`
 		Title      string `json:"title,omitempty"`
 		After      string `json:"after,omitempty"`
 		Parent     string `json:"parent,omitempty"`
-
-		//Matan 10-2
-		// Title      *string `json:"title,omitempty"`
-		// After      *string `json:"after,omitempty"`
-		// Parent     *string `json:"parent,omitempty"`
 	}
 
 	SidebarLocation struct {
@@ -466,18 +460,11 @@ type (
 	}
 
 	SidebarItemDTO struct {
-		Identifier string `json:"identifier"`
-		Title      string `json:"title"`
-		Sidebar    string `json:"sidebar"`
-		After      string `json:"after,omitempty"`
-		Parent     string `json:"parent,omitempty"`
-
-		// // Additional fields that appear in some sidebar items
-		// Icon      string `json:"icon,omitempty"`
-		// Type      string `json:"type,omitempty"`
-		// Protected bool   `json:"protected,omitempty"`
-		// Blueprint string `json:"blueprint,omitempty"`
-
+		Identifier  string `json:"identifier"`
+		Title       string `json:"title"`
+		Sidebar     string `json:"sidebar"`
+		After       string `json:"after,omitempty"`
+		Parent      string `json:"parent,omitempty"`
 		SidebarType string `json:"sidebarType"`
 	}
 

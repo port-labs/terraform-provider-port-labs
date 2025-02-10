@@ -9,8 +9,20 @@ func refreshFolderToState(fm *FolderModel, f *cli.Folder) error {
 	fm.Identifier = types.StringValue(f.Identifier)
 	fm.ID = types.StringValue(f.Identifier)
 	// fm.Sidebar = types.StringValue(f.Sidebar)
-	fm.Title = types.StringValue(f.Title)
-	fm.After = types.StringValue(f.After)
-	fm.Parent = types.StringValue(f.Parent)
+	if f.Title != "" {
+		fm.Title = types.StringValue(f.Title)
+	}
+
+	if f.After != "" {
+		fm.After = types.StringValue(f.After)
+	}
+
+	if f.Parent != "" {
+		fm.Parent = types.StringValue(f.Parent)
+	}
+
+	// fm.Title = types.StringValue(f.Title)
+	// fm.After = types.StringValue(f.After)
+	// fm.Parent = types.StringValue(f.Parent)
 	return nil
 }

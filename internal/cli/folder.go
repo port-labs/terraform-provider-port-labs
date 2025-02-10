@@ -5,14 +5,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-
-	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 var sidebarRoute = "v1/sidebars"
 var sidebarId = "catalog"
 
-func (c *PortClient) GetFolder(ctx context.Context, folderId string) (*Folder, int, error) {
+func (c *PortClient) GetFolder(ctx context.Context, id string) (*Folder, int, error) {
 	encodedSidebarId := url.QueryEscape(sidebarId)
 	sb := &SidebarGetResponseDTO{}
 
@@ -35,7 +33,7 @@ func (c *PortClient) GetFolder(ctx context.Context, folderId string) (*Folder, i
 	// fmt.Printf("******** url: [%s] - %v\n", url, pb.Sidebar.Items)
 
 	for _, item := range sb.Sidebar.Items {
-		if item.SidebarType == "folder" && item.Identifier == folderId {
+		if item.SidebarType == "folder" && item.Identifier == id {
 			folder := &Folder{
 				Identifier: item.Identifier,
 				Sidebar:    sidebarId,
@@ -47,14 +45,14 @@ func (c *PortClient) GetFolder(ctx context.Context, folderId string) (*Folder, i
 		}
 	}
 
-	return nil, resp.StatusCode(), fmt.Errorf("folder with identifier %s not found", folderId)
+	return nil, resp.StatusCode(), fmt.Errorf("folder with identifier %s not found", id)
 }
 
 func (c *PortClient) CreateFolder(ctx context.Context, folder *Folder) (*Folder, error) {
 	url := fmt.Sprintf("%s/%s/folders", sidebarRoute, sidebarId)
-	if folder.Identifier == "" {
-		folder.Identifier = utils.GenID()
-	}
+	// if folder.Identifier == "" {
+	// 	folder.Identifier = utils.GenID()
+	// }
 
 	resp, err := c.Client.R().
 		SetBody(folder).

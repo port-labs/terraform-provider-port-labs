@@ -345,6 +345,7 @@ Required:
 Optional:
 
 - `path` (String) Path for the Inherited ownership type. Required when type is 'Inherited'. Must be a valid relation identifiers path.
+- `title` (String) Optional title for the owning teams property.
 
 
 <a id="nestedatt--properties"></a>

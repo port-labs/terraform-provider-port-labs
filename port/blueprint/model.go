@@ -15,6 +15,7 @@ type TeamInheritanceModel struct {
 type OwnershipModel struct {
 	Type types.String `tfsdk:"type"`
 	Path types.String `tfsdk:"path"`
+	Title types.String `tfsdk:"title"`
 }
 
 type SpecAuthenticationModel struct {

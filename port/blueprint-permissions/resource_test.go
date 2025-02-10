@@ -304,10 +304,19 @@ resource "port_blueprint" "microservice" {
 	teamName := utils.GenID()
 	var testAccBaseBlueprintPermissionsConfigUpdate = fmt.Sprintf(`
 
-	resource "port_team" "team" {
-		name = "%s"
-		description = "Test description"
-		users = []
+	resource "port_system_blueprint" "team" {
+		identifier = "_team"
+	}
+
+	resource "port_entity" "team" {
+		identifier = "%s"
+		title = "%s"
+		blueprint = port_system_blueprint.team.identifier
+		properties = {
+			"string_props" = {
+				"description" =  "My Description"
+			}
+		}
 	}
 
 	resource "port_blueprint_permissions" "microservice_permissions" {
@@ -318,7 +327,7 @@ resource "port_blueprint" "microservice" {
 					"Member",
 				],
 				"users": [],
-				"teams": [port_team.team.name]
+				"teams": [port_entity.team.identifier]
 			},
 			"unregister" = {
 				"roles": [
@@ -374,7 +383,7 @@ resource "port_blueprint" "microservice" {
 				}
 			}
 		}
-	}`, teamName)
+	}`, teamName, teamName)
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },

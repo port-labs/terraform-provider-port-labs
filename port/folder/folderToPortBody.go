@@ -7,16 +7,9 @@ import (
 func FolderToPortRequest(fm *FolderModel) (*cli.Folder, error) {
 	fb := &cli.Folder{
 		Identifier: fm.Identifier.ValueString(),
-		// Sidebar:    fm.Sidebar.ValueString(),
-
-		Title:  fm.Title.ValueString(),
-		After:  fm.After.ValueString(),
-		Parent: fm.Parent.ValueString(),
-		//Matan 10-02
-
-		// Title:  fm.Title.ValueStringPointer(),
-		// After:  fm.After.ValueStringPointer(),
-		// Parent: fm.Parent.ValueStringPointer(),
+		Title:      fm.Title.ValueString(),
+		After:      fm.After.ValueString(),
+		Parent:     fm.Parent.ValueString(),
 	}
 	return fb, nil
 }

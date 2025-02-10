@@ -13,19 +13,26 @@ description: |-
   Basic Folder
   ```hcl
   resource "portfolder" "examplefolder" {
-    sidebar    = "examplesidebar"
-    identifier = "examplefolder"
-    title                 = "Example Folder"
+    identifier = "example_folder"
+    title      = "Example Folder"
   }
   ```
   Folder with Parent
   Create a folder inside another folder.
   ```hcl
   resource "portfolder" "childfolder" {
-    sidebar               = "examplesidebar"
-    identifier            = "childfolder"
-    parent                = portfolder.examplefolder.folder_identifier
-    title                 = "Child Folder"
+    identifier = "childfolder"
+    parent     = portfolder.example_folder.identifier
+    title      = "Child Folder"
+  }
+  ```
+  Folder with After
+  Create a folder after another folder.
+  ```hcl
+  resource "portfolder" "anotherfolder" {
+    identifier = "anotherfolder"
+    after      = portfolder.example_folder.identifier
+    title      = "Another Folder"
   }
   ```
 ---
@@ -48,9 +55,8 @@ If this Environment Variable isn't specified, you won't be able to use the resou
 ```hcl
 
 resource "port_folder" "example_folder" {
-  sidebar    = "example_sidebar"
   identifier = "example_folder"
-  title                 = "Example Folder"
+  title      = "Example Folder"
 }
 
 ```
@@ -62,10 +68,23 @@ Create a folder inside another folder.
 ```hcl
 
 resource "port_folder" "child_folder" {
-  sidebar               = "example_sidebar"
-  identifier            = "child_folder"
-  parent                = port_folder.example_folder.folder_identifier
-  title                 = "Child Folder"
+  identifier = "child_folder"
+  parent     = port_folder.example_folder.identifier
+  title      = "Child Folder"
+}
+
+```
+
+### Folder with After
+
+Create a folder after another folder.
+
+```hcl
+
+resource "port_folder" "another_folder" {
+  identifier = "another_folder"
+  after      = port_folder.example_folder.identifier
+  title      = "Another Folder"
 }
 
 ```
@@ -77,7 +96,7 @@ resource "port_folder" "child_folder" {
 
 ### Required
 
-- `identifier` (String)
+- `identifier` (String) The identifier of the folder
 
 ### Optional
 
@@ -87,4 +106,4 @@ resource "port_folder" "child_folder" {
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) Folder state identifier

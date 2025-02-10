@@ -6,10 +6,11 @@ import (
 )
 
 func refreshFolderToState(fm *FolderModel, f *cli.Folder) error {
+	fm.Identifier = types.StringValue(f.Identifier)
 	fm.ID = types.StringValue(f.Identifier)
-	fm.Sidebar = types.StringValue(f.Sidebar)
-	fm.Parent = types.StringPointerValue(f.Parent)
-	fm.After = types.StringPointerValue(f.After)
-	fm.Title = types.StringPointerValue(f.Title)
+	// fm.Sidebar = types.StringValue(f.Sidebar)
+	fm.Title = types.StringValue(f.Title)
+	fm.After = types.StringValue(f.After)
+	fm.Parent = types.StringValue(f.Parent)
 	return nil
 }

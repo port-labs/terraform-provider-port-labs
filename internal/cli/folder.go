@@ -14,14 +14,14 @@ var sidebarId = "catalog"
 
 func (c *PortClient) GetFolder(ctx context.Context, folderId string) (*Folder, int, error) {
 	encodedSidebarId := url.QueryEscape(sidebarId)
-	pb := &SidebarGetResponseDTO{}
+	sb := &SidebarGetResponseDTO{}
 
 	url := fmt.Sprintf("%s/%s", sidebarRoute, encodedSidebarId)
 
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
-		SetResult(pb).
+		SetResult(sb).
 		Get(url)
 
 	if err != nil {
@@ -32,16 +32,16 @@ func (c *PortClient) GetFolder(ctx context.Context, folderId string) (*Folder, i
 		return nil, resp.StatusCode(), fmt.Errorf("failed to get sidebar, got: %s", resp.Body())
 	}
 
-	fmt.Printf("******** url: [%s] - %v\n", url, pb.Sidebar.Items)
+	// fmt.Printf("******** url: [%s] - %v\n", url, pb.Sidebar.Items)
 
-	for _, item := range pb.Sidebar.Items {
+	for _, item := range sb.Sidebar.Items {
 		if item.SidebarType == "folder" && item.Identifier == folderId {
 			folder := &Folder{
 				Identifier: item.Identifier,
 				Sidebar:    sidebarId,
-				Title:      &item.Title,
-				After:      &item.After,
-				Parent:     &item.Parent,
+				Title:      item.Title,
+				After:      item.After,
+				Parent:     item.Parent,
 			}
 			return folder, resp.StatusCode(), nil
 		}

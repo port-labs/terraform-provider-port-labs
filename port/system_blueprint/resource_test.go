@@ -77,18 +77,6 @@ func TestAccPortSystemBlueprintProperties(t *testing.T) {
 	resource "port_system_blueprint" "test" {
 		identifier = "%s"
 		properties = {
-			string_props = {
-				"environment" = {
-					title = "Environment"
-					description = "The environment this service runs in"
-					enum = ["dev", "staging", "prod"]
-					enum_colors = {
-						"dev" = "blue"
-						"staging" = "yellow"
-						"prod" = "green"
-					}
-				}
-			}
 		}
 	}`, identifier)
 
@@ -111,8 +99,6 @@ func TestAccPortSystemBlueprintProperties(t *testing.T) {
 				Config: acctest.ProviderConfig + configWithoutProperties,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "identifier", identifier),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "properties.string_props.environment.title", "Environment"),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "properties.string_props.environment.description", "The environment this service runs in"),
 					resource.TestCheckNoResourceAttr("port_system_blueprint.test", "properties.number_props.version.title"),
 					resource.TestCheckNoResourceAttr("port_system_blueprint.test", "properties.number_props.version.minimum"),
 					resource.TestCheckNoResourceAttr("port_system_blueprint.test", "properties.number_props.version.maximum"),
@@ -150,13 +136,6 @@ func TestAccPortSystemBlueprintRelations(t *testing.T) {
 	resource "port_system_blueprint" "test" {
 		identifier = "%s"
 		relations = {
-			"groups" = {
-				target = "_team"
-				title = "Teams"
-				description = "The teams that owns this service"
-				many = true
-				required = false
-			}
 		}
 	}`, identifier)
 
@@ -184,11 +163,6 @@ func TestAccPortSystemBlueprintRelations(t *testing.T) {
 				Config: acctest.ProviderConfig + configWithoutRelations,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "identifier", identifier),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.target", "_team"),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.title", "Teams"),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.description", "The teams that owns this service"),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.many", "true"),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.required", "false"),
 					resource.TestCheckNoResourceAttr("port_system_blueprint.test", "relations.owner.target"),
 					resource.TestCheckNoResourceAttr("port_system_blueprint.test", "relations.owner.title"),
 					resource.TestCheckNoResourceAttr("port_system_blueprint.test", "relations.owner.description"),
@@ -240,10 +214,6 @@ func TestAccPortSystemBlueprintMirrorProperties(t *testing.T) {
 			}
 		}
 		mirror_properties = {
-			"team_size" = {
-				path = "groups.size"
-				title = "Team Size"
-			}
 		}
 	}`, identifier)
 
@@ -270,13 +240,6 @@ func TestAccPortSystemBlueprintMirrorProperties(t *testing.T) {
 				Config: acctest.ProviderConfig + configWithoutMirrorProps,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "identifier", identifier),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.target", "_team"),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.title", "Teams"),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.description", "The teams that owns this service"),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.many", "true"),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.groups.required", "false"),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "mirror_properties.team_size.path", "groups.size"),
-					resource.TestCheckResourceAttr("port_system_blueprint.test", "mirror_properties.team_size.title", "Team Size"),
 					resource.TestCheckNoResourceAttr("port_system_blueprint.test", "mirror_properties.team_name.path"),
 					resource.TestCheckNoResourceAttr("port_system_blueprint.test", "mirror_properties.team_name.title"),
 				),

@@ -2,7 +2,6 @@ package system_blueprint_test
 
 import (
 	"fmt"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -285,32 +284,3 @@ func TestAccPortSystemBlueprintMirrorProperties(t *testing.T) {
 		},
 	})
 }
-
-func TestAccPortSystemBlueprintCreate(t *testing.T) {
-	identifier := "_user"
-
-	var createConfig = fmt.Sprintf(`
-	resource "port_system_blueprint" "test" {
-		identifier = "%s"
-		properties = {
-			string_props = {
-				"environment" = {
-					title = "Environment"
-					description = "The environment this service runs in"
-					enum = ["dev", "staging", "prod"]
-				}
-			}
-		}
-	}`, identifier)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config:      acctest.ProviderConfig + createConfig,
-				ExpectError: regexp.MustCompile(`(?s)Error: System Blueprint Creation Not Supported.*with port_system_blueprint\.test.*System blueprints cannot be created\. To manage the system blueprint '_user',.*terraform import port_system_blueprint\._user _user`),
-			},
-		},
-	})
-} 

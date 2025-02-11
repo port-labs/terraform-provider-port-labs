@@ -33,14 +33,13 @@ type (
 
 	Entity struct {
 		Meta
-		Identifier                   string                    `json:"identifier,omitempty"`
-		Title                        string                    `json:"title"`
-		Blueprint                    string                    `json:"blueprint"`
-		Team                         []string                  `json:"team,omitempty"`
-		Properties                   map[string]any            `json:"properties"`
-		Relations                    map[string]any            `json:"relations"`
-		Scorecards                   map[string]ScorecardModel `json:"scorecards,omitempty"`
-		CreateMissingRelatedEntities bool                      `json:"createMissingRelatedEntities,omitempty"`
+		Identifier string                    `json:"identifier,omitempty"`
+		Title      string                    `json:"title"`
+		Blueprint  string                    `json:"blueprint"`
+		Team       []string                  `json:"team,omitempty"`
+		Properties map[string]any            `json:"properties"`
+		Relations  map[string]any            `json:"relations"`
+		Scorecards map[string]ScorecardModel `json:"scorecards,omitempty"`
 		// TODO: add the rest of the fields.
 	}
 

@@ -35,6 +35,10 @@ func EntitySchema() map[string]schema.Attribute {
 			MarkdownDescription: "The runID of the action run that created the entity",
 			Optional:            true,
 		},
+		"create_missing_related_entities": schema.BoolAttribute{
+			MarkdownDescription: "Whether to create missing related entities, default is False",
+			Optional:            true,
+		},
 		"teams": schema.ListAttribute{
 			MarkdownDescription: "The teams the entity belongs to",
 			Optional:            true,

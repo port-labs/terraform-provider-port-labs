@@ -2,6 +2,7 @@ package system_blueprint
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -75,36 +76,14 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
-	b, statusCode, err := r.client.ReadBlueprint(ctx, state.Identifier.ValueString())
-	if err != nil {
-		if statusCode == 404 {
-			resp.Diagnostics.AddError(
-				"Unsupported Operation",
-				"The system_blueprint resource does not support creation. Please import an existing system blueprint instead.",
-			)
-			return
-		}
-		resp.Diagnostics.AddError("Error Reading Blueprint", err.Error())
-		return
-	}
-
-	systemBp, statusCode, err := r.client.ReadSystemBlueprintStructure(ctx, state.Identifier.ValueString())
-	if err != nil {
-		if statusCode == 404 {
-			resp.Diagnostics.AddError("System blueprint doesn't exist", err.Error())
-			return
-		}
-		resp.Diagnostics.AddError("failed reading system blueprint", err.Error())
-		return
-	}
-
-	err = refreshBlueprintState(ctx, state, b, systemBp)
-	if err != nil {
-		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
-		return
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	resp.Diagnostics.AddError(
+		"System Blueprint Creation Not Supported",
+		fmt.Sprintf("System blueprints cannot be created. To manage the system blueprint '%s', please import it using:\n\nterraform import port_system_blueprint.%s %s", 
+			state.Identifier.ValueString(),
+			state.Identifier.ValueString(),
+			state.Identifier.ValueString(),
+		),
+	)
 }
 
 func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {

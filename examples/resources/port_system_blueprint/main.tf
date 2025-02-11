@@ -1,10 +1,9 @@
 resource "port_system_blueprint" "user" {
   identifier = "_user"
   properties = {
-    string_props = {
-      "age" = {
-        type  = "number"
-        title = "Age"
+    number_props = {
+      sum = {
+        type = "number"
       }
     }
   }

@@ -16,7 +16,7 @@ func MergeProperties(ctx context.Context, existing map[string]cli.BlueprintPrope
 	}
 
 	if state != nil {
-		props, required, err := blueprint.PropertiesToBody(ctx, state)
+		props, required, err := blueprint.PropsResourceToBody(ctx, state)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -36,7 +36,7 @@ func MergeRelations(existing map[string]cli.Relation, state map[string]blueprint
 	}
 
 	if state != nil {
-		relations := blueprint.RelationsToBody(state)
+		relations := blueprint.RelationsResourceToBody(state)
 		for k, v := range relations {
 			merged[k] = v
 		}

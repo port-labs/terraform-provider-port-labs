@@ -12,8 +12,8 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func arrayPropResourceToBody(ctx context.Context, state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range state.Properties.ArrayProps {
+func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+	for propIdentifier, prop := range state.ArrayProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "array",
 		}
@@ -114,7 +114,7 @@ func arrayPropResourceToBody(ctx context.Context, state *BlueprintModel, props m
 	return nil
 }
 
-func addArrayPropertiesToState(v *cli.BlueprintProperty) *ArrayPropModel {
+func AddArrayPropertiesToState(v *cli.BlueprintProperty) *ArrayPropModel {
 	arrayProp := &ArrayPropModel{
 		MinItems: flex.GoInt64ToFramework(v.MinItems),
 		MaxItems: flex.GoInt64ToFramework(v.MaxItems),

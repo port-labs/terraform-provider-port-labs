@@ -369,7 +369,7 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 	props := map[string]cli.BlueprintProperty{}
 	var err error
 	if state.Properties != nil {
-		props, required, err = propsResourceToBody(ctx, state)
+		props, required, err = PropsResourceToBody(ctx, state.Properties)
 		if err != nil {
 			return nil, err
 		}
@@ -378,9 +378,9 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 	properties := props
 
 	b.Schema = cli.BlueprintSchema{Properties: properties, Required: required}
-	b.Relations = relationsResourceToBody(state)
-	b.MirrorProperties = mirrorPropertiesToBody(state)
-	b.CalculationProperties = calculationPropertiesToBody(ctx, state)
+	b.Relations = RelationsResourceToBody(state.Relations)
+	b.MirrorProperties = MirrorPropertiesToBody(state.MirrorProperties)
+	b.CalculationProperties = CalculationPropertiesToBody(ctx, state.CalculationProperties)
 	if err != nil {
 		return nil, err
 	}

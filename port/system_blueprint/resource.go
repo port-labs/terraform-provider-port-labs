@@ -2,28 +2,52 @@ package system_blueprint
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint"
 )
 
-func writeBlueprintComputedFieldsToState(b *cli.Blueprint, state *Model) {
+func writeBlueprintComputedFieldsToState(b *cli.Blueprint, state *SystemBlueprintModel) {
 	state.ID = types.StringValue(b.Identifier)
 	state.Identifier = types.StringValue(b.Identifier)
 }
 
+func refreshBlueprintState(ctx context.Context, bm *SystemBlueprintModel, b *cli.Blueprint, systemBp *cli.Blueprint) error {
+	bm.Identifier = types.StringValue(b.Identifier)
+	bm.ID = types.StringValue(b.Identifier)
+
+	if len(b.Schema.Properties) - len(systemBp.Schema.Properties) > 0 {
+		err := updatePropertiesToState(ctx, b, systemBp, bm)
+		if err != nil {
+			return err
+		}
+	}
+
+	if len(b.Relations) - len(systemBp.Relations) > 0 {
+		addRelationsToState(b, systemBp, bm)
+	}
+
+	if len(b.MirrorProperties) - len(systemBp.MirrorProperties) > 0 {
+		addMirrorPropertiesToState(b, systemBp, bm)
+	}
+
+	if len(b.CalculationProperties) - len(systemBp.CalculationProperties) > 0 {
+		addCalculationPropertiesToState(ctx, b, systemBp, bm)
+	}
+
+	return nil
+}
+
 func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan Model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	var state *SystemBlueprintModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	b, statusCode, err := r.client.ReadBlueprint(ctx, plan.Identifier.ValueString())
+	b, statusCode, err := r.client.ReadBlueprint(ctx, state.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddError(
@@ -36,33 +60,27 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
-	writeBlueprintComputedFieldsToState(b, &plan)
-
-	if err := blueprint.UpdatePropertiesToState(ctx, b, plan.Properties); err != nil {
-		resp.Diagnostics.AddError("Error updating properties", err.Error())
+	systemBp, statusCode, err := r.client.ReadSystemBlueprintStructure(ctx, state.Identifier.ValueString())
+	if err != nil {
+		if statusCode == 404 {
+			resp.Diagnostics.AddError("System blueprint doesn't exist", err.Error())
+			return
+		}
+		resp.Diagnostics.AddError("failed reading system blueprint", err.Error())
 		return
 	}
 
-	if err := UpdateRelationsToState(b, plan.Relations); err != nil {
-		resp.Diagnostics.AddError("Error updating relations", err.Error())
+	err = refreshBlueprintState(ctx, state, b, systemBp)
+	if err != nil {
+		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
 		return
 	}
 
-	if err := UpdateMirrorPropertiesToState(b, plan.MirrorProperties); err != nil {
-		resp.Diagnostics.AddError("Error updating mirror properties", err.Error())
-		return
-	}
-
-	if err := UpdateCalculationPropertiesToState(ctx, b, plan.CalculationProperties); err != nil {
-		resp.Diagnostics.AddError("Error updating calculation properties", err.Error())
-		return
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state *Model
+	var state *SystemBlueprintModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -78,25 +96,19 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 		return
 	}
 
-	writeBlueprintComputedFieldsToState(b, state)
-
-	if err := blueprint.UpdatePropertiesToState(ctx, b, state.Properties); err != nil {
-		resp.Diagnostics.AddError("Error updating properties", err.Error())
+	systemBp, statusCode, err := r.client.ReadSystemBlueprintStructure(ctx, state.Identifier.ValueString())
+	if err != nil {
+		if statusCode == 404 {
+			resp.Diagnostics.AddError("System blueprint doesn't exist", err.Error())
+			return
+		}
+		resp.Diagnostics.AddError("failed reading system blueprint", err.Error())
 		return
 	}
 
-	if err := UpdateRelationsToState(b, state.Relations); err != nil {
-		resp.Diagnostics.AddError("Error updating relations", err.Error())
-		return
-	}
-
-	if err := UpdateMirrorPropertiesToState(b, state.MirrorProperties); err != nil {
-		resp.Diagnostics.AddError("Error updating mirror properties", err.Error())
-		return
-	}
-
-	if err := UpdateCalculationPropertiesToState(ctx, b, state.CalculationProperties); err != nil {
-		resp.Diagnostics.AddError("Error updating calculation properties", err.Error())
+	err = refreshBlueprintState(ctx, state, b, systemBp)
+	if err != nil {
+		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
 		return
 	}
 
@@ -104,13 +116,16 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 }
 
 func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan Model
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	var state *SystemBlueprintModel
+	var previousState *SystemBlueprintModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &previousState)...)
+
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	existingBp, statusCode, err := r.client.ReadBlueprint(ctx, plan.Identifier.ValueString())
+	existingBp, statusCode, err := r.client.ReadBlueprint(ctx, state.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddError("Blueprint doesn't exist", err.Error())
@@ -120,23 +135,28 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		return
 	}
 
-	fmt.Printf("Existing blueprint from Port:\n%+v\n", existingBp)
-	fmt.Printf("Existing blueprint schema:\n%+v\n", existingBp.Schema)
-	fmt.Printf("Existing blueprint ownership:\n%+v\n", existingBp.Ownership)
+	systemBp, statusCode, err := r.client.ReadSystemBlueprintStructure(ctx, state.Identifier.ValueString())
+	if err != nil {
+		if statusCode == 404 {
+			resp.Diagnostics.AddError("Blueprint doesn't exist", err.Error())
+			return
+		}
+		resp.Diagnostics.AddError("failed reading blueprint", err.Error())
+		return
+	}
 
 	// For system blueprints, we merge properties, relations, mirror properties and calculation properties
 	// Everything else should be preserved exactly as is
-	props, _, err := MergeProperties(ctx, existingBp.Schema.Properties, plan.Properties)
+	props, _, err := MergeProperties(ctx, systemBp.Schema.Properties, state.Properties)
 	if err != nil {
 		resp.Diagnostics.AddError("Error merging properties", err.Error())
 		return
 	}
 
-	relations := MergeRelations(existingBp.Relations, plan.Relations)
-	mirrorProps := MergeMirrorProperties(existingBp.MirrorProperties, plan.MirrorProperties)
-	calcProps := MergeCalculationProperties(ctx, existingBp.CalculationProperties, plan.CalculationProperties)
+	relations := MergeRelations(systemBp.Relations, state.Relations)
+	mirrorProps := MergeMirrorProperties(systemBp.MirrorProperties, state.MirrorProperties)
+	calcProps := MergeCalculationProperties(ctx, systemBp.CalculationProperties, state.CalculationProperties)
 
-	// Create update request with ALL fields from the existing blueprint
 	b := &cli.Blueprint{
 		Identifier:           existingBp.Identifier,
 		Title:                existingBp.Title,
@@ -146,15 +166,14 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		ChangelogDestination: existingBp.ChangelogDestination,
 		Schema: cli.BlueprintSchema{
 			Properties: props,
-			Required:  existingBp.Schema.Required,
+			Required:  systemBp.Schema.Required,
 		},
 		Relations:             relations,
 		MirrorProperties:     mirrorProps,
 		CalculationProperties: calcProps,
 		AggregationProperties: existingBp.AggregationProperties,
 	}
-
-	// Handle ownership - preserve the existing ownership
+	
 	if existingBp.Ownership != nil {
 		b.Ownership = &cli.Ownership{
 			Type: existingBp.Ownership.Type,
@@ -163,19 +182,15 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		}
 	}
 
-	fmt.Printf("Update blueprint request:\n%+v\n", b)
-	fmt.Printf("Update blueprint schema:\n%+v\n", b.Schema)
-	fmt.Printf("Update blueprint ownership:\n%+v\n", b.Ownership)
-
-	bp, err := r.client.UpdateBlueprint(ctx, b, plan.ID.ValueString())
+	bp, err := r.client.UpdateBlueprint(ctx, b, state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update blueprint", err.Error())
 		return
 	}
 
-	writeBlueprintComputedFieldsToState(bp, &plan)
+	writeBlueprintComputedFieldsToState(bp, state)
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
 
 func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

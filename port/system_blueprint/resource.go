@@ -8,7 +8,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint"
 )
 
 func writeBlueprintComputedFieldsToState(b *cli.Blueprint, state *SystemBlueprintModel) {
@@ -40,33 +39,6 @@ func refreshBlueprintState(ctx context.Context, bm *SystemBlueprintModel, b *cli
 	}
 
 	return nil
-}
-
-func blueprintResourceToPortRequest(ctx context.Context, state *SystemBlueprintModel) (*cli.Blueprint, error) {
-	b := &cli.Blueprint{
-		Identifier: state.Identifier.ValueString(),
-	}
-
-	required := []string{}
-	props := map[string]cli.BlueprintProperty{}
-	var err error
-	if state.Properties != nil {
-		props, required, err = blueprint.PropsResourceToBody(ctx, state.Properties)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	properties := props
-
-	b.Schema = cli.BlueprintSchema{Properties: properties, Required: required}
-	b.Relations = blueprint.RelationsResourceToBody(state.Relations)
-	b.MirrorProperties = blueprint.MirrorPropertiesToBody(state.MirrorProperties)
-	b.CalculationProperties = blueprint.CalculationPropertiesToBody(ctx, state.CalculationProperties)
-	if err != nil {
-		return nil, err
-	}
-	return b, nil
 }
 
 func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

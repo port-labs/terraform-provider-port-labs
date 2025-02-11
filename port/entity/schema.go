@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -36,8 +37,10 @@ func EntitySchema() map[string]schema.Attribute {
 			Optional:            true,
 		},
 		"create_missing_related_entities": schema.BoolAttribute{
-			MarkdownDescription: "Whether to create missing related entities, default is False",
+			MarkdownDescription: "Whether to create missing related entities",
 			Optional:            true,
+			Computed:            true,
+			Default:             booldefault.StaticBool(false),
 		},
 		"teams": schema.ListAttribute{
 			MarkdownDescription: "The teams the entity belongs to",

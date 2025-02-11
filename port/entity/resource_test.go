@@ -832,9 +832,9 @@ func TestAccPortEntityWithDefaultArrayProp(t *testing.T) {
 func TestAccPortEntityWithMissingRelation(t *testing.T) {
 	identifier := utils.GenID()
 	identifier2 := utils.GenID()
-	var testAccActionConfigCreate = fmt.Sprintf(`
+	testAccActionConfig := fmt.Sprintf(`
     resource "port_blueprint" "microservice" {
-        title = "TF Provider Test BP_0"
+        title = "TF Provider Test BP0"
         icon = "Terraform"
         identifier = "%s"
         properties = {
@@ -850,9 +850,10 @@ func TestAccPortEntityWithMissingRelation(t *testing.T) {
                 "target" = port_blueprint.microservice2.identifier
             }
         }
+        force_delete_entities = true
     }
     resource "port_blueprint" "microservice2" {
-        title = "TF Provider Test BP_1"
+        title = "TF Provider Test BP1"
         icon = "Terraform"
         identifier = "%s"
         properties = {
@@ -862,8 +863,10 @@ func TestAccPortEntityWithMissingRelation(t *testing.T) {
                 }
             }
         }
+        force_delete_entities = true
     }
 
+    // A: microservice
     resource "port_entity" "microservice" {
         title = "TF Provider Test Entity0"
         blueprint = port_blueprint.microservice.identifier
@@ -874,12 +877,13 @@ func TestAccPortEntityWithMissingRelation(t *testing.T) {
         }
         relations = {
             single_relations = {
-                "tfRelation" = port_entity.microservice2.identifier
+                "tfRelation" = "new-identifier" // Non-existing identifier to trigger creation
             }
         }
         create_missing_related_entities = true
     }
 
+    // B: microservice2
     resource "port_entity" "microservice2" {
         title = "TF Provider Test Entity1"
         identifier = "tf-entity-2"
@@ -898,13 +902,18 @@ func TestAccPortEntityWithMissingRelation(t *testing.T) {
 
 		Steps: []resource.TestStep{
 			{
-				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Config: acctest.ProviderConfig + testAccActionConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_entity.microservice", "title", "TF Provider Test Entity0"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "blueprint", identifier),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.string_props.myStringIdentifier", "My String Value"),
-					resource.TestCheckResourceAttr("port_entity.microservice", "relations.single_relations.tfRelation", "tf-entity-2"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "relations.single_relations.tfRelation", "new-identifier"),
 				),
+			},
+			{
+				// Delete the blueprints with force_delete_entities set to true
+				Config:  acctest.ProviderConfig + testAccActionConfig,
+				Destroy: true,
 			},
 		},
 	})

@@ -5,7 +5,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint"
 )
 
-type Model struct {
+type SystemBlueprintModel struct {
 	ID                    types.String                                  `tfsdk:"id"`
 	Identifier            types.String                                  `tfsdk:"identifier"`
 	Properties            *blueprint.PropertiesModel                    `tfsdk:"properties"`

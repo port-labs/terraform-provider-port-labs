@@ -8,8 +8,8 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
-func objectPropResourceToBody(state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) {
-	for propIdentifier, prop := range state.Properties.ObjectProps {
+func objectPropResourceToBody(state *PropertiesModel, props map[string]cli.BlueprintProperty, required *[]string) {
+	for propIdentifier, prop := range state.ObjectProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "object",
 		}
@@ -55,7 +55,7 @@ func objectPropResourceToBody(state *BlueprintModel, props map[string]cli.Bluepr
 	}
 }
 
-func addObjectPropertiesToState(v *cli.BlueprintProperty) *ObjectPropModel {
+func AddObjectPropertiesToState(v *cli.BlueprintProperty) *ObjectPropModel {
 	objectProp := &ObjectPropModel{}
 
 	if v.Spec != nil {

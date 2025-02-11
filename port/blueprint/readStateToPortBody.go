@@ -7,33 +7,33 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
-func propsResourceToBody(ctx context.Context, state *BlueprintModel) (map[string]cli.BlueprintProperty, []string, error) {
+func PropsResourceToBody(ctx context.Context, state *PropertiesModel) (map[string]cli.BlueprintProperty, []string, error) {
 	props := map[string]cli.BlueprintProperty{}
 	var required []string
-	if state.Properties != nil {
-		if state.Properties.StringProps != nil {
+	if state != nil {
+		if state.StringProps != nil {
 			err := stringPropResourceToBody(ctx, state, props, &required)
 			if err != nil {
 				return nil, nil, err
 			}
 		}
-		if state.Properties.ArrayProps != nil {
+		if state.ArrayProps != nil {
 			err := arrayPropResourceToBody(ctx, state, props, &required)
 			if err != nil {
 				return nil, nil, err
 			}
 		}
-		if state.Properties.NumberProps != nil {
+		if state.NumberProps != nil {
 			err := numberPropResourceToBody(ctx, state, props, &required)
 			if err != nil {
 				return nil, nil, err
 			}
 		}
-		if state.Properties.BooleanProps != nil {
+		if state.BooleanProps != nil {
 			booleanPropResourceToBody(state, props, &required)
 		}
 
-		if state.Properties.ObjectProps != nil {
+		if state.ObjectProps != nil {
 			objectPropResourceToBody(state, props, &required)
 		}
 
@@ -41,10 +41,10 @@ func propsResourceToBody(ctx context.Context, state *BlueprintModel) (map[string
 	return props, required, nil
 }
 
-func relationsResourceToBody(state *BlueprintModel) map[string]cli.Relation {
+func RelationsResourceToBody(state map[string]RelationModel) map[string]cli.Relation {
 	relations := map[string]cli.Relation{}
 
-	for identifier, prop := range state.Relations {
+	for identifier, prop := range state {
 		target := prop.Target.ValueString()
 		relationProp := cli.Relation{
 			Target: &target,
@@ -75,10 +75,10 @@ func relationsResourceToBody(state *BlueprintModel) map[string]cli.Relation {
 	return relations
 }
 
-func mirrorPropertiesToBody(state *BlueprintModel) map[string]cli.BlueprintMirrorProperty {
+func MirrorPropertiesToBody(state map[string]MirrorPropertyModel) map[string]cli.BlueprintMirrorProperty {
 	mirrorProperties := map[string]cli.BlueprintMirrorProperty{}
 
-	for identifier, prop := range state.MirrorProperties {
+	for identifier, prop := range state {
 		mirrorProp := cli.BlueprintMirrorProperty{
 			Path: prop.Path.ValueString(),
 		}
@@ -94,10 +94,10 @@ func mirrorPropertiesToBody(state *BlueprintModel) map[string]cli.BlueprintMirro
 	return mirrorProperties
 }
 
-func calculationPropertiesToBody(ctx context.Context, state *BlueprintModel) map[string]cli.BlueprintCalculationProperty {
+func CalculationPropertiesToBody(ctx context.Context, state map[string]CalculationPropertyModel) map[string]cli.BlueprintCalculationProperty {
 	calculationProperties := map[string]cli.BlueprintCalculationProperty{}
 
-	for identifier, prop := range state.CalculationProperties {
+	for identifier, prop := range state {
 		calculationProp := cli.BlueprintCalculationProperty{
 			Calculation: prop.Calculation.ValueString(),
 			Type:        prop.Type.ValueString(),
@@ -143,24 +143,4 @@ func calculationPropertiesToBody(ctx context.Context, state *BlueprintModel) map
 	}
 
 	return calculationProperties
-}
-
-func PropertiesToBody(ctx context.Context, state *PropertiesModel) (map[string]cli.BlueprintProperty, []string, error) {
-	bm := &BlueprintModel{Properties: state}
-	return propsResourceToBody(ctx, bm)
-}
-
-func RelationsToBody(state map[string]RelationModel) map[string]cli.Relation {
-	bm := &BlueprintModel{Relations: state}
-	return relationsResourceToBody(bm)
-}
-
-func MirrorPropertiesToBody(state map[string]MirrorPropertyModel) map[string]cli.BlueprintMirrorProperty {
-	bm := &BlueprintModel{MirrorProperties: state}
-	return mirrorPropertiesToBody(bm)
-}
-
-func CalculationPropertiesToBody(ctx context.Context, state map[string]CalculationPropertyModel) map[string]cli.BlueprintCalculationProperty {
-	bm := &BlueprintModel{CalculationProperties: state}
-	return calculationPropertiesToBody(ctx, bm)
 }

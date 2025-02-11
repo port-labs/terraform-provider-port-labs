@@ -828,3 +828,84 @@ func TestAccPortEntityWithDefaultArrayProp(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortEntityWithMissingRelation(t *testing.T) {
+	identifier := utils.GenID()
+	identifier2 := utils.GenID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+    resource "port_blueprint" "microservice" {
+        title = "TF Provider Test BP_0"
+        icon = "Terraform"
+        identifier = "%s"
+        properties = {
+            "string_props" = {
+                "myStringIdentifier" =  {
+                    "title" = "My String Identifier"
+                }
+            }
+        }
+        relations = {
+            "tfRelation" = {
+                "title" = "Test Relation"
+                "target" = port_blueprint.microservice2.identifier
+            }
+        }
+    }
+    resource "port_blueprint" "microservice2" {
+        title = "TF Provider Test BP_1"
+        icon = "Terraform"
+        identifier = "%s"
+        properties = {
+            "string_props" = {
+                "myStringIdentifier2" =  {
+                    "title" = "My String Identifier2"
+                }
+            }
+        }
+    }
+
+    resource "port_entity" "microservice" {
+        title = "TF Provider Test Entity0"
+        blueprint = port_blueprint.microservice.identifier
+        properties = {
+            "string_props" = {
+                "myStringIdentifier" =  "My String Value"
+            }
+        }
+        relations = {
+            single_relations = {
+                "tfRelation" = port_entity.microservice2.identifier
+            }
+        }
+        create_missing_related_entities = true
+    }
+
+    resource "port_entity" "microservice2" {
+        title = "TF Provider Test Entity1"
+        identifier = "tf-entity-2"
+        blueprint = port_blueprint.microservice2.identifier
+        properties = {
+            "string_props" = {
+                "myStringIdentifier2" =  "My String Value2"
+            }
+        }
+    }
+    `, identifier, identifier2)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_entity.microservice", "title", "TF Provider Test Entity0"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "blueprint", identifier),
+					resource.TestCheckResourceAttr("port_entity.microservice", "properties.string_props.myStringIdentifier", "My String Value"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "relations.single_relations.tfRelation", "tf-entity-2"),
+				),
+			},
+		},
+	})
+}

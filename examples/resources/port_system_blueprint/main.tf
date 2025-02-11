@@ -2,7 +2,7 @@ resource "port_system_blueprint" "user" {
   identifier = "_user"
   properties = {
     number_props = {
-      summ = {
+      sum = {
         type = "number"
       }
     }

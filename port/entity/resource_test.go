@@ -515,7 +515,7 @@ func TestAccPortEntityImport(t *testing.T) {
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateId:           entityId,
-				ImportStateVerifyIgnore: []string{"identifier"},
+				ImportStateVerifyIgnore: []string{"identifier", "create_missing_related_entities"},
 			},
 		},
 	})

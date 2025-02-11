@@ -205,13 +205,6 @@ func TestAccPortSystemBlueprintMirrorProperties(t *testing.T) {
 	resource "port_system_blueprint" "test" {
 		identifier = "%s"
 		relations = {
-			"groups" = {
-				target = "_team"
-				title = "Teams"
-				description = "The teams that owns this service"
-				many = true
-				required = false
-			}
 		}
 		mirror_properties = {
 		}

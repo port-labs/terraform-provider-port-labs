@@ -11,7 +11,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func addStringPropertiesToState(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
+func AddStringPropertiesToState(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
 	stringProp := &StringPropModel{
 		MinLength: flex.GoInt64ToFramework(v.MinLength),
 		MaxLength: flex.GoInt64ToFramework(v.MaxLength),
@@ -48,8 +48,8 @@ func addStringPropertiesToState(ctx context.Context, v *cli.BlueprintProperty) *
 	return stringProp
 }
 
-func stringPropResourceToBody(ctx context.Context, state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range state.Properties.StringProps {
+func stringPropResourceToBody(ctx context.Context, state *PropertiesModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+	for propIdentifier, prop := range state.StringProps {
 		property := cli.BlueprintProperty{
 			Type: "string",
 		}

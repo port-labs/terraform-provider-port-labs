@@ -10,7 +10,7 @@ import (
 	"github.com/samber/lo"
 )
 
-func setCommonProperties(v cli.BlueprintProperty, prop interface{}) {
+func SetCommonProperties(v cli.BlueprintProperty, prop interface{}) {
 	properties := []string{"Description", "Icon", "Default", "Title"}
 	for _, property := range properties {
 		switch property {
@@ -81,7 +81,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 			if properties.StringProps == nil {
 				properties.StringProps = make(map[string]StringPropModel)
 			}
-			stringProp := addStringPropertiesToState(ctx, &v)
+			stringProp := AddStringPropertiesToState(ctx, &v)
 
 			if lo.Contains(b.Schema.Required, k) {
 				stringProp.Required = types.BoolValue(true)
@@ -89,7 +89,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				stringProp.Required = types.BoolValue(false)
 			}
 
-			setCommonProperties(v, stringProp)
+			SetCommonProperties(v, stringProp)
 
 			properties.StringProps[k] = *stringProp
 
@@ -98,7 +98,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				properties.NumberProps = make(map[string]NumberPropModel)
 			}
 
-			numberProp := addNumberPropertiesToState(ctx, &v)
+			numberProp := AddNumberPropertiesToState(ctx, &v)
 
 			if lo.Contains(b.Schema.Required, k) {
 				numberProp.Required = types.BoolValue(true)
@@ -106,7 +106,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				numberProp.Required = types.BoolValue(false)
 			}
 
-			setCommonProperties(v, numberProp)
+			SetCommonProperties(v, numberProp)
 
 			properties.NumberProps[k] = *numberProp
 
@@ -115,7 +115,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				properties.ArrayProps = make(map[string]ArrayPropModel)
 			}
 
-			arrayProp := addArrayPropertiesToState(&v)
+			arrayProp := AddArrayPropertiesToState(&v)
 
 			if lo.Contains(b.Schema.Required, k) {
 				arrayProp.Required = types.BoolValue(true)
@@ -123,7 +123,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				arrayProp.Required = types.BoolValue(false)
 			}
 
-			setCommonProperties(v, arrayProp)
+			SetCommonProperties(v, arrayProp)
 
 			properties.ArrayProps[k] = *arrayProp
 
@@ -134,7 +134,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 
 			booleanProp := &BooleanPropModel{}
 
-			setCommonProperties(v, booleanProp)
+			SetCommonProperties(v, booleanProp)
 
 			if lo.Contains(b.Schema.Required, k) {
 				booleanProp.Required = types.BoolValue(true)
@@ -149,7 +149,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				properties.ObjectProps = make(map[string]ObjectPropModel)
 			}
 
-			objectProp := addObjectPropertiesToState(&v)
+			objectProp := AddObjectPropertiesToState(&v)
 
 			if lo.Contains(b.Schema.Required, k) {
 				objectProp.Required = types.BoolValue(true)
@@ -157,12 +157,10 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				objectProp.Required = types.BoolValue(false)
 			}
 
-			setCommonProperties(v, objectProp)
+			SetCommonProperties(v, objectProp)
 
 			properties.ObjectProps[k] = *objectProp
-
 		}
-
 	}
 
 	bm.Properties = properties
@@ -192,6 +190,7 @@ func addRelationsToState(b *cli.Blueprint, bm *BlueprintModel) {
 func addMirrorPropertiesToState(b *cli.Blueprint, bm *BlueprintModel) {
 	if b.MirrorProperties != nil {
 		for k, v := range b.MirrorProperties {
+
 			if bm.MirrorProperties == nil {
 				bm.MirrorProperties = make(map[string]MirrorPropertyModel)
 			}

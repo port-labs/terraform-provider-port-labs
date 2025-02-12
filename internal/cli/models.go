@@ -202,8 +202,9 @@ type (
 	}
 
 	Ownership struct {
-		Type string  `json:"type"`
-		Path *string `json:"path,omitempty"`
+		Type  string  `json:"type"`
+		Path  *string `json:"path,omitempty"`
+		Title *string `json:"title,omitempty"`
 	}
 
 	Step = struct {
@@ -437,6 +438,45 @@ type (
 		Exclude                     []string        `json:"exclude,omitempty"`
 		AttachTitleToRelation       *bool           `json:"attach_title_to_relation,omitempty"`
 	}
+
+	Folder struct {
+		Identifier string `json:"identifier,omitempty"`
+		Sidebar    string `json:"sidebar,omitempty"`
+		Title      string `json:"title,omitempty"`
+		After      string `json:"after,omitempty"`
+		Parent     string `json:"parent,omitempty"`
+	}
+
+	SidebarLocation struct {
+		Sidebar string `json:"sidebar"`
+		Parent  string `json:"parent,omitempty"`
+		After   string `json:"after,omitempty"`
+	}
+
+	SidebarFolderItem struct {
+		SidebarLocation
+		Identifier string `json:"identifier"`
+		Title      string `json:"title"`
+	}
+
+	SidebarItemDTO struct {
+		Identifier  string `json:"identifier"`
+		Title       string `json:"title"`
+		Sidebar     string `json:"sidebar"`
+		After       string `json:"after,omitempty"`
+		Parent      string `json:"parent,omitempty"`
+		SidebarType string `json:"sidebarType"`
+	}
+
+	SidebarDTO struct {
+		Identifier string           `json:"identifier"`
+		Items      []SidebarItemDTO `json:"items"`
+	}
+
+	SidebarGetResponseDTO struct {
+		Ok      bool        `json:"ok"`
+		Sidebar *SidebarDTO `json:"sidebar"`
+	}
 )
 
 type PortBody struct {
@@ -452,6 +492,7 @@ type PortBody struct {
 	Page                 Page              `json:"page"`
 	MigrationId          string            `json:"migrationId"`
 	Migration            Migration         `json:"migration"`
+	Folder               Folder            `json:"folder"`
 }
 
 type SearchEntityResult struct {

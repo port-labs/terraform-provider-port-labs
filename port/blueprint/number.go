@@ -11,8 +11,8 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func numberPropResourceToBody(ctx context.Context, state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range state.Properties.NumberProps {
+func numberPropResourceToBody(ctx context.Context, state *PropertiesModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+	for propIdentifier, prop := range state.NumberProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "number",
 		}
@@ -77,7 +77,7 @@ func numberPropResourceToBody(ctx context.Context, state *BlueprintModel, props 
 	return nil
 }
 
-func addNumberPropertiesToState(ctx context.Context, v *cli.BlueprintProperty) *NumberPropModel {
+func AddNumberPropertiesToState(ctx context.Context, v *cli.BlueprintProperty) *NumberPropModel {
 	numberProp := &NumberPropModel{
 		Minimum: flex.GoFloat64ToFramework(v.Minimum),
 		Maximum: flex.GoFloat64ToFramework(v.Maximum),

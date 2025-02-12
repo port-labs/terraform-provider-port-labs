@@ -70,3 +70,19 @@ resource "port_entity" "prod_env" {
     }
   }
 }
+
+resource "port_entity" "example_entity" {
+  title     = "Example Entity"
+  blueprint = port_blueprint.example_blueprint.identifier
+  properties = {
+    string_props = {
+      "name" = "example_value"
+    }
+  }
+  relations = {
+    single_relations = {
+      "example_relation" = "missing-identifier" // Non-existing identifier to trigger creation
+    }
+  }
+  create_missing_related_entities = true
+}

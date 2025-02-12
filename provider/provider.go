@@ -16,6 +16,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint"
 	blueprint_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/entity"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/folder"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/integration"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/page"
 	page_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
@@ -31,7 +32,7 @@ var (
 	_ provider.Provider = &PortLabsProvider{}
 )
 
-type PortLabsProvider struct {}
+type PortLabsProvider struct{}
 
 func New() provider.Provider {
 	return &PortLabsProvider{}
@@ -145,6 +146,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		page.NewPageResource,
 		page_permissions.NewPagePermissionsResource,
 		system_blueprint.NewResource,
+		folder.NewFolderResource,
 	}
 }
 

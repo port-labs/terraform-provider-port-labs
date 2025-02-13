@@ -93,7 +93,12 @@ func (r *EntityResource) Create(ctx context.Context, req resource.CreateRequest,
 		runID = state.RunID.ValueString()
 	}
 
-	en, err := r.portClient.CreateEntity(ctx, e, runID)
+	createMissingRelatedEntities := false
+	if !state.CreateMissingRelatedEntities.IsNull() && state.CreateMissingRelatedEntities.ValueBool() {
+		createMissingRelatedEntities = true
+	}
+
+	en, err := r.portClient.CreateEntity(ctx, e, runID, createMissingRelatedEntities)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create entity", err.Error())
 		return
@@ -141,14 +146,19 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 		runID = state.RunID.ValueString()
 	}
 
+	createMissingRelatedEntities := false
+	if !state.CreateMissingRelatedEntities.IsNull() && state.CreateMissingRelatedEntities.ValueBool() {
+		createMissingRelatedEntities = true
+	}
+
 	var en *cli.Entity
 
 	isBlueprintChanged := !previousState.Blueprint.IsNull() && previousState.Blueprint.ValueString() != state.Blueprint.ValueString()
 
 	if previousState.Identifier.IsNull() || isBlueprintChanged {
-		en, err = r.portClient.CreateEntity(ctx, e, runID)
+		en, err = r.portClient.CreateEntity(ctx, e, runID, createMissingRelatedEntities)
 	} else {
-		en, err = r.portClient.UpdateEntity(ctx, previousState.Identifier.ValueString(), previousState.Blueprint.ValueString(), e, runID)
+		en, err = r.portClient.UpdateEntity(ctx, previousState.Identifier.ValueString(), previousState.Blueprint.ValueString(), e, runID, createMissingRelatedEntities)
 	}
 
 	if err != nil {
@@ -183,7 +193,6 @@ func (r *EntityResource) Delete(ctx context.Context, req resource.DeleteRequest,
 		resp.Diagnostics.AddError("failed to delete entity", err.Error())
 		return
 	}
-
 }
 
 func (r *EntityResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {

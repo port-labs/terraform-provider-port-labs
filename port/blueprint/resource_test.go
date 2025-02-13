@@ -800,7 +800,7 @@ func TestAccPortDestroyDeleteAllEntities(t *testing.T) {
 	}
 
 	// create entity
-	_, err = portClient.CreateEntity(ctx, entity, "")
+	_, err = portClient.CreateEntity(ctx, entity, "", false)
 	if err != nil {
 		t.Fatalf("Failed to create entity: %s", err.Error())
 		return

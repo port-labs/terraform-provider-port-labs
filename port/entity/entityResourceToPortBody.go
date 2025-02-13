@@ -153,5 +153,6 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 	}
 
 	e.Relations = relations
+
 	return e, nil
 }

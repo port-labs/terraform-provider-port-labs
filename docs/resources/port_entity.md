@@ -21,6 +21,7 @@ Entity resource
 
 ### Optional
 
+- `create_missing_related_entities` (Boolean) Whether to create missing related entities
 - `icon` (String) The icon of the entity
 - `identifier` (String) The identifier of the entity
 - `properties` (Attributes) The properties of the entity (see [below for nested schema](#nestedatt--properties))

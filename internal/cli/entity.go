@@ -30,38 +30,51 @@ func (c *PortClient) ReadEntity(ctx context.Context, id string, blueprint string
 	return &pb.Entity, resp.StatusCode(), nil
 }
 
-func (c *PortClient) CreateEntity(ctx context.Context, e *Entity, runID string) (*Entity, error) {
+func (c *PortClient) CreateEntity(ctx context.Context, e *Entity, runID string, createMissingRelatedEntities bool) (*Entity, error) {
 	url := "v1/blueprints/{blueprint}/entities"
 	pb := &PortBody{}
-	resp, err := c.Client.R().
+	req := c.Client.R().
 		SetBody(e).
 		SetPathParam(("blueprint"), e.Blueprint).
 		SetQueryParam("upsert", "true").
 		SetQueryParam("run_id", runID).
-		SetResult(&pb).
-		Post(url)
+		SetResult(&pb)
+
+	if createMissingRelatedEntities {
+		req.SetQueryParam("create_missing_related_entities", "true")
+	}
+
+	resp, err := req.Post(url)
+
 	if err != nil {
 		return nil, err
 	}
+
 	if !pb.OK {
 		return nil, fmt.Errorf("failed to create entity, got: %s", resp.Body())
 	}
 	return &pb.Entity, nil
 }
 
-func (c *PortClient) UpdateEntity(ctx context.Context, id string, blueprint string, e *Entity, runID string) (*Entity, error) {
+func (c *PortClient) UpdateEntity(ctx context.Context, id string, blueprint string, e *Entity, runID string, createMissingRelatedEntities bool) (*Entity, error) {
 	url := "v1/blueprints/{blueprint}/entities/{identifier}"
 	pb := &PortBody{}
-	resp, err := c.Client.R().
+	req := c.Client.R().
 		SetBody(e).
 		SetPathParam(("blueprint"), e.Blueprint).
 		SetPathParam("identifier", id).
 		SetQueryParam("run_id", runID).
-		SetResult(&pb).
-		Put(url)
+		SetResult(&pb)
+
+	if createMissingRelatedEntities {
+		req.SetQueryParam("create_missing_related_entities", "true")
+	}
+
+	resp, err := req.Put(url)
 	if err != nil {
 		return nil, err
 	}
+
 	if !pb.OK {
 		return nil, fmt.Errorf("failed to update entity, got: %s", resp.Body())
 	}
@@ -77,9 +90,11 @@ func (c *PortClient) DeleteEntity(ctx context.Context, id string, blueprint stri
 		SetPathParam("identifier", id).
 		SetResult(pb).
 		Delete(url)
+
 	if err != nil {
 		return err
 	}
+
 	if !pb.OK {
 		return fmt.Errorf("failed to delete entity, got: %s", resp.Body())
 	}

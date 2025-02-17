@@ -21,14 +21,14 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.59
+          version: v1.64.5
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.2.6
           terraform_wrapper: false
       - name: Setup tools
         run: make setup
-  
+
   acctest:
     concurrency:
       group: acctest

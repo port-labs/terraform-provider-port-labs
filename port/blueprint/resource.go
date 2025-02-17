@@ -112,6 +112,9 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 			bm.Ownership.Path = types.StringValue(*b.Ownership.Path)
 		}
 	}
+	if b.Ownership == nil && bm.Ownership != nil {
+		bm.Ownership = nil
+	}
 
 	if len(b.Schema.Properties) > 0 {
 		err := updatePropertiesToState(ctx, b, bm)

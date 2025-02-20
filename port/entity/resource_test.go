@@ -59,6 +59,7 @@ func TestAccPortEntity(t *testing.T) {
 	}
 	resource "port_entity" "microservice" {
 		title = "TF Provider Test Entity0"
+		icon = "Terraform"
 		blueprint = port_blueprint.microservice.identifier
 		properties = {
 			"string_props" = {
@@ -100,6 +101,7 @@ func TestAccPortEntity(t *testing.T) {
 				Config: acctest.ProviderConfig + testAccActionConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_entity.microservice", "title", "TF Provider Test Entity0"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "blueprint", identifier),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.string_props.myStringIdentifier", "My String Value"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.number_props.myNumberIdentifier", "123.456"),

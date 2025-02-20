@@ -172,6 +172,7 @@ func refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, 
 	state.Identifier = types.StringValue(e.Identifier)
 	state.Blueprint = types.StringValue(blueprint.Identifier)
 	state.Title = types.StringValue(e.Title)
+	state.Icon = types.StringValue(e.Icon)
 	state.CreatedAt = types.StringValue(e.CreatedAt.String())
 	state.CreatedBy = types.StringValue(e.CreatedBy)
 	state.UpdatedAt = types.StringValue(e.UpdatedAt.String())

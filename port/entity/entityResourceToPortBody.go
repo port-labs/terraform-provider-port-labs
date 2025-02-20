@@ -87,6 +87,10 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 		e.Title = state.Title.ValueString()
 	}
 
+	if !state.Icon.IsNull() {
+		e.Icon = state.Icon.ValueString()
+	}
+
 	if !state.Identifier.IsUnknown() {
 		e.Identifier = state.Identifier.ValueString()
 	}

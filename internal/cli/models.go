@@ -35,6 +35,7 @@ type (
 		Meta
 		Identifier string                    `json:"identifier,omitempty"`
 		Title      string                    `json:"title"`
+		Icon       string                    `json:"icon,omitempty"`
 		Blueprint  string                    `json:"blueprint"`
 		Team       []string                  `json:"team,omitempty"`
 		Properties map[string]any            `json:"properties"`

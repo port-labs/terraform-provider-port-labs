@@ -158,7 +158,7 @@ func TestAccPortWebhook(t *testing.T) {
 	})
 }
 
-func TestAccPortWebhookWithOperation(t *testing.T) {
+func TestAccPortWebhookWithAllOperationOptions(t *testing.T) {
 	identifier := utils.GenID()
 	webhookIdentifier := utils.GenID()
 	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`

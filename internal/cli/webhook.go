@@ -61,7 +61,7 @@ func (c *PortClient) UpdateWebhook(ctx context.Context, webhookID string, webhoo
 		return nil, err
 	}
 	if !pb.OK {
-		return nil, fmt.Errorf("failed to create webhook, got: %s", resp.Body())
+		return nil, fmt.Errorf("failed to update webhook, got: %s", resp.Body())
 	}
 
 	return &pb.Webhook, nil

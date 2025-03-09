@@ -47,6 +47,7 @@ Optional:
 
 - `filter` (String) The filter of the mapping
 - `items_to_parse` (String) The items to parser of the mapping
+- `operation` (Attributes) The operation of the mapping (see [below for nested schema](#nestedatt--mappings--operation))
 
 <a id="nestedatt--mappings--entity"></a>
 ### Nested Schema for `mappings.entity`
@@ -62,6 +63,18 @@ Optional:
 - `relations` (Map of String) The relations of the entity
 - `team` (String) The team of the entity
 - `title` (String) The title of the entity
+
+
+<a id="nestedatt--mappings--operation"></a>
+### Nested Schema for `mappings.operation`
+
+Required:
+
+- `type` (String) The type of the operation
+
+Optional:
+
+- `delete_dependents` (Boolean) Whether to delete dependents entities, only relevant for delete operations
 
 
 

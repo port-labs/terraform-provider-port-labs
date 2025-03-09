@@ -211,7 +211,31 @@ func TestAccPortWebhookWithAllOperationOptions(t *testing.T) {
 						"url" = ".body.pull_request.html_url"
 					}
 				}
-			}
+			},
+						{
+			"blueprint" = port_blueprint.microservice.identifier,
+			"filter" = ".headers.\"X-GitHub-Event\" == \"pull_request\" and .body.pull_request.state == \"closed\"",
+			"items_to_parse" = ".body.pull_request",
+			"operation": {
+				"type": "delete",
+				"delete_dependents": true
+			},
+			"entity" = {
+					"identifier" = ".body.pull_request.id | tostring"
+				}
+			},
+			{
+			"blueprint" = port_blueprint.microservice.identifier,
+			"filter" = ".headers.\"X-GitHub-Event\" == \"pull_request\" and .body.pull_request.state == \"closed\"",
+			"items_to_parse" = ".body.pull_request",
+			"operation": {
+				"type": "delete",
+				"delete_dependents": false
+			},
+			"entity" = {
+					"identifier" = ".body.pull_request.id | tostring"
+				}
+			},
 		]
 	}`, webhookIdentifier)
 
@@ -265,6 +289,15 @@ func TestAccPortWebhookWithAllOperationOptions(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.2.entity.team", "\"port\""),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.2.entity.properties.author", ".body.pull_request.user.login"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.2.entity.properties.url", ".body.pull_request.html_url"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.3.blueprint", identifier),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.3.filter", ".headers.\"X-GitHub-Event\" == \"pull_request\" and .body.pull_request.state == \"closed\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.3.operation.type", "delete"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.3.operation.delete_dependents", "true"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.4.blueprint", identifier),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.4.filter", ".headers.\"X-GitHub-Event\" == \"pull_request\" and .body.pull_request.state == \"closed\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.4.operation.type", "delete"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.4.operation.delete_dependents", "false"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.5.blueprint", identifier),
 				),
 			},
 		},

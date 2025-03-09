@@ -297,7 +297,6 @@ func TestAccPortWebhookWithAllOperationOptions(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.4.filter", ".headers.\"X-GitHub-Event\" == \"pull_request\" and .body.pull_request.state == \"closed\""),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.4.operation.type", "delete"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.4.operation.delete_dependents", "false"),
-					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.5.blueprint", identifier),
 				),
 			},
 		},

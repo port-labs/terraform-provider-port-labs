@@ -2,6 +2,8 @@ package webhook
 
 import (
 	"context"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -50,9 +52,22 @@ func WebhookMappingSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The items to parser of the mapping",
 			Optional:            true,
 		},
-		"operation": schema.StringAttribute{
+		"operation": schema.SingleNestedAttribute{
 			MarkdownDescription: "The operation of the mapping",
 			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"type": schema.StringAttribute{
+					MarkdownDescription: "The type of the operation",
+					Validators: []validator.String{
+						stringvalidator.OneOf("create", "delete"),
+					},
+					Required: true,
+				},
+				"delete_dependents": schema.BoolAttribute{
+					MarkdownDescription: "Whether to delete dependents",
+					Optional:            true,
+				},
+			},
 		},
 		"entity": schema.SingleNestedAttribute{
 			MarkdownDescription: "The entity of the mapping",

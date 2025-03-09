@@ -69,9 +69,16 @@ func webhookResourceToPortBody(ctx context.Context, state *WebhookModel) (*cli.W
 				filter := v.Filter.ValueString()
 				mapping.Filter = &filter
 			}
-			if !v.Operation.IsNull() {
-				operation := v.Operation.ValueString()
-				mapping.Operation = &operation
+			if v.Operation != nil && !v.Operation.Type.IsNull() {
+				operationType := v.Operation.Type.ValueString()
+				operation := map[string]interface{}{
+					"type": operationType,
+				}
+				if !v.Operation.DeleteDependents.IsNull() {
+					deleteDependent := v.Operation.DeleteDependents.ValueBool()
+					operation["delete_dependent"] = deleteDependent
+				}
+				mapping.Operation = operation
 			}
 
 			if !v.ItemsToParse.IsNull() {

@@ -21,12 +21,17 @@ type EntityModel struct {
 	Relations  map[string]string `tfsdk:"relations"`
 }
 
+type OperationModel struct {
+	Type             types.String `tfsdk:"type"`
+	DeleteDependents types.Bool   `tfsdk:"delete_dependents"`
+}
+
 type MappingsModel struct {
-	Blueprint    types.String `tfsdk:"blueprint"`
-	Filter       types.String `tfsdk:"filter"`
-	Operation    types.String `tfsdk:"operation"`
-	ItemsToParse types.String `tfsdk:"items_to_parse"`
-	Entity       *EntityModel `tfsdk:"entity"`
+	Blueprint    types.String    `tfsdk:"blueprint"`
+	Filter       types.String    `tfsdk:"filter"`
+	Operation    *OperationModel `tfsdk:"operation"`
+	ItemsToParse types.String    `tfsdk:"items_to_parse"`
+	Entity       *EntityModel    `tfsdk:"entity"`
 }
 
 type WebhookModel struct {

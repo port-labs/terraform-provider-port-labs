@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -43,7 +44,6 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 			}
 
 			mapping.Filter = flex.GoStringToFramework(v.Filter)
-			mapping.Operation = flex.GoStringToFramework(v.Operation)
 			mapping.ItemsToParse = flex.GoStringToFramework(v.ItemsToParse)
 			mapping.Entity.Icon = flex.GoStringToFramework(v.Entity.Icon)
 			mapping.Entity.Title = flex.GoStringToFramework(v.Entity.Title)
@@ -62,6 +62,39 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 					mapping.Entity.Relations[k] = v
 				}
 			}
+
+			var operationModel OperationModel
+			if v.Operation != nil {
+				switch operation := v.Operation.(type) {
+				// If the operation is a simple string.
+				case string:
+					operationModel.Type = types.StringValue(operation)
+				// If the operation is an object.
+				case map[string]interface{}:
+					// Extract the "type" field.
+					if t, ok := operation["type"].(string); ok {
+						operationModel.Type = types.StringValue(t)
+					} else {
+						return fmt.Errorf("operation object missing 'type' field")
+					}
+					// Extract the "delete_dependant" field if present.
+					if dd, exists := operation["delete_dependants"]; exists {
+						if boolVal, ok := dd.(bool); ok {
+							operationModel.DeleteDependents = types.BoolValue(boolVal)
+						} else {
+							return fmt.Errorf("invalid type for 'delete_dependants' field: %T", dd)
+						}
+					}
+				default:
+					return fmt.Errorf("unexpected type for operation: %T", operation)
+				}
+
+				mapping.Operation = &operationModel
+				//if v.Operation.DeleteDependents != nil {
+				//	mapping.Operation.SetAttribute(types.GetAttribute("deleteDependent"), types.BoolValue(*v.Operation.DeleteDependents))
+				//}
+			}
+
 			state.Mappings = append(state.Mappings, *mapping)
 		}
 	}

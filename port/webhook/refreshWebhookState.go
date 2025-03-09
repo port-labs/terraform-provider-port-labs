@@ -92,9 +92,6 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 				}
 
 				mapping.Operation = &operationModel
-				//if v.Operation.DeleteDependents != nil {
-				//	mapping.Operation.SetAttribute(types.GetAttribute("deleteDependent"), types.BoolValue(*v.Operation.DeleteDependents))
-				//}
 			}
 
 			state.Mappings = append(state.Mappings, *mapping)

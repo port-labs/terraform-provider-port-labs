@@ -74,7 +74,7 @@ Required:
 
 Optional:
 
-- `delete_dependents` (Boolean) Whether to delete dependents
+- `delete_dependents` (Boolean) Whether to delete dependents entities, only relevant for delete operations
 
 
 

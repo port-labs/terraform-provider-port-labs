@@ -78,12 +78,14 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 						return fmt.Errorf("operation object missing 'type' field")
 					}
 					// Extract the "delete_dependant" field if present.
-					if dd, exists := operation["delete_dependants"]; exists {
+					if dd, exists := operation["deleteDependents"]; exists {
 						if boolVal, ok := dd.(bool); ok {
 							operationModel.DeleteDependents = types.BoolValue(boolVal)
 						} else {
 							return fmt.Errorf("invalid type for 'delete_dependants' field: %T", dd)
 						}
+
+						fmt.Println("delete_dependants: ", operationModel.DeleteDependents)
 					}
 				default:
 					return fmt.Errorf("unexpected type for operation: %T", operation)

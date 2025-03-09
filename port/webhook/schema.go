@@ -64,7 +64,7 @@ func WebhookMappingSchema() map[string]schema.Attribute {
 					Required: true,
 				},
 				"delete_dependents": schema.BoolAttribute{
-					MarkdownDescription: "Whether to delete dependents",
+					MarkdownDescription: "Whether to delete dependents entities, only relevant for delete operations",
 					Optional:            true,
 				},
 			},

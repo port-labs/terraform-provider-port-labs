@@ -147,7 +147,7 @@ func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cl
 }
 
 func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli.Entity) {
-	relations := &RelationModel{
+	state.Relations = &RelationModel{
 		SingleRelation: make(map[string]*string),
 		ManyRelations:  make(map[string][]string),
 	}
@@ -156,12 +156,12 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 		switch v := r.(type) {
 		case []string:
 			if len(v) != 0 {
-				relations.ManyRelations[identifier] = v
+				state.Relations.ManyRelations[identifier] = v
 			}
 
 		case string:
 			if len(v) != 0 {
-				relations.SingleRelation[identifier] = &v
+				state.Relations.SingleRelation[identifier] = &v
 			}
 		}
 	}

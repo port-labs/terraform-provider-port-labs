@@ -540,6 +540,11 @@ func StringPropertySchema() schema.Attribute {
 				listvalidator.SizeAtLeast(1),
 			},
 		},
+		"enum_colors": schema.MapAttribute{
+			MarkdownDescription: "The enum colors of the string property",
+			Optional:            true,
+			ElementType:         types.StringType,
+		},
 		"enum_jq_query": schema.StringAttribute{
 			MarkdownDescription: "The enum jq query of the string property",
 			Optional:            true,
@@ -665,6 +670,11 @@ func NumberPropertySchema() schema.Attribute {
 				listvalidator.UniqueValues(),
 				listvalidator.SizeAtLeast(1),
 			},
+		},
+		"enum_colors": schema.MapAttribute{
+			MarkdownDescription: "The enum colors of the number property",
+			Optional:            true,
+			ElementType:         types.StringType,
 		},
 		"enum_jq_query": schema.StringAttribute{
 			MarkdownDescription: "The enum jq query of the string property",

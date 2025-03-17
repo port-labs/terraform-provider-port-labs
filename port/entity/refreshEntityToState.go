@@ -147,19 +147,24 @@ func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cl
 }
 
 func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli.Entity) {
-	state.Relations = &RelationModel{
-		SingleRelation: make(map[string]*string),
-		ManyRelations:  make(map[string][]string),
-	}
+	state.Relations = &RelationModel{}
 
 	for identifier, r := range e.Relations {
 		switch v := r.(type) {
-		case []string:
-			if len(v) != 0 {
-				state.Relations.ManyRelations[identifier] = v
+		case []any:
+			if state.Relations.ManyRelations == nil {
+				state.Relations.ManyRelations = make(map[string][]string)
 			}
-
+			state.Relations.ManyRelations[identifier] = make([]string, 0, len(v))
+			for _, rawValue := range v {
+				if strVal, ok := rawValue.(string); ok {
+					state.Relations.ManyRelations[identifier] = append(state.Relations.ManyRelations[identifier], strVal)
+				}
+			}
 		case string:
+			if state.Relations.SingleRelation == nil {
+				state.Relations.SingleRelation = make(map[string]*string)
+			}
 			if len(v) != 0 {
 				state.Relations.SingleRelation[identifier] = &v
 			}

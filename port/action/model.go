@@ -37,6 +37,7 @@ type StringPropModel struct {
 	MinLength   types.Int64        `tfsdk:"min_length"`
 	Pattern     types.String       `tfsdk:"pattern"`
 	Enum        types.List         `tfsdk:"enum"`
+	EnumColors  types.Map          `tfsdk:"enum_colors"`
 	EnumJqQuery types.String       `tfsdk:"enum_jq_query"`
 	Encryption  types.String       `tfsdk:"encryption"`
 	Sort        *EntitiesSortModel `tfsdk:"sort"`
@@ -191,6 +192,7 @@ type NumberPropModel struct {
 	Maximum     types.Float64 `tfsdk:"maximum"`
 	Minimum     types.Float64 `tfsdk:"minimum"`
 	Enum        types.List    `tfsdk:"enum"`
+	EnumColors  types.Map     `tfsdk:"enum_colors"`
 	EnumJqQuery types.String  `tfsdk:"enum_jq_query"`
 }
 

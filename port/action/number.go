@@ -72,6 +72,19 @@ func numberPropResourceToBody(ctx context.Context, state *SelfServiceTriggerMode
 				property.Enum = enumJqQueryMap
 			}
 
+			if !prop.EnumColors.IsNull() {
+				property.EnumColors = map[string]string{}
+				for k, v := range prop.EnumColors.Elements() {
+					value, _ := v.ToTerraformValue(ctx)
+					var keyValue string
+					err := value.As(&keyValue)
+					if err != nil {
+						return err
+					}
+					property.EnumColors[k] = keyValue
+				}
+			}
+
 			if !prop.DependsOn.IsNull() {
 				dependsOn, err := utils.TerraformListToGoArray(ctx, prop.DependsOn, "string")
 				if err != nil {
@@ -128,6 +141,12 @@ func addNumberPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 	} else {
 		numberProp.Enum = types.ListNull(types.Float64Type)
 		numberProp.EnumJqQuery = types.StringNull()
+	}
+
+	if v.EnumColors != nil {
+		numberProp.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, v.EnumColors)
+	} else {
+		numberProp.EnumColors = types.MapNull(types.StringType)
 	}
 
 	return numberProp

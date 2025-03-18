@@ -65,6 +65,13 @@ func stringPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 			property.Pattern = &pattern
 		}
 
+		if !prop.PatternJqQuery.IsNull() {
+			patternJqQueryMap := map[string]string{
+				"jqQuery": prop.PatternJqQuery.ValueString(),
+			}
+			property.Pattern = patternJqQueryMap
+		}
+
 		if !prop.Description.IsNull() {
 			description := prop.Description.ValueString()
 			property.Description = &description
@@ -149,7 +156,6 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 	stringProp := &StringPropModel{
 		MinLength:  flex.GoInt64ToFramework(v.MinLength),
 		MaxLength:  flex.GoInt64ToFramework(v.MaxLength),
-		Pattern:    flex.GoStringToFramework(v.Pattern),
 		Format:     flex.GoStringToFramework(v.Format),
 		Blueprint:  flex.GoStringToFramework(v.Blueprint),
 		Encryption: flex.GoStringToFramework(v.Encryption),

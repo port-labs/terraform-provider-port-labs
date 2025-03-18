@@ -627,6 +627,7 @@ Optional:
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
 - `enum` (List of Number) The enum of the number property
+- `enum_colors` (Map of String) The enum colors of the number property
 - `enum_jq_query` (String) The enum jq query of the string property
 - `icon` (String) The icon of the property
 - `maximum` (Number) The min of the number property
@@ -667,6 +668,7 @@ Optional:
 - `description` (String) The description of the property
 - `encryption` (String) The algorithm to encrypt the property with. Accepted value: `aes256-gcm`
 - `enum` (List of String) The enum of the string property
+- `enum_colors` (Map of String) The enum colors of the string property
 - `enum_jq_query` (String) The enum jq query of the string property
 - `format` (String) The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
 - `icon` (String) The icon of the property

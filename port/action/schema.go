@@ -531,6 +531,13 @@ func StringPropertySchema() schema.Attribute {
 			MarkdownDescription: "The pattern of the string property",
 			Optional:            true,
 		},
+		"pattern_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The pattern jq query of the string property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("pattern")),
+			},
+		},
 		"enum": schema.ListAttribute{
 			MarkdownDescription: "The enum of the string property",
 			Optional:            true,

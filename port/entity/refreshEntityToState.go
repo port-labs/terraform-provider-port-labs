@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -147,23 +148,37 @@ func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cl
 }
 
 func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli.Entity) {
-	relations := &RelationModel{
+	state.Relations = &RelationModel{
 		SingleRelation: make(map[string]*string),
 		ManyRelations:  make(map[string][]string),
 	}
 
 	for identifier, r := range e.Relations {
 		switch v := r.(type) {
-		case []string:
-			if len(v) != 0 {
-				relations.ManyRelations[identifier] = v
+		case []any:
+			values := make([]string, 0, len(v))
+			for _, rawValue := range v {
+				if strVal, ok := rawValue.(string); ok {
+					values = append(values, strVal)
+				}
 			}
-
+			slices.Sort(values)
+			state.Relations.ManyRelations[identifier] = values
 		case string:
 			if len(v) != 0 {
-				relations.SingleRelation[identifier] = &v
+				state.Relations.SingleRelation[identifier] = &v
+			}
+		default:
+			if r == nil {
+				state.Relations.SingleRelation[identifier] = nil
 			}
 		}
+	}
+	if len(state.Relations.SingleRelation) == 0 {
+		state.Relations.SingleRelation = nil
+	}
+	if len(state.Relations.ManyRelations) == 0 {
+		state.Relations.ManyRelations = nil
 	}
 }
 

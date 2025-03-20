@@ -85,6 +85,11 @@ func TestAccPortAction(t *testing.T) {
 						"required" = true
 						maximum = 100
 						minimum = 0
+						enum = [1, 2]
+						enum_colors = {
+							"1" = "red"
+							"2" = "blue"
+						}
 					}
 				}
 				"boolean_props" = {
@@ -131,6 +136,10 @@ func TestAccPortAction(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.myNumberIdentifier.required", "true"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.myNumberIdentifier.maximum", "100"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.myNumberIdentifier.minimum", "0"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.myNumberIdentifier.enum.0", "1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.myNumberIdentifier.enum.1", "2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.myNumberIdentifier.enum_colors.1", "red"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.myNumberIdentifier.enum_colors.2", "blue"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.boolean_props.myBooleanIdentifier.title", "My Boolean Identifier"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.boolean_props.myBooleanIdentifier.required", "true"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.object_props.myObjectIdentifier.title", "My Object Identifier"),

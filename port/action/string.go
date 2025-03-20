@@ -79,6 +79,21 @@ func stringPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 			property.Enum = enumList
 		}
 
+		if !prop.EnumColors.IsNull() {
+			enumColor := map[string]string{}
+			for k, v := range prop.EnumColors.Elements() {
+				value, _ := v.ToTerraformValue(ctx)
+				var keyValue string
+				err := value.As(&keyValue)
+				if err != nil {
+					return err
+				}
+				enumColor[k] = keyValue
+			}
+
+			property.EnumColors = enumColor
+		}
+
 		if !prop.EnumJqQuery.IsNull() {
 			enumJqQueryMap := map[string]string{
 				"jqQuery": prop.EnumJqQuery.ValueString(),
@@ -162,6 +177,12 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 	} else {
 		stringProp.Enum = types.ListNull(types.StringType)
 		stringProp.EnumJqQuery = types.StringNull()
+	}
+
+	if v.EnumColors != nil {
+		stringProp.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, v.EnumColors)
+	} else {
+		stringProp.EnumColors = types.MapNull(types.StringType)
 	}
 
 	if v.Sort != nil {

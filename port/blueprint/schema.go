@@ -316,7 +316,7 @@ func ObjectPropertySchema() schema.MapNestedAttribute {
 func PropertiesSchema() schema.Attribute {
 	return schema.SingleNestedAttribute{
 		MarkdownDescription: "The properties of the blueprint",
-		Optional:           true,
+		Optional:            true,
 		Attributes: map[string]schema.Attribute{
 			"string_props":  StringPropertySchema(),
 			"number_props":  NumberPropertySchema(),
@@ -379,6 +379,7 @@ func BlueprintSchema() map[string]schema.Attribute {
 					Required:            true,
 				},
 			},
+			DeprecationMessage: "After the Users and Teams migration, `team_inheritance` will be ignored in favor of `ownership`",
 		},
 		"webhook_changelog_destination": schema.SingleNestedAttribute{
 			MarkdownDescription: "The webhook changelog destination of the blueprint",

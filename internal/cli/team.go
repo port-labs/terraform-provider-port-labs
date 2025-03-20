@@ -4,34 +4,40 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/url"
 )
 
+const FeatureFlagUsersAndTeamsV2 = "USERS_AND_TEAMS_OWNERSHIP_V2"
+
 func (c *PortClient) ReadTeam(ctx context.Context, teamName string) (*Team, int, error) {
-	url := "v1/teams/{name}?fields=name&fields=provider&fields=description&fields=createdAt&fields=updatedAt&fields=users.firstName&fields=users.status&fields=users.email"
+	var pt PortTeamBody
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
 		SetPathParam("name", teamName).
-		Get(url)
+		SetQueryParamsFromValues(url.Values{
+			"fields": []string{"name", "provider", "description", "createdAt", "updatedAt", "users.firstName",
+				"users.status", "users.email"},
+		}).
+		SetResult(&pt).
+		Get("v1/teams/{name}")
 	if err != nil {
-		return nil, resp.StatusCode(), err
-	}
-
-	var pt PortTeamBody
-	err = json.Unmarshal(resp.Body(), &pt)
-	if err != nil {
-		return nil, resp.StatusCode(), err
-	}
-
-	if !pt.OK {
+		return nil, 0, err
+	} else if resp.IsError() || !pt.OK {
 		return nil, resp.StatusCode(), fmt.Errorf("failed to read team, got: %s", resp.Body())
 	}
-	team := &Team{
+
+	portTeam := &PortTeam{
 		Name:        pt.Team.Name,
 		Description: pt.Team.Description,
 		CreatedAt:   pt.Team.CreatedAt,
 		UpdatedAt:   pt.Team.UpdatedAt,
 		Provider:    pt.Team.Provider,
+	}
+
+	team, err := c.enrichTeamFromTeamEntity(ctx, portTeam)
+	if err != nil {
+		return nil, 0, fmt.Errorf("failed to enrich team from entity: %w", err)
 	}
 
 	team.Users = make([]string, len(pt.Team.Users))
@@ -43,12 +49,45 @@ func (c *PortClient) ReadTeam(ctx context.Context, teamName string) (*Team, int,
 	return team, resp.StatusCode(), nil
 }
 
-func (c *PortClient) CreateTeam(ctx context.Context, team *Team) (*Team, error) {
-	url := "v1/teams"
+func (c *PortClient) enrichTeamFromTeamEntity(ctx context.Context, portTeam *PortTeam) (*Team, error) {
+	team := &Team{PortTeam: *portTeam}
+
+	isUsersAndTeamsV2, err := c.HasFeatureFlags(ctx, FeatureFlagUsersAndTeamsV2)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read feature flags: %w", err)
+	}
+
+	if isUsersAndTeamsV2 {
+		searchResults, searchErr := c.Search(ctx, &SearchRequestQuery{
+			Query: &map[string]any{
+				"combinator": "and",
+				"rules": []map[string]any{
+					{"property": "$blueprint", "operator": "=", "value": "_team"},
+					{"property": "$title", "operator": "=", "value": portTeam.Name},
+				},
+			},
+			Include: []string{"identifier"},
+		})
+		if searchErr != nil {
+			return nil, searchErr
+		}
+		if len(searchResults.Entities) != 1 {
+			return nil, fmt.Errorf("failed to read team results, got %d results instead of 1", len(searchResults.Entities))
+		}
+		team.Identifier = &searchResults.Entities[0].Identifier
+	}
+
+	return team, nil
+}
+
+const teamsBaseUrl = "v1/teams"
+const teamSpecificUrl = teamsBaseUrl + "/{name}"
+
+func (c *PortClient) CreateTeam(ctx context.Context, team *PortTeam) (*Team, error) {
 	resp, err := c.Client.R().
 		SetBody(team).
 		SetContext(ctx).
-		Post(url)
+		Post(teamsBaseUrl)
 
 	if err != nil {
 		return nil, err
@@ -61,16 +100,16 @@ func (c *PortClient) CreateTeam(ctx context.Context, team *Team) (*Team, error) 
 	if !pb.OK {
 		return nil, fmt.Errorf("failed to create team, got: %s", resp.Body())
 	}
-	return &pb.Team, nil
+
+	return c.enrichTeamFromTeamEntity(ctx, &pb.Team)
 }
 
-func (c *PortClient) UpdateTeam(ctx context.Context, teamName string, team *Team) (*Team, error) {
-	url := "v1/teams/{name}"
+func (c *PortClient) UpdateTeam(ctx context.Context, teamName string, team *PortTeam) (*Team, error) {
 	resp, err := c.Client.R().
 		SetBody(team).
 		SetContext(ctx).
 		SetPathParam("name", teamName).
-		Put(url)
+		Put(teamSpecificUrl)
 
 	if err != nil {
 		return nil, err
@@ -83,16 +122,16 @@ func (c *PortClient) UpdateTeam(ctx context.Context, teamName string, team *Team
 	if !pb.OK {
 		return nil, fmt.Errorf("failed to update team, got: %s", resp.Body())
 	}
-	return &pb.Team, nil
+
+	return c.enrichTeamFromTeamEntity(ctx, &pb.Team)
 }
 
 func (c *PortClient) DeleteTeam(ctx context.Context, teamName string) error {
-	url := "v1/teams/{name}"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
 		SetPathParam("name", teamName).
-		Delete(url)
+		Delete(teamSpecificUrl)
 
 	if err != nil {
 		return err

@@ -4,8 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"slices"
-
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
@@ -162,7 +160,6 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 					values = append(values, strVal)
 				}
 			}
-			slices.Sort(values)
 			state.Relations.ManyRelations[identifier] = values
 		case string:
 			if len(v) != 0 {

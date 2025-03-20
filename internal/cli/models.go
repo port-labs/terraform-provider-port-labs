@@ -411,13 +411,18 @@ type (
 		Entity       *EntityProperty `json:"entity,omitempty"`
 	}
 
-	Team struct {
+	PortTeam struct {
 		CreatedAt   *time.Time `json:"createdAt,omitempty"`
 		UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
 		Name        string     `json:"name,omitempty"`
 		Description *string    `json:"description,omitempty"`
 		Users       []string   `json:"users,omitempty"`
 		Provider    string     `json:"provider,omitempty"`
+	}
+
+	Team struct {
+		PortTeam
+		Identifier *string `json:"identifier,omitempty"`
 	}
 
 	Migration struct {
@@ -490,11 +495,12 @@ type PortBody struct {
 	ActionPermissions    ActionPermissions `json:"permissions"`
 	Webhook              Webhook           `json:"integration"`
 	Scorecard            Scorecard         `json:"Scorecard"`
-	Team                 Team              `json:"team"`
+	Team                 PortTeam          `json:"team"`
 	Page                 Page              `json:"page"`
 	MigrationId          string            `json:"migrationId"`
 	Migration            Migration         `json:"migration"`
 	Folder               Folder            `json:"folder"`
+	Organization         *Organization     `json:"organization"`
 }
 
 type SearchEntityResult struct {
@@ -559,4 +565,9 @@ type Integration struct {
 	Version              *string               `json:"version"`
 	Config               *map[string]any       `json:"config"`
 	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
+}
+
+type Organization struct {
+	Name         string   `json:"name"`
+	FeatureFlags []string `json:"featureFlags"`
 }

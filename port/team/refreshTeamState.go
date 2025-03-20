@@ -15,6 +15,7 @@ func refreshTeamState(ctx context.Context, state *TeamModel, t *cli.Team) error 
 	state.Name = types.StringValue(t.Name)
 	state.Description = flex.GoStringToFramework(t.Description)
 	state.ProviderName = flex.GoStringToFramework(&t.Provider)
+	state.Identifier = types.StringPointerValue(t.Identifier)
 
 	if len(t.Users) != 0 {
 		state.Users = make([]types.String, len(t.Users))

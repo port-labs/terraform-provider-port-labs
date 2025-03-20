@@ -7,6 +7,7 @@ import (
 type TeamModel struct {
 	ID           types.String   `tfsdk:"id"`
 	Name         types.String   `tfsdk:"name"`
+	Identifier   types.String   `tfsdk:"identifier"`
 	Description  types.String   `tfsdk:"description"`
 	Users        []types.String `tfsdk:"users"`
 	CreatedAt    types.String   `tfsdk:"created_at"`

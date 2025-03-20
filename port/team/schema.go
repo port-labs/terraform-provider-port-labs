@@ -19,6 +19,10 @@ func TeamSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The name of the team",
 			Required:            true,
 		},
+		"identifier": schema.StringAttribute{
+			MarkdownDescription: "The machine-readable identifier of the _team entity",
+			Computed:            true,
+		},
 		"description": schema.StringAttribute{
 			MarkdownDescription: "The description of the team",
 			Optional:            true,

@@ -2,7 +2,6 @@ package team
 
 import (
 	"context"
-
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -20,6 +19,9 @@ func NewTeamResource() resource.Resource {
 type TeamResource struct {
 	portClient *cli.PortClient
 }
+
+var _ resource.Resource = (*TeamResource)(nil)
+var _ resource.ResourceWithImportState = (*TeamResource)(nil)
 
 func (r *TeamResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_team"
@@ -75,7 +77,7 @@ func (r *TeamResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	tp, err := r.portClient.CreateTeam(ctx, t)
+	tp, err := r.portClient.CreateTeam(ctx, &t.PortTeam)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create team", err.Error())
 		return
@@ -91,6 +93,7 @@ func writeTeamComputedFieldsToState(state *TeamModel, tp *cli.Team) {
 	state.CreatedAt = types.StringValue(tp.CreatedAt.String())
 	state.UpdatedAt = types.StringValue(tp.UpdatedAt.String())
 	state.ProviderName = types.StringValue(tp.Provider)
+	state.Identifier = types.StringPointerValue(tp.Identifier)
 }
 
 func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -107,7 +110,7 @@ func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	tp, err := r.portClient.UpdateTeam(ctx, t.Name, t)
+	tp, err := r.portClient.UpdateTeam(ctx, t.Name, &t.PortTeam)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update the team", err.Error())
 		return

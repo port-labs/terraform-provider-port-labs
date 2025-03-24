@@ -51,8 +51,8 @@ jobs:
             file="$(echo "$package" | sed -e 's/[\/\.]/-/g').test" # Replace dots and backslashes with dashes
             go test "$package" -c -o "$file"
           done
-          files=$(ls *.test)
-          joined_files=$(printf ",%s" "${files[@]}")
+          files=$(ls *.test | xargs -I{} echo '"{}"')
+          joined_files="$(IFS=, ; echo "${files[*]}")"
           out="[${joined_files:1}]"
           echo "test_files=$out"
           echo "test_files=$out" >> "$GITHUB_OUTPUT"

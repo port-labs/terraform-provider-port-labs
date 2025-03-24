@@ -51,16 +51,16 @@ jobs:
           import json
           import os
           import subprocess
-
+          from glob import glob
+          
           result = subprocess.run(("go", "list", "./..."), capture_output=True, text=True)
           assert result.returncode == 0, result.stderr
           packages: list[str] = list(filter(lambda x: x != '', result.stdout.split('\n')))
-          files: list[str] = []
           for package in packages:
               file = package.replace('/', '-').replace('.', '-') + ".test"
               subprocess.run(("go", "test", package, "-c", "-o", file), capture_output=True, text=True, check=True)
-              files.append(file)
-          json_files = json.dumps(files)
+          
+          json_files = json.dumps(glob('*.test'))
           with open(os.environ['GITHUB_OUTPUT'], 'a') as github_output:
               github_output.write(f'test_files=' + json_files)
 

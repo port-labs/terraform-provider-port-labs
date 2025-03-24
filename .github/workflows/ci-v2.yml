@@ -72,12 +72,12 @@ jobs:
 
   acctest:
     needs: acctest-build
-    if: always()
     concurrency:
       group: acctest
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 1
+      fail-fast: false
       matrix:
         test_file: ${{fromJSON(needs.acctest-build.outputs.test_files)}}
     steps:
@@ -93,4 +93,4 @@ jobs:
           PORT_BASE_URL: ${{ secrets.PORT_BASE_URL }}
         run: |
           chmod u+x ${{matrix.test_file}} 
-          ./${{matrix.test_file}} -test.timeout 40m -test.p 1
+          ./${{matrix.test_file}} -test.timeout 40m -test.parallel 1

@@ -54,6 +54,7 @@ jobs:
             files+="\"$file\""
           done
           out="[$(IFS=, ; echo "${files[*]}")]"
+          echo "test_files=$out"
           echo "test_files=$out" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:

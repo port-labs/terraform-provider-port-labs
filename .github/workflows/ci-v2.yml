@@ -46,16 +46,24 @@ jobs:
             ${{ runner.os }}-go-
       - name: Compile tests
         id: compile-tests
+        shell: python
         run: |
-          for package in $(go list ./...); do
-            file="$(echo "$package" | sed -e 's/[\/\.]/-/g').test" # Replace dots and backslashes with dashes
-            go test "$package" -c -o "$file"
-          done
-          files=$(ls *.test | xargs -I{} echo '"{}"')
-          joined_files="$(IFS=, ; echo "${files[*]}")"
-          out="[${joined_files:1}]"
-          echo "test_files=$out"
-          echo "test_files=$out" >> "$GITHUB_OUTPUT"
+          import json
+          import os
+          import subprocess
+
+          result = subprocess.run(("go", "list", "./..."), capture_output=True, text=True)
+          assert result.returncode == 0, result.stderr
+          packages: list[str] = list(filter(lambda x: x != '', result.stdout.split('\n')))
+          files: list[str] = []
+          for package in packages:
+              file = package.replace('/', '-').replace('.', '-') + ".test"
+              subprocess.run(("go", "test", package, "-c", "-o", file), capture_output=True, text=True, check=True)
+              files.append(file)
+          json_files = json.dumps(files)
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as github_output:
+              github_output.write(f'test_files=' + json_files)
+
       - uses: actions/upload-artifact@v4
         with:
           name: test-files

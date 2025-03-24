@@ -47,12 +47,11 @@ jobs:
       - name: Compile tests
         id: compile-tests
         run: |
-          files=()
           for package in $(go list ./...); do
             file="$(echo "$package" | sed -e 's/[\/\.]/-/g').test" # Replace dots and backslashes with dashes
             go test "$package" -c -o "$file"
-            files+="\"$file\""
           done
+          files=$(ls *.test)
           joined_files=$(printf ",%s" "${files[@]}")
           out="[${joined_files:1}]"
           echo "test_files=$out"

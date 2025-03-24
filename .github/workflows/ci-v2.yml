@@ -53,7 +53,7 @@ jobs:
             go test "$package" -c -o "$file"
             files+="\"$file\""
           done
-          out="[$(IFS=, ; echo "${files[*]}")]"
+          out="[$(printf ",%s" "${files[@]}")]"
           echo "test_files=$out"
           echo "test_files=$out" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4

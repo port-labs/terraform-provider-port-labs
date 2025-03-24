@@ -81,6 +81,9 @@ jobs:
       matrix:
         test_file: ${{fromJSON(needs.acctest-build.outputs.test_files)}}
     steps:
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
       - uses: actions/download-artifact@v4
         with:
           name: test-files
@@ -93,4 +96,4 @@ jobs:
           PORT_BASE_URL: ${{ secrets.PORT_BASE_URL }}
         run: |
           chmod u+x ${{matrix.test_file}} 
-          ./${{matrix.test_file}} -test.timeout 40m -test.parallel 1
+          ./${{matrix.test_file}} -test.timeout 40m -test.parallel 1 -test.shuffle on -test.v

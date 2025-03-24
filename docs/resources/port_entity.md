@@ -18,6 +18,7 @@ Entity resource
 ### Required
 
 - `blueprint` (String) The blueprint identifier the entity relates to
+- `title` (String) The title of the entity
 
 ### Optional
 
@@ -28,7 +29,6 @@ Entity resource
 - `relations` (Attributes) The relations of the entity (see [below for nested schema](#nestedatt--relations))
 - `run_id` (String) The runID of the action run that created the entity
 - `teams` (List of String) The teams the entity belongs to
-- `title` (String) The title of the entity
 
 ### Read-Only
 

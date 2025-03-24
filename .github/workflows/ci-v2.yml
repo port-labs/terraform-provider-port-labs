@@ -1,0 +1,84 @@
+name: Continuous Integration
+on:
+  pull_request:
+
+env:
+  GO_VERSION: "1.22"
+  PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+  PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+  CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: v1.64.5
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.2.6
+          terraform_wrapper: false
+      - name: Setup tools
+        run: make setup
+
+  acctest-build:
+    runs-on: ubuntu-latest
+    outputs:
+      test_files: ${{steps.compile-tests.outputs.test_files}}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - uses: actions/cache@v4
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+      - name: Compile tests
+        id: compile-tests
+        run: |
+          files=()
+          for package in $(go list ./...); do
+            file="$(echo "$package" | sed -e 's/[\/\.]/-/g').test" # Replace dots and backslashes with dashes
+            go test "$package" -c -o "$file"
+            files+="\"$file\""
+          done
+          out="[$(IFS=, ; echo "${files[*]}")]"
+          echo "test_files=$out" >> "$GITHUB_OUTPUT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-files
+          path: "*.test"
+          if-no-files-found: error
+
+  acctest:
+    needs: acctest-build
+    concurrency:
+      group: acctest
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      matrix:
+        test_file: ${{fromJSON(needs.acctest-build.outputs.test_files)}}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-files
+      - name: Run dialect tests
+        env:
+          TF_ACC: 1
+          CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
+          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+          PORT_BASE_URL: ${{ secrets.PORT_BASE_URL }}
+        run: ${{matrix.test_file}} -test.timeout 40m -test.p 1

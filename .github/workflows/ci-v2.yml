@@ -72,6 +72,7 @@ jobs:
 
   acctest:
     needs: acctest-build
+    if: always()
     concurrency:
       group: acctest
     runs-on: ubuntu-latest
@@ -91,6 +92,5 @@ jobs:
           PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
           PORT_BASE_URL: ${{ secrets.PORT_BASE_URL }}
         run: |
-          ls -la || true
-          ls -la test-files || true
+          chmod u+x ${{matrix.test_file}} 
           ./${{matrix.test_file}} -test.timeout 40m -test.p 1

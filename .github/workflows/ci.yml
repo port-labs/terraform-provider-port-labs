@@ -92,6 +92,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
+          cache: 'false'
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@latest
       - uses: actions/download-artifact@v4

@@ -4,9 +4,6 @@ on:
 
 env:
   GO_VERSION: "1.22"
-  PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
-  PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
-  CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
 
 jobs:
   lint:
@@ -71,6 +68,7 @@ jobs:
           if-no-files-found: error
 
   acctest:
+    name: Acceptance Test - ${{matrix.test_file}}
     needs: acctest-build
     concurrency:
       group: acctest
@@ -87,7 +85,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: test-files
-      - name: Run dialect tests
+      - name: Run tests - ${{matrix.test_file}}
         env:
           TF_ACC: 1
           CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
@@ -95,5 +93,8 @@ jobs:
           PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
           PORT_BASE_URL: ${{ secrets.PORT_BASE_URL }}
         run: |
-          chmod u+x ${{matrix.test_file}} 
-          ./${{matrix.test_file}} -test.timeout 40m -test.parallel 1 -test.shuffle on -test.v
+          chmod u+x ${{matrix.test_file}}
+          echo '### ${{matrix.test_file}}' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ./${{matrix.test_file}} -test.timeout 10m -test.parallel 1 -test.shuffle ${{ github.run_id }} -test.v >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY

@@ -314,7 +314,7 @@ func buildUserProperties(ctx context.Context, a *cli.Action, state *ActionModel)
 	if properties.StringProps == nil && properties.NumberProps == nil && properties.ArrayProps == nil && properties.BooleanProps == nil && properties.ObjectProps == nil {
 		// this logic is handling default initialization of user properties as there is no option to define default user properties in the action schema
 		// if there was a state defined for the user properties, return the initiated properties
-		if state.SelfServiceTrigger.UserProperties != nil {
+		if state.SelfServiceTrigger != nil && state.SelfServiceTrigger.UserProperties != nil {
 			return properties, nil
 		}
 		// if there are no user properties defined, return nil

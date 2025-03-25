@@ -6,6 +6,9 @@ env:
   GO_VERSION: "1.22"
   FORCE_COLOR: 1
 
+  # See: https://github.com/actions/setup-go/issues/424#issuecomment-2044454425
+  GOTOOLCHAIN: local
+
 jobs:
   lint:
     name: lint

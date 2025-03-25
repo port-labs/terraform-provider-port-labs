@@ -3,10 +3,8 @@ on:
   pull_request:
 
 env:
-  GO_VERSION: "1.22"
-  PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
-  PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
-  CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
+  GO_VERSION: "1.22.0"
+  FORCE_COLOR: 1
 
 jobs:
   lint:
@@ -29,23 +27,110 @@ jobs:
       - name: Setup tools
         run: make setup
 
-  acctest:
-    concurrency:
-      group: acctest
+  acctest-build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        go: ['1.22']
+    outputs:
+      test_files: ${{steps.compile-tests.outputs.test_files}}
+      test_files_include: ${{steps.compile-tests.outputs.test_files_include}}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ matrix.go }}
+          go-version: ${{ env.GO_VERSION }}
       - uses: actions/cache@v4
         with:
           path: ~/go/pkg/mod
           key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
-      - name: Run dialect tests
-        run: make acctest CI_USER_NAME=${{ secrets.CI_USER_NAME }} PORT_CLIENT_ID=${{ secrets.PORT_CLIENT_ID }} PORT_CLIENT_SECRET=${{ secrets.PORT_CLIENT_SECRET }} PORT_BASE_URL=${{ secrets.PORT_BASE_URL }}
+      - name: Compile tests
+        id: compile-tests
+        shell: python
+        run: |
+          import json
+          import os
+          import subprocess
+          
+          result = subprocess.run(("go", "list", "./..."), capture_output=True, text=True)
+          assert result.returncode == 0, result.stderr
+          packages: list[str] = list(filter(lambda x: x != '', result.stdout.split('\n')))
+          files: list[str] = []
+          include: list[dict[str, str]] = []
+          for package in packages:
+            file = package.replace('/', '-').replace('.', '-') + ".test"
+            subprocess.run(("go", "test", package, "-c", "-o", file), capture_output=True, text=True, check=True)
+            if os.path.isfile(file):
+              files.append(file)
+              include.append(dict(test_file=file, package=package))
+            json_files = json.dumps(files)
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as github_output:
+              print(f'test_files=' + json.dumps(files), file=github_output)
+              print(f'test_files_include=' + json.dumps(include), file=github_output)
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: test-files
+          path: "*.test"
+          if-no-files-found: error
+
+  acctest:
+    name: Acceptance Test - ${{matrix.package}}
+    needs: acctest-build
+    concurrency:
+      group: acctest
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1
+      fail-fast: false
+      matrix:
+        test_file: ${{fromJSON(needs.acctest-build.outputs.test_files)}}
+        include: ${{fromJSON(needs.acctest-build.outputs.test_files_include)}}
+    steps:
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: 'false'
+      - name: Install gotestsum
+        run: go install gotest.tools/gotestsum@latest
+      - uses: actions/download-artifact@v4
+        with:
+          name: test-files
+      - name: Run tests - ${{matrix.package}}
+        env:
+          TF_ACC: 1
+          CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
+          PORT_CLIENT_ID: ${{ secrets.PORT_CLIENT_ID }}
+          PORT_CLIENT_SECRET: ${{ secrets.PORT_CLIENT_SECRET }}
+          PORT_BASE_URL: ${{ secrets.PORT_BASE_URL }}
+        run: |
+          chmod u+x "${{matrix.test_file}}"
+          gotestsum --raw-command --junitfile "./test-results/${{matrix.test_file}}.xml" -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
+            -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 'test-results-${{matrix.test_file}}'
+          path: './test-results/${{matrix.test_file}}.xml'
+          if-no-files-found: error
+
+  publish_report:
+    name: Publish Test Report
+    if: ${{ always() }}
+    needs: acctest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: 'test-results-*'
+          merge-multiple: 'true'
+          path: 'test-results'
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: './test-results/*.xml'
+          include_passed: true
+          require_tests: true
+          fail_on_failure: true

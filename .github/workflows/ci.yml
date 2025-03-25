@@ -107,14 +107,30 @@ jobs:
           PORT_BASE_URL: ${{ secrets.PORT_BASE_URL }}
         run: |
           chmod u+x "${{matrix.test_file}}"
-          gotestsum --raw-command --junitfile ./test-results/junit.xml -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
+          gotestsum --raw-command --junitfile "./test-results/${{matrix.test_file}}.xml" -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
             -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}"
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: 'test-results-${{matrix.test_file}}'
+          path: './test-results/${{matrix.test_file}}.xml'
+          if-no-files-found: error
+
+  publish_report:
+    name: Publish Test Report
+    if: ${{ always() }}
+    needs: acctest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: 'test-results-*'
+          merge-multiple: 'true'
+          path: 'test-results'
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v4
-        if: ${{ always() }}
         with:
-          report_paths: './test-results/junit.xml'
+          report_paths: './test-results/*.xml'
           include_passed: true
           require_tests: true
           fail_on_failure: true

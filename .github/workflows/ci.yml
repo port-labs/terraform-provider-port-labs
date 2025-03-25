@@ -3,7 +3,7 @@ on:
   pull_request:
 
 env:
-  GO_VERSION: "1.22"
+  GO_VERSION: "1.22.0"
   FORCE_COLOR: 1
 
 jobs:
@@ -34,11 +34,6 @@ jobs:
       test_files_include: ${{steps.compile-tests.outputs.test_files_include}}
     steps:
       - uses: actions/checkout@v4
-      - name: Configure env for toolchain ignore
-        shell: bash
-        run: |
-          # See: https://github.com/actions/setup-go/issues/424#issuecomment-2044454425
-          echo "GOTOOLCHAIN=local" >> "$GITHUB_ENV"
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}

@@ -30,6 +30,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       test_files: ${{steps.compile-tests.outputs.test_files}}
+      test_files_include: ${{steps.compile-tests.outputs.test_files_include}}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -48,18 +49,22 @@ jobs:
           import json
           import os
           import subprocess
-          from glob import glob
           
           result = subprocess.run(("go", "list", "./..."), capture_output=True, text=True)
           assert result.returncode == 0, result.stderr
           packages: list[str] = list(filter(lambda x: x != '', result.stdout.split('\n')))
+          files: list[str] = []
+          include: list[dict[str, str]] = []
           for package in packages:
-              file = package.replace('/', '-').replace('.', '-') + ".test"
-              subprocess.run(("go", "test", package, "-c", "-o", file), capture_output=True, text=True, check=True)
-          
-          json_files = json.dumps(glob('*.test'))
-          with open(os.environ['GITHUB_OUTPUT'], 'a') as github_output:
-              github_output.write(f'test_files=' + json_files)
+            file = package.replace('/', '-').replace('.', '-') + ".test"
+            subprocess.run(("go", "test", package, "-c", "-o", file), capture_output=True, text=True, check=True)
+            if os.path.isfile(file):
+              files.append(file)
+              include.append(dict(test_file=file, package=package))
+            json_files = json.dumps(files)
+            with open(os.environ['GITHUB_OUTPUT'], 'a') as github_output:
+              github_output.write(f'test_files=' + json.dumps(files))
+              github_output.write(f'test_files_include=' + json.dumps(include))
 
       - uses: actions/upload-artifact@v4
         with:
@@ -68,7 +73,7 @@ jobs:
           if-no-files-found: error
 
   acctest:
-    name: Acceptance Test - ${{matrix.test_file}}
+    name: Acceptance Test - ${{matrix.package}}
     needs: acctest-build
     concurrency:
       group: acctest
@@ -78,6 +83,7 @@ jobs:
       fail-fast: false
       matrix:
         test_file: ${{fromJSON(needs.acctest-build.outputs.test_files)}}
+        include: ${{fromJSON(needs.acctest-build.outputs.test_files_include)}}
     steps:
       - uses: hashicorp/setup-terraform@v3
         with:
@@ -85,7 +91,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: test-files
-      - name: Run tests - ${{matrix.test_file}}
+      - name: Run tests - ${{matrix.package}}
         env:
           TF_ACC: 1
           CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
@@ -94,7 +100,6 @@ jobs:
           PORT_BASE_URL: ${{ secrets.PORT_BASE_URL }}
         run: |
           chmod u+x ${{matrix.test_file}}
-          echo '### ${{matrix.test_file}}' >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
           ./${{matrix.test_file}} -test.timeout 10m -test.parallel 1 -test.shuffle ${{ github.run_id }} -test.v >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

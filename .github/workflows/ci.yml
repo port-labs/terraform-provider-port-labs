@@ -111,6 +111,7 @@ jobs:
             -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}"
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: 'test-results-${{matrix.test_file}}'
           path: './test-results/${{matrix.test_file}}.xml'

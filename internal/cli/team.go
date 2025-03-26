@@ -37,7 +37,7 @@ func (c *PortClient) ReadTeam(ctx context.Context, teamName string) (*Team, int,
 		Provider:    pt.Team.Provider,
 	}
 
-	team, err := c.enrichTeamFromTeamEntity(ctx, portTeam)
+	team, err := c.enrichTeamFromTeamEntityWithRetry(ctx, portTeam)
 	if err != nil {
 		return nil, 0, fmt.Errorf("failed to enrich team from entity: %w", err)
 	}

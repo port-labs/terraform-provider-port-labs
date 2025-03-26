@@ -50,6 +50,7 @@ jobs:
           import json
           import os
           import subprocess
+          from random import Random
           
           result = subprocess.run(("go", "list", "./..."), capture_output=True, text=True)
           assert result.returncode == 0, result.stderr
@@ -62,6 +63,8 @@ jobs:
             if os.path.isfile(file):
               files.append(file)
               include.append(dict(test_file=file, package=package))
+            
+            Random(int("${{ github.run_id }}")).shuffle(files)
             json_files = json.dumps(files)
             with open(os.environ['GITHUB_OUTPUT'], 'a') as github_output:
               print(f'test_files=' + json.dumps(files), file=github_output)

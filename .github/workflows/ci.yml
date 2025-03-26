@@ -107,10 +107,11 @@ jobs:
           PORT_BASE_URL: ${{ secrets.PORT_BASE_URL }}
         run: |
           chmod u+x "${{matrix.test_file}}"
-          gotestsum --raw-command --junitfile "./test-results/${{matrix.test_file}}.xml" -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
+          gotestsum --raw-command --format testname --junitfile "./test-results/${{matrix.test_file}}.xml" -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
             -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}"
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: 'test-results-${{matrix.test_file}}'
           path: './test-results/${{matrix.test_file}}.xml'

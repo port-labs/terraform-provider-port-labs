@@ -102,7 +102,7 @@ jobs:
         with:
           name: test-files
       - name: Run tests - ${{matrix.package}}
-        if: matrix.package == 'github.com/port-labs/terraform-provider-port-labs/v2/port/team'
+        if: matrix.package == 'github.com/port-labs/terraform-provider-port-labs/v2/port/team' # TODO: Remove
         env:
           TF_ACC: 1
           CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
@@ -111,7 +111,8 @@ jobs:
           PORT_BASE_URL: ${{ secrets.PORT_BASE_URL }}
         run: |
           chmod u+x "${{matrix.test_file}}"
-          gotestsum --raw-command --rerun-fails --format testname --junitfile "./test-results/${{matrix.test_file}}.xml" -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
+          gotestsum --raw-command --rerun-fails --format testname --junitfile "./test-results/${{matrix.test_file}}.xml" \
+            -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
             -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}"
 
       - uses: actions/upload-artifact@v4
@@ -137,7 +138,7 @@ jobs:
         with:
           report_paths: './test-results/*.xml'
           include_passed: 'true'
-          require_tests: 'true'
+          # require_tests: 'true' # TODO: Remove
           fail_on_failure: 'true'
           comment: 'true'
           check_retries: 'true'

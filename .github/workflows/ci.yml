@@ -58,11 +58,12 @@ jobs:
           files: list[str] = []
           include: list[dict[str, str]] = []
           for package in packages:
-            file = package.replace('/', '-').replace('.', '-') + ".test"
+            package_short = package.removeprefix('github.com/port-labs/terraform-provider-port-labs/')
+            file = package_short.replace('/', '-').replace('.', '-') + ".test"
             subprocess.run(("go", "test", package, "-c", "-o", file), capture_output=True, text=True, check=True)
             if os.path.isfile(file):
               files.append(file)
-              include.append(dict(test_file=file, package=package))
+              include.append(dict(test_file=file, package=package, package_short=package_short))
             
             Random(int("${{ github.run_id }}")).shuffle(files)
             json_files = json.dumps(files)
@@ -77,7 +78,7 @@ jobs:
           if-no-files-found: error
 
   acctest:
-    name: Acceptance Test - ${{matrix.package}}
+    name: Acceptance Test - ${{matrix.package_short}}
     needs: acctest-build
     concurrency:
       group: acctest
@@ -101,7 +102,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: test-files
-      - name: Run tests - ${{matrix.package}}
+      - name: Run tests - ${{matrix.package_short}}
         env:
           TF_ACC: 1
           CI_USER_NAME: ${{ secrets.CI_USER_NAME }}

@@ -79,6 +79,7 @@ jobs:
     concurrency:
       group: acctest
     runs-on: ubuntu-latest
+    if: ${{ matrix.package == 'github.com/port-labs/terraform-provider-port-labs/v2/port/team' }}
     strategy:
       max-parallel: 1
       fail-fast: false

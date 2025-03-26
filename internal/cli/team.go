@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/avast/retry-go/v4"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 	"net/url"
 )
 
@@ -49,37 +51,6 @@ func (c *PortClient) ReadTeam(ctx context.Context, teamName string) (*Team, int,
 	return team, resp.StatusCode(), nil
 }
 
-func (c *PortClient) enrichTeamFromTeamEntity(ctx context.Context, portTeam *PortTeam) (*Team, error) {
-	team := &Team{PortTeam: *portTeam}
-
-	isUsersAndTeamsV2, err := c.HasFeatureFlags(ctx, FeatureFlagUsersAndTeamsV2)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read feature flags: %w", err)
-	}
-
-	if isUsersAndTeamsV2 {
-		searchResults, searchErr := c.Search(ctx, &SearchRequestQuery{
-			Query: &map[string]any{
-				"combinator": "and",
-				"rules": []map[string]any{
-					{"property": "$blueprint", "operator": "=", "value": "_team"},
-					{"property": "$title", "operator": "=", "value": portTeam.Name},
-				},
-			},
-			Include: []string{"identifier"},
-		})
-		if searchErr != nil {
-			return nil, searchErr
-		}
-		if len(searchResults.Entities) != 1 {
-			return nil, fmt.Errorf("failed to read team results, got %d results instead of 1", len(searchResults.Entities))
-		}
-		team.Identifier = &searchResults.Entities[0].Identifier
-	}
-
-	return team, nil
-}
-
 const teamsBaseUrl = "v1/teams"
 const teamSpecificUrl = teamsBaseUrl + "/{name}"
 
@@ -101,7 +72,7 @@ func (c *PortClient) CreateTeam(ctx context.Context, team *PortTeam) (*Team, err
 		return nil, fmt.Errorf("failed to create team, got: %s", resp.Body())
 	}
 
-	return c.enrichTeamFromTeamEntity(ctx, &pb.Team)
+	return c.enrichTeamFromTeamEntityWithRetry(ctx, &pb.Team)
 }
 
 func (c *PortClient) UpdateTeam(ctx context.Context, teamName string, team *PortTeam) (*Team, error) {
@@ -123,7 +94,7 @@ func (c *PortClient) UpdateTeam(ctx context.Context, teamName string, team *Port
 		return nil, fmt.Errorf("failed to update team, got: %s", resp.Body())
 	}
 
-	return c.enrichTeamFromTeamEntity(ctx, &pb.Team)
+	return c.enrichTeamFromTeamEntityWithRetry(ctx, &pb.Team)
 }
 
 func (c *PortClient) DeleteTeam(ctx context.Context, teamName string) error {
@@ -146,4 +117,49 @@ func (c *PortClient) DeleteTeam(ctx context.Context, teamName string) error {
 		return fmt.Errorf("failed to delete team. got:\n%s", string(resp.Body()))
 	}
 	return nil
+}
+
+const MissingTeamEntityError = utils.StringErr("team entity is missing")
+
+func (c *PortClient) enrichTeamFromTeamEntityWithRetry(ctx context.Context, portTeam *PortTeam) (*Team, error) {
+	return retry.DoWithData(
+		func() (*Team, error) { return c.enrichTeamFromTeamEntity(ctx, portTeam) },
+		retry.LastErrorOnly(true),
+		retry.AttemptsForError(10, MissingTeamEntityError),
+		retry.Attempts(1),
+	)
+}
+
+func (c *PortClient) enrichTeamFromTeamEntity(ctx context.Context, portTeam *PortTeam) (*Team, error) {
+	team := &Team{PortTeam: *portTeam}
+
+	isUsersAndTeamsV2, err := c.HasFeatureFlags(ctx, FeatureFlagUsersAndTeamsV2)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read feature flags: %w", err)
+	}
+
+	if isUsersAndTeamsV2 {
+		searchResults, searchErr := c.Search(ctx, &SearchRequestQuery{
+			Query: &map[string]any{
+				"combinator": "and",
+				"rules": []map[string]any{
+					{"property": "$blueprint", "operator": "=", "value": "_team"},
+					{"property": "$title", "operator": "=", "value": portTeam.Name},
+				},
+			},
+			Include: []string{"identifier"},
+		})
+		if searchErr != nil {
+			return nil, searchErr
+		}
+		if len(searchResults.Entities) == 0 {
+			return nil, MissingTeamEntityError
+		}
+		if len(searchResults.Entities) != 1 {
+			return nil, fmt.Errorf("failed to read team results, got %d results instead of 1", len(searchResults.Entities))
+		}
+		team.Identifier = &searchResults.Entities[0].Identifier
+	}
+
+	return team, nil
 }

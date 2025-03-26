@@ -79,7 +79,6 @@ jobs:
     concurrency:
       group: acctest
     runs-on: ubuntu-latest
-    if: matrix.package == 'github.com/port-labs/terraform-provider-port-labs/v2/port/team'
     strategy:
       max-parallel: 1
       fail-fast: false
@@ -100,6 +99,7 @@ jobs:
         with:
           name: test-files
       - name: Run tests - ${{matrix.package}}
+        if: matrix.package == 'github.com/port-labs/terraform-provider-port-labs/v2/port/team'
         env:
           TF_ACC: 1
           CI_USER_NAME: ${{ secrets.CI_USER_NAME }}

@@ -102,7 +102,6 @@ jobs:
         with:
           name: test-files
       - name: Run tests - ${{matrix.package}}
-        if: matrix.package == 'github.com/port-labs/terraform-provider-port-labs/v2/port/team' # TODO: Remove
         env:
           TF_ACC: 1
           CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
@@ -138,7 +137,7 @@ jobs:
         with:
           report_paths: './test-results/*.xml'
           include_passed: 'true'
-          # require_tests: 'true' # TODO: Remove
+          require_tests: 'true'
           fail_on_failure: 'true'
           comment: 'true'
           check_retries: 'true'

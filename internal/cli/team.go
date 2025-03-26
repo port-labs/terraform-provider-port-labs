@@ -126,8 +126,10 @@ func (c *PortClient) enrichTeamFromTeamEntityWithRetry(ctx context.Context, port
 	return retry.DoWithData(
 		func() (*Team, error) { return c.enrichTeamFromTeamEntity(ctx, portTeam) },
 		retry.LastErrorOnly(true),
-		retry.Delay(10*time.Second),
-		retry.MaxJitter(10*time.Second),
+		retry.Attempts(1),
+		retry.AttemptsForError(10, MissingTeamEntityError),
+		retry.Delay(500*time.Millisecond),
+		retry.MaxJitter(500*time.Millisecond),
 	)
 }
 

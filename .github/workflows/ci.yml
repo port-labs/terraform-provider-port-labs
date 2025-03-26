@@ -50,6 +50,7 @@ jobs:
           import json
           import os
           import subprocess
+          from random import Random
           
           result = subprocess.run(("go", "list", "./..."), capture_output=True, text=True)
           assert result.returncode == 0, result.stderr
@@ -57,11 +58,14 @@ jobs:
           files: list[str] = []
           include: list[dict[str, str]] = []
           for package in packages:
-            file = package.replace('/', '-').replace('.', '-') + ".test"
+            package_short = package.removeprefix('github.com/port-labs/terraform-provider-port-labs/')
+            file = package_short.replace('/', '-').replace('.', '-') + ".test"
             subprocess.run(("go", "test", package, "-c", "-o", file), capture_output=True, text=True, check=True)
             if os.path.isfile(file):
               files.append(file)
-              include.append(dict(test_file=file, package=package))
+              include.append(dict(test_file=file, package=package, package_short=package_short))
+            
+            Random(int("${{ github.run_id }}")).shuffle(files)
             json_files = json.dumps(files)
             with open(os.environ['GITHUB_OUTPUT'], 'a') as github_output:
               print(f'test_files=' + json.dumps(files), file=github_output)
@@ -74,7 +78,7 @@ jobs:
           if-no-files-found: error
 
   acctest:
-    name: Acceptance Test - ${{matrix.package}}
+    name: Test ${{matrix.package_short}}
     needs: acctest-build
     concurrency:
       group: acctest
@@ -98,7 +102,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: test-files
-      - name: Run tests - ${{matrix.package}}
+      - name: Test ${{ matrix.package }}
         env:
           TF_ACC: 1
           CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
@@ -107,7 +111,8 @@ jobs:
           PORT_BASE_URL: ${{ secrets.PORT_BASE_URL }}
         run: |
           chmod u+x "${{matrix.test_file}}"
-          gotestsum --raw-command --format testname --junitfile "./test-results/${{matrix.test_file}}.xml" -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
+          gotestsum --raw-command --rerun-fails --format testname --junitfile "./test-results/${{matrix.test_file}}.xml" \
+            -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
             -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}"
 
       - uses: actions/upload-artifact@v4
@@ -129,9 +134,12 @@ jobs:
           merge-multiple: 'true'
           path: 'test-results'
       - name: Publish Test Report
-        uses: mikepenz/action-junit-report@v4
+        uses: mikepenz/action-junit-report@v5
         with:
           report_paths: './test-results/*.xml'
-          include_passed: true
-          require_tests: true
-          fail_on_failure: true
+          include_passed: 'true'
+          require_tests: 'true'
+          fail_on_failure: 'true'
+          comment: 'true'
+          check_retries: 'true'
+          flaky_summary: 'true'

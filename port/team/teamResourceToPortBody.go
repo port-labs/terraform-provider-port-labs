@@ -7,21 +7,24 @@ import (
 )
 
 func TeamResourceToPortBody(ctx context.Context, state *TeamModel) (*cli.Team, error) {
-	tp := &cli.Team{
+	portTeam := cli.PortTeam{
 		Name: state.Name.ValueString(),
 	}
 
 	if !state.Description.IsNull() {
 		description := state.Description.ValueString()
-		tp.Description = &description
+		portTeam.Description = &description
 	}
 
 	if state.Users != nil {
-		tp.Users = make([]string, len(state.Users))
+		portTeam.Users = make([]string, len(state.Users))
 		for i, t := range state.Users {
-			tp.Users[i] = t.ValueString()
+			portTeam.Users[i] = t.ValueString()
 		}
 	}
 
-	return tp, nil
+	return &cli.Team{
+		PortTeam:   portTeam,
+		Identifier: state.Identifier.ValueStringPointer(),
+	}, nil
 }

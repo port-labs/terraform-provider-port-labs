@@ -287,7 +287,7 @@ resource "port_blueprint" "microservice" {
 - `ownership` (Attributes) Optional ownership field for Blueprint. 'type' can be Inherited or Direct. If 'Inherited', then 'path' is required and must be a valid relation identifiers path. (see [below for nested schema](#nestedatt--ownership))
 - `properties` (Attributes) The properties of the blueprint (see [below for nested schema](#nestedatt--properties))
 - `relations` (Attributes Map) The relations of the blueprint (see [below for nested schema](#nestedatt--relations))
-- `team_inheritance` (Attributes) The team inheritance of the blueprint (see [below for nested schema](#nestedatt--team_inheritance))
+- `team_inheritance` (Attributes, Deprecated) The team inheritance of the blueprint (see [below for nested schema](#nestedatt--team_inheritance))
 - `webhook_changelog_destination` (Attributes) The webhook changelog destination of the blueprint (see [below for nested schema](#nestedatt--webhook_changelog_destination))
 
 ### Read-Only

@@ -7,6 +7,7 @@ import (
 	"github.com/avast/retry-go/v4"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 	"net/url"
+	"time"
 )
 
 const FeatureFlagUsersAndTeamsV2 = "USERS_AND_TEAMS_OWNERSHIP_V2"
@@ -125,8 +126,8 @@ func (c *PortClient) enrichTeamFromTeamEntityWithRetry(ctx context.Context, port
 	return retry.DoWithData(
 		func() (*Team, error) { return c.enrichTeamFromTeamEntity(ctx, portTeam) },
 		retry.LastErrorOnly(true),
-		retry.AttemptsForError(10, MissingTeamEntityError),
-		retry.Attempts(1),
+		retry.Delay(10*time.Second),
+		retry.MaxJitter(10*time.Second),
 	)
 }
 

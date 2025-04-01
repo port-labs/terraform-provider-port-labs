@@ -113,7 +113,7 @@ jobs:
           chmod u+x "${{matrix.test_file}}"
           gotestsum --raw-command --rerun-fails --format testname --junitfile "./test-results/${{matrix.test_file}}.xml" \
             -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
-            -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}"
+            -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}" -cover -coverprofile=cover.out
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -121,6 +121,12 @@ jobs:
           name: 'test-results-${{matrix.test_file}}'
           path: './test-results/${{matrix.test_file}}.xml'
           if-no-files-found: error
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          path: './cover.out'
 
   publish_report:
     name: Publish Test Report

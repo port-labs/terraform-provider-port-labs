@@ -84,7 +84,7 @@ jobs:
       group: acctest
     runs-on: ubuntu-latest
     strategy:
-      #max-parallel: 1
+      max-parallel: 1
       fail-fast: false
       matrix:
         test_file: ${{fromJSON(needs.acctest-build.outputs.test_files)}}
@@ -105,6 +105,7 @@ jobs:
       - name: Setup short name
         run: echo "SHORT_NAME=$(echo ${{ matrix.package_short }} | rev | cut -d'/' -f1 | rev)" >> $GITHUB_ENV
       - name: Test ${{ matrix.package }}
+        if : ${{ (env.SHORT_NAME == 'folder') || (env.SHORT_NAME == 'action') }}
         env:
           TF_ACC: 1
           CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
@@ -160,7 +161,7 @@ jobs:
       - name: Merge coverage reports
         run: |
           mkdir -p coverage
-          go tool covdata merge -i=coverage/*.out -o coverage/coverage.merged
+          go tool covdata merge -i=coverage -o coverage/coverage.merged
           go tool cover -html=coverage/coverage.merged -o coverage/coverage.html
           go tool cover -func=coverage/coverage.merged > coverage/coverage.txt
       - name: Upload coverage report

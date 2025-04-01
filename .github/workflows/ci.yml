@@ -113,7 +113,7 @@ jobs:
           chmod u+x "${{matrix.test_file}}"
           gotestsum --raw-command --rerun-fails --format testname --junitfile "./test-results/${{matrix.test_file}}.xml" \
             -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
-            -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}" -cover -coverprofile=cover.out
+            -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}" -coverprofile=cover.out
 
       - uses: actions/upload-artifact@v4
         if: always()

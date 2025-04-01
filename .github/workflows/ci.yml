@@ -179,10 +179,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: 'coverage/coverage.html'
-      - name: Upload coverage report
-        uses: actions/upload-artifact@v4
-        with:
-          path: 'coverage/coverage.txt'
+          name: 'coverage-html'
       - name: Get PR_NUMBER
         id: pr-number
         run: |
@@ -196,7 +193,7 @@ jobs:
       - name: Set repo code coverage percentage by the percentage of statements covered in the tests
         id: set-stmts-coverage
         run: |
-          stmts=$(grep "total:" coverage.txt | awk '{print $3}' | sed 's/%//')
+          stmts=$(tail -n1 coverage/coverage.txt | awk '{print $3}' | sed 's/%//')
           if [ -z "$stmts" ]; then
             echo "STMTS_COVERAGE=0" >> $GITHUB_OUTPUT
           else

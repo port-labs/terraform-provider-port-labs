@@ -90,6 +90,10 @@ jobs:
         test_file: ${{fromJSON(needs.acctest-build.outputs.test_files)}}
         include: ${{fromJSON(needs.acctest-build.outputs.test_files_include)}}
     steps:
+      - name: Setup short name
+        run: echo "SHORT_NAME=$(echo ${{ matrix.package_short }} | rev | cut -d'/' -f1 | rev)" >> $GITHUB_ENV
+      - if: ${{ (env.SHORT_NAME == 'folder') || (env.SHORT_NAME == 'action') }}
+        run: exit 1
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_wrapper: false
@@ -102,8 +106,6 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: test-files
-      - name: Setup short name
-        run: echo "SHORT_NAME=$(echo ${{ matrix.package_short }} | rev | cut -d'/' -f1 | rev)" >> $GITHUB_ENV
       - name: Test ${{ matrix.package }}
         if : ${{ (env.SHORT_NAME == 'folder') || (env.SHORT_NAME == 'action') }}
         env:
@@ -160,6 +162,8 @@ jobs:
           path: 'coverage'
       - name: Merge coverage reports
         run: |
+          ls -la
+          ls -la coverage
           mkdir -p coverage
           go tool covdata merge -i=coverage -o coverage/coverage.merged
           go tool cover -html=coverage/coverage.merged -o coverage/coverage.html

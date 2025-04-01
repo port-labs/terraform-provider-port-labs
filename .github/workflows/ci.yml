@@ -166,14 +166,11 @@ jobs:
       - name: Merge coverage reports
         run: |
           mkdir -p coverage
-          ls -la coverage-artifacts
-          ls -la coverage-artifacts/coverage-*
           find coverage-artifacts -type f -name '*' -exec cp {} coverage/ \;
-          ls -la coverage
-          ls -la coverage/coverage-*
-          go tool covdata merge -i=coverage -o coverage.merged
-          go tool cover -html=coverage.merged -o coverage/coverage.html
-          go tool cover -func=coverage.merged > coverage.txt
+          echo "mode: set" > coverage/coverage.merged
+          cat coverage/*.out | grep -v "mode: set" >> coverage/coverage.merged
+          go tool cover -func=coverage/coverage.merged > coverage/coverage.txt
+          go tool cover -html=coverage/coverage.merged -o coverage/coverage.html
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:

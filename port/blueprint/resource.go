@@ -111,6 +111,9 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 		if b.Ownership.Path != nil {
 			bm.Ownership.Path = types.StringValue(*b.Ownership.Path)
 		}
+		if b.Ownership.Title != nil {
+			bm.Ownership.Title = types.StringValue(*b.Ownership.Title)
+		}
 	}
 	if b.Ownership == nil && bm.Ownership != nil {
 		bm.Ownership = nil

@@ -852,6 +852,7 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 		}
 		ownership = {
 			type = "Direct"
+			title = "My direct owning teams"
 		}
 	}
 `, parentIdentifier)
@@ -900,6 +901,7 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 		ownership = {
 			type = "Inherited"
 			path = "parent"
+			title = "My inherited owning teams"
 		}
 	}
 `, parentIdentifier, childIdentifier)
@@ -915,6 +917,7 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.parent_blueprint", "identifier", parentIdentifier),
 					resource.TestCheckResourceAttr("port_blueprint.parent_blueprint", "ownership.type", "Direct"),
 					resource.TestCheckNoResourceAttr("port_blueprint.parent_blueprint", "ownership.path"),
+					resource.TestCheckResourceAttr("port_blueprint.parent_blueprint", "ownership.title", "My direct owning teams"),
 				),
 			},
 			{
@@ -924,6 +927,7 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.child_blueprint", "identifier", childIdentifier),
 					resource.TestCheckResourceAttr("port_blueprint.child_blueprint", "ownership.type", "Inherited"),
 					resource.TestCheckResourceAttr("port_blueprint.child_blueprint", "ownership.path", "parent"),
+					resource.TestCheckResourceAttr("port_blueprint.child_blueprint", "ownership.title", "My inherited owning teams"),
 				),
 			},
 		},

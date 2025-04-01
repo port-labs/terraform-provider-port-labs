@@ -60,7 +60,7 @@ jobs:
           for package in packages:
             package_short = package.removeprefix('github.com/port-labs/terraform-provider-port-labs/')
             file = package_short.replace('/', '-').replace('.', '-') + ".test"
-            subprocess.run(("go", "test", package, "-c", "-o", file), capture_output=True, text=True, check=True)
+            subprocess.run(("go", "test", package, "-c", "-cover", "-o", file), capture_output=True, text=True, check=True)
             if os.path.isfile(file):
               files.append(file)
               include.append(dict(test_file=file, package=package, package_short=package_short))

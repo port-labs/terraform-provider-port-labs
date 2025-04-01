@@ -102,6 +102,8 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: test-files
+      - name: Setup short name
+        run: echo "SHORT_NAME=$(echo ${{ matrix.package_short }} | rev | cut -d'/' -f1 | rev)" >> $GITHUB_ENV
       - name: Test ${{ matrix.package }}
         env:
           TF_ACC: 1
@@ -113,7 +115,7 @@ jobs:
           chmod u+x "${{matrix.test_file}}"
           gotestsum --raw-command --rerun-fails --format testname --junitfile "./test-results/${{matrix.test_file}}.xml" \
             -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
-            -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}" -test.coverprofile=cover.out
+            -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}" -test.coverprofile=cover-${{ env.SHORT_NAME }}.out
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -126,7 +128,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          path: './cover.out'
+          path: './cover-${{ env.SHORT_NAME }}.out'
+          name: 'coverage-${{ env.SHORT_NAME }}'
 
   publish_report:
     name: Publish Test Report
@@ -149,3 +152,22 @@ jobs:
           comment: 'true'
           check_retries: 'true'
           flaky_summary: 'true'
+      - name: Download all coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: 'coverage-*'
+          path: 'coverage'
+      - name: Merge coverage reports
+        run: |
+          mkdir -p coverage
+          go tool covdata merge -i=coverage/*.out -o coverage/coverage.merged
+          go tool cover -html=coverage/coverage.merged -o coverage/coverage.html
+          go tool cover -func=coverage/coverage.merged > coverage/coverage.txt
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          path: 'coverage/coverage.html'
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          path: 'coverage/coverage.txt'

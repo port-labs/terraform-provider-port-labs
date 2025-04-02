@@ -194,6 +194,9 @@ jobs:
         id: set-stmts-coverage
         run: |
           stmts=$(tail -n1 coverage/coverage.txt | awk '{print $3}' | sed 's/%//')
+          ls -al coverage
+          cat coverage/coverage.txt
+          tail -n1 coverage/coverage.txt | awk '{print $3}' | sed 's/%//'
           if [ -z "$stmts" ]; then
             echo "STMTS_COVERAGE=0" >> $GITHUB_OUTPUT
           else

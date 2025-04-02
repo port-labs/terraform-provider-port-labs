@@ -93,12 +93,8 @@ jobs:
         test_file: ${{fromJSON(needs.acctest-build.outputs.test_files)}}
         include: ${{fromJSON(needs.acctest-build.outputs.test_files_include)}}
     steps:
-      - name: test
-        run: ls -la
       - name: Setup short name
         run: echo "SHORT_NAME=$(echo ${{ matrix.package_short }} | rev | cut -d'/' -f1 | rev)" >> $GITHUB_ENV
-      - if: ${{ (env.SHORT_NAME != 'folder') && (env.SHORT_NAME != 'action') }}
-        run: exit 1
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_wrapper: false
@@ -112,7 +108,6 @@ jobs:
         with:
           name: test-files
       - name: Test ${{ matrix.package }}
-        if : ${{ (env.SHORT_NAME == 'folder') || (env.SHORT_NAME == 'action') }}
         env:
           TF_ACC: 1
           CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
@@ -169,7 +164,6 @@ jobs:
       - name: Merge coverage reports
         run: |
           mkdir -p coverage
-          ls -la
           find coverage-artifacts -type f -name '*' -exec cp {} coverage/ \;
           echo "mode: set" > coverage/coverage.merged
           cat coverage/*.out | grep -v "mode: set" >> coverage/coverage.merged
@@ -194,10 +188,6 @@ jobs:
         id: set-stmts-coverage
         run: |
           stmts=$(tail -n1 coverage/coverage.txt | awk '{print $3}' | sed 's/%//')
-          ls -al coverage
-          cat coverage/coverage.txt
-          tail -n1 coverage/coverage.txt | awk '{print $3}' | sed 's/%//'
-          echo $stmts
           if [ -z "$stmts" ]; then
             echo "STMTS_COVERAGE=0" >> $GITHUB_OUTPUT
           else
@@ -258,7 +248,7 @@ jobs:
         run: exit 1
 
       - name: Update service code coverage percentage in Port
-        if: ${{  (fromJson(steps.set-stmts-coverage.outputs.STMTS_COVERAGE) > fromJson(steps.set-current-coverage.outputs.CURRENT_COVERAGE)) }}
+        if: ${{ (github.event_name == 'push') && (fromJson(steps.set-stmts-coverage.outputs.STMTS_COVERAGE) > fromJson(steps.set-current-coverage.outputs.CURRENT_COVERAGE)) }}
         uses: port-labs/port-github-action@v1
         with:
           clientId: ${{ secrets.PORT_MAIN_CLIENT_ID }}

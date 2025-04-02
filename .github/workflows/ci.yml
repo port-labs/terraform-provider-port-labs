@@ -197,6 +197,7 @@ jobs:
           ls -al coverage
           cat coverage/coverage.txt
           tail -n1 coverage/coverage.txt | awk '{print $3}' | sed 's/%//'
+          echo $stmts
           if [ -z "$stmts" ]; then
             echo "STMTS_COVERAGE=0" >> $GITHUB_OUTPUT
           else

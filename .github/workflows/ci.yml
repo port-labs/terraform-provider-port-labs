@@ -1,6 +1,9 @@
 name: Continuous Integration
 on:
   pull_request:
+  push:
+    branches:
+      - main
 
 env:
   GO_VERSION: "1.22.0"
@@ -60,7 +63,7 @@ jobs:
           for package in packages:
             package_short = package.removeprefix('github.com/port-labs/terraform-provider-port-labs/')
             file = package_short.replace('/', '-').replace('.', '-') + ".test"
-            subprocess.run(("go", "test", package, "-c", "-o", file), capture_output=True, text=True, check=True)
+            subprocess.run(("go", "test", package, "-c", "-cover", "-o", file), capture_output=True, text=True, check=True)
             if os.path.isfile(file):
               files.append(file)
               include.append(dict(test_file=file, package=package, package_short=package_short))
@@ -90,6 +93,8 @@ jobs:
         test_file: ${{fromJSON(needs.acctest-build.outputs.test_files)}}
         include: ${{fromJSON(needs.acctest-build.outputs.test_files_include)}}
     steps:
+      - name: Setup short name
+        run: echo "SHORT_NAME=$(echo ${{ matrix.package_short }} | rev | cut -d'/' -f1 | rev)" >> $GITHUB_ENV
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_wrapper: false
@@ -113,7 +118,7 @@ jobs:
           chmod u+x "${{matrix.test_file}}"
           gotestsum --raw-command --rerun-fails --format testname --junitfile "./test-results/${{matrix.test_file}}.xml" \
             -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
-            -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}"
+            -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}" -test.coverprofile=cover-${{ env.SHORT_NAME }}.out
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -122,12 +127,20 @@ jobs:
           path: './test-results/${{matrix.test_file}}.xml'
           if-no-files-found: error
 
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          path: './cover-${{ env.SHORT_NAME }}.out'
+          name: 'coverage-${{ env.SHORT_NAME }}'
+
   publish_report:
     name: Publish Test Report
     if: ${{ always() }}
     needs: acctest
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           pattern: 'test-results-*'
@@ -143,3 +156,109 @@ jobs:
           comment: 'true'
           check_retries: 'true'
           flaky_summary: 'true'
+      - name: Download all coverage reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: 'coverage-*'
+          path: 'coverage-artifacts'
+      - name: Merge coverage reports
+        run: |
+          mkdir -p coverage
+          find coverage-artifacts -type f -name '*' -exec cp {} coverage/ \;
+          echo "mode: set" > coverage/coverage.merged
+          cat coverage/*.out | grep -v "mode: set" >> coverage/coverage.merged
+          go tool cover -func=coverage/coverage.merged > coverage/coverage.txt
+          go tool cover -html=coverage/coverage.merged -o coverage/coverage.html
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        id: upload-coverage
+        with:
+          path: 'coverage/coverage.html'
+          name: 'coverage-html'
+      - name: Get PR_NUMBER
+        id: pr-number
+        run: |
+          if [ ! -z ${{ inputs.PR_NUMBER }} ]; then
+            echo "PR_NUMBER=${{ inputs.PR_NUMBER }}" >> $GITHUB_OUTPUT
+          elif [ ! -z ${{ github.event.pull_request.number }} ]; then
+            echo "PR_NUMBER=${{ github.event.pull_request.number }}" >> $GITHUB_OUTPUT
+          else
+            echo "PR_NUMBER=0" >> $GITHUB_OUTPUT
+          fi
+      - name: Set repo code coverage percentage by the percentage of statements covered in the tests
+        id: set-stmts-coverage
+        run: |
+          stmts=$(tail -n1 coverage/coverage.txt | awk '{print $3}' | sed 's/%//')
+          if [ -z "$stmts" ]; then
+            echo "STMTS_COVERAGE=0" >> $GITHUB_OUTPUT
+          else
+            echo "STMTS_COVERAGE=$stmts" >> $GITHUB_OUTPUT
+          fi
+      - name: Comment PR with code coverage summary
+        uses: actions/github-script@v7
+        env:
+          CODE_COVERAGE_ARTIFACT_URL: ${{ steps.upload-coverage.outputs.artifact-url }}
+          PR_NUMBER: ${{ steps.pr-number.outputs.PR_NUMBER }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Code Coverage Artifact 📈: ${{ env.CODE_COVERAGE_ARTIFACT_URL }}
+            #### Code Coverage Total Percentage: \`${{ steps.set-stmts-coverage.outputs.STMTS_COVERAGE }}%\``;
+
+            github.rest.issues.createComment({
+              issue_number: ${{ env.PR_NUMBER }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+      - name: Get current repo coverage percentage from Port
+        uses: port-labs/port-github-action@v1
+        id: get-current-coverage
+        with:
+          clientId: ${{ secrets.PORT_MAIN_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_MAIN_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          operation: GET
+          identifier: terraform-provider-port-labs
+          blueprint: repository
+      - name: Set current code coverage
+        id: set-current-coverage
+        run: echo "CURRENT_COVERAGE=${{ fromJson(steps.get-current-coverage.outputs.entity).properties.coverage_percent }}" >> $GITHUB_OUTPUT
+
+      - name: Comment if Coverage Regression
+        if: ${{ (fromJson(steps.set-stmts-coverage.outputs.STMTS_COVERAGE) < fromJson(steps.set-current-coverage.outputs.CURRENT_COVERAGE)) && (steps.pr-number.outputs.PR_NUMBER != 0) }}
+        uses: actions/github-script@v7
+        env:
+          PR_NUMBER: ${{ steps.pr-number.outputs.PR_NUMBER }}
+          CURRENT_COVERAGE: ${{ steps.set-current-coverage.outputs.CURRENT_COVERAGE }}
+          NEW_COVERAGE: ${{ steps.set-stmts-coverage.outputs.STMTS_COVERAGE }}
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `🚨 The new code coverage percentage is lower than the current one. Current coverage: \`${{ env.CURRENT_COVERAGE }}\`\n While the new one is: \`${{ env.NEW_COVERAGE }}\``;
+
+            github.rest.issues.createComment({
+              issue_number: ${{ env.PR_NUMBER }},
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+      - name: Fail PR if current code coverage percentage is higher than the new one
+        if: ${{ (fromJson(steps.set-stmts-coverage.outputs.STMTS_COVERAGE) < fromJson(steps.set-current-coverage.outputs.CURRENT_COVERAGE)) && (vars.CODE_COVERAGE_ENFORCEMENT == 'true') }}
+        run: exit 1
+
+      - name: Update service code coverage percentage in Port
+        if: ${{ (github.event_name == 'push') }}
+        uses: port-labs/port-github-action@v1
+        with:
+          clientId: ${{ secrets.PORT_MAIN_CLIENT_ID }}
+          clientSecret: ${{ secrets.PORT_MAIN_CLIENT_SECRET }}
+          baseUrl: https://api.getport.io
+          operation: UPSERT
+          identifier: terraform-provider-port-labs
+          blueprint: repository
+          properties: |-
+            {
+              "coverage_percent": "${{ steps.set-stmts-coverage.outputs.STMTS_COVERAGE }}"
+            }

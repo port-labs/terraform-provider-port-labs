@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"strings"
 
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -89,12 +90,17 @@ func GoObjectToTerraformString(v interface{}) (types.String, error) {
 		}
 	}
 
+	// First marshal to JSON
 	js, err := json.Marshal(v)
 	if err != nil {
 		return types.StringNull(), err
 	}
 
+	// Convert to string and replace Unicode escape sequences with their actual characters
 	value := string(js)
+	value = strings.ReplaceAll(value, "\\u003e", ">")
+	value = strings.ReplaceAll(value, "\\u003c", "<")
+
 	return types.StringValue(value), nil
 }
 

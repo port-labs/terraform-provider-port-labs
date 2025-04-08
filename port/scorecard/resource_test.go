@@ -177,7 +177,7 @@ func TestAccPortScorecard(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.2.query.combinator", "or"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.2.query.conditions.#", "2"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.2.query.conditions.0", "{\"operator\":\"=\",\"property\":\"required\",\"value\":true}"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "rules.2.query.conditions.1", "{\"operator\":\">\",\"property\":\"sum\",\"value\":2}"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.2.query.conditions.1", "{\"operator\":\"\\u003e\",\"property\":\"sum\",\"value\":2}"),
 				),
 			},
 		},
@@ -290,7 +290,7 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard.test", "filter.combinator", "or"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "filter.conditions.#", "2"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "filter.conditions.0", "{\"operator\":\"=\",\"property\":\"required\",\"value\":true}"),
-					resource.TestCheckResourceAttr("port_scorecard.test", "filter.conditions.1", "{\"operator\":\">\",\"property\":\"sum\",\"value\":10}"), // u003e is how > is returned
+					resource.TestCheckResourceAttr("port_scorecard.test", "filter.conditions.1", "{\"operator\":\"\\u003e\",\"property\":\"sum\",\"value\":10}"), // u003e is how > is returned
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.identifier", "hasTeam"),
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.title", "Has Team"),

@@ -156,6 +156,9 @@ jobs:
           comment: 'true'
           check_retries: 'true'
           flaky_summary: 'true'
+          detailed_summary: 'true'
+          include_time_in_summary: 'true'
+          simplified_summary: 'true'
       - name: Download all coverage reports
         uses: actions/download-artifact@v4
         with:

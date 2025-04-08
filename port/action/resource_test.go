@@ -1024,7 +1024,8 @@ func TestAccPortActionPatternJqQuery(t *testing.T) {
 
 		Steps: []resource.TestStep{
 			{
-				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				ExpectNonEmptyPlan: true,
+				Config:             acctest.ProviderConfig + testAccActionConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "Action 1"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
@@ -1066,7 +1067,8 @@ func TestAccPortActionPattern(t *testing.T) {
 
 		Steps: []resource.TestStep{
 			{
-				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				ExpectNonEmptyPlan: true,
+				Config:             acctest.ProviderConfig + testAccActionConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "Action 1"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),

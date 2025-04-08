@@ -37,25 +37,25 @@ func TestGoObjectToTerraformString(t *testing.T) {
 				"nested": map[string]any{"foo": "bar"},
 			}},
 			want: types.StringValue(
-				"{\"bool\":true,\"float\":42.42,\"int\":42,\"list\":[1,2,3],\"nested\":{\"foo\":\"bar\"},\"nil\":null,\"string\":\"hello world\"}\n",
+				"{\"bool\":true,\"float\":42.42,\"int\":42,\"list\":[1,2,3],\"nested\":{\"foo\":\"bar\"},\"nil\":null,\"string\":\"hello world\"}",
 			),
 		},
 
 		{
 			name: "nested slice",
 			args: args{v: []any{"hello world", 1, map[string]any{"foo": "bar"}}},
-			want: types.StringValue("[\"hello world\",1,{\"foo\":\"bar\"}]\n"),
+			want: types.StringValue("[\"hello world\",1,{\"foo\":\"bar\"}]"),
 		},
 
 		{
 			name: "html unsafe characters",
 			args: args{v: map[string]any{"property": "sum", "operator": ">", "value": 2}},
-			want: types.StringValue("{\"operator\":\">\",\"property\":\"sum\",\"value\":2}\n"),
+			want: types.StringValue("{\"operator\":\">\",\"property\":\"sum\",\"value\":2}"),
 		},
 		{
 			name: "html unsafe characters (double escape)",
 			args: args{v: "{\"property\": \"sum\", \"operator\": \">\", \"value\": 2}"},
-			want: types.StringValue("\"{\\\"property\\\": \\\"sum\\\", \\\"operator\\\": \\\">\\\", \\\"value\\\": 2}\"\n"),
+			want: types.StringValue("\"{\\\"property\\\": \\\"sum\\\", \\\"operator\\\": \\\">\\\", \\\"value\\\": 2}\""),
 		},
 	}
 	for _, tt := range tests {

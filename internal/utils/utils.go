@@ -99,7 +99,8 @@ func GoObjectToTerraformString(v interface{}) (types.String, error) {
 		return types.StringNull(), err
 	}
 
-	return types.StringValue(jsonBuilder.String()), nil
+	jsonStr, _ := strings.CutSuffix(jsonBuilder.String(), "\n")
+	return types.StringValue(jsonStr), nil
 }
 
 func TerraformStringToGoType[T any](s types.String) (T, error) {

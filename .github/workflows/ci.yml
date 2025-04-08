@@ -87,6 +87,7 @@ jobs:
       group: acctest
     runs-on: ubuntu-latest
     strategy:
+      max-parallel: 1
       fail-fast: false
       matrix:
         test_file: ${{fromJSON(needs.acctest-build.outputs.test_files)}}

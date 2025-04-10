@@ -88,7 +88,7 @@ type (
 		Minimum            *float64            `json:"minimum,omitempty"`
 		Description        *string             `json:"description,omitempty"`
 		Blueprint          *string             `json:"blueprint,omitempty"`
-		Pattern            *string             `json:"pattern,omitempty"`
+		Pattern            any                 `json:"pattern,omitempty"`
 		Enum               any                 `json:"enum,omitempty"`
 		Spec               *string             `json:"spec,omitempty"`
 		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`

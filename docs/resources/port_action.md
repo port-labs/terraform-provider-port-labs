@@ -675,7 +675,7 @@ Optional:
 - `max_length` (Number) The max length of the string property
 - `min_length` (Number) The min length of the string property
 - `pattern` (String) The pattern of the string property
-- `pattern_jq_query` (String) The pattern jq query of the string property. This field accepts a JQ expression to dynamically generate either a regex pattern (as a string) or a list of allowed values (as an array). Cannot be used with `pattern`. Examples: `"if .env == \"prod\" then \"^[a-z]+$\" else \"^[a-zA-Z]+$\" end"` for dynamic regex patterns, or `"[\"value1\", \"value2\"]"` for a fixed list of allowed values.
+- `pattern_jq_query` (String) The pattern jq query of the string property. This field accepts a JQ expression to dynamically generate either a regex pattern (as a string) or a list of allowed values (as an array). Cannot be used with `pattern`. Empty values are not allowed. Examples: `"if .env == \"prod\" then \"^[a-z]+$\" else \"^[a-zA-Z]+$\" end"` for dynamic regex patterns, or `"[\"value1\", \"value2\"]"` for a fixed list of allowed values.
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
 - `sort` (Attributes) How to sort entities when in the self service action form in the UI (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--sort))
 - `title` (String) The title of the property

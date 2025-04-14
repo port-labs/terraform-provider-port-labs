@@ -532,10 +532,11 @@ func StringPropertySchema() schema.Attribute {
 			Optional:            true,
 		},
 		"pattern_jq_query": schema.StringAttribute{
-			MarkdownDescription: "The pattern jq query of the string property. This field accepts a JQ expression to dynamically generate either a regex pattern (as a string) or a list of allowed values (as an array). Cannot be used with `pattern`. Examples: `\"if .env == \\\"prod\\\" then \\\"^[a-z]+$\\\" else \\\"^[a-zA-Z]+$\\\" end\"` for dynamic regex patterns, or `\"[\\\"value1\\\", \\\"value2\\\"]\"` for a fixed list of allowed values.",
+			MarkdownDescription: "The pattern jq query of the string property. This field accepts a JQ expression to dynamically generate either a regex pattern (as a string) or a list of allowed values (as an array). Cannot be used with `pattern`. Empty values are not allowed. Examples: `\"if .env == \\\"prod\\\" then \\\"^[a-z]+$\\\" else \\\"^[a-zA-Z]+$\\\" end\"` for dynamic regex patterns, or `\"[\\\"value1\\\", \\\"value2\\\"]\"` for a fixed list of allowed values.",
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("pattern")),
+				stringvalidator.LengthAtLeast(1),
 			},
 		},
 		"enum": schema.ListAttribute{

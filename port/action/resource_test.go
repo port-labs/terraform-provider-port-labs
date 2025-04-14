@@ -1120,13 +1120,11 @@ func TestAccPortActionPatternConflict(t *testing.T) {
 	})
 }
 
-// tests empty pattern_jq_query
-func TestAccPortActionPatternJqQueryEdgeCases(t *testing.T) {
+// tests that empty pattern_jq_query values are rejected
+func TestAccPortActionEmptyPatternJqQuery(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()
-
-	// Empty JQ Query
-	var testAccActionConfigEmpty = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
 	resource "port_action" "create_microservice" {
 		title             = "Action 1"
 		identifier        = "%s"
@@ -1145,6 +1143,24 @@ func TestAccPortActionPatternJqQueryEdgeCases(t *testing.T) {
 		description       = "This is a test action"
 		kafka_method = {}
 	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				ExpectError: regexp.MustCompile(`(?s)Error: Invalid Attribute Value Length.*String length must be at least 1`),
+				Config:      acctest.ProviderConfig + testAccActionConfigCreate,
+			},
+		},
+	})
+}
+
+// tests complex JQ expressions for pattern_jq_query
+func TestAccPortActionPatternJqQueryComplex(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
 
 	// Complex JQ Query
 	var testAccActionConfigComplex = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
@@ -1172,13 +1188,6 @@ func TestAccPortActionPatternJqQueryEdgeCases(t *testing.T) {
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
 		Steps: []resource.TestStep{
-			{
-				ExpectNonEmptyPlan: true,
-				Config:             acctest.ProviderConfig + testAccActionConfigEmpty,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.pattern_jq_query", ""),
-				),
-			},
 			{
 				ExpectNonEmptyPlan: true,
 				Config:             acctest.ProviderConfig + testAccActionConfigComplex,

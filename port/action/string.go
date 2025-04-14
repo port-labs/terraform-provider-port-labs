@@ -162,6 +162,21 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 		Dataset:    writeDatasetToResource(v.Dataset),
 	}
 
+	if v.Pattern != nil {
+		patternVal := reflect.ValueOf(v.Pattern)
+		if patternVal.Kind() == reflect.String {
+			stringProp.Pattern = types.StringValue(v.Pattern.(string))
+		} else if patternVal.Kind() == reflect.Map {
+			patternMap := v.Pattern.(map[string]interface{})
+			if jqQuery, ok := patternMap["jqQuery"]; ok {
+				stringProp.PatternJqQuery = types.StringValue(jqQuery.(string))
+			}
+		}
+	} else {
+		stringProp.Pattern = types.StringNull()
+		stringProp.PatternJqQuery = types.StringNull()
+	}
+
 	if v.Enum != nil {
 		v := reflect.ValueOf(v.Enum)
 		switch v.Kind() {

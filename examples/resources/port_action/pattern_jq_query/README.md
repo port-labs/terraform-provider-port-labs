@@ -33,7 +33,7 @@ This simpler format can be used to specify a fixed list of allowed values direct
 ## Important Notes
 
 - You cannot use both `pattern` and `pattern_jq_query` at the same time on the same property
-- The JQ query is evaluated at runtime by the Port API
+- The JQ query is evaluated at runtime by Port
 - The context available to the JQ expression depends on where the pattern is being used (entity context, action context, etc.)
 - For regex patterns, make sure to escape special characters properly
 

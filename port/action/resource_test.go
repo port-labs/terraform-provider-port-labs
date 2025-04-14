@@ -1120,7 +1120,7 @@ func TestAccPortActionPatternConflict(t *testing.T) {
 	})
 }
 
-// TestAccPortActionPatternJqQueryEdgeCases tests edge cases for pattern_jq_query
+// tests empty pattern_jq_query
 func TestAccPortActionPatternJqQueryEdgeCases(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()
@@ -1190,7 +1190,7 @@ func TestAccPortActionPatternJqQueryEdgeCases(t *testing.T) {
 	})
 }
 
-// TestAccPortActionPatternJqQueryAllowedValues tests using pattern_jq_query to generate a list of allowed values
+// tests using pattern_jq_query to generate a list of allowed values
 func TestAccPortActionPatternJqQueryAllowedValues(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()
@@ -1232,7 +1232,7 @@ func TestAccPortActionPatternJqQueryAllowedValues(t *testing.T) {
 	})
 }
 
-// TestAccPortActionPatternJqQueryDirectArray tests using pattern_jq_query with a direct JSON array format
+// tests using pattern_jq_query with a direct JSON array format
 func TestAccPortActionPatternJqQueryDirectArray(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()

@@ -1009,7 +1009,7 @@ func TestAccPortActionPatternJqQuery(t *testing.T) {
 				string_props = {
 					myStringIdentifier = {
 						title      = "myStringIdentifier"
-						pattern_jq_query = "[\"test1\", \"test2\"]"
+						pattern_jq_query = "if .blueprint == \"microservice\" then \"^[a-z][a-z0-9-]+$\" else \"^[a-zA-Z0-9-]+$\" end"
 					}
 				}
 			}
@@ -1032,7 +1032,7 @@ func TestAccPortActionPatternJqQuery(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "description", "This is a test action"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.title", "myStringIdentifier"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.pattern_jq_query", "[\"test1\", \"test2\"]"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.pattern_jq_query", "if .blueprint == \"microservice\" then \"^[a-z][a-z0-9-]+$\" else \"^[a-zA-Z0-9-]+$\" end"),
 				),
 			},
 		},
@@ -1076,6 +1076,202 @@ func TestAccPortActionPattern(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "description", "This is a test action"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.title", "myStringIdentifier"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.pattern", "^[a-zA-Z0-9-]*-service$"),
+				),
+			},
+		},
+	})
+}
+
+// TestAccPortActionPatternConflict tests that pattern and pattern_jq_query can't be used simultaneously
+func TestAccPortActionPatternConflict(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title             = "Action 1"
+		identifier        = "%s"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				string_props = {
+					myStringIdentifier = {
+						title   = "myStringIdentifier"
+						pattern = "^[a-zA-Z0-9-]*-service$"
+						pattern_jq_query = "[\"test1\", \"test2\"]"
+					}
+				}
+			}
+		}
+		description       = "This is a test action"
+		kafka_method = {}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				ExpectError: regexp.MustCompile("Attribute .* conflicts with pattern_jq_query"),
+				Config:      acctest.ProviderConfig + testAccActionConfigCreate,
+			},
+		},
+	})
+}
+
+// TestAccPortActionPatternJqQueryEdgeCases tests edge cases for pattern_jq_query
+func TestAccPortActionPatternJqQueryEdgeCases(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+
+	// Empty JQ Query
+	var testAccActionConfigEmpty = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title             = "Action 1"
+		identifier        = "%s"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				string_props = {
+					myStringIdentifier = {
+						title      = "myStringIdentifier"
+						pattern_jq_query = ""
+					}
+				}
+			}
+		}
+		description       = "This is a test action"
+		kafka_method = {}
+	}`, actionIdentifier)
+
+	// Complex JQ Query
+	var testAccActionConfigComplex = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title             = "Action 1"
+		identifier        = "%s"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				string_props = {
+					myStringIdentifier = {
+						title      = "myStringIdentifier"
+						pattern_jq_query = "if .blueprint == \"microservice\" then \"^[a-z]+$\" else \"^[0-9]+$\" end"
+					}
+				}
+			}
+		}
+		description       = "This is a test action"
+		kafka_method = {}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				ExpectNonEmptyPlan: true,
+				Config:             acctest.ProviderConfig + testAccActionConfigEmpty,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.pattern_jq_query", ""),
+				),
+			},
+			{
+				ExpectNonEmptyPlan: true,
+				Config:             acctest.ProviderConfig + testAccActionConfigComplex,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.pattern_jq_query", "if .blueprint == \"microservice\" then \"^[a-z]+$\" else \"^[0-9]+$\" end"),
+				),
+			},
+		},
+	})
+}
+
+// TestAccPortActionPatternJqQueryAllowedValues tests using pattern_jq_query to generate a list of allowed values
+func TestAccPortActionPatternJqQueryAllowedValues(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title             = "Action 1"
+		identifier        = "%s"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				string_props = {
+					myStringIdentifier = {
+						title      = "myStringIdentifier"
+						# JQ expression that generates a list of allowed values
+						pattern_jq_query = "if .blueprint == \"microservice\" then [\"micro-1\", \"micro-2\"] else [\"other-1\", \"other-2\"] end"
+					}
+				}
+			}
+		}
+		description       = "This is a test action"
+		kafka_method = {}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				ExpectNonEmptyPlan: true,
+				Config:             acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.pattern_jq_query", "if .blueprint == \"microservice\" then [\"micro-1\", \"micro-2\"] else [\"other-1\", \"other-2\"] end"),
+				),
+			},
+		},
+	})
+}
+
+// TestAccPortActionPatternJqQueryDirectArray tests using pattern_jq_query with a direct JSON array format
+func TestAccPortActionPatternJqQueryDirectArray(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title             = "Action 1"
+		identifier        = "%s"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				string_props = {
+					myStringIdentifier = {
+						title      = "myStringIdentifier"
+						# Direct JSON array format (not a JQ expression)
+						pattern_jq_query = "[\"test1\", \"test2\"]"
+					}
+				}
+			}
+		}
+		description       = "This is a test action"
+		kafka_method = {}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				ExpectNonEmptyPlan: true,
+				Config:             acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "Action 1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "description", "This is a test action"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.title", "myStringIdentifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.pattern_jq_query", "[\"test1\", \"test2\"]"),
 				),
 			},
 		},

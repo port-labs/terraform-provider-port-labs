@@ -142,7 +142,7 @@ description: |-
             runId: "{{.run.id}}"
           })
       }
-  ```
+  }
 ---
 
 # port_action (Resource)
@@ -675,7 +675,25 @@ Optional:
 - `max_length` (Number) The max length of the string property
 - `min_length` (Number) The min length of the string property
 - `pattern` (String) The pattern of the string property
-- `pattern_jq_query` (String) The pattern jq query of the string property
+- `pattern_jq_query` (String) The pattern jq query of the string property. See the examples directory for a demonstration of how to use dynamic patterns.
+  This field can be used in three ways:
+
+  1. To generate a regex pattern dynamically:
+  ```hcl
+  pattern_jq_query = "if .environment == \"production\" then \"^[a-z][a-z0-9-]{3,20}$\" else \"^[a-z][a-z0-9-]{2,10}$\" end"
+  ```
+
+  2. To generate a list of allowed values dynamically:
+  ```hcl
+  pattern_jq_query = "if .team == \"platform\" then [\"dev\", \"staging\", \"production\"] else [\"dev\", \"staging\"] end"
+  ```
+
+  3. Direct JSON array of allowed values:
+  ```hcl
+  pattern_jq_query = "[\"value1\", \"value2\", \"value3\"]"
+  ```
+
+  The JQ expression is evaluated by the Port API at runtime to determine the validation rules based on context.
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
 - `sort` (Attributes) How to sort entities when in the self service action form in the UI (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--sort))
 - `title` (String) The title of the property

@@ -1113,7 +1113,7 @@ func TestAccPortActionPatternConflict(t *testing.T) {
 
 		Steps: []resource.TestStep{
 			{
-				ExpectError: regexp.MustCompile("Attribute .* conflicts with pattern_jq_query"),
+				ExpectError: regexp.MustCompile(`(?s)Error: Invalid Attribute Combination.*Attribute.*pattern.*cannot be specified when.*pattern_jq_query.*is specified`),
 				Config:      acctest.ProviderConfig + testAccActionConfigCreate,
 			},
 		},

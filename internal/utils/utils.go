@@ -81,7 +81,7 @@ func TerraformListToGoArray(ctx context.Context, list types.List, arrayType stri
 
 var nillableKinds = []reflect.Kind{reflect.Ptr, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice}
 
-func GoObjectToTerraformString(v interface{}) (types.String, error) {
+func GoObjectToTerraformString(v interface{}, jsonEscapeHTML bool) (types.String, error) {
 	if v == nil {
 		return types.StringNull(), nil
 	}
@@ -93,7 +93,7 @@ func GoObjectToTerraformString(v interface{}) (types.String, error) {
 
 	jsonBuilder := new(strings.Builder)
 	jsonEncoder := json.NewEncoder(jsonBuilder)
-	jsonEncoder.SetEscapeHTML(false)
+	jsonEncoder.SetEscapeHTML(jsonEscapeHTML)
 	err := jsonEncoder.Encode(v)
 	if err != nil {
 		return types.StringNull(), err

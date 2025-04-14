@@ -2,8 +2,6 @@ package provider
 
 import (
 	"context"
-	"os"
-
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -26,6 +24,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/team"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/webhook"
 	"github.com/port-labs/terraform-provider-port-labs/v2/version"
+	"os"
 )
 
 var (
@@ -63,6 +62,10 @@ func (p *PortLabsProvider) Schema(ctx context.Context, req provider.SchemaReques
 			"base_url": schema.StringAttribute{
 				Optional: true,
 			},
+			"json_escape_html": schema.BoolAttribute{
+				Optional:            true,
+				MarkdownDescription: "When set to `false` disables the default HTML escaping of json.Marshal when reading data from Port. Defaults to `true`",
+			},
 		},
 	}
 }
@@ -92,6 +95,12 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create Port-labs client", err.Error())
 		return
+	}
+
+	if data.JSONEscapeHTML.IsNull() {
+		c.JSONEscapeHTML = true
+	} else {
+		c.JSONEscapeHTML = data.JSONEscapeHTML.ValueBool()
 	}
 
 	if data.Token.ValueString() != "" {

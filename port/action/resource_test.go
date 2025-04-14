@@ -1150,7 +1150,7 @@ func TestAccPortActionEmptyPatternJqQuery(t *testing.T) {
 
 		Steps: []resource.TestStep{
 			{
-				ExpectError: regexp.MustCompile(`(?s)Error: Invalid Attribute Value Length.*String length must be at least 1`),
+				ExpectError: regexp.MustCompile(`string length must be at least 1`),
 				Config:      acctest.ProviderConfig + testAccActionConfigCreate,
 			},
 		},
@@ -1189,8 +1189,7 @@ func TestAccPortActionPatternJqQueryComplex(t *testing.T) {
 
 		Steps: []resource.TestStep{
 			{
-				ExpectNonEmptyPlan: true,
-				Config:             acctest.ProviderConfig + testAccActionConfigComplex,
+				Config: acctest.ProviderConfig + testAccActionConfigComplex,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.pattern_jq_query", "if .blueprint == \"microservice\" then \"^[a-z]+$\" else \"^[0-9]+$\" end"),
 				),
@@ -1230,8 +1229,7 @@ func TestAccPortActionPatternJqQueryAllowedValues(t *testing.T) {
 
 		Steps: []resource.TestStep{
 			{
-				ExpectNonEmptyPlan: true,
-				Config:             acctest.ProviderConfig + testAccActionConfigCreate,
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "Action 1"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.myStringIdentifier.pattern_jq_query", "if .blueprint == \"microservice\" then [\"micro-1\", \"micro-2\"] else [\"other-1\", \"other-2\"] end"),

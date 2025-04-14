@@ -66,10 +66,13 @@ func stringPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 		}
 
 		if !prop.PatternJqQuery.IsNull() {
-			patternJqQueryMap := map[string]string{
-				"jqQuery": prop.PatternJqQuery.ValueString(),
+			patternJqQuery := prop.PatternJqQuery.ValueString()
+			if patternJqQuery != "" {
+				patternJqQueryMap := map[string]string{
+					"jqQuery": patternJqQuery,
+				}
+				property.Pattern = patternJqQueryMap
 			}
-			property.Pattern = patternJqQueryMap
 		}
 
 		if !prop.Description.IsNull() {
@@ -162,7 +165,6 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 		Dataset:    writeDatasetToResource(v.Dataset),
 	}
 
-	// Handle pattern (could be a string or a map with jqQuery)
 	if v.Pattern != nil {
 		vPattern := reflect.ValueOf(v.Pattern)
 
@@ -173,9 +175,18 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 		} else if vPattern.Kind() == reflect.Map {
 			// JQ Query pattern
 			patternMap := v.Pattern.(map[string]interface{})
-			if jqQuery, ok := patternMap["jqQuery"]; ok {
+			if jqQuery, ok := patternMap["jqQuery"]; ok && jqQuery != nil {
+				jqQueryStr, isString := jqQuery.(string)
+				if isString && jqQueryStr != "" {
+					stringProp.Pattern = types.StringNull()
+					stringProp.PatternJqQuery = types.StringValue(jqQueryStr)
+				} else {
+					stringProp.Pattern = types.StringNull()
+					stringProp.PatternJqQuery = types.StringNull()
+				}
+			} else {
 				stringProp.Pattern = types.StringNull()
-				stringProp.PatternJqQuery = types.StringValue(jqQuery.(string))
+				stringProp.PatternJqQuery = types.StringNull()
 			}
 		}
 	} else {

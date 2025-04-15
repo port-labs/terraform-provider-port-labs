@@ -93,6 +93,12 @@ func TestGoObjectToTerraformString(t *testing.T) {
 			args: args{v: "{\"property\": \"sum\", \"operator\": \">\", \"value\": 2}", JSONEscapeHTML: false},
 			want: types.StringValue("\"{\\\"property\\\": \\\"sum\\\", \\\"operator\\\": \\\">\\\", \\\"value\\\": 2}\""),
 		},
+		{
+			name:    "encode error",
+			args:    args{v: func() {}},
+			want:    types.StringNull(),
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

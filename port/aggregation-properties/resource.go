@@ -60,7 +60,7 @@ func (r *AggregationPropertiesResource) Read(ctx context.Context, req resource.R
 		return
 	}
 
-	err = refreshAggregationPropertiesState(state, b.AggregationProperties)
+	err = r.refreshAggregationPropertiesState(state, b.AggregationProperties)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing aggregation property fields to resource", err.Error())
 		return

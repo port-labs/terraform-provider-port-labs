@@ -62,7 +62,7 @@ func (r *ActionResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	err = refreshActionState(ctx, state, a)
+	err = r.refreshActionState(ctx, state, a)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing action fields to resource", err.Error())
 		return

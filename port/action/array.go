@@ -208,7 +208,7 @@ func arrayPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, pr
 	return nil
 }
 
-func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error) {
+func (r *ActionResource) addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error) {
 	arrayProp := &ArrayPropModel{
 		MinItems: flex.GoInt64ToFramework(v.MinItems),
 		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
@@ -254,7 +254,7 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 					arrayProp.StringItems.Blueprint = types.StringValue(v.Items["blueprint"].(string))
 				}
 				if value, ok := v.Items["dataset"]; ok && value != nil {
-					ds, err := utils.GoObjectToTerraformString(v.Items["dataset"])
+					ds, err := utils.GoObjectToTerraformString(v.Items["dataset"], r.portClient.JSONEscapeHTML)
 					if err != nil {
 						return nil, err
 					}

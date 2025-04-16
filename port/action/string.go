@@ -62,7 +62,19 @@ func stringPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 
 		if !prop.Pattern.IsNull() {
 			pattern := prop.Pattern.ValueString()
-			property.Pattern = &pattern
+			if pattern != "" {
+				property.Pattern = &pattern
+			}
+		}
+
+		if !prop.PatternJqQuery.IsNull() {
+			patternJqQuery := prop.PatternJqQuery.ValueString()
+			if patternJqQuery != "" {
+				patternJqQueryMap := map[string]string{
+					"jqQuery": patternJqQuery,
+				}
+				property.Pattern = patternJqQueryMap
+			}
 		}
 
 		if !prop.Description.IsNull() {
@@ -149,11 +161,36 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 	stringProp := &StringPropModel{
 		MinLength:  flex.GoInt64ToFramework(v.MinLength),
 		MaxLength:  flex.GoInt64ToFramework(v.MaxLength),
-		Pattern:    flex.GoStringToFramework(v.Pattern),
 		Format:     flex.GoStringToFramework(v.Format),
 		Blueprint:  flex.GoStringToFramework(v.Blueprint),
 		Encryption: flex.GoStringToFramework(v.Encryption),
 		Dataset:    writeDatasetToResource(v.Dataset),
+	}
+
+	stringProp.Pattern = types.StringNull()
+	stringProp.PatternJqQuery = types.StringNull()
+
+	if v.Pattern != nil {
+		vPattern := reflect.ValueOf(v.Pattern)
+
+		if vPattern.Kind() == reflect.String {
+			// Regular pattern
+			patternValue := v.Pattern.(string)
+			if patternValue != "" {
+				stringProp.Pattern = types.StringValue(patternValue)
+			}
+		} else if vPattern.Kind() == reflect.Map {
+			// JQ Query pattern
+			patternMap, ok := v.Pattern.(map[string]interface{})
+			if ok && patternMap != nil {
+				if jqQuery, ok := patternMap["jqQuery"]; ok && jqQuery != nil {
+					jqQueryStr, isString := jqQuery.(string)
+					if isString && jqQueryStr != "" {
+						stringProp.PatternJqQuery = types.StringValue(jqQueryStr)
+					}
+				}
+			}
+		}
 	}
 
 	if v.Enum != nil {

@@ -60,7 +60,7 @@ func (d *SearchDataSource) Read(ctx context.Context, req datasource.ReadRequest,
 
 	for _, entity := range searchResult.Entities {
 		matchingEntityBlueprint := blueprints[entity.Blueprint]
-		e := refreshEntityState(ctx, &entity, &matchingEntityBlueprint)
+		e := d.refreshEntityState(ctx, &entity, &matchingEntityBlueprint)
 		data.Entities = append(data.Entities, *e)
 	}
 

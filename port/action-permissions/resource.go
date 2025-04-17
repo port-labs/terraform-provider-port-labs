@@ -62,7 +62,7 @@ func (r *ActionPermissionsResource) Read(ctx context.Context, req resource.ReadR
 		return
 	}
 
-	err = refreshActionPermissionsState(state, a, actionIdentifier)
+	err = r.refreshActionPermissionsState(state, a, actionIdentifier)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to refresh action permissions state", err.Error())
 		return

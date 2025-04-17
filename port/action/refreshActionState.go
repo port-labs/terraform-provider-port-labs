@@ -2,7 +2,6 @@ package action
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -362,11 +361,11 @@ func (r *ActionResource) writeTriggerToResource(ctx context.Context, a *cli.Acti
 		}
 
 		if a.Trigger.Condition != nil {
-			triggerCondition, err := json.Marshal(a.Trigger.Condition)
+			triggerCondition, err := utils.GoObjectToTerraformString(a.Trigger.Condition, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return err
 			}
-			state.SelfServiceTrigger.Condition = types.StringValue(string(triggerCondition))
+			state.SelfServiceTrigger.Condition = triggerCondition
 		}
 	}
 

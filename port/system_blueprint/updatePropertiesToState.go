@@ -10,7 +10,7 @@ import (
 	"github.com/samber/lo"
 )
 
-func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, systemBp *cli.Blueprint, bm *SystemBlueprintModel) error {
+func (r *Resource) updatePropertiesToState(ctx context.Context, b *cli.Blueprint, systemBp *cli.Blueprint, bm *SystemBlueprintModel) error {
 	properties := &blueprint.PropertiesModel{}
 
 	for k, v := range b.Schema.Properties {
@@ -34,7 +34,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, systemBp *cl
 				stringProp.Required = types.BoolValue(false)
 			}
 
-			blueprint.SetCommonProperties(v, stringProp)
+			blueprint.SetCommonProperties(v, stringProp, r.client.JSONEscapeHTML)
 
 			properties.StringProps[k] = *stringProp
 
@@ -51,7 +51,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, systemBp *cl
 				numberProp.Required = types.BoolValue(false)
 			}
 
-			blueprint.SetCommonProperties(v, numberProp)
+			blueprint.SetCommonProperties(v, numberProp, r.client.JSONEscapeHTML)
 
 			properties.NumberProps[k] = *numberProp
 
@@ -60,7 +60,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, systemBp *cl
 				properties.ArrayProps = make(map[string]blueprint.ArrayPropModel)
 			}
 
-			arrayProp := blueprint.AddArrayPropertiesToState(&v)
+			arrayProp := blueprint.AddArrayPropertiesToState(&v, r.client.JSONEscapeHTML)
 
 			if lo.Contains(b.Schema.Required, k) {
 				arrayProp.Required = types.BoolValue(true)
@@ -68,7 +68,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, systemBp *cl
 				arrayProp.Required = types.BoolValue(false)
 			}
 
-			blueprint.SetCommonProperties(v, arrayProp)
+			blueprint.SetCommonProperties(v, arrayProp, r.client.JSONEscapeHTML)
 
 			properties.ArrayProps[k] = *arrayProp
 
@@ -79,7 +79,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, systemBp *cl
 
 			booleanProp := &blueprint.BooleanPropModel{}
 
-			blueprint.SetCommonProperties(v, booleanProp)
+			blueprint.SetCommonProperties(v, booleanProp, r.client.JSONEscapeHTML)
 
 			if lo.Contains(b.Schema.Required, k) {
 				booleanProp.Required = types.BoolValue(true)
@@ -102,7 +102,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, systemBp *cl
 				objectProp.Required = types.BoolValue(false)
 			}
 
-			blueprint.SetCommonProperties(v, objectProp)
+			blueprint.SetCommonProperties(v, objectProp, r.client.JSONEscapeHTML)
 
 			properties.ObjectProps[k] = *objectProp
 		}
@@ -112,7 +112,6 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, systemBp *cl
 
 	return nil
 }
-
 
 func addRelationsToState(b *cli.Blueprint, systemBp *cli.Blueprint, bm *SystemBlueprintModel) {
 	for k, v := range b.Relations {

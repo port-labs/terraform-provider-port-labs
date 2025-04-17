@@ -2,7 +2,6 @@ package action
 
 import (
 	"context"
-	"encoding/json"
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -331,12 +330,11 @@ func (r *ActionResource) addArrayPropertiesToResource(v *cli.ActionProperty) (*A
 					objectArray := make([]map[string]interface{}, len(v.Default.([]interface{})))
 					attrs := make([]attr.Value, 0, len(objectArray))
 					for _, value := range v.Default.([]interface{}) {
-						stringfiyValue, err := json.Marshal(value)
+						stringValue, err := utils.GoObjectToTerraformString(value, r.portClient.JSONEscapeHTML)
 						if err != nil {
 							return nil, err
 						}
-						stringValue := string(stringfiyValue)
-						attrs = append(attrs, basetypes.NewStringValue(stringValue))
+						attrs = append(attrs, stringValue)
 					}
 					arrayProp.ObjectItems.Default, _ = types.ListValue(types.StringType, attrs)
 				}

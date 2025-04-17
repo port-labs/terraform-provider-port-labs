@@ -60,7 +60,7 @@ func (r *EntityResource) Read(ctx context.Context, req resource.ReadRequest, res
 		return
 	}
 
-	err = refreshEntityState(ctx, state, e, b)
+	err = r.refreshEntityState(ctx, state, e, b)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing entity fields to resource", err.Error())
 		return

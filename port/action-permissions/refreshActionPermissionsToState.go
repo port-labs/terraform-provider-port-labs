@@ -1,13 +1,13 @@
 package action_permissions
 
 import (
-	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func refreshActionPermissionsState(state *ActionPermissionsModel, a *cli.ActionPermissions, actionId string) error {
+func (r *ActionPermissionsResource) refreshActionPermissionsState(state *ActionPermissionsModel, a *cli.ActionPermissions, actionId string) error {
 	state.ID = types.StringValue(actionId)
 	state.ActionIdentifier = types.StringValue(actionId)
 	state.BlueprintIdentifier = types.StringNull()
@@ -33,12 +33,12 @@ func refreshActionPermissionsState(state *ActionPermissionsModel, a *cli.ActionP
 	state.Permissions.Execute.OwnedByTeam = flex.GoBoolToFramework(a.Execute.OwnedByTeam)
 
 	if a.Execute.Policy != nil {
-		policy, err := json.Marshal(a.Execute.Policy)
+		policy, err := utils.GoObjectToTerraformString(a.Execute.Policy, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
 
-		state.Permissions.Execute.Policy = types.StringValue(string(policy))
+		state.Permissions.Execute.Policy = policy
 	}
 
 	state.Permissions.Approve = &ApproveModel{}
@@ -59,12 +59,12 @@ func refreshActionPermissionsState(state *ActionPermissionsModel, a *cli.ActionP
 	}
 
 	if a.Approve.Policy != nil {
-		policy, err := json.Marshal(a.Approve.Policy)
+		policy, err := utils.GoObjectToTerraformString(a.Approve.Policy, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
 
-		state.Permissions.Approve.Policy = types.StringValue(string(policy))
+		state.Permissions.Approve.Policy = policy
 	}
 
 	return nil

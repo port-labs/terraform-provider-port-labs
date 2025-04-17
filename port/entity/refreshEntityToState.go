@@ -2,13 +2,13 @@ package entity
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayProperties map[string][]interface{}, blueprint *cli.Blueprint) {
+func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayProperties map[string][]interface{}, blueprint *cli.Blueprint) {
 	mapStringItems := make(map[string][]*string)
 	mapNumberItems := make(map[string][]*float64)
 	mapBooleanItems := make(map[string][]*bool)
@@ -70,9 +70,8 @@ func refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayPrope
 		case "object":
 			if t != nil {
 				for _, item := range t {
-					js, _ := json.Marshal(&item)
-					stringJs := string(js)
-					mapObjectItems[k] = append(mapObjectItems[k], &stringJs)
+					stringJs, _ := utils.GoObjectToTerraformString(&item, r.portClient.JSONEscapeHTML)
+					mapObjectItems[k] = append(mapObjectItems[k], stringJs.ValueStringPointer())
 				}
 				if len(t) == 0 {
 					mapObjectItems[k] = []*string{}
@@ -85,7 +84,7 @@ func refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayPrope
 	}
 }
 
-func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) {
+func (r *EntityResource) refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) {
 	state.Properties = &EntityPropertiesModel{}
 	arrayProperties := make(map[string][]interface{})
 	for k, v := range e.Properties {
@@ -111,8 +110,7 @@ func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cl
 			if state.Properties.ObjectProps == nil {
 				state.Properties.ObjectProps = make(map[string]types.String)
 			}
-			js, _ := json.Marshal(&t)
-			state.Properties.ObjectProps[k] = types.StringValue(string(js))
+			state.Properties.ObjectProps[k], _ = utils.GoObjectToTerraformString(&t, r.portClient.JSONEscapeHTML)
 		case nil:
 			switch blueprint.Schema.Properties[k].Type {
 			case "string":
@@ -141,7 +139,7 @@ func refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cl
 		}
 	}
 	if len(arrayProperties) != 0 {
-		refreshArrayEntityState(ctx, state, arrayProperties, blueprint)
+		r.refreshArrayEntityState(ctx, state, arrayProperties, blueprint)
 	}
 }
 
@@ -179,7 +177,7 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 	}
 }
 
-func refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) error {
+func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) error {
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprint.Identifier, e.Identifier))
 	state.Identifier = types.StringValue(e.Identifier)
 	state.Blueprint = types.StringValue(blueprint.Identifier)
@@ -204,7 +202,7 @@ func refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, 
 	}
 
 	if len(e.Properties) != 0 {
-		refreshPropertiesEntityState(ctx, state, e, blueprint)
+		r.refreshPropertiesEntityState(ctx, state, e, blueprint)
 	}
 
 	if len(e.Relations) != 0 {

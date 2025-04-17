@@ -2,8 +2,6 @@ package blueprint
 
 import (
 	"context"
-	"encoding/json"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -114,7 +112,7 @@ func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props 
 	return nil
 }
 
-func AddArrayPropertiesToState(v *cli.BlueprintProperty) *ArrayPropModel {
+func AddArrayPropertiesToState(v *cli.BlueprintProperty, jsonEscapeHTML bool) *ArrayPropModel {
 	arrayProp := &ArrayPropModel{
 		MinItems: flex.GoInt64ToFramework(v.MinItems),
 		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
@@ -179,9 +177,8 @@ func AddArrayPropertiesToState(v *cli.BlueprintProperty) *ArrayPropModel {
 					}
 					attrs := make([]attr.Value, 0, len(objectArray))
 					for _, value := range objectArray {
-						js, _ := json.Marshal(&value)
-						stringValue := string(js)
-						attrs = append(attrs, basetypes.NewStringValue(stringValue))
+						stringValue, _ := utils.GoObjectToTerraformString(&value, jsonEscapeHTML)
+						attrs = append(attrs, stringValue)
 					}
 					arrayProp.ObjectItems.Default, _ = types.ListValue(types.StringType, attrs)
 				} else {

@@ -2,7 +2,7 @@ package blueprint
 
 import (
 	"context"
-	"encoding/json"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -10,7 +10,7 @@ import (
 	"github.com/samber/lo"
 )
 
-func SetCommonProperties(v cli.BlueprintProperty, prop interface{}) {
+func SetCommonProperties(v cli.BlueprintProperty, prop interface{}, jsonEscapeHTML bool) {
 	properties := []string{"Description", "Icon", "Default", "Title"}
 	for _, property := range properties {
 		switch property {
@@ -63,16 +63,14 @@ func SetCommonProperties(v cli.BlueprintProperty, prop interface{}) {
 				case *BooleanPropModel:
 					p.Default = types.BoolValue(v.Default.(bool))
 				case *ObjectPropModel:
-					js, _ := json.Marshal(v.Default)
-					value := string(js)
-					p.Default = types.StringValue(value)
+					p.Default, _ = utils.GoObjectToTerraformString(v.Default, jsonEscapeHTML)
 				}
 			}
 		}
 	}
 }
 
-func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel) error {
+func (r *BlueprintResource) updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel) error {
 	properties := &PropertiesModel{}
 
 	for k, v := range b.Schema.Properties {
@@ -89,7 +87,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				stringProp.Required = types.BoolValue(false)
 			}
 
-			SetCommonProperties(v, stringProp)
+			SetCommonProperties(v, stringProp, r.portClient.JSONEscapeHTML)
 
 			properties.StringProps[k] = *stringProp
 
@@ -106,7 +104,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				numberProp.Required = types.BoolValue(false)
 			}
 
-			SetCommonProperties(v, numberProp)
+			SetCommonProperties(v, numberProp, r.portClient.JSONEscapeHTML)
 
 			properties.NumberProps[k] = *numberProp
 
@@ -115,7 +113,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				properties.ArrayProps = make(map[string]ArrayPropModel)
 			}
 
-			arrayProp := AddArrayPropertiesToState(&v)
+			arrayProp := AddArrayPropertiesToState(&v, r.portClient.JSONEscapeHTML)
 
 			if lo.Contains(b.Schema.Required, k) {
 				arrayProp.Required = types.BoolValue(true)
@@ -123,7 +121,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				arrayProp.Required = types.BoolValue(false)
 			}
 
-			SetCommonProperties(v, arrayProp)
+			SetCommonProperties(v, arrayProp, r.portClient.JSONEscapeHTML)
 
 			properties.ArrayProps[k] = *arrayProp
 
@@ -134,7 +132,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 
 			booleanProp := &BooleanPropModel{}
 
-			SetCommonProperties(v, booleanProp)
+			SetCommonProperties(v, booleanProp, r.portClient.JSONEscapeHTML)
 
 			if lo.Contains(b.Schema.Required, k) {
 				booleanProp.Required = types.BoolValue(true)
@@ -157,7 +155,7 @@ func updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *Blueprin
 				objectProp.Required = types.BoolValue(false)
 			}
 
-			SetCommonProperties(v, objectProp)
+			SetCommonProperties(v, objectProp, r.portClient.JSONEscapeHTML)
 
 			properties.ObjectProps[k] = *objectProp
 		}

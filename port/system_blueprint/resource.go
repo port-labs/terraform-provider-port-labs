@@ -14,26 +14,26 @@ func writeBlueprintComputedFieldsToState(b *cli.Blueprint, state *SystemBlueprin
 	state.Identifier = types.StringValue(b.Identifier)
 }
 
-func refreshBlueprintState(ctx context.Context, bm *SystemBlueprintModel, b *cli.Blueprint, systemBp *cli.Blueprint) error {
+func (r *Resource) refreshBlueprintState(ctx context.Context, bm *SystemBlueprintModel, b *cli.Blueprint, systemBp *cli.Blueprint) error {
 	bm.Identifier = types.StringValue(b.Identifier)
 	bm.ID = types.StringValue(b.Identifier)
 
-	if len(b.Schema.Properties) - len(systemBp.Schema.Properties) > 0 {
-		err := updatePropertiesToState(ctx, b, systemBp, bm)
+	if len(b.Schema.Properties)-len(systemBp.Schema.Properties) > 0 {
+		err := r.updatePropertiesToState(ctx, b, systemBp, bm)
 		if err != nil {
 			return err
 		}
 	}
 
-	if len(b.Relations) - len(systemBp.Relations) > 0 {
+	if len(b.Relations)-len(systemBp.Relations) > 0 {
 		addRelationsToState(b, systemBp, bm)
 	}
 
-	if len(b.MirrorProperties) - len(systemBp.MirrorProperties) > 0 {
+	if len(b.MirrorProperties)-len(systemBp.MirrorProperties) > 0 {
 		addMirrorPropertiesToState(b, systemBp, bm)
 	}
 
-	if len(b.CalculationProperties) - len(systemBp.CalculationProperties) > 0 {
+	if len(b.CalculationProperties)-len(systemBp.CalculationProperties) > 0 {
 		addCalculationPropertiesToState(ctx, b, systemBp, bm)
 	}
 
@@ -70,7 +70,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
-	err = refreshBlueprintState(ctx, state, b, systemBp)
+	err = r.refreshBlueprintState(ctx, state, b, systemBp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
 		return
@@ -106,7 +106,7 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 		return
 	}
 
-	err = refreshBlueprintState(ctx, state, b, systemBp)
+	err = r.refreshBlueprintState(ctx, state, b, systemBp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
 		return
@@ -166,18 +166,18 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		ChangelogDestination: existingBp.ChangelogDestination,
 		Schema: cli.BlueprintSchema{
 			Properties: props,
-			Required:  systemBp.Schema.Required,
+			Required:   systemBp.Schema.Required,
 		},
 		Relations:             relations,
-		MirrorProperties:     mirrorProps,
+		MirrorProperties:      mirrorProps,
 		CalculationProperties: calcProps,
 		AggregationProperties: existingBp.AggregationProperties,
 	}
-	
+
 	if existingBp.Ownership != nil {
 		b.Ownership = &cli.Ownership{
-			Type: existingBp.Ownership.Type,
-			Path: existingBp.Ownership.Path,
+			Type:  existingBp.Ownership.Type,
+			Path:  existingBp.Ownership.Path,
 			Title: existingBp.Ownership.Title,
 		}
 	}
@@ -204,4 +204,4 @@ func (r *Resource) ImportState(ctx context.Context, req resource.ImportStateRequ
 
 func (r *Resource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_system_blueprint"
-} 
+}

@@ -57,7 +57,7 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	err = refreshBlueprintState(ctx, state, b)
+	err = r.refreshBlueprintState(ctx, state, b)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
 		return
@@ -65,7 +65,7 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Blueprint) error {
+func (r *BlueprintResource) refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Blueprint) error {
 	bm.Identifier = types.StringValue(b.Identifier)
 	bm.ID = types.StringValue(b.Identifier)
 	bm.CreatedAt = types.StringValue(b.CreatedAt.String())
@@ -120,7 +120,7 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 	}
 
 	if len(b.Schema.Properties) > 0 {
-		err := updatePropertiesToState(ctx, b, bm)
+		err := r.updatePropertiesToState(ctx, b, bm)
 		if err != nil {
 			return err
 		}

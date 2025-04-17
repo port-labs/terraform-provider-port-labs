@@ -62,7 +62,7 @@ func (r *PageResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 		return
 	}
 
-	err = refreshPageToState(state, p)
+	err = r.refreshPageToState(state, p)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to write page fields to resource", err.Error())

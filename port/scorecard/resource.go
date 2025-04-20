@@ -53,7 +53,7 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 		resp.Diagnostics.AddError("failed to read scorecard", err.Error())
 		return
 	}
-	refreshScorecardState(ctx, state, s, blueprintIdentifier)
+	r.refreshScorecardState(ctx, state, s, blueprintIdentifier)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -78,7 +78,7 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString())
+	r.refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -112,8 +112,8 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		resp.Diagnostics.AddError("failed to update the scorecard", err.Error())
 		return
 	}
-	
-	refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString())
+
+	r.refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString())
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

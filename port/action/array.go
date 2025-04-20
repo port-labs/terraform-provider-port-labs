@@ -2,7 +2,6 @@ package action
 
 import (
 	"context"
-	"encoding/json"
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -208,7 +207,7 @@ func arrayPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, pr
 	return nil
 }
 
-func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error) {
+func (r *ActionResource) addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error) {
 	arrayProp := &ArrayPropModel{
 		MinItems: flex.GoInt64ToFramework(v.MinItems),
 		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
@@ -254,7 +253,7 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 					arrayProp.StringItems.Blueprint = types.StringValue(v.Items["blueprint"].(string))
 				}
 				if value, ok := v.Items["dataset"]; ok && value != nil {
-					ds, err := utils.GoObjectToTerraformString(v.Items["dataset"])
+					ds, err := utils.GoObjectToTerraformString(v.Items["dataset"], r.portClient.JSONEscapeHTML)
 					if err != nil {
 						return nil, err
 					}
@@ -331,12 +330,11 @@ func addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error
 					objectArray := make([]map[string]interface{}, len(v.Default.([]interface{})))
 					attrs := make([]attr.Value, 0, len(objectArray))
 					for _, value := range v.Default.([]interface{}) {
-						stringfiyValue, err := json.Marshal(value)
+						stringValue, err := utils.GoObjectToTerraformString(value, r.portClient.JSONEscapeHTML)
 						if err != nil {
 							return nil, err
 						}
-						stringValue := string(stringfiyValue)
-						attrs = append(attrs, basetypes.NewStringValue(stringValue))
+						attrs = append(attrs, stringValue)
 					}
 					arrayProp.ObjectItems.Default, _ = types.ListValue(types.StringType, attrs)
 				}

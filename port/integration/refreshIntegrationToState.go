@@ -7,7 +7,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func refreshIntegrationState(state *IntegrationModel, a *cli.Integration, integrationId string) error {
+func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a *cli.Integration, integrationId string) error {
 	state.ID = types.StringValue(integrationId)
 	state.InstallationId = types.StringValue(integrationId)
 
@@ -16,7 +16,7 @@ func refreshIntegrationState(state *IntegrationModel, a *cli.Integration, integr
 	state.Version = types.StringPointerValue(a.Version)
 
 	if a.Config != nil {
-		config, _ := utils.GoObjectToTerraformString(a.Config)
+		config, _ := utils.GoObjectToTerraformString(a.Config, r.portClient.JSONEscapeHTML)
 		state.Config = config
 	}
 	if a.ChangelogDestination != nil {

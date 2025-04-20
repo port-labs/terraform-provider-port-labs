@@ -28,6 +28,14 @@ var ProviderConfig = fmt.Sprintf(`provider "port" {
 	}
 `, os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET"), os.Getenv("PORT_BASE_URL"))
 
+var ProviderConfigNoEscapeHTML = fmt.Sprintf(`provider "port" {
+	client_id = "%s"
+	secret = "%s"
+	base_url = "%s"
+	json_escape_html = false
+	}
+`, os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET"), os.Getenv("PORT_BASE_URL"))
+
 func TestAccPreCheck(t *testing.T) {
 	if v := os.Getenv("PORT_CLIENT_ID"); v == "" {
 		t.Fatal("PORT_CLIENT_ID must be set for acceptance tests")

@@ -2,8 +2,6 @@ module github.com/port-labs/terraform-provider-port-labs/v2
 
 go 1.22
 
-toolchain go1.22.0
-
 require (
 	github.com/go-resty/resty/v2 v2.13.1
 	github.com/hashicorp/go-uuid v1.0.3

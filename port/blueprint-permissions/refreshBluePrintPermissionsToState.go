@@ -43,9 +43,9 @@ func refreshBlueprintPermissionsState(state *BlueprintPermissionsModel, a *cli.B
 		}
 	} else {
 		state.Entities.Unregister = &BlueprintPermissionsTFBlock{
-			Users:       utils.Map(utils.SortStringSliceByOther(a.Entities.Update.Users, utils.TFStringListToStringArray(oldPermissions.Unregister.Users)), types.StringValue),
-			Roles:       utils.Map(utils.SortStringSliceByOther(a.Entities.Update.Roles, utils.TFStringListToStringArray(oldPermissions.Unregister.Roles)), types.StringValue),
-			Teams:       utils.Map(utils.SortStringSliceByOther(a.Entities.Update.Teams, utils.TFStringListToStringArray(oldPermissions.Unregister.Teams)), types.StringValue),
+			Users:       utils.Map(utils.SortStringSliceByOther(a.Entities.Unregister.Users, utils.TFStringListToStringArray(oldPermissions.Unregister.Users)), types.StringValue),
+			Roles:       utils.Map(utils.SortStringSliceByOther(a.Entities.Unregister.Roles, utils.TFStringListToStringArray(oldPermissions.Unregister.Roles)), types.StringValue),
+			Teams:       utils.Map(utils.SortStringSliceByOther(a.Entities.Unregister.Teams, utils.TFStringListToStringArray(oldPermissions.Unregister.Teams)), types.StringValue),
 			OwnedByTeam: types.BoolValue(*a.Entities.Unregister.OwnedByTeam),
 		}
 	}
@@ -59,9 +59,9 @@ func refreshBlueprintPermissionsState(state *BlueprintPermissionsModel, a *cli.B
 		}
 	} else {
 		state.Entities.Register = &BlueprintPermissionsTFBlock{
-			Users:       utils.Map(utils.SortStringSliceByOther(a.Entities.Update.Users, utils.TFStringListToStringArray(oldPermissions.Register.Users)), types.StringValue),
-			Roles:       utils.Map(utils.SortStringSliceByOther(a.Entities.Update.Roles, utils.TFStringListToStringArray(oldPermissions.Register.Roles)), types.StringValue),
-			Teams:       utils.Map(utils.SortStringSliceByOther(a.Entities.Update.Teams, utils.TFStringListToStringArray(oldPermissions.Register.Teams)), types.StringValue),
+			Users:       utils.Map(utils.SortStringSliceByOther(a.Entities.Register.Users, utils.TFStringListToStringArray(oldPermissions.Register.Users)), types.StringValue),
+			Roles:       utils.Map(utils.SortStringSliceByOther(a.Entities.Register.Roles, utils.TFStringListToStringArray(oldPermissions.Register.Roles)), types.StringValue),
+			Teams:       utils.Map(utils.SortStringSliceByOther(a.Entities.Register.Teams, utils.TFStringListToStringArray(oldPermissions.Register.Teams)), types.StringValue),
 			OwnedByTeam: types.BoolValue(*a.Entities.Register.OwnedByTeam),
 		}
 	}

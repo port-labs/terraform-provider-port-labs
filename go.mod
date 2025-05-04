@@ -1,6 +1,6 @@
 module github.com/port-labs/terraform-provider-port-labs/v2
 
-go 1.22
+go 1.24
 
 require (
 	github.com/go-resty/resty/v2 v2.13.1

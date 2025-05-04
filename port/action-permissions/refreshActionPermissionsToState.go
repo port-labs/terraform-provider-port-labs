@@ -41,9 +41,9 @@ func (r *ActionPermissionsResource) refreshActionPermissionsState(state *ActionP
 	state.Permissions.Approve = &ApproveModel{}
 
 	if oldPermissions == nil || oldPermissions.Approve == nil {
-		state.Permissions.Approve.Users = utils.Map(a.Execute.Users, types.StringValue)
-		state.Permissions.Approve.Roles = utils.Map(a.Execute.Roles, types.StringValue)
-		state.Permissions.Approve.Teams = utils.Map(a.Execute.Teams, types.StringValue)
+		state.Permissions.Approve.Users = utils.Map(a.Approve.Users, types.StringValue)
+		state.Permissions.Approve.Roles = utils.Map(a.Approve.Roles, types.StringValue)
+		state.Permissions.Approve.Teams = utils.Map(a.Approve.Teams, types.StringValue)
 	} else {
 		state.Permissions.Approve.Users = utils.Map(utils.SortStringSliceByOther(a.Approve.Users, utils.TFStringListToStringArray(oldPermissions.Approve.Users)), types.StringValue)
 		state.Permissions.Approve.Roles = utils.Map(utils.SortStringSliceByOther(a.Approve.Roles, utils.TFStringListToStringArray(oldPermissions.Approve.Roles)), types.StringValue)

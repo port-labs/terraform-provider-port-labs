@@ -6,7 +6,6 @@ on:
       - main
 
 env:
-  GO_VERSION: "1.22.0"
   FORCE_COLOR: 1
 
 jobs:
@@ -39,13 +38,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
-      - uses: actions/cache@v4
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
+          go-version-file: 'go.mod'
+          cache: 'true'
       - name: Compile tests
         id: compile-tests
         shell: python
@@ -100,7 +94,7 @@ jobs:
           terraform_wrapper: false
       - uses: actions/setup-go@v5
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version-file: 'go.mod'
           cache: 'false'
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@latest

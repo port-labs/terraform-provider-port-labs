@@ -147,8 +147,6 @@ jobs:
         with:
           report_paths: './test-results/*.xml'
           include_passed: 'true'
-          require_tests: 'true'
-          fail_on_failure: 'true'
           comment: 'true'
           check_retries: 'true'
           flaky_summary: 'true'

@@ -22,7 +22,7 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 
 ## Requirements
 - [Terraform](https://www.terraform.io/downloads.html)
-- [Go](https://golang.org/doc/install) >= 1.22 (to build the provider plugin)
+- [Go](https://golang.org/doc/install) >= 1.24 (to build the provider plugin)
 - [Port Credentials](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/api/#find-your-port-credentials)
 
 ## Installation

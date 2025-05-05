@@ -8,6 +8,8 @@ import (
 )
 
 func (r *ActionPermissionsResource) refreshActionPermissionsState(state *ActionPermissionsModel, a *cli.ActionPermissions, actionId string) error {
+	oldPermissions := state.Permissions
+
 	state.ID = types.StringValue(actionId)
 	state.ActionIdentifier = types.StringValue(actionId)
 	state.BlueprintIdentifier = types.StringNull()
@@ -15,19 +17,14 @@ func (r *ActionPermissionsResource) refreshActionPermissionsState(state *ActionP
 
 	state.Permissions.Execute = &ExecuteModel{}
 
-	state.Permissions.Execute.Users = make([]types.String, len(a.Execute.Users))
-	for i, u := range a.Execute.Users {
-		state.Permissions.Execute.Users[i] = types.StringValue(u)
-	}
-
-	state.Permissions.Execute.Roles = make([]types.String, len(a.Execute.Roles))
-	for i, u := range a.Execute.Roles {
-		state.Permissions.Execute.Roles[i] = types.StringValue(u)
-	}
-
-	state.Permissions.Execute.Teams = make([]types.String, len(a.Execute.Teams))
-	for i, u := range a.Execute.Teams {
-		state.Permissions.Execute.Teams[i] = types.StringValue(u)
+	if oldPermissions == nil || oldPermissions.Execute == nil {
+		state.Permissions.Execute.Users = utils.Map(a.Execute.Users, types.StringValue)
+		state.Permissions.Execute.Roles = utils.Map(a.Execute.Roles, types.StringValue)
+		state.Permissions.Execute.Teams = utils.Map(a.Execute.Teams, types.StringValue)
+	} else {
+		state.Permissions.Execute.Users = utils.Map(utils.SortStringSliceByOther(a.Execute.Users, utils.TFStringListToStringArray(oldPermissions.Execute.Users)), types.StringValue)
+		state.Permissions.Execute.Roles = utils.Map(utils.SortStringSliceByOther(a.Execute.Roles, utils.TFStringListToStringArray(oldPermissions.Execute.Roles)), types.StringValue)
+		state.Permissions.Execute.Teams = utils.Map(utils.SortStringSliceByOther(a.Execute.Teams, utils.TFStringListToStringArray(oldPermissions.Execute.Teams)), types.StringValue)
 	}
 
 	state.Permissions.Execute.OwnedByTeam = flex.GoBoolToFramework(a.Execute.OwnedByTeam)
@@ -43,19 +40,14 @@ func (r *ActionPermissionsResource) refreshActionPermissionsState(state *ActionP
 
 	state.Permissions.Approve = &ApproveModel{}
 
-	state.Permissions.Approve.Users = make([]types.String, len(a.Approve.Users))
-	for i, u := range a.Approve.Users {
-		state.Permissions.Approve.Users[i] = types.StringValue(u)
-	}
-
-	state.Permissions.Approve.Roles = make([]types.String, len(a.Approve.Roles))
-	for i, u := range a.Approve.Roles {
-		state.Permissions.Approve.Roles[i] = types.StringValue(u)
-	}
-
-	state.Permissions.Approve.Teams = make([]types.String, len(a.Approve.Teams))
-	for i, u := range a.Approve.Teams {
-		state.Permissions.Approve.Teams[i] = types.StringValue(u)
+	if oldPermissions == nil || oldPermissions.Approve == nil {
+		state.Permissions.Approve.Users = utils.Map(a.Approve.Users, types.StringValue)
+		state.Permissions.Approve.Roles = utils.Map(a.Approve.Roles, types.StringValue)
+		state.Permissions.Approve.Teams = utils.Map(a.Approve.Teams, types.StringValue)
+	} else {
+		state.Permissions.Approve.Users = utils.Map(utils.SortStringSliceByOther(a.Approve.Users, utils.TFStringListToStringArray(oldPermissions.Approve.Users)), types.StringValue)
+		state.Permissions.Approve.Roles = utils.Map(utils.SortStringSliceByOther(a.Approve.Roles, utils.TFStringListToStringArray(oldPermissions.Approve.Roles)), types.StringValue)
+		state.Permissions.Approve.Teams = utils.Map(utils.SortStringSliceByOther(a.Approve.Teams, utils.TFStringListToStringArray(oldPermissions.Approve.Teams)), types.StringValue)
 	}
 
 	if a.Approve.Policy != nil {

@@ -92,10 +92,32 @@ resource "port_action" "restart_microservice" {
           title       = "Service"
           description = "The service to restart"
           format      = "entity"
-          blueprint   = "service"
+          blueprint   = "Service"
           sort        = {
             property = "$updatedAt"
             order    = "DESC"
+          }
+        }
+        testString = {
+          type        = "string"
+          title       = "String enum"
+          icon        = "Terraform"
+          default     = "a"
+          enum        = ["a","b"]
+          enum_colors = {
+            a  ="darkGray"
+            b = "turquoise"
+          }
+        }
+        testNumber = {
+          type        = "number"
+          title       = "Number enum"
+          icon        = "Terraform"
+          default     = 1
+          enum        = [1, 2]
+          enum_colors = {
+            "1"  ="darkGray"
+            "2" = "turquoise"
           }
         }
       }

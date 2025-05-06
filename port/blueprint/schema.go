@@ -2,6 +2,7 @@ package blueprint
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
@@ -205,6 +206,13 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
+				"pattern": schema.StringAttribute{
+					MarkdownDescription: "The pattern of the string array items",
+					Optional:            true,
+					Validators: []validator.String{
+						stringvalidator.RegexMatches(regexp.MustCompile(`^.*$`), "must be a valid regular expression"),
+					},
+				},
 			},
 		},
 		"number_items": schema.SingleNestedAttribute{
@@ -253,6 +261,31 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 	}
 }
 
+func OwnershipSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		MarkdownDescription: "Optional ownership field for Blueprint. 'type' can be Inherited or Direct. If 'Inherited', then 'path' is required and must be a valid relation identifiers path.",
+		Optional:            true,
+
+		Attributes: map[string]schema.Attribute{
+			"type": schema.StringAttribute{
+				MarkdownDescription: "Ownership type: either 'Inherited' or 'Direct'.",
+				Required:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("Inherited", "Direct"),
+				},
+			},
+			"path": schema.StringAttribute{
+				MarkdownDescription: "Path for the Inherited ownership type. Required when type is 'Inherited'. Must be a valid relation identifiers path.",
+				Optional:            true,
+			},
+			"title": schema.StringAttribute{
+				MarkdownDescription: "Optional title for the owning teams property.",
+				Optional:            true,
+			},
+		},
+	}
+}
+
 func ObjectPropertySchema() schema.MapNestedAttribute {
 
 	objectPropertySchema := map[string]schema.Attribute{
@@ -276,6 +309,20 @@ func ObjectPropertySchema() schema.MapNestedAttribute {
 		Optional:            true,
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: objectPropertySchema,
+		},
+	}
+}
+
+func PropertiesSchema() schema.Attribute {
+	return schema.SingleNestedAttribute{
+		MarkdownDescription: "The properties of the blueprint",
+		Optional:            true,
+		Attributes: map[string]schema.Attribute{
+			"string_props":  StringPropertySchema(),
+			"number_props":  NumberPropertySchema(),
+			"boolean_props": BooleanPropertySchema(),
+			"array_props":   ArrayPropertySchema(),
+			"object_props":  ObjectPropertySchema(),
 		},
 	}
 }
@@ -332,6 +379,7 @@ func BlueprintSchema() map[string]schema.Attribute {
 					Required:            true,
 				},
 			},
+			DeprecationMessage: "After the Users and Teams migration, `team_inheritance` will be ignored in favor of `ownership`",
 		},
 		"webhook_changelog_destination": schema.SingleNestedAttribute{
 			MarkdownDescription: "The webhook changelog destination of the blueprint",
@@ -352,17 +400,7 @@ func BlueprintSchema() map[string]schema.Attribute {
 			Optional:            true,
 			AttributeTypes:      map[string]attr.Type{},
 		},
-		"properties": schema.SingleNestedAttribute{
-			MarkdownDescription: "The properties of the blueprint",
-			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"string_props":  StringPropertySchema(),
-				"number_props":  NumberPropertySchema(),
-				"boolean_props": BooleanPropertySchema(),
-				"array_props":   ArrayPropertySchema(),
-				"object_props":  ObjectPropertySchema(),
-			},
-		},
+		"properties": PropertiesSchema(),
 		"relations": schema.MapNestedAttribute{
 			MarkdownDescription: "The relations of the blueprint",
 			Optional:            true,
@@ -464,6 +502,7 @@ func BlueprintSchema() map[string]schema.Attribute {
 			Computed:            true,
 			Default:             booldefault.StaticBool(true),
 		},
+		"ownership": OwnershipSchema(),
 	}
 }
 

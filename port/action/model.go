@@ -30,16 +30,18 @@ type StringPropModel struct {
 	Visible        types.Bool    `tfsdk:"visible"`
 	VisibleJqQuery types.String  `tfsdk:"visible_jq_query"`
 
-	Default     types.String       `tfsdk:"default"`
-	Blueprint   types.String       `tfsdk:"blueprint"`
-	Format      types.String       `tfsdk:"format"`
-	MaxLength   types.Int64        `tfsdk:"max_length"`
-	MinLength   types.Int64        `tfsdk:"min_length"`
-	Pattern     types.String       `tfsdk:"pattern"`
-	Enum        types.List         `tfsdk:"enum"`
-	EnumJqQuery types.String       `tfsdk:"enum_jq_query"`
-	Encryption  types.String       `tfsdk:"encryption"`
-	Sort        *EntitiesSortModel `tfsdk:"sort"`
+	Default        types.String       `tfsdk:"default"`
+	Blueprint      types.String       `tfsdk:"blueprint"`
+	Format         types.String       `tfsdk:"format"`
+	MaxLength      types.Int64        `tfsdk:"max_length"`
+	MinLength      types.Int64        `tfsdk:"min_length"`
+	Pattern        types.String       `tfsdk:"pattern"`
+	PatternJqQuery types.String       `tfsdk:"pattern_jq_query"`
+	Enum           types.List         `tfsdk:"enum"`
+	EnumColors     types.Map          `tfsdk:"enum_colors"`
+	EnumJqQuery    types.String       `tfsdk:"enum_jq_query"`
+	Encryption     types.String       `tfsdk:"encryption"`
+	Sort           *EntitiesSortModel `tfsdk:"sort"`
 }
 
 // StringPropValidationModel is a model used for the validation of StringPropModel resources
@@ -191,6 +193,7 @@ type NumberPropModel struct {
 	Maximum     types.Float64 `tfsdk:"maximum"`
 	Minimum     types.Float64 `tfsdk:"minimum"`
 	Enum        types.List    `tfsdk:"enum"`
+	EnumColors  types.Map     `tfsdk:"enum_colors"`
 	EnumJqQuery types.String  `tfsdk:"enum_jq_query"`
 }
 
@@ -380,6 +383,7 @@ type MappingModel struct {
 	Relations  types.String   `tfsdk:"relations"`
 	Identifier types.String   `tfsdk:"identifier"`
 	Teams      []types.String `tfsdk:"teams"`
+	TeamsJQ    types.String   `tfsdk:"teams_jq"`
 	Icon       types.String   `tfsdk:"icon"`
 }
 

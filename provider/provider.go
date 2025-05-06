@@ -9,16 +9,18 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/action"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/action-permissions"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/aggregation-properties"
+	action_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/action-permissions"
+	aggregation_properties "github.com/port-labs/terraform-provider-port-labs/v2/port/aggregation-properties"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-permissions"
+	blueprint_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/entity"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/folder"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/integration"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/page"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
+	page_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/search"
+	system_blueprint "github.com/port-labs/terraform-provider-port-labs/v2/port/system_blueprint"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/team"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/webhook"
 	"github.com/port-labs/terraform-provider-port-labs/v2/version"
@@ -60,6 +62,10 @@ func (p *PortLabsProvider) Schema(ctx context.Context, req provider.SchemaReques
 			"base_url": schema.StringAttribute{
 				Optional: true,
 			},
+			"json_escape_html": schema.BoolAttribute{
+				Optional:            true,
+				MarkdownDescription: "When set to `false` disables the default HTML escaping of json.Marshal when reading data from Port. Defaults to `true`",
+			},
 		},
 	}
 }
@@ -89,6 +95,12 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create Port-labs client", err.Error())
 		return
+	}
+
+	if data.JSONEscapeHTML.IsNull() {
+		c.JSONEscapeHTML = true
+	} else {
+		c.JSONEscapeHTML = data.JSONEscapeHTML.ValueBool()
 	}
 
 	if data.Token.ValueString() != "" {
@@ -126,7 +138,6 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 
 	resp.ResourceData = c
 	resp.DataSourceData = c
-
 }
 
 func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Resource {
@@ -143,6 +154,8 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		team.NewTeamResource,
 		page.NewPageResource,
 		page_permissions.NewPagePermissionsResource,
+		system_blueprint.NewResource,
+		folder.NewFolderResource,
 	}
 }
 

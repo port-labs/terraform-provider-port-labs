@@ -10,6 +10,11 @@
 
 Port is the Developer Platform meant to supercharge your DevOps and Developers, and allow you to regain control of your environment.
 
+> **⚠️ Deprecation Notice**  
+> Version 1.x of the Port Terraform Provider is now deprecated.  
+> Please upgrade to version 2.x for continued support, new features, and improvements.  
+> Refer to the [upgrade instructions](https://github.com/port-labs/terraform-provider-port-labs/releases/tag/v2.0.0) to upgrade to version 2.x.
+
 ## Documentation
 
 - [Terraform registry docs](https://registry.terraform.io/providers/port-labs/port-labs/latest/docs)
@@ -17,7 +22,7 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 
 ## Requirements
 - [Terraform](https://www.terraform.io/downloads.html)
-- [Go](https://golang.org/doc/install) >= 1.19 (to build the provider plugin)
+- [Go](https://golang.org/doc/install) >= 1.24 (to build the provider plugin)
 - [Port Credentials](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/api/#find-your-port-credentials)
 
 ## Installation

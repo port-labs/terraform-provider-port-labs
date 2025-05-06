@@ -40,7 +40,7 @@ setup:
 acctest:
 	# TEST_FILTER can be any regex, E.g: .*PageResource.*
 	# TEST_FILTER='TestAccPortPageResource*' make acctest
-	TF_ACC=1 PORT_CLIENT_ID=$(PORT_CLIENT_ID) PORT_CLIENT_SECRET=$(PORT_CLIENT_SECRET) PORT_BASE_URL=$(PORT_BASE_URL) go test -p 1 ./... -run "$(TEST_FILTER)"
+	TF_ACC=1 PORT_CLIENT_ID=$(PORT_CLIENT_ID) PORT_CLIENT_SECRET=$(PORT_CLIENT_SECRET) PORT_BASE_URL=$(PORT_BASE_URL) go test -timeout 40m -p 1 ./... -run "$(TEST_FILTER)"
 
 gen-docs:
 	tfplugindocs
@@ -53,7 +53,7 @@ dev-run-integration: build
 	PORT_BETA_FEATURES_ENABLED=true go run . --debug
 
 dev-setup: setup
-	wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.59.0
+	wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.64.5
 
 dev-debug: build
 	PORT_BETA_FEATURES_ENABLED=true dlv exec --accept-multiclient --continue --headless ./terraform-provider-port-labs -- --debug

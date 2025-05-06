@@ -2,7 +2,6 @@ package action
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -17,9 +16,9 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
+func (r *ActionResource) writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
 	if a.InvocationMethod.Type == consts.Kafka {
-		payload, err := utils.GoObjectToTerraformString(a.InvocationMethod.Payload)
+		payload, err := utils.GoObjectToTerraformString(a.InvocationMethod.Payload, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -30,16 +29,16 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 	}
 
 	if a.InvocationMethod.Type == consts.Webhook {
-		agent, err := utils.GoObjectToTerraformString(a.InvocationMethod.Agent)
+		agent, err := utils.GoObjectToTerraformString(a.InvocationMethod.Agent, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
-		synchronized, err := utils.GoObjectToTerraformString(a.InvocationMethod.Synchronized)
+		synchronized, err := utils.GoObjectToTerraformString(a.InvocationMethod.Synchronized, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
 		headers, _ := types.MapValueFrom(ctx, types.StringType, a.InvocationMethod.Headers)
-		body, err := utils.GoObjectToTerraformString(a.InvocationMethod.Body)
+		body, err := utils.GoObjectToTerraformString(a.InvocationMethod.Body, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -55,11 +54,11 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 	}
 
 	if a.InvocationMethod.Type == consts.Github {
-		workflowInputs, err := utils.GoObjectToTerraformString(a.InvocationMethod.WorkflowInputs)
+		workflowInputs, err := utils.GoObjectToTerraformString(a.InvocationMethod.WorkflowInputs, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
-		reportWorkflowStatus, err := utils.GoObjectToTerraformString(a.InvocationMethod.ReportWorkflowStatus)
+		reportWorkflowStatus, err := utils.GoObjectToTerraformString(a.InvocationMethod.ReportWorkflowStatus, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -74,7 +73,7 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 	}
 
 	if a.InvocationMethod.Type == consts.Gitlab {
-		pipelineVariables, err := utils.GoObjectToTerraformString(a.InvocationMethod.PipelineVariables)
+		pipelineVariables, err := utils.GoObjectToTerraformString(a.InvocationMethod.PipelineVariables, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -88,7 +87,7 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 	}
 
 	if a.InvocationMethod.Type == consts.AzureDevops {
-		payload, err := utils.GoObjectToTerraformString(a.InvocationMethod.Payload)
+		payload, err := utils.GoObjectToTerraformString(a.InvocationMethod.Payload, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -102,20 +101,22 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 
 	if a.InvocationMethod.Type == consts.UpsertEntity {
 		var teams []types.String
+		var teamsJQ types.String
 		switch team := a.InvocationMethod.Mapping.Team.(type) {
 		case string:
-			teams = append(teams, types.StringValue(team))
+			teamsJQ = types.StringValue(team)
 		case []interface{}:
 			teams = make([]types.String, 0)
 			for _, t := range team {
 				teams = append(teams, types.StringValue(t.(string)))
 			}
+			teamsJQ = types.StringNull()
 		}
-		properties, err := utils.GoObjectToTerraformString(a.InvocationMethod.Mapping.Properties)
+		properties, err := utils.GoObjectToTerraformString(a.InvocationMethod.Mapping.Properties, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
-		relations, err := utils.GoObjectToTerraformString(a.InvocationMethod.Mapping.Relations)
+		relations, err := utils.GoObjectToTerraformString(a.InvocationMethod.Mapping.Relations, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -128,6 +129,7 @@ func writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *
 				Relations:  relations,
 				Icon:       flex.GoStringToFramework(a.InvocationMethod.Mapping.Icon),
 				Teams:      teams,
+				TeamsJQ:    teamsJQ,
 				Identifier: types.StringPointerValue(a.InvocationMethod.Mapping.Identifier),
 			},
 		}
@@ -207,7 +209,7 @@ func buildRequired(v *cli.ActionUserInputs) (types.String, []string) {
 	return types.StringNull(), nil
 }
 
-func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesModel, error) {
+func (r *ActionResource) buildUserProperties(ctx context.Context, a *cli.Action, state *ActionModel) (*UserPropertiesModel, error) {
 	properties := &UserPropertiesModel{}
 	if len(a.Trigger.UserInputs.Properties) > 0 {
 		requiredJq, required := buildRequired(a.Trigger.UserInputs)
@@ -223,7 +225,7 @@ func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesMod
 					stringProp.Required = types.BoolValue(true)
 				}
 
-				err := setCommonProperties(ctx, v, stringProp)
+				err := r.setCommonProperties(ctx, v, stringProp)
 				if err != nil {
 					return nil, err
 				}
@@ -241,7 +243,7 @@ func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesMod
 					numberProp.Required = types.BoolValue(true)
 				}
 
-				err := setCommonProperties(ctx, v, numberProp)
+				err := r.setCommonProperties(ctx, v, numberProp)
 				if err != nil {
 					return nil, err
 				}
@@ -253,7 +255,7 @@ func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesMod
 					properties.ArrayProps = make(map[string]ArrayPropModel)
 				}
 
-				arrayProp, err := addArrayPropertiesToResource(&v)
+				arrayProp, err := r.addArrayPropertiesToResource(&v)
 				if err != nil {
 					return nil, err
 				}
@@ -262,7 +264,7 @@ func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesMod
 					arrayProp.Required = types.BoolValue(true)
 				}
 
-				err = setCommonProperties(ctx, v, arrayProp)
+				err = r.setCommonProperties(ctx, v, arrayProp)
 				if err != nil {
 					return nil, err
 				}
@@ -276,7 +278,7 @@ func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesMod
 
 				booleanProp := &BooleanPropModel{}
 
-				err := setCommonProperties(ctx, v, booleanProp)
+				err := r.setCommonProperties(ctx, v, booleanProp)
 				if err != nil {
 					return nil, err
 				}
@@ -298,7 +300,7 @@ func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesMod
 					objectProp.Required = types.BoolValue(true)
 				}
 
-				err := setCommonProperties(ctx, v, objectProp)
+				err := r.setCommonProperties(ctx, v, objectProp)
 				if err != nil {
 					return nil, err
 				}
@@ -308,13 +310,21 @@ func buildUserProperties(ctx context.Context, a *cli.Action) (*UserPropertiesMod
 			}
 		}
 	}
-
+	if properties.StringProps == nil && properties.NumberProps == nil && properties.ArrayProps == nil && properties.BooleanProps == nil && properties.ObjectProps == nil {
+		// this logic is handling default initialization of user properties as there is no option to define default user properties in the action schema
+		// if there was a state defined for the user properties, return the initiated properties
+		if state.SelfServiceTrigger != nil && state.SelfServiceTrigger.UserProperties != nil {
+			return properties, nil
+		}
+		// if there are no user properties defined, return nil
+		return nil, nil
+	}
 	return properties, nil
 }
 
-func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
+func (r *ActionResource) writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
 	if a.Trigger.Type == consts.SelfService {
-		userProperties, err := buildUserProperties(ctx, a)
+		userProperties, err := r.buildUserProperties(ctx, a, state)
 		if err != nil {
 			return err
 		}
@@ -351,11 +361,11 @@ func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionMod
 		}
 
 		if a.Trigger.Condition != nil {
-			triggerCondition, err := json.Marshal(a.Trigger.Condition)
+			triggerCondition, err := utils.GoObjectToTerraformString(a.Trigger.Condition, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return err
 			}
-			state.SelfServiceTrigger.Condition = types.StringValue(string(triggerCondition))
+			state.SelfServiceTrigger.Condition = triggerCondition
 		}
 	}
 
@@ -428,7 +438,7 @@ func writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionMod
 	return nil
 }
 
-func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action) error {
+func (r *ActionResource) refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action) error {
 	state.ID = types.StringValue(a.Identifier)
 	state.Identifier = types.StringValue(a.Identifier)
 	state.Blueprint = types.StringNull()
@@ -436,12 +446,12 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action) 
 	state.Icon = flex.GoStringToFramework(a.Icon)
 	state.Description = flex.GoStringToFramework(a.Description)
 
-	err := writeTriggerToResource(ctx, a, state)
+	err := r.writeTriggerToResource(ctx, a, state)
 	if err != nil {
 		return err
 	}
 
-	err = writeInvocationMethodToResource(ctx, a, state)
+	err = r.writeInvocationMethodToResource(ctx, a, state)
 	if err != nil {
 		return err
 	}
@@ -473,7 +483,7 @@ func refreshActionState(ctx context.Context, state *ActionModel, a *cli.Action) 
 	return nil
 }
 
-func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interface{}) error {
+func (r *ActionResource) setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interface{}) error {
 	properties := []string{"Description", "Icon", "Default", "Title", "DependsOn", "Dataset", "Visible"}
 	for _, property := range properties {
 		switch property {
@@ -560,7 +570,7 @@ func setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interfa
 					if v["jqQuery"] != nil {
 						p.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
 					} else {
-						defaultValue, err := utils.GoObjectToTerraformString(v)
+						defaultValue, err := utils.GoObjectToTerraformString(v, r.portClient.JSONEscapeHTML)
 						if err != nil {
 							return fmt.Errorf("error converting default value to terraform string: %s", err.Error())
 						}

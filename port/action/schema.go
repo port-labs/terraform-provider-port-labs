@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 
 	"regexp"
@@ -39,6 +38,7 @@ func MetadataProperties() map[string]schema.Attribute {
 			MarkdownDescription: "Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value",
 			Optional:            true,
 			Validators: []validator.Bool{
+				isTrueValidator{},
 				boolvalidator.ConflictsWith(path.MatchRoot("self_service_trigger").AtName("required_jq_query")),
 			},
 		},
@@ -110,8 +110,6 @@ func ActionSchema() map[string]schema.Attribute {
 				"user_properties": schema.SingleNestedAttribute{
 					MarkdownDescription: "User properties",
 					Optional:            true,
-					Computed:            true,
-					Default:             objectdefault.StaticValue(types.ObjectValueMust(map[string]attr.Type{}, map[string]attr.Value{})),
 					Attributes: map[string]schema.Attribute{
 						"string_props":  StringPropertySchema(),
 						"number_props":  NumberPropertySchema(),
@@ -433,6 +431,13 @@ func ActionSchema() map[string]schema.Attribute {
 							ElementType:         types.StringType,
 							Optional:            true,
 						},
+						"teams_jq": schema.StringAttribute{
+							MarkdownDescription: "Jq that returns the teams the entity belongs to",
+							Optional:            true,
+							Validators: []validator.String{
+								stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("teams")),
+							},
+						},
 						"icon": schema.StringAttribute{
 							MarkdownDescription: "The icon of the entity",
 							Optional:            true,
@@ -529,6 +534,14 @@ func StringPropertySchema() schema.Attribute {
 			MarkdownDescription: "The pattern of the string property",
 			Optional:            true,
 		},
+		"pattern_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The pattern jq query of the string property. This field accepts a JQ expression to dynamically generate either a regex pattern (as a string) or a list of allowed values (as an array). Cannot be used with `pattern`. Empty values are not allowed. Examples: `\"if .env == \\\"prod\\\" then \\\"^[a-z]+$\\\" else \\\"^[a-zA-Z]+$\\\" end\"` for dynamic regex patterns, or `\"[\\\"value1\\\", \\\"value2\\\"]\"` for a fixed list of allowed values.",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("pattern")),
+				stringvalidator.LengthAtLeast(1),
+			},
+		},
 		"enum": schema.ListAttribute{
 			MarkdownDescription: "The enum of the string property",
 			Optional:            true,
@@ -537,6 +550,11 @@ func StringPropertySchema() schema.Attribute {
 				listvalidator.UniqueValues(),
 				listvalidator.SizeAtLeast(1),
 			},
+		},
+		"enum_colors": schema.MapAttribute{
+			MarkdownDescription: "The enum colors of the string property",
+			Optional:            true,
+			ElementType:         types.StringType,
 		},
 		"enum_jq_query": schema.StringAttribute{
 			MarkdownDescription: "The enum jq query of the string property",
@@ -663,6 +681,11 @@ func NumberPropertySchema() schema.Attribute {
 				listvalidator.UniqueValues(),
 				listvalidator.SizeAtLeast(1),
 			},
+		},
+		"enum_colors": schema.MapAttribute{
+			MarkdownDescription: "The enum colors of the number property",
+			Optional:            true,
+			ElementType:         types.StringType,
 		},
 		"enum_jq_query": schema.StringAttribute{
 			MarkdownDescription: "The enum jq query of the string property",

@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"math/big"
 	"reflect"
+	"slices"
+	"strings"
 
 	"github.com/hashicorp/go-uuid"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -77,25 +79,28 @@ func TerraformListToGoArray(ctx context.Context, list types.List, arrayType stri
 
 }
 
-func GoObjectToTerraformString(v interface{}) (types.String, error) {
+var nillableKinds = []reflect.Kind{reflect.Ptr, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice}
+
+func GoObjectToTerraformString(v interface{}, jsonEscapeHTML bool) (types.String, error) {
 	if v == nil {
 		return types.StringNull(), nil
 	}
 
-	switch reflect.TypeOf(v).Kind() {
-	case reflect.Ptr, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice:
-		if reflect.ValueOf(v).IsNil() {
-			return types.StringNull(), nil
-		}
+	isNillable := slices.Contains(nillableKinds, reflect.TypeOf(v).Kind())
+	if isNillable && reflect.ValueOf(v).IsNil() {
+		return types.StringNull(), nil
 	}
 
-	js, err := json.Marshal(v)
+	jsonBuilder := new(strings.Builder)
+	jsonEncoder := json.NewEncoder(jsonBuilder)
+	jsonEncoder.SetEscapeHTML(jsonEscapeHTML)
+	err := jsonEncoder.Encode(v)
 	if err != nil {
 		return types.StringNull(), err
 	}
 
-	value := string(js)
-	return types.StringValue(value), nil
+	jsonStr, _ := strings.CutSuffix(jsonBuilder.String(), "\n")
+	return types.StringValue(jsonStr), nil
 }
 
 func TerraformStringToGoType[T any](s types.String) (T, error) {

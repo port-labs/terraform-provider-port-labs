@@ -6,7 +6,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func refreshAggregationPropertiesState(state *AggregationPropertiesModel, aggregationProperties map[string]cli.BlueprintAggregationProperty) error {
+func (r *AggregationPropertiesResource) refreshAggregationPropertiesState(state *AggregationPropertiesModel, aggregationProperties map[string]cli.BlueprintAggregationProperty) error {
 	state.ID = state.BlueprintIdentifier
 
 	state.Properties = map[string]*AggregationPropertyModel{}
@@ -22,7 +22,7 @@ func refreshAggregationPropertiesState(state *AggregationPropertiesModel, aggreg
 			Query:                     types.StringPointerValue(nil),
 		}
 
-		query, err := utils.GoObjectToTerraformString(aggregationProperty.Query)
+		query, err := utils.GoObjectToTerraformString(aggregationProperty.Query, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}

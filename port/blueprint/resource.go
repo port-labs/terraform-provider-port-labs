@@ -3,6 +3,9 @@ package blueprint
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -10,8 +13,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
-	"strings"
-	"time"
 )
 
 var _ resource.Resource = &BlueprintResource{}
@@ -56,7 +57,7 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	err = refreshBlueprintState(ctx, state, b)
+	err = r.refreshBlueprintState(ctx, state, b)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
 		return
@@ -64,7 +65,7 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Blueprint) error {
+func (r *BlueprintResource) refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Blueprint) error {
 	bm.Identifier = types.StringValue(b.Identifier)
 	bm.ID = types.StringValue(b.Identifier)
 	bm.CreatedAt = types.StringValue(b.CreatedAt.String())
@@ -103,8 +104,23 @@ func refreshBlueprintState(ctx context.Context, bm *BlueprintModel, b *cli.Bluep
 		}
 	}
 
+	if b.Ownership != nil {
+		bm.Ownership = &OwnershipModel{
+			Type: types.StringValue(b.Ownership.Type),
+		}
+		if b.Ownership.Path != nil {
+			bm.Ownership.Path = types.StringValue(*b.Ownership.Path)
+		}
+		if b.Ownership.Title != nil {
+			bm.Ownership.Title = types.StringValue(*b.Ownership.Title)
+		}
+	}
+	if b.Ownership == nil && bm.Ownership != nil {
+		bm.Ownership = nil
+	}
+
 	if len(b.Schema.Properties) > 0 {
-		err := updatePropertiesToState(ctx, b, bm)
+		err := r.updatePropertiesToState(ctx, b, bm)
 		if err != nil {
 			return err
 		}
@@ -335,11 +351,31 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 		}
 	}
 
+	if state.Ownership != nil && !state.Ownership.Type.IsNull() {
+		ownershipType := state.Ownership.Type.ValueString()
+		if ownershipType == "Inherited" && state.Ownership.Path.IsNull() {
+			return nil, fmt.Errorf("path is required when ownership type is Inherited")
+		}
+
+		ownership := &cli.Ownership{
+			Type: ownershipType,
+		}
+		if !state.Ownership.Path.IsNull() {
+			path := state.Ownership.Path.ValueString()
+			ownership.Path = &path
+		}
+		if !state.Ownership.Title.IsNull() {
+			title := state.Ownership.Title.ValueString()
+			ownership.Title = &title
+		}
+		b.Ownership = ownership
+	}
+
 	required := []string{}
 	props := map[string]cli.BlueprintProperty{}
 	var err error
 	if state.Properties != nil {
-		props, required, err = propsResourceToBody(ctx, state)
+		props, required, err = PropsResourceToBody(ctx, state.Properties)
 		if err != nil {
 			return nil, err
 		}
@@ -348,9 +384,9 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 	properties := props
 
 	b.Schema = cli.BlueprintSchema{Properties: properties, Required: required}
-	b.Relations = relationsResourceToBody(state)
-	b.MirrorProperties = mirrorPropertiesToBody(state)
-	b.CalculationProperties = calculationPropertiesToBody(ctx, state)
+	b.Relations = RelationsResourceToBody(state.Relations)
+	b.MirrorProperties = MirrorPropertiesToBody(state.MirrorProperties)
+	b.CalculationProperties = CalculationPropertiesToBody(ctx, state.CalculationProperties)
 	if err != nil {
 		return nil, err
 	}

@@ -58,7 +58,7 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	err = refreshIntegrationState(state, a, integrationIdentifier)
+	err = r.refreshIntegrationState(state, a, integrationIdentifier)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to refresh integration state", err.Error())
 		return
@@ -92,7 +92,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	err = refreshIntegrationState(state, updated, integrationIdentifier)
+	err = r.refreshIntegrationState(state, updated, integrationIdentifier)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to refresh integration state", err.Error())
 		return
@@ -143,7 +143,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	err = refreshIntegrationState(state, created, created.InstallationId)
+	err = r.refreshIntegrationState(state, created, created.InstallationId)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create integration", err.Error())

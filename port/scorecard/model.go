@@ -10,10 +10,11 @@ type Query struct {
 }
 
 type Rule struct {
-	Identifier types.String `tfsdk:"identifier"`
-	Title      types.String `tfsdk:"title"`
-	Level      types.String `tfsdk:"level"`
-	Query      *Query       `tfsdk:"query"`
+	Identifier  types.String `tfsdk:"identifier"`
+	Title       types.String `tfsdk:"title"`
+	Description types.String `tfsdk:"description"`
+	Level       types.String `tfsdk:"level"`
+	Query       *Query       `tfsdk:"query"`
 }
 
 type Level struct {
@@ -26,6 +27,7 @@ type ScorecardModel struct {
 	Identifier types.String `tfsdk:"identifier"`
 	Blueprint  types.String `tfsdk:"blueprint"`
 	Title      types.String `tfsdk:"title"`
+	Filter     *Query       `tfsdk:"filter"`
 	Levels     []Level      `tfsdk:"levels"`
 	Rules      []Rule       `tfsdk:"rules"`
 	CreatedAt  types.String `tfsdk:"created_at"`

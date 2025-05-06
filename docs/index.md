@@ -19,5 +19,6 @@ Interact with Port-labs
 
 - `base_url` (String)
 - `client_id` (String) Client ID for Port-labs
+- `json_escape_html` (Boolean) When set to `false` disables the default HTML escaping of json.Marshal when reading data from Port. Defaults to `true`
 - `secret` (String, Sensitive) Client Secret for Port-labs
 - `token` (String, Sensitive) Token for Port-labs

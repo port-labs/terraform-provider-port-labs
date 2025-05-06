@@ -19,11 +19,11 @@ func (c *PortClient) Search(ctx context.Context, searchRequest *SearchRequestQue
 		req.SetQueryParam("exclude_calculated_properties", fmt.Sprintf("%v", &searchRequest.ExcludeCalculatedProperties))
 	}
 
-	if searchRequest.Include != nil && len(searchRequest.Include) > 0 {
+	if len(searchRequest.Include) > 0 {
 		req.SetQueryParam("include", strings.Join(searchRequest.Include, ","))
 	}
 
-	if searchRequest.Exclude != nil && len(searchRequest.Exclude) > 0 {
+	if len(searchRequest.Exclude) > 0 {
 		req.SetQueryParam("exclude", strings.Join(searchRequest.Exclude, ","))
 	}
 

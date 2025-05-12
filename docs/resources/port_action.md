@@ -514,7 +514,7 @@ Optional:
 Required:
 
 - `order` (List of String) The order of the properties in this step
-- `title` (String) The step's title
+- `title` (String) The step's title (max 25 characters)
 
 
 <a id="nestedatt--self_service_trigger--user_properties"></a>

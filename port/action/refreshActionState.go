@@ -152,15 +152,18 @@ func writeDatasetToResource(ds *cli.Dataset) *DatasetModel {
 			Blueprint: flex.GoStringToFramework(v.Blueprint),
 			Property:  flex.GoStringToFramework(v.Property),
 			Operator:  flex.GoStringToFramework(&v.Operator),
-			Value: &Value{
-				JqQuery: flex.GoStringToFramework(&v.Value.JqQuery),
-			},
 		}
+		
+		if v.Value != nil {
+			rule.Value = &Value{
+				JqQuery: flex.GoStringToFramework(&v.Value.JqQuery),
+			}
+		}
+		
 		datasetModel.Rules = append(datasetModel.Rules, *rule)
 	}
 
 	return datasetModel
-
 }
 
 func writeVisibleToResource(v cli.ActionProperty) (types.Bool, types.String) {

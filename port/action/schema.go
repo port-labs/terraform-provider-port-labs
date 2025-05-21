@@ -611,7 +611,7 @@ func StringPropertySchema() schema.Attribute {
 							},
 							"value": schema.ObjectAttribute{
 								MarkdownDescription: "The value of the rule",
-								Required:            true,
+								Optional:            true,
 								AttributeTypes: map[string]attr.Type{
 									"jq_query": types.StringType,
 								},

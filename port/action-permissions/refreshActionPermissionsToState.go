@@ -21,13 +21,17 @@ func (r *ActionPermissionsResource) refreshActionPermissionsState(state *ActionP
 		state.Permissions.Execute.Users = utils.Map(a.Execute.Users, types.StringValue)
 		state.Permissions.Execute.Roles = utils.Map(a.Execute.Roles, types.StringValue)
 		state.Permissions.Execute.Teams = utils.Map(a.Execute.Teams, types.StringValue)
+		state.Permissions.Execute.OwnedByTeam = flex.GoBoolToFramework(a.Execute.OwnedByTeam)
 	} else {
 		state.Permissions.Execute.Users = utils.Map(utils.SortStringSliceByOther(a.Execute.Users, utils.TFStringListToStringArray(oldPermissions.Execute.Users)), types.StringValue)
 		state.Permissions.Execute.Roles = utils.Map(utils.SortStringSliceByOther(a.Execute.Roles, utils.TFStringListToStringArray(oldPermissions.Execute.Roles)), types.StringValue)
 		state.Permissions.Execute.Teams = utils.Map(utils.SortStringSliceByOther(a.Execute.Teams, utils.TFStringListToStringArray(oldPermissions.Execute.Teams)), types.StringValue)
+		if !oldPermissions.Execute.OwnedByTeam.IsNull() {
+			state.Permissions.Execute.OwnedByTeam = oldPermissions.Execute.OwnedByTeam
+		} else {
+			state.Permissions.Execute.OwnedByTeam = flex.GoBoolToFramework(a.Execute.OwnedByTeam)
+		}
 	}
-
-	state.Permissions.Execute.OwnedByTeam = flex.GoBoolToFramework(a.Execute.OwnedByTeam)
 
 	if a.Execute.Policy != nil {
 		policy, err := utils.GoObjectToTerraformString(a.Execute.Policy, r.portClient.JSONEscapeHTML)

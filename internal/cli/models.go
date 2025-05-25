@@ -108,7 +108,6 @@ type (
 
 	DatasetValue struct {
 		JqQuery string `json:"jqQuery,omitempty"`
-		Value   string `json:"value,omitempty"`
 	}
 	DatasetRule struct {
 		Blueprint *string       `json:"blueprint,omitempty"`

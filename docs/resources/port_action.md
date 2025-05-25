@@ -506,6 +506,7 @@ Optional:
 - `order_properties` (List of String) Order properties
 - `required_jq_query` (String) The required jq query of the property
 - `steps` (Attributes List) The steps of the action (see [below for nested schema](#nestedatt--self_service_trigger--steps))
+- `titles` (Attributes Map) action titles (see [below for nested schema](#nestedatt--self_service_trigger--titles))
 - `user_properties` (Attributes) User properties (see [below for nested schema](#nestedatt--self_service_trigger--user_properties))
 
 <a id="nestedatt--self_service_trigger--steps"></a>
@@ -515,6 +516,20 @@ Required:
 
 - `order` (List of String) The order of the properties in this step
 - `title` (String) The step's title (max 25 characters)
+
+
+<a id="nestedatt--self_service_trigger--titles"></a>
+### Nested Schema for `self_service_trigger.titles`
+
+Required:
+
+- `title` (String) The title of the action title
+
+Optional:
+
+- `description` (String) The description of the action title
+- `visible` (Boolean) The visibility of the string property
+- `visible_jq_query` (String) The visibility condition jq query of the string property
 
 
 <a id="nestedatt--self_service_trigger--user_properties"></a>

@@ -96,6 +96,13 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 			}
 		}
 
+		if data.SelfServiceTrigger.Titles != nil {
+			err := actionTitlesToBody(ctx, selfServiceTrigger, data.SelfServiceTrigger)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		if !data.SelfServiceTrigger.OrderProperties.IsNull() {
 			order, err := utils.TerraformListToGoArray(ctx, data.SelfServiceTrigger.OrderProperties, "string")
 			if err != nil {
@@ -245,6 +252,41 @@ func actionPropertiesToBody(ctx context.Context, actionTrigger *cli.Trigger, dat
 	} else {
 		actionTrigger.UserInputs.Required = required
 	}
+
+	return nil
+}
+
+func actionTitlesToBody(ctx context.Context, actionTrigger *cli.Trigger, data *SelfServiceTriggerModel) error {
+	titles := map[string]cli.ActionTitle{}
+	var err error
+	if data.Titles != nil {
+		for key, title := range data.Titles {
+
+			cliTitle := cli.ActionTitle{
+				Title:       title.Title.ValueString(),
+				Description: title.Description.ValueStringPointer(),
+			}
+
+			if !title.Visible.IsNull() {
+				cliTitle.Visible = title.Visible.ValueBool()
+			}
+
+			if !title.VisibleJqQuery.IsNull() {
+				VisibleJqQueryMap := map[string]string{
+					"jqQuery": title.VisibleJqQuery.ValueString(),
+				}
+				cliTitle.Visible = VisibleJqQueryMap
+			}
+
+			titles[key] = cliTitle
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	actionTrigger.UserInputs.Titles = titles
 
 	return nil
 }

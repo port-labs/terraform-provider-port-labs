@@ -322,9 +322,44 @@ func (r *ActionResource) buildUserProperties(ctx context.Context, a *cli.Action,
 	return properties, nil
 }
 
+func (r *ActionResource) buildActionTitles(ctx context.Context, a *cli.Action, state *ActionModel) (map[string]Title, error) {
+	if a.Trigger.UserInputs.Titles == nil {
+		return nil, nil
+	}
+
+	titles := make(map[string]Title)
+
+	for key, title := range a.Trigger.UserInputs.Titles {
+		stateTitle := Title{
+			Title:       types.StringValue(title.Title),
+			Description: flex.GoStringToFramework(title.Description),
+		}
+
+		if title.Visible != nil {
+			visible := reflect.ValueOf(title.Visible)
+			switch visible.Kind() {
+			case reflect.Bool:
+				boolValue := visible.Interface().(bool)
+				stateTitle.Visible = types.BoolValue(boolValue)
+			case reflect.Map:
+				jq := visible.Interface().(map[string]any)
+				jqQueryValue := jq["jqQuery"].(string)
+				stateTitle.VisibleJqQuery = types.StringValue(jqQueryValue)
+			}
+		}
+
+		titles[key] = stateTitle
+	}
+	return titles, nil
+}
+
 func (r *ActionResource) writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
 	if a.Trigger.Type == consts.SelfService {
 		userProperties, err := r.buildUserProperties(ctx, a, state)
+		if err != nil {
+			return err
+		}
+		actionTitles, err := r.buildActionTitles(ctx, a, state)
 		if err != nil {
 			return err
 		}
@@ -334,6 +369,7 @@ func (r *ActionResource) writeTriggerToResource(ctx context.Context, a *cli.Acti
 			Operation:           types.StringValue(*a.Trigger.Operation),
 			UserProperties:      userProperties,
 			RequiredJqQuery:     requiredJqQuery,
+			Titles:              actionTitles,
 		}
 
 		if len(a.Trigger.UserInputs.Order) > 0 {

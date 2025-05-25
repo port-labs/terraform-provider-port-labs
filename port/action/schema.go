@@ -118,6 +118,33 @@ func ActionSchema() map[string]schema.Attribute {
 						"array_props":   ArrayPropertySchema(),
 					},
 				},
+				"titles": schema.MapNestedAttribute{
+					MarkdownDescription: "action titles",
+					Optional:            true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"title": schema.StringAttribute{
+								MarkdownDescription: "The title of the action title",
+								Required:            true,
+							},
+							"description": schema.StringAttribute{
+								MarkdownDescription: "The description of the action title",
+								Optional:            true,
+							},
+							"visible": schema.BoolAttribute{
+								MarkdownDescription: "The visibility of the string property",
+								Optional:            true,
+							},
+							"visible_jq_query": schema.StringAttribute{
+								MarkdownDescription: "The visibility condition jq query of the string property",
+								Optional:            true,
+								Validators: []validator.String{
+									stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("visible")),
+								},
+							},
+						},
+					},
+				},
 				"required_jq_query": schema.StringAttribute{
 					MarkdownDescription: "The required jq query of the property",
 					Optional:            true,

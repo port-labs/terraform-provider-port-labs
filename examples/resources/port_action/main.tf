@@ -79,6 +79,14 @@ resource "port_action" "restart_microservice" {
   self_service_trigger = {
     operation            = "DAY-2"
     blueprint_identifier = port_blueprint.microservice.identifier
+    titles = {
+      "titleIdentifier" = {
+        title = "My String Title"
+        description = "My String Description",
+        visible_jq_query = "true"
+      }
+    }
+    order_properties = ["titleIdentifier","webhook_url","service","testString","testNumber"]
     user_properties = {
       string_props = {
         "webhook_url" = {

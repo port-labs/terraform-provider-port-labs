@@ -114,6 +114,14 @@ func TestAccPortAction(t *testing.T) {
 					}
 				}
 			}
+			titles = {
+				"titleIdentifier" = {
+					"title" = "My String Identifier"
+					"description" = "My String Description"
+					"visible" = true
+				}
+			}
+			
 		}
 		kafka_method = {}
 	}`, actionIdentifier)
@@ -147,6 +155,9 @@ func TestAccPortAction(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.myArrayIdentifier.title", "My Array Identifier"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.myArrayIdentifier.required", "true"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.myArrayIdentifier.string_items.format", "email"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.titles.titleIdentifier.title", "My String Identifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.titles.titleIdentifier.description", "My String Description"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.titles.titleIdentifier.visible", "true"),
 				),
 			},
 		},
@@ -2858,6 +2869,142 @@ func TestAccPortActionStepsConflictWithOrder(t *testing.T) {
 			{
 				Config:      acctest.ProviderConfig + testAccActionConfigCreate,
 				ExpectError: regexp.MustCompile(`.*Invalid Attribute Combination*`),
+			},
+		},
+	})
+}
+
+func TestAccPortActionActionTitles(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {}
+			order_properties = ["titleIdentifier"]
+			titles = {
+				"titleIdentifier" = {
+					"title" = "My String Identifier"
+					"description" = "My String Description"
+				}
+			}
+			
+		}
+		kafka_method = {}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.blueprint_identifier", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.titles.titleIdentifier.title", "My String Identifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.titles.titleIdentifier.description", "My String Description"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionActionTitlesWithVisible(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {}
+			order_properties = ["titleIdentifier"]
+			titles = {
+				"titleIdentifier" = {
+					"title" = "My String Identifier"
+					"description" = "My String Description"
+					"visible" = true
+				}
+			}
+			
+		}
+		kafka_method = {}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.blueprint_identifier", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.titles.titleIdentifier.title", "My String Identifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.titles.titleIdentifier.description", "My String Description"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.titles.titleIdentifier.visible", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionActionTitlesWithVisibleJqQuery(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {}
+			order_properties = ["titleIdentifier"]
+			titles = {
+				"titleIdentifier" = {
+					"title" = "My String Identifier"
+					"description" = "My String Description"
+					"visible_jq_query" = "true"
+				}
+			}
+			
+		}
+		kafka_method = {}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.blueprint_identifier", identifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.titles.titleIdentifier.title", "My String Identifier"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.titles.titleIdentifier.description", "My String Description"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.titles.titleIdentifier.visible_jq_query", "true"),
+				),
 			},
 		},
 	})

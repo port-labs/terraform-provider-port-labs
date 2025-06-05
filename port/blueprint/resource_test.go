@@ -3,11 +3,15 @@ package blueprint_test
 import (
 	"context"
 	"fmt"
+	"github.com/stretchr/testify/require"
+	"math/rand"
 	"net/http"
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
+	"text/template"
 	"time"
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -319,6 +323,94 @@ func TestAccPortBlueprintObjectProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_props.myObjectIdentifier.required", "true"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_props.myObjectIdentifier.default", "{\"key\":\"value\"}"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccPortBlueprintChangePropertyType(t *testing.T) {
+	type data struct{ Identifier, PropType string }
+	identifier := utils.GenID()
+	tmpl, err := template.New("resource").Parse(`
+	resource "port_blueprint" "{{.Identifier}}" {
+		title = "test: {{.Identifier}}"
+		icon = "Terraform"
+		identifier = "{{.Identifier}}"
+		properties = {
+			{{.PropType}}_props = {
+				myProperty = {
+					title = "My Property"
+					description = "This is a {{.PropType}} property"
+				}
+			}
+		}
+	}`)
+	require.NoErrorf(t, err, "failed to parse test template")
+
+	var propTypes = [...]string{"string", "number", "boolean", "array", "object"}
+
+	// Shuffle the prop types to make sure we don't have an issue transitioning from one type to the next.
+	rand.Shuffle(len(propTypes), func(i, j int) { propTypes[i], propTypes[j] = propTypes[j], propTypes[i] })
+
+	steps := make([]resource.TestStep, len(propTypes))
+	for idx, propType := range propTypes {
+		var txt strings.Builder
+		err = tmpl.Execute(&txt, data{Identifier: identifier, PropType: propType})
+		require.NoErrorf(t, err, "failed to execute template for propType: %s", propType)
+		steps[idx] = resource.TestStep{
+			Config: acctest.ProviderConfigNoPropertyTypeProtection + txt.String(),
+			Check: resource.ComposeTestCheckFunc(resource.TestCheckResourceAttr(
+				fmt.Sprintf("port_blueprint.%s", identifier),
+				fmt.Sprintf("properties.%s_props.myProperty.title", propType),
+				"My Property",
+			)),
+		}
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps:                    steps,
+	})
+}
+func TestAccPortBlueprintChangePropertyTypeProtection(t *testing.T) {
+	type data struct{ Identifier, PropType string }
+	identifier := utils.GenID()
+	tmpl, err := template.New("resource").Parse(`
+	resource "port_blueprint" "{{.Identifier}}" {
+		title = "test: {{.Identifier}}"
+		icon = "Terraform"
+		identifier = "{{.Identifier}}"
+		properties = {
+			{{.PropType}}_props = {
+				myProperty = {
+					title = "My Property"
+					description = "This is a {{.PropType}} property"
+				}
+			}
+		}
+	}`)
+	require.NoErrorf(t, err, "failed to parse test template")
+
+	var step1Text, step2Text strings.Builder
+	require.NoError(t, tmpl.Execute(&step1Text, data{Identifier: identifier, PropType: "string"}))
+	require.NoError(t, tmpl.Execute(&step2Text, data{Identifier: identifier, PropType: "number"}))
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + step1Text.String(),
+				Check: resource.ComposeTestCheckFunc(resource.TestCheckResourceAttr(
+					fmt.Sprintf("port_blueprint.%s", identifier),
+					"properties.string_props.myProperty.title",
+					"My Property",
+				)),
+			},
+			{
+				Config:      acctest.ProviderConfig + step2Text.String(),
+				ExpectError: regexp.MustCompile(`The type of property "myProperty" changed from "string" to "number"`),
 			},
 		},
 	})

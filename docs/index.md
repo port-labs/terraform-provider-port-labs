@@ -18,6 +18,7 @@ Interact with Port-labs
 ### Optional
 
 - `base_url` (String)
+- `blueprint_property_type_change_protection` (Boolean) Protects you from accidentally changing the property type of blueprints which will delete the property before recreating it with the new type. Defaults to `true`
 - `client_id` (String) Client ID for Port-labs
 - `json_escape_html` (Boolean) When set to `false` disables the default HTML escaping of json.Marshal when reading data from Port. Defaults to `true`
 - `secret` (String, Sensitive) Client Secret for Port-labs

@@ -548,11 +548,12 @@ type PortTeamBody struct {
 }
 
 type PortProviderModel struct {
-	ClientId       types.String `tfsdk:"client_id"`
-	Secret         types.String `tfsdk:"secret"`
-	Token          types.String `tfsdk:"token"`
-	BaseUrl        types.String `tfsdk:"base_url"`
-	JSONEscapeHTML types.Bool   `tfsdk:"json_escape_html"`
+	ClientId                              types.String `tfsdk:"client_id"`
+	Secret                                types.String `tfsdk:"secret"`
+	Token                                 types.String `tfsdk:"token"`
+	BaseUrl                               types.String `tfsdk:"base_url"`
+	JSONEscapeHTML                        types.Bool   `tfsdk:"json_escape_html"`
+	BlueprintPropertyTypeChangeProtection types.Bool   `tfsdk:"blueprint_property_type_change_protection"`
 }
 
 type PortBodyDelete struct {

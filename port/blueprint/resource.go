@@ -188,27 +188,33 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &previousState)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	b, err := blueprintResourceToPortRequest(ctx, state)
 
+	prevB, err := blueprintResourceToPortRequest(ctx, previousState)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to transform previous state into a blueprint", err.Error())
+		return
+	}
+
+	b, err := blueprintResourceToPortRequest(ctx, state)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to transform blueprint", err.Error())
 		return
 	}
 
 	var bp *cli.Blueprint
-	createCatalogPage := state.CreateCatalogPage.ValueBoolPointer()
 	if previousState.Identifier.IsNull() {
-		bp, err = r.portClient.CreateBlueprint(ctx, b, createCatalogPage)
+		bp, err = r.portClient.CreateBlueprint(ctx, b, state.CreateCatalogPage.ValueBoolPointer())
 		if err != nil {
 			resp.Diagnostics.AddError("failed to create blueprint", err.Error())
 			return
 		}
 	} else {
-		existingBp, statusCode, err := r.portClient.ReadBlueprint(ctx, previousState.Identifier.ValueString())
+		var existingBp *cli.Blueprint
+		var statusCode int
+		existingBp, statusCode, err = r.portClient.ReadBlueprint(ctx, previousState.Identifier.ValueString())
 		if err != nil {
 			if statusCode == 404 {
 				resp.Diagnostics.AddError("Blueprint doesn't exists, it is required to update the blueprint", err.Error())
@@ -220,6 +226,38 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 		// aggregation properties are managed in a different resource, so we need to keep them in the update
 		// to avoid losing them
 		b.AggregationProperties = existingBp.AggregationProperties
+		prevB.AggregationProperties = existingBp.AggregationProperties
+
+		propsWithChangedTypes := make(map[string]string, 0)
+		for propKey, prop := range b.Schema.Properties {
+			if prevProp, prevHasProp := prevB.Schema.Properties[propKey]; prevHasProp && prop.Type != prevProp.Type {
+				propsWithChangedTypes[propKey] = prevProp.Type
+				delete(prevB.Schema.Properties, propKey)
+			}
+		}
+		if len(propsWithChangedTypes) > 0 && r.portClient.BlueprintPropertyTypeChangeProtection {
+			for propKey, prevPropType := range propsWithChangedTypes {
+				currentPropType := b.Schema.Properties[propKey].Type
+				resp.Diagnostics.AddAttributeError(
+					path.Root("properties").AtName(fmt.Sprintf("%s_props", currentPropType)).
+						AtName(propKey).AtName("type"),
+					"Property type changed while protection is enabled",
+					fmt.Sprintf("The type of property %q changed from %q to %q. Applying this change will cause "+
+						"you to lose the data for that property. If you wish to continue disable the protection in the "+
+						"provider configuration by setting %q to false", propKey, prevPropType, currentPropType,
+						"blueprint_property_type_change_protection"),
+				)
+			}
+			return
+		}
+		if len(propsWithChangedTypes) > 0 {
+			_, err = r.portClient.UpdateBlueprint(ctx, prevB, previousState.ID.ValueString())
+			if err != nil {
+				resp.Diagnostics.AddError("failed to pre-delete properties that changed their type", err.Error())
+				return
+			}
+		}
+
 		bp, err = r.portClient.UpdateBlueprint(ctx, b, previousState.ID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError("failed to update blueprint", err.Error())

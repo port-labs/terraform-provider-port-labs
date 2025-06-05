@@ -13,11 +13,12 @@ import (
 type Option func(*PortClient)
 
 type PortClient struct {
-	Client         *resty.Client
-	ClientID       string
-	Token          string
-	featureFlags   []string
-	JSONEscapeHTML bool
+	Client                                *resty.Client
+	ClientID                              string
+	Token                                 string
+	featureFlags                          []string
+	JSONEscapeHTML                        bool
+	BlueprintPropertyTypeChangeProtection bool
 }
 
 func New(baseURL string, opts ...Option) (*PortClient, error) {

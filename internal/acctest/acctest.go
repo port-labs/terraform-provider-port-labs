@@ -28,6 +28,14 @@ var ProviderConfig = fmt.Sprintf(`provider "port" {
 	}
 `, os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET"), os.Getenv("PORT_BASE_URL"))
 
+var ProviderConfigNoPropertyTypeProtection = fmt.Sprintf(`provider "port" {
+	client_id = "%s"
+	secret = "%s"
+	base_url = "%s"
+	blueprint_property_type_change_protection = false
+	}
+`, os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET"), os.Getenv("PORT_BASE_URL"))
+
 var ProviderConfigNoEscapeHTML = fmt.Sprintf(`provider "port" {
 	client_id = "%s"
 	secret = "%s"

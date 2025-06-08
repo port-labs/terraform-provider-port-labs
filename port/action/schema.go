@@ -594,7 +594,7 @@ func StringPropertySchema() schema.Attribute {
 							},
 							"value": schema.ObjectAttribute{
 								MarkdownDescription: "The value of the rule",
-								Required:            true,
+								Optional:            true,
 								AttributeTypes: map[string]attr.Type{
 									"jq_query": types.StringType,
 								},
@@ -946,6 +946,7 @@ func (r *ActionResource) ValidateConfig(ctx context.Context, req resource.Valida
 	}
 
 	validateUserInputRequiredNotSetToFalse(ctx, state, resp)
+	validateDatasets(ctx, state, resp)
 }
 
 func validateUserInputRequiredNotSetToFalse(ctx context.Context, state *ActionValidationModel, resp *resource.ValidateConfigResponse) {
@@ -1122,6 +1123,190 @@ func validateUserInputRequiredNotSetToFalse(ctx context.Context, state *ActionVa
 				resp.Diagnostics.AddError(errorString, fmt.Sprint(`Error in User Property: `, arrayProp.Title, ` in action: `, state.Identifier))
 			}
 		}
+	}
+}
+
+func validateDatasets(ctx context.Context, state *ActionValidationModel, resp *resource.ValidateConfigResponse) {
+	if state.SelfServiceTrigger.IsNull() {
+		return
+	}
+
+	var sst = state.SelfServiceTrigger.Attributes()
+	if sst == nil {
+		return
+	}
+
+	var up, exists = sst["user_properties"]
+	if !exists || up == nil {
+		return
+	}
+
+	var val, err = up.ToTerraformValue(ctx)
+	if err != nil {
+		return
+	}
+
+	userProperties := map[string]tftypes.Value{}
+	err = val.As(&userProperties)
+	if err != nil {
+		return
+	}
+
+	// Check string properties for datasets
+	if stringProperties, exists := userProperties["string_props"]; exists && !stringProperties.IsNull() {
+		validateStringPropsDatasets(ctx, stringProperties, resp)
+	}
+
+	// Check array properties for datasets (in string_items)
+	if arrayProperties, exists := userProperties["array_props"]; exists && !arrayProperties.IsNull() {
+		validateArrayPropsDatasets(ctx, arrayProperties, resp)
+	}
+}
+
+func validateStringPropsDatasets(ctx context.Context, stringProperties tftypes.Value, resp *resource.ValidateConfigResponse) {
+	stringPropsMap := map[string]tftypes.Value{}
+	err := stringProperties.As(&stringPropsMap)
+	if err != nil {
+		return
+	}
+
+	for propName, propValue := range stringPropsMap {
+		if propValue.IsNull() {
+			continue
+		}
+
+		propMap := map[string]tftypes.Value{}
+		err := propValue.As(&propMap)
+		if err != nil {
+			continue
+		}
+
+		if datasetValue, exists := propMap["dataset"]; exists && !datasetValue.IsNull() {
+			validateDatasetValue(ctx, datasetValue, resp, fmt.Sprintf("string_props.%s.dataset", propName))
+		}
+	}
+}
+
+func validateArrayPropsDatasets(ctx context.Context, arrayProperties tftypes.Value, resp *resource.ValidateConfigResponse) {
+	arrayPropsMap := map[string]tftypes.Value{}
+	err := arrayProperties.As(&arrayPropsMap)
+	if err != nil {
+		return
+	}
+
+	for _, propValue := range arrayPropsMap {
+		if propValue.IsNull() {
+			continue
+		}
+
+		propMap := map[string]tftypes.Value{}
+		err := propValue.As(&propMap)
+		if err != nil {
+			continue
+		}
+
+		if stringItemsValue, exists := propMap["string_items"]; exists && !stringItemsValue.IsNull() {
+			stringItemsMap := map[string]tftypes.Value{}
+			err := stringItemsValue.As(&stringItemsMap)
+			if err != nil {
+				continue
+			}
+
+			if datasetValue, exists := stringItemsMap["dataset"]; exists && !datasetValue.IsNull() {
+				// For array string_items, dataset is a JSON string, not a structured object
+				// So we don't validate it here as it's already encoded
+				continue
+			}
+		}
+	}
+}
+
+func validateDatasetValue(ctx context.Context, datasetValue tftypes.Value, resp *resource.ValidateConfigResponse, path string) {
+	datasetMap := map[string]tftypes.Value{}
+	err := datasetValue.As(&datasetMap)
+	if err != nil {
+		return
+	}
+
+	if rulesValue, exists := datasetMap["rules"]; exists && !rulesValue.IsNull() {
+		rulesSlice := []tftypes.Value{}
+		err := rulesValue.As(&rulesSlice)
+		if err != nil {
+			return
+		}
+
+		for i, ruleValue := range rulesSlice {
+			if ruleValue.IsNull() {
+				continue
+			}
+
+			ruleMap := map[string]tftypes.Value{}
+			err := ruleValue.As(&ruleMap)
+			if err != nil {
+				continue
+			}
+
+			var operator string
+			if operatorValue, exists := ruleMap["operator"]; exists && !operatorValue.IsNull() {
+				err := operatorValue.As(&operator)
+				if err != nil {
+					continue
+				}
+			}
+
+			var hasValue bool
+			if valueValue, exists := ruleMap["value"]; exists && !valueValue.IsNull() {
+				hasValue = true
+			}
+
+			validateDatasetRule(operator, hasValue, resp, fmt.Sprintf("%s.rules[%d]", path, i))
+		}
+	}
+}
+
+func validateDatasetRule(operator string, hasValue bool, resp *resource.ValidateConfigResponse, path string) {
+	operatorsWithoutValue := []string{"isEmpty", "isNotEmpty"}
+	operatorsWithValue := []string{"in", "contains", "containsAny", "=", "!=", ">", "<", ">=", "<="}
+
+	isOperatorWithoutValue := false
+	for _, op := range operatorsWithoutValue {
+		if operator == op {
+			isOperatorWithoutValue = true
+			break
+		}
+	}
+
+	isOperatorWithValue := false
+	for _, op := range operatorsWithValue {
+		if operator == op {
+			isOperatorWithValue = true
+			break
+		}
+	}
+
+	if isOperatorWithoutValue && hasValue {
+		resp.Diagnostics.AddWarning(
+			"Unnecessary value for operator",
+			fmt.Sprintf("The value attribute is not needed for operator '%s' at %s and will be ignored.", operator, path),
+		)
+	} else if isOperatorWithValue && !hasValue {
+		resp.Diagnostics.AddError(
+			"Missing required value for operator",
+			fmt.Sprintf("The value attribute is required for operator '%s' at %s. Only operators like 'isEmpty' and 'isNotEmpty' can omit the value.", operator, path),
+		)
+	}
+}
+
+func validateDatasetRules(ctx context.Context, dataset *DatasetModel, resp *resource.ValidateConfigResponse, path string) {
+	if dataset == nil {
+		return
+	}
+
+	for i, rule := range dataset.Rules {
+		operator := rule.Operator.ValueString()
+		hasValue := rule.Value != nil
+
+		validateDatasetRule(operator, hasValue, resp, fmt.Sprintf("%s.rules[%d]", path, i))
 	}
 }
 

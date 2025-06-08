@@ -219,7 +219,8 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 					min_items = 1
 					max_items = 10
 					string_items = {
-						default = ["a", "b", "c"]
+						default = ["a", "b", "c"],
+						pattern = "^[a-zA-Z0-9]*$"
 					}
 				}
 				myNumberArrayIdentifier = {
@@ -266,6 +267,7 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.string_items.default.0", "a"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.string_items.default.1", "b"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.string_items.default.2", "c"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myStringArrayIdentifier.string_items.pattern", "^[a-zA-Z0-9]*$"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myNumberArrayIdentifier.number_items.default.0", "1"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myNumberArrayIdentifier.number_items.default.1", "2"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myNumberArrayIdentifier.number_items.default.2", "3"),
@@ -798,7 +800,7 @@ func TestAccPortDestroyDeleteAllEntities(t *testing.T) {
 	}
 
 	// create entity
-	_, err = portClient.CreateEntity(ctx, entity, "")
+	_, err = portClient.CreateEntity(ctx, entity, "", false)
 	if err != nil {
 		t.Fatalf("Failed to create entity: %s", err.Error())
 		return
@@ -827,6 +829,106 @@ func TestAccPortDestroyDeleteAllEntities(t *testing.T) {
 			{
 				Config:  acctest.ProviderConfig + testAccBlueprintConfigForceDeleteEntitiesTrue,
 				Destroy: true,
+			},
+		},
+	})
+}
+
+func TestAccPortBlueprintOwnership(t *testing.T) {
+	parentIdentifier := utils.GenID()
+	var testAccConfigDirect = fmt.Sprintf(`
+	resource "port_blueprint" "parent_blueprint" {
+		title = "Parent Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_props = {
+				team = {
+					type = "string"
+					format = "team"
+					title = "Team"
+				}
+			}
+		}
+		ownership = {
+			type = "Direct"
+			title = "My direct owning teams"
+		}
+	}
+`, parentIdentifier)
+
+	childIdentifier := utils.GenID()
+	var testAccConfigInherited = fmt.Sprintf(`
+	resource "port_blueprint" "parent_blueprint" {
+		title = "Parent Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_props = {
+				team = {
+					type = "string"
+					format = "team"
+					title = "Team"
+				}
+			}
+		}
+		ownership = {
+			type = "Direct"
+		}
+	}
+
+	resource "port_blueprint" "child_blueprint" {
+		title = "Child Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_props = {
+				team = {
+					type = "string"
+					format = "team"
+					title = "Team"
+				}
+			}
+		}
+		relations = {
+			parent = {
+				target = port_blueprint.parent_blueprint.identifier
+				title = "Parent Service"
+				required = false
+				many = false
+			}
+		}
+		ownership = {
+			type = "Inherited"
+			path = "parent"
+			title = "My inherited owning teams"
+		}
+	}
+`, parentIdentifier, childIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccConfigDirect,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.parent_blueprint", "title", "Parent Blueprint"),
+					resource.TestCheckResourceAttr("port_blueprint.parent_blueprint", "identifier", parentIdentifier),
+					resource.TestCheckResourceAttr("port_blueprint.parent_blueprint", "ownership.type", "Direct"),
+					resource.TestCheckNoResourceAttr("port_blueprint.parent_blueprint", "ownership.path"),
+					resource.TestCheckResourceAttr("port_blueprint.parent_blueprint", "ownership.title", "My direct owning teams"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccConfigInherited,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.child_blueprint", "title", "Child Blueprint"),
+					resource.TestCheckResourceAttr("port_blueprint.child_blueprint", "identifier", childIdentifier),
+					resource.TestCheckResourceAttr("port_blueprint.child_blueprint", "ownership.type", "Inherited"),
+					resource.TestCheckResourceAttr("port_blueprint.child_blueprint", "ownership.path", "parent"),
+					resource.TestCheckResourceAttr("port_blueprint.child_blueprint", "ownership.title", "My inherited owning teams"),
+				),
 			},
 		},
 	})

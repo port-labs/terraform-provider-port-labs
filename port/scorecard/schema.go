@@ -2,6 +2,7 @@ package scorecard
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 
@@ -35,6 +36,10 @@ func RuleSchema() map[string]schema.Attribute {
 		"title": schema.StringAttribute{
 			MarkdownDescription: "The title of the rule",
 			Required:            true,
+		},
+		"description": schema.StringAttribute{
+			MarkdownDescription: "The description of the rule",
+			Optional:            true,
 		},
 		"level": schema.StringAttribute{
 			MarkdownDescription: "The level of the rule",
@@ -79,6 +84,27 @@ func ScorecardSchema() map[string]schema.Attribute {
 		"title": schema.StringAttribute{
 			MarkdownDescription: "The title of the scorecard",
 			Required:            true,
+		},
+		"filter": schema.SingleNestedAttribute{
+			MarkdownDescription: "The filter to apply on the entities before calculating the scorecard",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"combinator": schema.StringAttribute{
+					MarkdownDescription: "The combinator of the filter",
+					Required:            true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("and", "or"),
+					},
+				},
+				"conditions": schema.ListAttribute{
+					MarkdownDescription: "The conditions of the filter. Each condition object should be encoded to a string",
+					Required:            true,
+					ElementType:         types.StringType,
+					Validators: []validator.List{
+						listvalidator.SizeAtLeast(1),
+					},
+				},
+			},
 		},
 		"levels": schema.ListNestedAttribute{
 			MarkdownDescription: "The levels of the scorecard. This overrides the default levels (Basic, Bronze, Silver, Gold) if provided",
@@ -232,7 +258,7 @@ resource "port_scorecard" "readiness" {
 
 ` + "```" + `
 
-## Example Usage with Levels
+## Example Usage with Levels and Filter
 
 This will override the default levels (Basic, Bronze, Silver, Gold) with the provided levels: Not Ready, Partially Ready, Ready.
 
@@ -269,6 +295,16 @@ resource "port_scorecard" "readiness" {
   identifier = "Readiness"
   title      = "Readiness"
   blueprint  = port_blueprint.microservice.identifier
+  filter = {
+    combinator = "and"
+    conditions = [
+      jsonencode({
+        property = "sum"
+        operator = ">"
+        value = 0
+      })
+    ]
+  }
   levels = [
     {
       color = "red"

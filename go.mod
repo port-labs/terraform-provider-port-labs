@@ -1,8 +1,6 @@
 module github.com/port-labs/terraform-provider-port-labs/v2
 
-go 1.22
-
-toolchain go1.22.0
+go 1.24
 
 require (
 	github.com/go-resty/resty/v2 v2.13.1
@@ -10,11 +8,19 @@ require (
 	github.com/hashicorp/terraform-plugin-docs v0.15.0
 	github.com/hashicorp/terraform-plugin-framework v1.10.0
 	github.com/samber/lo v1.46.0
+	github.com/stretchr/testify v1.10.0
+)
+
+require (
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
 	github.com/ProtonMail/go-crypto v1.1.0-alpha.5-proton // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
+	github.com/avast/retry-go/v4 v4.6.1
 	github.com/cloudflare/circl v1.3.9 // indirect
 	github.com/hashicorp/go-retryablehttp v0.7.7 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.34.0 // indirect

@@ -35,6 +35,7 @@ type (
 		Meta
 		Identifier string                    `json:"identifier,omitempty"`
 		Title      string                    `json:"title"`
+		Icon       string                    `json:"icon,omitempty"`
 		Blueprint  string                    `json:"blueprint"`
 		Team       []string                  `json:"team,omitempty"`
 		Properties map[string]any            `json:"properties"`
@@ -87,7 +88,7 @@ type (
 		Minimum            *float64            `json:"minimum,omitempty"`
 		Description        *string             `json:"description,omitempty"`
 		Blueprint          *string             `json:"blueprint,omitempty"`
-		Pattern            *string             `json:"pattern,omitempty"`
+		Pattern            any                 `json:"pattern,omitempty"`
 		Enum               any                 `json:"enum,omitempty"`
 		Spec               *string             `json:"spec,omitempty"`
 		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
@@ -201,6 +202,12 @@ type (
 		Path string `json:"path,omitempty"`
 	}
 
+	Ownership struct {
+		Type  string  `json:"type"`
+		Path  *string `json:"path,omitempty"`
+		Title *string `json:"title,omitempty"`
+	}
+
 	Step = struct {
 		Title string   `json:"title"`
 		Order []string `json:"order"`
@@ -249,6 +256,7 @@ type (
 		ChangelogDestination  *ChangelogDestination                   `json:"changelogDestination,omitempty"`
 		TeamInheritance       *TeamInheritance                        `json:"teamInheritance,omitempty"`
 		Relations             map[string]Relation                     `json:"relations"`
+		Ownership             *Ownership                              `json:"ownership,omitempty"`
 	}
 
 	Action struct {
@@ -343,15 +351,17 @@ type (
 		Identifier string  `json:"identifier,omitempty"`
 		Title      string  `json:"title,omitempty"`
 		Blueprint  string  `json:"blueprint,omitempty"`
+		Filter     *Query  `json:"filter,omitempty"`
 		Levels     []Level `json:"levels,omitempty"`
 		Rules      []Rule  `json:"rules,omitempty"`
 	}
 
 	Rule struct {
-		Identifier string `json:"identifier,omitempty"`
-		Title      string `json:"title,omitempty"`
-		Level      string `json:"level,omitempty"`
-		Query      Query  `json:"query,omitempty"`
+		Identifier  string `json:"identifier,omitempty"`
+		Title       string `json:"title,omitempty"`
+		Description string `json:"description,omitempty"`
+		Level       string `json:"level,omitempty"`
+		Query       Query  `json:"query,omitempty"`
 	}
 
 	Level struct {
@@ -396,17 +406,23 @@ type (
 	Mappings struct {
 		Blueprint    string          `json:"blueprint,omitempty"`
 		Filter       *string         `json:"filter,omitempty"`
+		Operation    any             `json:"operation,omitempty"`
 		ItemsToParse *string         `json:"itemsToParse,omitempty"`
 		Entity       *EntityProperty `json:"entity,omitempty"`
 	}
 
-	Team struct {
+	PortTeam struct {
 		CreatedAt   *time.Time `json:"createdAt,omitempty"`
 		UpdatedAt   *time.Time `json:"updatedAt,omitempty"`
 		Name        string     `json:"name,omitempty"`
 		Description *string    `json:"description,omitempty"`
 		Users       []string   `json:"users,omitempty"`
 		Provider    string     `json:"provider,omitempty"`
+	}
+
+	Team struct {
+		PortTeam
+		Identifier *string `json:"identifier,omitempty"`
 	}
 
 	Migration struct {
@@ -429,6 +445,45 @@ type (
 		Exclude                     []string        `json:"exclude,omitempty"`
 		AttachTitleToRelation       *bool           `json:"attach_title_to_relation,omitempty"`
 	}
+
+	Folder struct {
+		Identifier string `json:"identifier,omitempty"`
+		Sidebar    string `json:"sidebar,omitempty"`
+		Title      string `json:"title,omitempty"`
+		After      string `json:"after,omitempty"`
+		Parent     string `json:"parent,omitempty"`
+	}
+
+	SidebarLocation struct {
+		Sidebar string `json:"sidebar"`
+		Parent  string `json:"parent,omitempty"`
+		After   string `json:"after,omitempty"`
+	}
+
+	SidebarFolderItem struct {
+		SidebarLocation
+		Identifier string `json:"identifier"`
+		Title      string `json:"title"`
+	}
+
+	SidebarItemDTO struct {
+		Identifier  string `json:"identifier"`
+		Title       string `json:"title"`
+		Sidebar     string `json:"sidebar"`
+		After       string `json:"after,omitempty"`
+		Parent      string `json:"parent,omitempty"`
+		SidebarType string `json:"sidebarType"`
+	}
+
+	SidebarDTO struct {
+		Identifier string           `json:"identifier"`
+		Items      []SidebarItemDTO `json:"items"`
+	}
+
+	SidebarGetResponseDTO struct {
+		Ok      bool        `json:"ok"`
+		Sidebar *SidebarDTO `json:"sidebar"`
+	}
 )
 
 type PortBody struct {
@@ -440,10 +495,12 @@ type PortBody struct {
 	ActionPermissions    ActionPermissions `json:"permissions"`
 	Webhook              Webhook           `json:"integration"`
 	Scorecard            Scorecard         `json:"Scorecard"`
-	Team                 Team              `json:"team"`
+	Team                 PortTeam          `json:"team"`
 	Page                 Page              `json:"page"`
 	MigrationId          string            `json:"migrationId"`
 	Migration            Migration         `json:"migration"`
+	Folder               Folder            `json:"folder"`
+	Organization         *Organization     `json:"organization"`
 }
 
 type SearchEntityResult struct {
@@ -491,10 +548,11 @@ type PortTeamBody struct {
 }
 
 type PortProviderModel struct {
-	ClientId types.String `tfsdk:"client_id"`
-	Secret   types.String `tfsdk:"secret"`
-	Token    types.String `tfsdk:"token"`
-	BaseUrl  types.String `tfsdk:"base_url"`
+	ClientId       types.String `tfsdk:"client_id"`
+	Secret         types.String `tfsdk:"secret"`
+	Token          types.String `tfsdk:"token"`
+	BaseUrl        types.String `tfsdk:"base_url"`
+	JSONEscapeHTML types.Bool   `tfsdk:"json_escape_html"`
 }
 
 type PortBodyDelete struct {
@@ -508,4 +566,9 @@ type Integration struct {
 	Version              *string               `json:"version"`
 	Config               *map[string]any       `json:"config"`
 	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
+}
+
+type Organization struct {
+	Name         string   `json:"name"`
+	FeatureFlags []string `json:"featureFlags"`
 }

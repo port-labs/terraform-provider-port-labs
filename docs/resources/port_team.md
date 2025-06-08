@@ -28,5 +28,6 @@ Team resource
 
 - `created_at` (String) The creation date of the team
 - `id` (String) The ID of this resource.
+- `identifier` (String) The machine-readable identifier of the _team entity
 - `provider_name` (String) The provider of the team
 - `updated_at` (String) The last update date of the team

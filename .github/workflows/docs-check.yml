@@ -1,0 +1,33 @@
+name: Validate Documentation
+
+on:
+  pull_request:
+
+jobs:
+  docs-check:
+    name: Check Documentation Matches Provider Schema
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.24'
+          cache: true
+      
+      - name: Install tfplugindocs
+        run: make setup
+
+      - name: Generate Documentation
+        run: make gen-docs
+
+      - name: Check for changes in docs
+        run: |
+          DOCS_CHANGES=$(git status --porcelain docs/)
+          if [[ -n "${DOCS_CHANGES}" ]]; then
+            echo "Error: Documentation is out of sync with schema. Please run 'make gen-docs' locally and commit the changes."
+            echo "Changes detected in docs folder:"
+            echo "${DOCS_CHANGES}"
+            exit 1
+          fi 

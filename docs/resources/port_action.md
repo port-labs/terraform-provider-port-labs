@@ -514,7 +514,7 @@ Optional:
 Required:
 
 - `order` (List of String) The order of the properties in this step
-- `title` (String) The step's title
+- `title` (String) The step's title (max 25 characters)
 
 
 <a id="nestedatt--self_service_trigger--user_properties"></a>
@@ -627,6 +627,7 @@ Optional:
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
 - `enum` (List of Number) The enum of the number property
+- `enum_colors` (Map of String) The enum colors of the number property
 - `enum_jq_query` (String) The enum jq query of the string property
 - `icon` (String) The icon of the property
 - `maximum` (Number) The min of the number property
@@ -667,12 +668,14 @@ Optional:
 - `description` (String) The description of the property
 - `encryption` (String) The algorithm to encrypt the property with. Accepted value: `aes256-gcm`
 - `enum` (List of String) The enum of the string property
+- `enum_colors` (Map of String) The enum colors of the string property
 - `enum_jq_query` (String) The enum jq query of the string property
 - `format` (String) The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
 - `icon` (String) The icon of the property
 - `max_length` (Number) The max length of the string property
 - `min_length` (Number) The min length of the string property
 - `pattern` (String) The pattern of the string property
+- `pattern_jq_query` (String) The pattern jq query of the string property. This field accepts a JQ expression to dynamically generate either a regex pattern (as a string) or a list of allowed values (as an array). Cannot be used with `pattern`. Empty values are not allowed. Examples: `"if .env == \"prod\" then \"^[a-z]+$\" else \"^[a-zA-Z]+$\" end"` for dynamic regex patterns, or `"[\"value1\", \"value2\"]"` for a fixed list of allowed values.
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
 - `sort` (Attributes) How to sort entities when in the self service action form in the UI (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--sort))
 - `title` (String) The title of the property
@@ -693,15 +696,15 @@ Required:
 Required:
 
 - `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value))
 
 Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `property` (String) The property identifier of the rule
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value))
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.property`
+### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value`
 
 Optional:
 
@@ -747,6 +750,7 @@ Optional:
 - `properties` (String) The properties of the entity (key-value object encoded to a string)
 - `relations` (String) The relations of the entity (key-value object encoded to a string)
 - `teams` (List of String) The teams the entity belongs to
+- `teams_jq` (String) Jq that returns the teams the entity belongs to
 
 
 

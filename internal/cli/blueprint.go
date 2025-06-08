@@ -25,6 +25,24 @@ func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, 
 	return &pb.Blueprint, resp.StatusCode(), nil
 }
 
+func (c *PortClient) ReadSystemBlueprintStructure(ctx context.Context, id string) (*Blueprint, int, error) {
+	pb := &PortBody{}
+	url := "v1/blueprints/system/{identifier}/structure"
+	resp, err := c.Client.R().
+		SetContext(ctx).
+		SetHeader("Accept", "application/json").
+		SetResult(pb).
+		SetPathParam("identifier", id).
+		Get(url)
+	if err != nil {
+		return nil, resp.StatusCode(), err
+	}
+	if !pb.OK {
+		return nil, resp.StatusCode(), fmt.Errorf("failed to read system blueprint structure, got: %s", resp.Body())
+	}
+	return &pb.Blueprint, resp.StatusCode(), nil
+}
+
 func (c *PortClient) CreateBlueprint(ctx context.Context, b *Blueprint, createCatalogPage *bool) (*Blueprint, error) {
 	url := "v1/blueprints"
 	request := c.Client.R().

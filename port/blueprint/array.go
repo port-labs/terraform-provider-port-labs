@@ -2,8 +2,6 @@ package blueprint
 
 import (
 	"context"
-	"encoding/json"
-
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -12,8 +10,8 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func arrayPropResourceToBody(ctx context.Context, state *BlueprintModel, props map[string]cli.BlueprintProperty, required *[]string) error {
-	for propIdentifier, prop := range state.Properties.ArrayProps {
+func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props map[string]cli.BlueprintProperty, required *[]string) error {
+	for propIdentifier, prop := range state.ArrayProps {
 		props[propIdentifier] = cli.BlueprintProperty{
 			Type: "array",
 		}
@@ -49,6 +47,9 @@ func arrayPropResourceToBody(ctx context.Context, state *BlueprintModel, props m
 				items["type"] = "string"
 				if !prop.StringItems.Format.IsNull() {
 					items["format"] = prop.StringItems.Format.ValueString()
+				}
+				if !prop.StringItems.Pattern.IsNull() {
+					items["pattern"] = prop.StringItems.Pattern.ValueString()
 				}
 				if !prop.StringItems.Default.IsNull() {
 					defaultList, err := utils.TerraformListToGoArray(ctx, prop.StringItems.Default, "string")
@@ -111,7 +112,7 @@ func arrayPropResourceToBody(ctx context.Context, state *BlueprintModel, props m
 	return nil
 }
 
-func addArrayPropertiesToState(v *cli.BlueprintProperty) *ArrayPropModel {
+func AddArrayPropertiesToState(v *cli.BlueprintProperty, jsonEscapeHTML bool) *ArrayPropModel {
 	arrayProp := &ArrayPropModel{
 		MinItems: flex.GoInt64ToFramework(v.MinItems),
 		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
@@ -137,6 +138,9 @@ func addArrayPropertiesToState(v *cli.BlueprintProperty) *ArrayPropModel {
 				}
 				if value, ok := v.Items["format"]; ok && value != nil {
 					arrayProp.StringItems.Format = types.StringValue(v.Items["format"].(string))
+				}
+				if value, ok := v.Items["pattern"]; ok && value != nil {
+					arrayProp.StringItems.Pattern = types.StringValue(v.Items["pattern"].(string))
 				}
 			case "number":
 				arrayProp.NumberItems = &NumberItems{}
@@ -173,9 +177,8 @@ func addArrayPropertiesToState(v *cli.BlueprintProperty) *ArrayPropModel {
 					}
 					attrs := make([]attr.Value, 0, len(objectArray))
 					for _, value := range objectArray {
-						js, _ := json.Marshal(&value)
-						stringValue := string(js)
-						attrs = append(attrs, basetypes.NewStringValue(stringValue))
+						stringValue, _ := utils.GoObjectToTerraformString(&value, jsonEscapeHTML)
+						attrs = append(attrs, stringValue)
 					}
 					arrayProp.ObjectItems.Default, _ = types.ListValue(types.StringType, attrs)
 				} else {

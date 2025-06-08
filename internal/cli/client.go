@@ -3,19 +3,22 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/go-resty/resty/v2"
 )
 
-type (
-	Option     func(*PortClient)
-	PortClient struct {
-		Client   *resty.Client
-		ClientID string
-		Token    string
-	}
-)
+type Option func(*PortClient)
+
+type PortClient struct {
+	Client         *resty.Client
+	ClientID       string
+	Token          string
+	featureFlags   []string
+	JSONEscapeHTML bool
+}
 
 func New(baseURL string, opts ...Option) (*PortClient, error) {
 	c := &PortClient{
@@ -40,6 +43,32 @@ func New(baseURL string, opts ...Option) (*PortClient, error) {
 		opt(c)
 	}
 	return c, nil
+}
+
+// FeatureFlags Fetches the feature flags from the Organization API. It caches the feature flags locally to reduce call
+// count.
+func (c *PortClient) FeatureFlags(ctx context.Context) ([]string, error) {
+	if c.featureFlags == nil {
+		organization, _, err := c.ReadOrganization(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read organization data: %w", err)
+		}
+		c.featureFlags = organization.FeatureFlags
+	}
+	return slices.Clone(c.featureFlags), nil
+}
+
+func (c *PortClient) HasFeatureFlags(ctx context.Context, flags ...string) (bool, error) {
+	orgFlags, err := c.FeatureFlags(ctx)
+	if err != nil {
+		return false, err
+	}
+	for _, flag := range flags {
+		if !slices.Contains(orgFlags, flag) {
+			return false, nil
+		}
+	}
+	return true, nil
 }
 
 func (c *PortClient) Authenticate(ctx context.Context, clientID, clientSecret string) (string, error) {

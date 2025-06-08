@@ -12,6 +12,12 @@ type TeamInheritanceModel struct {
 	Path types.String `tfsdk:"path"`
 }
 
+type OwnershipModel struct {
+	Type types.String `tfsdk:"type"`
+	Path types.String `tfsdk:"path"`
+	Title types.String `tfsdk:"title"`
+}
+
 type SpecAuthenticationModel struct {
 	AuthorizationUrl types.String `tfsdk:"authorization_url"`
 	TokenUrl         types.String `tfsdk:"token_url"`
@@ -57,6 +63,7 @@ type BooleanPropModel struct {
 type StringItems struct {
 	Format  types.String `tfsdk:"format"`
 	Default types.List   `tfsdk:"default"`
+	Pattern types.String `tfsdk:"pattern"`
 }
 
 type NumberItems struct {
@@ -176,4 +183,5 @@ type BlueprintModel struct {
 	CalculationProperties       map[string]CalculationPropertyModel `tfsdk:"calculation_properties"`
 	ForceDeleteEntities         types.Bool                          `tfsdk:"force_delete_entities"`
 	CreateCatalogPage           types.Bool                          `tfsdk:"create_catalog_page"`
+	Ownership                   *OwnershipModel                     `tfsdk:"ownership"`
 }

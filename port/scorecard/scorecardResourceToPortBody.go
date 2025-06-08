@@ -3,6 +3,7 @@ package scorecard
 import (
 	"context"
 	"encoding/json"
+
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
@@ -24,6 +25,26 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 		Title:      state.Title.ValueString(),
 	}
 
+	if state.Filter != nil {
+		filter := &cli.Query{
+			Combinator: state.Filter.Combinator.ValueString(),
+		}
+		var conditions []interface{}
+		for _, stateCondition := range state.Filter.Conditions {
+			if !stateCondition.IsNull() {
+				stringCond := stateCondition.ValueString()
+				cond := map[string]interface{}{}
+				err := json.Unmarshal([]byte(stringCond), &cond)
+				if err != nil {
+					return nil, err
+				}
+				conditions = append(conditions, cond)
+			}
+		}
+		filter.Conditions = conditions
+		s.Filter = filter
+	}
+
 	var rules []cli.Rule
 
 	for _, stateRule := range state.Rules {
@@ -32,6 +53,11 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 			Identifier: stateRule.Identifier.ValueString(),
 			Title:      stateRule.Title.ValueString(),
 		}
+
+		if !stateRule.Description.IsNull() {
+			rule.Description = stateRule.Description.ValueString()
+		}
+
 		query := &cli.Query{
 			Combinator: stateRule.Query.Combinator.ValueString(),
 		}

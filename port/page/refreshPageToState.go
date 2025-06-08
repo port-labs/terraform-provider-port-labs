@@ -1,12 +1,12 @@
 package page
 
 import (
-	"encoding/json"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func refreshPageToState(pm *PageModel, b *cli.Page) error {
+func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	pm.ID = types.StringValue(b.Identifier)
 	pm.Identifier = types.StringValue(b.Identifier)
 	pm.Type = types.StringValue(b.Type)
@@ -22,11 +22,11 @@ func refreshPageToState(pm *PageModel, b *cli.Page) error {
 	if b.Widgets != nil {
 		// go over each widget and convert it to a string and store it in the widgets array
 		for i, widget := range *b.Widgets {
-			bWidget, err := json.Marshal(widget)
+			bWidget, err := utils.GoObjectToTerraformString(widget, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return err
 			}
-			pm.Widgets[i] = types.StringValue(string(bWidget))
+			pm.Widgets[i] = bWidget
 		}
 	}
 	return nil

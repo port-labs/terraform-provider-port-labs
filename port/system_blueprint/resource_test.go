@@ -115,6 +115,9 @@ func TestAccPortSystemBlueprintProperties(t *testing.T) {
 
 func TestAccPortBlueprintChangePropertyType(t *testing.T) {
 	type data struct{ PropType string }
+	cleanConfig := `
+		resource "port_system_blueprint" "user" { identifier = "_user" }
+	`
 	tmpl, err := template.New("resource").Parse(`
 	resource "port_system_blueprint" "user" {
 		identifier = "_user"
@@ -140,9 +143,7 @@ func TestAccPortBlueprintChangePropertyType(t *testing.T) {
 		ImportState:        true,
 		ImportStateId:      "_user",
 		ImportStatePersist: true,
-		Config: acctest.ProviderConfigNoPropertyTypeProtection + `
-			resource "port_system_blueprint" "user" { identifier = "_user" }
-		`,
+		Config:             acctest.ProviderConfigNoPropertyTypeProtection + cleanConfig,
 	}
 	for _, propType := range propTypes {
 		var txt strings.Builder
@@ -157,6 +158,7 @@ func TestAccPortBlueprintChangePropertyType(t *testing.T) {
 			)),
 		})
 	}
+	steps = append(steps, resource.TestStep{Config: acctest.ProviderConfigNoPropertyTypeProtection + cleanConfig})
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -167,6 +169,9 @@ func TestAccPortBlueprintChangePropertyType(t *testing.T) {
 
 func TestAccPortBlueprintChangePropertyTypeProtection(t *testing.T) {
 	type data struct{ PropType string }
+	cleanConfig := `
+		resource "port_system_blueprint" "user" { identifier = "_user" }
+	`
 	tmpl, err := template.New("resource").Parse(`
 	resource "port_system_blueprint" "user" {
 		identifier = "_user"
@@ -188,15 +193,14 @@ func TestAccPortBlueprintChangePropertyTypeProtection(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
 		Steps: []resource.TestStep{
 			{
 				ResourceName:       "port_system_blueprint.user",
 				ImportState:        true,
 				ImportStateId:      "_user",
 				ImportStatePersist: true,
-				Config: acctest.ProviderConfig + `
-					resource "port_system_blueprint" "user" { identifier = "_user" }
-				`,
+				Config:             acctest.ProviderConfig + cleanConfig,
 			},
 			{
 				Config: acctest.ProviderConfig + step1Text.String(),
@@ -209,6 +213,9 @@ func TestAccPortBlueprintChangePropertyTypeProtection(t *testing.T) {
 			{
 				Config:      acctest.ProviderConfig + step2Text.String(),
 				ExpectError: regexp.MustCompile(`The type of property "myProperty" changed from "string" to "number"`),
+			},
+			{
+				Config: acctest.ProviderConfig + cleanConfig,
 			},
 		},
 	})

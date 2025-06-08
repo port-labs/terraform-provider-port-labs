@@ -373,6 +373,7 @@ func TestAccPortBlueprintChangePropertyType(t *testing.T) {
 		Steps:                    steps,
 	})
 }
+
 func TestAccPortBlueprintChangePropertyTypeProtection(t *testing.T) {
 	type data struct{ Identifier, PropType string }
 	identifier := utils.GenID()

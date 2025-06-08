@@ -156,7 +156,7 @@ jobs:
   publish_cover_report:
     name: Publish Coverage Report
     if: ${{ always() }}
-    needs: publish_report
+    needs: acctest
     runs-on: ubuntu-latest
     steps:
       - name: Download all coverage reports

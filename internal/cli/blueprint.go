@@ -8,7 +8,7 @@ import (
 
 func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, int, error) {
 	pb := &PortBody{}
-	url := "v1/blueprints/{identifier}"
+	const url = "v1/blueprints/{identifier}"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
@@ -27,7 +27,7 @@ func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, 
 
 func (c *PortClient) ReadSystemBlueprintStructure(ctx context.Context, id string) (*Blueprint, int, error) {
 	pb := &PortBody{}
-	url := "v1/blueprints/system/{identifier}/structure"
+	const url = "v1/blueprints/system/{identifier}/structure"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
@@ -44,7 +44,7 @@ func (c *PortClient) ReadSystemBlueprintStructure(ctx context.Context, id string
 }
 
 func (c *PortClient) CreateBlueprint(ctx context.Context, b *Blueprint, createCatalogPage *bool) (*Blueprint, error) {
-	url := "v1/blueprints"
+	const url = "v1/blueprints"
 	request := c.Client.R().
 		SetBody(b).
 		SetContext(ctx)
@@ -67,7 +67,7 @@ func (c *PortClient) CreateBlueprint(ctx context.Context, b *Blueprint, createCa
 }
 
 func (c *PortClient) UpdateBlueprint(ctx context.Context, b *Blueprint, id string) (*Blueprint, error) {
-	url := "v1/blueprints/{identifier}"
+	const url = "v1/blueprints/{identifier}"
 	resp, err := c.Client.R().
 		SetBody(b).
 		SetContext(ctx).
@@ -88,7 +88,7 @@ func (c *PortClient) UpdateBlueprint(ctx context.Context, b *Blueprint, id strin
 }
 
 func (c *PortClient) DeleteBlueprint(ctx context.Context, id string) error {
-	url := "v1/blueprints/{identifier}"
+	const url = "v1/blueprints/{identifier}"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
@@ -109,7 +109,7 @@ func (c *PortClient) DeleteBlueprint(ctx context.Context, id string) error {
 }
 
 func (c *PortClient) DeleteBlueprintWithAllEntities(ctx context.Context, id string) (*string, error) {
-	url := "v1/blueprints/{identifier}/all-entities?delete_blueprint=true"
+	const url = "v1/blueprints/{identifier}/all-entities?delete_blueprint=true"
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
@@ -128,5 +128,4 @@ func (c *PortClient) DeleteBlueprintWithAllEntities(ctx context.Context, id stri
 	}
 
 	return &pb.MigrationId, nil
-
 }

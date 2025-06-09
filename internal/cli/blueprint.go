@@ -129,26 +129,3 @@ func (c *PortClient) DeleteBlueprintWithAllEntities(ctx context.Context, id stri
 
 	return &pb.MigrationId, nil
 }
-
-func (c *PortClient) PatchBlueprint(ctx context.Context, b *Blueprint) error {
-	const url = "v1/blueprints/{identifier}"
-	var pb PortBody
-	resp, err := c.Client.R().
-		SetContext(ctx).
-		SetHeader("Accept", "application/json").
-		ExpectContentType("application/json").
-		SetPathParam("identifier", b.Identifier).
-		SetBody(b).
-		SetResult(&pb).
-		Patch(url)
-	if err != nil && resp == nil {
-		return fmt.Errorf("failed to delete blueprint properties: %w", err)
-	} else if err != nil {
-		return fmt.Errorf("failed to delete blueprint properties, resp: %s, err: %w", resp.Body(), err)
-	}
-	if !pb.OK {
-		return fmt.Errorf("failed to delete blueprint properties, got: %s", resp.Body())
-	}
-
-	return nil
-}

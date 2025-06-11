@@ -143,14 +143,10 @@ resource "port_page" "microservice_blueprint_page" {
       {
         "id" : "microservice-table-entities",
         "type" : "table-entities-explorer",
+        "blueprint": port_blueprint.base_blueprint.identifier,
         "dataset" : {
           "combinator" : "and",
           "rules" : [
-            {
-              "operator" : "=",
-              "property" : "$blueprint",
-              "value" : ` + "{{`\"{{blueprint}}\"`}}" + `
-            }
           ]
         }
       }

@@ -1,3 +1,31 @@
+resource "port_blueprint" "microservice" {
+  identifier  = "microservice"
+  title       = "Microsvc from Port TF Examples"
+  icon        = "Terraform"
+  description = ""
+  properties = {
+    string_props = {
+      url = {
+        type = "string"
+      }
+      author = {
+        icon       = "github"
+        required   = true
+        min_length = 1
+        max_length = 10
+        default    = "default"
+        enum       = ["default", "default2"]
+        pattern    = "^[a-zA-Z0-9]*$"
+        format     = "user"
+        enum_colors = {
+          default  = "red"
+          default2 = "green"
+        }
+      }
+    }
+  }
+}
+
 resource "port_page" "microservice_dashboard_page" {
   identifier = "microservice_dashboard_page"
   title      = "Microservices"
@@ -12,7 +40,7 @@ resource "port_page" "microservice_dashboard_page" {
             "height" = 400,
             "columns" = [
               {
-                "id"   = "microserviceGuide",
+                "id"   = "microservice-table-entities",
                 "size" = 12
               }
             ]
@@ -21,12 +49,14 @@ resource "port_page" "microservice_dashboard_page" {
         "type" = "dashboard-widget",
         "widgets" = [
           {
-            "title"       = "Microservices Guide",
-            "icon"        = "BlankPage",
-            "markdown"    = "# This is the new Microservice Dashboard",
-            "type"        = "markdown",
-            "description" = "",
-            "id"          = "microserviceGuide"
+            "id" : "microservice-table-entities",
+            "type" : "table-entities-explorer",
+            "blueprint" : port_blueprint.microservice.identifier,
+            "dataset" : {
+              "combinator" : "and",
+              "rules" : [
+              ]
+            }
           }
         ],
       }

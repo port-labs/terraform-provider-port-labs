@@ -2,6 +2,8 @@ package cli
 
 import (
 	"encoding/json"
+	"reflect"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -489,6 +491,30 @@ type (
 	}
 )
 
+// getKnownFields uses reflection to extract JSON field names from BlueprintProperty struct
+func getKnownFields(bp *BlueprintProperty) map[string]bool {
+	knownFields := make(map[string]bool)
+	t := reflect.TypeOf(*bp)
+	
+	for i := 0; i < t.NumField(); i++ {
+		field := t.Field(i)
+		
+		// Get the JSON tag
+		jsonTag := field.Tag.Get("json")
+		if jsonTag == "" || jsonTag == "-" {
+			continue // Skip fields without JSON tags or with "-"
+		}
+		
+		// Handle "fieldname,omitempty" format
+		fieldName, _, _ := strings.Cut(jsonTag, ",")
+		if fieldName != "" {
+			knownFields[fieldName] = true
+		}
+	}
+	
+	return knownFields
+}
+
 // Custom UnmarshalJSON for BlueprintProperty to capture dynamic fields
 func (bp *BlueprintProperty) UnmarshalJSON(data []byte) error {
 	// Define an alias to avoid infinite recursion
@@ -506,21 +532,16 @@ func (bp *BlueprintProperty) UnmarshalJSON(data []byte) error {
 	}
 	
 	// Now unmarshal into a map to capture all fields
-	var all map[string]interface{}
+	var all map[string]any
 	if err := json.Unmarshal(data, &all); err != nil {
 		return err
 	}
 	
-	bp.UnknownFields = make(map[string]interface{})
+	// Initialize UnknownFields map
+	bp.UnknownFields = make(map[string]any)
 	
-	// List of known fields that shouldn't go into UnknownFields
-	knownFields := map[string]bool{
-		"type": true, "title": true, "identifier": true, "items": true,
-		"default": true, "icon": true, "format": true, "maxLength": true,
-		"minLength": true, "maxItems": true, "minItems": true, "maximum": true,
-		"minimum": true, "description": true, "blueprint": true, "pattern": true,
-		"enum": true, "spec": true, "specAuthentication": true, "enumColors": true,
-	}
+	// Use reflection to get known fields instead of hardcoding
+	knownFields := getKnownFields(bp)
 	
 	// Add any unknown fields to UnknownFields
 	for key, value := range all {
@@ -546,7 +567,7 @@ func (bp BlueprintProperty) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal(data, &result); err != nil {
 		return nil, err
 	}

@@ -506,7 +506,7 @@ func getKnownFields(bp *BlueprintProperty) map[string]bool {
 		}
 		
 		// Handle "fieldname,omitempty" format
-		fieldName := strings.Split(jsonTag, ",")[0]
+		fieldName, _, _ := strings.Cut(jsonTag, ",")
 		if fieldName != "" {
 			knownFields[fieldName] = true
 		}

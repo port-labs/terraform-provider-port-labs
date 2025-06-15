@@ -532,13 +532,13 @@ func (bp *BlueprintProperty) UnmarshalJSON(data []byte) error {
 	}
 	
 	// Now unmarshal into a map to capture all fields
-	var all map[string]interface{}
+	var all map[string]any
 	if err := json.Unmarshal(data, &all); err != nil {
 		return err
 	}
 	
 	// Initialize UnknownFields map
-	bp.UnknownFields = make(map[string]interface{})
+	bp.UnknownFields = make(map[string]any)
 	
 	// Use reflection to get known fields instead of hardcoding
 	knownFields := getKnownFields(bp)
@@ -567,7 +567,7 @@ func (bp BlueprintProperty) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 	
-	var result map[string]interface{}
+	var result map[string]any
 	if err := json.Unmarshal(data, &result); err != nil {
 		return nil, err
 	}

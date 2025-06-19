@@ -19,7 +19,7 @@ func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
 		dataSetRule := cli.DatasetRule{
 			Operator: rule.Operator.ValueString(),
 		}
-		
+
 		if rule.Value != nil && !rule.Value.JqQuery.IsNull() {
 			dataSetRule.Value = &cli.DatasetValue{
 				JqQuery: rule.Value.JqQuery.ValueString(),
@@ -261,28 +261,28 @@ func actionPropertiesToBody(ctx context.Context, actionTrigger *cli.Trigger, dat
 }
 
 func actionTitlesToBody(ctx context.Context, actionTrigger *cli.Trigger, data *SelfServiceTriggerModel) error {
-	titles := map[string]cli.ActionTitle{}
+	actionTitles := map[string]cli.ActionTitle{}
 	var err error
 	if data.Titles != nil {
-		for key, title := range data.Titles {
+		for key, actionTitle := range data.Titles {
 
 			cliTitle := cli.ActionTitle{
-				Title:       title.Title.ValueString(),
-				Description: title.Description.ValueStringPointer(),
+				Title:       actionTitle.Title.ValueString(),
+				Description: actionTitle.Description.ValueStringPointer(),
 			}
 
-			if !title.Visible.IsNull() {
-				cliTitle.Visible = title.Visible.ValueBool()
+			if !actionTitle.Visible.IsNull() {
+				cliTitle.Visible = actionTitle.Visible.ValueBool()
 			}
 
-			if !title.VisibleJqQuery.IsNull() {
+			if !actionTitle.VisibleJqQuery.IsNull() {
 				VisibleJqQueryMap := map[string]string{
-					"jqQuery": title.VisibleJqQuery.ValueString(),
+					"jqQuery": actionTitle.VisibleJqQuery.ValueString(),
 				}
 				cliTitle.Visible = VisibleJqQueryMap
 			}
 
-			titles[key] = cliTitle
+			actionTitles[key] = cliTitle
 		}
 	}
 
@@ -290,7 +290,7 @@ func actionTitlesToBody(ctx context.Context, actionTrigger *cli.Trigger, data *S
 		return err
 	}
 
-	actionTrigger.UserInputs.Titles = titles
+	actionTrigger.UserInputs.Titles = actionTitles
 
 	return nil
 }

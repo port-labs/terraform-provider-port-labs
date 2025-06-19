@@ -63,8 +63,14 @@ func (p *PortLabsProvider) Schema(ctx context.Context, req provider.SchemaReques
 				Optional: true,
 			},
 			"json_escape_html": schema.BoolAttribute{
-				Optional:            true,
-				MarkdownDescription: "When set to `false` disables the default HTML escaping of json.Marshal when reading data from Port. Defaults to `true`",
+				Optional: true,
+				MarkdownDescription: "When set to `false` disables the default HTML escaping of json.Marshal when " +
+					"reading data from Port. Defaults to `true`",
+			},
+			"blueprint_property_type_change_protection": schema.BoolAttribute{
+				Optional: true,
+				MarkdownDescription: "Protects you from accidentally changing the property type of blueprints which " +
+					"will delete the property before recreating it with the new type. Defaults to `true`",
 			},
 		},
 	}
@@ -101,6 +107,12 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 		c.JSONEscapeHTML = true
 	} else {
 		c.JSONEscapeHTML = data.JSONEscapeHTML.ValueBool()
+	}
+
+	if data.BlueprintPropertyTypeChangeProtection.IsNull() {
+		c.BlueprintPropertyTypeChangeProtection = true
+	} else {
+		c.BlueprintPropertyTypeChangeProtection = data.BlueprintPropertyTypeChangeProtection.ValueBool()
 	}
 
 	if data.Token.ValueString() != "" {

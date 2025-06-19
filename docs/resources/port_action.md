@@ -711,15 +711,15 @@ Required:
 Required:
 
 - `operator` (String) The operator of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value))
 
 Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `property` (String) The property identifier of the rule
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value))
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.property`
+### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value`
 
 Optional:
 

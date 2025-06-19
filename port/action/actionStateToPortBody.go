@@ -18,10 +18,14 @@ func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
 	for _, rule := range dataSet.Rules {
 		dataSetRule := cli.DatasetRule{
 			Operator: rule.Operator.ValueString(),
-			Value: &cli.DatasetValue{
-				JqQuery: rule.Value.JqQuery.ValueString(),
-			},
 		}
+		
+		if rule.Value != nil && !rule.Value.JqQuery.IsNull() {
+			dataSetRule.Value = &cli.DatasetValue{
+				JqQuery: rule.Value.JqQuery.ValueString(),
+			}
+		}
+
 		if !rule.Blueprint.IsNull() {
 			blueprint := rule.Blueprint.ValueString()
 			dataSetRule.Blueprint = &blueprint

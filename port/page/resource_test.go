@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
@@ -49,14 +50,10 @@ resource "port_page" "microservice_blueprint_page" {
       {
         "id" : "blabla",
         "type" : "table-entities-explorer",
+        "blueprint" : port_blueprint.microservice.identifier,
         "dataset" : {
           "combinator" : "and",
           "rules" : [
-            {
-              "operator" : "=",
-              "property" : "$blueprint",
-              "value" : "{{blueprint}}"
-            }
           ]
         }
       }
@@ -104,14 +101,10 @@ resource "port_page" "microservice_blueprint_page" {
       {
         "id" : "blabla",
         "type" : "table-entities-explorer",
+        "blueprint" : port_blueprint.microservice.identifier,
         "dataset" : {
           "combinator" : "and",
           "rules" : [
-            {
-              "operator" : "=",
-              "property" : "$blueprint",
-              "value" : "{{blueprint}}"
-            }
           ]
         }
       }

@@ -284,14 +284,22 @@ type Step struct {
 	Order []types.String `tfsdk:"order"`
 }
 
+type ActionTitle struct {
+	Title          types.String `tfsdk:"title"`
+	Description    types.String `tfsdk:"description"`
+	Visible        types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
+}
+
 type SelfServiceTriggerModel struct {
-	BlueprintIdentifier types.String         `tfsdk:"blueprint_identifier"`
-	Operation           types.String         `tfsdk:"operation"`
-	UserProperties      *UserPropertiesModel `tfsdk:"user_properties"`
-	RequiredJqQuery     types.String         `tfsdk:"required_jq_query"`
-	OrderProperties     types.List           `tfsdk:"order_properties"`
-	Steps               []Step               `tfsdk:"steps"`
-	Condition           types.String         `tfsdk:"condition"`
+	BlueprintIdentifier types.String           `tfsdk:"blueprint_identifier"`
+	Operation           types.String           `tfsdk:"operation"`
+	UserProperties      *UserPropertiesModel   `tfsdk:"user_properties"`
+	Titles              map[string]ActionTitle `tfsdk:"titles"`
+	RequiredJqQuery     types.String           `tfsdk:"required_jq_query"`
+	OrderProperties     types.List             `tfsdk:"order_properties"`
+	Steps               []Step                 `tfsdk:"steps"`
+	Condition           types.String           `tfsdk:"condition"`
 }
 
 type EntityCreatedEventModel struct {

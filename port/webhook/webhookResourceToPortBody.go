@@ -2,6 +2,8 @@ package webhook
 
 import (
 	"context"
+	"encoding/json"
+	"strings"
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
@@ -110,9 +112,21 @@ func webhookResourceToPortBody(ctx context.Context, state *WebhookModel) (*cli.W
 			}
 
 			if v.Entity.Relations != nil {
-				relations := make(map[string]string)
+				relations := make(map[string]any)
 				for k, v := range v.Entity.Relations {
-					relations[k] = v
+					// Try to detect if the value is a JSON string and parse it
+					if strings.HasPrefix(strings.TrimSpace(v), "{") && strings.HasSuffix(strings.TrimSpace(v), "}") {
+						var parsed interface{}
+						if err := json.Unmarshal([]byte(v), &parsed); err == nil {
+							relations[k] = parsed
+						} else {
+							// If JSON parsing fails, keep it as a string
+							relations[k] = v
+						}
+					} else {
+						// Not a JSON object, keep as string
+						relations[k] = v
+					}
 				}
 				mapping.Entity.Relations = relations
 			}

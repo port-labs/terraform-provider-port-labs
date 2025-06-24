@@ -10,6 +10,42 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
 )
 
+func validateRelationStructure(relation map[string]interface{}) error {
+	// Combinator validation
+	_, exists := relation["combinator"]
+	if !exists {
+		return fmt.Errorf("missing required field 'combinator'")
+	}
+
+	// Rules validation
+	rulesInterface, exists := relation["rules"]
+	if !exists {
+		return fmt.Errorf("missing required field 'rules'")
+	}
+
+	rules, ok := rulesInterface.([]interface{})
+	if !ok {
+		return fmt.Errorf("field 'rules' must be an array, got %T", rulesInterface)
+	}
+
+	for i, ruleInterface := range rules {
+		rule, ok := ruleInterface.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("rule at index %d must be an object, got %T", i, ruleInterface)
+		}
+
+		requiredFields := []string{"property", "operator", "value"}
+		for _, field := range requiredFields {
+			_, exists := rule[field]
+			if !exists {
+				return fmt.Errorf("rule at index %d is missing required field '%s'", i, field)
+			}
+		}
+	}
+
+	return nil
+}
+
 func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhook) error {
 	state.ID = types.StringValue(w.Identifier)
 	state.Identifier = types.StringValue(w.Identifier)
@@ -60,17 +96,20 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 			if v.Entity.Relations != nil {
 				mapping.Entity.Relations = map[string]string{}
 				for k, relationValue := range v.Entity.Relations {
-					// Convert any type back to string, handling JSON encoding if needed
 					switch val := relationValue.(type) {
 					case string:
 						mapping.Entity.Relations[k] = val
-					default:
-						// If it's an object, marshal it to JSON
+					case map[string]interface{}:
+						if err := validateRelationStructure(val); err != nil {
+							return fmt.Errorf("invalid relation structure for key '%s': %w", k, err)
+						}
 						if jsonBytes, err := json.Marshal(val); err == nil {
 							mapping.Entity.Relations[k] = string(jsonBytes)
 						} else {
-							mapping.Entity.Relations[k] = fmt.Sprintf("%v", val)
+							return fmt.Errorf("failed to marshal relation '%s' to JSON: %w", k, err)
 						}
+					default:
+						return fmt.Errorf("invalid relation type for key '%s': expected string or object, got %T", k, val)
 					}
 				}
 			}

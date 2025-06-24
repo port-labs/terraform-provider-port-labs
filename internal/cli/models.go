@@ -675,12 +675,12 @@ type Organization struct {
 	FeatureFlags []string `json:"featureFlags"`
 }
 
-// RateLimitInfo holds rate limiting information from response headers
+// RateLimitInfo holds rate limiting information from port api response headers
 type RateLimitInfo struct {
-	Limit     int `json:"limit"`     // x-ratelimit-limit
-	Period    int `json:"period"`    // x-ratelimit-period
-	Remaining int `json:"remaining"` // x-ratelimit-remaining
-	Reset     int `json:"reset"`     // x-ratelimit-reset (seconds until reset)
+	Limit     int // x-ratelimit-limit
+	Period    int // x-ratelimit-period
+	Remaining int // x-ratelimit-remaining
+	Reset     int // x-ratelimit-reset (seconds until reset)
 }
 
 // IsNearLimit checks if we're close to hitting the rate limit

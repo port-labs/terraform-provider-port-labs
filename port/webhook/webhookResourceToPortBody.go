@@ -2,6 +2,8 @@ package webhook
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
@@ -110,9 +112,36 @@ func webhookResourceToPortBody(ctx context.Context, state *WebhookModel) (*cli.W
 			}
 
 			if v.Entity.Relations != nil {
-				relations := make(map[string]string)
-				for k, v := range v.Entity.Relations {
-					relations[k] = v
+				relations := make(map[string]any)
+				for k, relationValue := range v.Entity.Relations {
+					var parsed interface{}
+					if err := json.Unmarshal([]byte(relationValue), &parsed); err == nil {
+						if relationMap, ok := parsed.(map[string]interface{}); ok {
+							if _, exists := relationMap["combinator"]; !exists {
+								return nil, fmt.Errorf("relation '%s' missing required field 'combinator'", k)
+							}
+							if rulesInterface, exists := relationMap["rules"]; !exists {
+								return nil, fmt.Errorf("relation '%s' missing required field 'rules'", k)
+							} else if rules, ok := rulesInterface.([]interface{}); ok {
+								for i, ruleInterface := range rules {
+									if rule, ok := ruleInterface.(map[string]interface{}); ok {
+										for _, field := range []string{"property", "operator", "value"} {
+											if _, exists := rule[field]; !exists {
+												return nil, fmt.Errorf("relation '%s' rule at index %d missing required field '%s'", k, i, field)
+											}
+										}
+									}
+								}
+							}
+							relations[k] = parsed
+						} else {
+							// JSON but not an object (e.g., array, string, number) - treating as string
+							relations[k] = relationValue
+						}
+					} else {
+						// Not valid JSON - treating as string relation
+						relations[k] = relationValue
+					}
 				}
 				mapping.Entity.Relations = relations
 			}

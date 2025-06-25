@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -58,8 +59,19 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 
 			if v.Entity.Relations != nil {
 				mapping.Entity.Relations = map[string]string{}
-				for k, v := range v.Entity.Relations {
-					mapping.Entity.Relations[k] = v
+				for k, relationValue := range v.Entity.Relations {
+					switch val := relationValue.(type) {
+					case string:
+						mapping.Entity.Relations[k] = val
+					case map[string]interface{}:
+						if jsonBytes, err := json.Marshal(val); err == nil {
+							mapping.Entity.Relations[k] = string(jsonBytes)
+						} else {
+							return fmt.Errorf("failed to marshal relation '%s' to JSON: %w", k, err)
+						}
+					default:
+						return fmt.Errorf("invalid relation type for key '%s': expected string or object, got %T", k, val)
+					}
 				}
 			}
 

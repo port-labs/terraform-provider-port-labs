@@ -10,42 +10,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
 )
 
-func validateRelationStructure(relation map[string]interface{}) error {
-	// Combinator validation
-	_, exists := relation["combinator"]
-	if !exists {
-		return fmt.Errorf("missing required field 'combinator'")
-	}
-
-	// Rules validation
-	rulesInterface, exists := relation["rules"]
-	if !exists {
-		return fmt.Errorf("missing required field 'rules'")
-	}
-
-	rules, ok := rulesInterface.([]interface{})
-	if !ok {
-		return fmt.Errorf("field 'rules' must be an array, got %T", rulesInterface)
-	}
-
-	for i, ruleInterface := range rules {
-		rule, ok := ruleInterface.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("rule at index %d must be an object, got %T", i, ruleInterface)
-		}
-
-		requiredFields := []string{"property", "operator", "value"}
-		for _, field := range requiredFields {
-			_, exists := rule[field]
-			if !exists {
-				return fmt.Errorf("rule at index %d is missing required field '%s'", i, field)
-			}
-		}
-	}
-
-	return nil
-}
-
 func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhook) error {
 	state.ID = types.StringValue(w.Identifier)
 	state.Identifier = types.StringValue(w.Identifier)
@@ -100,8 +64,26 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 					case string:
 						mapping.Entity.Relations[k] = val
 					case map[string]interface{}:
-						if err := validateRelationStructure(val); err != nil {
-							return fmt.Errorf("invalid relation structure for key '%s': %w", k, err)
+						// Validate relation structure inline
+						if _, exists := val["combinator"]; !exists {
+							return fmt.Errorf("relation '%s' missing required field 'combinator'", k)
+						}
+						if rulesInterface, exists := val["rules"]; !exists {
+							return fmt.Errorf("relation '%s' missing required field 'rules'", k)
+						} else if rules, ok := rulesInterface.([]interface{}); !ok {
+							return fmt.Errorf("relation '%s' field 'rules' must be an array, got %T", k, rulesInterface)
+						} else {
+							for i, ruleInterface := range rules {
+								if rule, ok := ruleInterface.(map[string]interface{}); !ok {
+									return fmt.Errorf("relation '%s' rule at index %d must be an object, got %T", k, i, ruleInterface)
+								} else {
+									for _, field := range []string{"property", "operator", "value"} {
+										if _, exists := rule[field]; !exists {
+											return fmt.Errorf("relation '%s' rule at index %d missing required field '%s'", k, i, field)
+										}
+									}
+								}
+							}
 						}
 						if jsonBytes, err := json.Marshal(val); err == nil {
 							mapping.Entity.Relations[k] = string(jsonBytes)

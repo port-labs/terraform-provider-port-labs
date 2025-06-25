@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 
@@ -95,7 +96,7 @@ func WebhookMappingSchema() map[string]schema.Attribute {
 					ElementType:         types.StringType,
 				},
 				"relations": schema.MapAttribute{
-					MarkdownDescription: "The relations of the entity",
+					MarkdownDescription: "The relations of the entity. Relations can be defined as either simple JQ expressions (strings) or search query objects. When using objects, the rules array must be encoded with jsonencode().",
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
@@ -180,7 +181,120 @@ func WebhookSchema() map[string]schema.Attribute {
 
 func (r *WebhookResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Webhook resource",
+		MarkdownDescription: ResourceMarkdownDescription,
 		Attributes:          WebhookSchema(),
 	}
 }
+
+var ResourceMarkdownDescription = `
+
+
+# Webhook resource
+Webhook resource can be used to create webhooks integrations in Port.
+
+## Example Usage
+
+` + "```hcl" + `
+resource "port_blueprint" "author" {
+    title = "Author"
+    icon = "User"
+    identifier = "author"
+    properties = {
+      string_props = {
+        "name" = {
+          type = "string"
+          title = "Name"
+        }
+      }
+    }
+  }
+
+  resource "port_blueprint" "team" {
+    title = "Team"
+    icon = "Team"
+    identifier = "team"
+    properties = {
+      string_props = {
+        "name" = {
+          type = "string"
+          title = "Team Name"
+        }
+      }
+    }
+  }
+
+  resource "port_blueprint" "microservice" {
+    title = "TF test microservice"
+    icon = "Terraform"
+    identifier = "microservice"
+    properties = {
+      string_props = {
+        "url" = {
+          type = "string"
+          title = "URL"
+        }
+      }
+    }
+    relations = {
+      "author" = {
+        title = "Author"
+        target = port_blueprint.author.identifier
+      }
+      "team" = {
+        title = "Team"
+        target = port_blueprint.team.identifier
+      }
+    }
+  }
+
+  resource "port_webhook" "create_pr" {
+    identifier = "pr_webhook"
+    title      = "Webhook with mixed relations"
+    icon       = "Terraform"
+    enabled    = true
+    
+    mappings = [
+      {
+        blueprint = port_blueprint.microservice.identifier
+        operation = { "type" = "create" }
+        filter    = ".headers.\"x-github-event\" == \"pull_request\""
+        entity = {
+          identifier = ".body.pull_request.id | tostring"
+          title      = ".body.pull_request.title"
+          properties = {
+            url = ".body.pull_request.html_url"
+          }
+          relations = {
+            # Complex object relation with search query
+            author = jsonencode({
+              combinator = "'and'",
+              rules = [
+                {
+                  property = "'$identifier'"
+                  operator = "'='"
+                  value    = ".body.pull_request.user.login | tostring"
+                }
+              ]
+            })
+            
+            # Simple string relation
+            team = ".body.repository.owner.login | tostring"
+          }
+        }
+      }
+    ]
+    
+    depends_on = [
+      port_blueprint.microservice,
+      port_blueprint.author,
+      port_blueprint.team
+    ]
+  }
+` + "\n```" + `
+
+## Notes
+
+- When using object format for relations, ` + "`combinator`, `property`" + ` and ` + "`operator`" + ` fields should be enclosed in single quotes, while ` + "`value`" + ` should not have quotes as it's a JQ expression. The single quotes are required because these fields contain literal string values that must be passed as-is to the Port API, whereas ` + "`value`" + ` contains a JQ expression that should be evaluated dynamically.
+- For all available operators, see the [Port comparison operators documentation](https://docs.port.io/search-and-query/comparison-operators).
+
+`

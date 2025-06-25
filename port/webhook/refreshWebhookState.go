@@ -64,7 +64,6 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 					case string:
 						mapping.Entity.Relations[k] = val
 					case map[string]interface{}:
-						// Validate relation structure inline
 						if _, exists := val["combinator"]; !exists {
 							return fmt.Errorf("relation '%s' missing required field 'combinator'", k)
 						}

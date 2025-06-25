@@ -2,6 +2,7 @@ package webhook_test
 
 import (
 	"fmt"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -537,6 +538,139 @@ func TestAccPortWebhookCreateWithRelations(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.properties.url", ".body.pull_request.html_url"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.relations.author", `{"combinator":"'and'","rules":[{"operator":"'='","property":"'$identifier'","value":".body.pull_request.user.login | tostring"}]}`),
 				),
+			},
+		},
+	})
+}
+
+func TestAccPortWebhookCreateWithInvalidRelations(t *testing.T) {
+	identifier := utils.GenID()
+	authorIdentifier := utils.GenID()
+	webhookIdentifier := utils.GenID()
+
+	// Test case 1: Missing combinator field
+	var testPortWebhookConfigMissingCombinator = testAccCreateBlueprintConfigWithRelations(identifier, authorIdentifier) + fmt.Sprintf(`
+	resource "port_webhook" "create_pr" {
+		identifier = "%s"
+		title      = "Invalid Relations Test"
+		icon       = "Terraform"
+  		enabled    = true
+ 		mappings = [
+    		{
+      			blueprint = port_blueprint.microservice.identifier
+				operation = { "type" = "create" }
+				filter    = ".headers.\"x-github-event\" == \"pull_request\""
+				entity = {
+					identifier = ".body.pull_request.id | tostring"
+					title      = ".body.pull_request.title"
+					properties = {
+						url = ".body.pull_request.html_url"
+					}
+					relations = {
+						author = jsonencode({
+							rules = [
+								{
+									property = "'$identifier'"
+									operator = "'='"
+									value    = ".body.pull_request.user.login | tostring"
+								}
+							]
+						})
+        			}
+      			}
+    		}
+  		]
+		depends_on = [
+			port_blueprint.microservice,
+			port_blueprint.author
+		]
+	}`, webhookIdentifier)
+
+	// Test case 2: Missing rules field
+	var testPortWebhookConfigMissingRules = testAccCreateBlueprintConfigWithRelations(identifier+"2", authorIdentifier+"2") + fmt.Sprintf(`
+	resource "port_webhook" "create_pr2" {
+		identifier = "%s"
+		title      = "Invalid Relations Test"
+		icon       = "Terraform"
+  		enabled    = true
+ 		mappings = [
+    		{
+      			blueprint = port_blueprint.microservice.identifier
+				operation = { "type" = "create" }
+				filter    = ".headers.\"x-github-event\" == \"pull_request\""
+				entity = {
+					identifier = ".body.pull_request.id | tostring"
+					title      = ".body.pull_request.title"
+					properties = {
+						url = ".body.pull_request.html_url"
+					}
+					relations = {
+						author = jsonencode({
+							combinator = "'and'"
+						})
+        			}
+      			}
+    		}
+  		]
+		depends_on = [
+			port_blueprint.microservice,
+			port_blueprint.author
+		]
+	}`, webhookIdentifier+"2")
+
+	// Test case 3: Missing required field in rule (missing operator)
+	var testPortWebhookConfigMissingOperator = testAccCreateBlueprintConfigWithRelations(identifier+"3", authorIdentifier+"3") + fmt.Sprintf(`
+	resource "port_webhook" "create_pr3" {
+		identifier = "%s"
+		title      = "Invalid Relations Test"
+		icon       = "Terraform"
+  		enabled    = true
+ 		mappings = [
+    		{
+      			blueprint = port_blueprint.microservice.identifier
+				operation = { "type" = "create" }
+				filter    = ".headers.\"x-github-event\" == \"pull_request\""
+				entity = {
+					identifier = ".body.pull_request.id | tostring"
+					title      = ".body.pull_request.title"
+					properties = {
+						url = ".body.pull_request.html_url"
+					}
+					relations = {
+						author = jsonencode({
+							combinator = "'and'",
+							rules = [
+								{
+									property = "'$identifier'"
+									value    = ".body.pull_request.user.login | tostring"
+								}
+							]
+						})
+        			}
+      			}
+    		}
+  		]
+		depends_on = [
+			port_blueprint.microservice,
+			port_blueprint.author
+		]
+	}`, webhookIdentifier+"3")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + testPortWebhookConfigMissingCombinator,
+				ExpectError: regexp.MustCompile("relation.*missing required field.*combinator"),
+			},
+			{
+				Config:      acctest.ProviderConfig + testPortWebhookConfigMissingRules,
+				ExpectError: regexp.MustCompile("relation.*missing required field.*rules"),
+			},
+			{
+				Config:      acctest.ProviderConfig + testPortWebhookConfigMissingOperator,
+				ExpectError: regexp.MustCompile("relation.*missing required field.*operator"),
 			},
 		},
 	})

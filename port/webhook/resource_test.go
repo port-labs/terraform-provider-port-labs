@@ -70,6 +70,62 @@ func testAccCreateBlueprintConfigWithRelations(identifier string, authorIdentifi
 	`, authorIdentifier, identifier)
 }
 
+func testAccCreateBlueprintConfigWithMultipleRelations(identifier string, authorIdentifier string, teamIdentifier string) string {
+	return fmt.Sprintf(`
+	resource "port_blueprint" "author" {
+		title = "Author"
+		icon = "User"
+		identifier = "%s"
+		properties = {
+			string_props = {
+				"name" = {
+					type = "string"
+					title = "Name"
+				}
+			}
+		}
+	}
+	
+	resource "port_blueprint" "team" {
+		title = "Team"
+		icon = "Team"
+		identifier = "%s"
+		properties = {
+			string_props = {
+				"name" = {
+					type = "string"
+					title = "Team Name"
+				}
+			}
+		}
+	}
+	
+	resource "port_blueprint" "microservice" {
+		title = "TF test microservice"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_props = {
+				"url" = {
+					type = "string"
+					title = "URL"
+				}
+			}
+		}
+		relations = {
+			"author" = {
+				title = "Author"
+				target = port_blueprint.author.identifier
+			}
+			"team" = {
+				title = "Team"
+				target = port_blueprint.team.identifier
+			}
+		}
+	}
+	`, authorIdentifier, teamIdentifier, identifier)
+}
+
 func TestAccPortWebhookBasic(t *testing.T) {
 	identifier := utils.GenID()
 	webhookIdentifier := utils.GenID()
@@ -480,8 +536,11 @@ func TestAccPortWebhookUpdateIdentifier(t *testing.T) {
 func TestAccPortWebhookCreateWithRelations(t *testing.T) {
 	identifier := utils.GenID()
 	authorIdentifier := utils.GenID()
+	teamIdentifier := utils.GenID()
 	webhookIdentifier := utils.GenID()
-	var testPortWebhookConfig = testAccCreateBlueprintConfigWithRelations(identifier, authorIdentifier) + fmt.Sprintf(`
+
+	// Test case 1: JSON relations with combinator/rules structure
+	var testPortWebhookConfigJSON = testAccCreateBlueprintConfigWithRelations(identifier, authorIdentifier) + fmt.Sprintf(`
 	resource "port_webhook" "create_pr" {
 		identifier = "%s"
 		title      = "Webhook with json relation"
@@ -519,12 +578,83 @@ func TestAccPortWebhookCreateWithRelations(t *testing.T) {
 		]
 	}`, webhookIdentifier)
 
+	// Test case 2: String relations (simple string values)
+	var testPortWebhookConfigString = testAccCreateBlueprintConfigWithRelations(identifier, authorIdentifier) + fmt.Sprintf(`
+	resource "port_webhook" "create_pr" {
+		identifier = "%s"
+		title      = "Webhook with string relation"
+		icon       = "Terraform"
+  		enabled    = true
+ 		mappings = [
+    		{
+      			blueprint = port_blueprint.microservice.identifier
+				operation = { "type" = "create" }
+				filter    = ".headers.\"x-github-event\" == \"pull_request\""
+				entity = {
+					identifier = ".body.pull_request.id | tostring"
+					title      = ".body.pull_request.title"
+					properties = {
+						url = ".body.pull_request.html_url"
+					}
+					relations = {
+						author = ".body.pull_request.user.login | tostring"
+        			}
+      			}
+    		}
+  		]
+		depends_on = [
+			port_blueprint.microservice,
+			port_blueprint.author
+		]
+	}`, webhookIdentifier)
+
+	// Test case 3: Mixed relations (both JSON and string in the same webhook)
+	var testPortWebhookConfigMixed = testAccCreateBlueprintConfigWithMultipleRelations(identifier, authorIdentifier, teamIdentifier) + fmt.Sprintf(`
+	resource "port_webhook" "create_pr" {
+		identifier = "%s"
+		title      = "Webhook with mixed relations"
+		icon       = "Terraform"
+  		enabled    = true
+ 		mappings = [
+    		{
+      			blueprint = port_blueprint.microservice.identifier
+				operation = { "type" = "create" }
+				filter    = ".headers.\"x-github-event\" == \"pull_request\""
+				entity = {
+					identifier = ".body.pull_request.id | tostring"
+					title      = ".body.pull_request.title"
+					properties = {
+						url = ".body.pull_request.html_url"
+					}
+					relations = {
+						author = jsonencode({
+							combinator = "'and'",
+							rules = [
+								{
+									property = "'$identifier'"
+									operator = "'='"
+									value    = ".body.pull_request.user.login | tostring"
+								}
+							]
+						})
+						team = ".body.repository.owner.login | tostring"
+        			}
+      			}
+    		}
+  		]
+		depends_on = [
+			port_blueprint.microservice,
+			port_blueprint.author,
+			port_blueprint.team
+		]
+	}`, webhookIdentifier)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: acctest.ProviderConfig + testPortWebhookConfig,
+				Config: acctest.ProviderConfig + testPortWebhookConfigJSON,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "identifier", webhookIdentifier),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "title", "Webhook with json relation"),
@@ -537,6 +667,39 @@ func TestAccPortWebhookCreateWithRelations(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.title", ".body.pull_request.title"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.properties.url", ".body.pull_request.html_url"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.relations.author", `{"combinator":"'and'","rules":[{"operator":"'='","property":"'$identifier'","value":".body.pull_request.user.login | tostring"}]}`),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testPortWebhookConfigString,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "identifier", webhookIdentifier),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "title", "Webhook with string relation"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "enabled", "true"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.blueprint", identifier),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.operation.type", "create"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.filter", ".headers.\"x-github-event\" == \"pull_request\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.identifier", ".body.pull_request.id | tostring"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.title", ".body.pull_request.title"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.properties.url", ".body.pull_request.html_url"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.relations.author", ".body.pull_request.user.login | tostring"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testPortWebhookConfigMixed,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "identifier", webhookIdentifier),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "title", "Webhook with mixed relations"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "enabled", "true"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.blueprint", identifier),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.operation.type", "create"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.filter", ".headers.\"x-github-event\" == \"pull_request\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.identifier", ".body.pull_request.id | tostring"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.title", ".body.pull_request.title"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.properties.url", ".body.pull_request.html_url"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.relations.author", `{"combinator":"'and'","rules":[{"operator":"'='","property":"'$identifier'","value":".body.pull_request.user.login | tostring"}]}`),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.relations.team", ".body.repository.owner.login | tostring"),
 				),
 			},
 		},

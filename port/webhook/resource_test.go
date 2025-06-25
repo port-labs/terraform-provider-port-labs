@@ -31,6 +31,44 @@ func testAccCreateBlueprintConfig(identifier string) string {
 	`, identifier)
 }
 
+func testAccCreateBlueprintConfigWithRelations(identifier string, authorIdentifier string) string {
+	return fmt.Sprintf(`
+	resource "port_blueprint" "author" {
+		title = "Author"
+		icon = "User"
+		identifier = "%s"
+		properties = {
+			string_props = {
+				"name" = {
+					type = "string"
+					title = "Name"
+				}
+			}
+		}
+	}
+	
+	resource "port_blueprint" "microservice" {
+		title = "TF test microservice"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_props = {
+				"url" = {
+					type = "string"
+					title = "URL"
+				}
+			}
+		}
+		relations = {
+			"author" = {
+				title = "Author"
+				target = port_blueprint.author.identifier
+			}
+		}
+	}
+	`, authorIdentifier, identifier)
+}
+
 func TestAccPortWebhookBasic(t *testing.T) {
 	identifier := utils.GenID()
 	webhookIdentifier := utils.GenID()
@@ -432,6 +470,72 @@ func TestAccPortWebhookUpdateIdentifier(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "title", "Test"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_webhook.create_pr", "enabled", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortWebhookCreateWithRelations(t *testing.T) {
+	identifier := utils.GenID()
+	authorIdentifier := utils.GenID()
+	webhookIdentifier := utils.GenID()
+	var testPortWebhookConfig = testAccCreateBlueprintConfigWithRelations(identifier, authorIdentifier) + fmt.Sprintf(`
+	resource "port_webhook" "create_pr" {
+		identifier = "%s"
+		title      = "Webhook with json relation"
+		icon       = "Terraform"
+  		enabled    = true
+ 		mappings = [
+    		{
+      			blueprint = port_blueprint.microservice.identifier
+				operation = { "type" = "create" }
+				filter    = ".headers.\"x-github-event\" == \"pull_request\""
+				entity = {
+					identifier = ".body.pull_request.id | tostring"
+					title      = ".body.pull_request.title"
+					properties = {
+						url = ".body.pull_request.html_url"
+					}
+					relations = {
+						author = jsonencode({
+							combinator = "'and'",
+							rules = [
+								{
+									property = "'$identifier'"
+									operator = "'='"
+									value    = ".body.pull_request.user.login | tostring"
+								}
+							]
+						})
+        			}
+      			}
+    		}
+  		]
+		depends_on = [
+			port_blueprint.microservice,
+			port_blueprint.author
+		]
+	}`, webhookIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testPortWebhookConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "identifier", webhookIdentifier),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "title", "Webhook with json relation"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "enabled", "true"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.blueprint", identifier),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.operation.type", "create"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.filter", ".headers.\"x-github-event\" == \"pull_request\""),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.identifier", ".body.pull_request.id | tostring"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.title", ".body.pull_request.title"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.properties.url", ".body.pull_request.html_url"),
+					resource.TestCheckResourceAttr("port_webhook.create_pr", "mappings.0.entity.relations.author", `{"combinator":"'and'","rules":[{"operator":"'='","property":"'$identifier'","value":".body.pull_request.user.login | tostring"}]}`),
 				),
 			},
 		},

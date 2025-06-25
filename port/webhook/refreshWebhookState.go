@@ -64,26 +64,6 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 					case string:
 						mapping.Entity.Relations[k] = val
 					case map[string]interface{}:
-						if _, exists := val["combinator"]; !exists {
-							return fmt.Errorf("relation '%s' missing required field 'combinator'", k)
-						}
-						if rulesInterface, exists := val["rules"]; !exists {
-							return fmt.Errorf("relation '%s' missing required field 'rules'", k)
-						} else if rules, ok := rulesInterface.([]interface{}); !ok {
-							return fmt.Errorf("relation '%s' field 'rules' must be an array, got %T", k, rulesInterface)
-						} else {
-							for i, ruleInterface := range rules {
-								if rule, ok := ruleInterface.(map[string]interface{}); !ok {
-									return fmt.Errorf("relation '%s' rule at index %d must be an object, got %T", k, i, ruleInterface)
-								} else {
-									for _, field := range []string{"property", "operator", "value"} {
-										if _, exists := rule[field]; !exists {
-											return fmt.Errorf("relation '%s' rule at index %d missing required field '%s'", k, i, field)
-										}
-									}
-								}
-							}
-						}
 						if jsonBytes, err := json.Marshal(val); err == nil {
 							mapping.Entity.Relations[k] = string(jsonBytes)
 						} else {

@@ -9,50 +9,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
-// validateRelationStructure validates that a parsed JSON relation has the required structure
-func validateRelationStructure(relationKey string, relationValue interface{}) error {
-	// If it's not a map, it could be a string relation which is valid
-	relationMap, ok := relationValue.(map[string]interface{})
-	if !ok {
-		return nil // String relations are valid
-	}
-
-	// Validate required field: combinator
-	if _, exists := relationMap["combinator"]; !exists {
-		return fmt.Errorf("relation '%s' missing required field 'combinator'", relationKey)
-	}
-
-	// Validate required field: rules
-	rulesInterface, exists := relationMap["rules"]
-	if !exists {
-		return fmt.Errorf("relation '%s' missing required field 'rules'", relationKey)
-	}
-
-	// Validate that rules is an array
-	rules, ok := rulesInterface.([]interface{})
-	if !ok {
-		return fmt.Errorf("relation '%s' field 'rules' must be an array, got %T", relationKey, rulesInterface)
-	}
-
-	// Validate each rule in the rules array
-	for i, ruleInterface := range rules {
-		rule, ok := ruleInterface.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("relation '%s' rule at index %d must be an object, got %T", relationKey, i, ruleInterface)
-		}
-
-		// Validate required fields in each rule
-		requiredFields := []string{"property", "operator", "value"}
-		for _, field := range requiredFields {
-			if _, exists := rule[field]; !exists {
-				return fmt.Errorf("relation '%s' rule at index %d missing required field '%s'", relationKey, i, field)
-			}
-		}
-	}
-
-	return nil
-}
-
 func webhookResourceToPortBody(ctx context.Context, state *WebhookModel) (*cli.Webhook, error) {
 	w := &cli.Webhook{
 		Identifier: state.Identifier.ValueString(),
@@ -163,9 +119,23 @@ func webhookResourceToPortBody(ctx context.Context, state *WebhookModel) (*cli.W
 					if strings.HasPrefix(strings.TrimSpace(relationValue), "{") && strings.HasSuffix(strings.TrimSpace(relationValue), "}") {
 						var parsed interface{}
 						if err := json.Unmarshal([]byte(relationValue), &parsed); err == nil {
-							// Validate the parsed JSON structure
-							if err := validateRelationStructure(k, parsed); err != nil {
-								return nil, err
+							if relationMap, ok := parsed.(map[string]interface{}); ok {
+								if _, exists := relationMap["combinator"]; !exists {
+									return nil, fmt.Errorf("relation '%s' missing required field 'combinator'", k)
+								}
+								if rulesInterface, exists := relationMap["rules"]; !exists {
+									return nil, fmt.Errorf("relation '%s' missing required field 'rules'", k)
+								} else if rules, ok := rulesInterface.([]interface{}); ok {
+									for i, ruleInterface := range rules {
+										if rule, ok := ruleInterface.(map[string]interface{}); ok {
+											for _, field := range []string{"property", "operator", "value"} {
+												if _, exists := rule[field]; !exists {
+													return nil, fmt.Errorf("relation '%s' rule at index %d missing required field '%s'", k, i, field)
+												}
+											}
+										}
+									}
+								}
 							}
 							relations[k] = parsed
 						} else {

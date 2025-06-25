@@ -3,10 +3,55 @@ package webhook
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strings"
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
+
+// validateRelationStructure validates that a parsed JSON relation has the required structure
+func validateRelationStructure(relationKey string, relationValue interface{}) error {
+	// If it's not a map, it could be a string relation which is valid
+	relationMap, ok := relationValue.(map[string]interface{})
+	if !ok {
+		return nil // String relations are valid
+	}
+
+	// Validate required field: combinator
+	if _, exists := relationMap["combinator"]; !exists {
+		return fmt.Errorf("relation '%s' missing required field 'combinator'", relationKey)
+	}
+
+	// Validate required field: rules
+	rulesInterface, exists := relationMap["rules"]
+	if !exists {
+		return fmt.Errorf("relation '%s' missing required field 'rules'", relationKey)
+	}
+
+	// Validate that rules is an array
+	rules, ok := rulesInterface.([]interface{})
+	if !ok {
+		return fmt.Errorf("relation '%s' field 'rules' must be an array, got %T", relationKey, rulesInterface)
+	}
+
+	// Validate each rule in the rules array
+	for i, ruleInterface := range rules {
+		rule, ok := ruleInterface.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("relation '%s' rule at index %d must be an object, got %T", relationKey, i, ruleInterface)
+		}
+
+		// Validate required fields in each rule
+		requiredFields := []string{"property", "operator", "value"}
+		for _, field := range requiredFields {
+			if _, exists := rule[field]; !exists {
+				return fmt.Errorf("relation '%s' rule at index %d missing required field '%s'", relationKey, i, field)
+			}
+		}
+	}
+
+	return nil
+}
 
 func webhookResourceToPortBody(ctx context.Context, state *WebhookModel) (*cli.Webhook, error) {
 	w := &cli.Webhook{
@@ -113,19 +158,23 @@ func webhookResourceToPortBody(ctx context.Context, state *WebhookModel) (*cli.W
 
 			if v.Entity.Relations != nil {
 				relations := make(map[string]any)
-				for k, v := range v.Entity.Relations {
+				for k, relationValue := range v.Entity.Relations {
 					// Try to detect if the value is a JSON string and parse it
-					if strings.HasPrefix(strings.TrimSpace(v), "{") && strings.HasSuffix(strings.TrimSpace(v), "}") {
+					if strings.HasPrefix(strings.TrimSpace(relationValue), "{") && strings.HasSuffix(strings.TrimSpace(relationValue), "}") {
 						var parsed interface{}
-						if err := json.Unmarshal([]byte(v), &parsed); err == nil {
+						if err := json.Unmarshal([]byte(relationValue), &parsed); err == nil {
+							// Validate the parsed JSON structure
+							if err := validateRelationStructure(k, parsed); err != nil {
+								return nil, err
+							}
 							relations[k] = parsed
 						} else {
 							// If JSON parsing fails, keep it as a string
-							relations[k] = v
+							relations[k] = relationValue
 						}
 					} else {
 						// Not a JSON object, keep as string
-						relations[k] = v
+						relations[k] = relationValue
 					}
 				}
 				mapping.Entity.Relations = relations

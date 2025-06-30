@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"slices"
-	"strconv"
 	"strings"
-	"sync"
-	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/ratelimit"
 )
 
 type Option func(*PortClient)
@@ -23,14 +21,13 @@ type PortClient struct {
 	JSONEscapeHTML                        bool
 	BlueprintPropertyTypeChangeProtection bool
 
-	// Rate limiting fields
-	rateLimitInfo      *RateLimitInfo
-	rateLimitMutex     sync.RWMutex
-	rateLimitEnabled   bool
-	rateLimitThreshold float64 // Threshold for when to start throttling (0.1 = 10% remaining)
+	// Rate limiting
+	rateLimitManager *ratelimit.Manager
 }
 
 func New(baseURL string, opts ...Option) (*PortClient, error) {
+	rateLimitManager := ratelimit.NewManager()
+
 	c := &PortClient{
 		Client: resty.New().
 			SetBaseURL(baseURL).
@@ -48,13 +45,12 @@ func New(baseURL string, opts ...Option) (*PortClient, error) {
 				err = json.Unmarshal(r.Body(), &b)
 				return err != nil || b["ok"] != true
 			}),
-		rateLimitEnabled:   true,
-		rateLimitThreshold: 0.1, // Start throttling when 10% of requests remain
+		rateLimitManager: rateLimitManager,
 	}
 
-	// Add rate limiting middleware
-	c.Client.OnAfterResponse(c.rateLimitMiddleware)
-	c.Client.OnBeforeRequest(c.preRequestRateLimitCheck)
+	c.Client.
+		OnBeforeRequest(rateLimitManager.RequestMiddleware).
+		OnAfterResponse(rateLimitManager.ResponseMiddleware)
 
 	for _, opt := range opts {
 		opt(c)
@@ -62,109 +58,19 @@ func New(baseURL string, opts ...Option) (*PortClient, error) {
 	return c, nil
 }
 
-// rateLimitMiddleware extracts rate limit information from response headers
-func (c *PortClient) rateLimitMiddleware(client *resty.Client, resp *resty.Response) error {
-	if !c.rateLimitEnabled {
-		return nil
-	}
-
-	c.rateLimitMutex.Lock()
-	defer c.rateLimitMutex.Unlock()
-
-	// Extract rate limit headers
-	limitHeader := resp.Header().Get("x-ratelimit-limit")
-	periodHeader := resp.Header().Get("x-ratelimit-period")
-	remainingHeader := resp.Header().Get("x-ratelimit-remaining")
-	resetHeader := resp.Header().Get("x-ratelimit-reset")
-
-	// Only update if we have the headers
-	if limitHeader != "" && remainingHeader != "" {
-		rateLimitInfo := &RateLimitInfo{}
-
-		if limit, err := strconv.Atoi(limitHeader); err == nil {
-			rateLimitInfo.Limit = limit
-		}
-		if period, err := strconv.Atoi(periodHeader); err == nil {
-			rateLimitInfo.Period = period
-		}
-		if remaining, err := strconv.Atoi(remainingHeader); err == nil {
-			rateLimitInfo.Remaining = remaining
-		}
-		if reset, err := strconv.Atoi(resetHeader); err == nil {
-			rateLimitInfo.Reset = reset
-		}
-
-		c.rateLimitInfo = rateLimitInfo
-	}
-
-	return nil
-}
-
-// preRequestRateLimitCheck checks if we should throttle before making a request
-func (c *PortClient) preRequestRateLimitCheck(client *resty.Client, req *resty.Request) error {
-	if !c.rateLimitEnabled {
-		return nil
-	}
-
-	c.rateLimitMutex.RLock()
-	rateLimitInfo := c.rateLimitInfo
-	c.rateLimitMutex.RUnlock()
-
-	if rateLimitInfo != nil && rateLimitInfo.ShouldThrottle(c.rateLimitThreshold) {
-		// Calculate delay based on reset time and remaining requests
-		var delay time.Duration
-
-		if rateLimitInfo.Remaining > 0 && rateLimitInfo.Reset > 0 {
-			// Spread remaining requests evenly over the reset period
-			delay = time.Duration(rateLimitInfo.Reset) * time.Second / time.Duration(rateLimitInfo.Remaining)
-
-			// Cap the delay to a reasonable maximum (30 seconds)
-			if delay > 30*time.Second {
-				delay = 30 * time.Second
-			}
-		} else if rateLimitInfo.Reset > 0 {
-			// If no requests remaining, wait until reset
-			delay = time.Duration(rateLimitInfo.Reset) * time.Second
-		}
-
-		if delay > 0 {
-			time.Sleep(delay)
-		}
-	}
-
-	return nil
-}
-
 // GetRateLimitInfo returns the current rate limit information
-func (c *PortClient) GetRateLimitInfo() *RateLimitInfo {
-	c.rateLimitMutex.RLock()
-	defer c.rateLimitMutex.RUnlock()
-
-	if c.rateLimitInfo == nil {
-		return nil
-	}
-
-	// Return a copy to avoid race conditions
-	return &RateLimitInfo{
-		Limit:     c.rateLimitInfo.Limit,
-		Period:    c.rateLimitInfo.Period,
-		Remaining: c.rateLimitInfo.Remaining,
-		Reset:     c.rateLimitInfo.Reset,
-	}
+func (c *PortClient) GetRateLimitInfo() *ratelimit.RateLimitInfo {
+	return c.rateLimitManager.GetInfo()
 }
 
 // SetRateLimitEnabled enables or disables rate limiting
 func (c *PortClient) SetRateLimitEnabled(enabled bool) {
-	c.rateLimitMutex.Lock()
-	defer c.rateLimitMutex.Unlock()
-	c.rateLimitEnabled = enabled
+	c.rateLimitManager.SetEnabled(enabled)
 }
 
 // SetRateLimitThreshold sets the threshold for when to start throttling
 func (c *PortClient) SetRateLimitThreshold(threshold float64) {
-	c.rateLimitMutex.Lock()
-	defer c.rateLimitMutex.Unlock()
-	c.rateLimitThreshold = threshold
+	c.rateLimitManager.SetThreshold(threshold)
 }
 
 // FeatureFlags Fetches the feature flags from the Organization API. It caches the feature flags locally to reduce call
@@ -235,7 +141,7 @@ func WithToken(token string) Option {
 // WithRateLimitDisabled disables rate limiting
 func WithRateLimitDisabled() Option {
 	return func(pc *PortClient) {
-		pc.rateLimitEnabled = false
+		pc.rateLimitManager.SetEnabled(false)
 	}
 }
 
@@ -244,7 +150,7 @@ func WithRateLimitDisabled() Option {
 func WithRateLimitThreshold(threshold float64) Option {
 	return func(pc *PortClient) {
 		if threshold >= 0.0 && threshold <= 1.0 {
-			pc.rateLimitThreshold = threshold
+			pc.rateLimitManager.SetThreshold(threshold)
 		}
 	}
 }

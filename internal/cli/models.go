@@ -674,24 +674,3 @@ type Organization struct {
 	Name         string   `json:"name"`
 	FeatureFlags []string `json:"featureFlags"`
 }
-
-// RateLimitInfo holds rate limiting information from port api response headers
-type RateLimitInfo struct {
-	Limit     int // x-ratelimit-limit
-	Period    int // x-ratelimit-period
-	Remaining int // x-ratelimit-remaining
-	Reset     int // x-ratelimit-reset (seconds until reset)
-}
-
-// IsNearLimit checks if we're close to hitting the rate limit
-func (r *RateLimitInfo) IsNearLimit(threshold float64) bool {
-	if r.Limit == 0 {
-		return false
-	}
-	return float64(r.Remaining)/float64(r.Limit) < threshold
-}
-
-// ShouldThrottle determines if we should pause before the next request
-func (r *RateLimitInfo) ShouldThrottle(threshold float64) bool {
-	return r.IsNearLimit(threshold)
-}

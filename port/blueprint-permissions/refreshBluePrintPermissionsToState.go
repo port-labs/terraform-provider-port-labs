@@ -128,6 +128,9 @@ func refreshBlueprintPermissionsState(state *BlueprintPermissionsModel, a *cli.B
 		}
 	}
 
+	if oldPermissions.UpdateRelations == nil {
+		oldPermissions.UpdateRelations = &BlueprintRelationsPermissionsTFBlock{}
+	}
 	if len(a.Entities.UpdateRelations) > 0 {
 		var mappedUpdateRelations = make(BlueprintRelationsPermissionsTFBlock, len(a.Entities.UpdateRelations))
 		for updateRelationKey, updateRelationValue := range a.Entities.UpdateRelations {

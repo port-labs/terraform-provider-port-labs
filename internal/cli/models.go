@@ -412,7 +412,7 @@ type (
 		Icon       *string           `json:"icon,omitempty"`
 		Team       *string           `json:"team,omitempty"`
 		Properties map[string]string `json:"properties,omitempty"`
-		Relations  map[string]string `json:"relations,omitempty"`
+		Relations  map[string]any    `json:"relations,omitempty"`
 	}
 
 	Mappings struct {

@@ -183,7 +183,7 @@ func TestConcurrentRequests(t *testing.T) {
 	numRequests := 3
 	results := make(chan error, numRequests)
 
-	for i := range numRequests {
+	for i := 0; i < numRequests; i++ {
 		go func(index int) {
 			_, err := client.R().Get("/test")
 			results <- err

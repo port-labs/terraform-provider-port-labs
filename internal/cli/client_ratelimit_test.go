@@ -129,7 +129,7 @@ func TestClientRateLimitSettings(t *testing.T) {
 }
 
 func TestClientRateLimitDisabledViaEnv(t *testing.T) {
-	skipIfDisabled(t)
+	t.Setenv("PORT_RATE_LIMIT_DISABLED", "1")
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("x-ratelimit-limit", "1000")

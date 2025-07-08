@@ -68,3 +68,5 @@ Optional:
 
 - `many_relations` (Map of List of String) The many relation of the entity
 - `single_relations` (Map of String) The single relation of the entity
+
+

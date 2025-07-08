@@ -48,28 +48,28 @@ type (
 	}
 
 	BlueprintProperty struct {
-		Type               string                 `json:"type,omitempty"`
-		Title              *string                `json:"title,omitempty"`
-		Identifier         string                 `json:"identifier,omitempty"`
-		Items              map[string]any 		  `json:"items,omitempty"`
-		Default            any            		  `json:"default,omitempty"`
-		Icon               *string                `json:"icon,omitempty"`
-		Format             *string                `json:"format,omitempty"`
-		MaxLength          *int                   `json:"maxLength,omitempty"`
-		MinLength          *int                   `json:"minLength,omitempty"`
-		MaxItems           *int                   `json:"maxItems,omitempty"`
-		MinItems           *int                   `json:"minItems,omitempty"`
-		Maximum            *float64               `json:"maximum,omitempty"`
-		Minimum            *float64               `json:"minimum,omitempty"`
-		Description        *string                `json:"description,omitempty"`
-		Blueprint          *string                `json:"blueprint,omitempty"`
-		Pattern            *string                `json:"pattern,omitempty"`
-		Enum               []any          		  `json:"enum,omitempty"`
-		Spec               *string                `json:"spec,omitempty"`
-		SpecAuthentication *SpecAuthentication    `json:"specAuthentication,omitempty"`
-		EnumColors         map[string]string      `json:"enumColors,omitempty"`
+		Type               string              `json:"type,omitempty"`
+		Title              *string             `json:"title,omitempty"`
+		Identifier         string              `json:"identifier,omitempty"`
+		Items              map[string]any      `json:"items,omitempty"`
+		Default            any                 `json:"default,omitempty"`
+		Icon               *string             `json:"icon,omitempty"`
+		Format             *string             `json:"format,omitempty"`
+		MaxLength          *int                `json:"maxLength,omitempty"`
+		MinLength          *int                `json:"minLength,omitempty"`
+		MaxItems           *int                `json:"maxItems,omitempty"`
+		MinItems           *int                `json:"minItems,omitempty"`
+		Maximum            *float64            `json:"maximum,omitempty"`
+		Minimum            *float64            `json:"minimum,omitempty"`
+		Description        *string             `json:"description,omitempty"`
+		Blueprint          *string             `json:"blueprint,omitempty"`
+		Pattern            *string             `json:"pattern,omitempty"`
+		Enum               []any               `json:"enum,omitempty"`
+		Spec               *string             `json:"spec,omitempty"`
+		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
+		EnumColors         map[string]string   `json:"enumColors,omitempty"`
 		// UnknownFields captures any dynamic fields not explicitly defined above
-		UnknownFields      map[string]any 		  `json:"-"`
+		UnknownFields map[string]any `json:"-"`
 	}
 
 	EntitiesSortModel struct {
@@ -102,6 +102,7 @@ type (
 		Dataset            *Dataset            `json:"dataset,omitempty"`
 		Encryption         *string             `json:"encryption,omitempty"`
 		Visible            any                 `json:"visible,omitempty"`
+		Disabled           any                 `json:"disabled,omitempty"`
 		Sort               *EntitiesSortModel  `json:"sort,omitempty"`
 	}
 
@@ -502,23 +503,23 @@ type (
 func getKnownFields(bp *BlueprintProperty) map[string]bool {
 	knownFields := make(map[string]bool)
 	t := reflect.TypeOf(*bp)
-	
+
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		
+
 		// Get the JSON tag
 		jsonTag := field.Tag.Get("json")
 		if jsonTag == "" || jsonTag == "-" {
 			continue // Skip fields without JSON tags or with "-"
 		}
-		
+
 		// Handle "fieldname,omitempty" format
 		fieldName, _, _ := strings.Cut(jsonTag, ",")
 		if fieldName != "" {
 			knownFields[fieldName] = true
 		}
 	}
-	
+
 	return knownFields
 }
 
@@ -526,37 +527,37 @@ func getKnownFields(bp *BlueprintProperty) map[string]bool {
 func (bp *BlueprintProperty) UnmarshalJSON(data []byte) error {
 	// Define an alias to avoid infinite recursion
 	type Alias BlueprintProperty
-	
+
 	// First, unmarshal into the alias to populate known fields
 	aux := &struct {
 		*Alias
 	}{
 		Alias: (*Alias)(bp),
 	}
-	
+
 	if err := json.Unmarshal(data, aux); err != nil {
 		return err
 	}
-	
+
 	// Now unmarshal into a map to capture all fields
 	var all map[string]any
 	if err := json.Unmarshal(data, &all); err != nil {
 		return err
 	}
-	
+
 	// Initialize UnknownFields map
 	bp.UnknownFields = make(map[string]any)
-	
+
 	// Use reflection to get known fields instead of hardcoding
 	knownFields := getKnownFields(bp)
-	
+
 	// Add any unknown fields to UnknownFields
 	for key, value := range all {
 		if !knownFields[key] {
 			bp.UnknownFields[key] = value
 		}
 	}
-	
+
 	return nil
 }
 
@@ -564,25 +565,25 @@ func (bp *BlueprintProperty) UnmarshalJSON(data []byte) error {
 func (bp BlueprintProperty) MarshalJSON() ([]byte, error) {
 	// Define an alias to avoid infinite recursion
 	type Alias BlueprintProperty
-	
+
 	// Marshal the known fields first
 	aux := Alias(bp)
 	aux.UnknownFields = nil // Don't marshal this field directly
-	
+
 	data, err := json.Marshal(aux)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	var result map[string]any
 	if err := json.Unmarshal(data, &result); err != nil {
 		return nil, err
 	}
-	
+
 	for key, value := range bp.UnknownFields {
 		result[key] = value
 	}
-	
+
 	return json.Marshal(result)
 }
 

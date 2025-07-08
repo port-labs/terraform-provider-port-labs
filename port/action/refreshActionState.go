@@ -185,6 +185,25 @@ func writeVisibleToResource(v cli.ActionProperty) (types.Bool, types.String) {
 	return types.BoolNull(), types.StringNull()
 }
 
+func writeDisabledToResource(v cli.ActionProperty) (types.Bool, types.String) {
+	if v.Disabled == nil {
+		return types.BoolNull(), types.StringNull()
+	}
+
+	disabled := reflect.ValueOf(v.Disabled)
+	switch disabled.Kind() {
+	case reflect.Bool:
+		boolValue := disabled.Interface().(bool)
+		return types.BoolValue(boolValue), types.StringNull()
+	case reflect.Map:
+		jq := disabled.Interface().(map[string]any)
+		jqQueryValue := jq["jqQuery"].(string)
+		return types.BoolNull(), types.StringValue(jqQueryValue)
+	}
+
+	return types.BoolNull(), types.StringNull()
+}
+
 func buildRequired(v *cli.ActionUserInputs) (types.String, []string) {
 	// If required is nil, return an empty string and nil
 	if v.Required == nil {
@@ -523,7 +542,7 @@ func (r *ActionResource) refreshActionState(ctx context.Context, state *ActionMo
 }
 
 func (r *ActionResource) setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interface{}) error {
-	properties := []string{"Description", "Icon", "Default", "Title", "DependsOn", "Dataset", "Visible"}
+	properties := []string{"Description", "Icon", "Default", "Title", "DependsOn", "Dataset", "Visible", "Disabled"}
 	for _, property := range properties {
 		switch property {
 		case "Description":
@@ -663,6 +682,37 @@ func (r *ActionResource) setCommonProperties(ctx context.Context, v cli.ActionPr
 					p.VisibleJqQuery = visibleJq
 				case *ObjectPropModel:
 					p.VisibleJqQuery = visibleJq
+				}
+			}
+
+		case "Disabled":
+			disabled, disabledJq := writeDisabledToResource(v)
+			if !disabled.IsNull() {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.Disabled = disabled
+				case *NumberPropModel:
+					p.Disabled = disabled
+				case *BooleanPropModel:
+					p.Disabled = disabled
+				case *ArrayPropModel:
+					p.Disabled = disabled
+				case *ObjectPropModel:
+					p.Disabled = disabled
+				}
+			}
+			if !disabledJq.IsNull() {
+				switch p := prop.(type) {
+				case *StringPropModel:
+					p.DisabledJqQuery = disabledJq
+				case *NumberPropModel:
+					p.DisabledJqQuery = disabledJq
+				case *BooleanPropModel:
+					p.DisabledJqQuery = disabledJq
+				case *ArrayPropModel:
+					p.DisabledJqQuery = disabledJq
+				case *ObjectPropModel:
+					p.DisabledJqQuery = disabledJq
 				}
 			}
 		}

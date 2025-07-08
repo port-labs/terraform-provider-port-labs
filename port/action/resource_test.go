@@ -1622,6 +1622,146 @@ func TestAccPortActionVisibility(t *testing.T) {
 	})
 }
 
+func TestAccPortActionDisabled(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				"string_props" = {
+					"disabledStringProp" = {
+						"title" = "disabled string"
+						"required" = true
+						"disabled" = true
+					}
+					"enabledStringProp" = {
+						"title" = "enabled string"
+						"required" = true
+						"disabled" = false
+					}
+					"jqQueryStringProp" = {
+						"title" = "jq based disabled string"
+						"required" = true
+						"disabled_jq_query" = "1==1"
+					}
+				}
+				"number_props" = {
+					"disabledNumberProp" = {
+						"title" = "disabled number"
+						"required" = true
+						"disabled" = true
+					}
+					"enabledNumberProp" = {
+						"title" = "enabled number"
+						"required" = true
+						"disabled" = false
+					}
+					"jqQueryNumberProp" = {
+						"title" = "jq based disabled number"
+						"required" = true
+						"disabled_jq_query" = "1==1"
+					}
+				}
+				"boolean_props" = {
+					"disabledBooleanProp" = {
+						"title" = "disabled boolean"
+						"required" = true
+						"disabled" = true
+					}
+					"enabledBooleanProp" = {
+						"title" = "enabled boolean"
+						"required" = true
+						"disabled" = false
+					}
+					"jqQueryBooleanProp" = {
+						"title" = "jq based disabled boolean"
+						"required" = true
+						"disabled_jq_query" = "1==1"
+					}
+				}
+				"array_props" = {
+					"disabledArrayProp" = {
+						"title" = "disabled array"
+						"required" = true
+						"disabled" = true
+					}
+					"enabledArrayProp" = {
+						"title" = "enabled array"
+						"required" = true
+						"disabled" = false
+					}
+					"jqQueryArrayProp" = {
+						"title" = "jq based disabled array"
+						"required" = true
+						"disabled_jq_query" = "1==1"
+					}
+				}
+				"object_props" = {
+					"disabledObjectProp" = {
+						"title" = "disabled array"
+						"required" = true
+						"disabled" = true
+					}
+					"enabledObjectProp" = {
+						"title" = "enabled array"
+						"required" = true
+						"disabled" = false
+					}
+					"jqQueryObjectProp" = {
+						"title" = "jq based disabled array"
+						"required" = true
+						"disabled_jq_query" = "1==1"
+					}
+				}
+			}
+		}
+		webhook_method = {
+			url = "https://getport.io"
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.blueprint_identifier", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.operation", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.action1", "webhook_method.url", "https://getport.io"),
+
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.string_props.disabledStringProp.disabled", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.string_props.enabledStringProp.disabled", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.string_props.jqQueryStringProp.disabled_jq_query", "1==1"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.number_props.disabledNumberProp.disabled", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.number_props.enabledNumberProp.disabled", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.number_props.jqQueryNumberProp.disabled_jq_query", "1==1"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.boolean_props.disabledBooleanProp.disabled", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.boolean_props.enabledBooleanProp.disabled", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.boolean_props.jqQueryBooleanProp.disabled_jq_query", "1==1"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.array_props.disabledArrayProp.disabled", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.array_props.enabledArrayProp.disabled", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.array_props.jqQueryArrayProp.disabled_jq_query", "1==1"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.object_props.disabledObjectProp.disabled", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.object_props.enabledObjectProp.disabled", "false"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.object_props.jqQueryObjectProp.disabled_jq_query", "1==1"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortActionRequiredConflictsWithRequiredJQ(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	actionIdentifier := utils.GenID()

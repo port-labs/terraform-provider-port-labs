@@ -47,7 +47,6 @@ func booleanPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, 
 					return err
 				}
 				property.DependsOn = utils.InterfaceToStringArray(dependsOn)
-
 			}
 
 			if !prop.Visible.IsNull() {
@@ -59,6 +58,18 @@ func booleanPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, 
 					"jqQuery": prop.VisibleJqQuery.ValueString(),
 				}
 				property.Visible = VisibleJqQueryMap
+			}
+
+			if !prop.Disabled.IsNull() {
+				val := prop.Disabled.ValueBool()
+				property.Disabled = &val
+			}
+
+			if !prop.DisabledJqQuery.IsNull() {
+				DisabledJqQuery := map[string]string{
+					"jqQuery": prop.DisabledJqQuery.ValueString(),
+				}
+				property.Disabled = DisabledJqQuery 
 			}
 
 			props[propIdentifier] = property

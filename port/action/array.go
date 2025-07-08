@@ -190,6 +190,18 @@ func arrayPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, pr
 				property.Visible = VisibleJqQueryMap
 			}
 
+			if !prop.Disabled.IsNull() {
+				val := prop.Disabled.ValueBool()
+				property.Disabled = &val
+			}
+
+			if !prop.DisabledJqQuery.IsNull() {
+				DisabledJqQuery := map[string]string{
+					"jqQuery": prop.DisabledJqQuery.ValueString(),
+				}
+				property.Disabled = DisabledJqQuery 
+			}
+
 			if prop.Sort != nil {
 				property.Sort = &cli.EntitiesSortModel{
 					Property: prop.Sort.Property.ValueString(),

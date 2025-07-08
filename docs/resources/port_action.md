@@ -552,6 +552,8 @@ Optional:
 - `default_jq_query` (String) The default jq query of the array property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the array property
+- `disabled_jq_query` (String) The disabled state jq query of the array property
 - `icon` (String) The icon of the property
 - `max_items` (Number) The max items of the array property
 - `min_items` (Number) The min items of the array property
@@ -625,6 +627,8 @@ Optional:
 - `default_jq_query` (String) The default jq query of the boolean property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the boolean property
+- `disabled_jq_query` (String) The disabled state jq query of the boolean property
 - `icon` (String) The icon of the property
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
 - `title` (String) The title of the property
@@ -641,6 +645,8 @@ Optional:
 - `default_jq_query` (String) The default jq query of the number property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the number property
+- `disabled_jq_query` (String) The disabled state jq query of the number property
 - `enum` (List of Number) The enum of the number property
 - `enum_colors` (Map of String) The enum colors of the number property
 - `enum_jq_query` (String) The enum jq query of the string property
@@ -662,6 +668,8 @@ Optional:
 - `default_jq_query` (String) The default jq query of the object property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the object property
+- `disabled_jq_query` (String) The disabled state jq query of the object property
 - `encryption` (String) The algorithm to encrypt the property with. Accepted value: `aes256-gcm`
 - `icon` (String) The icon of the property
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
@@ -681,6 +689,8 @@ Optional:
 - `default_jq_query` (String) The default jq query of the string property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the string property
+- `disabled_jq_query` (String) The disabled state jq query of the string property
 - `encryption` (String) The algorithm to encrypt the property with. Accepted value: `aes256-gcm`
 - `enum` (List of String) The enum of the string property
 - `enum_colors` (Map of String) The enum colors of the string property
@@ -783,3 +793,5 @@ Optional:
 - `headers` (Map of String) The HTTP headers for invoking the action. They should be encoded as a key-value object to a string using [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 - `method` (String) The HTTP method to invoke the action
 - `synchronized` (String) Synchronize the action
+
+

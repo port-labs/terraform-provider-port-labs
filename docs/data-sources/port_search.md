@@ -225,5 +225,3 @@ Read-Only:
 - `identifier` (String)
 - `level` (String)
 - `status` (String)
-
-

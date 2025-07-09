@@ -121,5 +121,3 @@ Optional:
 - `roles` (List of String) The roles with read permission
 - `teams` (List of String) The teams with read permission
 - `users` (List of String) The users with read permission
-
-

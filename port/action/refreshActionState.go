@@ -166,37 +166,18 @@ func writeDatasetToResource(ds *cli.Dataset) *DatasetModel {
 	return datasetModel
 }
 
-func writeVisibleToResource(v cli.ActionProperty) (types.Bool, types.String) {
-	if v.Visible == nil {
+func buildBoolOrJq(prop any) (types.Bool, types.String) {
+	if prop == nil {
 		return types.BoolNull(), types.StringNull()
 	}
 
-	visible := reflect.ValueOf(v.Visible)
-	switch visible.Kind() {
+	reflectedProp := reflect.ValueOf(prop)
+	switch reflectedProp.Kind() {
 	case reflect.Bool:
-		boolValue := visible.Interface().(bool)
+		boolValue := reflectedProp.Interface().(bool)
 		return types.BoolValue(boolValue), types.StringNull()
 	case reflect.Map:
-		jq := visible.Interface().(map[string]any)
-		jqQueryValue := jq["jqQuery"].(string)
-		return types.BoolNull(), types.StringValue(jqQueryValue)
-	}
-
-	return types.BoolNull(), types.StringNull()
-}
-
-func writeDisabledToResource(v cli.ActionProperty) (types.Bool, types.String) {
-	if v.Disabled == nil {
-		return types.BoolNull(), types.StringNull()
-	}
-
-	disabled := reflect.ValueOf(v.Disabled)
-	switch disabled.Kind() {
-	case reflect.Bool:
-		boolValue := disabled.Interface().(bool)
-		return types.BoolValue(boolValue), types.StringNull()
-	case reflect.Map:
-		jq := disabled.Interface().(map[string]any)
+		jq := reflectedProp.Interface().(map[string]any)
 		jqQueryValue := jq["jqQuery"].(string)
 		return types.BoolNull(), types.StringValue(jqQueryValue)
 	}
@@ -655,7 +636,7 @@ func (r *ActionResource) setCommonProperties(ctx context.Context, v cli.ActionPr
 			}
 
 		case "Visible":
-			visible, visibleJq := writeVisibleToResource(v)
+			visible, visibleJq := buildBoolOrJq(v.Visible)
 			if !visible.IsNull() {
 				switch p := prop.(type) {
 				case *StringPropModel:
@@ -686,7 +667,7 @@ func (r *ActionResource) setCommonProperties(ctx context.Context, v cli.ActionPr
 			}
 
 		case "Disabled":
-			disabled, disabledJq := writeDisabledToResource(v)
+			disabled, disabledJq := buildBoolOrJq(v.Disabled)
 			if !disabled.IsNull() {
 				switch p := prop.(type) {
 				case *StringPropModel:

@@ -107,5 +107,3 @@ resource "port_folder" "another_folder" {
 ### Read-Only
 
 - `id` (String) Folder state identifier
-
-

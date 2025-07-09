@@ -95,13 +95,16 @@ resource "port_action" "restart_microservice" {
           format      = "url"
           default     = "https://example.com"
           pattern     = "^https://.*"
+          disabled    = true
         }
         service = {
-          title       = "Service"
-          description = "The service to restart"
-          format      = "entity"
-          blueprint   = "Service"
-          sort        = {
+          title             = "Service"
+          description       = "The service to restart"
+          format            = "entity"
+          blueprint         = "Service"
+          disabled_jq_query = "1 == 1"
+
+          sort = {
             property = "$updatedAt"
             order    = "DESC"
           }

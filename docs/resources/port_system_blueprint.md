@@ -209,5 +209,3 @@ Optional:
 - `many` (Boolean) The many of the relation
 - `required` (Boolean) The required of the relation
 - `title` (String) The title of the relation
-
-

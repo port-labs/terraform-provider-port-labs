@@ -783,5 +783,3 @@ Optional:
 - `headers` (Map of String) The HTTP headers for invoking the action. They should be encoded as a key-value object to a string using [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 - `method` (String) The HTTP method to invoke the action
 - `synchronized` (String) Synchronize the action
-
-

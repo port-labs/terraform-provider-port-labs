@@ -405,6 +405,8 @@ Optional:
 Optional:
 
 - `default` (List of String) The default of the items
+- `enum` (List of String) The enum of the string array items
+- `enum_colors` (Map of String) The enum colors of the string array items
 - `format` (String) The format of the items
 - `pattern` (String) The pattern of the string array items
 
@@ -515,3 +517,5 @@ Required:
 Optional:
 
 - `agent` (Boolean) The agent of the webhook changelog destination
+
+

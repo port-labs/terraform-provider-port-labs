@@ -3,7 +3,6 @@ package blueprint_test
 import (
 	"context"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"math/rand"
 	"net/http"
 	"os"
@@ -13,6 +12,8 @@ import (
 	"testing"
 	"text/template"
 	"time"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
@@ -248,6 +249,16 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 						default = [jsonencode({"a": "b"}), jsonencode({"c": "d"})]
 					}
 				}
+				myEnumArrayIdentifier = {
+					title = "enum"
+					string_items = {
+						enum        = ["default", "default2"]
+						enum_colors = {
+							default  = "red"
+							default2 = "green"
+						}
+					}
+				}	
 			}
 		}
 	}`, identifier)
@@ -279,6 +290,10 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myBooleanArrayIdentifier.boolean_items.default.1", "true"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myObjectArrayIdentifier.object_items.default.0", "{\"a\":\"b\"}"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myObjectArrayIdentifier.object_items.default.1", "{\"c\":\"d\"}"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myEnumArrayIdentifier.string_items.enum.0", "default"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myEnumArrayIdentifier.string_items.enum.1", "default2"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myEnumArrayIdentifier.string_items.enum_colors.default", "red"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myEnumArrayIdentifier.string_items.enum_colors.default2", "green"),
 				),
 			},
 		},

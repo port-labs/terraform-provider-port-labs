@@ -153,13 +153,13 @@ func writeDatasetToResource(ds *cli.Dataset) *DatasetModel {
 			Property:  flex.GoStringToFramework(v.Property),
 			Operator:  flex.GoStringToFramework(&v.Operator),
 		}
-		
+
 		if v.Value != nil {
 			rule.Value = &Value{
 				JqQuery: flex.GoStringToFramework(&v.Value.JqQuery),
 			}
 		}
-		
+
 		datasetModel.Rules = append(datasetModel.Rules, *rule)
 	}
 
@@ -325,9 +325,44 @@ func (r *ActionResource) buildUserProperties(ctx context.Context, a *cli.Action,
 	return properties, nil
 }
 
+func (r *ActionResource) buildActionTitles(a *cli.Action) (map[string]ActionTitle, error) {
+	if a.Trigger.UserInputs.Titles == nil {
+		return nil, nil
+	}
+
+	actionTitles := make(map[string]ActionTitle)
+
+	for key, actionTitle := range a.Trigger.UserInputs.Titles {
+		stateTitle := ActionTitle{
+			Title:       types.StringValue(actionTitle.Title),
+			Description: flex.GoStringToFramework(actionTitle.Description),
+		}
+
+		if actionTitle.Visible != nil {
+			visible := reflect.ValueOf(actionTitle.Visible)
+			switch visible.Kind() {
+			case reflect.Bool:
+				boolValue := visible.Interface().(bool)
+				stateTitle.Visible = types.BoolValue(boolValue)
+			case reflect.Map:
+				jq := visible.Interface().(map[string]any)
+				jqQueryValue := jq["jqQuery"].(string)
+				stateTitle.VisibleJqQuery = types.StringValue(jqQueryValue)
+			}
+		}
+
+		actionTitles[key] = stateTitle
+	}
+	return actionTitles, nil
+}
+
 func (r *ActionResource) writeTriggerToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
 	if a.Trigger.Type == consts.SelfService {
 		userProperties, err := r.buildUserProperties(ctx, a, state)
+		if err != nil {
+			return err
+		}
+		actionTitles, err := r.buildActionTitles(a)
 		if err != nil {
 			return err
 		}
@@ -337,6 +372,7 @@ func (r *ActionResource) writeTriggerToResource(ctx context.Context, a *cli.Acti
 			Operation:           types.StringValue(*a.Trigger.Operation),
 			UserProperties:      userProperties,
 			RequiredJqQuery:     requiredJqQuery,
+			Titles:              actionTitles,
 		}
 
 		if len(a.Trigger.UserInputs.Order) > 0 {

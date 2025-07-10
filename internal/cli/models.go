@@ -105,6 +105,12 @@ type (
 		Sort               *EntitiesSortModel  `json:"sort,omitempty"`
 	}
 
+	ActionTitle struct {
+		Title       string  `json:"title"`
+		Description *string `json:"description,omitempty"`
+		Visible     any     `json:"visible,omitempty"`
+	}
+
 	SpecAuthentication struct {
 		ClientId         string `json:"clientId,omitempty"`
 		AuthorizationUrl string `json:"authorizationUrl,omitempty"`
@@ -223,6 +229,7 @@ type (
 		Required   any                       `json:"required,omitempty"`
 		Order      []string                  `json:"order,omitempty"`
 		Steps      []Step                    `json:"steps,omitempty"`
+		Titles     map[string]ActionTitle    `json:"titles,omitempty"`
 	}
 
 	TriggerEvent struct {
@@ -405,7 +412,7 @@ type (
 		Icon       *string           `json:"icon,omitempty"`
 		Team       *string           `json:"team,omitempty"`
 		Properties map[string]string `json:"properties,omitempty"`
-		Relations  map[string]string `json:"relations,omitempty"`
+		Relations  map[string]any    `json:"relations,omitempty"`
 	}
 
 	Mappings struct {

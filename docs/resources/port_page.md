@@ -18,20 +18,16 @@ description: |-
     title                 = "Microservices"
     type                  = "blueprint-entities"
     icon                  = "Microservice"
-    blueprint             = portblueprint.base_blueprint.identifier
+    blueprint             = portblueprint.baseblueprint.identifier
     widgets               = [
       jsonencode(
         {
           "id" : "microservice-table-entities",
           "type" : "table-entities-explorer",
+          "blueprint": portblueprint.base_blueprint.identifier,
           "dataset" : {
             "combinator" : "and",
             "rules" : [
-              {
-                "operator" : "=",
-                "property" : "$blueprint",
-                "value" : {{blueprint}}
-              }
             ]
           }
         }
@@ -241,14 +237,10 @@ resource "port_page" "microservice_blueprint_page" {
       {
         "id" : "microservice-table-entities",
         "type" : "table-entities-explorer",
+        "blueprint": port_blueprint.base_blueprint.identifier,
         "dataset" : {
           "combinator" : "and",
           "rules" : [
-            {
-              "operator" : "=",
-              "property" : "$blueprint",
-              "value" : "{{blueprint}}"
-            }
           ]
         }
       }

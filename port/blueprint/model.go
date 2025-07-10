@@ -64,6 +64,8 @@ type StringItems struct {
 	Format  types.String `tfsdk:"format"`
 	Default types.List   `tfsdk:"default"`
 	Pattern types.String `tfsdk:"pattern"`
+	Enum    types.List   `tfsdk:"enum"`
+	EnumColors types.Map  `tfsdk:"enum_colors"`
 }
 
 type NumberItems struct {

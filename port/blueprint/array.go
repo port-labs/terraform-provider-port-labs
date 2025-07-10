@@ -2,6 +2,7 @@ package blueprint
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -59,6 +60,26 @@ func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props 
 
 					property.Default = defaultList
 				}
+				if !prop.StringItems.Enum.IsNull() {
+					enumList, err := utils.TerraformListToGoArray(ctx, prop.StringItems.Enum, "string")
+					if err != nil {
+						return err
+					}
+					items["enum"] = enumList
+				}
+				if !prop.StringItems.EnumColors.IsNull() {
+					enumColors := map[string]string{}
+					for k, v := range prop.StringItems.EnumColors.Elements() {
+						value, _ := v.ToTerraformValue(ctx)
+						var keyValue string
+						err := value.As(&keyValue)
+						if err != nil {
+							return err
+						}
+						enumColors[k] = keyValue
+					}
+					items["enumColors"] = enumColors
+				}
 				property.Items = items
 			}
 
@@ -112,7 +133,7 @@ func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props 
 	return nil
 }
 
-func AddArrayPropertiesToState(v *cli.BlueprintProperty, jsonEscapeHTML bool) *ArrayPropModel {
+func AddArrayPropertiesToState(ctx context.Context, v *cli.BlueprintProperty, jsonEscapeHTML bool) *ArrayPropModel {
 	arrayProp := &ArrayPropModel{
 		MinItems: flex.GoInt64ToFramework(v.MinItems),
 		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
@@ -141,6 +162,20 @@ func AddArrayPropertiesToState(v *cli.BlueprintProperty, jsonEscapeHTML bool) *A
 				}
 				if value, ok := v.Items["pattern"]; ok && value != nil {
 					arrayProp.StringItems.Pattern = types.StringValue(v.Items["pattern"].(string))
+				}
+				if value, ok := v.Items["enum"]; ok && value != nil {
+					attrs := make([]attr.Value, 0, len(value.([]interface{})))
+					for _, enumValue := range value.([]interface{}) {
+						attrs = append(attrs, basetypes.NewStringValue(enumValue.(string)))
+					}
+					arrayProp.StringItems.Enum, _ = types.ListValue(types.StringType, attrs)
+				} else {
+					arrayProp.StringItems.Enum = types.ListNull(types.StringType)
+				}
+				if value, ok := v.Items["enumColors"]; ok && value != nil {
+					arrayProp.StringItems.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, value)
+				} else {
+					arrayProp.StringItems.EnumColors = types.MapNull(types.StringType)
 				}
 			case "number":
 				arrayProp.NumberItems = &NumberItems{}

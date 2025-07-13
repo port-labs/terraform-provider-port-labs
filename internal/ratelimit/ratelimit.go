@@ -3,12 +3,12 @@ package ratelimit
 import (
 	"context"
 	"log/slog"
+	"math/rand/v2"
 	"os"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
-
-	"math/rand"
 
 	"github.com/go-resty/resty/v2"
 	"golang.org/x/sync/semaphore"
@@ -38,7 +38,7 @@ type Manager struct {
 	rateLimitInfo      *RateLimitInfo
 	enabled            bool
 	threshold          float64
-	activeRequests     int
+	activeRequests     int64 // Changed to int64 for atomic operations
 	requestSemaphore   *semaphore.Weighted
 	lastRequestTime    time.Time
 	minRequestInterval time.Duration
@@ -129,14 +129,14 @@ func (m *Manager) startCleanup() {
 		for {
 			select {
 			case <-ticker.C:
-				m.mu.Lock()
-				if m.activeRequests > 0 {
+				// Check and reset activeRequests atomically (no lock needed)
+				currentActiveRequests := atomic.LoadInt64(&m.activeRequests)
+				if currentActiveRequests > 0 {
 					m.logger.Debug("Cleaning up stuck activeRequests",
-						"stuck_count", m.activeRequests,
+						"stuck_count", currentActiveRequests,
 						"cleanup_interval", m.cleanupInterval)
-					m.activeRequests = 0
+					atomic.StoreInt64(&m.activeRequests, 0)
 				}
-				m.mu.Unlock()
 
 			case <-m.cleanupStop:
 				m.logger.Debug("Cleanup goroutine stopping")
@@ -168,11 +168,12 @@ func (m *Manager) RequestMiddleware(client *resty.Client, req *resty.Request) er
 	m.logger.Debug("Getting rate limit state")
 
 	m.mu.Lock()
-	m.activeRequests++
 	rateLimitInfo := m.rateLimitInfo
 	lastRequestTime := m.lastRequestTime
-	activeRequests := m.activeRequests
 	m.mu.Unlock()
+
+	// Increment activeRequests atomically (no lock needed)
+	activeRequests := atomic.AddInt64(&m.activeRequests, 1)
 
 	m.logger.Debug("Active requests and rate limit info", "active_requests", activeRequests, "rate_limit_info", rateLimitInfo)
 
@@ -233,13 +234,14 @@ func (m *Manager) ResponseMiddleware(client *resty.Client, resp *resty.Response)
 
 		m.logger.Debug("Updating active request count")
 
-		m.mu.Lock()
-		m.activeRequests--
-		if m.activeRequests < 0 {
-			m.activeRequests = 0 // Prevent negative count
+		// Decrement activeRequests atomically (no lock needed)
+		activeRequests := atomic.AddInt64(&m.activeRequests, -1)
+		if activeRequests < 0 {
+			// Reset to 0 if somehow went negative
+			atomic.StoreInt64(&m.activeRequests, 0)
+			activeRequests = 0
 		}
-		m.logger.Debug("Active requests now", "active_requests", m.activeRequests)
-		m.mu.Unlock()
+		m.logger.Debug("Active requests now", "active_requests", activeRequests)
 
 		m.logger.Debug("Defer function completed")
 	}()
@@ -313,7 +315,8 @@ func (m *Manager) calculateDelay(rateLimitInfo *RateLimitInfo) time.Duration {
 
 		// Apply scaling factor based on active requests to be more conservative
 		// When we have many active requests, increase the delay to avoid overwhelming
-		activeRequestScaling := 1.0 + float64(m.activeRequests)*0.2
+		activeRequests := atomic.LoadInt64(&m.activeRequests)
+		activeRequestScaling := 1.0 + float64(activeRequests)*0.2
 		delay := baseDelay * activeRequestScaling
 
 		// Cap delay at 30 seconds

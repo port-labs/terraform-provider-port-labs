@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"sync/atomic"
+
 	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -219,7 +221,7 @@ func TestCalculateDelay(t *testing.T) {
 		Remaining: 5,
 		Reset:     10,
 	}
-	manager.activeRequests = 0
+	atomic.StoreInt64(&manager.activeRequests, 0)
 	delay = manager.calculateDelay(rateLimitInfo)
 
 	// Base delay: (10*0.8)/5 = 1.6s, with jitter: 1.76-1.92s
@@ -227,7 +229,7 @@ func TestCalculateDelay(t *testing.T) {
 	assert.Less(t, delay, time.Duration(2.5*float64(time.Second)))
 
 	// Test case 3: Some remaining requests, with active requests
-	manager.activeRequests = 2
+	atomic.StoreInt64(&manager.activeRequests, 2)
 	delay = manager.calculateDelay(rateLimitInfo)
 
 	// Base delay: 1.6s, scaling: 1.6*(1+2*0.2) = 2.24s, with jitter: 2.46-2.69s
@@ -240,7 +242,7 @@ func TestCalculateDelay(t *testing.T) {
 		Remaining: 1,
 		Reset:     60,
 	}
-	manager.activeRequests = 0
+	atomic.StoreInt64(&manager.activeRequests, 0)
 	delay = manager.calculateDelay(rateLimitInfo)
 
 	// Base calculation: (60*0.8)/1 = 48s, but capped at 30s, with jitter: 33-36s
@@ -256,20 +258,16 @@ func TestActiveRequestsCleanup(t *testing.T) {
 	manager.cleanupInterval = 100 * time.Millisecond
 
 	// Artificially set activeRequests to simulate stuck state
-	manager.mu.Lock()
-	manager.activeRequests = 5
-	stuckCount := manager.activeRequests
-	manager.mu.Unlock()
+	atomic.StoreInt64(&manager.activeRequests, 5)
+	stuckCount := atomic.LoadInt64(&manager.activeRequests)
 
-	assert.Equal(t, 5, stuckCount, "activeRequests should be set to 5")
+	assert.Equal(t, int64(5), stuckCount, "activeRequests should be set to 5")
 
 	// Wait for cleanup to run (should happen within 100ms + some buffer)
 	time.Sleep(200 * time.Millisecond)
 
 	// Check that activeRequests has been reset
-	manager.mu.Lock()
-	cleanedCount := manager.activeRequests
-	manager.mu.Unlock()
+	cleanedCount := atomic.LoadInt64(&manager.activeRequests)
 
-	assert.Equal(t, 0, cleanedCount, "activeRequests should be cleaned up to 0")
+	assert.Equal(t, int64(0), cleanedCount, "activeRequests should be cleaned up to 0")
 }

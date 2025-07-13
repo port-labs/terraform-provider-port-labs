@@ -247,3 +247,29 @@ func TestCalculateDelay(t *testing.T) {
 	assert.Greater(t, delay, 30*time.Second)
 	assert.Less(t, delay, 37*time.Second)
 }
+
+func TestActiveRequestsCleanup(t *testing.T) {
+	manager := NewManager()
+	defer manager.Stop()
+
+	// Set a shorter cleanup interval for testing
+	manager.cleanupInterval = 100 * time.Millisecond
+
+	// Artificially set activeRequests to simulate stuck state
+	manager.mu.Lock()
+	manager.activeRequests = 5
+	stuckCount := manager.activeRequests
+	manager.mu.Unlock()
+
+	assert.Equal(t, 5, stuckCount, "activeRequests should be set to 5")
+
+	// Wait for cleanup to run (should happen within 100ms + some buffer)
+	time.Sleep(200 * time.Millisecond)
+
+	// Check that activeRequests has been reset
+	manager.mu.Lock()
+	cleanedCount := manager.activeRequests
+	manager.mu.Unlock()
+
+	assert.Equal(t, 0, cleanedCount, "activeRequests should be cleaned up to 0")
+}

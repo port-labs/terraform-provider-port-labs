@@ -43,6 +43,10 @@ type Manager struct {
 	lastRequestTime    time.Time
 	minRequestInterval time.Duration
 	logger             *slog.Logger
+
+	// Cleanup mechanism for activeRequests drift
+	cleanupStop     chan struct{}
+	cleanupInterval time.Duration
 }
 
 func NewManager() *Manager {
@@ -62,13 +66,20 @@ func NewManager() *Manager {
 		})).With("component", "ratelimit", "enabled", enabled)
 	}
 
-	return &Manager{
+	manager := &Manager{
 		enabled:            enabled,
 		threshold:          0.02,
 		requestSemaphore:   semaphore.NewWeighted(50),
 		minRequestInterval: 50 * time.Millisecond,
 		logger:             logger,
+		cleanupStop:        make(chan struct{}),
+		cleanupInterval:    30 * time.Second, // Reset stuck activeRequests every 30 seconds
 	}
+
+	// Start cleanup goroutine to handle activeRequests drift
+	manager.startCleanup()
+
+	return manager
 }
 
 func (m *Manager) GetInfo() *RateLimitInfo {
@@ -99,6 +110,40 @@ func (m *Manager) SetThreshold(threshold float64) {
 	if threshold >= 0.0 && threshold <= 1.0 {
 		m.threshold = threshold
 	}
+}
+
+// Stop gracefully shuts down the rate limit manager
+func (m *Manager) Stop() {
+	if m.cleanupStop != nil {
+		close(m.cleanupStop)
+	}
+}
+
+// startCleanup starts a background goroutine that periodically resets activeRequests
+// to handle cases where the count gets stuck due to timeouts, panics, etc.
+func (m *Manager) startCleanup() {
+	go func() {
+		ticker := time.NewTicker(m.cleanupInterval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				m.mu.Lock()
+				if m.activeRequests > 0 {
+					m.logger.Debug("Cleaning up stuck activeRequests",
+						"stuck_count", m.activeRequests,
+						"cleanup_interval", m.cleanupInterval)
+					m.activeRequests = 0
+				}
+				m.mu.Unlock()
+
+			case <-m.cleanupStop:
+				m.logger.Debug("Cleanup goroutine stopping")
+				return
+			}
+		}
+	}()
 }
 
 func (m *Manager) RequestMiddleware(client *resty.Client, req *resty.Request) error {

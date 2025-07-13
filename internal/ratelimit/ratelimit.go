@@ -10,11 +10,16 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
+// Extracted from Port HTTP Headers
 type RateLimitInfo struct {
-	Limit     int // x-ratelimit-limit
-	Period    int // x-ratelimit-period
-	Remaining int // x-ratelimit-remaining
-	Reset     int // x-ratelimit-reset (seconds until reset)
+	// x-ratelimit-limit
+	Limit int
+	// x-ratelimit-period
+	Period int
+	// x-ratelimit-remaining
+	Remaining int
+	// x-ratelimit-reset (seconds until reset)
+	Reset int
 }
 
 func (r *RateLimitInfo) IsNearLimit(threshold float64) bool {

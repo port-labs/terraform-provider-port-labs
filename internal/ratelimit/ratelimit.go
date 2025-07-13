@@ -8,6 +8,8 @@ import (
 	"sync"
 	"time"
 
+	"math/rand"
+
 	"github.com/go-resty/resty/v2"
 	"golang.org/x/sync/semaphore"
 )
@@ -244,37 +246,45 @@ func (m *Manager) ResponseMiddleware(client *resty.Client, resp *resty.Response)
 }
 
 func (m *Manager) calculateDelay(rateLimitInfo *RateLimitInfo) time.Duration {
+	// Case 1: No remaining requests - wait until reset
 	if rateLimitInfo.Remaining <= 0 && rateLimitInfo.Reset > 0 {
-		delay := time.Duration(rateLimitInfo.Reset) * time.Second
-		if delay > 2*time.Minute {
-			delay = 2 * time.Minute
+		delay := float64(rateLimitInfo.Reset)
+		// Cap at 2 minutes
+		if delay > 120 {
+			delay = 120
 		}
-		jitter := time.Duration(float64(delay) * 0.1)
-		delay += jitter
-		return delay
+		// Apply random jitter (10-20% increase)
+		jitterMultiplier := 1.1 + rand.Float64()*0.1
+		return time.Duration(delay * jitterMultiplier * float64(time.Second))
 	}
 
+	// Case 2: Some requests remaining - calculate based on remaining and reset time
 	if rateLimitInfo.Remaining > 0 && rateLimitInfo.Reset > 0 {
-		effectiveRemaining := rateLimitInfo.Remaining - m.activeRequests
-		if effectiveRemaining <= 0 {
-			effectiveRemaining = 1 // Always leave at least some room
-		}
-
+		// Use 80% of reset time as buffer
 		resetBuffer := float64(rateLimitInfo.Reset) * 0.8
-		delay := time.Duration(resetBuffer) * time.Second / time.Duration(effectiveRemaining)
 
-		if delay > 30*time.Second {
-			delay = 30 * time.Second
+		// Calculate base delay: spread remaining time across remaining requests
+		baseDelay := resetBuffer / float64(rateLimitInfo.Remaining)
+
+		// Apply scaling factor based on active requests to be more conservative
+		// When we have many active requests, increase the delay to avoid overwhelming
+		activeRequestScaling := 1.0 + float64(m.activeRequests)*0.2
+		delay := baseDelay * activeRequestScaling
+
+		// Cap delay at 30 seconds
+		if delay > 30 {
+			delay = 30
 		}
 
-		if delay < m.minRequestInterval {
-			delay = m.minRequestInterval
+		// Ensure minimum delay
+		minDelaySeconds := m.minRequestInterval.Seconds()
+		if delay < minDelaySeconds {
+			delay = minDelaySeconds
 		}
 
-		jitter := time.Duration(float64(delay) * 0.1)
-		delay += jitter
-
-		return delay
+		// Apply random jitter (10-20% increase)
+		jitterMultiplier := 1.1 + rand.Float64()*0.1
+		return time.Duration(delay * jitterMultiplier * float64(time.Second))
 	}
 
 	return 0

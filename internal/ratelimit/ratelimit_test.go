@@ -201,6 +201,7 @@ func TestConcurrentRequests(t *testing.T) {
 func TestCalculateDelay(t *testing.T) {
 	manager := NewManager()
 
+	// Test case 1: No remaining requests - should wait until reset
 	rateLimitInfo := &RateLimitInfo{
 		Limit:     100,
 		Remaining: 0,
@@ -208,9 +209,11 @@ func TestCalculateDelay(t *testing.T) {
 	}
 	delay := manager.calculateDelay(rateLimitInfo)
 
+	// Base delay: 10s, with jitter (1.1-1.2x): 11-12s
 	assert.Greater(t, delay, 10*time.Second)
-	assert.Less(t, delay, 12*time.Second)
+	assert.Less(t, delay, 13*time.Second)
 
+	// Test case 2: Some remaining requests, no active requests
 	rateLimitInfo = &RateLimitInfo{
 		Limit:     100,
 		Remaining: 5,
@@ -219,15 +222,19 @@ func TestCalculateDelay(t *testing.T) {
 	manager.activeRequests = 0
 	delay = manager.calculateDelay(rateLimitInfo)
 
+	// Base delay: (10*0.8)/5 = 1.6s, with jitter: 1.76-1.92s
 	assert.Greater(t, delay, 1*time.Second)
-	assert.Less(t, delay, 2*time.Second)
+	assert.Less(t, delay, time.Duration(2.5*float64(time.Second)))
 
+	// Test case 3: Some remaining requests, with active requests
 	manager.activeRequests = 2
 	delay = manager.calculateDelay(rateLimitInfo)
 
+	// Base delay: 1.6s, scaling: 1.6*(1+2*0.2) = 2.24s, with jitter: 2.46-2.69s
 	assert.Greater(t, delay, 2*time.Second)
-	assert.Less(t, delay, 4*time.Second)
+	assert.Less(t, delay, time.Duration(3.5*float64(time.Second)))
 
+	// Test case 4: One remaining request, long reset time (should be capped at 30s)
 	rateLimitInfo = &RateLimitInfo{
 		Limit:     100,
 		Remaining: 1,
@@ -236,6 +243,7 @@ func TestCalculateDelay(t *testing.T) {
 	manager.activeRequests = 0
 	delay = manager.calculateDelay(rateLimitInfo)
 
+	// Base calculation: (60*0.8)/1 = 48s, but capped at 30s, with jitter: 33-36s
 	assert.Greater(t, delay, 30*time.Second)
-	assert.Less(t, delay, 35*time.Second)
+	assert.Less(t, delay, 37*time.Second)
 }

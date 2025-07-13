@@ -37,7 +37,7 @@ func TestClientRateLimitIntegration(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
 
-	rateLimitInfo := client.GetRateLimitInfo()
+	rateLimitInfo := client.RateLimitManager.GetInfo()
 	require.NotNil(t, rateLimitInfo)
 	assert.Equal(t, 1000, rateLimitInfo.Limit)
 	assert.Equal(t, 300, rateLimitInfo.Period)
@@ -61,7 +61,7 @@ func TestClientRateLimitNoHeaders(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
 
-	rateLimitInfo := client.GetRateLimitInfo()
+	rateLimitInfo := client.RateLimitManager.GetInfo()
 	assert.Nil(t, rateLimitInfo)
 }
 
@@ -81,7 +81,7 @@ func TestClientRateLimitDisabled(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode())
 
-	rateLimitInfo := client.GetRateLimitInfo()
+	rateLimitInfo := client.RateLimitManager.GetInfo()
 	assert.Nil(t, rateLimitInfo)
 }
 
@@ -123,9 +123,9 @@ func TestClientRateLimitSettings(t *testing.T) {
 	require.NoError(t, err)
 
 	// somewhat dummy tests since we really can't test, so we check that they don't panic
-	client.SetRateLimitEnabled(false)
-	client.SetRateLimitEnabled(true)
-	client.SetRateLimitThreshold(0.25)
+	client.RateLimitManager.SetEnabled(false)
+	client.RateLimitManager.SetEnabled(true)
+	client.RateLimitManager.SetThreshold(0.25)
 }
 
 func TestClientRateLimitDisabledViaEnv(t *testing.T) {
@@ -151,6 +151,25 @@ func TestClientRateLimitDisabledViaEnv(t *testing.T) {
 
 	assert.Less(t, elapsed, 100*time.Millisecond, "Request should not be throttled when rate limiting is disabled")
 
-	rateLimitInfo := client.GetRateLimitInfo()
+	rateLimitInfo := client.RateLimitManager.GetInfo()
 	assert.Nil(t, rateLimitInfo)
+}
+
+// Test-specific option functions
+
+// WithRateLimitDisabled disables rate limiting
+func WithRateLimitDisabled() Option {
+	return func(pc *PortClient) {
+		pc.RateLimitManager.SetEnabled(false)
+	}
+}
+
+// WithRateLimitThreshold sets the threshold for when to start throttling
+// threshold should be between 0.0 and 1.0 (e.g., 0.1 means start throttling when 10% of requests remain)
+func WithRateLimitThreshold(threshold float64) Option {
+	return func(pc *PortClient) {
+		if threshold >= 0.0 && threshold <= 1.0 {
+			pc.RateLimitManager.SetThreshold(threshold)
+		}
+	}
 }

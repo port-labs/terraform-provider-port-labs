@@ -19,14 +19,10 @@ func TestRateLimitInfo(t *testing.T) {
 		Reset:     60,
 	}
 
-	assert.True(t, rateLimitInfo.IsNearLimit(0.2))   // 10/100 = 0.1 < 0.2
-	assert.False(t, rateLimitInfo.IsNearLimit(0.05)) // 10/100 = 0.1 > 0.05
-
-	assert.True(t, rateLimitInfo.ShouldThrottle(0.2))
-	assert.False(t, rateLimitInfo.ShouldThrottle(0.05))
+	assert.True(t, rateLimitInfo.ShouldThrottle(0.2))   // 10/100 = 0.1 < 0.2
+	assert.False(t, rateLimitInfo.ShouldThrottle(0.05)) // 10/100 = 0.1 > 0.05
 
 	zeroLimitInfo := &RateLimitInfo{Limit: 0}
-	assert.False(t, zeroLimitInfo.IsNearLimit(0.5))
 	assert.False(t, zeroLimitInfo.ShouldThrottle(0.5))
 }
 

@@ -22,7 +22,7 @@ type PortClient struct {
 	BlueprintPropertyTypeChangeProtection bool
 
 	// Rate limiting
-	rateLimitManager *ratelimit.Manager
+	RateLimitManager *ratelimit.Manager
 }
 
 func New(baseURL string, opts ...Option) (*PortClient, error) {
@@ -45,7 +45,7 @@ func New(baseURL string, opts ...Option) (*PortClient, error) {
 				err = json.Unmarshal(r.Body(), &b)
 				return err != nil || b["ok"] != true
 			}),
-		rateLimitManager: rateLimitManager,
+		RateLimitManager: rateLimitManager,
 	}
 
 	c.Client.
@@ -56,21 +56,6 @@ func New(baseURL string, opts ...Option) (*PortClient, error) {
 		opt(c)
 	}
 	return c, nil
-}
-
-// GetRateLimitInfo returns the current rate limit information
-func (c *PortClient) GetRateLimitInfo() *ratelimit.RateLimitInfo {
-	return c.rateLimitManager.GetInfo()
-}
-
-// SetRateLimitEnabled enables or disables rate limiting
-func (c *PortClient) SetRateLimitEnabled(enabled bool) {
-	c.rateLimitManager.SetEnabled(enabled)
-}
-
-// SetRateLimitThreshold sets the threshold for when to start throttling
-func (c *PortClient) SetRateLimitThreshold(threshold float64) {
-	c.rateLimitManager.SetThreshold(threshold)
 }
 
 // FeatureFlags Fetches the feature flags from the Organization API. It caches the feature flags locally to reduce call
@@ -135,22 +120,5 @@ func WithClientID(clientID string) Option {
 func WithToken(token string) Option {
 	return func(pc *PortClient) {
 		pc.Client.SetAuthToken(token)
-	}
-}
-
-// WithRateLimitDisabled disables rate limiting
-func WithRateLimitDisabled() Option {
-	return func(pc *PortClient) {
-		pc.rateLimitManager.SetEnabled(false)
-	}
-}
-
-// WithRateLimitThreshold sets the threshold for when to start throttling
-// threshold should be between 0.0 and 1.0 (e.g., 0.1 means start throttling when 10% of requests remain)
-func WithRateLimitThreshold(threshold float64) Option {
-	return func(pc *PortClient) {
-		if threshold >= 0.0 && threshold <= 1.0 {
-			pc.rateLimitManager.SetThreshold(threshold)
-		}
 	}
 }

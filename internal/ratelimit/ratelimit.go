@@ -1,6 +1,7 @@
 package ratelimit
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"golang.org/x/sync/semaphore"
 )
 
 // Extracted from Port HTTP Headers
@@ -22,15 +24,11 @@ type RateLimitInfo struct {
 	Reset int
 }
 
-func (r *RateLimitInfo) IsNearLimit(threshold float64) bool {
+func (r *RateLimitInfo) ShouldThrottle(threshold float64) bool {
 	if r.Limit == 0 {
 		return false
 	}
 	return float64(r.Remaining)/float64(r.Limit) < threshold
-}
-
-func (r *RateLimitInfo) ShouldThrottle(threshold float64) bool {
-	return r.IsNearLimit(threshold)
 }
 
 type Manager struct {
@@ -39,7 +37,7 @@ type Manager struct {
 	enabled            bool
 	threshold          float64
 	activeRequests     int
-	requestSemaphore   chan struct{}
+	requestSemaphore   *semaphore.Weighted
 	lastRequestTime    time.Time
 	minRequestInterval time.Duration
 	debug              bool
@@ -50,7 +48,7 @@ func NewManager() *Manager {
 		enabled:            os.Getenv("PORT_RATE_LIMIT_DISABLED") == "",
 		threshold:          0.02,
 		debug:              os.Getenv("PORT_DEBUG_RATE_LIMIT") != "",
-		requestSemaphore:   make(chan struct{}, 50),
+		requestSemaphore:   semaphore.NewWeighted(50),
 		minRequestInterval: 50 * time.Millisecond,
 	}
 }
@@ -99,13 +97,15 @@ func (m *Manager) RequestMiddleware(client *resty.Client, req *resty.Request) er
 		return nil
 	}
 
-	m.log(fmt.Sprintf("DEBUG: Attempting to acquire semaphore (capacity: %d)\n", cap(m.requestSemaphore)))
+	m.log(fmt.Sprintf("DEBUG: Attempting to acquire semaphore (capacity: %d)\n", 50))
 
-	select {
-	case m.requestSemaphore <- struct{}{}:
-		m.log("DEBUG: Acquired semaphore slot\n")
-	case <-time.After(30 * time.Second):
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := m.requestSemaphore.Acquire(ctx, 1); err != nil {
 		m.log("DEBUG: Semaphore timeout - proceeding anyway\n")
+	} else {
+		m.log("DEBUG: Acquired semaphore slot\n")
 	}
 
 	m.log("DEBUG: Getting rate limit state\n")
@@ -164,12 +164,8 @@ func (m *Manager) ResponseMiddleware(client *resty.Client, resp *resty.Response)
 	defer func() {
 		m.log("DEBUG: Defer function executing - attempting to release semaphore\n")
 
-		select {
-		case <-m.requestSemaphore:
-			m.log("DEBUG: Successfully released semaphore slot\n")
-		case <-time.After(1 * time.Second):
-			m.log("DEBUG: Semaphore release timeout - continuing anyway\n")
-		}
+		m.requestSemaphore.Release(1)
+		m.log("DEBUG: Successfully released semaphore slot\n")
 
 		m.log("DEBUG: Updating active request count\n")
 

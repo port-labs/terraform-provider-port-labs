@@ -2,7 +2,7 @@ package ratelimit
 
 import (
 	"context"
-	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"sync"
@@ -40,16 +40,32 @@ type Manager struct {
 	requestSemaphore   *semaphore.Weighted
 	lastRequestTime    time.Time
 	minRequestInterval time.Duration
-	debug              bool
+	logger             *slog.Logger
 }
 
 func NewManager() *Manager {
+	enabled := os.Getenv("PORT_RATE_LIMIT_DISABLED") == ""
+	debug := os.Getenv("PORT_DEBUG_RATE_LIMIT") != ""
+
+	// Create logger with appropriate level and output
+	var logger *slog.Logger
+	if debug {
+		logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		})).With("component", "ratelimit", "enabled", enabled)
+	} else {
+		// Create a no-op logger that discards output
+		logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelError, // Only log errors and above (effectively disabling debug)
+		})).With("component", "ratelimit", "enabled", enabled)
+	}
+
 	return &Manager{
-		enabled:            os.Getenv("PORT_RATE_LIMIT_DISABLED") == "",
+		enabled:            enabled,
 		threshold:          0.02,
-		debug:              os.Getenv("PORT_DEBUG_RATE_LIMIT") != "",
 		requestSemaphore:   semaphore.NewWeighted(50),
 		minRequestInterval: 50 * time.Millisecond,
+		logger:             logger,
 	}
 }
 
@@ -83,32 +99,26 @@ func (m *Manager) SetThreshold(threshold float64) {
 	}
 }
 
-func (m *Manager) log(logString string) {
-	if m.debug {
-		fmt.Print(logString)
-	}
-}
-
 func (m *Manager) RequestMiddleware(client *resty.Client, req *resty.Request) error {
-	m.log(fmt.Sprintf("DEBUG: RequestMiddleware called, enabled: %v\n", m.enabled))
+	m.logger.Debug("RequestMiddleware called")
 
 	if !m.enabled {
-		m.log("DEBUG: Rate limiting disabled - returning early\n")
+		m.logger.Debug("Rate limiting disabled - returning early")
 		return nil
 	}
 
-	m.log(fmt.Sprintf("DEBUG: Attempting to acquire semaphore (capacity: %d)\n", 50))
+	m.logger.Debug("Attempting to acquire semaphore", "capacity", 50)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := m.requestSemaphore.Acquire(ctx, 1); err != nil {
-		m.log("DEBUG: Semaphore timeout - proceeding anyway\n")
+		m.logger.Debug("Semaphore timeout - proceeding anyway")
 	} else {
-		m.log("DEBUG: Acquired semaphore slot\n")
+		m.logger.Debug("Acquired semaphore slot")
 	}
 
-	m.log("DEBUG: Getting rate limit state\n")
+	m.logger.Debug("Getting rate limit state")
 
 	m.mu.Lock()
 	m.activeRequests++
@@ -117,28 +127,35 @@ func (m *Manager) RequestMiddleware(client *resty.Client, req *resty.Request) er
 	activeRequests := m.activeRequests
 	m.mu.Unlock()
 
-	m.log(fmt.Sprintf("DEBUG: Active requests: %d, Rate limit info: %+v\n", activeRequests, rateLimitInfo))
+	m.logger.Debug("Active requests and rate limit info", "active_requests", activeRequests, "rate_limit_info", rateLimitInfo)
 
 	timeSinceLastRequest := time.Since(lastRequestTime)
 	if timeSinceLastRequest < m.minRequestInterval {
-		m.log(fmt.Sprintf("DEBUG: Applying minimum interval delay: %v\n", m.minRequestInterval-timeSinceLastRequest))
-		time.Sleep(m.minRequestInterval - timeSinceLastRequest)
+		delay := m.minRequestInterval - timeSinceLastRequest
+		m.logger.Debug("Applying minimum interval delay", "delay", delay)
+		time.Sleep(delay)
 	}
 
 	if rateLimitInfo != nil && rateLimitInfo.ShouldThrottle(m.threshold) {
 		delay := m.calculateDelay(rateLimitInfo)
 		if delay > 0 {
-			m.log(fmt.Sprintf("DEBUG: Throttling request - delay: %v (remaining: %d, reset: %d, threshold: %.2f)\n",
-				delay, rateLimitInfo.Remaining, rateLimitInfo.Reset, m.threshold))
+			m.logger.Debug("Throttling request",
+				"delay", delay,
+				"remaining", rateLimitInfo.Remaining,
+				"reset", rateLimitInfo.Reset,
+				"threshold", m.threshold)
 			time.Sleep(delay)
 		}
 	} else {
 		if rateLimitInfo == nil {
-			m.log("DEBUG: No rate limit info available yet\n")
+			m.logger.Debug("No rate limit info available yet")
 		} else {
-			m.log(fmt.Sprintf("DEBUG: Not throttling - remaining: %d, limit: %d, ratio: %.2f, threshold: %.2f\n",
-				rateLimitInfo.Remaining, rateLimitInfo.Limit,
-				float64(rateLimitInfo.Remaining)/float64(rateLimitInfo.Limit), m.threshold))
+			ratio := float64(rateLimitInfo.Remaining) / float64(rateLimitInfo.Limit)
+			m.logger.Debug("Not throttling",
+				"remaining", rateLimitInfo.Remaining,
+				"limit", rateLimitInfo.Limit,
+				"ratio", ratio,
+				"threshold", m.threshold)
 		}
 	}
 
@@ -146,52 +163,55 @@ func (m *Manager) RequestMiddleware(client *resty.Client, req *resty.Request) er
 	m.lastRequestTime = time.Now()
 	m.mu.Unlock()
 
-	m.log("DEBUG: RequestMiddleware completed successfully\n")
+	m.logger.Debug("RequestMiddleware completed successfully")
 
 	return nil
 }
 
 func (m *Manager) ResponseMiddleware(client *resty.Client, resp *resty.Response) error {
-	m.log(fmt.Sprintf("DEBUG: ResponseMiddleware called, enabled: %v\n", m.enabled))
+	m.logger.Debug("ResponseMiddleware called")
 
 	if !m.enabled {
-		m.log("DEBUG: Rate limiting disabled - response middleware returning early\n")
+		m.logger.Debug("Rate limiting disabled - response middleware returning early")
 		return nil
 	}
 
-	m.log("DEBUG: Setting up defer function for semaphore release\n")
+	m.logger.Debug("Setting up defer function for semaphore release")
 
 	defer func() {
-		m.log("DEBUG: Defer function executing - attempting to release semaphore\n")
+		m.logger.Debug("Defer function executing - attempting to release semaphore")
 
 		m.requestSemaphore.Release(1)
-		m.log("DEBUG: Successfully released semaphore slot\n")
+		m.logger.Debug("Successfully released semaphore slot")
 
-		m.log("DEBUG: Updating active request count\n")
+		m.logger.Debug("Updating active request count")
 
 		m.mu.Lock()
 		m.activeRequests--
 		if m.activeRequests < 0 {
 			m.activeRequests = 0 // Prevent negative count
 		}
-		m.log(fmt.Sprintf("DEBUG: Active requests now: %d\n", m.activeRequests))
+		m.logger.Debug("Active requests now", "active_requests", m.activeRequests)
 		m.mu.Unlock()
 
-		m.log("DEBUG: Defer function completed\n")
+		m.logger.Debug("Defer function completed")
 	}()
 
-	m.log("DEBUG: Extracting rate limit headers\n")
+	m.logger.Debug("Extracting rate limit headers")
 
 	limitHeader := resp.Header().Get("x-ratelimit-limit")
 	periodHeader := resp.Header().Get("x-ratelimit-period")
 	remainingHeader := resp.Header().Get("x-ratelimit-remaining")
 	resetHeader := resp.Header().Get("x-ratelimit-reset")
 
-	m.log(fmt.Sprintf("DEBUG: Rate limit headers - limit: %q, period: %q, remaining: %q, reset: %q\n",
-		limitHeader, periodHeader, remainingHeader, resetHeader))
+	m.logger.Debug("Rate limit headers",
+		"limit", limitHeader,
+		"period", periodHeader,
+		"remaining", remainingHeader,
+		"reset", resetHeader)
 
 	if limitHeader != "" && remainingHeader != "" {
-		m.log("DEBUG: Parsing rate limit headers\n")
+		m.logger.Debug("Parsing rate limit headers")
 
 		m.mu.Lock()
 		defer m.mu.Unlock()
@@ -213,12 +233,12 @@ func (m *Manager) ResponseMiddleware(client *resty.Client, resp *resty.Response)
 
 		m.rateLimitInfo = rateLimitInfo
 
-		m.log(fmt.Sprintf("DEBUG: Parsed rate limit info: %+v\n", rateLimitInfo))
+		m.logger.Debug("Parsed rate limit info", "rate_limit_info", rateLimitInfo)
 	} else {
-		m.log("DEBUG: No rate limit headers found or incomplete\n")
+		m.logger.Debug("No rate limit headers found or incomplete")
 	}
 
-	m.log("DEBUG: ResponseMiddleware completed successfully\n")
+	m.logger.Debug("ResponseMiddleware completed successfully")
 
 	return nil
 }

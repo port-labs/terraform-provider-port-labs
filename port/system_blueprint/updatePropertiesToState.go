@@ -60,7 +60,7 @@ func (r *Resource) updatePropertiesToState(ctx context.Context, b *cli.Blueprint
 				properties.ArrayProps = make(map[string]blueprint.ArrayPropModel)
 			}
 
-			arrayProp := blueprint.AddArrayPropertiesToState(&v, r.client.JSONEscapeHTML)
+			arrayProp := blueprint.AddArrayPropertiesToState(ctx, &v, r.client.JSONEscapeHTML)
 
 			if lo.Contains(b.Schema.Required, k) {
 				arrayProp.Required = types.BoolValue(true)

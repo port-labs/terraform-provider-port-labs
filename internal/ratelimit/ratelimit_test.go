@@ -203,10 +203,10 @@ func TestConcurrentRequests(t *testing.T) {
 	t.Logf("Concurrent requests took %v", elapsed)
 }
 
-func TestCalculateDelay(t *testing.T) {
+func TestCalculateDelayNoRemainingRequests(t *testing.T) {
 	manager := NewManager(nil)
 
-	// Test case 1: No remaining requests - should wait until reset
+	// No remaining requests - should wait until reset
 	rateLimitInfo := &RateLimitInfo{
 		Limit:     100,
 		Remaining: 0,
@@ -217,46 +217,63 @@ func TestCalculateDelay(t *testing.T) {
 	// Base delay: 10s, with jitter (1.1-1.2x): 11-12s
 	assert.Greater(t, delay, 10*time.Second)
 	assert.Less(t, delay, 13*time.Second)
+}
 
-	// Test case 2: Some remaining requests, no active requests
-	rateLimitInfo = &RateLimitInfo{
+func TestCalculateDelaySomeRemainingRequests(t *testing.T) {
+	manager := NewManager(nil)
+
+	t.Run("normal reset time", func(t *testing.T) {
+		// Some remaining requests, no active requests
+		rateLimitInfo := &RateLimitInfo{
+			Limit:     100,
+			Remaining: 5,
+			Reset:     10,
+		}
+		manager.activeRequestsMu.Lock()
+		manager.activeRequests.Store(0)
+		manager.activeRequestsMu.Unlock()
+		delay := manager.calculateDelay(rateLimitInfo)
+
+		// Base delay: (10*0.8)/5 = 1.6s, with jitter: 1.76-1.92s
+		assert.Greater(t, delay, 1*time.Second)
+		assert.Less(t, delay, time.Duration(2.5*float64(time.Second)))
+	})
+
+	t.Run("long reset time should be capped", func(t *testing.T) {
+		// One remaining request, long reset time (should be capped at 30s)
+		rateLimitInfo := &RateLimitInfo{
+			Limit:     100,
+			Remaining: 1,
+			Reset:     60,
+		}
+		manager.activeRequestsMu.Lock()
+		manager.activeRequests.Store(0)
+		manager.activeRequestsMu.Unlock()
+		delay := manager.calculateDelay(rateLimitInfo)
+
+		// Base calculation: (60*0.8)/1 = 48s, but capped at 30s, with jitter: 33-36s
+		assert.Greater(t, delay, 30*time.Second)
+		assert.Less(t, delay, 37*time.Second)
+	})
+}
+
+func TestCalculateDelayWithActiveRequestScaling(t *testing.T) {
+	manager := NewManager(nil)
+
+	// Some remaining requests, with active requests
+	rateLimitInfo := &RateLimitInfo{
 		Limit:     100,
 		Remaining: 5,
 		Reset:     10,
 	}
 	manager.activeRequestsMu.Lock()
-	manager.activeRequests.Store(0)
-	manager.activeRequestsMu.Unlock()
-	delay = manager.calculateDelay(rateLimitInfo)
-
-	// Base delay: (10*0.8)/5 = 1.6s, with jitter: 1.76-1.92s
-	assert.Greater(t, delay, 1*time.Second)
-	assert.Less(t, delay, time.Duration(2.5*float64(time.Second)))
-
-	// Test case 3: Some remaining requests, with active requests
-	manager.activeRequestsMu.Lock()
 	manager.activeRequests.Store(2)
 	manager.activeRequestsMu.Unlock()
-	delay = manager.calculateDelay(rateLimitInfo)
+	delay := manager.calculateDelay(rateLimitInfo)
 
 	// Base delay: 1.6s, scaling: 1.6*(1+2*0.2) = 2.24s, with jitter: 2.46-2.69s
 	assert.Greater(t, delay, 2*time.Second)
 	assert.Less(t, delay, time.Duration(3.5*float64(time.Second)))
-
-	// Test case 4: One remaining request, long reset time (should be capped at 30s)
-	rateLimitInfo = &RateLimitInfo{
-		Limit:     100,
-		Remaining: 1,
-		Reset:     60,
-	}
-	manager.activeRequestsMu.Lock()
-	manager.activeRequests.Store(0)
-	manager.activeRequestsMu.Unlock()
-	delay = manager.calculateDelay(rateLimitInfo)
-
-	// Base calculation: (60*0.8)/1 = 48s, but capped at 30s, with jitter: 33-36s
-	assert.Greater(t, delay, 30*time.Second)
-	assert.Less(t, delay, 37*time.Second)
 }
 
 func TestActiveRequestsCleanup(t *testing.T) {

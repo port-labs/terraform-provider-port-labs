@@ -2,6 +2,7 @@ package blueprint
 
 import (
 	"context"
+
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -113,7 +114,7 @@ func (r *BlueprintResource) updatePropertiesToState(ctx context.Context, b *cli.
 				properties.ArrayProps = make(map[string]ArrayPropModel)
 			}
 
-			arrayProp := AddArrayPropertiesToState(&v, r.portClient.JSONEscapeHTML)
+			arrayProp := AddArrayPropertiesToState(ctx, &v, r.portClient.JSONEscapeHTML)
 
 			if lo.Contains(b.Schema.Required, k) {
 				arrayProp.Required = types.BoolValue(true)

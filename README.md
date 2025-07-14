@@ -7,6 +7,7 @@
 # Port Terraform Provider
 
 [![Slack](https://img.shields.io/badge/Slack-4A154B?style=for-the-badge&logo=slack&logoColor=white)](https://join.slack.com/t/devex-community/shared_invite/zt-1bmf5621e-GGfuJdMPK2D8UN58qL4E_g)
+[![Built with Devbox](https://www.jetify.com/img/devbox/shield_galaxy.svg)](https://www.jetify.com/devbox/docs/contributor-quickstart/)
 
 Port is the Developer Platform meant to supercharge your DevOps and Developers, and allow you to regain control of your environment.
 
@@ -21,6 +22,7 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 - [Port docs](https://docs.getport.io/build-your-software-catalog/custom-integration/iac/terraform/)
 
 ## Requirements
+
 - [Terraform](https://www.terraform.io/downloads.html)
 - [Go](https://golang.org/doc/install) >= 1.24 (to build the provider plugin)
 - [Port Credentials](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/api/#find-your-port-credentials)

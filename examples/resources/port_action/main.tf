@@ -79,6 +79,14 @@ resource "port_action" "restart_microservice" {
   self_service_trigger = {
     operation            = "DAY-2"
     blueprint_identifier = port_blueprint.microservice.identifier
+    titles = {
+      "titleIdentifier" = {
+        title = "My String Title"
+        description = "My String Description",
+        visible_jq_query = "true"
+      }
+    }
+    order_properties = ["titleIdentifier","webhook_url","service","testString","testNumber"]
     user_properties = {
       string_props = {
         "webhook_url" = {
@@ -87,13 +95,16 @@ resource "port_action" "restart_microservice" {
           format      = "url"
           default     = "https://example.com"
           pattern     = "^https://.*"
+          disabled    = true
         }
         service = {
-          title       = "Service"
-          description = "The service to restart"
-          format      = "entity"
-          blueprint   = "Service"
-          sort        = {
+          title             = "Service"
+          description       = "The service to restart"
+          format            = "entity"
+          blueprint         = "Service"
+          disabled_jq_query = "1 == 1"
+
+          sort = {
             property = "$updatedAt"
             order    = "DESC"
           }

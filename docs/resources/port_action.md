@@ -506,6 +506,7 @@ Optional:
 - `order_properties` (List of String) Order properties
 - `required_jq_query` (String) The required jq query of the property
 - `steps` (Attributes List) The steps of the action (see [below for nested schema](#nestedatt--self_service_trigger--steps))
+- `titles` (Attributes Map) action titles (see [below for nested schema](#nestedatt--self_service_trigger--titles))
 - `user_properties` (Attributes) User properties (see [below for nested schema](#nestedatt--self_service_trigger--user_properties))
 
 <a id="nestedatt--self_service_trigger--steps"></a>
@@ -515,6 +516,20 @@ Required:
 
 - `order` (List of String) The order of the properties in this step
 - `title` (String) The step's title (max 25 characters)
+
+
+<a id="nestedatt--self_service_trigger--titles"></a>
+### Nested Schema for `self_service_trigger.titles`
+
+Required:
+
+- `title` (String) The title of the action title
+
+Optional:
+
+- `description` (String) The description of the action title
+- `visible` (Boolean) The visibility of the string property
+- `visible_jq_query` (String) The visibility condition jq query of the string property
 
 
 <a id="nestedatt--self_service_trigger--user_properties"></a>
@@ -537,6 +552,8 @@ Optional:
 - `default_jq_query` (String) The default jq query of the array property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the array property
+- `disabled_jq_query` (String) The disabled state jq query of the array property
 - `icon` (String) The icon of the property
 - `max_items` (Number) The max items of the array property
 - `min_items` (Number) The min items of the array property
@@ -610,6 +627,8 @@ Optional:
 - `default_jq_query` (String) The default jq query of the boolean property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the boolean property
+- `disabled_jq_query` (String) The disabled state jq query of the boolean property
 - `icon` (String) The icon of the property
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
 - `title` (String) The title of the property
@@ -626,6 +645,8 @@ Optional:
 - `default_jq_query` (String) The default jq query of the number property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the number property
+- `disabled_jq_query` (String) The disabled state jq query of the number property
 - `enum` (List of Number) The enum of the number property
 - `enum_colors` (Map of String) The enum colors of the number property
 - `enum_jq_query` (String) The enum jq query of the string property
@@ -647,6 +668,8 @@ Optional:
 - `default_jq_query` (String) The default jq query of the object property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the object property
+- `disabled_jq_query` (String) The disabled state jq query of the object property
 - `encryption` (String) The algorithm to encrypt the property with. Accepted value: `aes256-gcm`
 - `icon` (String) The icon of the property
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
@@ -666,6 +689,8 @@ Optional:
 - `default_jq_query` (String) The default jq query of the string property
 - `depends_on` (List of String) The properties that this property depends on
 - `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the string property
+- `disabled_jq_query` (String) The disabled state jq query of the string property
 - `encryption` (String) The algorithm to encrypt the property with. Accepted value: `aes256-gcm`
 - `enum` (List of String) The enum of the string property
 - `enum_colors` (Map of String) The enum colors of the string property

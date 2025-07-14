@@ -152,6 +152,14 @@ jobs:
           flaky_summary: 'true'
           include_time_in_summary: 'true'
           simplified_summary: 'true'
+
+  publish_cover_report:
+    name: Publish Coverage Report
+    if: ${{ always() }}
+    needs: acctest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Download all coverage reports
         uses: actions/download-artifact@v4
         with:

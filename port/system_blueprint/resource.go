@@ -2,6 +2,7 @@ package system_blueprint
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -135,7 +136,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		return
 	}
 
-	systemBp, statusCode, err := r.client.ReadSystemBlueprintStructure(ctx, state.Identifier.ValueString())
+	structure, statusCode, err := r.client.ReadSystemBlueprintStructure(ctx, state.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
 			resp.Diagnostics.AddError("Blueprint doesn't exist", err.Error())
@@ -145,17 +146,71 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		return
 	}
 
-	// For system blueprints, we merge properties, relations, mirror properties and calculation properties
-	// Everything else should be preserved exactly as is
-	props, _, err := MergeProperties(ctx, systemBp.Schema.Properties, state.Properties)
+	prevB, err := r.mergeSystemBlueprint(ctx, previousState, existingBp, structure)
 	if err != nil {
-		resp.Diagnostics.AddError("Error merging properties", err.Error())
+		resp.Diagnostics.AddError("Failed to merge in remote to previous state", err.Error())
 		return
 	}
 
-	relations := MergeRelations(systemBp.Relations, state.Relations)
-	mirrorProps := MergeMirrorProperties(systemBp.MirrorProperties, state.MirrorProperties)
-	calcProps := MergeCalculationProperties(ctx, systemBp.CalculationProperties, state.CalculationProperties)
+	b, err := r.mergeSystemBlueprint(ctx, state, existingBp, structure)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to merge in remote to current state", err.Error())
+		return
+	}
+
+	propsWithChangedTypes := make(map[string]string, 0)
+	for propKey, prop := range b.Schema.Properties {
+		if prevProp, prevHasProp := prevB.Schema.Properties[propKey]; prevHasProp && prop.Type != prevProp.Type {
+			propsWithChangedTypes[propKey] = prevProp.Type
+			delete(prevB.Schema.Properties, propKey)
+		}
+	}
+	if len(propsWithChangedTypes) > 0 && r.client.BlueprintPropertyTypeChangeProtection {
+		for propKey, prevPropType := range propsWithChangedTypes {
+			currentPropType := b.Schema.Properties[propKey].Type
+			resp.Diagnostics.AddAttributeError(
+				path.Root("properties").AtName(fmt.Sprintf("%s_props", currentPropType)).
+					AtName(propKey).AtName("type"),
+				"Property type changed while protection is enabled",
+				fmt.Sprintf("The type of property %q changed from %q to %q. Applying this change will cause "+
+					"you to lose the data for that property. If you wish to continue disable the protection in the "+
+					"provider configuration by setting %q to false", propKey, prevPropType, currentPropType,
+					"blueprint_property_type_change_protection"),
+			)
+		}
+		return
+	}
+	if len(propsWithChangedTypes) > 0 {
+		_, err = r.client.UpdateBlueprint(ctx, prevB, previousState.ID.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("failed to pre-delete properties that changed their type", err.Error())
+			return
+		}
+	}
+
+	bp, err := r.client.UpdateBlueprint(ctx, b, state.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to update blueprint", err.Error())
+		return
+	}
+
+	writeBlueprintComputedFieldsToState(bp, state)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+}
+
+func (r *Resource) mergeSystemBlueprint(ctx context.Context, state *SystemBlueprintModel, existingBp, structure *cli.Blueprint) (*cli.Blueprint, error) {
+
+	// For system blueprints, we merge properties, relations, mirror properties and calculation properties
+	// Everything else should be preserved exactly as is
+	props, _, err := MergeProperties(ctx, structure.Schema.Properties, state.Properties)
+	if err != nil {
+		return nil, fmt.Errorf("error merging properties: %w", err)
+	}
+
+	relations := MergeRelations(structure.Relations, state.Relations)
+	mirrorProps := MergeMirrorProperties(structure.MirrorProperties, state.MirrorProperties)
+	calcProps := MergeCalculationProperties(ctx, structure.CalculationProperties, state.CalculationProperties)
 
 	b := &cli.Blueprint{
 		Identifier:           existingBp.Identifier,
@@ -166,7 +221,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		ChangelogDestination: existingBp.ChangelogDestination,
 		Schema: cli.BlueprintSchema{
 			Properties: props,
-			Required:   systemBp.Schema.Required,
+			Required:   structure.Schema.Required,
 		},
 		Relations:             relations,
 		MirrorProperties:      mirrorProps,
@@ -182,15 +237,7 @@ func (r *Resource) Update(ctx context.Context, req resource.UpdateRequest, resp 
 		}
 	}
 
-	bp, err := r.client.UpdateBlueprint(ctx, b, state.ID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update blueprint", err.Error())
-		return
-	}
-
-	writeBlueprintComputedFieldsToState(bp, state)
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
+	return b, err
 }
 
 func (r *Resource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

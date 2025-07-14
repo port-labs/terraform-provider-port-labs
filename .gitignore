@@ -1,8 +1,9 @@
 .vscode/
-.env
+.env*
 local/
 __debug_bin*
 terraform-provider-port-labs
 .idea
 **/terraform.tfstat*
 **/.terraform
+pkg

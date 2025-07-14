@@ -14,15 +14,15 @@ import (
 	"golang.org/x/sync/semaphore"
 )
 
-// Extracted from Port HTTP Headers
+// RateLimitInfo holds rate limit information extracted from Port HTTP Headers
 type RateLimitInfo struct {
-	// x-ratelimit-limit
+	// Limit is extracted from x-ratelimit-limit
 	Limit int
-	// x-ratelimit-period
+	// Period is extracted from x-ratelimit-period
 	Period int
-	// x-ratelimit-remaining
+	// Remaining is extracted from x-ratelimit-remaining
 	Remaining int
-	// x-ratelimit-reset (seconds until reset)
+	// Reset is extracted from x-ratelimit-reset (seconds until reset)
 	Reset int
 }
 

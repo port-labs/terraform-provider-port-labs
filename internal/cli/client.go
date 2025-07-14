@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/ratelimit"
 )
 
 type Option func(*PortClient)
@@ -19,9 +20,14 @@ type PortClient struct {
 	featureFlags                          []string
 	JSONEscapeHTML                        bool
 	BlueprintPropertyTypeChangeProtection bool
+
+	// Rate limiting
+	RateLimitManager *ratelimit.Manager
 }
 
 func New(baseURL string, opts ...Option) (*PortClient, error) {
+	rateLimitManager := ratelimit.NewManagerWithDebug()
+
 	c := &PortClient{
 		Client: resty.New().
 			SetBaseURL(baseURL).
@@ -39,7 +45,13 @@ func New(baseURL string, opts ...Option) (*PortClient, error) {
 				err = json.Unmarshal(r.Body(), &b)
 				return err != nil || b["ok"] != true
 			}),
+		RateLimitManager: rateLimitManager,
 	}
+
+	c.Client.
+		OnBeforeRequest(rateLimitManager.RequestMiddleware).
+		OnAfterResponse(rateLimitManager.ResponseMiddleware)
+
 	for _, opt := range opts {
 		opt(c)
 	}

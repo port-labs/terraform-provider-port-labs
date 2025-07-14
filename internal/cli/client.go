@@ -26,7 +26,7 @@ type PortClient struct {
 }
 
 func New(baseURL string, opts ...Option) (*PortClient, error) {
-	rateLimitManager := ratelimit.NewManager(nil)
+	rateLimitManager := ratelimit.NewManagerWithDebug()
 
 	c := &PortClient{
 		Client: resty.New().

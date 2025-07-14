@@ -220,16 +220,17 @@ func (m *Manager) RequestMiddleware(client *resty.Client, req *resty.Request) er
 		return nil
 	}
 
-	m.logger.Debug("Attempting to acquire semaphore", "capacity", 50)
+	m.logger.Debug("Checking load via semaphore")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// Try to acquire semaphore immediately (non-blocking) as load indicator
+	ctx, cancel := context.WithTimeout(context.Background(), 0)
 	defer cancel()
 
 	semaphoreAcquired := false
 	if err := m.requestSemaphore.Acquire(ctx, 1); err != nil {
-		m.logger.Debug("Semaphore timeout - proceeding anyway")
+		m.logger.Warn("High concurrent load detected - proceeding anyway")
 	} else {
-		m.logger.Debug("Acquired semaphore slot")
+		m.logger.Debug("Normal load - acquired semaphore slot")
 		semaphoreAcquired = true
 	}
 
@@ -355,80 +356,67 @@ func (m *Manager) ResponseMiddleware(client *resty.Client, resp *resty.Response)
 		"remaining", remainingHeader,
 		"reset", resetHeader)
 
-	if limitHeader != "" && remainingHeader != "" {
-		m.logger.Debug("Parsing rate limit headers")
-
-		m.mu.Lock()
-		defer m.mu.Unlock()
-
-		rateLimitInfo := &RateLimitInfo{}
-
-		if limit, err := strconv.Atoi(limitHeader); err == nil {
-			rateLimitInfo.Limit = limit
-		}
-		if period, err := strconv.Atoi(periodHeader); err == nil {
-			rateLimitInfo.Period = period
-		}
-		if remaining, err := strconv.Atoi(remainingHeader); err == nil {
-			rateLimitInfo.Remaining = remaining
-		}
-		if reset, err := strconv.Atoi(resetHeader); err == nil {
-			rateLimitInfo.Reset = reset
-		}
-
-		m.rateLimitInfo = rateLimitInfo
-
-		m.logger.Debug("Parsed rate limit info", "rate_limit_info", rateLimitInfo)
-	} else {
+	if limitHeader == "" || remainingHeader == "" {
 		m.logger.Debug("No rate limit headers found or incomplete")
+		return nil
+	}
+	m.logger.Debug("Parsing rate limit headers")
+
+	m.mu.Lock()
+	defer m.mu.Unlock()
+
+	rateLimitInfo := &RateLimitInfo{}
+
+	if limit, err := strconv.Atoi(limitHeader); err == nil {
+		rateLimitInfo.Limit = limit
+	}
+	if period, err := strconv.Atoi(periodHeader); err == nil {
+		rateLimitInfo.Period = period
+	}
+	if remaining, err := strconv.Atoi(remainingHeader); err == nil {
+		rateLimitInfo.Remaining = remaining
+	}
+	if reset, err := strconv.Atoi(resetHeader); err == nil {
+		rateLimitInfo.Reset = reset
 	}
 
-	m.logger.Debug("ResponseMiddleware completed successfully")
+	m.rateLimitInfo = rateLimitInfo
+
+	m.logger.Debug("Parsed rate limit info", "rate_limit_info", rateLimitInfo)
 
 	return nil
 }
 
 func (m *Manager) calculateDelay(rateLimitInfo *RateLimitInfo) time.Duration {
-	// No remaining requests - wait until reset
 	if rateLimitInfo.Remaining <= 0 && rateLimitInfo.Reset > 0 {
 		delay := float64(rateLimitInfo.Reset)
-		// Cap at 2 minutes
 		if delay > 120 {
 			delay = 120
 		}
-		// Apply random jitter (10-20% increase)
 		jitterMultiplier := 1.1 + rand.Float64()*0.1
 		return time.Duration(delay * jitterMultiplier * float64(time.Second))
 	}
 
-	// Some requests remaining - calculate based on remaining and reset time
 	if rateLimitInfo.Remaining > 0 && rateLimitInfo.Reset > 0 {
-		// Use 80% of reset time as buffer
 		resetBuffer := float64(rateLimitInfo.Reset) * 0.8
 
-		// Calculate base delay: spread remaining time across remaining requests
 		baseDelay := resetBuffer / float64(rateLimitInfo.Remaining)
 
-		// Apply scaling factor based on active requests to be more conservative
-		// When we have many active requests, increase the delay to avoid overwhelming
 		m.activeRequestsMu.RLock()
 		activeRequests := m.activeRequests.Load()
 		m.activeRequestsMu.RUnlock()
 		activeRequestScaling := 1.0 + float64(activeRequests)*0.2
 		delay := baseDelay * activeRequestScaling
 
-		// Cap delay at 30 seconds
 		if delay > 30 {
 			delay = 30
 		}
 
-		// Ensure minimum delay
 		minDelaySeconds := m.minRequestInterval.Seconds()
 		if delay < minDelaySeconds {
 			delay = minDelaySeconds
 		}
 
-		// Apply random jitter (10-20% increase)
 		jitterMultiplier := 1.1 + rand.Float64()*0.1
 		return time.Duration(delay * jitterMultiplier * float64(time.Second))
 	}

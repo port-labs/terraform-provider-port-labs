@@ -506,7 +506,7 @@ func TestSemaphoreTimeoutNoReleasePanic(t *testing.T) {
 		Level: slog.LevelDebug,
 	}))
 
-	// Create manager with very small semaphore weight to force timeouts
+	// Create manager with very small semaphore weight to force immediate "timeouts"
 	semaphoreWeight := int64(1)
 	manager := NewManager(&ManagerOptions{
 		SemaphoreWeight: &semaphoreWeight,
@@ -519,7 +519,7 @@ func TestSemaphoreTimeoutNoReleasePanic(t *testing.T) {
 	err := manager.requestSemaphore.Acquire(ctx, 1)
 	require.NoError(t, err, "Should be able to acquire the single semaphore slot")
 
-	// Create a test that simulates the scenario without actually waiting 30 seconds
+	// Create a test that simulates the scenario without actually waiting
 	// We'll test the logic directly by creating a request with the proper context
 	req := &resty.Request{}
 	req.SetContext(context.WithValue(context.Background(), semaphoreAcquiredKey, false))
@@ -541,6 +541,68 @@ func TestSemaphoreTimeoutNoReleasePanic(t *testing.T) {
 		"Should not log successful semaphore release")
 
 	// Clean up - release the semaphore we acquired manually
+	manager.requestSemaphore.Release(1)
+}
+
+func TestSemaphoreNonBlockingLoadIndicator(t *testing.T) {
+	// Create manager with debug logging to capture log messages
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+
+	// Create manager with small semaphore weight to test load indication
+	semaphoreWeight := int64(2)
+	manager := NewManager(&ManagerOptions{
+		SemaphoreWeight: &semaphoreWeight,
+		Logger:          logger,
+	})
+	defer manager.Stop()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"ok": true}`))
+	}))
+	defer server.Close()
+
+	client := resty.New().SetBaseURL(server.URL)
+	client.OnBeforeRequest(manager.RequestMiddleware)
+	client.OnAfterResponse(manager.ResponseMiddleware)
+
+	// First request should succeed and acquire semaphore
+	_, err := client.R().Get("/test1")
+	require.NoError(t, err, "First request should succeed")
+
+	// Second request should succeed and acquire semaphore
+	_, err = client.R().Get("/test2")
+	require.NoError(t, err, "Second request should succeed")
+
+	// Manually exhaust the semaphore to test high load behavior
+	ctx := context.Background()
+	err = manager.requestSemaphore.Acquire(ctx, 1)
+	require.NoError(t, err, "Should be able to acquire remaining semaphore slot")
+	err = manager.requestSemaphore.Acquire(ctx, 1)
+	require.NoError(t, err, "Should be able to acquire final semaphore slot")
+
+	// Clear the log buffer to focus on the high load case
+	buf.Reset()
+
+	// Third request should proceed anyway but log high load
+	start := time.Now()
+	_, err = client.R().Get("/test3")
+	elapsed := time.Since(start)
+	require.NoError(t, err, "Third request should still succeed despite high load")
+
+	// Should complete quickly since it's non-blocking
+	assert.Less(t, elapsed, 100*time.Millisecond, "Request should complete quickly (non-blocking)")
+
+	// Check logs for high load warning
+	logs := buf.String()
+	assert.Contains(t, logs, "High concurrent load detected - proceeding anyway",
+		"Should log high load warning")
+
+	// Clean up - release the semaphores we acquired manually
+	manager.requestSemaphore.Release(1)
 	manager.requestSemaphore.Release(1)
 }
 

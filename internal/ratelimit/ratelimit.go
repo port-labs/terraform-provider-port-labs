@@ -239,10 +239,10 @@ func (m *Manager) RequestMiddleware(client *resty.Client, req *resty.Request) er
 
 	m.logger.Debug("Getting rate limit state")
 
-	m.mu.Lock()
+	m.mu.RLock()
 	rateLimitInfo := m.rateLimitInfo
 	lastRequestTime := m.lastRequestTime
-	m.mu.Unlock()
+	m.mu.RUnlock()
 
 	// Increment activeRequests with read lock
 	m.activeRequestsMu.RLock()

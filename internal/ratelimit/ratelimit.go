@@ -2,6 +2,7 @@ package ratelimit
 
 import (
 	"context"
+	"io"
 	"log/slog"
 	"math/rand/v2"
 	"os"
@@ -12,6 +13,13 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"golang.org/x/sync/semaphore"
+)
+
+// contextKey is a custom type for context keys to avoid collisions
+type contextKey string
+
+const (
+	semaphoreAcquiredKey contextKey = "semaphore_acquired"
 )
 
 // RateLimitInfo holds rate limit information extracted from Port HTTP Headers
@@ -33,53 +41,109 @@ func (r *RateLimitInfo) ShouldThrottle(threshold float64) bool {
 	return float64(r.Remaining)/float64(r.Limit) < threshold
 }
 
+// ManagerOptions holds configuration options for creating a new Manager
+type ManagerOptions struct {
+	Logger             *slog.Logger
+	Threshold          *float64
+	SemaphoreWeight    *int64
+	MinRequestInterval *time.Duration
+	CleanupInterval    *time.Duration
+}
+
+// DefaultManagerOptions returns a ManagerOptions struct with sensible defaults
+func DefaultManagerOptions() *ManagerOptions {
+	return &ManagerOptions{
+		Logger:             slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Threshold:          ptrTo(0.02),
+		SemaphoreWeight:    ptrTo(int64(50)),
+		MinRequestInterval: ptrTo(50 * time.Millisecond),
+		CleanupInterval:    ptrTo(30 * time.Second),
+	}
+}
+
+// ptrTo returns a pointer to the given value
+func ptrTo[T any](v T) *T {
+	return &v
+}
+
 type Manager struct {
 	mu                 sync.RWMutex
 	rateLimitInfo      *RateLimitInfo
 	enabled            bool
 	threshold          float64
-	activeRequests     int64 // Changed to int64 for atomic operations
+	activeRequests     atomic.Int64
+	activeRequestsMu   sync.RWMutex
 	requestSemaphore   *semaphore.Weighted
 	lastRequestTime    time.Time
 	minRequestInterval time.Duration
 	logger             *slog.Logger
 
-	// Cleanup mechanism for activeRequests drift
-	cleanupStop     chan struct{}
+	cleanupCtx      context.Context
+	cleanupCancel   context.CancelFunc
 	cleanupInterval time.Duration
 }
 
-func NewManager() *Manager {
+func NewManager(opts *ManagerOptions) *Manager {
 	enabled := os.Getenv("PORT_RATE_LIMIT_DISABLED") == ""
-	debug := os.Getenv("PORT_DEBUG_RATE_LIMIT") != ""
 
-	// Create logger with appropriate level and output
-	var logger *slog.Logger
-	if debug {
-		logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		})).With("component", "ratelimit", "enabled", enabled)
-	} else {
-		// Create a no-op logger that discards output
-		logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-			Level: slog.LevelError, // Only log errors and above (effectively disabling debug)
-		})).With("component", "ratelimit", "enabled", enabled)
+	// Use defaults if opts is nil
+	if opts == nil {
+		opts = DefaultManagerOptions()
 	}
+
+	// Apply defaults for nil fields
+	defaults := DefaultManagerOptions()
+	if opts.Logger == nil {
+		opts.Logger = defaults.Logger
+	}
+	if opts.Threshold == nil {
+		opts.Threshold = defaults.Threshold
+	}
+	if opts.SemaphoreWeight == nil {
+		opts.SemaphoreWeight = defaults.SemaphoreWeight
+	}
+	if opts.MinRequestInterval == nil {
+		opts.MinRequestInterval = defaults.MinRequestInterval
+	}
+	if opts.CleanupInterval == nil {
+		opts.CleanupInterval = defaults.CleanupInterval
+	}
+
+	// Add component context to logger
+	logger := opts.Logger.With("component", "ratelimit", "enabled", enabled)
+
+	// Create context for cleanup goroutine
+	ctx, cancel := context.WithCancel(context.Background())
 
 	manager := &Manager{
 		enabled:            enabled,
-		threshold:          0.02,
-		requestSemaphore:   semaphore.NewWeighted(50),
-		minRequestInterval: 50 * time.Millisecond,
+		threshold:          *opts.Threshold,
+		requestSemaphore:   semaphore.NewWeighted(*opts.SemaphoreWeight),
+		minRequestInterval: *opts.MinRequestInterval,
 		logger:             logger,
-		cleanupStop:        make(chan struct{}),
-		cleanupInterval:    30 * time.Second, // Reset stuck activeRequests every 30 seconds
+		cleanupCtx:         ctx,
+		cleanupCancel:      cancel,
+		cleanupInterval:    *opts.CleanupInterval,
 	}
 
 	// Start cleanup goroutine to handle activeRequests drift
 	manager.startCleanup()
 
 	return manager
+}
+
+// NewManagerWithDebug creates a new Manager with debug logging enabled
+func NewManagerWithDebug() *Manager {
+	debug := os.Getenv("PORT_DEBUG_RATE_LIMIT") != ""
+
+	opts := DefaultManagerOptions()
+	if debug {
+		opts.Logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		}))
+	}
+
+	return NewManager(opts)
 }
 
 func (m *Manager) GetInfo() *RateLimitInfo {
@@ -114,8 +178,8 @@ func (m *Manager) SetThreshold(threshold float64) {
 
 // Stop gracefully shuts down the rate limit manager
 func (m *Manager) Stop() {
-	if m.cleanupStop != nil {
-		close(m.cleanupStop)
+	if m.cleanupCancel != nil {
+		m.cleanupCancel()
 	}
 }
 
@@ -129,16 +193,18 @@ func (m *Manager) startCleanup() {
 		for {
 			select {
 			case <-ticker.C:
-				// Check and reset activeRequests atomically (no lock needed)
-				currentActiveRequests := atomic.LoadInt64(&m.activeRequests)
+				// Check and reset activeRequests with write lock
+				m.activeRequestsMu.Lock()
+				currentActiveRequests := m.activeRequests.Load()
 				if currentActiveRequests > 0 {
 					m.logger.Debug("Cleaning up stuck activeRequests",
 						"stuck_count", currentActiveRequests,
 						"cleanup_interval", m.cleanupInterval)
-					atomic.StoreInt64(&m.activeRequests, 0)
+					m.activeRequests.Store(0)
 				}
+				m.activeRequestsMu.Unlock()
 
-			case <-m.cleanupStop:
+			case <-m.cleanupCtx.Done():
 				m.logger.Debug("Cleanup goroutine stopping")
 				return
 			}
@@ -159,11 +225,16 @@ func (m *Manager) RequestMiddleware(client *resty.Client, req *resty.Request) er
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
+	semaphoreAcquired := false
 	if err := m.requestSemaphore.Acquire(ctx, 1); err != nil {
 		m.logger.Debug("Semaphore timeout - proceeding anyway")
 	} else {
 		m.logger.Debug("Acquired semaphore slot")
+		semaphoreAcquired = true
 	}
+
+	// Store semaphore acquisition status in request context for ResponseMiddleware
+	req.SetContext(context.WithValue(req.Context(), semaphoreAcquiredKey, semaphoreAcquired))
 
 	m.logger.Debug("Getting rate limit state")
 
@@ -172,28 +243,40 @@ func (m *Manager) RequestMiddleware(client *resty.Client, req *resty.Request) er
 	lastRequestTime := m.lastRequestTime
 	m.mu.Unlock()
 
-	// Increment activeRequests atomically (no lock needed)
-	activeRequests := atomic.AddInt64(&m.activeRequests, 1)
+	// Increment activeRequests with read lock
+	m.activeRequestsMu.RLock()
+	activeRequests := m.activeRequests.Add(1)
+	m.activeRequestsMu.RUnlock()
 
 	m.logger.Debug("Active requests and rate limit info", "active_requests", activeRequests, "rate_limit_info", rateLimitInfo)
 
+	// Calculate minimum interval delay
+	var minIntervalDelay time.Duration
 	timeSinceLastRequest := time.Since(lastRequestTime)
 	if timeSinceLastRequest < m.minRequestInterval {
-		delay := m.minRequestInterval - timeSinceLastRequest
-		m.logger.Debug("Applying minimum interval delay", "delay", delay)
-		time.Sleep(delay)
+		minIntervalDelay = m.minRequestInterval - timeSinceLastRequest
 	}
 
+	// Calculate throttling delay
+	var throttlingDelay time.Duration
 	if rateLimitInfo != nil && rateLimitInfo.ShouldThrottle(m.threshold) {
-		delay := m.calculateDelay(rateLimitInfo)
-		if delay > 0 {
+		throttlingDelay = m.calculateDelay(rateLimitInfo)
+	}
+
+	// Use the maximum of the two delays to avoid double sleeping
+	finalDelay := max(minIntervalDelay, throttlingDelay)
+
+	if finalDelay > 0 {
+		if throttlingDelay > minIntervalDelay {
 			m.logger.Debug("Throttling request",
-				"delay", delay,
+				"delay", finalDelay,
 				"remaining", rateLimitInfo.Remaining,
 				"reset", rateLimitInfo.Reset,
 				"threshold", m.threshold)
-			time.Sleep(delay)
+		} else {
+			m.logger.Debug("Applying minimum interval delay", "delay", finalDelay)
 		}
+		time.Sleep(finalDelay)
 	} else {
 		if rateLimitInfo == nil {
 			m.logger.Debug("No rate limit info available yet")
@@ -227,20 +310,33 @@ func (m *Manager) ResponseMiddleware(client *resty.Client, resp *resty.Response)
 	m.logger.Debug("Setting up defer function for semaphore release")
 
 	defer func() {
-		m.logger.Debug("Defer function executing - attempting to release semaphore")
+		// Use recover to catch any potential panics from semaphore operations
+		if r := recover(); r != nil {
+			m.logger.Debug("Recovered from panic in ResponseMiddleware defer", "panic", r)
+		}
 
-		m.requestSemaphore.Release(1)
-		m.logger.Debug("Successfully released semaphore slot")
+		m.logger.Debug("Defer function executing")
+
+		// Only release semaphore if we actually acquired it
+		if semaphoreAcquired, ok := resp.Request.Context().Value(semaphoreAcquiredKey).(bool); ok && semaphoreAcquired {
+			m.logger.Debug("Attempting to release semaphore")
+			m.requestSemaphore.Release(1)
+			m.logger.Debug("Successfully released semaphore slot")
+		} else {
+			m.logger.Debug("Skipping semaphore release - was not acquired or acquisition status unknown")
+		}
 
 		m.logger.Debug("Updating active request count")
 
-		// Decrement activeRequests atomically (no lock needed)
-		activeRequests := atomic.AddInt64(&m.activeRequests, -1)
+		// Decrement activeRequests with read lock
+		m.activeRequestsMu.RLock()
+		activeRequests := m.activeRequests.Add(-1)
 		if activeRequests < 0 {
 			// Reset to 0 if somehow went negative
-			atomic.StoreInt64(&m.activeRequests, 0)
+			m.activeRequests.Store(0)
 			activeRequests = 0
 		}
+		m.activeRequestsMu.RUnlock()
 		m.logger.Debug("Active requests now", "active_requests", activeRequests)
 
 		m.logger.Debug("Defer function completed")
@@ -293,7 +389,7 @@ func (m *Manager) ResponseMiddleware(client *resty.Client, resp *resty.Response)
 }
 
 func (m *Manager) calculateDelay(rateLimitInfo *RateLimitInfo) time.Duration {
-	// Case 1: No remaining requests - wait until reset
+	// No remaining requests - wait until reset
 	if rateLimitInfo.Remaining <= 0 && rateLimitInfo.Reset > 0 {
 		delay := float64(rateLimitInfo.Reset)
 		// Cap at 2 minutes
@@ -305,7 +401,7 @@ func (m *Manager) calculateDelay(rateLimitInfo *RateLimitInfo) time.Duration {
 		return time.Duration(delay * jitterMultiplier * float64(time.Second))
 	}
 
-	// Case 2: Some requests remaining - calculate based on remaining and reset time
+	// Some requests remaining - calculate based on remaining and reset time
 	if rateLimitInfo.Remaining > 0 && rateLimitInfo.Reset > 0 {
 		// Use 80% of reset time as buffer
 		resetBuffer := float64(rateLimitInfo.Reset) * 0.8
@@ -315,7 +411,9 @@ func (m *Manager) calculateDelay(rateLimitInfo *RateLimitInfo) time.Duration {
 
 		// Apply scaling factor based on active requests to be more conservative
 		// When we have many active requests, increase the delay to avoid overwhelming
-		activeRequests := atomic.LoadInt64(&m.activeRequests)
+		m.activeRequestsMu.RLock()
+		activeRequests := m.activeRequests.Load()
+		m.activeRequestsMu.RUnlock()
 		activeRequestScaling := 1.0 + float64(activeRequests)*0.2
 		delay := baseDelay * activeRequestScaling
 

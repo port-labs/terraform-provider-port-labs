@@ -12,6 +12,7 @@ import (
 )
 
 func skipIfDisabled(t *testing.T) {
+	t.Helper()
 	if os.Getenv("PORT_RATE_LIMIT_DISABLED") != "" {
 		t.Skip("Skipping rate limit test because PORT_RATE_LIMIT_DISABLED is set")
 	}

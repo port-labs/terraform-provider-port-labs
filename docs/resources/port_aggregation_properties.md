@@ -606,6 +606,7 @@ Optional:
 
 - `description` (String) The description of the aggregation property
 - `icon` (String) The icon of the aggregation property
+- `path_filter` (Attributes List) Path filter to filter entities based on relation path (see [below for nested schema](#nestedatt--properties--path_filter))
 - `query` (String) Query to filter the target entities
 - `title` (String) The title of the aggregation property
 
@@ -645,3 +646,16 @@ Optional:
 
 - `average_of` (String) The time periods to calculate the average of, e.g. hour, day, week, month
 - `measure_time_by` (String) The property name on which to calculate the the time periods, e.g. $createdAt, $updated_at or any other date property
+
+
+
+<a id="nestedatt--properties--path_filter"></a>
+### Nested Schema for `properties.path_filter`
+
+Required:
+
+- `path` (List of String) The path array of relations to filter by
+
+Optional:
+
+- `from_blueprint` (String) The blueprint identifier to filter from

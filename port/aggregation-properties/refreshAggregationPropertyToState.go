@@ -31,7 +31,7 @@ func (r *AggregationPropertiesResource) refreshAggregationPropertiesState(state 
 		state.Properties[aggregationPropertyIdentifier].Query = query
 
 		// Handle PathFilter conversion from Port API response to Terraform state
-		if aggregationProperty.PathFilter != nil && len(aggregationProperty.PathFilter) > 0 {
+		if len(aggregationProperty.PathFilter) > 0 {
 			pathFilter := make([]AggregationPropertyPathFilterModel, len(aggregationProperty.PathFilter))
 			for i, pf := range aggregationProperty.PathFilter {
 				pathFilter[i] = AggregationPropertyPathFilterModel{}

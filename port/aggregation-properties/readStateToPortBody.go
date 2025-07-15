@@ -63,7 +63,7 @@ func aggregationPropertiesToBody(state *AggregationPropertiesModel) (*map[string
 		}
 
 		// Handle PathFilter conversion from Terraform state to Port API body
-		if aggregationProperty.PathFilter != nil && len(aggregationProperty.PathFilter) > 0 {
+		if len(aggregationProperty.PathFilter) > 0 {
 			pathFilter := make([]cli.AggregationPropertyPathFilter, len(aggregationProperty.PathFilter))
 			for i, pf := range aggregationProperty.PathFilter {
 				pathFilter[i] = cli.AggregationPropertyPathFilter{}

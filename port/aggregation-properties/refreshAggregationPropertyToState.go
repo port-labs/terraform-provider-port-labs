@@ -1,6 +1,7 @@
 package aggregation_properties
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
@@ -20,6 +21,7 @@ func (r *AggregationPropertiesResource) refreshAggregationPropertiesState(state 
 			TargetBlueprintIdentifier: types.StringValue(aggregationProperty.Target),
 			Method:                    nil,
 			Query:                     types.StringPointerValue(nil),
+			PathFilter:                nil,
 		}
 
 		query, err := utils.GoObjectToTerraformString(aggregationProperty.Query, r.portClient.JSONEscapeHTML)
@@ -27,6 +29,30 @@ func (r *AggregationPropertiesResource) refreshAggregationPropertiesState(state 
 			return err
 		}
 		state.Properties[aggregationPropertyIdentifier].Query = query
+
+		// Handle PathFilter conversion from Port API response to Terraform state
+		if aggregationProperty.PathFilter != nil && len(aggregationProperty.PathFilter) > 0 {
+			pathFilter := make([]AggregationPropertyPathFilterModel, len(aggregationProperty.PathFilter))
+			for i, pf := range aggregationProperty.PathFilter {
+				pathFilter[i] = AggregationPropertyPathFilterModel{}
+				
+				// Set FromBlueprint, using null value if empty
+				if pf.FromBlueprint != "" {
+					pathFilter[i].FromBlueprint = types.StringValue(pf.FromBlueprint)
+				} else {
+					pathFilter[i].FromBlueprint = types.StringNull()
+				}
+
+				// Convert path from []string to types.List
+				pathElements := make([]attr.Value, len(pf.Path))
+				for j, pathStr := range pf.Path {
+					pathElements[j] = types.StringValue(pathStr)
+				}
+				pathList, _ := types.ListValue(types.StringType, pathElements)
+				pathFilter[i].Path = pathList
+			}
+			state.Properties[aggregationPropertyIdentifier].PathFilter = pathFilter
+		}
 
 		if aggregationProperty.CalculationSpec != nil {
 			if calculationBy, ok := aggregationProperty.CalculationSpec["calculationBy"]; ok {

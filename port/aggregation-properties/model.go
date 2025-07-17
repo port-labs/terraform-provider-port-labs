@@ -9,12 +9,13 @@ type AggregationPropertiesModel struct {
 }
 
 type AggregationPropertyModel struct {
-	Title                     types.String             `tfsdk:"title"`
-	Icon                      types.String             `tfsdk:"icon"`
-	Description               types.String             `tfsdk:"description"`
-	TargetBlueprintIdentifier types.String             `tfsdk:"target_blueprint_identifier"`
-	Method                    *AggregationMethodsModel `tfsdk:"method"`
-	Query                     types.String             `tfsdk:"query"`
+	Title                     types.String                         `tfsdk:"title"`
+	Icon                      types.String                         `tfsdk:"icon"`
+	Description               types.String                         `tfsdk:"description"`
+	TargetBlueprintIdentifier types.String                         `tfsdk:"target_blueprint_identifier"`
+	Method                    *AggregationMethodsModel             `tfsdk:"method"`
+	Query                     types.String                         `tfsdk:"query"`
+	PathFilter                []AggregationPropertyPathFilterModel `tfsdk:"path_filter"`
 }
 
 type AggregationMethodsModel struct {
@@ -38,4 +39,9 @@ type AverageByProperty struct {
 type AggregateByPropertyModel struct {
 	Func     types.String `tfsdk:"func"`
 	Property types.String `tfsdk:"property"`
+}
+
+type AggregationPropertyPathFilterModel struct {
+	FromBlueprint types.String `tfsdk:"from_blueprint"`
+	Path          types.List   `tfsdk:"path"`
 }

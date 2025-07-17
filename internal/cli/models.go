@@ -146,12 +146,18 @@ type (
 	}
 
 	BlueprintAggregationProperty struct {
-		Title           *string           `json:"title,omitempty"`
-		Description     *string           `json:"description,omitempty"`
-		Icon            *string           `json:"icon,omitempty"`
-		Target          string            `json:"target,omitempty"`
-		CalculationSpec map[string]string `json:"calculationSpec,omitempty"`
-		Query           any               `json:"query,omitempty"`
+		Title           *string                         `json:"title,omitempty"`
+		Description     *string                         `json:"description,omitempty"`
+		Icon            *string                         `json:"icon,omitempty"`
+		Target          string                          `json:"target,omitempty"`
+		CalculationSpec map[string]string               `json:"calculationSpec,omitempty"`
+		Query           any                             `json:"query,omitempty"`
+		PathFilter      []AggregationPropertyPathFilter `json:"pathFilter,omitempty"`
+	}
+
+	AggregationPropertyPathFilter struct {
+		FromBlueprint string   `json:"fromBlueprint,omitempty"`
+		Path          []string `json:"path"`
 	}
 
 	BlueprintMirrorProperty struct {

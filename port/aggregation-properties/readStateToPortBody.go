@@ -1,6 +1,7 @@
 package aggregation_properties
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
@@ -59,6 +60,26 @@ func aggregationPropertiesToBody(state *AggregationPropertiesModel) (*map[string
 		// the search format, and not empty map or nil
 		if query != nil {
 			newAggregationProperty.Query = *query
+		}
+
+		if len(aggregationProperty.PathFilter) > 0 {
+			pathFilter := make([]cli.AggregationPropertyPathFilter, len(aggregationProperty.PathFilter))
+			for i, pf := range aggregationProperty.PathFilter {
+				pathFilter[i] = cli.AggregationPropertyPathFilter{}
+
+				if !pf.FromBlueprint.IsNull() {
+					pathFilter[i].FromBlueprint = pf.FromBlueprint.ValueString()
+				}
+
+				var pathStrings []string
+				for _, pathElement := range pf.Path.Elements() {
+					if pathStr, ok := pathElement.(types.String); ok {
+						pathStrings = append(pathStrings, pathStr.ValueString())
+					}
+				}
+				pathFilter[i].Path = pathStrings
+			}
+			newAggregationProperty.PathFilter = pathFilter
 		}
 
 		aggregationProperties[aggregationPropertyIdentifier] = newAggregationProperty

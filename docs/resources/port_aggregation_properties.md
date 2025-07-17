@@ -654,8 +654,8 @@ Optional:
 
 Required:
 
-- `path` (List of String) The blueprint to start the path from. Should be the target blueprint or undefined to start from the source blueprint
+- `path` (List of String) The path array of relations to filter by
 
 Optional:
 
-- `from_blueprint` (String) The blueprint identifier to filter from
+- `from_blueprint` (String) The blueprint to start the path from. Should be the target blueprint or undefined to start from the source blueprint

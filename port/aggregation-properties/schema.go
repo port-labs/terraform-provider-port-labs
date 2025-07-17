@@ -122,7 +122,7 @@ func AggregationPropertySchema() schema.Attribute {
 					NestedObject: schema.NestedAttributeObject{
 						Attributes: map[string]schema.Attribute{
 							"from_blueprint": schema.StringAttribute{
-								MarkdownDescription: "The blueprint identifier to filter from",
+								MarkdownDescription: "The blueprint to start the path from. Should be the target blueprint or undefined to start from the source blueprint",
 								Optional:            true,
 							},
 							"path": schema.ListAttribute{

@@ -62,18 +62,16 @@ func aggregationPropertiesToBody(state *AggregationPropertiesModel) (*map[string
 			newAggregationProperty.Query = *query
 		}
 
-		// Handle PathFilter conversion from Terraform state to Port API body
 		if len(aggregationProperty.PathFilter) > 0 {
 			pathFilter := make([]cli.AggregationPropertyPathFilter, len(aggregationProperty.PathFilter))
 			for i, pf := range aggregationProperty.PathFilter {
 				pathFilter[i] = cli.AggregationPropertyPathFilter{}
-				
+
 				// Only set FromBlueprint if it's not null
 				if !pf.FromBlueprint.IsNull() {
 					pathFilter[i].FromBlueprint = pf.FromBlueprint.ValueString()
 				}
 
-				// Convert path from types.List to []string
 				var pathStrings []string
 				for _, pathElement := range pf.Path.Elements() {
 					if pathStr, ok := pathElement.(types.String); ok {

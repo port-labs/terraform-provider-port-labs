@@ -67,7 +67,6 @@ func aggregationPropertiesToBody(state *AggregationPropertiesModel) (*map[string
 			for i, pf := range aggregationProperty.PathFilter {
 				pathFilter[i] = cli.AggregationPropertyPathFilter{}
 
-				// Only set FromBlueprint if it's not null
 				if !pf.FromBlueprint.IsNull() {
 					pathFilter[i].FromBlueprint = pf.FromBlueprint.ValueString()
 				}

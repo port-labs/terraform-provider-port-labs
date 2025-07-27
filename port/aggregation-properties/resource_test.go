@@ -517,3 +517,401 @@ func TestAccMultipleAggregationPropertiesForBlueprintCreate(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortCreateAggregationPropertyWithPathFilter(t *testing.T) {
+	parentBlueprintIdentifier := utils.GenID()
+	childBlueprintIdentifier := utils.GenID()
+	intermediateBlueprintIdentifier := utils.GenID()
+
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port_blueprint" "parent_blueprint" {
+		title = "Parent Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "intermediate_blueprint" {
+		title = "Intermediate Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		relations = {
+			"parent" = {
+				title = "Parent"
+				target = port_blueprint.parent_blueprint.identifier
+			}
+		}
+	}
+
+	resource "port_blueprint" "child_blueprint" {
+		title = "Child Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		relations = {
+			"intermediate" = {
+				title = "Intermediate"
+				target = port_blueprint.intermediate_blueprint.identifier
+			}
+		}
+	}
+
+	resource "port_aggregation_properties" "child_aggregation_properties" {
+		blueprint_identifier = port_blueprint.child_blueprint.identifier
+		properties = {
+			"count_parents" = {
+				target_blueprint_identifier = port_blueprint.parent_blueprint.identifier
+				title = "Count Parents"
+				icon = "Terraform"
+				description = "Count Parents via Path Filter"
+				method = {
+					count_entities = true
+				}
+				path_filter = [
+					{
+						path = ["intermediate", "parent"]
+					}
+				]
+			}
+		}
+	}
+`, parentBlueprintIdentifier, intermediateBlueprintIdentifier, childBlueprintIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "blueprint_identifier", childBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.title", "Count Parents"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.description", "Count Parents via Path Filter"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.target_blueprint_identifier", parentBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.method.count_entities", "true"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.path_filter.0.path.0", "intermediate"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.path_filter.0.path.1", "parent"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortCreateAggregationPropertyWithPathFilterAndFromBlueprint(t *testing.T) {
+	parentBlueprintIdentifier := utils.GenID()
+	childBlueprintIdentifier := utils.GenID()
+	intermediateBlueprintIdentifier := utils.GenID()
+
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port_blueprint" "parent_blueprint" {
+		title = "Parent Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "intermediate_blueprint" {
+		title = "Intermediate Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		relations = {
+			"parent" = {
+				title = "Parent"
+				target = port_blueprint.parent_blueprint.identifier
+			}
+		}
+	}
+
+	resource "port_blueprint" "child_blueprint" {
+		title = "Child Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		relations = {
+			"intermediate" = {
+				title = "Intermediate"
+				target = port_blueprint.intermediate_blueprint.identifier
+			}
+		}
+	}
+
+	resource "port_aggregation_properties" "child_aggregation_properties" {
+		blueprint_identifier = port_blueprint.parent_blueprint.identifier
+		properties = {
+			"count_parents" = {
+				target_blueprint_identifier = port_blueprint.child_blueprint.identifier
+				title = "Count Parents"
+				icon = "Terraform"
+				description = "Count Parents via Path Filter"
+				method = {
+					count_entities = true
+				}
+				path_filter = [
+					{
+						path = ["intermediate", "parent"]
+						from_blueprint = port_blueprint.child_blueprint.identifier
+					}
+				]
+			}
+		}
+	}
+`, parentBlueprintIdentifier, intermediateBlueprintIdentifier, childBlueprintIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "blueprint_identifier", parentBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.title", "Count Parents"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.description", "Count Parents via Path Filter"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.target_blueprint_identifier", childBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.method.count_entities", "true"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.path_filter.0.from_blueprint", childBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.path_filter.0.path.0", "intermediate"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.path_filter.0.path.1", "parent"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortAddAndRemovePathFilterFromAggregationProperty(t *testing.T) {
+	parentBlueprintIdentifier := utils.GenID()
+	childBlueprintIdentifier := utils.GenID()
+	intermediateBlueprintIdentifier := utils.GenID()
+
+	var testAccActionConfigWithoutPathFilter = fmt.Sprintf(`
+	resource "port_blueprint" "parent_blueprint" {
+		title = "Parent Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "intermediate_blueprint" {
+		title = "Intermediate Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		relations = {
+			"parent" = {
+				title = "Parent"
+				target = port_blueprint.parent_blueprint.identifier
+			}
+		}
+	}
+
+	resource "port_blueprint" "child_blueprint" {
+		title = "Child Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		relations = {
+			"intermediate" = {
+				title = "Intermediate"
+				target = port_blueprint.intermediate_blueprint.identifier
+			}
+		}
+	}
+
+	resource "port_aggregation_properties" "child_aggregation_properties" {
+		blueprint_identifier = port_blueprint.child_blueprint.identifier
+		properties = {
+			"count_parents" = {
+				target_blueprint_identifier = port_blueprint.parent_blueprint.identifier
+				title = "Count Parents"
+				icon = "Terraform"
+				description = "Count Parents"
+				method = {
+					count_entities = true
+				}
+			}
+		}
+	}
+`, parentBlueprintIdentifier, intermediateBlueprintIdentifier, childBlueprintIdentifier)
+
+	var testAccActionConfigWithPathFilter = fmt.Sprintf(`
+	resource "port_blueprint" "parent_blueprint" {
+		title = "Parent Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "intermediate_blueprint" {
+		title = "Intermediate Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		relations = {
+			"parent" = {
+				title = "Parent"
+				target = port_blueprint.parent_blueprint.identifier
+			}
+		}
+	}
+
+	resource "port_blueprint" "child_blueprint" {
+		title = "Child Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		relations = {
+			"intermediate" = {
+				title = "Intermediate"
+				target = port_blueprint.intermediate_blueprint.identifier
+			}
+		}
+	}
+
+	resource "port_aggregation_properties" "child_aggregation_properties" {
+		blueprint_identifier = port_blueprint.child_blueprint.identifier
+		properties = {
+			"count_parents" = {
+				target_blueprint_identifier = port_blueprint.parent_blueprint.identifier
+				title = "Count Parents"
+				icon = "Terraform"
+				description = "Count Parents with Path Filter"
+				method = {
+					count_entities = true
+				}
+				path_filter = [
+					{
+						path = ["intermediate", "parent"]
+					}
+				]
+			}
+		}
+	}
+`, parentBlueprintIdentifier, intermediateBlueprintIdentifier, childBlueprintIdentifier)
+
+	var testAccActionConfigRemovePathFilter = fmt.Sprintf(`
+	resource "port_blueprint" "parent_blueprint" {
+		title = "Parent Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		properties = {
+			number_props = {
+				"age" = {
+					title = "Age"
+				}
+			}
+		}
+	}
+
+	resource "port_blueprint" "intermediate_blueprint" {
+		title = "Intermediate Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		relations = {
+			"parent" = {
+				title = "Parent"
+				target = port_blueprint.parent_blueprint.identifier
+			}
+		}
+	}
+
+	resource "port_blueprint" "child_blueprint" {
+		title = "Child Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		relations = {
+			"intermediate" = {
+				title = "Intermediate"
+				target = port_blueprint.intermediate_blueprint.identifier
+			}
+		}
+	}
+
+	resource "port_aggregation_properties" "child_aggregation_properties" {
+		blueprint_identifier = port_blueprint.child_blueprint.identifier
+		properties = {
+			"count_parents" = {
+				target_blueprint_identifier = port_blueprint.parent_blueprint.identifier
+				title = "Count Parents"
+				icon = "Terraform"
+				description = "Count Parents without Path Filter"
+				method = {
+					count_entities = true
+				}
+			}
+		}
+	}
+`, parentBlueprintIdentifier, intermediateBlueprintIdentifier, childBlueprintIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigWithoutPathFilter,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "blueprint_identifier", childBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.title", "Count Parents"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.description", "Count Parents"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.method.count_entities", "true"),
+					resource.TestCheckNoResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.path_filter"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigWithPathFilter,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "blueprint_identifier", childBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.title", "Count Parents"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.description", "Count Parents with Path Filter"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.method.count_entities", "true"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.path_filter.0.path.0", "intermediate"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.path_filter.0.path.1", "parent"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigRemovePathFilter,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "blueprint_identifier", childBlueprintIdentifier),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.title", "Count Parents"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.description", "Count Parents without Path Filter"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.method.count_entities", "true"),
+					resource.TestCheckNoResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.path_filter"),
+				),
+			},
+		},
+	})
+}

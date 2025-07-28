@@ -180,7 +180,6 @@ func (m *Manager) ResponseMiddleware(_ *resty.Client, resp *resty.Response) erro
 
 	reset, err := strconv.Atoi(resetHeader)
 	if err != nil {
-		reset = 0
 		m.logger.Debug("Invalid RateLimit reset header - ignoring all RateLimit headers", "reset", resetHeader,
 			"error", err)
 		return nil

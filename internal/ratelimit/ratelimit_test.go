@@ -29,7 +29,6 @@ func TestResponseMiddleware(t *testing.T) {
 
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("x-ratelimit-limit", "1000")
-		w.Header().Set("x-ratelimit-period", "300")
 		w.Header().Set("x-ratelimit-remaining", "50")
 		w.Header().Set("x-ratelimit-reset", "120")
 		w.WriteHeader(http.StatusOK)
@@ -48,8 +47,7 @@ func TestResponseMiddleware(t *testing.T) {
 	rateLimitInfo := manager.GetInfo()
 	require.NotNil(t, rateLimitInfo)
 	assert.Equal(t, 1000, rateLimitInfo.Limit)
-	assert.Equal(t, 300, rateLimitInfo.Period)
-	assert.Equal(t, 50, rateLimitInfo.Remaining)
+	assert.Equal(t, int64(50), manager.remaining.Load())
 	assert.Equal(t, 120, rateLimitInfo.Reset)
 }
 
@@ -184,11 +182,10 @@ func TestCalculateDelayNoRemainingRequests(t *testing.T) {
 
 	// No remaining requests - should wait until reset
 	rateLimitInfo := &Info{
-		Limit:     100,
-		Remaining: 0,
-		Reset:     10,
+		Limit: 100,
+		Reset: 10,
 	}
-	delay := manager.calculateDelay(nil, rateLimitInfo)
+	delay := manager.calculateDelay(nil, 0, rateLimitInfo)
 
 	// Base delay: 10s, with jitter (1.1-1.2x): 11-12s
 	assert.Greater(t, delay, 10*time.Second)
@@ -202,11 +199,10 @@ func TestCalculateDelay(t *testing.T) {
 	t.Run("Delay using MinRequestInterval", func(t *testing.T) {
 		// Some remaining requests, no active requests
 		rateLimitInfo := &Info{
-			Limit:     100,
-			Remaining: 5,
-			Reset:     10,
+			Limit: 100,
+			Reset: 10,
 		}
-		delay := manager.calculateDelay(utils.PtrTo(time.Now()), rateLimitInfo)
+		delay := manager.calculateDelay(utils.PtrTo(time.Now()), 5, rateLimitInfo)
 
 		assert.Greater(t, delay, time.Duration(0))
 		assert.Less(t, delay, time.Duration(1.5*float64(time.Second)))
@@ -215,11 +211,10 @@ func TestCalculateDelay(t *testing.T) {
 	t.Run("Delay using Info.Reset", func(t *testing.T) {
 		// One remaining request, long reset time (should be capped at 30s)
 		rateLimitInfo := &Info{
-			Limit:     100,
-			Remaining: 0,
-			Reset:     60,
+			Limit: 100,
+			Reset: 60,
 		}
-		delay := manager.calculateDelay(utils.PtrTo(time.Now()), rateLimitInfo)
+		delay := manager.calculateDelay(utils.PtrTo(time.Now()), 0, rateLimitInfo)
 
 		// delay should be between [Info.Reset] and 1.1 times the [Info.Reset] (for jitter)
 		assert.GreaterOrEqual(t, delay, time.Duration(rateLimitInfo.Reset)*time.Second)

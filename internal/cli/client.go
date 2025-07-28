@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
+	"log/slog"
+	"os"
 	"slices"
 	"strings"
 
@@ -20,16 +23,21 @@ type PortClient struct {
 	featureFlags                          []string
 	JSONEscapeHTML                        bool
 	BlueprintPropertyTypeChangeProtection bool
-
-	// Rate limiting
-	RateLimitManager *ratelimit.Manager
 }
 
 func New(baseURL string, opts ...Option) (*PortClient, error) {
-	rateLimitManager := ratelimit.NewManagerWithDebug()
+	ratelimitOpts := &ratelimit.Options{
+		Enabled: utils.PtrTo(os.Getenv("PORT_RATE_LIMIT_DISABLED") == ""),
+	}
+	if isDebug := os.Getenv("PORT_DEBUG_RATE_LIMIT") != ""; isDebug {
+		ratelimitOpts.Logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	}
+	rateLimitManager := ratelimit.New(ratelimitOpts)
 
 	c := &PortClient{
 		Client: resty.New().
+			SetRateLimiter(rateLimitManager).
+			OnAfterResponse(rateLimitManager.ResponseMiddleware).
 			SetBaseURL(baseURL).
 			SetRetryCount(5).
 			SetRetryWaitTime(300).
@@ -45,12 +53,7 @@ func New(baseURL string, opts ...Option) (*PortClient, error) {
 				err = json.Unmarshal(r.Body(), &b)
 				return err != nil || b["ok"] != true
 			}),
-		RateLimitManager: rateLimitManager,
 	}
-
-	c.Client.
-		OnBeforeRequest(rateLimitManager.RequestMiddleware).
-		OnAfterResponse(rateLimitManager.ResponseMiddleware)
 
 	for _, opt := range opts {
 		opt(c)

@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/go-resty/resty/v2"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/ratelimit"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 	"log/slog"
 	"os"
 	"slices"
 	"strings"
-
-	"github.com/go-resty/resty/v2"
-	"github.com/port-labs/terraform-provider-port-labs/v2/internal/ratelimit"
 )
 
 type Option func(*PortClient)
@@ -23,6 +22,10 @@ type PortClient struct {
 	featureFlags                          []string
 	JSONEscapeHTML                        bool
 	BlueprintPropertyTypeChangeProtection bool
+}
+
+func isTooManyRequests(r *resty.Response, _ error) bool {
+	return r.StatusCode() == 429
 }
 
 func New(baseURL string, opts ...Option) (*PortClient, error) {
@@ -40,7 +43,7 @@ func New(baseURL string, opts ...Option) (*PortClient, error) {
 			OnAfterResponse(rateLimitManager.ResponseMiddleware).
 			SetBaseURL(baseURL).
 			SetRetryCount(5).
-			SetRetryWaitTime(300).
+			AddRetryCondition(isTooManyRequests).
 			// retry when create permission fails because scopes are created async-ly and sometimes (mainly in tests) the scope doesn't exist yet.
 			AddRetryCondition(func(r *resty.Response, err error) bool {
 				if err != nil {

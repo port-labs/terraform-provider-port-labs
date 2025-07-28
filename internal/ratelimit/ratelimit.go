@@ -17,19 +17,8 @@ import (
 type Info struct {
 	// Limit is extracted from x-ratelimit-limit
 	Limit int
-	// Period is extracted from x-ratelimit-period
-	Period int
-	// Remaining is extracted from x-ratelimit-remaining
-	Remaining int
 	// Reset is extracted from x-ratelimit-reset (seconds until reset)
 	Reset int
-}
-
-func (r *Info) ShouldThrottle() bool {
-	if r == nil || r.Limit == 0 {
-		return false
-	}
-	return r.Remaining <= 0
 }
 
 // Options holds configuration options for creating a new Manager
@@ -51,11 +40,13 @@ func DefaultOptions() *Options {
 }
 
 type Manager struct {
-	rateLimitInfo      atomic.Pointer[Info]
 	enabled            bool
 	lastRequestTime    atomic.Pointer[time.Time]
 	minRequestInterval time.Duration
 	logger             *slog.Logger
+
+	info      atomic.Pointer[Info]
+	remaining atomic.Int64
 
 	ctx           context.Context
 	cancelCtxFunc context.CancelFunc
@@ -103,15 +94,13 @@ func New(opts *Options) *Manager {
 }
 
 func (m *Manager) GetInfo() *Info {
-	info := m.rateLimitInfo.Load()
+	info := m.info.Load()
 	if info == nil {
 		return nil
 	}
 	return &Info{
-		Limit:     info.Limit,
-		Period:    info.Period,
-		Remaining: info.Remaining,
-		Reset:     info.Reset,
+		Limit: info.Limit,
+		Reset: info.Reset,
 	}
 }
 
@@ -121,32 +110,33 @@ func (m *Manager) Close() {
 }
 
 func (m *Manager) Allow() bool {
-	rateLimitInfo := m.rateLimitInfo.Load()
-	logger := m.logger.With("rate_limit_info", rateLimitInfo)
-	logger.Debug("ratelimit.Manager.Allow called")
+	m.logger.Debug("ratelimit.Manager.Allow called")
 
 	if !m.enabled {
-		logger.Debug("Rate limiting disabled - returning early")
+		m.logger.Debug("Rate limiting disabled - returning early")
 		return true
 	}
 	if utils.IsDone(m.ctx) {
-		logger.Debug("Rate limiting context cancelled - returning early")
+		m.logger.Debug("Rate limiting context cancelled - returning early")
 		return true
 	}
 
 	lastRequestTime := m.lastRequestTime.Load()
 	defer m.lastRequestTime.Store(utils.PtrTo(time.Now()))
 
-	if throttlingDelay := m.calculateDelay(lastRequestTime, rateLimitInfo); throttlingDelay > 0 {
-		logger.Debug("Throttling request", "delay", throttlingDelay)
+	remaining := m.remaining.Add(-1)
+	info := m.GetInfo()
+
+	if throttlingDelay := m.calculateDelay(lastRequestTime, remaining, info); throttlingDelay > 0 {
+		m.logger.Debug("Throttling request", "delay", throttlingDelay, "remaining", remaining)
 		select {
 		case <-m.ctx.Done():
-			logger.Debug("Rate limiting context cancelled - stopping delay")
+			m.logger.Debug("Rate limiting context cancelled - stopping delay", "remaining", remaining)
 			return true
 		case <-time.After(throttlingDelay):
 		}
 	} else {
-		logger.Debug("Not throttling")
+		m.logger.Debug("Not throttling", "remaining", remaining)
 	}
 
 	return true
@@ -161,22 +151,25 @@ func (m *Manager) ResponseMiddleware(_ *resty.Client, resp *resty.Response) erro
 	}
 	m.logger.Debug("Extracting rate limit headers")
 
-	limitHeader := resp.Header().Get("x-ratelimit-limit")
-	periodHeader := resp.Header().Get("x-ratelimit-period")
 	remainingHeader := resp.Header().Get("x-ratelimit-remaining")
+	limitHeader := resp.Header().Get("x-ratelimit-limit")
 	resetHeader := resp.Header().Get("x-ratelimit-reset")
 
-	m.logger.Debug("Rate limit headers",
-		"limit", limitHeader,
-		"period", periodHeader,
-		"remaining", remainingHeader,
-		"reset", resetHeader)
-
-	if limitHeader == "" || remainingHeader == "" {
-		m.logger.Debug("No rate limit headers found or incomplete")
+	if limitHeader+remainingHeader+resetHeader == "" {
+		m.logger.Debug("No rate limit headers found or incomplete", slog.Group("headers",
+			"limit", limitHeader,
+			"remaining", remainingHeader,
+			"reset", resetHeader))
 		return nil
 	}
 	m.logger.Debug("Parsing rate limit headers")
+
+	remaining, err := strconv.ParseInt(remainingHeader, 10, 64)
+	if err != nil {
+		m.logger.Debug("Invalid RateLimit remaining header - ignoring all RateLimit headers", "remaining",
+			remainingHeader, "error", err)
+		return nil
+	}
 
 	limit, err := strconv.Atoi(limitHeader)
 	if err != nil {
@@ -185,42 +178,25 @@ func (m *Manager) ResponseMiddleware(_ *resty.Client, resp *resty.Response) erro
 		return nil
 	}
 
-	remaining, err := strconv.Atoi(remainingHeader)
-	if err != nil {
-		m.logger.Debug("Invalid RateLimit remaining header - ignoring all RateLimit headers", "remaining",
-			remainingHeader, "error", err)
-		return nil
-	}
-
-	period, err := strconv.Atoi(periodHeader)
-	if err != nil {
-		period = 0
-		m.logger.Debug("Invalid RateLimit period header - ignoring this header", "period", periodHeader,
-			"error", err)
-	}
-
 	reset, err := strconv.Atoi(resetHeader)
 	if err != nil {
 		reset = 0
-		m.logger.Debug("Invalid RateLimit reset header - ignoring this header", "reset", resetHeader,
+		m.logger.Debug("Invalid RateLimit reset header - ignoring all RateLimit headers", "reset", resetHeader,
 			"error", err)
+		return nil
 	}
 
-	rateLimitInfo := &Info{
-		Limit:     limit,
-		Period:    period,
-		Remaining: remaining,
-		Reset:     reset,
-	}
-	oldRateLimitInfo := m.rateLimitInfo.Swap(rateLimitInfo)
+	rateLimitInfo := &Info{Limit: limit, Reset: reset}
+	oldRateLimitInfo := m.info.Swap(rateLimitInfo)
+	m.remaining.Store(remaining)
 
 	m.logger.Debug("Parsed rate limit info", "new_rate_limit_info", rateLimitInfo,
-		"old_rate_limit_info", oldRateLimitInfo)
+		"old_rate_limit_info", oldRateLimitInfo, "remaining", remaining)
 
 	return nil
 }
 
-func (m *Manager) calculateDelay(lastRequestTime *time.Time, rateLimitInfo *Info) time.Duration {
+func (m *Manager) calculateDelay(lastRequestTime *time.Time, remaining int64, info *Info) time.Duration {
 	if lastRequestTime == nil {
 		lastRequestTime = utils.PtrTo(time.Time{})
 	}
@@ -231,12 +207,12 @@ func (m *Manager) calculateDelay(lastRequestTime *time.Time, rateLimitInfo *Info
 		minIntervalDelay = m.minRequestInterval - timeSinceLastRequest
 	}
 
-	if !rateLimitInfo.ShouldThrottle() {
+	if info == nil || info.Limit <= 0 || remaining > 0 {
 		return minIntervalDelay
 	}
 
-	if rateLimitInfo.Reset > 0 {
-		delay := float64(rateLimitInfo.Reset)
+	if info.Reset > 0 {
+		delay := float64(info.Reset)
 		jitterMultiplier := 1 + rand.Float64()*0.1
 		return max(time.Duration(delay*jitterMultiplier*float64(time.Second)), minIntervalDelay)
 	}

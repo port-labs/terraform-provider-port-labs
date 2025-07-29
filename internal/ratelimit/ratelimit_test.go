@@ -197,7 +197,6 @@ func TestCalculateDelay(t *testing.T) {
 	t.Cleanup(manager.Close)
 
 	t.Run("Delay using MinRequestInterval", func(t *testing.T) {
-		// Some remaining requests, no active requests
 		rateLimitInfo := &Info{
 			Limit: 100,
 			Reset: 10,
@@ -209,7 +208,6 @@ func TestCalculateDelay(t *testing.T) {
 	})
 
 	t.Run("Delay using Info.Reset", func(t *testing.T) {
-		// One remaining request, long reset time (should be capped at 30s)
 		rateLimitInfo := &Info{
 			Limit: 100,
 			Reset: 60,

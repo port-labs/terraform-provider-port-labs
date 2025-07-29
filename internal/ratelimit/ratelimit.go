@@ -21,7 +21,6 @@ type Info struct {
 	Reset int
 }
 
-// Options holds configuration options for creating a new Manager
 type Options struct {
 	Logger             *slog.Logger
 	MinRequestInterval *time.Duration
@@ -29,7 +28,6 @@ type Options struct {
 	Ctx                context.Context
 }
 
-// DefaultOptions returns a Options struct with sensible defaults
 func DefaultOptions() *Options {
 	return &Options{
 		Logger:             slog.New(slog.NewTextHandler(io.Discard, nil)),

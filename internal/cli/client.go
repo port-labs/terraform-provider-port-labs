@@ -4,10 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/go-resty/resty/v2"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/ratelimit"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
+	"log/slog"
+	"os"
 	"slices"
 	"strings"
-
-	"github.com/go-resty/resty/v2"
 )
 
 type Option func(*PortClient)
@@ -21,12 +24,26 @@ type PortClient struct {
 	BlueprintPropertyTypeChangeProtection bool
 }
 
+func isTooManyRequests(r *resty.Response, _ error) bool {
+	return r.StatusCode() == 429
+}
+
 func New(baseURL string, opts ...Option) (*PortClient, error) {
+	ratelimitOpts := &ratelimit.Options{
+		Enabled: utils.PtrTo(os.Getenv("PORT_RATE_LIMIT_DISABLED") == ""),
+	}
+	if isDebug := os.Getenv("PORT_DEBUG_RATE_LIMIT") != ""; isDebug {
+		ratelimitOpts.Logger = slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	}
+	rateLimitManager := ratelimit.New(ratelimitOpts)
+
 	c := &PortClient{
 		Client: resty.New().
+			SetRateLimiter(rateLimitManager).
+			OnAfterResponse(rateLimitManager.ResponseMiddleware).
 			SetBaseURL(baseURL).
 			SetRetryCount(5).
-			SetRetryWaitTime(300).
+			AddRetryCondition(isTooManyRequests).
 			// retry when create permission fails because scopes are created async-ly and sometimes (mainly in tests) the scope doesn't exist yet.
 			AddRetryCondition(func(r *resty.Response, err error) bool {
 				if err != nil {
@@ -40,6 +57,7 @@ func New(baseURL string, opts ...Option) (*PortClient, error) {
 				return err != nil || b["ok"] != true
 			}),
 	}
+
 	for _, opt := range opts {
 		opt(c)
 	}

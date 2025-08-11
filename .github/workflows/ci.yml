@@ -100,7 +100,7 @@ jobs:
           cache: 'false'
       - name: Install gotestsum
         run: go install gotest.tools/gotestsum@latest
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           name: test-files
       - name: Test ${{ matrix.package }}
@@ -137,7 +137,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v5
         with:
           pattern: 'test-results-*'
           merge-multiple: 'true'
@@ -161,7 +161,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Download all coverage reports
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: 'coverage-*'
           path: 'coverage-artifacts'

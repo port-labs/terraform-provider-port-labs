@@ -13,7 +13,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
@@ -36,7 +36,7 @@ jobs:
       test_files_include: ${{steps.compile-tests.outputs.test_files_include}}
       go-version: ${{steps.setup-go.outputs.go-version}}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/setup-go@v5
         id: setup-go
         with:
@@ -136,7 +136,7 @@ jobs:
     needs: acctest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: actions/download-artifact@v4
         with:
           pattern: 'test-results-*'
@@ -159,7 +159,7 @@ jobs:
     needs: acctest
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Download all coverage reports
         uses: actions/download-artifact@v4
         with:

@@ -92,7 +92,7 @@ func (c *PortClient) DeleteEntityWithDependents(ctx context.Context, id string, 
 		SetHeader("Accept", "application/json").
 		SetPathParam("blueprint", blueprint).
 		SetPathParam("identifier", id).
-		SetResult(pb)
+		SetResult(&pb)
 
 	if deleteDependents {
 		req.SetQueryParam("delete_dependents", "true")

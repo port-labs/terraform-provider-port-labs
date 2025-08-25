@@ -1007,7 +1007,7 @@ func TestAccPortWebhookCreateWithComplexIdentifier(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.blueprint", identifier),
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.operation.type", "create"),
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.filter", ".headers.\"x-github-event\" == \"push\""),
-					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.entity.identifier", "{\"combinator\":\"'and'\",\"rules\":[{\"property\":\"'arn'\",\"operator\":\"'='\",\"value\":\".body.resources[0]\"}]}"),
+					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.entity.identifier", "{\"combinator\":\"'and'\",\"rules\":[\"operator\":\"'='\",\"value\":\".body.resources[0]\"}], {\"property\":\"'arn'\"}"),
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.entity.title", ".body.repository.name"),
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.entity.properties.url", ".body.repository.html_url"),
 				),

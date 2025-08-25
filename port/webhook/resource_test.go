@@ -960,7 +960,7 @@ func TestAccPortWebhookCreateWithComplexIdentifier(t *testing.T) {
 	var testPortWebhookConfigComplexIdentifier = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
 	resource "port_webhook" "complex_identifier" {
 		identifier = "%s"
-		title      = "Webhook with complex identifier"
+		title      = "Webhook complex identifier"
 		icon       = "Terraform"
   		enabled    = true
  		mappings = [
@@ -1000,7 +1000,7 @@ func TestAccPortWebhookCreateWithComplexIdentifier(t *testing.T) {
 				Config: acctest.ProviderConfig + testPortWebhookConfigComplexIdentifier,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "identifier", webhookIdentifier),
-					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "title", "Webhook with complex identifier"),
+					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "title", "Webhook complex identifier"),
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "enabled", "true"),
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.#", "1"),

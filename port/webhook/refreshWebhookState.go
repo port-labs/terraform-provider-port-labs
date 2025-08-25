@@ -42,7 +42,6 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 				Entity:    &EntityModel{},
 			}
 
-			// Handle identifier which can be either string or complex object
 			switch identifier := v.Entity.Identifier.(type) {
 			case string:
 				mapping.Entity.Identifier = types.StringValue(identifier)

@@ -39,9 +39,21 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 		for _, v := range w.Mappings {
 			mapping := &MappingsModel{
 				Blueprint: types.StringValue(v.Blueprint),
-				Entity: &EntityModel{
-					Identifier: types.StringValue(v.Entity.Identifier),
-				},
+				Entity:    &EntityModel{},
+			}
+
+			// Handle identifier which can be either string or complex object
+			switch identifier := v.Entity.Identifier.(type) {
+			case string:
+				mapping.Entity.Identifier = types.StringValue(identifier)
+			case map[string]interface{}:
+				if jsonBytes, err := json.Marshal(identifier); err == nil {
+					mapping.Entity.Identifier = types.StringValue(string(jsonBytes))
+				} else {
+					return fmt.Errorf("failed to marshal identifier to JSON: %w", err)
+				}
+			default:
+				return fmt.Errorf("invalid identifier type: expected string or object, got %T", identifier)
 			}
 
 			mapping.Filter = flex.GoStringToFramework(v.Filter)

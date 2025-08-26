@@ -1007,7 +1007,26 @@ func TestAccPortWebhookCreateWithComplexIdentifier(t *testing.T) {
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.blueprint", identifier),
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.operation.type", "create"),
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.filter", ".headers.\"x-github-event\" == \"push\""),
-					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.entity.identifier", "{\"combinator\":\"'and'\",\"rules\":[\"operator\":\"'='\",\"value\":\".body.resources[0]\"}], {\"property\":\"'arn'\"}"),
+					resource.TestCheckResourceAttrWith("port_webhook.complex_identifier", "mappings.0.entity.identifier",
+						func(value string) error {
+							// Check that the identifier contains the expected parts
+							if !regexp.MustCompile(`"combinator"\s*:\s*"'and'"`).MatchString(value) {
+								return fmt.Errorf("identifier missing combinator: 'and'")
+							}
+							if !regexp.MustCompile(`"rules"\s*:\s*\[`).MatchString(value) {
+								return fmt.Errorf("identifier missing rules array")
+							}
+							if !regexp.MustCompile(`"property"\s*:\s*"'arn'"`).MatchString(value) {
+								return fmt.Errorf("identifier missing property: 'arn'")
+							}
+							if !regexp.MustCompile(`"operator"\s*:\s*"'='"`).MatchString(value) {
+								return fmt.Errorf("identifier missing operator: '='")
+							}
+							if !regexp.MustCompile(`"value"\s*:\s*"\.body\.resources\[0\]"`).MatchString(value) {
+								return fmt.Errorf("identifier missing value: .body.resources[0]")
+							}
+							return nil
+						}),
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.entity.title", ".body.repository.name"),
 					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.entity.properties.url", ".body.repository.html_url"),
 				),

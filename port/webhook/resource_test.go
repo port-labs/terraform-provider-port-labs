@@ -1131,12 +1131,22 @@ func TestAccPortWebhookCreateWithInvalidIdentifier(t *testing.T) {
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config:      acctest.ProviderConfig + testPortWebhookConfigMissingCombinator,
-				ExpectError: regexp.MustCompile("identifier rule at index 0 missing required field 'operator'"),
+				Config: acctest.ProviderConfig + testPortWebhookConfigMissingCombinator,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "identifier", webhookIdentifier),
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "title", "Invalid Identifier Test"),
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "enabled", "true"),
+				),
 			},
 			{
-				Config:      acctest.ProviderConfig + testPortWebhookConfigMissingRules,
-				ExpectError: regexp.MustCompile("identifier rule at index 0 missing required field 'property'"),
+				Config: acctest.ProviderConfig + testPortWebhookConfigMissingRules,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "identifier", webhookIdentifier),
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "title", "Invalid Identifier Test"),
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "enabled", "true"),
+				),
 			},
 			{
 				Config:      acctest.ProviderConfig + testPortWebhookConfigMissingRuleFields,

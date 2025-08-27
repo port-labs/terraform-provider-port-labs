@@ -99,9 +99,45 @@ description: |-
   ]
   
   }
+  # Example with complex identifier using search query
+    resource "portwebhook" "complexidentifier" {
+      identifier = "complexidentifierwebhook"
+      title      = "Webhook with complex identifier"
+      icon       = "Terraform"
+      enabled    = true
+  mappings = [
+    {
+      blueprint = port_blueprint.microservice.identifier
+      operation = { "type" = "create" }
+      filter    = ".headers.\"x-github-event\" == \"push\""
+      entity = {
+        # Complex identifier using search query to find entity by ARN
+        identifier = jsonencode({
+          combinator = "'and'",
+          rules = [
+            {
+              property = "'arn'"
+              operator = "'='"
+              value    = ".body.resources[0]"
+            }
+          ]
+        })
+        title      = ".body.repository.name"
+        properties = {
+          url = ".body.repository.html_url"
+        }
+      }
+    }
+  ]
+  
+  depends_on = [
+    port_blueprint.microservice
+  ]
+  
+  }
   ```
   Notes
-  When using object format for relations, combinator, property and operator fields should be enclosed in single quotes, while value should not have quotes as it's a JQ expression. The single quotes are required because these fields contain literal string values that must be passed as-is to the Port API, whereas value contains a JQ expression that should be evaluated dynamically.For all available operators, see the Port comparison operators documentation https://docs.port.io/search-and-query/comparison-operators.
+  When using object format for relations, combinator, property and operator fields should be enclosed in single quotes, while value should not have quotes as it's a JQ expression. The single quotes are required because these fields contain literal string values that must be passed as-is to the Port API, whereas value contains a JQ expression that should be evaluated dynamically.The identifier field supports both simple JQ expressions (strings) and complex search query objects. When using search query objects, the structure must include combinator and rules fields, and each rule must have property, operator, and value fields.For all available operators, see the Port comparison operators documentation https://docs.port.io/search-and-query/comparison-operators.
 ---
 
 # port_webhook (Resource)
@@ -208,11 +244,49 @@ resource "port_blueprint" "author" {
     ]
   }
 
+  # Example with complex identifier using search query
+  resource "port_webhook" "complex_identifier" {
+    identifier = "complex_identifier_webhook"
+    title      = "Webhook with complex identifier"
+    icon       = "Terraform"
+    enabled    = true
+    
+    mappings = [
+      {
+        blueprint = port_blueprint.microservice.identifier
+        operation = { "type" = "create" }
+        filter    = ".headers.\"x-github-event\" == \"push\""
+        entity = {
+          # Complex identifier using search query to find entity by ARN
+          identifier = jsonencode({
+            combinator = "'and'",
+            rules = [
+              {
+                property = "'arn'"
+                operator = "'='"
+                value    = ".body.resources[0]"
+              }
+            ]
+          })
+          title      = ".body.repository.name"
+          properties = {
+            url = ".body.repository.html_url"
+          }
+        }
+      }
+    ]
+    
+    depends_on = [
+      port_blueprint.microservice
+    ]
+  }
+
 ```
 
 ## Notes
 
 - When using object format for relations, `combinator`, `property` and `operator` fields should be enclosed in single quotes, while `value` should not have quotes as it's a JQ expression. The single quotes are required because these fields contain literal string values that must be passed as-is to the Port API, whereas `value` contains a JQ expression that should be evaluated dynamically.
+- The `identifier` field supports both simple JQ expressions (strings) and complex search query objects. When using search query objects, the structure must include `combinator` and `rules` fields, and each rule must have `property`, `operator`, and `value` fields.
 - For all available operators, see the [Port comparison operators documentation](https://docs.port.io/search-and-query/comparison-operators).
 
 
@@ -259,7 +333,7 @@ Optional:
 
 Required:
 
-- `identifier` (String) The identifier of the entity
+- `identifier` (String) The identifier of the entity. Can be either a simple JQ expression (string) or a search query object encoded with jsonencode(). When using search query objects, the structure must include 'combinator' and 'rules' fields, and each rule must have 'property', 'operator', and 'value' fields.
 
 Optional:
 

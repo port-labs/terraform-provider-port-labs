@@ -414,7 +414,7 @@ type (
 	}
 
 	EntityProperty struct {
-		Identifier string            `json:"identifier,omitempty"`
+		Identifier any               `json:"identifier,omitempty"`
 		Title      *string           `json:"title,omitempty"`
 		Icon       *string           `json:"icon,omitempty"`
 		Team       *string           `json:"team,omitempty"`

@@ -952,3 +952,206 @@ func TestAccPortWebhookUpdateRelationType(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortWebhookCreateWithComplexIdentifier(t *testing.T) {
+	identifier := utils.GenID()
+	webhookIdentifier := utils.GenID()
+
+	var testPortWebhookConfigComplexIdentifier = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_webhook" "complex_identifier" {
+		identifier = "%s"
+		title      = "Webhook complex identifier"
+		icon       = "Terraform"
+  		enabled    = true
+ 		mappings = [
+    		{
+      			blueprint = port_blueprint.microservice.identifier
+				operation = { "type" = "create" }
+				filter    = ".headers.\"x-github-event\" == \"push\""
+				entity = {
+					# Complex identifier using search query to find entity by ARN
+					identifier = jsonencode({
+						combinator = "'and'",
+						rules = [
+							{
+								property = "'arn'"
+								operator = "'='"
+								value    = ".body.resources[0]"
+							}
+						]
+					})
+					title      = ".body.repository.name"
+					properties = {
+						url = ".body.repository.html_url"
+					}
+				}
+      		}
+    	]
+		depends_on = [
+			port_blueprint.microservice
+		]
+	}`, webhookIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testPortWebhookConfigComplexIdentifier,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "identifier", webhookIdentifier),
+					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "title", "Webhook complex identifier"),
+					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "enabled", "true"),
+					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.#", "1"),
+					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.blueprint", identifier),
+					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.operation.type", "create"),
+					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.filter", ".headers.\"x-github-event\" == \"push\""),
+					resource.TestCheckResourceAttrWith("port_webhook.complex_identifier", "mappings.0.entity.identifier",
+						func(value string) error {
+							// Check that the identifier contains the expected parts
+							if !regexp.MustCompile(`"combinator"\s*:\s*"'and'"`).MatchString(value) {
+								return fmt.Errorf("identifier missing combinator: 'and'")
+							}
+							if !regexp.MustCompile(`"rules"\s*:\s*\[`).MatchString(value) {
+								return fmt.Errorf("identifier missing rules array")
+							}
+							if !regexp.MustCompile(`"property"\s*:\s*"'arn'"`).MatchString(value) {
+								return fmt.Errorf("identifier missing property: 'arn'")
+							}
+							if !regexp.MustCompile(`"operator"\s*:\s*"'='"`).MatchString(value) {
+								return fmt.Errorf("identifier missing operator: '='")
+							}
+							if !regexp.MustCompile(`"value"\s*:\s*"\.body\.resources\[0\]"`).MatchString(value) {
+								return fmt.Errorf("identifier missing value: .body.resources[0]")
+							}
+							return nil
+						}),
+					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.entity.title", ".body.repository.name"),
+					resource.TestCheckResourceAttr("port_webhook.complex_identifier", "mappings.0.entity.properties.url", ".body.repository.html_url"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortWebhookCreateWithInvalidIdentifier(t *testing.T) {
+	identifier := utils.GenID()
+	webhookIdentifier := utils.GenID()
+
+	// Test case 1: Missing combinator field in identifier
+	var testPortWebhookConfigMissingCombinator = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_webhook" "invalid_identifier" {
+		identifier = "%s"
+		title      = "Invalid Identifier Test"
+		icon       = "Terraform"
+  		enabled    = true
+ 		mappings = [
+    		{
+      			blueprint = port_blueprint.microservice.identifier
+				operation = { "type" = "create" }
+				filter    = ".headers.\"x-github-event\" == \"push\""
+				entity = {
+					identifier = jsonencode({
+						rules = [
+							{
+								property = "'arn'"
+								operator = "'='"
+								value    = ".body.resources[0]"
+							}
+						]
+					})
+					title      = ".body.repository.name"
+				}
+      		}
+    	]
+		depends_on = [
+			port_blueprint.microservice
+		]
+	}`, webhookIdentifier)
+
+	// Test case 2: Missing rules field in identifier
+	var testPortWebhookConfigMissingRules = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_webhook" "invalid_identifier" {
+		identifier = "%s"
+		title      = "Invalid Identifier Test"
+		icon       = "Terraform"
+  		enabled    = true
+ 		mappings = [
+    		{
+      			blueprint = port_blueprint.microservice.identifier
+				operation = { "type" = "create" }
+				filter    = ".headers.\"x-github-event\" == \"push\""
+				entity = {
+					identifier = jsonencode({
+						combinator = "'and'"
+					})
+					title      = ".body.repository.name"
+				}
+      		}
+    	]
+		depends_on = [
+			port_blueprint.microservice
+		]
+	}`, webhookIdentifier)
+
+	// Test case 3: Missing required fields in identifier rules
+	var testPortWebhookConfigMissingRuleFields = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_webhook" "invalid_identifier" {
+		identifier = "%s"
+		title      = "Invalid Identifier Test"
+		icon       = "Terraform"
+  		enabled    = true
+ 		mappings = [
+    		{
+      			blueprint = port_blueprint.microservice.identifier
+				operation = { "type" = "create" }
+				filter    = ".headers.\"x-github-event\" == \"push\""
+				entity = {
+					identifier = jsonencode({
+						combinator = "'and'",
+						rules = [
+							{
+								property = "'arn'"
+								# Missing operator and value
+							}
+						]
+					})
+					title      = ".body.repository.name"
+				}
+      		}
+    	]
+		depends_on = [
+			port_blueprint.microservice
+		]
+	}`, webhookIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testPortWebhookConfigMissingCombinator,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "identifier", webhookIdentifier),
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "title", "Invalid Identifier Test"),
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "enabled", "true"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testPortWebhookConfigMissingRules,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "identifier", webhookIdentifier),
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "title", "Invalid Identifier Test"),
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_webhook.invalid_identifier", "enabled", "true"),
+				),
+			},
+			{
+				Config:      acctest.ProviderConfig + testPortWebhookConfigMissingRuleFields,
+				ExpectError: regexp.MustCompile("identifier rule at index 0 missing required field 'operator'"),
+			},
+		},
+	})
+}

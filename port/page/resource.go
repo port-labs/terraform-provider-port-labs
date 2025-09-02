@@ -2,6 +2,7 @@ package page
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -142,6 +143,7 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 func (r *PageResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var state *PageModel
+	var p *cli.Page
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 
@@ -149,7 +151,7 @@ func (r *PageResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	p, _, err := r.portClient.GetPage(ctx, state.Identifier.ValueString())
+	_, _, err := r.portClient.GetPage(ctx, state.Identifier.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to get page", err.Error())
 		return
@@ -161,7 +163,7 @@ func (r *PageResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	_, err = r.portClient.UpdatePage(ctx, p.Identifier, page)
+	p, err = r.portClient.UpdatePage(ctx, state.Identifier.ValueString(), page)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update page", err.Error())

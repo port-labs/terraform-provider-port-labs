@@ -163,7 +163,7 @@ func (r *PageResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	p, err = r.portClient.UpdatePage(ctx, state.Identifier.ValueString(), page)
+	p, err = r.portClient.UpdatePage(ctx, page.Identifier, page)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update page", err.Error())

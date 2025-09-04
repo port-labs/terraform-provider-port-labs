@@ -29,7 +29,7 @@ func EntitySchema() map[string]schema.Attribute {
 			Computed:            true,
 			Optional:            true,
 		},
-		"teams": schema.ListAttribute{
+		"teams": schema.SetAttribute{
 			MarkdownDescription: "The teams the entity belongs to",
 			Computed:            true,
 			Optional:            true,

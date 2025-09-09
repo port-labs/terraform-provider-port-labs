@@ -1,5 +1,5 @@
 resource "port_blueprint" "environment" {
-  title      = "Environmentttt"
+  title      = "Environment"
   icon       = "Environment"
   identifier = "hedwig-env"
   properties = {

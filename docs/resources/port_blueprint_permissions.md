@@ -447,6 +447,6 @@ Optional:
 Optional:
 
 - `owned_by_team` (Boolean) Owned by team
-- `roles` (List of String) Roles with update specific relation permissions
-- `teams` (List of String) Teams with update specific relation permissions
-- `users` (List of String) Users with update specific relation permissions
+- `roles` (Set of String) Roles with update specific relation permissions
+- `teams` (Set of String) Teams with update specific relation permissions
+- `users` (Set of String) Users with update specific relation permissions

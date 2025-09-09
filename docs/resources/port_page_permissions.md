@@ -118,6 +118,6 @@ resource "port_page_permissions" "microservices_permissions" {
 
 Optional:
 
-- `roles` (List of String) The roles with read permission
-- `teams` (List of String) The teams with read permission
-- `users` (List of String) The users with read permission
+- `roles` (Set of String) The roles with read permission
+- `teams` (Set of String) The teams with read permission
+- `users` (Set of String) The users with read permission

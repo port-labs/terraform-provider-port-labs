@@ -533,10 +533,6 @@ func getKnownFields(bp *BlueprintProperty) map[string]bool {
 func (bp *BlueprintProperty) UnmarshalJSON(data []byte) error {
 	// Define an alias to avoid infinite recursion
 	type Alias BlueprintProperty
-<<<<<<< HEAD
-=======
-
->>>>>>> b39c78f681a8ff0a9badb5a8a1b41addad9dda05
 	// First, unmarshal into the alias to populate known fields
 	aux := &struct {
 		*Alias

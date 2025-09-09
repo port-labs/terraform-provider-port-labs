@@ -1,5 +1,5 @@
 resource "port_blueprint" "environment" {
-  title      = "Environment"
+  title      = "Environmentttt"
   icon       = "Environment"
   identifier = "hedwig-env"
   properties = {
@@ -42,6 +42,19 @@ resource "port_blueprint" "microservice" {
   icon       = "GPU"
   identifier = "hedwig-microservice"
   properties = {
+    array_props = {
+      enum = {
+        type  = "array"
+        title = "enum"
+        string_items = {
+          enum        = ["default", "default2"]
+          enum_colors = {
+            default  = "red"
+            default2 = "green"
+          }
+        }
+      }
+    }
     string_props = {
       name = {
         type  = "string"
@@ -113,9 +126,9 @@ resource "port_blueprint" "pull_request_blueprint" {
     }
   }
   relations = {
-    "repository" = {
-      title  = "Repository"
-      target = port_blueprint.repository_blueprint.identifier
+    "self" = {
+      title  = "Self"
+      target = "pull_request"
     }
   }
 }

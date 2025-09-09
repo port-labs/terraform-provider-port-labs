@@ -2,6 +2,7 @@ package aggregation_properties
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -9,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 func AggregationPropertySchema() schema.Attribute {
@@ -113,6 +115,23 @@ func AggregationPropertySchema() schema.Attribute {
 				"query": schema.StringAttribute{
 					MarkdownDescription: "Query to filter the target entities",
 					Optional:            true,
+				},
+				"path_filter": schema.ListNestedAttribute{
+					MarkdownDescription: "Path filter to filter entities based on relation path",
+					Optional:            true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"from_blueprint": schema.StringAttribute{
+								MarkdownDescription: "The blueprint to start the path from. Should be the target blueprint or undefined to start from the source blueprint",
+								Optional:            true,
+							},
+							"path": schema.ListAttribute{
+								ElementType:         types.StringType,
+								MarkdownDescription: "The path array of relations to filter by",
+								Required:            true,
+							},
+						},
+					},
 				},
 			},
 		},

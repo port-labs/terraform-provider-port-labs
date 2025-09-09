@@ -20,15 +20,17 @@ type DatasetModel struct {
 }
 
 type StringPropModel struct {
-	Title          types.String  `tfsdk:"title"`
-	Icon           types.String  `tfsdk:"icon"`
-	Description    types.String  `tfsdk:"description"`
-	Required       types.Bool    `tfsdk:"required"`
-	DependsOn      types.List    `tfsdk:"depends_on"`
-	Dataset        *DatasetModel `tfsdk:"dataset"`
-	DefaultJqQuery types.String  `tfsdk:"default_jq_query"`
-	Visible        types.Bool    `tfsdk:"visible"`
-	VisibleJqQuery types.String  `tfsdk:"visible_jq_query"`
+	Title           types.String  `tfsdk:"title"`
+	Icon            types.String  `tfsdk:"icon"`
+	Description     types.String  `tfsdk:"description"`
+	Required        types.Bool    `tfsdk:"required"`
+	DependsOn       types.List    `tfsdk:"depends_on"`
+	Dataset         *DatasetModel `tfsdk:"dataset"`
+	DefaultJqQuery  types.String  `tfsdk:"default_jq_query"`
+	Visible         types.Bool    `tfsdk:"visible"`
+	VisibleJqQuery  types.String  `tfsdk:"visible_jq_query"`
+	Disabled        types.Bool    `tfsdk:"disabled"`
+	DisabledJqQuery types.String  `tfsdk:"disabled_jq_query"`
 
 	Default        types.String       `tfsdk:"default"`
 	Blueprint      types.String       `tfsdk:"blueprint"`
@@ -180,34 +182,38 @@ func (e *ArrayPropValidationModel) FromTerraform5Value(val tftypes.Value) error 
 }
 
 type NumberPropModel struct {
-	Title          types.String `tfsdk:"title"`
-	Icon           types.String `tfsdk:"icon"`
-	Description    types.String `tfsdk:"description"`
-	Required       types.Bool   `tfsdk:"required"`
-	DependsOn      types.List   `tfsdk:"depends_on"`
-	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
-	Visible        types.Bool   `tfsdk:"visible"`
-	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
+	Title           types.String `tfsdk:"title"`
+	Icon            types.String `tfsdk:"icon"`
+	Description     types.String `tfsdk:"description"`
+	Required        types.Bool   `tfsdk:"required"`
+	DependsOn       types.List   `tfsdk:"depends_on"`
+	Default         types.Float64 `tfsdk:"default"`
+	DefaultJqQuery  types.String `tfsdk:"default_jq_query"`
+	Visible         types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery  types.String `tfsdk:"visible_jq_query"`
+	Disabled        types.Bool   `tfsdk:"disabled"`
+	DisabledJqQuery types.String `tfsdk:"disabled_jq_query"`
 
-	Default     types.Float64 `tfsdk:"default"`
 	Maximum     types.Float64 `tfsdk:"maximum"`
 	Minimum     types.Float64 `tfsdk:"minimum"`
 	Enum        types.List    `tfsdk:"enum"`
 	EnumColors  types.Map     `tfsdk:"enum_colors"`
 	EnumJqQuery types.String  `tfsdk:"enum_jq_query"`
+
 }
 
 type BooleanPropModel struct {
-	Title          types.String `tfsdk:"title"`
-	Icon           types.String `tfsdk:"icon"`
-	Description    types.String `tfsdk:"description"`
-	Required       types.Bool   `tfsdk:"required"`
-	DependsOn      types.List   `tfsdk:"depends_on"`
-	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
-	Visible        types.Bool   `tfsdk:"visible"`
-	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
-
-	Default types.Bool `tfsdk:"default"`
+	Title           types.String `tfsdk:"title"`
+	Icon            types.String `tfsdk:"icon"`
+	Description     types.String `tfsdk:"description"`
+	Required        types.Bool   `tfsdk:"required"`
+	DependsOn       types.List   `tfsdk:"depends_on"`
+	Default         types.Bool   `tfsdk:"default"`
+	DefaultJqQuery  types.String `tfsdk:"default_jq_query"`
+	Visible         types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery  types.String `tfsdk:"visible_jq_query"`
+	Disabled        types.Bool   `tfsdk:"disabled"`
+	DisabledJqQuery types.String `tfsdk:"disabled_jq_query"`
 }
 
 type EntitiesSortModel struct {
@@ -216,14 +222,16 @@ type EntitiesSortModel struct {
 }
 
 type ArrayPropModel struct {
-	Title          types.String `tfsdk:"title"`
-	Icon           types.String `tfsdk:"icon"`
-	Description    types.String `tfsdk:"description"`
-	Required       types.Bool   `tfsdk:"required"`
-	DependsOn      types.List   `tfsdk:"depends_on"`
-	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
-	Visible        types.Bool   `tfsdk:"visible"`
-	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
+	Title           types.String `tfsdk:"title"`
+	Icon            types.String `tfsdk:"icon"`
+	Description     types.String `tfsdk:"description"`
+	Required        types.Bool   `tfsdk:"required"`
+	DependsOn       types.List   `tfsdk:"depends_on"`
+	DefaultJqQuery  types.String `tfsdk:"default_jq_query"`
+	Visible         types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery  types.String `tfsdk:"visible_jq_query"`
+	Disabled        types.Bool   `tfsdk:"disabled"`
+	DisabledJqQuery types.String `tfsdk:"disabled_jq_query"`
 
 	MaxItems     types.Int64        `tfsdk:"max_items"`
 	MinItems     types.Int64        `tfsdk:"min_items"`
@@ -235,14 +243,16 @@ type ArrayPropModel struct {
 }
 
 type ObjectPropModel struct {
-	Title          types.String `tfsdk:"title"`
-	Icon           types.String `tfsdk:"icon"`
-	Description    types.String `tfsdk:"description"`
-	Required       types.Bool   `tfsdk:"required"`
-	DependsOn      types.List   `tfsdk:"depends_on"`
-	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
-	Visible        types.Bool   `tfsdk:"visible"`
-	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
+	Title           types.String `tfsdk:"title"`
+	Icon            types.String `tfsdk:"icon"`
+	Description     types.String `tfsdk:"description"`
+	Required        types.Bool   `tfsdk:"required"`
+	DependsOn       types.List   `tfsdk:"depends_on"`
+	DefaultJqQuery  types.String `tfsdk:"default_jq_query"`
+	Visible         types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery  types.String `tfsdk:"visible_jq_query"`
+	Disabled        types.Bool   `tfsdk:"disabled"`
+	DisabledJqQuery types.String `tfsdk:"disabled_jq_query"`
 
 	Default    types.String `tfsdk:"default"`
 	Encryption types.String `tfsdk:"encryption"`
@@ -284,14 +294,22 @@ type Step struct {
 	Order []types.String `tfsdk:"order"`
 }
 
+type ActionTitle struct {
+	Title          types.String `tfsdk:"title"`
+	Description    types.String `tfsdk:"description"`
+	Visible        types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
+}
+
 type SelfServiceTriggerModel struct {
-	BlueprintIdentifier types.String         `tfsdk:"blueprint_identifier"`
-	Operation           types.String         `tfsdk:"operation"`
-	UserProperties      *UserPropertiesModel `tfsdk:"user_properties"`
-	RequiredJqQuery     types.String         `tfsdk:"required_jq_query"`
-	OrderProperties     types.List           `tfsdk:"order_properties"`
-	Steps               []Step               `tfsdk:"steps"`
-	Condition           types.String         `tfsdk:"condition"`
+	BlueprintIdentifier types.String           `tfsdk:"blueprint_identifier"`
+	Operation           types.String           `tfsdk:"operation"`
+	UserProperties      *UserPropertiesModel   `tfsdk:"user_properties"`
+	Titles              map[string]ActionTitle `tfsdk:"titles"`
+	RequiredJqQuery     types.String           `tfsdk:"required_jq_query"`
+	OrderProperties     types.List             `tfsdk:"order_properties"`
+	Steps               []Step                 `tfsdk:"steps"`
+	Condition           types.String           `tfsdk:"condition"`
 }
 
 type EntityCreatedEventModel struct {

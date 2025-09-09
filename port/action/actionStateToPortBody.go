@@ -19,7 +19,7 @@ func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
 		dataSetRule := cli.DatasetRule{
 			Operator: rule.Operator.ValueString(),
 		}
-		
+
 		if rule.Value != nil && !rule.Value.JqQuery.IsNull() {
 			dataSetRule.Value = &cli.DatasetValue{
 				JqQuery: rule.Value.JqQuery.ValueString(),
@@ -95,6 +95,13 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 
 		if data.SelfServiceTrigger.UserProperties != nil {
 			err := actionPropertiesToBody(ctx, selfServiceTrigger, data.SelfServiceTrigger)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if data.SelfServiceTrigger.Titles != nil {
+			err := actionTitlesToBody(ctx, selfServiceTrigger, data.SelfServiceTrigger)
 			if err != nil {
 				return nil, err
 			}
@@ -249,6 +256,41 @@ func actionPropertiesToBody(ctx context.Context, actionTrigger *cli.Trigger, dat
 	} else {
 		actionTrigger.UserInputs.Required = required
 	}
+
+	return nil
+}
+
+func actionTitlesToBody(ctx context.Context, actionTrigger *cli.Trigger, data *SelfServiceTriggerModel) error {
+	actionTitles := map[string]cli.ActionTitle{}
+	var err error
+	if data.Titles != nil {
+		for key, actionTitle := range data.Titles {
+
+			cliTitle := cli.ActionTitle{
+				Title:       actionTitle.Title.ValueString(),
+				Description: actionTitle.Description.ValueStringPointer(),
+			}
+
+			if !actionTitle.Visible.IsNull() {
+				cliTitle.Visible = actionTitle.Visible.ValueBool()
+			}
+
+			if !actionTitle.VisibleJqQuery.IsNull() {
+				VisibleJqQueryMap := map[string]string{
+					"jqQuery": actionTitle.VisibleJqQuery.ValueString(),
+				}
+				cliTitle.Visible = VisibleJqQueryMap
+			}
+
+			actionTitles[key] = cliTitle
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	actionTrigger.UserInputs.Titles = actionTitles
 
 	return nil
 }

@@ -213,6 +213,17 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 						stringvalidator.RegexMatches(regexp.MustCompile(`^.*$`), "must be a valid regular expression"),
 					},
 				},
+				"enum": schema.ListAttribute{
+					MarkdownDescription: "The enum of the string array items",
+					Optional:            true,
+					ElementType:         types.StringType,
+					Validators:          []validator.List{listvalidator.UniqueValues(), listvalidator.SizeAtLeast(1)},
+				},
+				"enum_colors": schema.MapAttribute{
+					MarkdownDescription: "The enum colors of the string array items",
+					Optional:            true,
+					ElementType:         types.StringType,
+				},
 			},
 		},
 		"number_items": schema.SingleNestedAttribute{

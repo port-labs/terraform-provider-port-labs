@@ -348,9 +348,9 @@ Optional:
 Optional:
 
 - `owned_by_team` (Boolean) Owned by team
-- `roles` (List of String) Roles with register permissions
-- `teams` (List of String) Teams with register permissions
-- `users` (List of String) Users with register permissions
+- `roles` (Set of String) Roles with register permissions
+- `teams` (Set of String) Teams with register permissions
+- `users` (Set of String) Users with register permissions
 
 
 <a id="nestedatt--entities--unregister"></a>
@@ -359,9 +359,9 @@ Optional:
 Optional:
 
 - `owned_by_team` (Boolean) Owned by team
-- `roles` (List of String) Roles with unregister permissions
-- `teams` (List of String) Teams with unregister permissions
-- `users` (List of String) Users with unregister permissions
+- `roles` (Set of String) Roles with unregister permissions
+- `teams` (Set of String) Teams with unregister permissions
+- `users` (Set of String) Users with unregister permissions
 
 
 <a id="nestedatt--entities--update"></a>
@@ -370,9 +370,9 @@ Optional:
 Optional:
 
 - `owned_by_team` (Boolean) Owned by team
-- `roles` (List of String) Roles with update permissions
-- `teams` (List of String) Teams with update permissions
-- `users` (List of String) Users with update permissions
+- `roles` (Set of String) Roles with update permissions
+- `teams` (Set of String) Teams with update permissions
+- `users` (Set of String) Users with update permissions
 
 
 <a id="nestedatt--entities--update_metadata_properties"></a>
@@ -391,9 +391,9 @@ Required:
 Optional:
 
 - `owned_by_team` (Boolean) Owned by team
-- `roles` (List of String) Roles with update `$icon` metadata permissions
-- `teams` (List of String) Teams with update `$icon` metadata permissions
-- `users` (List of String) Users with update `$icon` metadata permissions
+- `roles` (Set of String) Roles with update `$icon` metadata permissions
+- `teams` (Set of String) Teams with update `$icon` metadata permissions
+- `users` (Set of String) Users with update `$icon` metadata permissions
 
 
 <a id="nestedatt--entities--update_metadata_properties--identifier"></a>
@@ -402,9 +402,9 @@ Optional:
 Optional:
 
 - `owned_by_team` (Boolean) Owned by team
-- `roles` (List of String) Roles with update `$identifier` metadata permissions
-- `teams` (List of String) Teams with update `$identifier` metadata permissions
-- `users` (List of String) Users with update `$identifier` metadata permissions
+- `roles` (Set of String) Roles with update `$identifier` metadata permissions
+- `teams` (Set of String) Teams with update `$identifier` metadata permissions
+- `users` (Set of String) Users with update `$identifier` metadata permissions
 
 
 <a id="nestedatt--entities--update_metadata_properties--team"></a>
@@ -413,9 +413,9 @@ Optional:
 Optional:
 
 - `owned_by_team` (Boolean) Owned by team
-- `roles` (List of String) Roles with update `$team` metadata permissions
-- `teams` (List of String) Teams with update `$team` metadata permissions
-- `users` (List of String) Users with update `$team` metadata permissions
+- `roles` (Set of String) Roles with update `$team` metadata permissions
+- `teams` (Ser of String) Teams with update `$team` metadata permissions
+- `users` (Set of String) Users with update `$team` metadata permissions
 
 
 <a id="nestedatt--entities--update_metadata_properties--title"></a>
@@ -424,9 +424,9 @@ Optional:
 Optional:
 
 - `owned_by_team` (Boolean) Owned by team
-- `roles` (List of String) Roles with update `$title` metadata permissions
-- `teams` (List of String) Teams with update `$title` metadata permissions
-- `users` (List of String) Users with update `$title` metadata permissions
+- `roles` (Set of String) Roles with update `$title` metadata permissions
+- `teams` (Set of String) Teams with update `$title` metadata permissions
+- `users` (Set of String) Users with update `$title` metadata permissions
 
 
 
@@ -436,9 +436,9 @@ Optional:
 Optional:
 
 - `owned_by_team` (Boolean) Owned by team
-- `roles` (List of String) Roles with update specific property permissions
-- `teams` (List of String) Teams with update specific property permissions
-- `users` (List of String) Users with update specific property permissions
+- `roles` (Set of String) Roles with update specific property permissions
+- `teams` (Set of String) Teams with update specific property permissions
+- `users` (Set of String) Users with update specific property permissions
 
 
 <a id="nestedatt--entities--update_relations"></a>

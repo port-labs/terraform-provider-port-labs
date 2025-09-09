@@ -414,7 +414,7 @@ Optional:
 
 - `owned_by_team` (Boolean) Owned by team
 - `roles` (Set of String) Roles with update `$team` metadata permissions
-- `teams` (Ser of String) Teams with update `$team` metadata permissions
+- `teams` (Set of String) Teams with update `$team` metadata permissions
 - `users` (Set of String) Users with update `$team` metadata permissions
 
 

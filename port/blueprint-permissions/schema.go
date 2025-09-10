@@ -16,17 +16,17 @@ import (
 
 func getAssigneeProps(permName string) map[string]schema.Attribute {
 	return map[string]schema.Attribute{
-		"users": schema.ListAttribute{
+		"users": schema.SetAttribute{
 			MarkdownDescription: fmt.Sprintf("Users with %+v permissions", permName),
 			Optional:            true,
 			ElementType:         types.StringType,
 		},
-		"roles": schema.ListAttribute{
+		"roles": schema.SetAttribute{
 			MarkdownDescription: fmt.Sprintf("Roles with %+v permissions", permName),
 			Optional:            true,
 			ElementType:         types.StringType,
 		},
-		"teams": schema.ListAttribute{
+		"teams": schema.SetAttribute{
 			MarkdownDescription: fmt.Sprintf("Teams with %+v permissions", permName),
 			Optional:            true,
 			ElementType:         types.StringType,

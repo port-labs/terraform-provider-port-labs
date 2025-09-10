@@ -250,9 +250,9 @@ Required:
 Optional:
 
 - `policy` (String) The policy to use for approval
-- `roles` (List of String) The roles with approval permission
-- `teams` (List of String) The teams with approval permission
-- `users` (List of String) The users with approval permission
+- `roles` (Set of String) The roles with approval permission
+- `teams` (Set of String) The teams with approval permission
+- `users` (Set of String) The users with approval permission
 
 
 <a id="nestedatt--permissions--execute"></a>
@@ -262,6 +262,6 @@ Optional:
 
 - `owned_by_team` (Boolean) Give execution permission to the teams who own the entity
 - `policy` (String) The policy to use for execution
-- `roles` (List of String) The roles with execution permission
-- `teams` (List of String) The teams with execution permission
-- `users` (List of String) The users with execution permission
+- `roles` (Set of String) The roles with execution permission
+- `teams` (Set of String) The teams with execution permission
+- `users` (Set of String) The users with execution permission

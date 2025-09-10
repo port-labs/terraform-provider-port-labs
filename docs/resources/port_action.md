@@ -774,7 +774,7 @@ Optional:
 - `identifier` (String) Required when selecting type Upsert Entity. The entity identifier for the upsert
 - `properties` (String) The properties of the entity (key-value object encoded to a string)
 - `relations` (String) The relations of the entity (key-value object encoded to a string)
-- `teams` (List of String) The teams the entity belongs to
+- `teams` (Set of String) The teams the entity belongs to
 - `teams_jq` (String) Jq that returns the teams the entity belongs to
 
 

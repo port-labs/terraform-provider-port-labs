@@ -4,11 +4,290 @@ page_title: "port_webhook Resource - terraform-provider-port-labs"
 subcategory: ""
 description: |-
   Webhook resource
+  Webhook resource can be used to create webhooks integrations in Port.
+  Example Usage
+  ```hcl
+  resource "portblueprint" "author" {
+      title = "Author"
+      icon = "User"
+      identifier = "author"
+      properties = {
+        stringprops = {
+          "name" = {
+            type = "string"
+            title = "Name"
+          }
+        }
+      }
+    }
+  resource "portblueprint" "team" {
+      title = "Team"
+      icon = "Team"
+      identifier = "team"
+      properties = {
+        stringprops = {
+          "name" = {
+            type = "string"
+            title = "Team Name"
+          }
+        }
+      }
+    }
+  resource "portblueprint" "microservice" {
+      title = "TF test microservice"
+      icon = "Terraform"
+      identifier = "microservice"
+      properties = {
+        stringprops = {
+          "url" = {
+            type = "string"
+            title = "URL"
+          }
+        }
+      }
+      relations = {
+        "author" = {
+          title = "Author"
+          target = portblueprint.author.identifier
+        }
+        "team" = {
+          title = "Team"
+          target = portblueprint.team.identifier
+        }
+      }
+    }
+  resource "portwebhook" "createpr" {
+      identifier = "pr_webhook"
+      title      = "Webhook with mixed relations"
+      icon       = "Terraform"
+      enabled    = true
+  mappings = [
+    {
+      blueprint = port_blueprint.microservice.identifier
+      operation = { "type" = "create" }
+      filter    = ".headers.\"x-github-event\" == \"pull_request\""
+      entity = {
+        identifier = ".body.pull_request.id | tostring"
+        title      = ".body.pull_request.title"
+        properties = {
+          url = ".body.pull_request.html_url"
+        }
+        relations = {
+          # Complex object relation with search query
+          author = jsonencode({
+            combinator = "'and'",
+            rules = [
+              {
+                property = "'$identifier'"
+                operator = "'='"
+                value    = ".body.pull_request.user.login | tostring"
+              }
+            ]
+          })
+  
+          # Simple string relation
+          team = ".body.repository.owner.login | tostring"
+        }
+      }
+    }
+  ]
+  
+  depends_on = [
+    port_blueprint.microservice,
+    port_blueprint.author,
+    port_blueprint.team
+  ]
+  
+  }
+  # Example with complex identifier using search query
+    resource "portwebhook" "complexidentifier" {
+      identifier = "complexidentifierwebhook"
+      title      = "Webhook with complex identifier"
+      icon       = "Terraform"
+      enabled    = true
+  mappings = [
+    {
+      blueprint = port_blueprint.microservice.identifier
+      operation = { "type" = "create" }
+      filter    = ".headers.\"x-github-event\" == \"push\""
+      entity = {
+        # Complex identifier using search query to find entity by ARN
+        identifier = jsonencode({
+          combinator = "'and'",
+          rules = [
+            {
+              property = "'arn'"
+              operator = "'='"
+              value    = ".body.resources[0]"
+            }
+          ]
+        })
+        title      = ".body.repository.name"
+        properties = {
+          url = ".body.repository.html_url"
+        }
+      }
+    }
+  ]
+  
+  depends_on = [
+    port_blueprint.microservice
+  ]
+  
+  }
+  ```
+  Notes
+  When using object format for relations, combinator, property and operator fields should be enclosed in single quotes, while value should not have quotes as it's a JQ expression. The single quotes are required because these fields contain literal string values that must be passed as-is to the Port API, whereas value contains a JQ expression that should be evaluated dynamically.The identifier field supports both simple JQ expressions (strings) and complex search query objects. When using search query objects, the structure must include combinator and rules fields, and each rule must have property, operator, and value fields.For all available operators, see the Port comparison operators documentation https://docs.port.io/search-and-query/comparison-operators.
 ---
 
 # port_webhook (Resource)
 
-Webhook resource
+# Webhook resource
+Webhook resource can be used to create webhooks integrations in Port.
+
+## Example Usage
+
+```hcl
+resource "port_blueprint" "author" {
+    title = "Author"
+    icon = "User"
+    identifier = "author"
+    properties = {
+      string_props = {
+        "name" = {
+          type = "string"
+          title = "Name"
+        }
+      }
+    }
+  }
+
+  resource "port_blueprint" "team" {
+    title = "Team"
+    icon = "Team"
+    identifier = "team"
+    properties = {
+      string_props = {
+        "name" = {
+          type = "string"
+          title = "Team Name"
+        }
+      }
+    }
+  }
+
+  resource "port_blueprint" "microservice" {
+    title = "TF test microservice"
+    icon = "Terraform"
+    identifier = "microservice"
+    properties = {
+      string_props = {
+        "url" = {
+          type = "string"
+          title = "URL"
+        }
+      }
+    }
+    relations = {
+      "author" = {
+        title = "Author"
+        target = port_blueprint.author.identifier
+      }
+      "team" = {
+        title = "Team"
+        target = port_blueprint.team.identifier
+      }
+    }
+  }
+
+  resource "port_webhook" "create_pr" {
+    identifier = "pr_webhook"
+    title      = "Webhook with mixed relations"
+    icon       = "Terraform"
+    enabled    = true
+    
+    mappings = [
+      {
+        blueprint = port_blueprint.microservice.identifier
+        operation = { "type" = "create" }
+        filter    = ".headers.\"x-github-event\" == \"pull_request\""
+        entity = {
+          identifier = ".body.pull_request.id | tostring"
+          title      = ".body.pull_request.title"
+          properties = {
+            url = ".body.pull_request.html_url"
+          }
+          relations = {
+            # Complex object relation with search query
+            author = jsonencode({
+              combinator = "'and'",
+              rules = [
+                {
+                  property = "'$identifier'"
+                  operator = "'='"
+                  value    = ".body.pull_request.user.login | tostring"
+                }
+              ]
+            })
+            
+            # Simple string relation
+            team = ".body.repository.owner.login | tostring"
+          }
+        }
+      }
+    ]
+    
+    depends_on = [
+      port_blueprint.microservice,
+      port_blueprint.author,
+      port_blueprint.team
+    ]
+  }
+
+  # Example with complex identifier using search query
+  resource "port_webhook" "complex_identifier" {
+    identifier = "complex_identifier_webhook"
+    title      = "Webhook with complex identifier"
+    icon       = "Terraform"
+    enabled    = true
+    
+    mappings = [
+      {
+        blueprint = port_blueprint.microservice.identifier
+        operation = { "type" = "create" }
+        filter    = ".headers.\"x-github-event\" == \"push\""
+        entity = {
+          # Complex identifier using search query to find entity by ARN
+          identifier = jsonencode({
+            combinator = "'and'",
+            rules = [
+              {
+                property = "'arn'"
+                operator = "'='"
+                value    = ".body.resources[0]"
+              }
+            ]
+          })
+          title      = ".body.repository.name"
+          properties = {
+            url = ".body.repository.html_url"
+          }
+        }
+      }
+    ]
+    
+    depends_on = [
+      port_blueprint.microservice
+    ]
+  }
+
+```
+
+## Notes
+
+- When using object format for relations, `combinator`, `property` and `operator` fields should be enclosed in single quotes, while `value` should not have quotes as it's a JQ expression. The single quotes are required because these fields contain literal string values that must be passed as-is to the Port API, whereas `value` contains a JQ expression that should be evaluated dynamically.
+- The `identifier` field supports both simple JQ expressions (strings) and complex search query objects. When using search query objects, the structure must include `combinator` and `rules` fields, and each rule must have `property`, `operator`, and `value` fields.
+- For all available operators, see the [Port comparison operators documentation](https://docs.port.io/search-and-query/comparison-operators).
 
 
 
@@ -54,13 +333,13 @@ Optional:
 
 Required:
 
-- `identifier` (String) The identifier of the entity
+- `identifier` (String) The identifier of the entity. Can be either a simple JQ expression (string) or a search query object encoded with jsonencode(). When using search query objects, the structure must include 'combinator' and 'rules' fields, and each rule must have 'property', 'operator', and 'value' fields.
 
 Optional:
 
 - `icon` (String) The icon of the entity
 - `properties` (Map of String) The properties of the entity
-- `relations` (Map of String) The relations of the entity
+- `relations` (Map of String) The relations of the entity. Relations can be defined as either simple JQ expressions (strings) or search query objects. When using objects, the rules array must be encoded with jsonencode().
 - `team` (String) The team of the entity
 - `title` (String) The title of the entity
 

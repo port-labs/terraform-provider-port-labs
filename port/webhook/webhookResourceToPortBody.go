@@ -2,6 +2,8 @@ package webhook
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
@@ -60,9 +62,50 @@ func webhookResourceToPortBody(ctx context.Context, state *WebhookModel) (*cli.W
 		for _, v := range state.Mappings {
 			mapping := cli.Mappings{
 				Blueprint: v.Blueprint.ValueString(),
-				Entity: &cli.EntityProperty{
-					Identifier: v.Entity.Identifier.ValueString(),
-				},
+				Entity:    &cli.EntityProperty{},
+			}
+
+			// Handle complex identifier structure (search query object)
+			if !v.Entity.Identifier.IsNull() {
+				identifierValue := v.Entity.Identifier.ValueString()
+				var parsed interface{}
+				if err := json.Unmarshal([]byte(identifierValue), &parsed); err == nil {
+					if identifierMap, ok := parsed.(map[string]interface{}); ok {
+						// Check if it's a search query object with combinator and rules
+						if _, hasCombinator := identifierMap["combinator"]; hasCombinator {
+							if _, hasRules := identifierMap["rules"]; hasRules {
+								// Validate the search query structure
+								if rulesInterface, exists := identifierMap["rules"]; exists {
+									if rules, ok := rulesInterface.([]interface{}); ok {
+										for i, ruleInterface := range rules {
+											if rule, ok := ruleInterface.(map[string]interface{}); ok {
+												for _, field := range []string{"property", "operator", "value"} {
+													if _, exists := rule[field]; !exists {
+														return nil, fmt.Errorf("identifier rule at index %d missing required field '%s'", i, field)
+													}
+												}
+											}
+										}
+									}
+								}
+								// Use the parsed object as identifier
+								mapping.Entity.Identifier = parsed
+							} else {
+								// Has combinator but no rules - treat as string
+								mapping.Entity.Identifier = identifierValue
+							}
+						} else {
+							// Not a search query object - treat as string
+							mapping.Entity.Identifier = identifierValue
+						}
+					} else {
+						// JSON but not an object (e.g., array, string, number) - treat as string
+						mapping.Entity.Identifier = identifierValue
+					}
+				} else {
+					// Not valid JSON - treat as string
+					mapping.Entity.Identifier = identifierValue
+				}
 			}
 
 			if !v.Filter.IsNull() {
@@ -110,9 +153,36 @@ func webhookResourceToPortBody(ctx context.Context, state *WebhookModel) (*cli.W
 			}
 
 			if v.Entity.Relations != nil {
-				relations := make(map[string]string)
-				for k, v := range v.Entity.Relations {
-					relations[k] = v
+				relations := make(map[string]any)
+				for k, relationValue := range v.Entity.Relations {
+					var parsed interface{}
+					if err := json.Unmarshal([]byte(relationValue), &parsed); err == nil {
+						if relationMap, ok := parsed.(map[string]interface{}); ok {
+							if _, exists := relationMap["combinator"]; !exists {
+								return nil, fmt.Errorf("relation '%s' missing required field 'combinator'", k)
+							}
+							if rulesInterface, exists := relationMap["rules"]; !exists {
+								return nil, fmt.Errorf("relation '%s' missing required field 'rules'", k)
+							} else if rules, ok := rulesInterface.([]interface{}); ok {
+								for i, ruleInterface := range rules {
+									if rule, ok := ruleInterface.(map[string]interface{}); ok {
+										for _, field := range []string{"property", "operator", "value"} {
+											if _, exists := rule[field]; !exists {
+												return nil, fmt.Errorf("relation '%s' rule at index %d missing required field '%s'", k, i, field)
+											}
+										}
+									}
+								}
+							}
+							relations[k] = parsed
+						} else {
+							// JSON but not an object (e.g., array, string, number) - treating as string
+							relations[k] = relationValue
+						}
+					} else {
+						// Not valid JSON - treating as string relation
+						relations[k] = relationValue
+					}
 				}
 				mapping.Entity.Relations = relations
 			}

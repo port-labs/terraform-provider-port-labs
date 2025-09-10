@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -38,9 +39,20 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 		for _, v := range w.Mappings {
 			mapping := &MappingsModel{
 				Blueprint: types.StringValue(v.Blueprint),
-				Entity: &EntityModel{
-					Identifier: types.StringValue(v.Entity.Identifier),
-				},
+				Entity:    &EntityModel{},
+			}
+
+			switch identifier := v.Entity.Identifier.(type) {
+			case string:
+				mapping.Entity.Identifier = types.StringValue(identifier)
+			case map[string]interface{}:
+				if jsonBytes, err := json.Marshal(identifier); err == nil {
+					mapping.Entity.Identifier = types.StringValue(string(jsonBytes))
+				} else {
+					return fmt.Errorf("failed to marshal identifier to JSON: %w", err)
+				}
+			default:
+				return fmt.Errorf("invalid identifier type: expected string or object, got %T", identifier)
 			}
 
 			mapping.Filter = flex.GoStringToFramework(v.Filter)
@@ -58,8 +70,19 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 
 			if v.Entity.Relations != nil {
 				mapping.Entity.Relations = map[string]string{}
-				for k, v := range v.Entity.Relations {
-					mapping.Entity.Relations[k] = v
+				for k, relationValue := range v.Entity.Relations {
+					switch val := relationValue.(type) {
+					case string:
+						mapping.Entity.Relations[k] = val
+					case map[string]interface{}:
+						if jsonBytes, err := json.Marshal(val); err == nil {
+							mapping.Entity.Relations[k] = string(jsonBytes)
+						} else {
+							return fmt.Errorf("failed to marshal relation '%s' to JSON: %w", k, err)
+						}
+					default:
+						return fmt.Errorf("invalid relation type for key '%s': expected string or object, got %T", k, val)
+					}
 				}
 			}
 

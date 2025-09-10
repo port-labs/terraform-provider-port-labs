@@ -42,6 +42,12 @@ resource "port_aggregation_properties" "parent_aggregation_properties" {
       method = {
         count_entities = true
       }
+      path_filter = [
+        {
+          from_blueprint = port_blueprint.child_blueprint.identifier
+          path          = ["parent"]
+        }
+      ]
     }
   }
 }

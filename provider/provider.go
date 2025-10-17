@@ -16,6 +16,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/entity"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/folder"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/integration"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/organization"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/page"
 	page_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
@@ -168,6 +169,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		page_permissions.NewPagePermissionsResource,
 		system_blueprint.NewResource,
 		folder.NewFolderResource,
+		organization.NewOrganizationSecretResource,
 	}
 }
 

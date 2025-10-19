@@ -522,6 +522,7 @@ Optional:
 - `visible` (Boolean) The visibility of the step
 - `visible_jq_query` (String) The visibility condition jq query of the step
 
+
 <a id="nestedatt--self_service_trigger--titles"></a>
 ### Nested Schema for `self_service_trigger.titles`
 

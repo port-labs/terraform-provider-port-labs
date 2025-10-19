@@ -229,6 +229,7 @@ type (
 	Step = struct {
 		Title string   `json:"title"`
 		Order []string `json:"order"`
+		Visible any     `json:"visible,omitempty"`
 	}
 
 	ActionUserInputs = struct {

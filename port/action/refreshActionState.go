@@ -393,6 +393,13 @@ func (r *ActionResource) writeTriggerToResource(ctx context.Context, a *cli.Acti
 					Title: t,
 					Order: o,
 				}
+				visible, visibleJq := buildBoolOrJq(step.Visible)
+				if !visible.IsNull() {
+					s.Visible = visible
+				}
+				if !visibleJq.IsNull() {
+					s.VisibleJqQuery = visibleJq
+				}
 				steps = append(steps, s)
 			}
 

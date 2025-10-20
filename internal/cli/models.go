@@ -230,6 +230,7 @@ type (
 		Title string   `json:"title"`
 		Order []string `json:"order"`
 		Visible any     `json:"visible,omitempty"`
+		VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
 	}
 
 	ActionUserInputs = struct {

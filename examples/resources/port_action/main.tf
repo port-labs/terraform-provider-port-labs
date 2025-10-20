@@ -101,7 +101,7 @@ resource "port_action" "restart_microservice" {
           title             = "Service"
           description       = "The service to restart"
           format            = "entity"
-          blueprint         = "Service"
+          blueprint         = port_blueprint.microservice.identifier
           disabled_jq_query = "1 == 1"
 
           sort = {
@@ -133,6 +133,53 @@ resource "port_action" "restart_microservice" {
         }
       }
     }
+  }
+  webhook_method = {
+    type = "WEBHOOK"
+    url  = "https://app.getport.io"
+  }
+}
+
+resource "port_action" "restart_microservice_steps" {
+  title      = "Restart microservice (Steps)"
+  icon       = "Terraform"
+  identifier = "examples-action-restart-microservice-steps"
+  self_service_trigger = {
+    operation            = "DAY-2"
+    blueprint_identifier = port_blueprint.environment.identifier
+    title = "titleIdentifier"
+    user_properties = {
+      string_props = {
+        testString = {
+          type  = "string"
+          title = "String"
+        }
+        testNumber = {
+          type  = "number"
+          title = "Number"
+        }
+        testNumberInvisible = {
+          type  = "number"
+          title = "Number"
+        }
+      }
+    }
+    steps = [
+      {
+        title = "General"
+        order = ["testString"]
+      },
+      {
+        title = "visibleJqStep"
+        order = ["testNumber"]
+        visible_jq_query = "1 == 1"
+      },
+      {
+        title = "InvisibleStep"
+        order = ["testNumberInvisible"]
+        visible = "false"
+      }
+    ]
   }
   webhook_method = {
     type = "WEBHOOK"

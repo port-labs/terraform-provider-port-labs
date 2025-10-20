@@ -124,10 +124,21 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 				for _, p := range s.Order {
 					o = append(o, p.ValueString())
 				}
-				steps = append(steps, cli.Step{
+				stepObj := cli.Step{
 					Title: s.Title.ValueString(),
 					Order: o,
-				})
+				}
+
+				if !s.Visible.IsNull() {
+					stepObj.Visible = s.Visible.ValueBool()
+				}
+				if !s.VisibleJqQuery.IsNull() {
+					stepObj.Visible = map[string]string{
+						"jqQuery": s.VisibleJqQuery.ValueString(),
+					}
+				}
+
+				steps = append(steps, stepObj)
 			}
 
 			selfServiceTrigger.UserInputs.Steps = steps

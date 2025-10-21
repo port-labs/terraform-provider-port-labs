@@ -108,7 +108,6 @@ func (r *OrganizationSecretResource) Update(ctx context.Context, req resource.Up
 		return
 	}
 
-	// Read the updated secret to refresh the state
 	s, _, err := r.portClient.ReadOrganizationSecret(ctx, secretName)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to read organization secret after update", err.Error())

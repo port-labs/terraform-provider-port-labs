@@ -11,7 +11,6 @@ func refreshOrganizationSecretState(ctx context.Context, state *OrganizationSecr
 	state.ID = types.StringValue(secret.SecretName)
 	state.SecretName = types.StringValue(secret.SecretName)
 	
-	// Treat empty string as null for description
 	if secret.Description != nil && *secret.Description != "" {
 		state.Description = types.StringValue(*secret.Description)
 	} else {

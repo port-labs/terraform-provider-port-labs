@@ -142,3 +142,30 @@ func TestAccPortOrganizationSecretImport(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortOrganizationSecretDelete(t *testing.T) {
+	secretName := utils.GenID()
+	var testAccOrganizationSecretConfigCreate = fmt.Sprintf(`
+	resource "port_organization_secret" "test" {
+		secret_name  = "%s"
+		secret_value = "test-value"
+		description  = "Test description"
+	}`, secretName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccOrganizationSecretConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_organization_secret.test", "secret_name", secretName),
+					resource.TestCheckResourceAttr("port_organization_secret.test", "description", "Test description"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig,
+			},
+		},
+	})
+}

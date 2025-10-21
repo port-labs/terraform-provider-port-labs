@@ -140,52 +140,59 @@ resource "port_action" "restart_microservice" {
   }
 }
 
-resource "port_action" "restart_microservice_steps" {
-  title      = "Restart microservice (Steps)"
+
+resource "port_action" "restart_microservice_with_steps" {
+  title      = "Restart microservice (With Steps)"
   icon       = "Terraform"
-  identifier = "examples-action-restart-microservice-steps"
+  identifier = "restart_microservice_with_steps"
+  publish = true
   self_service_trigger = {
     operation            = "DAY-2"
     blueprint_identifier = port_blueprint.environment.identifier
     title = "titleIdentifier"
     user_properties = {
       string_props = {
-        testString = {
+        "service_name" = {
           type  = "string"
-          title = "String"
+          title = "Service Name"
         }
-        testNumber = {
-          type  = "number"
-          title = "Number"
+        "restart_reason" = {
+          type  = "string"
+          title = "Restart Reason"
         }
-        testNumberInvisible = {
-          type  = "number"
-          title = "Number"
+        "advanced_mode" = {
+          type  = "string"
+          title = "Advanced Options"
+        }
+        "confirm_restart" = {
+          type  = "boolean"
+          title = "Confirm Restart"
         }
       }
     }
     steps = [
       {
-        title = "General"
-        order = ["testString"]
+        title = "Basic Information"
+        order = ["service_name", "restart_reason"]
       },
       {
-        title = "visibleJqStep"
-        order = ["testNumber"]
-        visible_jq_query = "1 == 1"
+        title = "Advanced Settings"
+        order = ["advanced_mode"]
+        visible_jq_query = "1==1"
       },
       {
-        title = "InvisibleStep"
-        order = ["testNumberInvisible"]
-        visible = "false"
+        title = "Confirmation"
+        order = ["confirm_restart"]
+        visible = true
       }
     ]
   }
   webhook_method = {
     type = "WEBHOOK"
-    url  = "https://app.getport.io"
+    url  = "https://api.example.com/restart"
   }
 }
+
 
 resource "port_action" "notifiy_on_mocrosiervice_creation" {
   title      = "Notify On Microservice Creation"

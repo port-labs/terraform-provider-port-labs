@@ -2,12 +2,13 @@ package action_permissions
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -35,25 +36,25 @@ func ActionPermissionsSchema() map[string]schema.Attribute {
 					MarkdownDescription: "The permission to execute the action",
 					Required:            true,
 					Attributes: map[string]schema.Attribute{
-						"users": schema.ListAttribute{
+						"users": schema.SetAttribute{
 							MarkdownDescription: "The users with execution permission",
 							Optional:            true,
 							Computed:            true,
-							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
+							Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
-						"roles": schema.ListAttribute{
+						"roles": schema.SetAttribute{
 							MarkdownDescription: "The roles with execution permission",
 							Optional:            true,
 							Computed:            true,
-							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
+							Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
-						"teams": schema.ListAttribute{
+						"teams": schema.SetAttribute{
 							MarkdownDescription: "The teams with execution permission",
 							Optional:            true,
 							Computed:            true,
-							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
+							Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"owned_by_team": schema.BoolAttribute{
@@ -72,25 +73,25 @@ func ActionPermissionsSchema() map[string]schema.Attribute {
 					MarkdownDescription: "The permission to approve the action's runs",
 					Required:            true,
 					Attributes: map[string]schema.Attribute{
-						"users": schema.ListAttribute{
+						"users": schema.SetAttribute{
 							MarkdownDescription: "The users with approval permission",
 							Optional:            true,
 							Computed:            true,
-							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
+							Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
-						"roles": schema.ListAttribute{
+						"roles": schema.SetAttribute{
 							MarkdownDescription: "The roles with approval permission",
 							Optional:            true,
 							Computed:            true,
-							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
+							Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
-						"teams": schema.ListAttribute{
+						"teams": schema.SetAttribute{
 							MarkdownDescription: "The teams with approval permission",
 							Optional:            true,
 							Computed:            true,
-							Default:             listdefault.StaticValue(types.ListValueMust(types.StringType, []attr.Value{})),
+							Default:             setdefault.StaticValue(types.SetValueMust(types.StringType, []attr.Value{})),
 							ElementType:         types.StringType,
 						},
 						"policy": schema.StringAttribute{

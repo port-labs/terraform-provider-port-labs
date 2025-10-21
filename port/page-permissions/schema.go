@@ -2,6 +2,7 @@ package page_permissions
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -19,17 +20,17 @@ func PagePermissionsSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The permission to read the page",
 			Required:            true,
 			Attributes: map[string]schema.Attribute{
-				"users": schema.ListAttribute{
+				"users": schema.SetAttribute{
 					MarkdownDescription: "The users with read permission",
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
-				"roles": schema.ListAttribute{
+				"roles": schema.SetAttribute{
 					MarkdownDescription: "The roles with read permission",
 					Optional:            true,
 					ElementType:         types.StringType,
 				},
-				"teams": schema.ListAttribute{
+				"teams": schema.SetAttribute{
 					MarkdownDescription: "The teams with read permission",
 					Optional:            true,
 					ElementType:         types.StringType,

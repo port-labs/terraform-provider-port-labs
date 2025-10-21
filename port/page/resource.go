@@ -144,6 +144,7 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 func (r *PageResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var state *PageModel
 	var p *cli.Page
+	var updatedPage *cli.Page
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 
@@ -164,18 +165,23 @@ func (r *PageResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	p, err = r.portClient.UpdatePage(ctx, page.Identifier, page)
-
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update page", err.Error())
 		return
 	}
 
+	updatedPage, _, err = r.portClient.GetPage(ctx, state.Identifier.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to get updated page", err.Error())
+		return
+	}
+
 	state.ID = types.StringValue(p.Identifier)
-	state.CreatedAt = types.StringValue(p.CreatedAt.String())
-	state.CreatedBy = types.StringValue(p.CreatedBy)
-	state.UpdatedAt = types.StringValue(p.UpdatedAt.String())
-	state.UpdatedBy = types.StringValue(p.UpdatedBy)
-	state.Description = types.StringPointerValue(p.Description)
+	state.CreatedAt = types.StringValue(updatedPage.CreatedAt.String())
+	state.CreatedBy = types.StringValue(updatedPage.CreatedBy)
+	state.UpdatedAt = types.StringValue(updatedPage.UpdatedAt.String())
+	state.UpdatedBy = types.StringValue(updatedPage.UpdatedBy)
+	state.Description = types.StringPointerValue(updatedPage.Description)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 

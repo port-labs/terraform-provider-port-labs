@@ -94,21 +94,32 @@ func (r *OrganizationSecretResource) Update(ctx context.Context, req resource.Up
 		return
 	}
 
-	secret, err := organizationSecretResourceToPortBody(ctx, state)
+	// Use the update-specific function that excludes secretName from the body
+	secret, err := organizationSecretResourceToPortBodyForUpdate(ctx, state)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert organization secret resource to body", err.Error())
 		return
 	}
 
 	secretName := state.SecretName.ValueString()
-	s, err := r.portClient.UpdateOrganizationSecret(ctx, secretName, secret)
+	_, err = r.portClient.UpdateOrganizationSecret(ctx, secretName, secret)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update organization secret", err.Error())
 		return
 	}
 
-	state.ID = types.StringValue(s.SecretName)
-	state.SecretName = types.StringValue(s.SecretName)
+	// Read the updated secret to refresh the state
+	s, _, err := r.portClient.ReadOrganizationSecret(ctx, secretName)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to read organization secret after update", err.Error())
+		return
+	}
+
+	err = refreshOrganizationSecretState(ctx, state, s)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to refresh organization secret state", err.Error())
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

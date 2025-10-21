@@ -680,7 +680,7 @@ type Organization struct {
 }
 
 type OrganizationSecret struct {
-	SecretName  string  `json:"secretName"`
+	SecretName  string  `json:"secretName,omitempty"`
 	SecretValue *string `json:"secretValue,omitempty"`
 	Description *string `json:"description,omitempty"`
 }

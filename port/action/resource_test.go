@@ -2919,7 +2919,7 @@ func TestAccPortActionSteps(t *testing.T) {
 	  identifier = "%[1]v"
 	  icon       = "Terraform"
 	  self_service_trigger = {
-	    operation            = "DAY-2"
+	    operation            = "CREATE"
 	    user_properties = {
 	      "string_props" = {
 	        "prop1" = {
@@ -2954,7 +2954,7 @@ func TestAccPortActionSteps(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
-					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.operation", "CREATE"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.prop1.title", "Property #1"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.prop2.title", "Property #2"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.steps.0.title", "Step #1"),

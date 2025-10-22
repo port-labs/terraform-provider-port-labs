@@ -140,31 +140,30 @@ resource "port_action" "restart_microservice" {
   }
 }
 
-
 resource "port_action" "restart_microservice_with_steps" {
-  title      = "Restart microservice (With Steps)"
+  title      = "Restart Microservice With Steps"
   icon       = "Terraform"
-  identifier = "restart_microservice_with_steps"
-  publish = true
+  identifier = "examples-action-restart-microservice-with-steps"
+  publish    = true
   self_service_trigger = {
     operation            = "DAY-2"
     blueprint_identifier = port_blueprint.environment.identifier
-    title = "titleIdentifier"
+    title                = "Restart Microservice Workflow"
     user_properties = {
       string_props = {
-        "service_name" = {
+        service_name = {
           type  = "string"
           title = "Service Name"
         }
-        "restart_reason" = {
+        restart_reason = {
           type  = "string"
           title = "Restart Reason"
         }
-        "advanced_mode" = {
+        advanced_mode = {
           type  = "string"
           title = "Advanced Options"
         }
-        "confirm_restart" = {
+        confirm_restart = {
           type  = "boolean"
           title = "Confirm Restart"
         }
@@ -192,7 +191,6 @@ resource "port_action" "restart_microservice_with_steps" {
     url  = "https://api.example.com/restart"
   }
 }
-
 
 resource "port_action" "notifiy_on_mocrosiervice_creation" {
   title      = "Notify On Microservice Creation"

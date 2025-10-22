@@ -107,6 +107,12 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 			}
 		}
 
+		if !data.SelfServiceTrigger.RequiredJqQuery.IsNull() {
+			selfServiceTrigger.UserInputs.Required = map[string]string{
+				"jqQuery": data.SelfServiceTrigger.RequiredJqQuery.ValueString(),
+			}
+		}
+
 		if !data.SelfServiceTrigger.OrderProperties.IsNull() {
 			order, err := utils.TerraformListToGoArray(ctx, data.SelfServiceTrigger.OrderProperties, "string")
 			if err != nil {
@@ -129,13 +135,12 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 					Order: o,
 				}
 
-				if !s.Visible.IsNull() {
-					stepObj.Visible = s.Visible.ValueBool()
-				}
 				if !s.VisibleJqQuery.IsNull() {
 					stepObj.Visible = map[string]string{
 						"jqQuery": s.VisibleJqQuery.ValueString(),
 					}
+				} else if !s.Visible.IsNull() {
+					stepObj.Visible = s.Visible.ValueBool()
 				}
 
 				steps = append(steps, stepObj)
@@ -264,7 +269,7 @@ func actionPropertiesToBody(ctx context.Context, actionTrigger *cli.Trigger, dat
 			"jqQuery": data.RequiredJqQuery.ValueString(),
 		}
 		actionTrigger.UserInputs.Required = RequiredJqQueryMap
-	} else {
+	} else if len(required) > 0 {
 		actionTrigger.UserInputs.Required = required
 	}
 

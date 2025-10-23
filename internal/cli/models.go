@@ -679,3 +679,14 @@ type Organization struct {
 	Name         string   `json:"name"`
 	FeatureFlags []string `json:"featureFlags"`
 }
+
+type OrganizationSecret struct {
+	SecretName  string  `json:"secretName,omitempty"`
+	SecretValue *string `json:"secretValue,omitempty"`
+	Description *string `json:"description,omitempty"`
+}
+
+type OrganizationSecretBody struct {
+	OK     bool               `json:"ok"`
+	Secret OrganizationSecret `json:"secret"`
+}

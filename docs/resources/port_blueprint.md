@@ -314,6 +314,8 @@ Optional:
 - `format` (String) The format of the calculation property
 - `icon` (String) The icon of the calculation property
 - `title` (String) The title of the calculation property
+- `spec` (String) The spec of the string property
+- `spec_authentication` (Attributes) The spec authentication of a string calculation property (see [below for nested schema](#nestedatt--properties--string_props--spec_authentication))
 
 
 <a id="nestedatt--kafka_changelog_destination"></a>

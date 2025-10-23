@@ -43,7 +43,13 @@ acctest:
 	TF_ACC=1 PORT_CLIENT_ID=$(PORT_CLIENT_ID) PORT_CLIENT_SECRET=$(PORT_CLIENT_SECRET) PORT_BASE_URL=$(PORT_BASE_URL) go test -timeout 40m -p 1 ./... -run "$(TEST_FILTER)"
 
 gen-docs:
+	@echo "Generating documentation..."
+	@if [ ! -f "./terraform-provider-port-labs" ]; then \
+		echo "Provider binary not found. Building..."; \
+		go build -o terraform-provider-port-labs; \
+	fi
 	tfplugindocs
+	@echo "Documentation generated successfully!"
 
 lint: build
 	# https://golangci-lint.run/welcome/install/#local-installation

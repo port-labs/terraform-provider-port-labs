@@ -2,6 +2,7 @@ package aggregation_properties
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"

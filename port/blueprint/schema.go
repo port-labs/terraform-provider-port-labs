@@ -498,6 +498,29 @@ func BlueprintSchema() map[string]schema.Attribute {
 						Optional:            true,
 						ElementType:         types.StringType,
 					},
+					"spec": schema.StringAttribute{
+						MarkdownDescription: "The spec of the calculation property",
+						Optional:            true,
+						Validators:          []validator.String{stringvalidator.OneOf("open-api", "async-api", "embedded-url")},
+					},
+					"spec_authentication": schema.SingleNestedAttribute{
+						MarkdownDescription: "The spec authentication of the calculation property",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"client_id": schema.StringAttribute{
+								MarkdownDescription: "The clientId of the spec authentication",
+								Required:            true,
+							},
+							"token_url": schema.StringAttribute{
+								MarkdownDescription: "The tokenUrl of the spec authentication",
+								Required:            true,
+							},
+							"authorization_url": schema.StringAttribute{
+								MarkdownDescription: "The authorizationUrl of the spec authentication",
+								Required:            true,
+							},
+						},
+					},
 				},
 			},
 		},

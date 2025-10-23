@@ -97,6 +97,26 @@ resource "port_blueprint" "microservice" {
     }
   }
 
+  calculation_properties = {
+    "spec-calculation" = {
+      title       = "Spec Calculation"
+      calculation = "@blueprint/environment.properties.name"
+      type        = "string"
+      spec        = "embedded-url"
+      spec_authentication = {
+        client_id         = "my-client-id"
+        token_url         = "https://example.com/token"
+        authorization_url = "https://example.com/auth"
+      }
+    }
+    "simple-calculation" = {
+      title       = "Simple Calculation"
+      calculation = "1 + 1"
+      type        = "number"
+      description = "A simple calculation without spec"
+    }
+  }
+
   relations = {
     "environment" = {
       title    = "Test Relation"

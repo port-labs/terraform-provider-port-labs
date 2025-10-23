@@ -133,16 +133,18 @@ type (
 	}
 
 	BlueprintCalculationProperty struct {
-		Type        string            `json:"type,omitempty"`
-		Title       *string           `json:"title,omitempty"`
-		Identifier  string            `json:"identifier,omitempty"`
-		Calculation string            `json:"calculation,omitempty"`
-		Default     any               `json:"default,omitempty"`
-		Icon        *string           `json:"icon,omitempty"`
-		Format      *string           `json:"format,omitempty"`
-		Description *string           `json:"description,omitempty"`
-		Colorized   *bool             `json:"colorized,omitempty"`
-		Colors      map[string]string `json:"colors,omitempty"`
+		Type               string             `json:"type,omitempty"`
+		Title              *string            `json:"title,omitempty"`
+		Identifier         string             `json:"identifier,omitempty"`
+		Calculation        string             `json:"calculation,omitempty"`
+		Default            any                `json:"default,omitempty"`
+		Icon               *string            `json:"icon,omitempty"`
+		Format             *string            `json:"format,omitempty"`
+		Description        *string            `json:"description,omitempty"`
+		Colorized          *bool              `json:"colorized,omitempty"`
+		Colors             map[string]string  `json:"colors,omitempty"`
+		Spec               *string            `json:"spec,omitempty"`
+		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
 	}
 
 	BlueprintAggregationProperty struct {

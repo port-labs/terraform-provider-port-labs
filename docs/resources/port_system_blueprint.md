@@ -45,7 +45,19 @@ Optional:
 - `description` (String) The description of the calculation property
 - `format` (String) The format of the calculation property
 - `icon` (String) The icon of the calculation property
+- `spec` (String) The spec of the calculation property
+- `spec_authentication` (Attributes) The spec authentication of the calculation property (see [below for nested schema](#nestedatt--calculation_properties--spec_authentication))
 - `title` (String) The title of the calculation property
+
+<a id="nestedatt--calculation_properties--spec_authentication"></a>
+### Nested Schema for `calculation_properties.spec_authentication`
+
+Required:
+
+- `authorization_url` (String) The authorizationUrl of the spec authentication
+- `client_id` (String) The clientId of the spec authentication
+- `token_url` (String) The tokenUrl of the spec authentication
+
 
 
 <a id="nestedatt--mirror_properties"></a>

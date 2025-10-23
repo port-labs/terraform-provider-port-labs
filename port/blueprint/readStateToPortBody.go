@@ -139,6 +139,20 @@ func CalculationPropertiesToBody(ctx context.Context, state map[string]Calculati
 			calculationProp.Colors = colors
 		}
 
+		if !prop.Spec.IsNull() {
+			spec := prop.Spec.ValueString()
+			calculationProp.Spec = &spec
+		}
+
+		if prop.SpecAuthentication != nil {
+			specAuth := &cli.SpecAuthentication{
+				AuthorizationUrl: prop.SpecAuthentication.AuthorizationUrl.ValueString(),
+				TokenUrl:         prop.SpecAuthentication.TokenUrl.ValueString(),
+				ClientId:         prop.SpecAuthentication.ClientId.ValueString(),
+			}
+			calculationProp.SpecAuthentication = specAuth
+		}
+
 		calculationProperties[identifier] = calculationProp
 	}
 

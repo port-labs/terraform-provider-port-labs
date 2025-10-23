@@ -219,12 +219,21 @@ func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *
 			Description: flex.GoStringToFramework(v.Description),
 			Format:      flex.GoStringToFramework(v.Format),
 			Colorized:   flex.GoBoolToFramework(v.Colorized),
+			Spec:        flex.GoStringToFramework(v.Spec),
 		}
 
 		if v.Colors != nil {
 			calculationPropertyModel.Colors, _ = types.MapValueFrom(ctx, types.StringType, v.Colors)
 		} else {
 			calculationPropertyModel.Colors = types.MapNull(types.StringType)
+		}
+
+		if v.SpecAuthentication != nil {
+			calculationPropertyModel.SpecAuthentication = &SpecAuthenticationModel{
+				AuthorizationUrl: types.StringValue(v.SpecAuthentication.AuthorizationUrl),
+				TokenUrl:         types.StringValue(v.SpecAuthentication.TokenUrl),
+				ClientId:         types.StringValue(v.SpecAuthentication.ClientId),
+			}
 		}
 
 		bm.CalculationProperties[k] = *calculationPropertyModel

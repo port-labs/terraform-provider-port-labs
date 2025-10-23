@@ -199,7 +199,6 @@ type NumberPropModel struct {
 	Enum        types.List    `tfsdk:"enum"`
 	EnumColors  types.Map     `tfsdk:"enum_colors"`
 	EnumJqQuery types.String  `tfsdk:"enum_jq_query"`
-
 }
 
 type BooleanPropModel struct {
@@ -292,6 +291,8 @@ type UserPropertiesModel struct {
 type Step struct {
 	Title types.String   `tfsdk:"title"`
 	Order []types.String `tfsdk:"order"`
+	Visible types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
 }
 
 type ActionTitle struct {

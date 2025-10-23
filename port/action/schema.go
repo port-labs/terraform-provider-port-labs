@@ -171,6 +171,17 @@ func ActionSchema() map[string]schema.Attribute {
 								Required:            true,
 								ElementType:         types.StringType,
 							},
+							"visible": schema.BoolAttribute{
+								MarkdownDescription: "The visibility of the step",
+								Optional:            true,
+							},
+							"visible_jq_query": schema.StringAttribute{
+								MarkdownDescription: "The visibility condition jq query of the step",
+								Optional:            true,
+								Validators: []validator.String{
+									stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("visible")),
+								},
+							},
 						},
 					},
 					Validators: []validator.List{

@@ -45,9 +45,21 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 		s.Filter = filter
 	}
 
+	// Sort rules by identifier to ensure consistent ordering
+	sortedStateRules := make([]Rule, len(state.Rules))
+	copy(sortedStateRules, state.Rules)
+
+	for i := 0; i < len(sortedStateRules)-1; i++ {
+		for j := i + 1; j < len(sortedStateRules); j++ {
+			if sortedStateRules[i].Identifier.ValueString() > sortedStateRules[j].Identifier.ValueString() {
+				sortedStateRules[i], sortedStateRules[j] = sortedStateRules[j], sortedStateRules[i]
+			}
+		}
+	}
+
 	var rules []cli.Rule
 
-	for _, stateRule := range state.Rules {
+	for _, stateRule := range sortedStateRules {
 		rule := &cli.Rule{
 			Level:      stateRule.Level.ValueString(),
 			Identifier: stateRule.Identifier.ValueString(),

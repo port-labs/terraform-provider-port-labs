@@ -117,6 +117,16 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 		stateRules = append(stateRules, *stateRule)
 	}
 
+	// Sort rules by identifier to prevent Terraform from detecting false-positive changes
+	// due to API returning rules in different order
+	for i := 0; i < len(stateRules)-1; i++ {
+		for j := i + 1; j < len(stateRules); j++ {
+			if stateRules[i].Identifier.ValueString() > stateRules[j].Identifier.ValueString() {
+				stateRules[i], stateRules[j] = stateRules[j], stateRules[i]
+			}
+		}
+	}
+
 	state.Rules = stateRules
 	if shouldRefreshLevels(state.Levels, s.Levels) {
 		state.Levels = fromCliLevelsToTerraformLevels(s.Levels)

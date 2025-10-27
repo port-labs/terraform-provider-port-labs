@@ -101,7 +101,7 @@ resource "port_action" "restart_microservice" {
           title             = "Service"
           description       = "The service to restart"
           format            = "entity"
-          blueprint         = "Service"
+          blueprint         = port_blueprint.microservice.identifier
           disabled_jq_query = "1 == 1"
 
           sort = {
@@ -137,6 +137,58 @@ resource "port_action" "restart_microservice" {
   webhook_method = {
     type = "WEBHOOK"
     url  = "https://app.getport.io"
+  }
+}
+
+resource "port_action" "restart_microservice_with_steps" {
+  title      = "Restart Microservice With Steps"
+  icon       = "Terraform"
+  identifier = "examples-action-restart-microservice-with-steps"
+  publish    = true
+  self_service_trigger = {
+    operation            = "DAY-2"
+    blueprint_identifier = port_blueprint.environment.identifier
+    title                = "Restart Microservice Workflow"
+    user_properties = {
+      string_props = {
+        service_name = {
+          type  = "string"
+          title = "Service Name"
+        }
+        restart_reason = {
+          type  = "string"
+          title = "Restart Reason"
+        }
+        advanced_mode = {
+          type  = "string"
+          title = "Advanced Options"
+        }
+        confirm_restart = {
+          type  = "boolean"
+          title = "Confirm Restart"
+        }
+      }
+    }
+    steps = [
+      {
+        title = "Basic Information"
+        order = ["service_name", "restart_reason"]
+      },
+      {
+        title = "Advanced Settings"
+        order = ["advanced_mode"]
+        visible_jq_query = "1==1"
+      },
+      {
+        title = "Confirmation"
+        order = ["confirm_restart"]
+        visible = true
+      }
+    ]
+  }
+  webhook_method = {
+    type = "WEBHOOK"
+    url  = "https://api.example.com/restart"
   }
 }
 

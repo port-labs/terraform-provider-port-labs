@@ -124,14 +124,16 @@ type MirrorPropertyModel struct {
 }
 
 type CalculationPropertyModel struct {
-	Calculation types.String `tfsdk:"calculation"`
-	Title       types.String `tfsdk:"title"`
-	Format      types.String `tfsdk:"format"`
-	Icon        types.String `tfsdk:"icon"`
-	Description types.String `tfsdk:"description"`
-	Type        types.String `tfsdk:"type"`
-	Colorized   types.Bool   `tfsdk:"colorized"`
-	Colors      types.Map    `tfsdk:"colors"`
+	Calculation        types.String             `tfsdk:"calculation"`
+	Title              types.String             `tfsdk:"title"`
+	Format             types.String             `tfsdk:"format"`
+	Icon               types.String             `tfsdk:"icon"`
+	Description        types.String             `tfsdk:"description"`
+	Type               types.String             `tfsdk:"type"`
+	Colorized          types.Bool               `tfsdk:"colorized"`
+	Colors             types.Map                `tfsdk:"colors"`
+	Spec               types.String             `tfsdk:"spec"`
+	SpecAuthentication *SpecAuthenticationModel `tfsdk:"spec_authentication"`
 }
 
 type AverageEntitiesModel struct {

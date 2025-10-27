@@ -2,6 +2,7 @@ package team
 
 import (
 	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -104,13 +105,23 @@ func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
+	// Get the current state to extract the old team name
+	var currentState *TeamModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &currentState)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	t, err := TeamResourceToPortBody(ctx, state)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert team resource to body", err.Error())
 		return
 	}
 
-	tp, err := r.portClient.UpdateTeam(ctx, t.Name, &t.PortTeam)
+	// Use the old team name from current state to identify which team to update
+	oldTeamName := currentState.Name.ValueString()
+	tp, err := r.portClient.UpdateTeam(ctx, oldTeamName, &t.PortTeam)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update the team", err.Error())
 		return

@@ -105,7 +105,6 @@ func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	// Get the current state to extract the old team name
 	var currentState *TeamModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &currentState)...)
 
@@ -119,7 +118,6 @@ func (r *TeamResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	// Use the old team name from current state to identify which team to update
 	oldTeamName := currentState.Name.ValueString()
 	tp, err := r.portClient.UpdateTeam(ctx, oldTeamName, &t.PortTeam)
 	if err != nil {

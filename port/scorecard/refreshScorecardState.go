@@ -3,13 +3,12 @@ package scorecard
 import (
 	"context"
 	"fmt"
-
-	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
-
 	"reflect"
+	"sort"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func shouldRefreshLevels(stateLevels []Level, cliLevels []cli.Level) bool {
@@ -119,13 +118,9 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 
 	// Sort rules by identifier to prevent Terraform from detecting false-positive changes
 	// due to API returning rules in different order
-	for i := 0; i < len(stateRules)-1; i++ {
-		for j := i + 1; j < len(stateRules); j++ {
-			if stateRules[i].Identifier.ValueString() > stateRules[j].Identifier.ValueString() {
-				stateRules[i], stateRules[j] = stateRules[j], stateRules[i]
-			}
-		}
-	}
+	sort.Slice(stateRules, func(i, j int) bool {
+		return stateRules[i].Identifier.ValueString() < stateRules[j].Identifier.ValueString()
+	})
 
 	state.Rules = stateRules
 	if shouldRefreshLevels(state.Levels, s.Levels) {

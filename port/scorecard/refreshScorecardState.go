@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"reflect"
-	"sort"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -115,12 +114,6 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 
 		stateRules = append(stateRules, *stateRule)
 	}
-
-	// Sort rules by identifier to prevent Terraform from detecting false-positive changes
-	// due to API returning rules in different order
-	sort.Slice(stateRules, func(i, j int) bool {
-		return stateRules[i].Identifier.ValueString() < stateRules[j].Identifier.ValueString()
-	})
 
 	state.Rules = stateRules
 	if shouldRefreshLevels(state.Levels, s.Levels) {

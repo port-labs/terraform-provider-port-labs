@@ -318,6 +318,7 @@ resource "port_action" "create_microservice" {
 - `github_method` (Attributes) GitHub invocation method (see [below for nested schema](#nestedatt--github_method))
 - `gitlab_method` (Attributes) Gitlab invocation method (see [below for nested schema](#nestedatt--gitlab_method))
 - `icon` (String) Icon
+- `is_view_run_access` (Boolean) Whether members can view the runs of this action
 - `kafka_method` (Attributes) Kafka invocation method (see [below for nested schema](#nestedatt--kafka_method))
 - `publish` (Boolean) Publish action
 - `required_approval` (String) Require approval before invoking the action. Can be one of "true", "false", "ANY" or "ALL"

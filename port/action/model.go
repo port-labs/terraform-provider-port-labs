@@ -436,6 +436,7 @@ type ActionModel struct {
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
 	Publish                     types.Bool                        `tfsdk:"publish"`
+	IsViewRunAccess             types.Bool                        `tfsdk:"is_view_run_access"`
 }
 
 // ActionValidationModel is a model used for the validation of ActionModel resources

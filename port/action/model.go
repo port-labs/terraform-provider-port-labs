@@ -182,17 +182,17 @@ func (e *ArrayPropValidationModel) FromTerraform5Value(val tftypes.Value) error 
 }
 
 type NumberPropModel struct {
-	Title           types.String `tfsdk:"title"`
-	Icon            types.String `tfsdk:"icon"`
-	Description     types.String `tfsdk:"description"`
-	Required        types.Bool   `tfsdk:"required"`
-	DependsOn       types.List   `tfsdk:"depends_on"`
+	Title           types.String  `tfsdk:"title"`
+	Icon            types.String  `tfsdk:"icon"`
+	Description     types.String  `tfsdk:"description"`
+	Required        types.Bool    `tfsdk:"required"`
+	DependsOn       types.List    `tfsdk:"depends_on"`
 	Default         types.Float64 `tfsdk:"default"`
-	DefaultJqQuery  types.String `tfsdk:"default_jq_query"`
-	Visible         types.Bool   `tfsdk:"visible"`
-	VisibleJqQuery  types.String `tfsdk:"visible_jq_query"`
-	Disabled        types.Bool   `tfsdk:"disabled"`
-	DisabledJqQuery types.String `tfsdk:"disabled_jq_query"`
+	DefaultJqQuery  types.String  `tfsdk:"default_jq_query"`
+	Visible         types.Bool    `tfsdk:"visible"`
+	VisibleJqQuery  types.String  `tfsdk:"visible_jq_query"`
+	Disabled        types.Bool    `tfsdk:"disabled"`
+	DisabledJqQuery types.String  `tfsdk:"disabled_jq_query"`
 
 	Maximum     types.Float64 `tfsdk:"maximum"`
 	Minimum     types.Float64 `tfsdk:"minimum"`
@@ -289,10 +289,10 @@ type UserPropertiesModel struct {
 }
 
 type Step struct {
-	Title types.String   `tfsdk:"title"`
-	Order []types.String `tfsdk:"order"`
-	Visible types.Bool   `tfsdk:"visible"`
-	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
+	Title          types.String   `tfsdk:"title"`
+	Order          []types.String `tfsdk:"order"`
+	Visible        types.Bool     `tfsdk:"visible"`
+	VisibleJqQuery types.String   `tfsdk:"visible_jq_query"`
 }
 
 type ActionTitle struct {
@@ -436,6 +436,7 @@ type ActionModel struct {
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
 	Publish                     types.Bool                        `tfsdk:"publish"`
+	IsViewRunAccess             types.Bool                        `tfsdk:"is_view_run_access"`
 }
 
 // ActionValidationModel is a model used for the validation of ActionModel resources
@@ -458,4 +459,5 @@ type ActionValidationModel struct {
 	ApprovalWebhookNotification types.Object `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object `tfsdk:"approval_email_notification"`
 	Publish                     types.Bool   `tfsdk:"publish"`
+	IsViewRunAccess             types.Bool   `tfsdk:"is_view_run_access"`
 }

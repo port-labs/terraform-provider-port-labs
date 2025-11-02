@@ -45,9 +45,13 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 		s.Filter = filter
 	}
 
+	// Use rules in the order defined in Terraform state
+	stateRules := make([]Rule, len(state.Rules))
+	copy(stateRules, state.Rules)
+
 	var rules []cli.Rule
 
-	for _, stateRule := range state.Rules {
+	for _, stateRule := range stateRules {
 		rule := &cli.Rule{
 			Level:      stateRule.Level.ValueString(),
 			Identifier: stateRule.Identifier.ValueString(),

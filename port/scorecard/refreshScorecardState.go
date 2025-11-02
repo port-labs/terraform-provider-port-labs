@@ -115,7 +115,88 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 		stateRules = append(stateRules, *stateRule)
 	}
 
-	state.Rules = stateRules
+	// Preserve the original order from state if it exists
+	if len(state.Rules) > 0 {
+		// Create a map of API rule identifier to API rule for quick lookup
+		apiRulesByIdentifier := make(map[string]*cli.Rule)
+		for i := range s.Rules {
+			apiRulesByIdentifier[s.Rules[i].Identifier] = &s.Rules[i]
+		}
+
+		// Process existing rules in their original order, updating with API data
+		orderedRules := make([]Rule, 0, len(stateRules))
+		processedIdentifiers := make(map[string]bool)
+
+		// First, update existing rules in their original order
+		for _, existingRule := range state.Rules {
+			identifier := existingRule.Identifier.ValueString()
+			if apiRule, exists := apiRulesByIdentifier[identifier]; exists {
+				// Update the existing rule with fresh API data while preserving structure
+				updatedRule := Rule{
+					Title:      types.StringValue(apiRule.Title),
+					Level:      types.StringValue(apiRule.Level),
+					Identifier: types.StringValue(apiRule.Identifier),
+				}
+
+				// Handle description - preserve from state if it exists, otherwise use API value
+				if !existingRule.Description.IsNull() && !existingRule.Description.IsUnknown() {
+					updatedRule.Description = existingRule.Description
+				} else if apiRule.Description != "" {
+					updatedRule.Description = types.StringValue(apiRule.Description)
+				} else {
+					updatedRule.Description = types.StringNull()
+				}
+
+				// Update query from API
+				stateQuery := &Query{
+					Combinator: types.StringValue(apiRule.Query.Combinator),
+				}
+				stateQuery.Conditions = make([]types.String, len(apiRule.Query.Conditions))
+				for i, u := range apiRule.Query.Conditions {
+					cond, _ := utils.GoObjectToTerraformString(u, r.portClient.JSONEscapeHTML)
+					stateQuery.Conditions[i] = cond
+				}
+				updatedRule.Query = stateQuery
+
+				orderedRules = append(orderedRules, updatedRule)
+				processedIdentifiers[identifier] = true
+			}
+		}
+
+		// Then append any new rules from API that weren't in the original state
+		for _, apiRule := range s.Rules {
+			if !processedIdentifiers[apiRule.Identifier] {
+				newRule := Rule{
+					Title:      types.StringValue(apiRule.Title),
+					Level:      types.StringValue(apiRule.Level),
+					Identifier: types.StringValue(apiRule.Identifier),
+				}
+
+				if apiRule.Description != "" {
+					newRule.Description = types.StringValue(apiRule.Description)
+				} else {
+					newRule.Description = types.StringNull()
+				}
+
+				stateQuery := &Query{
+					Combinator: types.StringValue(apiRule.Query.Combinator),
+				}
+				stateQuery.Conditions = make([]types.String, len(apiRule.Query.Conditions))
+				for i, u := range apiRule.Query.Conditions {
+					cond, _ := utils.GoObjectToTerraformString(u, r.portClient.JSONEscapeHTML)
+					stateQuery.Conditions[i] = cond
+				}
+				newRule.Query = stateQuery
+
+				orderedRules = append(orderedRules, newRule)
+			}
+		}
+
+		state.Rules = orderedRules
+	} else {
+		// No existing state, use API order
+		state.Rules = stateRules
+	}
 	if shouldRefreshLevels(state.Levels, s.Levels) {
 		state.Levels = fromCliLevelsToTerraformLevels(s.Levels)
 	}

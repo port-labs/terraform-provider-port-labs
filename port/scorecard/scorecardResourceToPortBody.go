@@ -3,7 +3,6 @@ package scorecard
 import (
 	"context"
 	"encoding/json"
-	"sort"
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
@@ -46,17 +45,13 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 		s.Filter = filter
 	}
 
-	// Sort rules by identifier to ensure consistent ordering
-	sortedStateRules := make([]Rule, len(state.Rules))
-	copy(sortedStateRules, state.Rules)
-
-	sort.Slice(sortedStateRules, func(i, j int) bool {
-		return sortedStateRules[i].Identifier.ValueString() < sortedStateRules[j].Identifier.ValueString()
-	})
+	// Use rules in the order defined in Terraform state
+	stateRules := make([]Rule, len(state.Rules))
+	copy(stateRules, state.Rules)
 
 	var rules []cli.Rule
 
-	for _, stateRule := range sortedStateRules {
+	for _, stateRule := range stateRules {
 		rule := &cli.Rule{
 			Level:      stateRule.Level.ValueString(),
 			Identifier: stateRule.Identifier.ValueString(),

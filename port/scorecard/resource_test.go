@@ -522,3 +522,151 @@ func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortScorecardRuleOrderPreservation(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	scorecardIdentifier := utils.GenID()
+	
+	// Create scorecard with rules in a specific non-alphabetical order
+	// Order: "zebra" (Z), "alpha" (A), "beta" (B)
+	// This tests that order is preserved even if API returns them alphabetically
+	var testAccConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_scorecard" "test" {
+		identifier = "%s"
+		title      = "Rule Order Test"
+		blueprint  = "%s"
+		rules = [
+			{
+				identifier = "zebra"
+				title      = "Zebra Rule"
+				level      = "Gold"
+				query = {
+					combinator = "and"
+					conditions = [jsonencode({
+						property = "$team"
+						operator = "isNotEmpty"
+					})]
+				}
+			},
+			{
+				identifier = "alpha"
+				title      = "Alpha Rule"
+				level      = "Silver"
+				query = {
+					combinator = "and"
+					conditions = [jsonencode({
+						property = "author"
+						operator = "isNotEmpty"
+					})]
+				}
+			},
+			{
+				identifier = "beta"
+				title      = "Beta Rule"
+				level      = "Bronze"
+				query = {
+					combinator = "and"
+					conditions = [jsonencode({
+						property = "url"
+						operator = "isNotEmpty"
+					})]
+				}
+			}
+		]
+		depends_on = [
+			port_blueprint.microservice
+		]
+	}`, scorecardIdentifier, blueprintIdentifier)
+
+	// Update config - only change title to trigger refresh, rules remain the same
+	var testAccConfigUpdate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_scorecard" "test" {
+		identifier = "%s"
+		title      = "Rule Order Test Updated"
+		blueprint  = "%s"
+		rules = [
+			{
+				identifier = "zebra"
+				title      = "Zebra Rule"
+				level      = "Gold"
+				query = {
+					combinator = "and"
+					conditions = [jsonencode({
+						property = "$team"
+						operator = "isNotEmpty"
+					})]
+				}
+			},
+			{
+				identifier = "alpha"
+				title      = "Alpha Rule"
+				level      = "Silver"
+				query = {
+					combinator = "and"
+					conditions = [jsonencode({
+						property = "author"
+						operator = "isNotEmpty"
+					})]
+				}
+			},
+			{
+				identifier = "beta"
+				title      = "Beta Rule"
+				level      = "Bronze"
+				query = {
+					combinator = "and"
+					conditions = [jsonencode({
+						property = "url"
+						operator = "isNotEmpty"
+					})]
+				}
+			}
+		]
+		depends_on = [
+			port_blueprint.microservice
+		]
+	}`, scorecardIdentifier, blueprintIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "title", "Rule Order Test"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "3"),
+					// Verify rules are in the original order (zebra, alpha, beta)
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.identifier", "zebra"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.title", "Zebra Rule"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Gold"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.identifier", "alpha"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.title", "Alpha Rule"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.level", "Silver"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.2.identifier", "beta"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.2.title", "Beta Rule"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.2.level", "Bronze"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "title", "Rule Order Test Updated"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "3"),
+					// Verify rules are STILL in the original order after refresh (zebra, alpha, beta)
+					// This ensures that even if API returns them in a different order,
+					// the original state order is preserved
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.identifier", "zebra"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.title", "Zebra Rule"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.level", "Gold"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.identifier", "alpha"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.title", "Alpha Rule"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.level", "Silver"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.2.identifier", "beta"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.2.title", "Beta Rule"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.2.level", "Bronze"),
+				),
+			},
+		},
+	})
+}

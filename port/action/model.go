@@ -232,8 +232,10 @@ type ArrayPropModel struct {
 	Disabled        types.Bool   `tfsdk:"disabled"`
 	DisabledJqQuery types.String `tfsdk:"disabled_jq_query"`
 
-	MaxItems     types.Int64        `tfsdk:"max_items"`
-	MinItems     types.Int64        `tfsdk:"min_items"`
+	MaxItems        types.Int64  `tfsdk:"max_items"`
+	MaxItemsJqQuery types.String `tfsdk:"max_items_jq_query"`
+	MinItems        types.Int64  `tfsdk:"min_items"`
+	MinItemsJqQuery types.String `tfsdk:"min_items_jq_query"`
 	StringItems  *StringItems       `tfsdk:"string_items"`
 	NumberItems  *NumberItems       `tfsdk:"number_items"`
 	BooleanItems *BooleanItems      `tfsdk:"boolean_items"`

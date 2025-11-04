@@ -890,11 +890,25 @@ func ArrayPropertySchema() schema.Attribute {
 				int64validator.AtLeast(0),
 			},
 		},
+		"min_items_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The min items jq query of the array property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("min_items")),
+			},
+		},
 		"max_items": schema.Int64Attribute{
 			MarkdownDescription: "The max items of the array property",
 			Optional:            true,
 			Validators: []validator.Int64{
 				int64validator.AtLeast(0),
+			},
+		},
+		"max_items_jq_query": schema.StringAttribute{
+			MarkdownDescription: "The max items jq query of the array property",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("max_items")),
 			},
 		},
 		"default_jq_query": schema.StringAttribute{

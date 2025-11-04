@@ -157,12 +157,28 @@ func arrayPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, pr
 			}
 			if !prop.MinItems.IsNull() {
 				minItems := int(prop.MinItems.ValueInt64())
-				property.MinItems = &minItems
+				property.MinItems = minItems
+			}
+
+			if !prop.MinItemsJqQuery.IsNull() {
+				minItemsJqQuery := prop.MinItemsJqQuery.ValueString()
+				jqQueryMap := map[string]string{
+					"jqQuery": minItemsJqQuery,
+				}
+				property.MinItems = jqQueryMap
 			}
 
 			if !prop.MaxItems.IsNull() {
 				maxItems := int(prop.MaxItems.ValueInt64())
-				property.MaxItems = &maxItems
+				property.MaxItems = maxItems
+			}
+
+			if !prop.MaxItemsJqQuery.IsNull() {
+				maxItemsJqQuery := prop.MaxItemsJqQuery.ValueString()
+				jqQueryMap := map[string]string{
+					"jqQuery": maxItemsJqQuery,
+				}
+				property.MaxItems = jqQueryMap
 			}
 
 			if !prop.DependsOn.IsNull() {
@@ -220,9 +236,34 @@ func arrayPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, pr
 }
 
 func (r *ActionResource) addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error) {
-	arrayProp := &ArrayPropModel{
-		MinItems: flex.GoInt64ToFramework(v.MinItems),
-		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
+	arrayProp := &ArrayPropModel{}
+
+	// Handle MinItems - can be int or JQ query
+	if v.MinItems != nil {
+		switch minItems := v.MinItems.(type) {
+		case float64:
+			arrayProp.MinItems = types.Int64Value(int64(minItems))
+		case int:
+			arrayProp.MinItems = types.Int64Value(int64(minItems))
+		case map[string]interface{}:
+			if jqQuery, ok := minItems["jqQuery"].(string); ok {
+				arrayProp.MinItemsJqQuery = types.StringValue(jqQuery)
+			}
+		}
+	}
+
+	// Handle MaxItems - can be int or JQ query
+	if v.MaxItems != nil {
+		switch maxItems := v.MaxItems.(type) {
+		case float64:
+			arrayProp.MaxItems = types.Int64Value(int64(maxItems))
+		case int:
+			arrayProp.MaxItems = types.Int64Value(int64(maxItems))
+		case map[string]interface{}:
+			if jqQuery, ok := maxItems["jqQuery"].(string); ok {
+				arrayProp.MaxItemsJqQuery = types.StringValue(jqQuery)
+			}
+		}
 	}
 
 	if v.Default != nil {

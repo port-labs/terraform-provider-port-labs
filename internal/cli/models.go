@@ -87,8 +87,8 @@ type (
 		Format             *string             `json:"format,omitempty"`
 		MaxLength          *int                `json:"maxLength,omitempty"`
 		MinLength          *int                `json:"minLength,omitempty"`
-		MaxItems           *int                `json:"maxItems,omitempty"`
-		MinItems           *int                `json:"minItems,omitempty"`
+		MaxItems           any                 `json:"maxItems,omitempty"`
+		MinItems           any                 `json:"minItems,omitempty"`
 		Maximum            *float64            `json:"maximum,omitempty"`
 		Minimum            *float64            `json:"minimum,omitempty"`
 		Description        *string             `json:"description,omitempty"`

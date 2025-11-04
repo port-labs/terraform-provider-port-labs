@@ -562,7 +562,9 @@ Optional:
 - `disabled_jq_query` (String) The disabled state jq query of the array property
 - `icon` (String) The icon of the property
 - `max_items` (Number) The max items of the array property
+- `max_items_jq_query` (String) The max items jq query of the array property
 - `min_items` (Number) The min items of the array property
+- `min_items_jq_query` (String) The min items jq query of the array property
 - `number_items` (Attributes) An array of number items within the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--number_items))
 - `object_items` (Attributes) An array of object items within the property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--array_props--object_items))
 - `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value

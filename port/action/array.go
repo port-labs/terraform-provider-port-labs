@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -249,6 +250,8 @@ func (r *ActionResource) addArrayPropertiesToResource(v *cli.ActionProperty) (*A
 			if jqQuery, ok := minItems["jqQuery"].(string); ok {
 				arrayProp.MinItemsJqQuery = types.StringValue(jqQuery)
 			}
+		default:
+			return nil, fmt.Errorf("minItems must be int or map[string]interface{}")
 		}
 	}
 
@@ -263,6 +266,8 @@ func (r *ActionResource) addArrayPropertiesToResource(v *cli.ActionProperty) (*A
 			if jqQuery, ok := maxItems["jqQuery"].(string); ok {
 				arrayProp.MaxItemsJqQuery = types.StringValue(jqQuery)
 			}
+		default:
+			return nil, fmt.Errorf("maxItems must be int or map[string]interface{}")
 		}
 	}
 

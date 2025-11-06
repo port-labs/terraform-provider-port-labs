@@ -53,6 +53,12 @@ resource "port_action" "dynamic_max_items_example" {
           string_items = {
             format = "user"
           }
+          # Dynamically calculate remaining reviewer slots (max 6 total):
+          # 1. (.form.reviewers // []) - Get current reviewers array, default to empty array if null
+          # 2. | length - Count how many reviewers are already selected
+          # 3. (6 - ...) as $n - Subtract from 6 to get remaining slots, store in variable $n
+          # 4. if $n < 0 then 0 else $n end - Ensure result is never negative (min 0)
+          # Result: As users select reviewers, the max limit decreases accordingly
           max_items_jq_query = "(6 - ((.form.reviewers // []) | length)) as $n | if $n < 0 then 0 else $n end"
           description = "Select up to 6 reviewers (limit decreases as you select)"
         }
@@ -139,7 +145,15 @@ resource "port_action" "both_jq_queries_example" {
           string_items = {
             format = "user"
           }
+          # Dynamically set minimum team members based on project size:
+          # - Large projects: require at least 3 members
+          # - Medium projects: require at least 2 members
+          # - Small projects: require at least 1 member
           min_items_jq_query = "if .form.project_size == \"large\" then 3 elif .form.project_size == \"medium\" then 2 else 1 end"
+          # Dynamically set maximum team members based on project size:
+          # - Large projects: allow up to 10 members
+          # - Medium projects: allow up to 5 members
+          # - Small projects: allow up to 3 members
           max_items_jq_query = "if .form.project_size == \"large\" then 10 elif .form.project_size == \"medium\" then 5 else 3 end"
           description = "Assign team members (range depends on project size)"
         }
@@ -163,8 +177,8 @@ resource "port_action" "static_values_example" {
         labels = {
           title = "Labels"
           string_items = {}
-          min_items = 1
-          max_items = 5
+          min_items = 1 ## test with integer
+          max_items = 5 ## test with integer
           description = "Service labels (1-5 required)"
         }
       }
@@ -187,8 +201,8 @@ resource "port_action" "simple_jq_query_example" {
         availability_zones = {
           title = "Availability Zones"
           string_items = {}
-          min_items_jq_query = "1"
-          max_items_jq_query = "3"
+          min_items_jq_query = "1" ##test with string
+          max_items_jq_query = "3" ##test with string
           description = "Select availability zones (1-3)"
         }
       }

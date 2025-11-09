@@ -691,6 +691,349 @@ func TestAccPortActionUpdate(t *testing.T) {
 	})
 }
 
+func TestAccPortActionArrayPropsWithMaxItemsJqQuery(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test - Max Items JQ Query"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				array_props = {
+					"reviewers" = {
+						title = "Reviewers"
+						string_items = {
+							format = "user"
+						}
+						max_items_jq_query = "(6 - ((.form.reviewers // []) | length)) as $n | if $n < 0 then 0 else $n end"
+					}
+				}
+			}
+		}
+		webhook_method = {
+			url = "https://example.com"
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test - Max Items JQ Query"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.reviewers.title", "Reviewers"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.reviewers.max_items_jq_query", "(6 - ((.form.reviewers // []) | length)) as $n | if $n < 0 then 0 else $n end"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.reviewers.string_items.format", "user"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionArrayPropsWithMinItemsJqQuery(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test - Min Items JQ Query"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				array_props = {
+					"tags" = {
+						title = "Tags"
+						string_items = {}
+						min_items_jq_query = "if .entity.properties.environment == \"production\" then 2 else 1 end"
+					}
+				}
+			}
+		}
+		webhook_method = {
+			url = "https://example.com"
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test - Min Items JQ Query"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.tags.title", "Tags"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.tags.min_items_jq_query", "if .entity.properties.environment == \"production\" then 2 else 1 end"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionArrayPropsWithBothJqQueries(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test - Both JQ Queries"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				array_props = {
+					"approvers" = {
+						title = "Approvers"
+						string_items = {
+							format = "user"
+						}
+						min_items_jq_query = "1"
+						max_items_jq_query = "if .form.priority == \"high\" then 5 elif .form.priority == \"medium\" then 3 else 1 end"
+					}
+				}
+				string_props = {
+					"priority" = {
+						title = "Priority"
+						enum = ["low", "medium", "high"]
+					}
+				}
+			}
+		}
+		webhook_method = {
+			url = "https://example.com"
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test - Both JQ Queries"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.approvers.title", "Approvers"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.approvers.min_items_jq_query", "1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.approvers.max_items_jq_query", "if .form.priority == \"high\" then 5 elif .form.priority == \"medium\" then 3 else 1 end"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.priority.title", "Priority"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionArrayPropsWithStaticMaxMinItems(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test - Static Max Min Items"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				array_props = {
+					"labels" = {
+						title = "Labels"
+						string_items = {}
+						min_items = 1
+						max_items = 5
+					}
+				}
+			}
+		}
+		webhook_method = {
+			url = "https://example.com"
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test - Static Max Min Items"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.labels.title", "Labels"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.labels.min_items", "1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.labels.max_items", "5"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionArrayPropsConflictMaxItemsAndJqQuery(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test - Conflict Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				array_props = {
+					"reviewers" = {
+						title = "Reviewers"
+						string_items = {
+							format = "user"
+						}
+						max_items = 5
+						max_items_jq_query = "10"
+					}
+				}
+			}
+		}
+		webhook_method = {
+			url = "https://example.com"
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + testAccActionConfigCreate,
+				ExpectError: regexp.MustCompile(`.*Attribute "max_items_jq_query".*conflicts with.*max_items.*`),
+			},
+		},
+	})
+}
+
+func TestAccPortActionArrayPropsConflictMinItemsAndJqQuery(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test - Conflict Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				array_props = {
+					"tags" = {
+						title = "Tags"
+						string_items = {}
+						min_items = 1
+						min_items_jq_query = "2"
+					}
+				}
+			}
+		}
+		webhook_method = {
+			url = "https://example.com"
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + testAccActionConfigCreate,
+				ExpectError: regexp.MustCompile(`.*Attribute "min_items_jq_query".*conflicts with.*min_items.*`),
+			},
+		},
+	})
+}
+
+func TestAccPortActionArrayPropsUpdateFromStaticToJqQuery(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test - Update Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				array_props = {
+					"reviewers" = {
+						title = "Reviewers"
+						string_items = {
+							format = "user"
+						}
+						max_items = 5
+					}
+				}
+			}
+		}
+		webhook_method = {
+			url = "https://example.com"
+		}
+	}`, actionIdentifier)
+
+	var testAccActionConfigUpdate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test - Update Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				array_props = {
+					"reviewers" = {
+						title = "Reviewers"
+						string_items = {
+							format = "user"
+						}
+						max_items_jq_query = "(6 - ((.form.reviewers // []) | length)) as $n | if $n < 0 then 0 else $n end"
+					}
+				}
+			}
+		}
+		webhook_method = {
+			url = "https://example.com"
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.reviewers.max_items", "5"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.reviewers.max_items_jq_query"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.reviewers.max_items_jq_query", "(6 - ((.form.reviewers // []) | length)) as $n | if $n < 0 then 0 else $n end"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.reviewers.max_items"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()

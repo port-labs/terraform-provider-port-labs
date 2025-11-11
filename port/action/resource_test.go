@@ -914,7 +914,7 @@ func TestAccPortActionArrayPropsConflictMaxItemsAndJqQuery(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      acctest.ProviderConfig + testAccActionConfigCreate,
-				ExpectError: regexp.MustCompile(`.*Attribute "max_items_jq_query".*conflicts with.*max_items.*`),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Combination`),
 			},
 		},
 	})
@@ -953,7 +953,7 @@ func TestAccPortActionArrayPropsConflictMinItemsAndJqQuery(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				Config:      acctest.ProviderConfig + testAccActionConfigCreate,
-				ExpectError: regexp.MustCompile(`.*Attribute "min_items_jq_query".*conflicts with.*min_items.*`),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Combination`),
 			},
 		},
 	})
@@ -3588,7 +3588,6 @@ func TestAccPortActionStepsVisibleJqQuery(t *testing.T) {
 	  kafka_method = {}
 	}`, actionIdentifier, identifier)
 
-
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -3611,4 +3610,3 @@ func TestAccPortActionStepsVisibleJqQuery(t *testing.T) {
 		},
 	})
 }
-

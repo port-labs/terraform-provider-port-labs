@@ -292,7 +292,7 @@ type (
 		RequiredApproval     any                   `json:"requiredApproval,omitempty"`
 		ApprovalNotification *ApprovalNotification `json:"approvalNotification,omitempty"`
 		Publish              *bool                 `json:"publish,omitempty"`
-		IsViewRunAccess      *bool                 `json:"isViewRunAccess,omitempty"`
+		AllowAnyoneToViewRuns *bool                 `json:"allowAnyoneToViewRuns,omitempty"`
 	}
 
 	ActionExecutePermissions struct {

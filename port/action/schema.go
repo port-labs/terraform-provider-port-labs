@@ -530,7 +530,7 @@ func ActionSchema() map[string]schema.Attribute {
 			Computed:            true,
 			Default:             booldefault.StaticBool(true),
 		},
-		"allow_anyone_to_view_view_runs": schema.BoolAttribute{
+		"allow_anyone_to_view_runs": schema.BoolAttribute{
 			MarkdownDescription: "Whether members can view the runs of this action",
 			Optional:            true,
 		},

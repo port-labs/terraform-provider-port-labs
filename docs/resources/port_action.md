@@ -295,7 +295,7 @@ resource "port_action" "create_microservice" {
 		  runId: "{{.run.id}}"
 		})
 	}
-    
+	
 ```
 
 
@@ -309,6 +309,7 @@ resource "port_action" "create_microservice" {
 
 ### Optional
 
+- `allow_anyone_to_view_runs` (Boolean) Whether members can view the runs of this action
 - `approval_email_notification` (Object) The email notification of the approval (see [below for nested schema](#nestedatt--approval_email_notification))
 - `approval_webhook_notification` (Attributes) The webhook notification of the approval (see [below for nested schema](#nestedatt--approval_webhook_notification))
 - `automation_trigger` (Attributes) Automation trigger for the action (see [below for nested schema](#nestedatt--automation_trigger))
@@ -318,7 +319,6 @@ resource "port_action" "create_microservice" {
 - `github_method` (Attributes) GitHub invocation method (see [below for nested schema](#nestedatt--github_method))
 - `gitlab_method` (Attributes) Gitlab invocation method (see [below for nested schema](#nestedatt--gitlab_method))
 - `icon` (String) Icon
-- `allow_anyone_to_view_runs` (Boolean) Whether members can view the runs of this action
 - `kafka_method` (Attributes) Kafka invocation method (see [below for nested schema](#nestedatt--kafka_method))
 - `publish` (Boolean) Publish action
 - `required_approval` (String) Require approval before invoking the action. Can be one of "true", "false", "ANY" or "ALL"
@@ -524,8 +524,6 @@ Optional:
 - `visible_jq_query` (String) The visibility condition jq query of the step
 
 
-
-
 <a id="nestedatt--self_service_trigger--titles"></a>
 ### Nested Schema for `self_service_trigger.titles`
 
@@ -625,6 +623,8 @@ Optional:
 - `enum` (List of String) The enum of possible values for the string items
 - `enum_jq_query` (String) The jq query for the enum of string items
 - `format` (String) The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
+
+
 
 <a id="nestedatt--self_service_trigger--user_properties--boolean_props"></a>
 ### Nested Schema for `self_service_trigger.user_properties.boolean_props`

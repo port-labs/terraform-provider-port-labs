@@ -295,7 +295,7 @@ resource "port_action" "create_microservice" {
 		  runId: "{{.run.id}}"
 		})
 	}
-    
+   
 ```
 
 
@@ -336,6 +336,8 @@ resource "port_action" "create_microservice" {
 
 Optional:
 
+
+
 <a id="nestedatt--approval_webhook_notification"></a>
 ### Nested Schema for `approval_webhook_notification`
 
@@ -346,6 +348,7 @@ Required:
 Optional:
 
 - `format` (String) The format to invoke the webhook
+
 
 <a id="nestedatt--automation_trigger"></a>
 ### Nested Schema for `automation_trigger`
@@ -369,12 +372,14 @@ Required:
 
 - `blueprint_identifier` (String) The blueprint identifier of the changed entity
 
+
 <a id="nestedatt--automation_trigger--any_run_change_event"></a>
 ### Nested Schema for `automation_trigger.any_run_change_event`
 
 Required:
 
 - `action_identifier` (String) The action identifier of the changed run
+
 
 <a id="nestedatt--automation_trigger--entity_created_event"></a>
 ### Nested Schema for `automation_trigger.entity_created_event`
@@ -383,6 +388,7 @@ Required:
 
 - `blueprint_identifier` (String) The blueprint identifier of the created entity
 
+
 <a id="nestedatt--automation_trigger--entity_deleted_event"></a>
 ### Nested Schema for `automation_trigger.entity_deleted_event`
 
@@ -390,12 +396,14 @@ Required:
 
 - `blueprint_identifier` (String) The blueprint identifier of the deleted entity
 
+
 <a id="nestedatt--automation_trigger--entity_updated_event"></a>
 ### Nested Schema for `automation_trigger.entity_updated_event`
 
 Required:
 
 - `blueprint_identifier` (String) The blueprint identifier of the updated entity
+
 
 <a id="nestedatt--automation_trigger--jq_condition"></a>
 ### Nested Schema for `automation_trigger.jq_condition`
@@ -408,12 +416,14 @@ Optional:
 
 - `combinator` (String) The combinator of the condition
 
+
 <a id="nestedatt--automation_trigger--run_created_event"></a>
 ### Nested Schema for `automation_trigger.run_created_event`
 
 Required:
 
 - `action_identifier` (String) The action identifier of the created run
+
 
 <a id="nestedatt--automation_trigger--run_updated_event"></a>
 ### Nested Schema for `automation_trigger.run_updated_event`
@@ -422,6 +432,7 @@ Required:
 
 - `action_identifier` (String) The action identifier of the updated run
 
+
 <a id="nestedatt--automation_trigger--timer_property_expired_event"></a>
 ### Nested Schema for `automation_trigger.timer_property_expired_event`
 
@@ -429,6 +440,8 @@ Required:
 
 - `blueprint_identifier` (String) The blueprint identifier of the expired timer property
 - `property_identifier` (String) The property identifier of the expired timer property
+
+
 
 <a id="nestedatt--azure_method"></a>
 ### Nested Schema for `azure_method`
@@ -441,6 +454,7 @@ Required:
 Optional:
 
 - `payload` (String) The Azure Devops workflow [payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
+
 
 <a id="nestedatt--github_method"></a>
 ### Nested Schema for `github_method`
@@ -456,6 +470,7 @@ Optional:
 - `report_workflow_status` (String) Report the workflow status when invoking the action
 - `workflow_inputs` (String) The GitHub [workflow inputs](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 
+
 <a id="nestedatt--gitlab_method"></a>
 ### Nested Schema for `gitlab_method`
 
@@ -469,12 +484,14 @@ Optional:
 - `default_ref` (String) The default ref of the action
 - `pipeline_variables` (String) The Gitlab pipeline variables should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
 
+
 <a id="nestedatt--kafka_method"></a>
 ### Nested Schema for `kafka_method`
 
 Optional:
 
 - `payload` (String) The Kafka message [payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload) should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
+
 
 <a id="nestedatt--self_service_trigger"></a>
 ### Nested Schema for `self_service_trigger`
@@ -506,6 +523,9 @@ Optional:
 - `visible` (Boolean) The visibility of the step
 - `visible_jq_query` (String) The visibility condition jq query of the step
 
+
+
+
 <a id="nestedatt--self_service_trigger--titles"></a>
 ### Nested Schema for `self_service_trigger.titles`
 
@@ -518,6 +538,7 @@ Optional:
 - `description` (String) The description of the action title
 - `visible` (Boolean) The visibility of the string property
 - `visible_jq_query` (String) The visibility condition jq query of the string property
+
 
 <a id="nestedatt--self_service_trigger--user_properties"></a>
 ### Nested Schema for `self_service_trigger.user_properties`
@@ -562,6 +583,7 @@ Optional:
 
 - `default` (List of Boolean) The default values for the boolean items
 
+
 <a id="nestedatt--self_service_trigger--user_properties--array_props--number_items"></a>
 ### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
 
@@ -571,12 +593,14 @@ Optional:
 - `enum` (List of Number) The enum of possible values for the number items
 - `enum_jq_query` (String) The jq query for the enum number items
 
+
 <a id="nestedatt--self_service_trigger--user_properties--array_props--object_items"></a>
 ### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
 
 Optional:
 
 - `default` (List of Map of String) The default values for the object items
+
 
 <a id="nestedatt--self_service_trigger--user_properties--array_props--sort"></a>
 ### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
@@ -588,6 +612,7 @@ Required:
 Optional:
 
 - `order` (String) The order to sort the entities in
+
 
 <a id="nestedatt--self_service_trigger--user_properties--array_props--string_items"></a>
 ### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
@@ -618,6 +643,7 @@ Optional:
 - `visible` (Boolean) The visibility of the boolean property
 - `visible_jq_query` (String) The visibility condition jq query of the boolean property
 
+
 <a id="nestedatt--self_service_trigger--user_properties--number_props"></a>
 ### Nested Schema for `self_service_trigger.user_properties.number_props`
 
@@ -640,6 +666,7 @@ Optional:
 - `visible` (Boolean) The visibility of the number property
 - `visible_jq_query` (String) The visibility condition jq query of the number property
 
+
 <a id="nestedatt--self_service_trigger--user_properties--object_props"></a>
 ### Nested Schema for `self_service_trigger.user_properties.object_props`
 
@@ -657,6 +684,7 @@ Optional:
 - `title` (String) The title of the property
 - `visible` (Boolean) The visibility of the object property
 - `visible_jq_query` (String) The visibility condition jq query of the object property
+
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props`
@@ -715,6 +743,9 @@ Optional:
 
 - `jq_query` (String)
 
+
+
+
 <a id="nestedatt--self_service_trigger--user_properties--string_props--sort"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query`
 
@@ -725,6 +756,10 @@ Required:
 Optional:
 
 - `order` (String) The order to sort the entities in
+
+
+
+
 
 <a id="nestedatt--upsert_entity_method"></a>
 ### Nested Schema for `upsert_entity_method`
@@ -749,6 +784,8 @@ Optional:
 - `relations` (String) The relations of the entity (key-value object encoded to a string)
 - `teams` (Set of String) The teams the entity belongs to
 - `teams_jq` (String) Jq that returns the teams the entity belongs to
+
+
 
 <a id="nestedatt--webhook_method"></a>
 ### Nested Schema for `webhook_method`

@@ -70,6 +70,10 @@ func refreshBlueprintPermissionsState(state *BlueprintPermissionsModel, a *cli.B
 		oldPermissions.UpdateProperties = &BlueprintRelationsPermissionsTFBlock{}
 	}
 
+	if oldPermissions.UpdateMetadataProperties == nil {
+		oldPermissions.UpdateMetadataProperties = &BlueprintMetadataPermissionsTFBlock{}
+	}
+
 	state.Entities.UpdateProperties = nil
 	var mappedUpdateProperties BlueprintRelationsPermissionsTFBlock = nil
 	if len(a.Entities.UpdateProperties) > 0 {

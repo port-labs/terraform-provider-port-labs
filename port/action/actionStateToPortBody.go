@@ -79,8 +79,8 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action,
 		}
 	}
 
-	if !data.IsViewRunAccess.IsNull() {
-		action.IsViewRunAccess = data.IsViewRunAccess.ValueBoolPointer()
+	if !data.AllowAnyoneToViewRuns.IsNull() {
+		action.AllowAnyoneToViewRuns = data.AllowAnyoneToViewRuns.ValueBoolPointer()
 	}
 
 	return action, nil

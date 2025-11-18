@@ -3610,3 +3610,52 @@ func TestAccPortActionStepsVisibleJqQuery(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortActionAllowAnyoneToViewRuns(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+
+	type testAllowAnyoneToViewRunsParams struct {
+		allowAnyoneToViewRuns bool
+	}
+
+	testConfig := func(params testAllowAnyoneToViewRunsParams) string {
+		return testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+		}
+		kafka_method = {}
+		allow_anyone_to_view_runs = %t
+	}`, actionIdentifier, params.allowAnyoneToViewRuns)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testConfig(testAllowAnyoneToViewRunsParams{allowAnyoneToViewRuns: true}),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "allow_anyone_to_view_runs", "true"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testConfig(testAllowAnyoneToViewRunsParams{allowAnyoneToViewRuns: false}),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "allow_anyone_to_view_runs", "false"),
+				),
+			},
+		},
+	})
+}

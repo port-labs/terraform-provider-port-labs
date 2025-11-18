@@ -232,15 +232,15 @@ type ArrayPropModel struct {
 	Disabled        types.Bool   `tfsdk:"disabled"`
 	DisabledJqQuery types.String `tfsdk:"disabled_jq_query"`
 
-	MaxItems        types.Int64  `tfsdk:"max_items"`
-	MaxItemsJqQuery types.String `tfsdk:"max_items_jq_query"`
-	MinItems        types.Int64  `tfsdk:"min_items"`
-	MinItemsJqQuery types.String `tfsdk:"min_items_jq_query"`
-	StringItems  *StringItems       `tfsdk:"string_items"`
-	NumberItems  *NumberItems       `tfsdk:"number_items"`
-	BooleanItems *BooleanItems      `tfsdk:"boolean_items"`
-	ObjectItems  *ObjectItems       `tfsdk:"object_items"`
-	Sort         *EntitiesSortModel `tfsdk:"sort"`
+	MaxItems        types.Int64        `tfsdk:"max_items"`
+	MaxItemsJqQuery types.String       `tfsdk:"max_items_jq_query"`
+	MinItems        types.Int64        `tfsdk:"min_items"`
+	MinItemsJqQuery types.String       `tfsdk:"min_items_jq_query"`
+	StringItems     *StringItems       `tfsdk:"string_items"`
+	NumberItems     *NumberItems       `tfsdk:"number_items"`
+	BooleanItems    *BooleanItems      `tfsdk:"boolean_items"`
+	ObjectItems     *ObjectItems       `tfsdk:"object_items"`
+	Sort            *EntitiesSortModel `tfsdk:"sort"`
 }
 
 type ObjectPropModel struct {
@@ -438,7 +438,7 @@ type ActionModel struct {
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
 	Publish                     types.Bool                        `tfsdk:"publish"`
-	IsViewRunAccess             types.Bool                        `tfsdk:"is_view_run_access"`
+	AllowAnyoneToViewRuns       types.Bool 						  `tfsdk:"allow_anyone_to_view_runs"`
 }
 
 // ActionValidationModel is a model used for the validation of ActionModel resources
@@ -461,5 +461,5 @@ type ActionValidationModel struct {
 	ApprovalWebhookNotification types.Object `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object `tfsdk:"approval_email_notification"`
 	Publish                     types.Bool   `tfsdk:"publish"`
-	IsViewRunAccess             types.Bool   `tfsdk:"is_view_run_access"`
+	AllowAnyoneToViewRuns       types.Bool   `tfsdk:"allow_anyone_to_view_runs"`
 }

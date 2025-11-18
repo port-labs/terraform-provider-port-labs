@@ -525,7 +525,7 @@ func (r *ActionResource) refreshActionState(ctx context.Context, state *ActionMo
 		}
 	}
 	state.Publish = flex.GoBoolToFramework(a.Publish)
-	state.IsViewRunAccess = flex.GoBoolToFramework(a.IsViewRunAccess)
+	state.AllowAnyoneToViewRuns = flex.GoBoolToFramework(a.AllowAnyoneToViewRuns)
 
 	return nil
 }

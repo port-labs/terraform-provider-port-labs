@@ -502,8 +502,10 @@ Required:
 
 Optional:
 
+- `action_card_button_text` (String) The text of the button that will be displayed in the self service action card
 - `blueprint_identifier` (String) The ID of the blueprint
 - `condition` (String) The `condition` field allows you to define rules using Port's [search & query syntax](https://docs.getport.io/search-and-query/#rules) to determine which entities the action will be available for.
+- `execute_action_button_text` (String) The text of the button that will be displayed for executing the action
 - `order_properties` (List of String) Order properties
 - `required_jq_query` (String) The required jq query of the property
 - `steps` (Attributes List) The steps of the action (see [below for nested schema](#nestedatt--self_service_trigger--steps))

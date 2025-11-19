@@ -161,6 +161,15 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 			selfServiceTrigger.Condition = &condition
 		}
 
+		if !data.SelfServiceTrigger.ActionCardButtonText.IsNull() {
+			selfServiceTrigger.ActionCardButtonText = data.SelfServiceTrigger.ActionCardButtonText.ValueStringPointer()
+		}
+
+		if !data.SelfServiceTrigger.ExecuteActionButtonText.IsNull() {
+			selfServiceTrigger.ExecuteActionButtonText = data.SelfServiceTrigger.ExecuteActionButtonText.ValueStringPointer()
+		}
+
+
 		return selfServiceTrigger, nil
 	}
 

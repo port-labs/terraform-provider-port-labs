@@ -3659,3 +3659,62 @@ func TestAccPortActionAllowAnyoneToViewRuns(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortActionButtonTexts(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+
+	type testButtonTextsParams struct {
+		actionCardButtonText    string
+		executeActionButtonText string
+	}
+
+	testConfig := func(params testButtonTextsParams) string {
+		return testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			action_card_button_text = %q
+			execute_action_button_text = %q
+		}
+		kafka_method = {}
+	}`, actionIdentifier, params.actionCardButtonText, params.executeActionButtonText)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testConfig(testButtonTextsParams{
+					actionCardButtonText:    "Start Action",
+					executeActionButtonText: "Execute Now",
+				}),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.action_card_button_text", "Start Action"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.execute_action_button_text", "Execute Now"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testConfig(testButtonTextsParams{
+					actionCardButtonText:    "Custom Button",
+					executeActionButtonText: "Run Action",
+				}),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.action_card_button_text", "Custom Button"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.execute_action_button_text", "Run Action"),
+				),
+			},
+		},
+	})
+}

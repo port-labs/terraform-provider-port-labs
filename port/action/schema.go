@@ -194,6 +194,14 @@ func ActionSchema() map[string]schema.Attribute {
 					MarkdownDescription: "The `condition` field allows you to define rules using Port's [search & query syntax](https://docs.getport.io/search-and-query/#rules) to determine which entities the action will be available for.",
 					Optional:            true,
 				},
+				"action_card_button_text": schema.StringAttribute{
+					MarkdownDescription: "The text of the button that will be displayed in the self service action card",
+					Optional:            true,
+				},
+				"execute_action_button_text": schema.StringAttribute{
+					MarkdownDescription: "The text of the button that will be displayed for executing the action",
+					Optional:            true,
+				},
 			},
 			Validators: []validator.Object{
 				objectvalidator.ExactlyOneOf(

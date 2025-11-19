@@ -257,12 +257,14 @@ type (
 	}
 
 	Trigger struct {
-		Type                string            `json:"type"`
-		BlueprintIdentifier *string           `json:"blueprintIdentifier,omitempty"`
-		Operation           *string           `json:"operation,omitempty"`
-		UserInputs          *ActionUserInputs `json:"userInputs,omitempty"`
-		Event               *TriggerEvent     `json:"event,omitempty"`
-		Condition           *TriggerCondition `json:"condition,omitempty"`
+		Type                    string            `json:"type"`
+		BlueprintIdentifier     *string           `json:"blueprintIdentifier,omitempty"`
+		Operation               *string           `json:"operation,omitempty"`
+		UserInputs              *ActionUserInputs `json:"userInputs,omitempty"`
+		Event                   *TriggerEvent     `json:"event,omitempty"`
+		Condition               *TriggerCondition `json:"condition,omitempty"`
+		ActionCardButtonText    *string           `json:"actionCardButtonText,omitempty"`
+		ExecuteActionButtonText *string           `json:"executeActionButtonText,omitempty"`
 	}
 
 	Blueprint struct {

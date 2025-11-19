@@ -526,6 +526,8 @@ func (r *ActionResource) refreshActionState(ctx context.Context, state *ActionMo
 	}
 	state.Publish = flex.GoBoolToFramework(a.Publish)
 	state.AllowAnyoneToViewRuns = flex.GoBoolToFramework(a.AllowAnyoneToViewRuns)
+	state.SelfServiceTrigger.ActionCardButtonText = flex.GoStringToFramework(a.Trigger.ActionCardButtonText)
+	state.SelfServiceTrigger.ExecuteActionButtonText = flex.GoStringToFramework(a.Trigger.ExecuteActionButtonText)
 
 	return nil
 }

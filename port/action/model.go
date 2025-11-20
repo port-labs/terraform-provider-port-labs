@@ -305,14 +305,16 @@ type ActionTitle struct {
 }
 
 type SelfServiceTriggerModel struct {
-	BlueprintIdentifier types.String           `tfsdk:"blueprint_identifier"`
-	Operation           types.String           `tfsdk:"operation"`
-	UserProperties      *UserPropertiesModel   `tfsdk:"user_properties"`
-	Titles              map[string]ActionTitle `tfsdk:"titles"`
-	RequiredJqQuery     types.String           `tfsdk:"required_jq_query"`
-	OrderProperties     types.List             `tfsdk:"order_properties"`
-	Steps               []Step                 `tfsdk:"steps"`
-	Condition           types.String           `tfsdk:"condition"`
+	BlueprintIdentifier     types.String           `tfsdk:"blueprint_identifier"`
+	Operation               types.String           `tfsdk:"operation"`
+	UserProperties          *UserPropertiesModel   `tfsdk:"user_properties"`
+	Titles                  map[string]ActionTitle `tfsdk:"titles"`
+	RequiredJqQuery         types.String           `tfsdk:"required_jq_query"`
+	OrderProperties         types.List             `tfsdk:"order_properties"`
+	Steps                   []Step                 `tfsdk:"steps"`
+	Condition               types.String           `tfsdk:"condition"`
+	ActionCardButtonText    types.String           `tfsdk:"action_card_button_text"`
+	ExecuteActionButtonText types.String           `tfsdk:"execute_action_button_text"`
 }
 
 type EntityCreatedEventModel struct {

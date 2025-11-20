@@ -368,11 +368,13 @@ func (r *ActionResource) writeTriggerToResource(ctx context.Context, a *cli.Acti
 		}
 		requiredJqQuery, _ := buildRequired(a.Trigger.UserInputs)
 		state.SelfServiceTrigger = &SelfServiceTriggerModel{
-			BlueprintIdentifier: flex.GoStringToFramework(a.Trigger.BlueprintIdentifier),
-			Operation:           types.StringValue(*a.Trigger.Operation),
-			UserProperties:      userProperties,
-			RequiredJqQuery:     requiredJqQuery,
-			Titles:              actionTitles,
+			BlueprintIdentifier:     flex.GoStringToFramework(a.Trigger.BlueprintIdentifier),
+			Operation:               types.StringValue(*a.Trigger.Operation),
+			UserProperties:          userProperties,
+			RequiredJqQuery:         requiredJqQuery,
+			Titles:                  actionTitles,
+			ActionCardButtonText:    flex.GoStringToFramework(a.Trigger.ActionCardButtonText),
+			ExecuteActionButtonText: flex.GoStringToFramework(a.Trigger.ExecuteActionButtonText),
 		}
 
 		if len(a.Trigger.UserInputs.Order) > 0 {

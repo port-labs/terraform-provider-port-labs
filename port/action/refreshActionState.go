@@ -368,11 +368,13 @@ func (r *ActionResource) writeTriggerToResource(ctx context.Context, a *cli.Acti
 		}
 		requiredJqQuery, _ := buildRequired(a.Trigger.UserInputs)
 		state.SelfServiceTrigger = &SelfServiceTriggerModel{
-			BlueprintIdentifier: flex.GoStringToFramework(a.Trigger.BlueprintIdentifier),
-			Operation:           types.StringValue(*a.Trigger.Operation),
-			UserProperties:      userProperties,
-			RequiredJqQuery:     requiredJqQuery,
-			Titles:              actionTitles,
+			BlueprintIdentifier:     flex.GoStringToFramework(a.Trigger.BlueprintIdentifier),
+			Operation:               types.StringValue(*a.Trigger.Operation),
+			UserProperties:          userProperties,
+			RequiredJqQuery:         requiredJqQuery,
+			Titles:                  actionTitles,
+			ActionCardButtonText:    flex.GoStringToFramework(a.Trigger.ActionCardButtonText),
+			ExecuteActionButtonText: flex.GoStringToFramework(a.Trigger.ExecuteActionButtonText),
 		}
 
 		if len(a.Trigger.UserInputs.Order) > 0 {
@@ -526,14 +528,6 @@ func (r *ActionResource) refreshActionState(ctx context.Context, state *ActionMo
 	}
 	state.Publish = flex.GoBoolToFramework(a.Publish)
 	state.AllowAnyoneToViewRuns = flex.GoBoolToFramework(a.AllowAnyoneToViewRuns)
-
-	if a.Trigger.ActionCardButtonText != nil {
-		state.SelfServiceTrigger.ActionCardButtonText = flex.GoStringToFramework(a.Trigger.ActionCardButtonText)
-	}
-
-	if a.Trigger.ExecuteActionButtonText != nil {
-		state.SelfServiceTrigger.ExecuteActionButtonText = flex.GoStringToFramework(a.Trigger.ExecuteActionButtonText)
-	}
 
 	return nil
 }

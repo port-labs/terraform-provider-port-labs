@@ -300,3 +300,259 @@ resource "port_page" "microservice_dashboard_page_2" {
 		},
 	})
 }
+
+func TestAccPortPageResourceWithoutFilters(t *testing.T) {
+	pageIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testAccPortPageResourceWithoutFilters = fmt.Sprintf(`
+resource "port_page" "page_without_filters" {
+  identifier = "%s"
+  title      = "Page Without Filters"
+  icon       = "Dashboard"
+  type       = "dashboard"
+  widgets    = [
+    jsonencode(
+      {
+        "id" = "dashboardWidget"
+        "type" = "dashboard-widget"
+        "layout" = [
+          {
+            "height" = 400
+            "columns" = [
+              {
+                "id" = "widget1"
+                "size" = 12
+              }
+            ]
+          }
+        ]
+        "widgets" = [
+          {
+            "id" = "widget1"
+            "type" = "markdown"
+            "title" = "Test Widget"
+            "markdown" = "# Test"
+          }
+        ]
+      }
+    )
+  ]
+}
+`, pageIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccPortPageResourceWithoutFilters,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.page_without_filters", "identifier", pageIdentifier),
+					resource.TestCheckResourceAttr("port_page.page_without_filters", "title", "Page Without Filters"),
+					resource.TestCheckResourceAttr("port_page.page_without_filters", "type", "dashboard"),
+					resource.TestCheckResourceAttr("port_page.page_without_filters", "widgets.#", "1"),
+					resource.TestCheckResourceAttr("port_page.page_without_filters", "page_filters.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortPageResourceWithFilters(t *testing.T) {
+	serviceBlueprintIdentifier := utils.GenID()
+	clusterBlueprintIdentifier := utils.GenID()
+	pageIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var testAccPortPageResourceWithFilters = fmt.Sprintf(`
+resource "port_blueprint" "service" {
+  identifier  = "%s"
+  title       = "Service Test"
+  icon        = "Microservice"
+  description = "Service entities for testing filters"
+
+  properties = {
+    string_props = {
+      language = {
+        type = "string"
+      }
+    }
+  }
+}
+
+resource "port_blueprint" "cluster" {
+  identifier  = "%s"
+  title       = "Cluster Test"
+  icon        = "Cluster"
+  description = "Cluster entities for testing filters"
+
+  properties = {
+    string_props = {
+      studio = {
+        type = "string"
+      }
+    }
+  }
+}
+
+resource "port_entity" "service_ruby" {
+  title     = "Ruby Service"
+  blueprint = port_blueprint.service.identifier
+
+  properties = {
+    string_props = {
+      language = "Ruby"
+    }
+  }
+
+  depends_on = [port_blueprint.service]
+}
+
+resource "port_entity" "service_python" {
+  title     = "Python Service"
+  blueprint = port_blueprint.service.identifier
+
+  properties = {
+    string_props = {
+      language = "Python"
+    }
+  }
+
+  depends_on = [port_blueprint.service]
+}
+
+resource "port_entity" "cluster_studio1" {
+  title     = "Studio 1 Cluster"
+  blueprint = port_blueprint.cluster.identifier
+
+  properties = {
+    string_props = {
+      studio = "Studio1"
+    }
+  }
+
+  depends_on = [port_blueprint.cluster]
+}
+
+resource "port_entity" "cluster_studio2" {
+  title     = "Studio 2 Cluster"
+  blueprint = port_blueprint.cluster.identifier
+
+  properties = {
+    string_props = {
+      studio = "Studio2"
+    }
+  }
+
+  depends_on = [port_blueprint.cluster]
+}
+
+resource "port_page" "page_with_filters" {
+  identifier = "%s"
+  title      = "Page With Filters"
+  icon       = "Dashboard"
+  type       = "dashboard"
+
+  depends_on = [
+    port_blueprint.service,
+    port_blueprint.cluster,
+    port_entity.service_ruby,
+    port_entity.service_python,
+    port_entity.cluster_studio1,
+    port_entity.cluster_studio2
+  ]
+
+  page_filters = [
+    jsonencode(
+      {
+        "identifier" = "filter-1"
+        "title"      = "Service: language = Ruby"
+        "query" = {
+          "combinator" = "and"
+          "rules" = [
+            {
+              "value"    = "Ruby"
+              "property" = "language"
+              "operator" = "="
+            }
+          ]
+          "blueprint" = port_blueprint.service.identifier
+        }
+      }
+    ),
+    jsonencode(
+      {
+        "identifier" = "filter-2"
+        "title"      = "Cluster: studio != Studio1"
+        "query" = {
+          "combinator" = "and"
+          "rules" = [
+            {
+              "value"    = "Studio1"
+              "property" = "studio"
+              "operator" = "!="
+            }
+          ]
+          "blueprint" = port_blueprint.cluster.identifier
+        }
+      }
+    )
+  ]
+
+  widgets = [
+    jsonencode(
+      {
+        "id" = "dashboardWidget"
+        "type" = "dashboard-widget"
+        "layout" = [
+          {
+            "height" = 400
+            "columns" = [
+              {
+                "id" = "widget1"
+                "size" = 12
+              }
+            ]
+          }
+        ]
+        "widgets" = [
+          {
+            "id" = "widget1"
+            "type" = "table-entities-explorer"
+            "title" = "Services Table"
+            "blueprint" = port_blueprint.service.identifier
+            "dataset" = {
+              "combinator" = "and"
+              "rules" = []
+            }
+          }
+        ]
+      }
+    )
+  ]
+}
+`, serviceBlueprintIdentifier, clusterBlueprintIdentifier, pageIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccPortPageResourceWithFilters,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.page_with_filters", "identifier", pageIdentifier),
+					resource.TestCheckResourceAttr("port_page.page_with_filters", "title", "Page With Filters"),
+					resource.TestCheckResourceAttr("port_page.page_with_filters", "type", "dashboard"),
+					resource.TestCheckResourceAttr("port_page.page_with_filters", "widgets.#", "1"),
+					resource.TestCheckResourceAttr("port_page.page_with_filters", "page_filters.#", "2"),
+				),
+			},
+		},
+	})
+}

@@ -18,8 +18,8 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	pm.Blueprint = types.StringPointerValue(b.Blueprint)
 	pm.Description = types.StringPointerValue(b.Description)
 
-	pm.Widgets = make([]types.String, len(*b.Widgets))
 	if b.Widgets != nil {
+		pm.Widgets = make([]types.String, len(*b.Widgets))
 		// go over each widget and convert it to a string and store it in the widgets array
 		for i, widget := range *b.Widgets {
 			bWidget, err := utils.GoObjectToTerraformString(widget, r.portClient.JSONEscapeHTML)
@@ -28,10 +28,12 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 			}
 			pm.Widgets[i] = bWidget
 		}
+	} else {
+		pm.Widgets = make([]types.String, 0)
 	}
 
-	pm.PageFilters = make([]types.String, len(*b.PageFilters))
 	if b.PageFilters != nil {
+		pm.PageFilters = make([]types.String, len(*b.PageFilters))
 		// go over each page filter and convert it to a string and store it in the page filters array
 		for i, pageFilter := range *b.PageFilters {
 			bFilter, err := utils.GoObjectToTerraformString(pageFilter, r.portClient.JSONEscapeHTML)
@@ -40,6 +42,8 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 			}
 			pm.PageFilters[i] = bFilter
 		}
+	} else {
+		pm.PageFilters = make([]types.String, 0)
 	}
 	return nil
 }

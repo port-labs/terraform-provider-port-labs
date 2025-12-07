@@ -13,6 +13,7 @@ type PageModel struct {
 	Locked      types.Bool     `tfsdk:"locked"`
 	Blueprint   types.String   `tfsdk:"blueprint"`
 	Widgets     []types.String `tfsdk:"widgets"`
+	PageFilters []types.String `tfsdk:"page_filters"`
 	CreatedAt   types.String   `tfsdk:"created_at"`
 	CreatedBy   types.String   `tfsdk:"created_by"`
 	UpdatedAt   types.String   `tfsdk:"updated_at"`

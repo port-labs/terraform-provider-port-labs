@@ -29,5 +29,17 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 			pm.Widgets[i] = bWidget
 		}
 	}
+
+	pm.PageFilters = make([]types.String, len(*b.PageFilters))
+	if b.PageFilters != nil {
+		// go over each page filter and convert it to a string and store it in the page filters array
+		for i, pageFilter := range *b.PageFilters {
+			bFilter, err := utils.GoObjectToTerraformString(pageFilter, r.portClient.JSONEscapeHTML)
+			if err != nil {
+				return err
+			}
+			pm.PageFilters[i] = bFilter
+		}
+	}
 	return nil
 }

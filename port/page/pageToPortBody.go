@@ -25,6 +25,12 @@ func PageToPortBody(pm *PageModel) (*cli.Page, error) {
 	}
 	pb.Widgets = widgets
 
+	pageFilters, err := pageFiltersToPortBody(pm.PageFilters)
+	if err != nil {
+		return nil, err
+	}
+	pb.PageFilters = pageFilters
+
 	return pb, nil
 }
 
@@ -44,4 +50,22 @@ func widgetsToPortBody(widgets []types.String) (*[]map[string]any, error) {
 	}
 
 	return &widgetsBody, nil
+}
+
+func pageFiltersToPortBody(pageFilters []types.String) (*[]map[string]any, error) {
+	if pageFilters == nil {
+		return nil, nil
+	}
+	pageFiltersBody := make([]map[string]any, len(pageFilters))
+	for i, pf := range pageFilters {
+		v, err := utils.TerraformJsonStringToGoObject(pf.ValueStringPointer())
+
+		if err != nil {
+			return nil, err
+		}
+
+		pageFiltersBody[i] = *v
+	}
+
+	return &pageFiltersBody, nil
 }

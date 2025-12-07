@@ -1,6 +1,8 @@
 package page
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
@@ -29,7 +31,7 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 			pm.Widgets[i] = bWidget
 		}
 	} else {
-		pm.Widgets = make([]types.String, 0)
+		pm.Widgets = nil
 	}
 
 	if b.PageFilters != nil {
@@ -43,7 +45,7 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 			pm.PageFilters[i] = bFilter
 		}
 	} else {
-		pm.PageFilters = make([]types.String, 0)
+		pm.PageFilters = nil
 	}
 	return nil
 }

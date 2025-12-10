@@ -14,7 +14,8 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"installation_id": schema.StringAttribute{
-			Required: true,
+			MarkdownDescription: "The installation ID of the integration. Cannot contain spaces - use dashes (-) instead.",
+			Required:            true,
 		},
 		"version": schema.StringAttribute{
 			Optional: true,

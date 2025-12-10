@@ -3,6 +3,7 @@ package integration_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -211,6 +212,28 @@ func TestPortIntegrationImport(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateId:     integrationIdentifier,
+			},
+		},
+	})
+}
+
+func TestPortIntegrationWithSpaces(t *testing.T) {
+	// Test integration identifier with spaces to verify validation error is raised
+	integrationIdentifierWithSpaces := "my integration with spaces"
+	installationAppType := "kafka"
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testPortIntegrationResourceWithSpaces = createIntegration(integrationIdentifierWithSpaces, installationAppType)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testPortIntegrationResourceWithSpaces,
+				ExpectError: regexp.MustCompile(`installation_id cannot contain spaces`),
 			},
 		},
 	})

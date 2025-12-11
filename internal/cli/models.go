@@ -133,17 +133,17 @@ type (
 	}
 
 	BlueprintCalculationProperty struct {
-		Type               string             `json:"type,omitempty"`
-		Title              *string            `json:"title,omitempty"`
-		Identifier         string             `json:"identifier,omitempty"`
-		Calculation        string             `json:"calculation,omitempty"`
-		Default            any                `json:"default,omitempty"`
-		Icon               *string            `json:"icon,omitempty"`
-		Format             *string            `json:"format,omitempty"`
-		Description        *string            `json:"description,omitempty"`
-		Colorized          *bool              `json:"colorized,omitempty"`
-		Colors             map[string]string  `json:"colors,omitempty"`
-		Spec               *string            `json:"spec,omitempty"`
+		Type               string              `json:"type,omitempty"`
+		Title              *string             `json:"title,omitempty"`
+		Identifier         string              `json:"identifier,omitempty"`
+		Calculation        string              `json:"calculation,omitempty"`
+		Default            any                 `json:"default,omitempty"`
+		Icon               *string             `json:"icon,omitempty"`
+		Format             *string             `json:"format,omitempty"`
+		Description        *string             `json:"description,omitempty"`
+		Colorized          *bool               `json:"colorized,omitempty"`
+		Colors             map[string]string   `json:"colors,omitempty"`
+		Spec               *string             `json:"spec,omitempty"`
 		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
 	}
 
@@ -284,17 +284,17 @@ type (
 	}
 
 	Action struct {
-		ID                   string                `json:"id,omitempty"`
-		Identifier           string                `json:"identifier"`
-		Title                *string               `json:"title,omitempty"`
-		Icon                 *string               `json:"icon,omitempty"`
-		Description          *string               `json:"description,omitempty"`
-		Trigger              *Trigger              `json:"trigger"`
-		InvocationMethod     *InvocationMethod     `json:"invocationMethod,omitempty"`
-		RequiredApproval     any                   `json:"requiredApproval,omitempty"`
-		ApprovalNotification *ApprovalNotification `json:"approvalNotification,omitempty"`
-		Publish              *bool                 `json:"publish,omitempty"`
-		AllowAnyoneToViewRuns      *bool			`json:"allowAnyoneToViewRuns,omitempty"`
+		ID                    string                `json:"id,omitempty"`
+		Identifier            string                `json:"identifier"`
+		Title                 *string               `json:"title,omitempty"`
+		Icon                  *string               `json:"icon,omitempty"`
+		Description           *string               `json:"description,omitempty"`
+		Trigger               *Trigger              `json:"trigger"`
+		InvocationMethod      *InvocationMethod     `json:"invocationMethod,omitempty"`
+		RequiredApproval      any                   `json:"requiredApproval,omitempty"`
+		ApprovalNotification  *ApprovalNotification `json:"approvalNotification,omitempty"`
+		Publish               *bool                 `json:"publish,omitempty"`
+		AllowAnyoneToViewRuns *bool                 `json:"allowAnyoneToViewRuns,omitempty"`
 	}
 
 	ActionExecutePermissions struct {
@@ -328,6 +328,7 @@ type (
 		Locked      *bool             `json:"locked,omitempty"`
 		Blueprint   *string           `json:"blueprint,omitempty"`
 		Widgets     *[]map[string]any `json:"widgets,omitempty"`
+		PageFilters *[]map[string]any `json:"pageFilters,omitempty"`
 		Description *string           `json:"description,omitempty"`
 	}
 

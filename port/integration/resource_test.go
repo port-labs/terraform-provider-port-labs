@@ -219,10 +219,6 @@ func TestPortIntegrationImport(t *testing.T) {
 
 func TestPortIntegrationInvalidIdentifier(t *testing.T) {
 	installationAppType := "kafka"
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	testCases := []struct {
 		name         string
@@ -279,12 +275,7 @@ func TestPortIntegrationInvalidIdentifier(t *testing.T) {
 }
 
 func TestPortIntegrationValidIdentifier(t *testing.T) {
-	// Test valid installation_id formats
 	installationAppType := "kafka"
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	testCases := []struct {
 		name       string

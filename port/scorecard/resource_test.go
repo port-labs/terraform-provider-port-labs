@@ -430,6 +430,7 @@ func TestAccPortScorecardImport(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateId:     fmt.Sprintf("%s:%s", blueprintIdentifier, scorecardIdentifier),
+				ImportStateVerifyIgnore: []string{"created_at", "updated_at"},
 			},
 		},
 	})

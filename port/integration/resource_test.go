@@ -3,6 +3,7 @@ package integration_test
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -214,4 +215,110 @@ func TestPortIntegrationImport(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestPortIntegrationInvalidIdentifier(t *testing.T) {
+	installationAppType := "kafka"
+
+	testCases := []struct {
+		name         string
+		identifier   string
+		errorPattern string
+	}{
+		{
+			name:         "spaces",
+			identifier:   "my integration with spaces",
+			errorPattern: `installation_id must match the pattern`,
+		},
+		{
+			name:         "uppercase letters",
+			identifier:   "MyIntegration",
+			errorPattern: `installation_id must match the pattern`,
+		},
+		{
+			name:         "starts with number",
+			identifier:   "123-integration",
+			errorPattern: `installation_id must match the pattern`,
+		},
+		{
+			name:         "ends with dash",
+			identifier:   "my-integration-",
+			errorPattern: `installation_id must match the pattern`,
+		},
+		{
+			name:         "starts with dash",
+			identifier:   "-my-integration",
+			errorPattern: `installation_id must match the pattern`,
+		},
+		{
+			name:         "special characters",
+			identifier:   "my_integration!",
+			errorPattern: `installation_id must match the pattern`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			config := createIntegration(tc.identifier, installationAppType)
+			resource.Test(t, resource.TestCase{
+				PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+				ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config:      config,
+						ExpectError: regexp.MustCompile(tc.errorPattern),
+					},
+				},
+			})
+		})
+	}
+}
+
+func TestPortIntegrationValidIdentifier(t *testing.T) {
+	installationAppType := "kafka"
+
+	testCases := []struct {
+		name       string
+		identifier string
+	}{
+		{
+			name:       "simple lowercase",
+			identifier: "myintegration",
+		},
+		{
+			name:       "with dashes",
+			identifier: "my-integration",
+		},
+		{
+			name:       "with numbers",
+			identifier: "my-integration-123",
+		},
+		{
+			name:       "starts with letter ends with number",
+			identifier: "integration1",
+		},
+		{
+			name:       "multiple dashes",
+			identifier: "my-custom-integration-v2",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			config := createIntegration(tc.identifier, installationAppType)
+			resource.Test(t, resource.TestCase{
+				PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+				ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config: config,
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", tc.identifier),
+							resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
+						),
+					},
+				},
+			})
+		})
+	}
 }

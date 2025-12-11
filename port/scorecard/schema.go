@@ -76,10 +76,16 @@ func ScorecardSchema() map[string]schema.Attribute {
 		"identifier": schema.StringAttribute{
 			MarkdownDescription: "The identifier of the scorecard",
 			Required:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.RequiresReplace(),
+			},
 		},
 		"blueprint": schema.StringAttribute{
 			MarkdownDescription: "The blueprint of the scorecard",
 			Required:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.RequiresReplace(),
+			},
 		},
 		"title": schema.StringAttribute{
 			MarkdownDescription: "The title of the scorecard",

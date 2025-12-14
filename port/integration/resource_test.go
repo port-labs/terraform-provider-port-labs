@@ -236,23 +236,18 @@ func TestPortIntegrationInvalidIdentifier(t *testing.T) {
 			errorPattern: `installation_id must match the pattern`,
 		},
 		{
-			name:         "starts with number",
-			identifier:   "123-integration",
+			name:         "special characters underscore",
+			identifier:   "my_integration",
 			errorPattern: `installation_id must match the pattern`,
 		},
 		{
-			name:         "ends with dash",
-			identifier:   "my-integration-",
+			name:         "special characters exclamation",
+			identifier:   "my-integration!",
 			errorPattern: `installation_id must match the pattern`,
 		},
 		{
-			name:         "starts with dash",
-			identifier:   "-my-integration",
-			errorPattern: `installation_id must match the pattern`,
-		},
-		{
-			name:         "special characters",
-			identifier:   "my_integration!",
+			name:         "special characters at",
+			identifier:   "my@integration",
 			errorPattern: `installation_id must match the pattern`,
 		},
 	}
@@ -300,6 +295,26 @@ func TestPortIntegrationValidIdentifier(t *testing.T) {
 		{
 			name:       "multiple dashes",
 			identifier: "my-custom-integration-v2",
+		},
+		{
+			name:       "starts with number",
+			identifier: "123-integration",
+		},
+		{
+			name:       "ends with dash",
+			identifier: "my-integration-",
+		},
+		{
+			name:       "starts with dash",
+			identifier: "-my-integration",
+		},
+		{
+			name:       "only numbers",
+			identifier: "12345",
+		},
+		{
+			name:       "only dashes",
+			identifier: "---",
 		},
 	}
 

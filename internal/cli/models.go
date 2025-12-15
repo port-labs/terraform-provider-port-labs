@@ -131,7 +131,87 @@ type (
 		Combinator string        `json:"combinator,omitempty"`
 		Rules      []DatasetRule `json:"rules,omitempty"`
 	}
+)
 
+// Custom UnmarshalJSON for DatasetValue to handle both simple values and jqQuery objects
+func (dv *DatasetValue) UnmarshalJSON(data []byte) error {
+	// Try to unmarshal as an object with jqQuery field first
+	type Alias DatasetValue
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(dv),
+	}
+
+	// If it unmarshals successfully as an object, we're done
+	if err := json.Unmarshal(data, aux); err == nil && dv.JqQuery != "" {
+		return nil
+	}
+
+	// Otherwise, it's a simple value (string, number, or bool)
+	// Unmarshal into a generic interface to determine the type
+	var rawValue any
+	if err := json.Unmarshal(data, &rawValue); err != nil {
+		return err
+	}
+
+	// Convert the raw value to a string for JqQuery
+	switch v := rawValue.(type) {
+	case string:
+		dv.JqQuery = v
+	case float64:
+		// JSON numbers are unmarshaled as float64
+		// Preserve the original number format from the JSON
+		dv.JqQuery = json.Number(data).String()
+	case bool:
+		if v {
+			dv.JqQuery = "true"
+		} else {
+			dv.JqQuery = "false"
+		}
+	case nil:
+		dv.JqQuery = ""
+	default:
+		// For any other type, try to marshal it back to JSON string
+		jsonBytes, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		dv.JqQuery = string(jsonBytes)
+	}
+
+	return nil
+}
+
+// Custom MarshalJSON for DatasetValue to preserve the original format when possible
+func (dv DatasetValue) MarshalJSON() ([]byte, error) {
+	// If JqQuery is empty, return null
+	if dv.JqQuery == "" {
+		return []byte("null"), nil
+	}
+
+	// Check if it's a boolean
+	if dv.JqQuery == "true" || dv.JqQuery == "false" {
+		return []byte(dv.JqQuery), nil
+	}
+
+	// Try to parse as a number
+	var numTest float64
+	if err := json.Unmarshal([]byte(dv.JqQuery), &numTest); err == nil {
+		// It's a valid number, return it as-is
+		return []byte(dv.JqQuery), nil
+	}
+
+	// Check if it's already a valid JSON string (starts and ends with quotes)
+	if len(dv.JqQuery) >= 2 && dv.JqQuery[0] == '"' && dv.JqQuery[len(dv.JqQuery)-1] == '"' {
+		return []byte(dv.JqQuery), nil
+	}
+
+	// Otherwise, marshal as a string value
+	return json.Marshal(dv.JqQuery)
+}
+
+type (
 	BlueprintCalculationProperty struct {
 		Type               string              `json:"type,omitempty"`
 		Title              *string             `json:"title,omitempty"`

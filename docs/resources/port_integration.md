@@ -94,7 +94,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 ### Required
 
-- `installation_id` (String) The installation ID of the integration. Must contain only lowercase letters, numbers, and dashes (pattern: `^[a-z0-9-]+$`).
+- `installation_id` (String) The installation ID of the integration. Must contain only lowercase letters, numbers, dashes and underscores (pattern: `^[a-z0-9-_]+$`).
 
 ### Optional
 

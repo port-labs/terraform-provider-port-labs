@@ -14,7 +14,7 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"installation_id": schema.StringAttribute{
-			MarkdownDescription: "The installation ID of the integration. Must contain only lowercase letters, numbers, and dashes (pattern: `" + installationIdPattern + "`).",
+			MarkdownDescription: "The installation ID of the integration. Must contain only lowercase letters, numbers, dashes and underscores (pattern: `" + installationIdPattern + "`).",
 			Required:            true,
 		},
 		"version": schema.StringAttribute{

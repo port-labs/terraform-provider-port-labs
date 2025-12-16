@@ -236,11 +236,6 @@ func TestPortIntegrationInvalidIdentifier(t *testing.T) {
 			errorPattern: `installation_id must match the pattern`,
 		},
 		{
-			name:         "special characters underscore",
-			identifier:   "my_integration",
-			errorPattern: `installation_id must match the pattern`,
-		},
-		{
 			name:         "special characters exclamation",
 			identifier:   "my-integration!",
 			errorPattern: `installation_id must match the pattern`,
@@ -315,6 +310,14 @@ func TestPortIntegrationValidIdentifier(t *testing.T) {
 		{
 			name:       "only dashes",
 			identifier: "---",
+		},
+		{
+			name:       "with underscores",
+			identifier: "my_integration",
+		},
+		{
+			name:       "mixed underscores and dashes",
+			identifier: "my_integration-v2",
 		},
 	}
 

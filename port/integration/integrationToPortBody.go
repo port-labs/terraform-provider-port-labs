@@ -9,7 +9,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-const installationIdPattern = `^[a-z0-9-]+$`
+const installationIdPattern = `^[a-z0-9-_]+$`
 var installationIdRegex = regexp.MustCompile(installationIdPattern)
 
 func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
@@ -20,7 +20,7 @@ func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
 	installationId := state.InstallationId.ValueString()
 
 	if !installationIdRegex.MatchString(installationId) {
-		return nil, fmt.Errorf("installation_id must match the pattern %s: must contain only lowercase letters, numbers, and dashes. Got: %q", installationIdPattern, installationId)
+		return nil, fmt.Errorf("installation_id must match the pattern %s: must contain only lowercase letters, numbers, dashes, and underscores. Got: %q", installationIdPattern, installationId)
 	}
 
 	integration := &cli.Integration{

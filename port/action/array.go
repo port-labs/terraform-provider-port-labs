@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -114,11 +115,25 @@ func handleArrayItemsToBody(ctx context.Context, property *cli.ActionProperty, p
 		items := map[string]interface{}{}
 		items["type"] = "object"
 		if !prop.ObjectItems.Default.IsNull() {
-			defaultList, err := utils.TerraformListToGoArray(ctx, prop.ObjectItems.Default, "object")
-			if err != nil {
-				return err
+			// Convert List[Map[String]] to []map[string]interface{}
+			// The API expects the default to be set at property.Default (like string_items)
+			defaultList := make([]map[string]interface{}, 0)
+			for _, elem := range prop.ObjectItems.Default.Elements() {
+				mapValue, ok := elem.(types.Map)
+				if !ok {
+					return fmt.Errorf("expected types.Map but got %T", elem)
+				}
+				objMap := make(map[string]interface{})
+				for key, val := range mapValue.Elements() {
+					strVal, ok := val.(types.String)
+					if !ok {
+						return fmt.Errorf("expected types.String but got %T", val)
+					}
+					objMap[key] = strVal.ValueString()
+				}
+				defaultList = append(defaultList, objMap)
 			}
-			items["default"] = defaultList
+			property.Default = defaultList
 		}
 
 		property.Items = items
@@ -216,7 +231,7 @@ func arrayPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, pr
 				DisabledJqQuery := map[string]string{
 					"jqQuery": prop.DisabledJqQuery.ValueString(),
 				}
-				property.Disabled = DisabledJqQuery 
+				property.Disabled = DisabledJqQuery
 			}
 
 			if prop.Sort != nil {
@@ -384,17 +399,46 @@ func (r *ActionResource) addArrayPropertiesToResource(v *cli.ActionProperty) (*A
 
 			case "object":
 				arrayProp.ObjectItems = &ObjectItems{}
+				// For object_items, the default is in v.Default (like string_items)
+				// because we set it at property.Default in the write path (handleArrayItemsToBody)
 				if v.Default != nil && arrayProp.DefaultJqQuery.IsNull() {
-					objectArray := make([]map[string]interface{}, len(v.Default.([]interface{})))
+					objectArray := v.Default.([]interface{})
 					attrs := make([]attr.Value, 0, len(objectArray))
-					for _, value := range v.Default.([]interface{}) {
-						stringValue, err := utils.GoObjectToTerraformString(value, r.portClient.JSONEscapeHTML)
-						if err != nil {
-							return nil, err
+					for _, value := range objectArray {
+						// Convert each object to a map[string]string
+						objMap, ok := value.(map[string]interface{})
+						if !ok {
+							return nil, fmt.Errorf("expected map[string]interface{} but got %T", value)
 						}
-						attrs = append(attrs, stringValue)
+						mapAttrs := make(map[string]attr.Value)
+						for k, v := range objMap {
+							// Convert all values to strings
+							var strValue string
+							switch val := v.(type) {
+							case string:
+								strValue = val
+							case float64:
+								strValue = fmt.Sprintf("%g", val)
+							case bool:
+								strValue = fmt.Sprintf("%t", val)
+							case nil:
+								strValue = ""
+							default:
+								// For complex types, convert to JSON string
+								jsonBytes, err := json.Marshal(val)
+								if err != nil {
+									return nil, fmt.Errorf("error marshaling object value: %w", err)
+								}
+								strValue = string(jsonBytes)
+							}
+							mapAttrs[k] = basetypes.NewStringValue(strValue)
+						}
+						mapValue, _ := types.MapValue(types.StringType, mapAttrs)
+						attrs = append(attrs, mapValue)
 					}
-					arrayProp.ObjectItems.Default, _ = types.ListValue(types.StringType, attrs)
+					arrayProp.ObjectItems.Default, _ = types.ListValue(types.MapType{ElemType: types.StringType}, attrs)
+				} else {
+					arrayProp.ObjectItems.Default = types.ListNull(types.MapType{ElemType: types.StringType})
 				}
 
 			}

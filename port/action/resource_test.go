@@ -3718,3 +3718,70 @@ func TestAccPortActionButtonTexts(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortActionArrayObjectItemsDefault(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test - Object Items Default"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				array_props = {
+					"related_repositories" = {
+						title = "Related Repositories"
+						description = "Select related repositories for deployment"
+						required = true
+						object_items = {
+							default = [
+								{
+									name = "example-repo-1"
+									url  = "https://github.com/example/repo-1"
+								},
+								{
+									name = "example-repo-2"
+									url  = "https://github.com/example/repo-2"
+								}
+							]
+						}
+					}
+				}
+			}
+		}
+		webhook_method = {
+			url = "https://api.example.com/deploy"
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test - Object Items Default"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.related_repositories.title", "Related Repositories"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.related_repositories.object_items.default.0.name", "example-repo-1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.related_repositories.object_items.default.0.url", "https://github.com/example/repo-1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.related_repositories.object_items.default.1.name", "example-repo-2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.related_repositories.object_items.default.1.url", "https://github.com/example/repo-2"),
+				),
+			},
+			{
+				// This step verifies that the resource can be read again without errors
+				// This is the critical test - it would fail with the original bug
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.related_repositories.object_items.default.0.name", "example-repo-1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.related_repositories.object_items.default.1.name", "example-repo-2"),
+				),
+			},
+		},
+	})
+}

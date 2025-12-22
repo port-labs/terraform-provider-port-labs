@@ -131,7 +131,74 @@ type (
 		Combinator string        `json:"combinator,omitempty"`
 		Rules      []DatasetRule `json:"rules,omitempty"`
 	}
+)
 
+// Custom UnmarshalJSON for DatasetValue to handle both simple values and jqQuery objects
+func (dv *DatasetValue) UnmarshalJSON(data []byte) error {
+	type Alias DatasetValue
+	aux := &struct {
+		*Alias
+	}{
+		Alias: (*Alias)(dv),
+	}
+
+	if err := json.Unmarshal(data, aux); err == nil && dv.JqQuery != "" {
+		return nil
+	}
+
+	var rawValue any
+	if err := json.Unmarshal(data, &rawValue); err != nil {
+		return err
+	}
+
+	switch v := rawValue.(type) {
+	case string:
+		dv.JqQuery = v
+	case float64:
+		dv.JqQuery = json.Number(data).String()
+	case bool:
+		if v {
+			dv.JqQuery = "true"
+		} else {
+			dv.JqQuery = "false"
+		}
+	case nil:
+		dv.JqQuery = ""
+	default:
+		jsonBytes, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		dv.JqQuery = string(jsonBytes)
+	}
+
+	return nil
+}
+
+	// Custom MarshalJSON for DatasetValue to preserve the original format when possible
+func (dv DatasetValue) MarshalJSON() ([]byte, error) {
+
+	if dv.JqQuery == "" {
+		return []byte("null"), nil
+	}
+
+	if dv.JqQuery == "true" || dv.JqQuery == "false" {
+		return []byte(dv.JqQuery), nil
+	}
+
+	var numTest float64
+	if err := json.Unmarshal([]byte(dv.JqQuery), &numTest); err == nil {
+		return []byte(dv.JqQuery), nil
+	}
+
+	if len(dv.JqQuery) >= 2 && dv.JqQuery[0] == '"' && dv.JqQuery[len(dv.JqQuery)-1] == '"' {
+		return []byte(dv.JqQuery), nil
+	}
+
+	return json.Marshal(dv.JqQuery)
+}
+
+type (
 	BlueprintCalculationProperty struct {
 		Type               string              `json:"type,omitempty"`
 		Title              *string             `json:"title,omitempty"`

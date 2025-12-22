@@ -1349,6 +1349,182 @@ func TestAccPortActionEnum(t *testing.T) {
 	})
 }
 
+func TestAccPortActionImportNonJqFields(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfig = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title      = "TF Provider Test - Import Non-JQ Fields"
+		identifier = "%s"
+		icon       = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				string_props = {
+					environment = {
+						title    = "Environment"
+						required = true
+						enum     = ["dev", "staging", "prod"]
+						default  = "dev"
+						enum_colors = {
+							"dev"     = "blue"
+							"staging" = "yellow"
+							"prod"    = "red"
+						}
+					}
+					region = {
+						title       = "Region"
+						pattern     = "^[a-z]{2}-[a-z]+-[0-9]$"
+						description = "AWS region pattern"
+					}
+					serviceName = {
+						title      = "Service Name"
+						min_length = 3
+						max_length = 50
+					}
+				}
+				number_props = {
+					replicas = {
+						title   = "Replicas"
+						minimum = 1
+						maximum = 10
+						default = 3
+						enum    = [1, 3, 5, 10]
+					}
+					port = {
+						title   = "Port"
+						minimum = 1024
+						maximum = 65535
+					}
+				}
+				boolean_props = {
+					enabled = {
+						title   = "Enabled"
+						default = true
+					}
+					autoScale = {
+						title = "Auto Scale"
+					}
+				}
+				array_props = {
+					tags = {
+						title      = "Tags"
+						min_items  = 1
+						max_items  = 5
+						string_items = {
+							format = "user"
+							enum   = ["tag1", "tag2", "tag3"]
+						}
+					}
+					ports = {
+						title      = "Ports"
+						min_items  = 1
+						max_items  = 10
+						number_items = {
+							enum = [80, 443, 8080, 3000]
+						}
+					}
+				}
+			}
+		}
+		webhook_method = {
+			url = "https://example.com/webhook"
+		}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfig,
+				Check: resource.ComposeTestCheckFunc(
+					// Basic action attributes
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test - Import Non-JQ Fields"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
+
+					// String property: environment - with enum, default, and enum_colors
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.environment.title", "Environment"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.environment.required", "true"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.environment.default", "dev"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.environment.enum.#", "3"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.environment.enum.0", "dev"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.environment.enum.1", "staging"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.environment.enum.2", "prod"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.environment.enum_colors.dev", "blue"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.environment.enum_colors.staging", "yellow"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.environment.enum_colors.prod", "red"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.environment.enum_jq_query"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.environment.default_jq_query"),
+
+					// String property: region - with pattern and description
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.region.title", "Region"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.region.pattern", "^[a-z]{2}-[a-z]+-[0-9]$"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.region.description", "AWS region pattern"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.region.pattern_jq_query"),
+
+					// String property: serviceName - with min_length and max_length
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.serviceName.title", "Service Name"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.serviceName.min_length", "3"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.string_props.serviceName.max_length", "50"),
+
+					// Number property: replicas - with minimum, maximum, default, and enum
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.replicas.title", "Replicas"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.replicas.minimum", "1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.replicas.maximum", "10"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.replicas.default", "3"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.replicas.enum.#", "4"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.replicas.enum.0", "1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.replicas.enum.3", "10"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.replicas.enum_jq_query"),
+
+					// Number property: port - with minimum and maximum
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.port.title", "Port"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.port.minimum", "1024"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.number_props.port.maximum", "65535"),
+
+					// Boolean property: enabled - with default
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.boolean_props.enabled.title", "Enabled"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.boolean_props.enabled.default", "true"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.boolean_props.enabled.default_jq_query"),
+
+					// Boolean property: autoScale - without default
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.boolean_props.autoScale.title", "Auto Scale"),
+
+					// Array property: tags - with min_items, max_items, and string_items
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.tags.title", "Tags"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.tags.min_items", "1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.tags.max_items", "5"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.tags.string_items.format", "user"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.tags.string_items.enum.#", "3"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.tags.string_items.enum.0", "tag1"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.tags.min_items_jq_query"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.tags.max_items_jq_query"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.tags.string_items.enum_jq_query"),
+
+					// Array property: ports - with number_items
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.ports.title", "Ports"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.ports.min_items", "1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.ports.max_items", "10"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.ports.number_items.enum.#", "4"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.ports.number_items.enum.0", "80"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.ports.number_items.enum.1", "443"),
+					resource.TestCheckNoResourceAttr("port_action.create_microservice", "self_service_trigger.user_properties.array_props.ports.number_items.enum_jq_query"),
+				),
+			},
+			{
+				// Import step - verifies all non-JQ fields are correctly imported
+				ResourceName:      "port_action.create_microservice",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     actionIdentifier,
+			},
+		},
+	})
+}
+
 func TestAccPortActionPatternJqQuery(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()

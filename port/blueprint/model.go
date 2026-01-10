@@ -13,8 +13,8 @@ type TeamInheritanceModel struct {
 }
 
 type OwnershipModel struct {
-	Type types.String `tfsdk:"type"`
-	Path types.String `tfsdk:"path"`
+	Type  types.String `tfsdk:"type"`
+	Path  types.String `tfsdk:"path"`
 	Title types.String `tfsdk:"title"`
 }
 
@@ -61,11 +61,11 @@ type BooleanPropModel struct {
 }
 
 type StringItems struct {
-	Format  types.String  `tfsdk:"format"`
-	Default types.List    `tfsdk:"default"`
-	Pattern types.String  `tfsdk:"pattern"`
-	Enum    types.List    `tfsdk:"enum"`
-	EnumColors types.Map  `tfsdk:"enum_colors"`
+	Format     types.String `tfsdk:"format"`
+	Default    types.List   `tfsdk:"default"`
+	Pattern    types.String `tfsdk:"pattern"`
+	Enum       types.List   `tfsdk:"enum"`
+	EnumColors types.Map    `tfsdk:"enum_colors"`
 }
 
 type NumberItems struct {
@@ -77,7 +77,8 @@ type BooleanItems struct {
 }
 
 type ObjectItems struct {
-	Default types.List `tfsdk:"default"`
+	Default types.List   `tfsdk:"default"`
+	Format  types.String `tfsdk:"format"`
 }
 
 type ArrayPropModel struct {
@@ -100,6 +101,7 @@ type ObjectPropModel struct {
 	Required    types.Bool   `tfsdk:"required"`
 	Default     types.String `tfsdk:"default"`
 	Spec        types.String `tfsdk:"spec"`
+	Format      types.String `tfsdk:"format"`
 }
 
 type PropertiesModel struct {

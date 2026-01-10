@@ -46,6 +46,11 @@ func objectPropResourceToBody(state *PropertiesModel, props map[string]cli.Bluep
 				property.Spec = &spec
 			}
 
+			if !prop.Format.IsNull() {
+				format := prop.Format.ValueString()
+				property.Format = &format
+			}
+
 			props[propIdentifier] = property
 		}
 
@@ -60,6 +65,10 @@ func AddObjectPropertiesToState(v *cli.BlueprintProperty) *ObjectPropModel {
 
 	if v.Spec != nil {
 		objectProp.Spec = types.StringValue(*v.Spec)
+	}
+
+	if v.Format != nil {
+		objectProp.Format = types.StringValue(*v.Format)
 	}
 
 	return objectProp

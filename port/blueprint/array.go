@@ -112,6 +112,9 @@ func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props 
 			if prop.ObjectItems != nil {
 				items := map[string]interface{}{}
 				items["type"] = "object"
+				if !prop.ObjectItems.Format.IsNull() {
+					items["format"] = prop.ObjectItems.Format.ValueString()
+				}
 				if !prop.ObjectItems.Default.IsNull() {
 					defaultList, err := utils.TerraformListToGoArray(ctx, prop.ObjectItems.Default, "object")
 					if err != nil {
@@ -205,6 +208,9 @@ func AddArrayPropertiesToState(ctx context.Context, v *cli.BlueprintProperty, js
 
 			case "object":
 				arrayProp.ObjectItems = &ObjectItems{}
+				if value, ok := v.Items["format"]; ok && value != nil {
+					arrayProp.ObjectItems.Format = types.StringValue(v.Items["format"].(string))
+				}
 				if v.Default != nil {
 					objectArray := make([]map[string]interface{}, len(v.Default.([]interface{})))
 					for i, v := range v.Default.([]interface{}) {

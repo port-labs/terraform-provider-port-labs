@@ -252,6 +252,10 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 			MarkdownDescription: "The items of the array property",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
+				"format": schema.StringAttribute{
+					MarkdownDescription: "The format of the object items",
+					Optional:            true,
+				},
 				"default": schema.ListAttribute{
 					MarkdownDescription: "The default of the items",
 					Optional:            true,
@@ -306,6 +310,10 @@ func ObjectPropertySchema() schema.MapNestedAttribute {
 			Validators: []validator.String{
 				stringvalidator.OneOf("async-api", "open-api"),
 			},
+		},
+		"format": schema.StringAttribute{
+			MarkdownDescription: "The format of the object property",
+			Optional:            true,
 		},
 		"default": schema.StringAttribute{
 			Optional:            true,

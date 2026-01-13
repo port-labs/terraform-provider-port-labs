@@ -409,6 +409,7 @@ Optional:
 Optional:
 
 - `default` (List of String) The default of the items
+- `format` (String) The format of the object items
 
 
 <a id="nestedatt--properties--array_props--string_items"></a>
@@ -459,6 +460,7 @@ Optional:
 
 - `default` (String) The default of the object property
 - `description` (String) The description of the property
+- `format` (String) The format of the object property
 - `icon` (String) The icon of the property
 - `required` (Boolean) Whether the property is required
 - `spec` (String) The spec of the object property

@@ -161,6 +161,48 @@ resource "port_page" "microservice_blueprint_page" {
 
 ` + "```" + `
 
+### Blueprint Entities Page with Board View
+
+The ` + "`table-entities-explorer`" + ` widget supports a ` + "`dataViewMode`" + ` property that controls how entities are displayed:
+- ` + "`table`" + ` (default): Display entities in a table format
+- ` + "`board`" + `: Display entities in a Kanban-style board format
+
+**Note:** When using ` + "`board`" + ` mode, you must configure exactly one ` + "`groupBy`" + ` property in the widget's ` + "`blueprintConfig`" + `. The board columns are determined by the values of this grouped property.
+
+` + "```hcl" + `
+
+resource "port_page" "microservice_board_page" {
+  identifier            = "microservice_board_page"
+  title                 = "Microservices Board"
+  type                  = "blueprint-entities"
+  icon                  = "Microservice"
+  blueprint             = port_blueprint.base_blueprint.identifier
+  widgets               = [
+    jsonencode(
+      {
+        "id" : "microservice-board",
+        "type" : "table-entities-explorer",
+        "blueprint" : port_blueprint.base_blueprint.identifier,
+        "dataViewMode" : "board",
+        "blueprintConfig" : {
+          (port_blueprint.base_blueprint.identifier) : {
+            "groupSettings" : {
+              "groupBy" : ["status"]
+            }
+          }
+        },
+        "dataset" : {
+          "combinator" : "and",
+          "rules" : [
+          ]
+        }
+      }
+    )
+  ]
+}
+
+` + "```" + `
+
 ### Dashboard Page
 
 ` + "```hcl" + `

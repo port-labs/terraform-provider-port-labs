@@ -556,3 +556,133 @@ resource "port_page" "page_with_filters" {
 		},
 	})
 }
+
+func testAccCreateBlueprintWithStatusConfig(identifier string) string {
+	return fmt.Sprintf(`
+	resource "port_blueprint" "microservice_with_status" {
+		title = "TF test microservice with status"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_props = {
+				"status" = {
+					type = "string"
+					title = "Status"
+					enum = ["Active", "Inactive", "Deprecated"]
+				}
+			}
+		}
+	}
+	`, identifier)
+}
+
+func TestAccPortPageResourceWithDataViewModeTable(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	pageIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testAccPortPageResourceDataViewModeTable = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+
+resource "port_page" "microservice_table_page" {
+  identifier            = "%s"
+  title                 = "Microservices Table View"
+  icon                  = "Microservice"
+  blueprint             = port_blueprint.microservice.identifier
+  type                  = "blueprint-entities"
+  widgets               = [
+    jsonencode(
+      {
+        "id" : "microservice-table",
+        "type" : "table-entities-explorer",
+        "blueprint" : port_blueprint.microservice.identifier,
+        "dataViewMode" : "table",
+        "dataset" : {
+          "combinator" : "and",
+          "rules" : [
+          ]
+        }
+      }
+    )
+  ]
+}
+`, pageIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccPortPageResourceDataViewModeTable,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.microservice_table_page", "identifier", pageIdentifier),
+					resource.TestCheckResourceAttr("port_page.microservice_table_page", "title", "Microservices Table View"),
+					resource.TestCheckResourceAttr("port_page.microservice_table_page", "icon", "Microservice"),
+					resource.TestCheckResourceAttr("port_page.microservice_table_page", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_page.microservice_table_page", "type", "blueprint-entities"),
+					resource.TestCheckResourceAttr("port_page.microservice_table_page", "widgets.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortPageResourceWithDataViewModeBoard(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	pageIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testAccPortPageResourceDataViewModeBoard = testAccCreateBlueprintWithStatusConfig(blueprintIdentifier) + fmt.Sprintf(`
+
+resource "port_page" "microservice_board_page" {
+  identifier            = "%s"
+  title                 = "Microservices Board View"
+  icon                  = "Microservice"
+  blueprint             = port_blueprint.microservice_with_status.identifier
+  type                  = "blueprint-entities"
+  widgets               = [
+    jsonencode(
+      {
+        "id" : "microservice-board",
+        "type" : "table-entities-explorer",
+        "blueprint" : port_blueprint.microservice_with_status.identifier,
+        "dataViewMode" : "board",
+        "blueprintConfig" : {
+          (port_blueprint.microservice_with_status.identifier) : {
+            "groupSettings" : {
+              "groupBy" : ["status"]
+            }
+          }
+        },
+        "dataset" : {
+          "combinator" : "and",
+          "rules" : [
+          ]
+        }
+      }
+    )
+  ]
+}
+`, pageIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccPortPageResourceDataViewModeBoard,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.microservice_board_page", "identifier", pageIdentifier),
+					resource.TestCheckResourceAttr("port_page.microservice_board_page", "title", "Microservices Board View"),
+					resource.TestCheckResourceAttr("port_page.microservice_board_page", "icon", "Microservice"),
+					resource.TestCheckResourceAttr("port_page.microservice_board_page", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_page.microservice_board_page", "type", "blueprint-entities"),
+					resource.TestCheckResourceAttr("port_page.microservice_board_page", "widgets.#", "1"),
+				),
+			},
+		},
+	})
+}

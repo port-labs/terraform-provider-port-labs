@@ -48,7 +48,7 @@ gen-docs:
 		echo "Provider binary not found. Building..."; \
 		go build -o terraform-provider-port-labs; \
 	fi
-	tfplugindocs
+	tfplugindocs generate --provider-name port
 	@echo "Documentation generated successfully!"
 
 lint: build

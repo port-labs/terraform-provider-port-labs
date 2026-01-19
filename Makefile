@@ -35,7 +35,7 @@ install: build
 	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 
 setup:
-	cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+	cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
 
 acctest:
 	# TEST_FILTER can be any regex, E.g: .*PageResource.*

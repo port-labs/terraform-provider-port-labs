@@ -13,8 +13,7 @@
   },
   "shell": {
     "init_hook": [
-      "unset DEVELOPER_DIR",
-      "if ! command -v tfplugindocs &> /dev/null; then echo 'Installing tfplugindocs...'; go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest; fi"
+      "unset DEVELOPER_DIR"
     ],
     "scripts": {}
   }

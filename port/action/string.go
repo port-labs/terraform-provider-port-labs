@@ -123,7 +123,14 @@ func stringPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 
 		if !prop.Encryption.IsNull() {
 			encryption := prop.Encryption.ValueString()
-			property.Encryption = &encryption
+			property.Encryption = encryption
+		}
+
+		if prop.ClientSideEncryption != nil {
+			property.Encryption = map[string]string{
+				"algorithm": prop.ClientSideEncryption.Algorithm.ValueString(),
+				"key":       prop.ClientSideEncryption.Key.ValueString(),
+			}
 		}
 
 		if prop.Dataset != nil {
@@ -171,12 +178,30 @@ func stringPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 
 func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *StringPropModel {
 	stringProp := &StringPropModel{
-		MinLength:  flex.GoInt64ToFramework(v.MinLength),
-		MaxLength:  flex.GoInt64ToFramework(v.MaxLength),
-		Format:     flex.GoStringToFramework(v.Format),
-		Blueprint:  flex.GoStringToFramework(v.Blueprint),
-		Encryption: flex.GoStringToFramework(v.Encryption),
-		Dataset:    writeDatasetToResource(v.Dataset),
+		MinLength: flex.GoInt64ToFramework(v.MinLength),
+		MaxLength: flex.GoInt64ToFramework(v.MaxLength),
+		Format:    flex.GoStringToFramework(v.Format),
+		Blueprint: flex.GoStringToFramework(v.Blueprint),
+		Dataset:   writeDatasetToResource(v.Dataset),
+	}
+
+	// Handle encryption - can be either a string or an object
+	stringProp.Encryption = types.StringNull()
+	stringProp.ClientSideEncryption = nil
+	if v.Encryption != nil {
+		switch enc := v.Encryption.(type) {
+		case string:
+			stringProp.Encryption = types.StringValue(enc)
+		case map[string]interface{}:
+			algorithm, _ := enc["algorithm"].(string)
+			key, _ := enc["key"].(string)
+			if algorithm != "" && key != "" {
+				stringProp.ClientSideEncryption = &ClientSideEncryptionModel{
+					Algorithm: types.StringValue(algorithm),
+					Key:       types.StringValue(key),
+				}
+			}
+		}
 	}
 
 	stringProp.Pattern = types.StringNull()

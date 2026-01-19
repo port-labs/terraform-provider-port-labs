@@ -100,7 +100,7 @@ type (
 		EnumColors         map[string]string   `json:"enumColors,omitempty"`
 		DependsOn          []string            `json:"dependsOn,omitempty"`
 		Dataset            *Dataset            `json:"dataset,omitempty"`
-		Encryption         *string             `json:"encryption,omitempty"`
+		Encryption         any                 `json:"encryption,omitempty"`
 		Visible            any                 `json:"visible,omitempty"`
 		Disabled           any                 `json:"disabled,omitempty"`
 		Sort               *EntitiesSortModel  `json:"sort,omitempty"`

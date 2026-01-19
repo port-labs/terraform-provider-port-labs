@@ -19,6 +19,11 @@ type DatasetModel struct {
 	Rules      []Rule       `tfsdk:"rules"`
 }
 
+type ClientSideEncryptionModel struct {
+	Algorithm types.String `tfsdk:"algorithm"`
+	Key       types.String `tfsdk:"key"`
+}
+
 type StringPropModel struct {
 	Title           types.String  `tfsdk:"title"`
 	Icon            types.String  `tfsdk:"icon"`
@@ -39,11 +44,12 @@ type StringPropModel struct {
 	MinLength      types.Int64        `tfsdk:"min_length"`
 	Pattern        types.String       `tfsdk:"pattern"`
 	PatternJqQuery types.String       `tfsdk:"pattern_jq_query"`
-	Enum           types.List         `tfsdk:"enum"`
-	EnumColors     types.Map          `tfsdk:"enum_colors"`
-	EnumJqQuery    types.String       `tfsdk:"enum_jq_query"`
-	Encryption     types.String       `tfsdk:"encryption"`
-	Sort           *EntitiesSortModel `tfsdk:"sort"`
+	Enum                 types.List                 `tfsdk:"enum"`
+	EnumColors           types.Map                  `tfsdk:"enum_colors"`
+	EnumJqQuery          types.String               `tfsdk:"enum_jq_query"`
+	Encryption           types.String               `tfsdk:"encryption"`
+	ClientSideEncryption *ClientSideEncryptionModel `tfsdk:"client_side_encryption"`
+	Sort                 *EntitiesSortModel         `tfsdk:"sort"`
 }
 
 // StringPropValidationModel is a model used for the validation of StringPropModel resources
@@ -255,8 +261,9 @@ type ObjectPropModel struct {
 	Disabled        types.Bool   `tfsdk:"disabled"`
 	DisabledJqQuery types.String `tfsdk:"disabled_jq_query"`
 
-	Default    types.String `tfsdk:"default"`
-	Encryption types.String `tfsdk:"encryption"`
+	Default              types.String               `tfsdk:"default"`
+	Encryption           types.String               `tfsdk:"encryption"`
+	ClientSideEncryption *ClientSideEncryptionModel `tfsdk:"client_side_encryption"`
 }
 
 type StringItems struct {

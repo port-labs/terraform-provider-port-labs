@@ -10,7 +10,7 @@ import (
 func refreshOrganizationSecretState(ctx context.Context, state *OrganizationSecretModel, secret *cli.OrganizationSecret) error {
 	state.ID = types.StringValue(secret.SecretName)
 	state.SecretName = types.StringValue(secret.SecretName)
-	
+
 	if secret.Description != nil && *secret.Description != "" {
 		state.Description = types.StringValue(*secret.Description)
 	} else {

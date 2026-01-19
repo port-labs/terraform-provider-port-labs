@@ -175,7 +175,7 @@ func (dv *DatasetValue) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-	// Custom MarshalJSON for DatasetValue to preserve the original format when possible
+// Custom MarshalJSON for DatasetValue to preserve the original format when possible
 func (dv DatasetValue) MarshalJSON() ([]byte, error) {
 
 	if dv.JqQuery == "" {

@@ -55,6 +55,10 @@ lint: build
 	# https://golangci-lint.run/welcome/install/#local-installation
 	golangci-lint run
 
+format: build
+	# https://golangci-lint.run/welcome/install/#local-installation
+	golangci-lint fmt
+
 dev-run-integration: build
 	PORT_BETA_FEATURES_ENABLED=true go run . --debug
 

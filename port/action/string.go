@@ -157,7 +157,7 @@ func stringPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 			DisabledJqQuery := map[string]string{
 				"jqQuery": prop.DisabledJqQuery.ValueString(),
 			}
-			property.Disabled = DisabledJqQuery 
+			property.Disabled = DisabledJqQuery
 		}
 
 		if prop.Sort != nil {

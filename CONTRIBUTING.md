@@ -45,6 +45,7 @@ Be sure to run:
 
 ```sh
 make lint
+make format
 ```
 
 **NOTE**: Should be installed with `make dev-setup`, if you prefer manually, have a look at the [installation guide](https://golangci-lint.run/welcome/install/#local-installation).

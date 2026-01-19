@@ -426,10 +426,10 @@ func TestAccPortScorecardImport(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "port_scorecard.test",
-				ImportState:       true,
-				ImportStateVerify: true,
-				ImportStateId:     fmt.Sprintf("%s:%s", blueprintIdentifier, scorecardIdentifier),
+				ResourceName:            "port_scorecard.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateId:           fmt.Sprintf("%s:%s", blueprintIdentifier, scorecardIdentifier),
 				ImportStateVerifyIgnore: []string{"created_at", "updated_at"},
 			},
 		},
@@ -527,7 +527,7 @@ func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
 func TestAccPortScorecardRuleOrderPreservation(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	scorecardIdentifier := utils.GenID()
-	
+
 	// Create scorecard with rules in a specific non-alphabetical order
 	// Order: "zebra" (Z), "alpha" (A), "beta" (B)
 	// This tests that order is preserved even if API returns them alphabetically

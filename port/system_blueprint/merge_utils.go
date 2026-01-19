@@ -80,7 +80,7 @@ func UpdateRelationsToState(b *cli.Blueprint, state map[string]blueprint.Relatio
 	}
 
 	bm := &blueprint.BlueprintModel{Relations: state}
-	
+
 	bm.Relations = make(map[string]blueprint.RelationModel)
 	for k, v := range b.Relations {
 		if bm.Relations == nil {
@@ -151,4 +151,4 @@ func UpdateCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, s
 		bm.CalculationProperties[k] = *calculationPropertyModel
 	}
 	return nil
-} 
+}

@@ -114,7 +114,7 @@ func numberPropResourceToBody(ctx context.Context, state *SelfServiceTriggerMode
 				DisabledJqQuery := map[string]string{
 					"jqQuery": prop.DisabledJqQuery.ValueString(),
 				}
-				property.Disabled = DisabledJqQuery 
+				property.Disabled = DisabledJqQuery
 			}
 
 			props[propIdentifier] = property

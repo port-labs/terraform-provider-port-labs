@@ -3,7 +3,7 @@
   "packages": [
     "go@1.25",
     "wget@latest",
-    "golangci-lint@1.64.5",
+    "golangci-lint@2.8.0",
     "terraform@latest"
   ],
   "env": {

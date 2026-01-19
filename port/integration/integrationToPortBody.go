@@ -10,6 +10,7 @@ import (
 )
 
 const installationIdPattern = `^[a-z0-9-]+$`
+
 var installationIdRegex = regexp.MustCompile(installationIdPattern)
 
 func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {

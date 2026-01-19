@@ -169,7 +169,6 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 			selfServiceTrigger.ExecuteActionButtonText = data.SelfServiceTrigger.ExecuteActionButtonText.ValueStringPointer()
 		}
 
-
 		return selfServiceTrigger, nil
 	}
 

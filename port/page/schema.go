@@ -112,7 +112,7 @@ func (r *PageResource) ValidateConfig(ctx context.Context, req resource.Validate
 	}
 
 	betaFeaturesEnabledEnv := os.Getenv("PORT_BETA_FEATURES_ENABLED")
-	if !(betaFeaturesEnabledEnv == "true") {
+	if betaFeaturesEnabledEnv != "true" {
 		resp.Diagnostics.AddError("Beta features are not enabled", "Page resource is currently in beta and is subject to change in future versions. Use it by setting the Environment Variable PORT_BETA_FEATURES_ENABLED=true.")
 		return
 	}

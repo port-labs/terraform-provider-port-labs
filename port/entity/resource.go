@@ -93,10 +93,7 @@ func (r *EntityResource) Create(ctx context.Context, req resource.CreateRequest,
 		runID = state.RunID.ValueString()
 	}
 
-	createMissingRelatedEntities := false
-	if !state.CreateMissingRelatedEntities.IsNull() && state.CreateMissingRelatedEntities.ValueBool() {
-		createMissingRelatedEntities = true
-	}
+	createMissingRelatedEntities := !state.CreateMissingRelatedEntities.IsNull() && state.CreateMissingRelatedEntities.ValueBool()
 
 	en, err := r.portClient.CreateEntity(ctx, e, runID, createMissingRelatedEntities)
 	if err != nil {
@@ -146,10 +143,7 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 		runID = state.RunID.ValueString()
 	}
 
-	createMissingRelatedEntities := false
-	if !state.CreateMissingRelatedEntities.IsNull() && state.CreateMissingRelatedEntities.ValueBool() {
-		createMissingRelatedEntities = true
-	}
+	createMissingRelatedEntities := !state.CreateMissingRelatedEntities.IsNull() && state.CreateMissingRelatedEntities.ValueBool()
 
 	var en *cli.Entity
 

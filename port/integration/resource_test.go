@@ -97,7 +97,7 @@ func TestPortIntegrationBasic(t *testing.T) {
 	}
 	var testPortIntegrationResourceBasic = createIntegration(integrationIdentifier, installationAppType)
 
-	var testAccBaseIntegrationUpdate = strings.Replace(testPortIntegrationResourceBasic, "1.33.7", "1.33.8", -1)
+	var testAccBaseIntegrationUpdate = strings.ReplaceAll(testPortIntegrationResourceBasic, "1.33.7", "1.33.8")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -135,7 +135,7 @@ func TestPortIntegrationPatchTitleNull(t *testing.T) {
 	}
 	var testPortIntegrationResourceBasic = createIntegration(integrationIdentifier, installationAppType)
 
-	var testAccBaseIntegrationUpdate = strings.Replace(testPortIntegrationResourceBasic, "\"my-kafka-cluster\"", "null", -1)
+	var testAccBaseIntegrationUpdate = strings.ReplaceAll(testPortIntegrationResourceBasic, "\"my-kafka-cluster\"", "null")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },

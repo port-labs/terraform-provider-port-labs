@@ -614,10 +614,28 @@ func StringPropertySchema() schema.Attribute {
 			},
 		},
 		"encryption": schema.StringAttribute{
-			MarkdownDescription: "The algorithm to encrypt the property with. Accepted value: `aes256-gcm`",
+			MarkdownDescription: "The algorithm to encrypt the property with for server-side encryption. Accepted value: `aes256-gcm`. Cannot be used with `client_side_encryption`.",
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.OneOf("aes256-gcm"),
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("client_side_encryption")),
+			},
+		},
+		"client_side_encryption": schema.SingleNestedAttribute{
+			MarkdownDescription: "Client-side encryption configuration for the property. The value will be encrypted on the client side before being sent to Port. Cannot be used with `encryption`.",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"algorithm": schema.StringAttribute{
+					MarkdownDescription: "The encryption algorithm. Accepted value: `client-side`",
+					Required:            true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("client-side"),
+					},
+				},
+				"key": schema.StringAttribute{
+					MarkdownDescription: "The public key (PEM format) to use for encryption",
+					Required:            true,
+				},
 			},
 		},
 		"visible": schema.BoolAttribute{
@@ -850,10 +868,28 @@ func ObjectPropertySchema() schema.Attribute {
 			},
 		},
 		"encryption": schema.StringAttribute{
-			MarkdownDescription: "The algorithm to encrypt the property with. Accepted value: `aes256-gcm`",
+			MarkdownDescription: "The algorithm to encrypt the property with for server-side encryption. Accepted value: `aes256-gcm`. Cannot be used with `client_side_encryption`.",
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.OneOf("aes256-gcm"),
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("client_side_encryption")),
+			},
+		},
+		"client_side_encryption": schema.SingleNestedAttribute{
+			MarkdownDescription: "Client-side encryption configuration for the property. The value will be encrypted on the client side before being sent to Port. Cannot be used with `encryption`.",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"algorithm": schema.StringAttribute{
+					MarkdownDescription: "The encryption algorithm. Accepted value: `client-side`",
+					Required:            true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("client-side"),
+					},
+				},
+				"key": schema.StringAttribute{
+					MarkdownDescription: "The public key (PEM format) to use for encryption",
+					Required:            true,
+				},
 			},
 		},
 		"visible": schema.BoolAttribute{

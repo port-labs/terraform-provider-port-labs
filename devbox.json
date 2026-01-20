@@ -1,18 +1,20 @@
 {
   "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.14.2/.schema/devbox.schema.json",
   "packages": [
-    "go@1.24",
+    "go@1.25",
     "wget@latest",
-    "golangci-lint@1.64.5",
-    "terraform@latest",
-    "tfplugindocs@0.13.0"
+    "golangci-lint@2.8.0",
+    "terraform@latest"
   ],
   "env": {
     "GOPATH": "$PWD/.devbox/go",
-    "GOBIN": "$PWD/.devbox/go/bin"
+    "GOBIN": "$PWD/.devbox/go/bin",
+    "PATH": "$PWD/.devbox/go/bin:$PATH"
   },
   "shell": {
-    "init_hook": [],
+    "init_hook": [
+      "unset DEVELOPER_DIR"
+    ],
     "scripts": {}
   }
 }

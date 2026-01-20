@@ -35,7 +35,7 @@ install: build
 	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 
 setup:
-	cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+	cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest
 
 acctest:
 	# TEST_FILTER can be any regex, E.g: .*PageResource.*
@@ -48,12 +48,16 @@ gen-docs:
 		echo "Provider binary not found. Building..."; \
 		go build -o terraform-provider-port-labs; \
 	fi
-	tfplugindocs
+	tfplugindocs generate --provider-name port
 	@echo "Documentation generated successfully!"
 
 lint: build
 	# https://golangci-lint.run/welcome/install/#local-installation
 	golangci-lint run
+
+format: build
+	# https://golangci-lint.run/welcome/install/#local-installation
+	golangci-lint fmt
 
 dev-run-integration: build
 	PORT_BETA_FEATURES_ENABLED=true go run . --debug

@@ -69,7 +69,7 @@ func booleanPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, 
 				DisabledJqQuery := map[string]string{
 					"jqQuery": prop.DisabledJqQuery.ValueString(),
 				}
-				property.Disabled = DisabledJqQuery 
+				property.Disabled = DisabledJqQuery
 			}
 
 			props[propIdentifier] = property

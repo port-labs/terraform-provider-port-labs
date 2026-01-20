@@ -53,13 +53,15 @@ func (r *AggregationPropertiesResource) refreshAggregationPropertiesState(state 
 
 		if aggregationProperty.CalculationSpec != nil {
 			if calculationBy, ok := aggregationProperty.CalculationSpec["calculationBy"]; ok {
-				if calculationBy == "entities" {
+				switch calculationBy {
+				case "entities":
 					if entitiesFunc, ok := aggregationProperty.CalculationSpec["func"]; ok {
-						if entitiesFunc == "count" {
+						switch entitiesFunc {
+						case "count":
 							state.Properties[aggregationPropertyIdentifier].Method = &AggregationMethodsModel{
 								CountEntities: types.BoolValue(true),
 							}
-						} else if entitiesFunc == "average" {
+						case "average":
 							state.Properties[aggregationPropertyIdentifier].Method = &AggregationMethodsModel{
 								AverageEntities: &AverageEntitiesModel{
 									AverageOf:     types.StringValue(aggregationProperty.CalculationSpec["averageOf"]),
@@ -68,7 +70,7 @@ func (r *AggregationPropertiesResource) refreshAggregationPropertiesState(state 
 							}
 						}
 					}
-				} else if calculationBy == "property" {
+				case "property":
 					if propertyFunc, ok := aggregationProperty.CalculationSpec["func"]; ok {
 						if propertyFunc == "average" {
 							state.Properties[aggregationPropertyIdentifier].Method = &AggregationMethodsModel{

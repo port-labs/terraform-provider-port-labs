@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
@@ -60,7 +60,14 @@ func objectPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 
 			if !prop.Encryption.IsNull() {
 				encryption := prop.Encryption.ValueString()
-				property.Encryption = &encryption
+				property.Encryption = encryption
+			}
+
+			if prop.ClientSideEncryption != nil {
+				property.Encryption = map[string]string{
+					"algorithm": prop.ClientSideEncryption.Algorithm.ValueString(),
+					"key":       prop.ClientSideEncryption.Key.ValueString(),
+				}
 			}
 
 			if !prop.Visible.IsNull() {
@@ -83,7 +90,7 @@ func objectPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 				DisabledJqQuery := map[string]string{
 					"jqQuery": prop.DisabledJqQuery.ValueString(),
 				}
-				property.Disabled = DisabledJqQuery 
+				property.Disabled = DisabledJqQuery
 			}
 
 			props[propIdentifier] = property
@@ -97,8 +104,25 @@ func objectPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 }
 
 func addObjectPropertiesToResource(v *cli.ActionProperty) *ObjectPropModel {
-	objectProp := &ObjectPropModel{
-		Encryption: flex.GoStringToFramework(v.Encryption),
+	objectProp := &ObjectPropModel{}
+
+	// Handle encryption - can be either a string or an object
+	objectProp.Encryption = types.StringNull()
+	objectProp.ClientSideEncryption = nil
+	if v.Encryption != nil {
+		switch enc := v.Encryption.(type) {
+		case string:
+			objectProp.Encryption = types.StringValue(enc)
+		case map[string]interface{}:
+			algorithm, _ := enc["algorithm"].(string)
+			key, _ := enc["key"].(string)
+			if algorithm != "" && key != "" {
+				objectProp.ClientSideEncryption = &ClientSideEncryptionModel{
+					Algorithm: types.StringValue(algorithm),
+					Key:       types.StringValue(key),
+				}
+			}
+		}
 	}
 
 	return objectProp

@@ -1918,6 +1918,74 @@ func TestAccPortActionEncryption(t *testing.T) {
 	})
 }
 
+func TestAccPortActionClientSideEncryption(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	testPublicKey := `-----BEGIN PUBLIC KEY-----
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0Z3VS5JJcds3xfn/ygWyf8sK8pPgbJPbL3pvFkOk9vXwB1QsE0p2LXRJ8ABkOC8fAKCVlCcHWoF7AXxEm+FKxqMJJO7vOxYXf4cF3bHPzR3pHJnFgAtY3aN/VBMAnTvvvfoUBGhLf0oEGoXmCQbZzP3zJIzX/O0G8u0L+wMw9e3CnGWMFYVbq3zOdmGBYVDMnR4lqJMfT3+Qr+w/F6Vf0jG3x8OXrHVCiNxNv0xHp5zRJvQMW7jDk9frYmOxFvACP/yLMDx/PA/kJxZ0IqSyhBZ0zfjA3bjZkQfT5NrJmzY5C1t5F6x4sFdHb1e5Kv5VDFMQw5tSMPNhLo3qYVVnTwIDAQAB
+-----END PUBLIC KEY-----`
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_action" "action1" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				"string_props" = {
+					"clientSideEncryptedStringProp" = {
+						"title" = "Client Side Encrypted string"
+						"required" = true
+						"client_side_encryption" = {
+							"algorithm" = "client-side"
+							"key" = %q
+						}
+					}
+				}
+				"object_props" = {
+					"clientSideEncryptedObjectProp" = {
+						"title" = "Client Side Encrypted object"
+						"required" = true
+						"client_side_encryption" = {
+							"algorithm" = "client-side"
+							"key" = %q
+						}
+					}
+				}
+			}
+		}
+		webhook_method = {
+			url = "https://getport.io"
+		}
+	}`, actionIdentifier, testPublicKey, testPublicKey)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.action1", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.action1", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.blueprint_identifier", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.operation", "DAY-2"),
+					resource.TestCheckResourceAttr("port_action.action1", "webhook_method.url", "https://getport.io"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.string_props.clientSideEncryptedStringProp.title", "Client Side Encrypted string"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.string_props.clientSideEncryptedStringProp.required", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.string_props.clientSideEncryptedStringProp.client_side_encryption.algorithm", "client-side"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.object_props.clientSideEncryptedObjectProp.title", "Client Side Encrypted object"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.object_props.clientSideEncryptedObjectProp.required", "true"),
+					resource.TestCheckResourceAttr("port_action.action1", "self_service_trigger.user_properties.object_props.clientSideEncryptedObjectProp.client_side_encryption.algorithm", "client-side"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortActionUpdateIdentifier(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()

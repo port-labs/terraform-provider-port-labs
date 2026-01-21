@@ -361,6 +361,100 @@ resource "port_page" "page_without_filters" {
 	})
 }
 
+// TestAccPortPageResourceWithForExpression tests that the widgets field properly handles
+// unknown values when using a for expression. This validates the fix where Widgets was
+// changed from []types.String to types.List to handle unknown list values during planning.
+func TestAccPortPageResourceWithForExpression(t *testing.T) {
+	pageIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var testAccPortPageResourceWithForExpression = fmt.Sprintf(`
+locals {
+  widgets_json = [
+    {
+      "id" = "dashboard-widget-1"
+      "type" = "dashboard-widget"
+      "layout" = [
+        {
+          "height" = 400
+          "columns" = [
+            { "id" = "widget1", "size" = 6 },
+            { "id" = "widget2", "size" = 6 },
+          ]
+        }
+      ]
+      "widgets" = [
+        {
+          "id" = "widget1"
+          "type" = "markdown"
+          "title" = "Welcome"
+          "icon" = "BlankPage"
+          "markdown" = "# Welcome to the Dashboard"
+        },
+        {
+          "id" = "widget2"
+          "type" = "markdown"
+          "title" = "Info"
+          "icon" = "BlankPage"
+          "markdown" = "## Additional Information"
+        }
+      ]
+    }
+  ]
+
+  metadata_fields = ["createdAt", "updatedAt", "createdBy", "updatedBy"]
+
+  cleaned_widgets = [
+    for widget in local.widgets_json : merge(
+      {
+        for k, v in widget :
+        k => v
+        if !contains(local.metadata_fields, k) && k != "widgets"
+      },
+      contains(keys(widget), "widgets") ? {
+        widgets = [
+          for nested_widget in widget.widgets : {
+            for nk, nv in nested_widget :
+            nk => nv
+            if !contains(local.metadata_fields, nk)
+          }
+        ]
+      } : {}
+    )
+  ]
+}
+
+resource "port_page" "for_expression_page" {
+  identifier = "%s"
+  title      = "For Expression Test Page"
+  icon       = "Dashboard"
+  type       = "dashboard"
+
+  # Using a for expression to generate widgets - this tests types.List handling unknown values
+  widgets = [for widget in local.cleaned_widgets : jsonencode(widget)]
+}
+`, pageIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccPortPageResourceWithForExpression,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.for_expression_page", "identifier", pageIdentifier),
+					resource.TestCheckResourceAttr("port_page.for_expression_page", "title", "For Expression Test Page"),
+					resource.TestCheckResourceAttr("port_page.for_expression_page", "type", "dashboard"),
+					resource.TestCheckResourceAttr("port_page.for_expression_page", "widgets.#", "1"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortPageResourceWithFilters(t *testing.T) {
 	serviceBlueprintIdentifier := utils.GenID()
 	clusterBlueprintIdentifier := utils.GenID()

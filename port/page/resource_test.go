@@ -361,7 +361,7 @@ resource "port_page" "page_without_filters" {
 	})
 }
 
-// TestAccPortPageResourceWithForExpression tests that the widgets field properly handles
+// Tests that the widgets field properly handles
 // unknown values when using a for expression. This validates the fix where Widgets was
 // changed from []types.String to types.List to handle unknown list values during planning.
 func TestAccPortPageResourceWithForExpression(t *testing.T) {

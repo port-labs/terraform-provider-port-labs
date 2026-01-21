@@ -1,6 +1,7 @@
 package page
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
@@ -19,31 +20,33 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	pm.Description = types.StringPointerValue(b.Description)
 
 	if b.Widgets != nil {
-		pm.Widgets = make([]types.String, len(*b.Widgets))
+		widgetAttrs := make([]attr.Value, len(*b.Widgets))
 		// go over each widget and convert it to a string and store it in the widgets array
 		for i, widget := range *b.Widgets {
 			bWidget, err := utils.GoObjectToTerraformString(widget, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return err
 			}
-			pm.Widgets[i] = bWidget
+			widgetAttrs[i] = bWidget
 		}
+		pm.Widgets, _ = types.ListValue(types.StringType, widgetAttrs)
 	} else {
-		pm.Widgets = nil
+		pm.Widgets = types.ListNull(types.StringType)
 	}
 
 	if b.PageFilters != nil {
-		pm.PageFilters = make([]types.String, len(*b.PageFilters))
+		filterAttrs := make([]attr.Value, len(*b.PageFilters))
 		// go over each page filter and convert it to a string and store it in the page filters array
 		for i, pageFilter := range *b.PageFilters {
 			bFilter, err := utils.GoObjectToTerraformString(pageFilter, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return err
 			}
-			pm.PageFilters[i] = bFilter
+			filterAttrs[i] = bFilter
 		}
+		pm.PageFilters, _ = types.ListValue(types.StringType, filterAttrs)
 	} else {
-		pm.PageFilters = nil
+		pm.PageFilters = types.ListNull(types.StringType)
 	}
 	return nil
 }

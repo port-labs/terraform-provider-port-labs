@@ -34,13 +34,14 @@ func PageToPortBody(pm *PageModel) (*cli.Page, error) {
 	return pb, nil
 }
 
-func widgetsToPortBody(widgets []types.String) (*[]map[string]any, error) {
-	if widgets == nil {
+func widgetsToPortBody(widgets types.List) (*[]map[string]any, error) {
+	if widgets.IsNull() || widgets.IsUnknown() {
 		return nil, nil
 	}
-	widgetsBody := make([]map[string]any, len(widgets))
-	for i, w := range widgets {
-		v, err := utils.TerraformJsonStringToGoObject(w.ValueStringPointer())
+	widgetsBody := make([]map[string]any, len(widgets.Elements()))
+	for i, w := range widgets.Elements() {
+		strVal := w.(types.String)
+		v, err := utils.TerraformJsonStringToGoObject(strVal.ValueStringPointer())
 
 		if err != nil {
 			return nil, err
@@ -52,13 +53,14 @@ func widgetsToPortBody(widgets []types.String) (*[]map[string]any, error) {
 	return &widgetsBody, nil
 }
 
-func pageFiltersToPortBody(pageFilters []types.String) (*[]map[string]any, error) {
-	if pageFilters == nil {
+func pageFiltersToPortBody(pageFilters types.List) (*[]map[string]any, error) {
+	if pageFilters.IsNull() || pageFilters.IsUnknown() {
 		return nil, nil
 	}
-	pageFiltersBody := make([]map[string]any, len(pageFilters))
-	for i, pf := range pageFilters {
-		v, err := utils.TerraformJsonStringToGoObject(pf.ValueStringPointer())
+	pageFiltersBody := make([]map[string]any, len(pageFilters.Elements()))
+	for i, pf := range pageFilters.Elements() {
+		strVal := pf.(types.String)
+		v, err := utils.TerraformJsonStringToGoObject(strVal.ValueStringPointer())
 
 		if err != nil {
 			return nil, err

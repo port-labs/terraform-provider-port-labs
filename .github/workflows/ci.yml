@@ -70,7 +70,7 @@ jobs:
               print(f'test_files=' + json.dumps(files), file=github_output)
               print(f'test_files_include=' + json.dumps(include), file=github_output)
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: test-files
           path: "*.test"
@@ -116,7 +116,7 @@ jobs:
             -- go tool test2json -t -p "${{matrix.package}}" "./${{matrix.test_file}}" \
             -test.v=test2json -test.timeout 10m -test.parallel 1 -test.shuffle "${{ github.run_id }}" -test.coverprofile=cover-${{ env.SHORT_NAME }}.out
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: 'test-results-${{matrix.test_file}}'
@@ -125,7 +125,7 @@ jobs:
 
       - name: Upload coverage
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           path: './cover-${{ env.SHORT_NAME }}.out'
           name: 'coverage-${{ env.SHORT_NAME }}'
@@ -174,7 +174,7 @@ jobs:
           go tool cover -func=coverage/coverage.merged > coverage/coverage.txt
           go tool cover -html=coverage/coverage.merged -o coverage/coverage.html
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         id: upload-coverage
         with:
           path: 'coverage/coverage.html'

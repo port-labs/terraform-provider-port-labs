@@ -122,10 +122,14 @@ type (
 		JqQuery string `json:"jqQuery,omitempty"`
 	}
 	DatasetRule struct {
+		// Leaf rule fields (property filters)
 		Blueprint *string       `json:"blueprint,omitempty"`
 		Property  *string       `json:"property,omitempty"`
 		Operator  string        `json:"operator,omitempty"`
 		Value     *DatasetValue `json:"value,omitempty"`
+		// Group rule fields (logical combinators) - for nested rules
+		Combinator *string       `json:"combinator,omitempty"`
+		Rules      []DatasetRule `json:"rules,omitempty"`
 	}
 	Dataset struct {
 		Combinator string        `json:"combinator,omitempty"`

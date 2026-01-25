@@ -1142,6 +1142,93 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 	})
 }
 
+// TestAccPortActionNestedDatasetRules tests nested dataset rules with combinator groups
+func TestAccPortActionNestedDatasetRules(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+	var testAccActionConfigCreate = testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "nested_dataset" {
+		title             = "Nested Dataset Test"
+		identifier        = "%s"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+			user_properties = {
+				string_props = {
+					permission_set = {
+						title      = "Permission Set"
+						required   = true
+						format     = "entity"
+						blueprint  = port_blueprint.microservice.id
+						dataset = {
+							combinator = "and"
+							rules = [
+								{
+									property = "$team"
+									operator = "containsAny"
+									value = {
+										jq_query = "test-team"
+									}
+								},
+								{
+									combinator = "or"
+									rules = [
+										{
+											property = "$identifier"
+											operator = "="
+											value = {
+												jq_query = "entity-1"
+											}
+										},
+										{
+											property = "$identifier"
+											operator = "="
+											value = {
+												jq_query = "entity-2"
+											}
+										}
+									]
+								}
+							]
+						}
+					}
+				}
+			}
+		}
+		kafka_method = {}
+	}`, actionIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.nested_dataset", "title", "Nested Dataset Test"),
+					resource.TestCheckResourceAttr("port_action.nested_dataset", "identifier", actionIdentifier),
+					// Check top-level dataset
+					resource.TestCheckResourceAttr("port_action.nested_dataset", "self_service_trigger.user_properties.string_props.permission_set.dataset.combinator", "and"),
+					// Check first rule (leaf rule)
+					resource.TestCheckResourceAttr("port_action.nested_dataset", "self_service_trigger.user_properties.string_props.permission_set.dataset.rules.0.property", "$team"),
+					resource.TestCheckResourceAttr("port_action.nested_dataset", "self_service_trigger.user_properties.string_props.permission_set.dataset.rules.0.operator", "containsAny"),
+					resource.TestCheckResourceAttr("port_action.nested_dataset", "self_service_trigger.user_properties.string_props.permission_set.dataset.rules.0.value.jq_query", "test-team"),
+					// Check second rule (group rule with combinator)
+					resource.TestCheckResourceAttr("port_action.nested_dataset", "self_service_trigger.user_properties.string_props.permission_set.dataset.rules.1.combinator", "or"),
+					// Check nested rules within the group
+					resource.TestCheckResourceAttr("port_action.nested_dataset", "self_service_trigger.user_properties.string_props.permission_set.dataset.rules.1.rules.0.property", "$identifier"),
+					resource.TestCheckResourceAttr("port_action.nested_dataset", "self_service_trigger.user_properties.string_props.permission_set.dataset.rules.1.rules.0.operator", "="),
+					resource.TestCheckResourceAttr("port_action.nested_dataset", "self_service_trigger.user_properties.string_props.permission_set.dataset.rules.1.rules.0.value.jq_query", "entity-1"),
+					resource.TestCheckResourceAttr("port_action.nested_dataset", "self_service_trigger.user_properties.string_props.permission_set.dataset.rules.1.rules.1.property", "$identifier"),
+					resource.TestCheckResourceAttr("port_action.nested_dataset", "self_service_trigger.user_properties.string_props.permission_set.dataset.rules.1.rules.1.operator", "="),
+					resource.TestCheckResourceAttr("port_action.nested_dataset", "self_service_trigger.user_properties.string_props.permission_set.dataset.rules.1.rules.1.value.jq_query", "entity-2"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortActionJqDefault(t *testing.T) {
 	identifier := utils.GenID()
 	actionIdentifier := utils.GenID()

@@ -705,7 +705,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier the string property relates to
 - `client_side_encryption` (Attributes) Client-side encryption configuration for the property. The value will be encrypted on the client side before being sent to Port. Cannot be used with `encryption`. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--client_side_encryption))
-- `dataset` (Attributes) The dataset of an the entity-format property (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset))
+- `dataset` (Attributes) The dataset of an the entity-format property. Supports nested rules with combinator groups. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset))
 - `default` (String) The default of the string property
 - `default_jq_query` (String) The default jq query of the string property
 - `depends_on` (List of String) The properties that this property depends on
@@ -743,20 +743,60 @@ Required:
 Required:
 
 - `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules))
+- `rules` (Attributes List) The rules of the dataset. Can be leaf rules (with operator) or group rules (with combinator and nested rules). (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules))
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules`
 
-Required:
+Optional:
 
-- `operator` (String) The operator of the rule
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--value))
+
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules`
 
 Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--value))
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--value))
+
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--value))
+
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--value"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.value`

@@ -148,22 +148,47 @@ func writeDatasetToResource(ds *cli.Dataset) *DatasetModel {
 	}
 
 	for _, v := range ds.Rules {
-		rule := &Rule{
-			Blueprint: flex.GoStringToFramework(v.Blueprint),
-			Property:  flex.GoStringToFramework(v.Property),
-			Operator:  flex.GoStringToFramework(&v.Operator),
+		rule := convertCliRuleToRule(v)
+		datasetModel.Rules = append(datasetModel.Rules, rule)
+	}
+
+	return datasetModel
+}
+
+// convertCliRuleToRule recursively converts a CLI DatasetRule to a Terraform Rule.
+// Handles both leaf rules (with operator) and group rules (with combinator + nested rules).
+func convertCliRuleToRule(v cli.DatasetRule) Rule {
+	rule := Rule{}
+
+	// Check if this is a group rule (has combinator)
+	if v.Combinator != nil && *v.Combinator != "" {
+		rule.Combinator = types.StringValue(*v.Combinator)
+		// Recursively convert nested rules
+		if len(v.Rules) > 0 {
+			rule.Rules = make([]Rule, 0, len(v.Rules))
+			for _, nestedRule := range v.Rules {
+				rule.Rules = append(rule.Rules, convertCliRuleToRule(nestedRule))
+			}
 		}
+		// Group rules don't have operator/property/blueprint/value
+		rule.Operator = types.StringNull()
+		rule.Blueprint = types.StringNull()
+		rule.Property = types.StringNull()
+	} else {
+		// Leaf rule - has operator
+		rule.Blueprint = flex.GoStringToFramework(v.Blueprint)
+		rule.Property = flex.GoStringToFramework(v.Property)
+		rule.Operator = flex.GoStringToFramework(&v.Operator)
+		rule.Combinator = types.StringNull()
 
 		if v.Value != nil {
 			rule.Value = &Value{
 				JqQuery: flex.GoStringToFramework(&v.Value.JqQuery),
 			}
 		}
-
-		datasetModel.Rules = append(datasetModel.Rules, *rule)
 	}
 
-	return datasetModel
+	return rule
 }
 
 func buildBoolOrJq(prop any) (types.Bool, types.String) {

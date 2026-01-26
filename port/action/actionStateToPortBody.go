@@ -11,34 +11,55 @@ import (
 )
 
 func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
-	cliDateSet := &cli.Dataset{
+	cliDataSet := &cli.Dataset{
 		Combinator: dataSet.Combinator.ValueString(),
 	}
 	rules := make([]cli.DatasetRule, 0, len(dataSet.Rules))
 	for _, rule := range dataSet.Rules {
-		dataSetRule := cli.DatasetRule{
-			Operator: rule.Operator.ValueString(),
+		cliRule := convertRuleToCliRule(rule)
+		rules = append(rules, cliRule)
+	}
+	cliDataSet.Rules = rules
+	return cliDataSet
+}
+
+// convertRuleToCliRule recursively converts a Terraform Rule to a CLI DatasetRule.
+// Handles both leaf rules (with operator) and group rules (with combinator + nested rules).
+func convertRuleToCliRule(rule Rule) cli.DatasetRule {
+	cliRule := cli.DatasetRule{}
+
+	// Check if this is a group rule (has combinator)
+	if !rule.Combinator.IsNull() && rule.Combinator.ValueString() != "" {
+		combinator := rule.Combinator.ValueString()
+		cliRule.Combinator = &combinator
+		// Recursively convert nested rules
+		if len(rule.Rules) > 0 {
+			cliRule.Rules = make([]cli.DatasetRule, 0, len(rule.Rules))
+			for _, nestedRule := range rule.Rules {
+				cliRule.Rules = append(cliRule.Rules, convertRuleToCliRule(nestedRule))
+			}
 		}
+	} else {
+		// Leaf rule - has operator
+		cliRule.Operator = rule.Operator.ValueString()
 
 		if rule.Value != nil && !rule.Value.JqQuery.IsNull() {
-			dataSetRule.Value = &cli.DatasetValue{
+			cliRule.Value = &cli.DatasetValue{
 				JqQuery: rule.Value.JqQuery.ValueString(),
 			}
 		}
 
 		if !rule.Blueprint.IsNull() {
 			blueprint := rule.Blueprint.ValueString()
-			dataSetRule.Blueprint = &blueprint
+			cliRule.Blueprint = &blueprint
 		}
 		if !rule.Property.IsNull() {
-			rule := rule.Property.ValueString()
-			dataSetRule.Property = &rule
+			prop := rule.Property.ValueString()
+			cliRule.Property = &prop
 		}
-
-		rules = append(rules, dataSetRule)
 	}
-	cliDateSet.Rules = rules
-	return cliDateSet
+
+	return cliRule
 }
 
 func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action, error) {

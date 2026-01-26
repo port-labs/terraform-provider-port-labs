@@ -24,6 +24,56 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
+// datasetRuleSchema generates the schema for dataset rules with support for nested group rules.
+// The depth parameter controls how many levels of nesting are allowed (2 is recommended).
+// - Leaf rules: have operator, property, blueprint, value (for filtering entities)
+// - Group rules: have combinator and rules (for logical AND/OR grouping)
+func datasetRuleSchema(depth int) map[string]schema.Attribute {
+	attrs := map[string]schema.Attribute{
+		// Leaf rule fields
+		"blueprint": schema.StringAttribute{
+			MarkdownDescription: "The blueprint identifier of the rule",
+			Optional:            true,
+		},
+		"property": schema.StringAttribute{
+			MarkdownDescription: "The property identifier of the rule",
+			Optional:            true,
+		},
+		"operator": schema.StringAttribute{
+			MarkdownDescription: "The operator of the rule. Required for leaf rules, should not be set for group rules.",
+			Optional:            true, // Changed from Required - group rules don't have operator
+		},
+		"value": schema.ObjectAttribute{
+			MarkdownDescription: "The value of the rule",
+			Optional:            true,
+			AttributeTypes: map[string]attr.Type{
+				"jq_query": types.StringType,
+			},
+		},
+		// Group rule fields
+		"combinator": schema.StringAttribute{
+			MarkdownDescription: "The combinator for a group rule (and/or). Used with nested rules instead of operator.",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.OneOf("and", "or"),
+			},
+		},
+	}
+
+	// Add nested rules up to max depth
+	if depth > 0 {
+		attrs["rules"] = schema.ListNestedAttribute{
+			MarkdownDescription: "Nested rules for a group rule. Used with combinator for logical grouping.",
+			Optional:            true,
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: datasetRuleSchema(depth - 1),
+			},
+		}
+	}
+
+	return attrs
+}
+
 func MetadataProperties() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"title": schema.StringAttribute{
@@ -661,7 +711,7 @@ func StringPropertySchema() schema.Attribute {
 			},
 		},
 		"dataset": schema.SingleNestedAttribute{
-			MarkdownDescription: "The dataset of an the entity-format property",
+			MarkdownDescription: "The dataset of an the entity-format property. Supports nested rules with combinator groups.",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
 				"combinator": schema.StringAttribute{
@@ -672,30 +722,10 @@ func StringPropertySchema() schema.Attribute {
 					},
 				},
 				"rules": schema.ListNestedAttribute{
-					MarkdownDescription: "The rules of the dataset",
+					MarkdownDescription: "The rules of the dataset. Can be leaf rules (with operator) or group rules (with combinator and nested rules).",
 					Required:            true,
 					NestedObject: schema.NestedAttributeObject{
-						Attributes: map[string]schema.Attribute{
-							"blueprint": schema.StringAttribute{
-								MarkdownDescription: "The blueprint identifier of the rule",
-								Optional:            true,
-							},
-							"property": schema.StringAttribute{
-								MarkdownDescription: "The property identifier of the rule",
-								Optional:            true,
-							},
-							"operator": schema.StringAttribute{
-								MarkdownDescription: "The operator of the rule",
-								Required:            true,
-							},
-							"value": schema.ObjectAttribute{
-								MarkdownDescription: "The value of the rule",
-								Optional:            true,
-								AttributeTypes: map[string]attr.Type{
-									"jq_query": types.StringType,
-								},
-							},
-						},
+						Attributes: datasetRuleSchema(2), // Support 2 levels of nesting
 					},
 				},
 			},

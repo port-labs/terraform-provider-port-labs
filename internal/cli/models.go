@@ -175,27 +175,17 @@ func (dv *DatasetValue) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Custom MarshalJSON for DatasetValue to preserve the original format when possible
+// Custom MarshalJSON for DatasetValue to always preserve the jqQuery wrapper.
+// The Port API expects dataset rule values to be in the format {"jqQuery": "..."}
+// for dynamic JQ expression evaluation.
 func (dv DatasetValue) MarshalJSON() ([]byte, error) {
-
 	if dv.JqQuery == "" {
 		return []byte("null"), nil
 	}
 
-	if dv.JqQuery == "true" || dv.JqQuery == "false" {
-		return []byte(dv.JqQuery), nil
-	}
-
-	var numTest float64
-	if err := json.Unmarshal([]byte(dv.JqQuery), &numTest); err == nil {
-		return []byte(dv.JqQuery), nil
-	}
-
-	if len(dv.JqQuery) >= 2 && dv.JqQuery[0] == '"' && dv.JqQuery[len(dv.JqQuery)-1] == '"' {
-		return []byte(dv.JqQuery), nil
-	}
-
-	return json.Marshal(dv.JqQuery)
+	// Always output the jqQuery wrapper - the API requires this format
+	// for proper JQ expression evaluation in dataset rules
+	return json.Marshal(map[string]string{"jqQuery": dv.JqQuery})
 }
 
 type (

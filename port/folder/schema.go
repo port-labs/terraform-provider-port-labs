@@ -29,6 +29,7 @@ func FolderSchema() map[string]schema.Attribute {
 		"parent": schema.StringAttribute{
 			MarkdownDescription: "The identifier of the parent folder. If not specified but `after` is set, this will be automatically inherited from the parent of the folder specified in `after`.",
 			Optional:            true,
+			Computed:            true,
 		},
 	}
 }

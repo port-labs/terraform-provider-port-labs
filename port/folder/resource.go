@@ -12,6 +12,7 @@ import (
 
 var _ resource.Resource = &FolderResource{}
 var _ resource.ResourceWithImportState = &FolderResource{}
+var _ resource.ResourceWithModifyPlan = &FolderResource{}
 
 func NewFolderResource() resource.Resource {
 	return &FolderResource{}
@@ -37,10 +38,6 @@ func (r *FolderResource) Create(ctx context.Context, req resource.CreateRequest,
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
-	}
-
-	if err := r.computeExpectedParent(ctx, state); err != nil {
-		resp.Diagnostics.AddWarning("failed to compute expected parent", err.Error())
 	}
 
 	folder := FolderModelToCLI(state)
@@ -88,10 +85,6 @@ func (r *FolderResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	if err := r.computeExpectedParent(ctx, state); err != nil {
-		resp.Diagnostics.AddWarning("failed to compute expected parent", err.Error())
-	}
-
 	folder := FolderModelToCLI(state)
 	updatedFolder, err := r.portClient.UpdateFolder(ctx, folder)
 	if err != nil {
@@ -135,6 +128,25 @@ func (r *FolderResource) ImportState(ctx context.Context, req resource.ImportSta
 	resp.Diagnostics.Append(resp.State.SetAttribute(
 		ctx, path.Root("id"), req.ID,
 	)...)
+}
+
+func (r *FolderResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var plan FolderModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := r.computeExpectedParent(ctx, &plan); err != nil {
+		resp.Diagnostics.AddWarning("failed to compute expected parent", err.Error())
+		return
+	}
+
+	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
 }
 
 func FolderModelToCLI(state *FolderModel) *cli.Folder {

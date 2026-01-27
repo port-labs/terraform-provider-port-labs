@@ -2,6 +2,7 @@ package folder
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -36,6 +37,11 @@ func (r *FolderResource) Create(ctx context.Context, req resource.CreateRequest,
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// Pre-compute parent when inherited from 'after' to avoid state inconsistencies
+	if err := r.computeExpectedParent(ctx, state); err != nil {
+		resp.Diagnostics.AddWarning("failed to compute expected parent", err.Error())
 	}
 
 	folder := FolderModelToCLI(state)
@@ -81,6 +87,11 @@ func (r *FolderResource) Update(ctx context.Context, req resource.UpdateRequest,
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// Pre-compute parent when inherited from 'after' to avoid state inconsistencies
+	if err := r.computeExpectedParent(ctx, state); err != nil {
+		resp.Diagnostics.AddWarning("failed to compute expected parent", err.Error())
 	}
 
 	folder := FolderModelToCLI(state)
@@ -143,6 +154,8 @@ func writeFolderComputedFieldsToState(state *FolderModel, fr *cli.Folder) {
 
 	if fr.Parent != "" {
 		state.Parent = types.StringValue(fr.Parent)
+	} else {
+		state.Parent = types.StringNull()
 	}
 
 	if fr.After != "" {
@@ -152,4 +165,28 @@ func writeFolderComputedFieldsToState(state *FolderModel, fr *cli.Folder) {
 	if fr.Title != "" {
 		state.Title = types.StringValue(fr.Title)
 	}
+}
+
+// computeExpectedParent pre-computes the parent when it will be inherited from the 'after' folder.
+// The Port API automatically assigns parent from 'after' when parent is null/empty.
+func (r *FolderResource) computeExpectedParent(ctx context.Context, state *FolderModel) error {
+	// Only compute if parent is null/empty AND after is set
+	if (state.Parent.IsNull() || state.Parent.ValueString() == "") && !state.After.IsNull() && state.After.ValueString() != "" {
+		afterFolderId := state.After.ValueString()
+
+		afterFolder, statusCode, err := r.portClient.GetFolder(ctx, afterFolderId)
+		if err != nil {
+			if statusCode == 404 {
+				return fmt.Errorf("after folder '%s' not found", afterFolderId)
+			}
+			return fmt.Errorf("failed to fetch after folder '%s': %w", afterFolderId, err)
+		}
+
+		// Inherit parent from the after folder to match API behavior
+		if afterFolder.Parent != "" {
+			state.Parent = types.StringValue(afterFolder.Parent)
+		}
+	}
+
+	return nil
 }

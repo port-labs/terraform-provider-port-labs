@@ -178,3 +178,59 @@ func TestAccPortFolderResourceImport(t *testing.T) {
 		},
 	})
 }
+
+// TestAccPortFolderResourceAutomaticParentInheritance tests the fix for the bug where
+// folders with 'after' set but 'parent' null would inherit the parent from the 'after' folder.
+// This test ensures the provider correctly handles the Port API's automatic parent assignment.
+func TestAccPortFolderResourceAutomaticParentInheritance(t *testing.T) {
+	parentFolderIdentifier := utils.GenID()
+	firstChildIdentifier := utils.GenID()
+	secondChildIdentifier := utils.GenID()
+
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a parent folder, a first child with explicit parent,
+	// and a second child with 'after' pointing to first child but no parent specified.
+	// The second child should automatically inherit the parent from the first child.
+	var testAccPortFolderResourceConfig = fmt.Sprintf(`
+    resource "port_folder" "parent_folder" {
+        identifier = "%s"
+        title      = "Parent Folder"
+    }
+
+    resource "port_folder" "first_child" {
+        identifier = "%s"
+        parent     = port_folder.parent_folder.identifier
+        title      = "First Child"
+    }
+
+    resource "port_folder" "second_child" {
+        identifier = "%s"
+        after      = port_folder.first_child.identifier
+        title      = "Second Child"
+        # Note: parent is not explicitly set, but should be inherited from first_child
+    }
+    `, parentFolderIdentifier, firstChildIdentifier, secondChildIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccPortFolderResourceConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_folder.parent_folder", "identifier", parentFolderIdentifier),
+					resource.TestCheckResourceAttr("port_folder.first_child", "identifier", firstChildIdentifier),
+					resource.TestCheckResourceAttr("port_folder.first_child", "parent", parentFolderIdentifier),
+					resource.TestCheckResourceAttr("port_folder.second_child", "identifier", secondChildIdentifier),
+					// This is the key check: second_child should have inherited parent from first_child
+					resource.TestCheckResourceAttr("port_folder.second_child", "parent", parentFolderIdentifier),
+					resource.TestCheckResourceAttr("port_folder.second_child", "after", firstChildIdentifier),
+				),
+			},
+		},
+	})
+}

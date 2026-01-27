@@ -61,6 +61,9 @@ func datasetRuleSchema(depth int) map[string]schema.Attribute {
 	}
 
 	// Add nested rules up to max depth
+	// Note: The Go Rule struct always has Rules []Rule, but the schema can only go so deep.
+	// At depth=0, we don't add rules - users hitting this limit will get an error,
+	// but 10 levels of nesting should be more than enough for any practical use case.
 	if depth > 0 {
 		attrs["rules"] = schema.ListNestedAttribute{
 			MarkdownDescription: "Nested rules for a group rule. Used with combinator for logical grouping.",
@@ -725,7 +728,7 @@ func StringPropertySchema() schema.Attribute {
 					MarkdownDescription: "The rules of the dataset. Can be leaf rules (with operator) or group rules (with combinator and nested rules).",
 					Required:            true,
 					NestedObject: schema.NestedAttributeObject{
-						Attributes: datasetRuleSchema(2), // Support 2 levels of nesting
+						Attributes: datasetRuleSchema(10), // Support 10 levels of nesting to avoid struct/schema mismatch at depth 0
 					},
 				},
 			},

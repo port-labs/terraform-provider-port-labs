@@ -39,7 +39,6 @@ func (r *FolderResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	// Pre-compute parent when inherited from 'after' to avoid state inconsistencies
 	if err := r.computeExpectedParent(ctx, state); err != nil {
 		resp.Diagnostics.AddWarning("failed to compute expected parent", err.Error())
 	}
@@ -89,7 +88,6 @@ func (r *FolderResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	// Pre-compute parent when inherited from 'after' to avoid state inconsistencies
 	if err := r.computeExpectedParent(ctx, state); err != nil {
 		resp.Diagnostics.AddWarning("failed to compute expected parent", err.Error())
 	}
@@ -167,10 +165,8 @@ func writeFolderComputedFieldsToState(state *FolderModel, fr *cli.Folder) {
 	}
 }
 
-// computeExpectedParent pre-computes the parent when it will be inherited from the 'after' folder.
-// The Port API automatically assigns parent from 'after' when parent is null/empty.
+// computeExpectedParent pre-computes parent inherited from 'after' folder.
 func (r *FolderResource) computeExpectedParent(ctx context.Context, state *FolderModel) error {
-	// Only compute if parent is null/empty AND after is set
 	if (state.Parent.IsNull() || state.Parent.ValueString() == "") && !state.After.IsNull() && state.After.ValueString() != "" {
 		afterFolderId := state.After.ValueString()
 
@@ -182,7 +178,6 @@ func (r *FolderResource) computeExpectedParent(ctx context.Context, state *Folde
 			return fmt.Errorf("failed to fetch after folder '%s': %w", afterFolderId, err)
 		}
 
-		// Inherit parent from the after folder to match API behavior
 		if afterFolder.Parent != "" {
 			state.Parent = types.StringValue(afterFolder.Parent)
 		}

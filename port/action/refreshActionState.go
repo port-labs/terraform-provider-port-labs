@@ -135,6 +135,29 @@ func (r *ActionResource) writeInvocationMethodToResource(ctx context.Context, a 
 		}
 	}
 
+	if a.InvocationMethod.Type == consts.IntegrationAction {
+		workflowInputs, err := utils.GoObjectToTerraformString(a.InvocationMethod.IntegrationActionExecutionProperties.WorkflowInputs, r.portClient.JSONEscapeHTML)
+		if err != nil {
+			return err
+		}
+		reportWorkflowStatus, err := utils.GoObjectToTerraformString(a.InvocationMethod.IntegrationActionExecutionProperties.ReportWorkflowStatus, r.portClient.JSONEscapeHTML)
+		if err != nil {
+			return err
+		}
+
+		state.IntegrationMethod = &IntegrationMethodModel{
+			InstallationId:        types.StringValue(*a.InvocationMethod.InstallationId),
+			IntegrationActionType: types.StringValue(*a.InvocationMethod.IntegrationActionType),
+			IntegrationActionExecutionProperties: &IntegrationActionExecutionPropertiesModel{
+				Org:                  types.StringValue(*a.InvocationMethod.IntegrationActionExecutionProperties.Org),
+				Repo:                 types.StringValue(*a.InvocationMethod.IntegrationActionExecutionProperties.Repo),
+				Workflow:             types.StringValue(*a.InvocationMethod.IntegrationActionExecutionProperties.Workflow),
+				WorkflowInputs:       workflowInputs,
+				ReportWorkflowStatus: reportWorkflowStatus,
+			},
+		}
+	}
+
 	return nil
 }
 

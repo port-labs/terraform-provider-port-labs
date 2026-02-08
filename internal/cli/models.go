@@ -244,27 +244,38 @@ type (
 	}
 
 	InvocationMethod struct {
-		Type                 string            `json:"type"`
-		Payload              any               `json:"payload,omitempty"`
-		Url                  *string           `json:"url,omitempty"`
-		Agent                any               `json:"agent,omitempty"`
-		Synchronized         any               `json:"synchronized,omitempty"`
-		Method               *string           `json:"method,omitempty"`
-		Headers              map[string]string `json:"headers,omitempty"`
-		Body                 any               `json:"body,omitempty"`
-		Org                  *string           `json:"org,omitempty"`
-		Repo                 *string           `json:"repo,omitempty"`
-		Workflow             *string           `json:"workflow,omitempty"`
-		WorkflowInputs       map[string]any    `json:"workflowInputs,omitempty"`
-		ReportWorkflowStatus any               `json:"reportWorkflowStatus,omitempty"`
-		Branch               *string           `json:"branch,omitempty"`
-		ProjectName          *string           `json:"projectName,omitempty"`
-		GroupName            *string           `json:"groupName,omitempty"`
-		DefaultRef           *string           `json:"defaultRef,omitempty"`
-		PipelineVariables    map[string]any    `json:"pipelineVariables,omitempty"`
-		Webhook              *string           `json:"webhook,omitempty"`
-		BlueprintIdentifier  *string           `json:"blueprintIdentifier,omitempty"`
-		Mapping              *MappingSchema    `json:"mapping,omitempty"`
+		Type                                 string                                `json:"type"`
+		Payload                              any                                   `json:"payload,omitempty"`
+		Url                                  *string                               `json:"url,omitempty"`
+		Agent                                any                                   `json:"agent,omitempty"`
+		Synchronized                         any                                   `json:"synchronized,omitempty"`
+		Method                               *string                               `json:"method,omitempty"`
+		Headers                              map[string]string                     `json:"headers,omitempty"`
+		Body                                 any                                   `json:"body,omitempty"`
+		Org                                  *string                               `json:"org,omitempty"`
+		Repo                                 *string                               `json:"repo,omitempty"`
+		Workflow                             *string                               `json:"workflow,omitempty"`
+		WorkflowInputs                       map[string]any                        `json:"workflowInputs,omitempty"`
+		ReportWorkflowStatus                 any                                   `json:"reportWorkflowStatus,omitempty"`
+		Branch                               *string                               `json:"branch,omitempty"`
+		ProjectName                          *string                               `json:"projectName,omitempty"`
+		GroupName                            *string                               `json:"groupName,omitempty"`
+		DefaultRef                           *string                               `json:"defaultRef,omitempty"`
+		PipelineVariables                    map[string]any                        `json:"pipelineVariables,omitempty"`
+		Webhook                              *string                               `json:"webhook,omitempty"`
+		BlueprintIdentifier                  *string                               `json:"blueprintIdentifier,omitempty"`
+		Mapping                              *MappingSchema                        `json:"mapping,omitempty"`
+		InstallationId                       *string                               `json:"installationId,omitempty"`
+		IntegrationActionType                *string                               `json:"integrationActionType,omitempty"`
+		IntegrationActionExecutionProperties *IntegrationActionExecutionProperties `json:"integrationActionExecutionProperties,omitempty"`
+	}
+
+	IntegrationActionExecutionProperties struct {
+		Org                  *string        `json:"org,omitempty"`
+		Repo                 *string        `json:"repo,omitempty"`
+		Workflow             *string        `json:"workflow,omitempty"`
+		WorkflowInputs       map[string]any `json:"workflowInputs,omitempty"`
+		ReportWorkflowStatus any            `json:"reportWorkflowStatus,omitempty"`
 	}
 
 	ApprovalNotification struct {

@@ -427,6 +427,20 @@ type UpsertEntityMethodModel struct {
 	Mapping             *MappingModel `tfsdk:"mapping"`
 }
 
+type IntegrationActionExecutionPropertiesModel struct {
+	Org                  types.String `tfsdk:"org"`
+	Repo                 types.String `tfsdk:"repo"`
+	Workflow             types.String `tfsdk:"workflow"`
+	WorkflowInputs       types.String `tfsdk:"workflow_inputs"`
+	ReportWorkflowStatus types.String `tfsdk:"report_workflow_status"`
+}
+
+type IntegrationMethodModel struct {
+	InstallationId                       types.String                               `tfsdk:"installation_id"`
+	IntegrationActionType                types.String                               `tfsdk:"integration_action_type"`
+	IntegrationActionExecutionProperties *IntegrationActionExecutionPropertiesModel `tfsdk:"integration_action_execution_properties"`
+}
+
 type ApprovalWebhookNotificationModel struct {
 	Url    types.String `tfsdk:"url"`
 	Format types.String `tfsdk:"format"`
@@ -447,6 +461,7 @@ type ActionModel struct {
 	GitlabMethod                *GitlabMethodModel                `tfsdk:"gitlab_method"`
 	AzureMethod                 *AzureMethodModel                 `tfsdk:"azure_method"`
 	UpsertEntityMethod          *UpsertEntityMethodModel          `tfsdk:"upsert_entity_method"`
+	IntegrationMethod           *IntegrationMethodModel           `tfsdk:"integration_method"`
 	RequiredApproval            types.String                      `tfsdk:"required_approval"`
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
@@ -470,6 +485,7 @@ type ActionValidationModel struct {
 	GitlabMethod                types.Object `tfsdk:"gitlab_method"`
 	AzureMethod                 types.Object `tfsdk:"azure_method"`
 	UpsertEntityMethod          types.Object `tfsdk:"upsert_entity_method"`
+	IntegrationMethod           types.Object `tfsdk:"integration_method"`
 	RequiredApproval            types.String `tfsdk:"required_approval"`
 	ApprovalWebhookNotification types.Object `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object `tfsdk:"approval_email_notification"`

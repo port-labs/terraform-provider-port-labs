@@ -1,14 +1,15 @@
 package consts
 
 const (
-	ProviderName         = "port"
-	DefaultBaseUrl       = "https://api.getport.io"
-	Kafka                = "KAFKA"
-	Webhook              = "WEBHOOK"
-	Github               = "GITHUB"
-	Gitlab               = "GITLAB"
-	AzureDevops          = "AZURE_DEVOPS"
-	UpsertEntity         = "UPSERT_ENTITY"
+	ProviderName      = "port"
+	DefaultBaseUrl    = "https://api.getport.io"
+	Kafka             = "KAFKA"
+	Webhook           = "WEBHOOK"
+	Github            = "GITHUB"
+	Gitlab            = "GITLAB"
+	AzureDevops       = "AZURE_DEVOPS"
+	UpsertEntity      = "UPSERT_ENTITY"
+	IntegrationAction = "INTEGRATION_ACTION"
 	SelfService          = "self-service"
 	Automation           = "automation"
 	EntityCreated        = "ENTITY_CREATED"

@@ -493,5 +493,32 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 		return upsertEntityInvocation, nil
 	}
 
+	if data.IntegrationMethod != nil {
+		reportWorkflowStatus, err := utils.TerraformStringToGoType[interface{}](data.IntegrationMethod.IntegrationActionExecutionProperties.ReportWorkflowStatus)
+		if err != nil {
+			return nil, err
+		}
+		wi, err := utils.TerraformStringToGoType[interface{}](data.IntegrationMethod.IntegrationActionExecutionProperties.WorkflowInputs)
+		if err != nil {
+			return nil, err
+		}
+		workflowInputs, _ := wi.(map[string]interface{})
+
+		integrationInvocation := &cli.InvocationMethod{
+			Type:                  consts.IntegrationAction,
+			InstallationId:        data.IntegrationMethod.InstallationId.ValueStringPointer(),
+			IntegrationActionType: data.IntegrationMethod.IntegrationActionType.ValueStringPointer(),
+			IntegrationActionExecutionProperties: &cli.IntegrationActionExecutionProperties{
+				Org:                  data.IntegrationMethod.IntegrationActionExecutionProperties.Org.ValueStringPointer(),
+				Repo:                 data.IntegrationMethod.IntegrationActionExecutionProperties.Repo.ValueStringPointer(),
+				Workflow:             data.IntegrationMethod.IntegrationActionExecutionProperties.Workflow.ValueStringPointer(),
+				WorkflowInputs:       workflowInputs,
+				ReportWorkflowStatus: reportWorkflowStatus,
+			},
+		}
+
+		return integrationInvocation, nil
+	}
+
 	return nil, nil
 }

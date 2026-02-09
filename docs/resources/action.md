@@ -319,6 +319,7 @@ resource "port_action" "create_microservice" {
 - `github_method` (Attributes) GitHub invocation method (see [below for nested schema](#nestedatt--github_method))
 - `gitlab_method` (Attributes) Gitlab invocation method (see [below for nested schema](#nestedatt--gitlab_method))
 - `icon` (String) Icon
+- `integration_method` (Attributes) Integration invocation method (handled by Ocean integrations) (see [below for nested schema](#nestedatt--integration_method))
 - `kafka_method` (Attributes) Kafka invocation method (see [below for nested schema](#nestedatt--kafka_method))
 - `publish` (Boolean) Publish action
 - `required_approval` (String) Require approval before invoking the action. Can be one of "true", "false", "ANY" or "ALL"
@@ -483,6 +484,31 @@ Optional:
 
 - `default_ref` (String) The default ref of the action
 - `pipeline_variables` (String) The Gitlab pipeline variables should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).
+
+
+<a id="nestedatt--integration_method"></a>
+### Nested Schema for `integration_method`
+
+Required:
+
+- `installation_id` (String) The installation ID of the integration
+- `integration_action_execution_properties` (Attributes) Execution properties for the integration action (see [below for nested schema](#nestedatt--integration_method--integration_action_execution_properties))
+- `integration_action_type` (String) The type of integration action (e.g., 'dispatch_workflow')
+
+<a id="nestedatt--integration_method--integration_action_execution_properties"></a>
+### Nested Schema for `integration_method.integration_action_execution_properties`
+
+Required:
+
+- `org` (String) The organization for the integration action
+- `repo` (String) The repository for the integration action
+- `workflow` (String) The workflow for the integration action
+
+Optional:
+
+- `report_workflow_status` (String) Whether to report the workflow status
+- `workflow_inputs` (String) The workflow inputs should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects.
+
 
 
 <a id="nestedatt--kafka_method"></a>

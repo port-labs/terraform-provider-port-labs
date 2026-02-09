@@ -9,6 +9,7 @@ const (
 	Gitlab               = "GITLAB"
 	AzureDevops          = "AZURE_DEVOPS"
 	UpsertEntity         = "UPSERT_ENTITY"
+	IntegrationAction    = "INTEGRATION_ACTION"
 	SelfService          = "self-service"
 	Automation           = "automation"
 	EntityCreated        = "ENTITY_CREATED"

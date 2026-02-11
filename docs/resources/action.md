@@ -409,13 +409,10 @@ Required:
 <a id="nestedatt--automation_trigger--jq_condition"></a>
 ### Nested Schema for `automation_trigger.jq_condition`
 
-Required:
-
-- `expressions` (List of String) The jq expressions of the condition
-
 Optional:
 
 - `combinator` (String) The combinator of the condition
+- `expressions` (List of String) The jq expressions of the condition. Can be an empty array to indicate no conditions.
 
 
 <a id="nestedatt--automation_trigger--run_created_event"></a>

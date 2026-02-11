@@ -199,10 +199,15 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 		}
 
 		if data.AutomationTrigger.JqCondition != nil {
-			automationTrigger.Condition = &cli.TriggerCondition{
-				Type:        consts.JqCondition,
-				Expressions: flex.TerraformStringListToGoArray(data.AutomationTrigger.JqCondition.Expressions),
-				Combinator:  data.AutomationTrigger.JqCondition.Combinator.ValueStringPointer(),
+			// Convert expressions - only set condition if there are actual expressions
+			// An empty expressions array means no filtering, which is equivalent to no condition
+			expressions := flex.TerraformStringListToGoArray(data.AutomationTrigger.JqCondition.Expressions)
+			if len(expressions) > 0 {
+				automationTrigger.Condition = &cli.TriggerCondition{
+					Type:        consts.JqCondition,
+					Expressions: expressions,
+					Combinator:  data.AutomationTrigger.JqCondition.Combinator.ValueStringPointer(),
+				}
 			}
 		}
 

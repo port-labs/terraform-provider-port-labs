@@ -368,9 +368,9 @@ func ActionSchema() map[string]schema.Attribute {
 					Optional:            true,
 					Attributes: map[string]schema.Attribute{
 						"expressions": schema.ListAttribute{
-							MarkdownDescription: "The jq expressions of the condition",
+							MarkdownDescription: "The jq expressions of the condition. Can be an empty array to indicate no conditions.",
 							ElementType:         types.StringType,
-							Required:            true,
+							Optional:            true,
 						},
 						"combinator": schema.StringAttribute{
 							MarkdownDescription: "The combinator of the condition",

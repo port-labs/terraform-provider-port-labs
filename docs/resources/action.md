@@ -143,6 +143,46 @@ description: |-
   		  runId: "{{"{{.run.id}}"}}"
   		})
   	}
+  	
+  
+  Limitations
+  Mixed static and dynamic values in dataset rules
+  When defining dataset rules in self-service actions that mix static values with jq_query values, the Terraform provider may not handle them correctly.
+  To work around this, use jsonencode() for the entire dataset object:
+  
+  resource "port_action" "myAction" {
+    # ...action properties
+    self_service_trigger = {
+      operation = "CREATE"
+      blueprint_identifier = port_blueprint.myBlueprint.identifier
+      user_properties = {
+        string_props = {
+          myEntityInput = {
+            format    = "entity"
+            blueprint = port_blueprint.myBlueprint.identifier
+            dataset = jsonencode({
+              combinator = "and"
+              rules = [
+                {
+                  property = "$identifier"
+                  operator = "in"
+                  value = {
+                    jqQuery = ".user.relations.teams[].identifier"
+                  }
+                },
+                {
+                  property = "status"
+                  operator = "="
+                  value = "active"
+                }
+              ]
+            })
+          }
+        }
+      }
+    }
+    kafka_method = {}
+  }
 ---
 
 # port_action (Resource)
@@ -296,6 +336,50 @@ resource "port_action" "create_microservice" {
 		})
 	}
 	
+```
+
+## Limitations
+
+### Mixed static and dynamic values in dataset rules
+
+When defining `dataset` rules in self-service actions that mix static values with `jq_query` values, the Terraform provider may not handle them correctly. 
+
+To work around this, use `jsonencode()` for the entire dataset object:
+
+```hcl
+resource "port_action" "myAction" {
+  # ...action properties
+  self_service_trigger = {
+    operation = "CREATE"
+    blueprint_identifier = port_blueprint.myBlueprint.identifier
+    user_properties = {
+      string_props = {
+        myEntityInput = {
+          format    = "entity"
+          blueprint = port_blueprint.myBlueprint.identifier
+          dataset = jsonencode({
+            combinator = "and"
+            rules = [
+              {
+                property = "$identifier"
+                operator = "in"
+                value = {
+                  jqQuery = ".user.relations.teams[].identifier"
+                }
+              },
+              {
+                property = "status"
+                operator = "="
+                value = "active"
+              }
+            ]
+          })
+        }
+      }
+    }
+  }
+  kafka_method = {}
+}
 ```
 
 

@@ -26,6 +26,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/webhook"
 	"github.com/port-labs/terraform-provider-port-labs/v2/version"
 	"os"
+	"strings"
 )
 
 var (
@@ -144,7 +145,19 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 
 		_, err = c.Authenticate(ctx, clientID, secret)
 		if err != nil {
-			resp.Diagnostics.AddError("Failed to authenticate with Port-labs", err.Error())
+			errMsg := err.Error()
+			if strings.Contains(errMsg, "invalid client ID or secret") {
+				resp.Diagnostics.AddError(
+					"Authentication Failed - Invalid Credentials",
+					"The provided client ID or secret is incorrect.\n\n"+
+						"Please verify:\n"+
+						"  • PORT_CLIENT_ID environment variable or 'client_id' in provider config\n"+
+						"  • PORT_CLIENT_SECRET environment variable or 'secret' in provider config\n\n"+
+						"Error: "+errMsg,
+				)
+			} else {
+				resp.Diagnostics.AddError("Failed to authenticate with Port-labs", errMsg)
+			}
 			return
 		}
 	}

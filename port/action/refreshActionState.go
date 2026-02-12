@@ -135,6 +135,29 @@ func (r *ActionResource) writeInvocationMethodToResource(ctx context.Context, a 
 		}
 	}
 
+	if a.InvocationMethod.Type == consts.IntegrationAction {
+		workflowInputs, err := utils.GoObjectToTerraformString(a.InvocationMethod.IntegrationActionExecutionProperties.WorkflowInputs, r.portClient.JSONEscapeHTML)
+		if err != nil {
+			return err
+		}
+		reportWorkflowStatus, err := utils.GoObjectToTerraformString(a.InvocationMethod.IntegrationActionExecutionProperties.ReportWorkflowStatus, r.portClient.JSONEscapeHTML)
+		if err != nil {
+			return err
+		}
+
+		state.IntegrationMethod = &IntegrationMethodModel{
+			InstallationId:        types.StringValue(*a.InvocationMethod.InstallationId),
+			IntegrationActionType: types.StringValue(*a.InvocationMethod.IntegrationActionType),
+			IntegrationActionExecutionProperties: &IntegrationActionExecutionPropertiesModel{
+				Org:                  types.StringValue(*a.InvocationMethod.IntegrationActionExecutionProperties.Org),
+				Repo:                 types.StringValue(*a.InvocationMethod.IntegrationActionExecutionProperties.Repo),
+				Workflow:             types.StringValue(*a.InvocationMethod.IntegrationActionExecutionProperties.Workflow),
+				WorkflowInputs:       workflowInputs,
+				ReportWorkflowStatus: reportWorkflowStatus,
+			},
+		}
+	}
+
 	return nil
 }
 
@@ -445,14 +468,24 @@ func (r *ActionResource) writeTriggerToResource(ctx context.Context, a *cli.Acti
 	if a.Trigger.Type == consts.Automation {
 		automationTrigger := &AutomationTriggerModel{}
 
-		var expressions []types.String
 		if a.Trigger.Condition != nil {
+			// Initialize expressions as empty slice to properly handle empty arrays from API
+			expressions := make([]types.String, 0, len(a.Trigger.Condition.Expressions))
 			for _, e := range a.Trigger.Condition.Expressions {
 				expressions = append(expressions, types.StringValue(e))
 			}
 			automationTrigger.JqCondition = &JqConditionModel{
 				Expressions: expressions,
 				Combinator:  flex.GoStringToFramework(a.Trigger.Condition.Combinator),
+			}
+		} else if state.AutomationTrigger != nil && state.AutomationTrigger.JqCondition != nil && len(state.AutomationTrigger.JqCondition.Expressions) == 0 {
+			// Preserve jq_condition with empty expressions from prior state
+			// When user configures jq_condition with empty expressions, we don't send
+			// condition to API (empty expressions = no filtering). On read, API returns
+			// no condition, so we preserve the user's intent to have the jq_condition block.
+			automationTrigger.JqCondition = &JqConditionModel{
+				Expressions: make([]types.String, 0),
+				Combinator:  state.AutomationTrigger.JqCondition.Combinator,
 			}
 		}
 

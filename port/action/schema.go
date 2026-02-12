@@ -368,9 +368,9 @@ func ActionSchema() map[string]schema.Attribute {
 					Optional:            true,
 					Attributes: map[string]schema.Attribute{
 						"expressions": schema.ListAttribute{
-							MarkdownDescription: "The jq expressions of the condition",
+							MarkdownDescription: "The jq expressions of the condition. Can be an empty array to indicate no conditions.",
 							ElementType:         types.StringType,
-							Required:            true,
+							Optional:            true,
 						},
 						"combinator": schema.StringAttribute{
 							MarkdownDescription: "The combinator of the condition",
@@ -402,6 +402,7 @@ func ActionSchema() map[string]schema.Attribute {
 					path.MatchRoot("gitlab_method"),
 					path.MatchRoot("azure_method"),
 					path.MatchRoot("upsert_entity_method"),
+					path.MatchRoot("integration_method"),
 				),
 			},
 		},
@@ -548,6 +549,47 @@ func ActionSchema() map[string]schema.Attribute {
 						"relations": schema.StringAttribute{
 							MarkdownDescription: "The relations of the entity (key-value object encoded to a string)",
 							Optional:            true,
+						},
+					},
+				},
+			},
+		},
+		"integration_method": schema.SingleNestedAttribute{
+			MarkdownDescription: "Integration invocation method (handled by Ocean integrations)",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"installation_id": schema.StringAttribute{
+					MarkdownDescription: "The installation ID of the integration",
+					Required:            true,
+				},
+				"integration_action_type": schema.StringAttribute{
+					MarkdownDescription: "The type of integration action (e.g., 'dispatch_workflow')",
+					Required:            true,
+				},
+				"integration_action_execution_properties": schema.SingleNestedAttribute{
+					MarkdownDescription: "Execution properties for the integration action",
+					Required:            true,
+					Attributes: map[string]schema.Attribute{
+						"org": schema.StringAttribute{
+							MarkdownDescription: "The organization for the integration action",
+							Required:            true,
+						},
+						"repo": schema.StringAttribute{
+							MarkdownDescription: "The repository for the integration action",
+							Required:            true,
+						},
+						"workflow": schema.StringAttribute{
+							MarkdownDescription: "The workflow for the integration action",
+							Required:            true,
+						},
+						"workflow_inputs": schema.StringAttribute{
+							MarkdownDescription: "The workflow inputs should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects.",
+							Optional:            true,
+						},
+						"report_workflow_status": schema.StringAttribute{
+							MarkdownDescription: "Whether to report the workflow status",
+							Optional:            true,
+							Validators:          StringBooleanOrJQTemplateValidator(),
 						},
 					},
 				},

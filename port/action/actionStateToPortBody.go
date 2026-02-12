@@ -199,10 +199,15 @@ func triggerToBody(ctx context.Context, data *ActionModel) (*cli.Trigger, error)
 		}
 
 		if data.AutomationTrigger.JqCondition != nil {
-			automationTrigger.Condition = &cli.TriggerCondition{
-				Type:        consts.JqCondition,
-				Expressions: flex.TerraformStringListToGoArray(data.AutomationTrigger.JqCondition.Expressions),
-				Combinator:  data.AutomationTrigger.JqCondition.Combinator.ValueStringPointer(),
+			// Convert expressions - only set condition if there are actual expressions
+			// An empty expressions array means no filtering, which is equivalent to no condition
+			expressions := flex.TerraformStringListToGoArray(data.AutomationTrigger.JqCondition.Expressions)
+			if len(expressions) > 0 {
+				automationTrigger.Condition = &cli.TriggerCondition{
+					Type:        consts.JqCondition,
+					Expressions: expressions,
+					Combinator:  data.AutomationTrigger.JqCondition.Combinator.ValueStringPointer(),
+				}
 			}
 		}
 
@@ -491,6 +496,33 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 		}
 
 		return upsertEntityInvocation, nil
+	}
+
+	if data.IntegrationMethod != nil {
+		reportWorkflowStatus, err := utils.TerraformStringToGoType[interface{}](data.IntegrationMethod.IntegrationActionExecutionProperties.ReportWorkflowStatus)
+		if err != nil {
+			return nil, err
+		}
+		wi, err := utils.TerraformStringToGoType[interface{}](data.IntegrationMethod.IntegrationActionExecutionProperties.WorkflowInputs)
+		if err != nil {
+			return nil, err
+		}
+		workflowInputs, _ := wi.(map[string]interface{})
+
+		integrationInvocation := &cli.InvocationMethod{
+			Type:                  consts.IntegrationAction,
+			InstallationId:        data.IntegrationMethod.InstallationId.ValueStringPointer(),
+			IntegrationActionType: data.IntegrationMethod.IntegrationActionType.ValueStringPointer(),
+			IntegrationActionExecutionProperties: &cli.IntegrationActionExecutionProperties{
+				Org:                  data.IntegrationMethod.IntegrationActionExecutionProperties.Org.ValueStringPointer(),
+				Repo:                 data.IntegrationMethod.IntegrationActionExecutionProperties.Repo.ValueStringPointer(),
+				Workflow:             data.IntegrationMethod.IntegrationActionExecutionProperties.Workflow.ValueStringPointer(),
+				WorkflowInputs:       workflowInputs,
+				ReportWorkflowStatus: reportWorkflowStatus,
+			},
+		}
+
+		return integrationInvocation, nil
 	}
 
 	return nil, nil

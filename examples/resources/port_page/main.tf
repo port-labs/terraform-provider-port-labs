@@ -50,8 +50,10 @@ resource "port_page" "microservice_dashboard_page" {
         "widgets" = [
           {
             "id" : "microservice-table-entities",
+            "title": "Table test",
             "type" : "table-entities-explorer",
             "blueprint" : port_blueprint.microservice.identifier,
+            "displayMode": "widget",
             "dataset" : {
               "combinator" : "and",
               "rules" : [

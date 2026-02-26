@@ -2,6 +2,7 @@ package folder
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -11,6 +12,7 @@ import (
 
 var _ resource.Resource = &FolderResource{}
 var _ resource.ResourceWithImportState = &FolderResource{}
+var _ resource.ResourceWithModifyPlan = &FolderResource{}
 
 func NewFolderResource() resource.Resource {
 	return &FolderResource{}
@@ -128,6 +130,25 @@ func (r *FolderResource) ImportState(ctx context.Context, req resource.ImportSta
 	)...)
 }
 
+func (r *FolderResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var plan FolderModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := r.computeExpectedParent(ctx, &plan); err != nil {
+		resp.Diagnostics.AddWarning("failed to compute expected parent", err.Error())
+		return
+	}
+
+	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
+}
+
 func FolderModelToCLI(state *FolderModel) *cli.Folder {
 	return &cli.Folder{
 		Identifier: state.Identifier.ValueString(),
@@ -143,6 +164,8 @@ func writeFolderComputedFieldsToState(state *FolderModel, fr *cli.Folder) {
 
 	if fr.Parent != "" {
 		state.Parent = types.StringValue(fr.Parent)
+	} else {
+		state.Parent = types.StringNull()
 	}
 
 	if fr.After != "" {
@@ -152,4 +175,25 @@ func writeFolderComputedFieldsToState(state *FolderModel, fr *cli.Folder) {
 	if fr.Title != "" {
 		state.Title = types.StringValue(fr.Title)
 	}
+}
+
+// computeExpectedParent pre-computes parent inherited from 'after' folder.
+func (r *FolderResource) computeExpectedParent(ctx context.Context, state *FolderModel) error {
+	if (state.Parent.IsNull() || state.Parent.ValueString() == "") && !state.After.IsNull() && state.After.ValueString() != "" {
+		afterFolderId := state.After.ValueString()
+
+		afterFolder, statusCode, err := r.portClient.GetFolder(ctx, afterFolderId)
+		if err != nil {
+			if statusCode == 404 {
+				return fmt.Errorf("after folder '%s' not found", afterFolderId)
+			}
+			return fmt.Errorf("failed to fetch after folder '%s': %w", afterFolderId, err)
+		}
+
+		if afterFolder.Parent != "" {
+			state.Parent = types.StringValue(afterFolder.Parent)
+		}
+	}
+
+	return nil
 }

@@ -32,6 +32,7 @@ description: |-
   
   Folder with After
   Create a folder after another folder.
+  Note: When using after without explicitly setting parent, the folder will automatically inherit the parent from the folder specified in after. To create a root-level folder positioned after another folder, explicitly set parent to an empty string or the desired parent identifier.
   
   
   resource "port_folder" "another_folder" {
@@ -83,6 +84,8 @@ resource "port_folder" "child_folder" {
 
 Create a folder after another folder.
 
+**Note:** When using `after` without explicitly setting `parent`, the folder will automatically inherit the parent from the folder specified in `after`. To create a root-level folder positioned after another folder, explicitly set `parent` to an empty string or the desired parent identifier.
+
 ```hcl
 
 resource "port_folder" "another_folder" {
@@ -104,8 +107,8 @@ resource "port_folder" "another_folder" {
 
 ### Optional
 
-- `after` (String) The identifier of the folder after which the folder should be placed
-- `parent` (String) The identifier of the parent folder
+- `after` (String) The identifier of the folder after which the folder should be placed. Note: If `parent` is not explicitly set and `after` is specified, the parent will be automatically inherited from the folder specified in `after`.
+- `parent` (String) The identifier of the parent folder. If not specified but `after` is set, this will be automatically inherited from the parent of the folder specified in `after`.
 - `title` (String) The title of the folder
 
 ### Read-Only

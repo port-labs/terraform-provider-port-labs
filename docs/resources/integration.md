@@ -7,37 +7,35 @@ description: |-
   NOTE: This resource manages existing integration and integration mappings, not for creating new integrations.
   Docs about integrations can be found here https://docs.getport.io/integrations-index/.
   Docs about how to import existing integrations and manage their mappings can be found here https://docs.getport.io/guides/all/import-and-manage-integration.
-  
-  resource "port_integration" "my_custom_integration" {
-  	installation_id       = "my-custom-integration-id"
-  	title                 = "My Custom Integration"
-  	config = jsonencode({
-  		createMissingRelatedEntitiesboolean = true
-  		deleteDependentEntities = true,
-  		resources = [{
-  			kind = "my-custom-kind"
-  			selector = {
-  				query = ".title"
-  			}
-  			port = {
-  				entity = {
-  					mappings = [{
-  						identifier = "'my-identifier'"
-  						title      = ".title"
-  						blueprint  = "'my-blueprint'"
-  						properties = {
-  							my_property = 123
-  						}
-  						relations  = {}
-  					}]
-  				}
-  			}
-  		}]
-  	})
+  ```hcl
+  resource "portintegration" "mycustomintegration" {
+      installationid       = "my-custom-integration-id"
+      title                 = "My Custom Integration"
+      config = jsonencode({
+          createMissingRelatedEntitiesboolean = true
+          deleteDependentEntities = true,
+          resources = [{
+              kind = "my-custom-kind"
+              selector = {
+                  query = ".title"
+              }
+              port = {
+                  entity = {
+                      mappings = [{
+                          identifier = "'my-identifier'"
+                          title      = ".title"
+                          blueprint  = "'my-blueprint'"
+                          properties = {
+                              my_property = 123
+                          }
+                          relations  = {}
+                      }]
+                  }
+              }
+          }]
+      })
   }
-  
-  
-  
+  ```
   NOTICE:
   The following config properties (selector.query|entity.mappings.*) are jq expressions, which means that you need to input either a valid jq expression (E.g .title), or if you want a string value, a qouted escaped string val (E.g 'my-string').
 ---

@@ -8,14 +8,13 @@ description: |-
   See the Port documentation https://docs.getport.io/promote-scorecards/ for more information about scorecards.
   Example Usage
   This will create a blueprint with a Scorecard measuring the readiness of a microservice.
-  
-  
-  resource "port_blueprint" "microservice" {
+  ```hcl
+  resource "portblueprint" "microservice" {
     title      = "microservice"
     icon       = "Terraform"
     identifier = "microservice"
     properties = {
-      string_props = {
+      stringprops = {
         "author" = {
           title = "Author"
         }
@@ -23,23 +22,22 @@ description: |-
           title = "URL"
         }
       }
-      boolean_props = {
+      booleanprops = {
         "required" = {
           type = "boolean"
         }
       }
-      number_props = {
+      numberprops = {
         "sum" = {
           type = "number"
         }
       }
     }
   }
-  
-  resource "port_scorecard" "readiness" {
+  resource "portscorecard" "readiness" {
     identifier = "Readiness"
     title      = "Readiness"
-    blueprint  = port_blueprint.microservice.identifier
+    blueprint  = portblueprint.microservice.identifier
     rules      = [
       {
         identifier = "hasOwner"
@@ -95,22 +93,20 @@ description: |-
         }
       }
     ]
-    depends_on = [
-      port_blueprint.microservice
+    dependson = [
+      portblueprint.microservice
     ]
   }
-  
-  
+  ```
   Example Usage with Levels and Filter
   This will override the default levels (Basic, Bronze, Silver, Gold) with the provided levels: Not Ready, Partially Ready, Ready.
-  
-  
-  resource "port_blueprint" "microservice" {
+  ```hcl
+  resource "portblueprint" "microservice" {
     title      = "microservice"
     icon       = "Terraform"
     identifier = "microservice"
     properties = {
-      string_props = {
+      stringprops = {
         "author" = {
           title = "Author"
         }
@@ -118,23 +114,22 @@ description: |-
           title = "URL"
         }
       }
-      boolean_props = {
+      booleanprops = {
         "required" = {
           type = "boolean"
         }
       }
-      number_props = {
+      numberprops = {
         "sum" = {
           type = "number"
         }
       }
     }
   }
-  
-  resource "port_scorecard" "readiness" {
+  resource "portscorecard" "readiness" {
     identifier = "Readiness"
     title      = "Readiness"
-    blueprint  = port_blueprint.microservice.identifier
+    blueprint  = portblueprint.microservice.identifier
     filter = {
       combinator = "and"
       conditions = [
@@ -214,10 +209,11 @@ description: |-
         }
       }
     ]
-    depends_on = [
-      port_blueprint.microservice
+    dependson = [
+      portblueprint.microservice
     ]
   }
+  ```
 ---
 
 # port_scorecard (Resource)

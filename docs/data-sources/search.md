@@ -8,22 +8,18 @@ description: |-
   See the Port documentation https://docs.getport.io/search-and-query/ for more information about the search capabilities in Port.
   Example Usage
   Search for all entities in a specific blueprint:
-  
-  
-  data "port_search" "all_service" {
+  ```hcl
+  data "portsearch" "allservice" {
     query = jsonencode({
       "combinator" : "and", "rules" : [
         { "operator" : "=", "property" : "$blueprint", "value" : "Service" },
       ]
     })
   }
-  
-  
-  
+  ```
   Search for entity with specific identifier in a specific blueprint to create another resource based on the values of the entity:
-  
-  
-  data "port_search" "ads_service" {
+  ```hcl
+  data "portsearch" "adsservice" {
     query = jsonencode({
       "combinator" : "and", "rules" : [
         { "operator" : "=", "property" : "$blueprint", "value" : "Service" },
@@ -31,39 +27,33 @@ description: |-
       ]
     })
   }
-  
-  
-  
+  ```
   Scorecards automation example
   In this example we are creating a jira task for each service that its Ownership Scorecard hasn't reached Gold level :
-  
-  
-  data "port_search" "all_services" {
+  ```hcl
+  data "portsearch" "allservices" {
     query = jsonencode({
       "combinator" : "and", "rules" : [
         { "operator" : "=", "property" : "$blueprint", "value" : "microservice" },
       ]
     })
   }
-  
   locals {
     // Count the number of services that are not owned by a team with a Gold level
-    microservice_ownership_without_gold_level = length([
-      for entity in data.port_search.all_services.entities : entity.scorecards["ownership"].level
+    microserviceownershipwithoutgoldlevel = length([
+      for entity in data.portsearch.allservices.entities : entity.scorecards["ownership"].level
       if entity.scorecards["ownership"].level != "Gold"
     ])
   }
-  
   // create jira issue per service that is not owned by a team with a Gold level
-  resource "jira_issue" "microservice_ownership_without_gold_level" {
-    count      = local.microservice_ownership_without_gold_level
-    issue_type = "Task"
-  
-    project_key = "PORT"
-  
-    summary     = "Service ${data.port_search.backend_services.entities[count.index].title} hasn't reached Gold level in Ownership Scorecard"
-    description = "[Service](https://app.getport.io/${port_blueprint.microservice.identifier}Entity/${data.port_search.backend_services.entities[count.index].identifier}) is not owned by a team with a Gold level, please assign a team with a Gold level to the service"
+  resource "jiraissue" "microserviceownershipwithoutgoldlevel" {
+    count      = local.microserviceownershipwithoutgoldlevel
+    issuetype = "Task"
+  project_key = "PORT"
+  summary     = "Service ${data.portsearch.backendservices.entities[count.index].title} hasn't reached Gold level in Ownership Scorecard"
+    description = "Service https://app.getport.io/${port_blueprint.microservice.identifier}Entity/${data.port_search.backend_services.entities[count.index].identifier} is not owned by a team with a Gold level, please assign a team with a Gold level to the service"
   }
+  ```
 ---
 
 # port_search (Data Source)

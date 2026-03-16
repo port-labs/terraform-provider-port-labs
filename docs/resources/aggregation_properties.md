@@ -7,12 +7,11 @@ description: |-
   This resource allows you to manage aggregation properties of a blueprint.
   See the Port documentation https://docs.getport.io/build-your-software-catalog/customize-integrations/configure-data-model/setup-blueprint/properties/aggregation-property/ for more information about aggregation properties.
   Supported Methods:
-  count_entities - Count the entities of the target blueprintaverage_entities - Average the entities of the target blueprint by time periodsaverage_by_property - Calculate the average by property value of the target entitiesaggregate_by_property - Calculate the aggregate by property value of the target entities, such as sum, min, max, median
+  count_entities - Count the entities of the target blueprintaverage_entities - Average the entities of the target blueprint by time periodsaveragebyproperty - Calculate the average by property value of the target entitiesaggregatebyproperty - Calculate the aggregate by property value of the target entities, such as sum, min, max, median
   Example Usage
   Create a parent blueprint with a child blueprint and an aggregation property to count the parent kids:
-  
-  
-  resource "port_blueprint" "parent_blueprint" {
+  ```hcl
+  resource "portblueprint" "parentblueprint" {
     title       = "Parent Blueprint"
     icon        = "Terraform"
     identifier  = "parent"
@@ -25,14 +24,13 @@ description: |-
       }
     }
   }
-  
-  resource "port_blueprint" "child_blueprint" {
+  resource "portblueprint" "childblueprint" {
     title       = "Child Blueprint"
     icon        = "Terraform"
     identifier  = "child"
     description = ""
     properties = {
-      number_props = {
+      numberprops = {
         "age" = {
           title = "Age"
         }
@@ -41,16 +39,15 @@ description: |-
     relations = {
       "parent" = {
         title  = "Parent"
-        target = port_blueprint.parent_blueprint.identifier
+        target = portblueprint.parent_blueprint.identifier
       }
     }
   }
-  
-  resource "port_aggregation_properties" "parent_aggregation_properties" {
-    blueprint_identifier        = port_blueprint.parent_blueprint.identifier
+  resource "portaggregationproperties" "parentaggregationproperties" {
+    blueprintidentifier        = portblueprint.parentblueprint.identifier
     properties = {
-      "count_kids" = {
-        target_blueprint_identifier = port_blueprint.child_blueprint.identifier
+      "countkids" = {
+        targetblueprintidentifier = portblueprint.childblueprint.identifier
         title                       = "Count Kids"
         icon                        = "Terraform"
         description                 = "Count Kids"
@@ -60,12 +57,10 @@ description: |-
       }
     }
   }
-  
-  
+  ```
   Create a parent blueprint with a child blueprint and an aggregation property to calculate the average avg of the parent kids age:
-  
-  
-  resource "port_blueprint" "parent_blueprint" {
+  ```hcl
+  resource "portblueprint" "parentblueprint" {
     title       = "Parent Blueprint"
     icon        = "Terraform"
     identifier  = "parent"
@@ -78,14 +73,13 @@ description: |-
       }
     }
   }
-  
-  resource "port_blueprint" "child_blueprint" {
+  resource "portblueprint" "childblueprint" {
     title       = "Child Blueprint"
     icon        = "Terraform"
     identifier  = "child"
     description = ""
     properties = {
-      number_props = {
+      numberprops = {
         "age" = {
           title = "Age"
         }
@@ -94,49 +88,44 @@ description: |-
     relations = {
       "parent" = {
         title  = "Parent"
-        target = port_blueprint.parent_blueprint.identifier
+        target = portblueprint.parent_blueprint.identifier
       }
     }
   }
-  
-  resource "port_aggregation_properties" "parent_aggregation_properties" {
-    blueprint_identifier = port_blueprint.parent_blueprint.identifier
+  resource "portaggregationproperties" "parentaggregationproperties" {
+    blueprintidentifier = portblueprint.parentblueprint.identifier
     properties           = {
-      average_kids_age = {
-        target_blueprint_identifier = port_blueprint.child_blueprint.identifier
+      averagekidsage = {
+        targetblueprintidentifier = portblueprint.childblueprint.identifier
         title                       = "Average Kids Age"
         icon                        = "Terraform"
         description                 = "Average Kids Age"
         method                      = {
-          average_by_property = {
-            average_of      = "total"
-            measure_time_by = "$createdAt"
+          averagebyproperty = {
+            averageof      = "total"
+            measuretimeby = "$createdAt"
             property        = "age"
           }
         }
       }
     }
   }
-  
-  
-  
+  ```
   Create a repository blueprint and a pull request blueprint and an aggregation property to calculate the average of pull requests created per day:
-  
-  
-  resource "port_blueprint" "repository_blueprint" {
+  ```hcl
+  resource "portblueprint" "repositoryblueprint" {
     title       = "Repository Blueprint"
     icon        = "Terraform"
     identifier  = "repository"
     description = ""
   }
-  
-  resource "port_blueprint" "pull_request_blueprint" {
+  resource "portblueprint" "pullrequestblueprint" {
     title       = "Pull Request Blueprint"
     icon        = "Terraform"
-    identifier  = "pull_request"
+    identifier  = "pullrequest"
     description = ""
     properties = {
-      string_props = {
+      stringprops = {
         "status" = {
           title = "Status"
         }
@@ -145,48 +134,44 @@ description: |-
     relations = {
       "repository" = {
         title  = "Repository"
-        target = port_blueprint.repository_blueprint.identifier
+        target = portblueprint.repository_blueprint.identifier
       }
     }
   }
-  
-  resource "port_aggregation_properties" "repository_aggregation_properties" {
-    blueprint_identifier = port_blueprint.repository_blueprint.identifier
+  resource "portaggregationproperties" "repositoryaggregationproperties" {
+    blueprintidentifier = portblueprint.repositoryblueprint.identifier
     properties           = {
-      "pull_requests_per_day" = {
-        target_blueprint_identifier = port_blueprint.pull_request_blueprint.identifier
+      "pullrequestsperday" = {
+        targetblueprintidentifier = portblueprint.pullrequestblueprint.identifier
         title                       = "Pull Requests Per Day"
         icon                        = "Terraform"
         description                 = "Pull Requests Per Day"
         method                      = {
-          average_entities = {
-            average_of      = "day"
-            measure_time_by = "$createdAt"
+          averageentities = {
+            averageof      = "day"
+            measuretime_by = "$createdAt"
           }
         }
       }
     }
   }
-    
-  
+  ```
   Create a repository blueprint and a pull request blueprint and an aggregation property to calculate the average of fix pull request per month:
   To do that we will add a query to the aggregation property to filter only pull requests with fixed title:
-  
-  
-  resource "port_blueprint" "repository_blueprint" {
+  ```hcl
+  resource "portblueprint" "repositoryblueprint" {
     title       = "Repository Blueprint"
     icon        = "Terraform"
     identifier  = "repository"
     description = ""
   }
-  
-  resource "port_blueprint" "pull_request_blueprint" {
+  resource "portblueprint" "pullrequestblueprint" {
     title       = "Pull Request Blueprint"
     icon        = "Terraform"
-    identifier  = "pull_request"
+    identifier  = "pullrequest"
     description = ""
     properties = {
-      string_props = {
+      stringprops = {
         "status" = {
           title = "Status"
         }
@@ -195,23 +180,22 @@ description: |-
     relations = {
       "repository" = {
         title  = "Repository"
-        target = port_blueprint.repository_blueprint.identifier
+        target = portblueprint.repository_blueprint.identifier
       }
     }
   }
-  
-  resource "port_aggregation_properties" "repository_aggregation_properties" {
-    blueprint_identifier = port_blueprint.repository_blueprint.identifier
+  resource "portaggregationproperties" "repositoryaggregationproperties" {
+    blueprintidentifier = portblueprint.repositoryblueprint.identifier
     properties           = {
-      "fix_pull_requests_count" = {
-        target_blueprint_identifier = port_blueprint.pull_request_blueprint.identifier
+      "fixpullrequestscount" = {
+        targetblueprintidentifier = portblueprint.pullrequestblueprint.identifier
         title                       = "Pull Requests Per Day"
         icon                        = "Terraform"
         description                 = "Pull Requests Per Day"
         method                      = {
-          average_entities = {
-            average_of      = "month"
-            measure_time_by = "$createdAt"
+          averageentities = {
+            averageof      = "month"
+            measuretime_by = "$createdAt"
           }
         }
         query = jsonencode(
@@ -229,25 +213,22 @@ description: |-
       }
     }
   }
-  
-  
+  ```
   Create multiple aggregation properties in one resource:
-  
-  
-  resource "port_blueprint" "repository_blueprint" {
+  ```hcl
+  resource "portblueprint" "repositoryblueprint" {
     title       = "Repository Blueprint"
     icon        = "Terraform"
     identifier  = "repository"
     description = ""
   }
-  
-  resource "port_blueprint" "pull_request_blueprint" {
+  resource "portblueprint" "pullrequestblueprint" {
     title       = "Pull Request Blueprint"
     icon        = "Terraform"
-    identifier  = "pull_request"
+    identifier  = "pullrequest"
     description = ""
     properties = {
-      string_props = {
+      stringprops = {
         "status" = {
           title = "Status"
         }
@@ -256,37 +237,37 @@ description: |-
     relations = {
       "repository" = {
         title  = "Repository"
-        target = port_blueprint.repository_blueprint.identifier
+        target = portblueprint.repository_blueprint.identifier
       }
     }
   }
-  
-  resource "port_aggregation_properties" "repository_aggregation_properties" {
-    blueprint_identifier = port_blueprint.repository_blueprint.identifier
+  resource "portaggregationproperties" "repositoryaggregationproperties" {
+    blueprintidentifier = portblueprint.repositoryblueprint.identifier
     properties           = {
-      "pull_requests_per_day" = {
-        target_blueprint_identifier = port_blueprint.pull_request_blueprint.identifier
+      "pullrequestsperday" = {
+        targetblueprintidentifier = portblueprint.pullrequestblueprint.identifier
         title                       = "Pull Requests Per Day"
         icon                        = "Terraform"
         description                 = "Pull Requests Per Day"
         method                      = {
-          average_entities = {
-            average_of      = "day"
-            measure_time_by = "$createdAt"
+          averageentities = {
+            averageof      = "day"
+            measuretimeby = "$createdAt"
           }
         }
       }
-      "overall_pull_requests_count" = {
-        target_blueprint_identifier = port_blueprint.pull_request_blueprint.identifier
+      "overallpullrequestscount" = {
+        targetblueprintidentifier = portblueprint.pullrequestblueprint.identifier
         title                       = "Overall Pull Requests Count"
         icon                        = "Terraform"
         description                 = "Overall Pull Requests Count"
         method                      = {
-          count_entities = true
+          countentities = true
         }
       }
     }
   }
+  ```
 ---
 
 # port_aggregation_properties (Resource)

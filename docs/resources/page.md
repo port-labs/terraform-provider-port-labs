@@ -12,20 +12,19 @@ description: |-
   If this Environment Variable isn't specified, you won't be able to use the resource.
   Example Usage
   Blueprint Entities Page
-  
-  
-  resource "port_page" "microservice_blueprint_page" {
-    identifier            = "microservice_blueprint_page"
+  ```hcl
+  resource "portpage" "microserviceblueprintpage" {
+    identifier            = "microserviceblueprintpage"
     title                 = "Microservices"
     type                  = "blueprint-entities"
     icon                  = "Microservice"
-    blueprint             = port_blueprint.base_blueprint.identifier
+    blueprint             = portblueprint.baseblueprint.identifier
     widgets               = [
       jsonencode(
         {
           "id" : "microservice-table-entities",
           "type" : "table-entities-explorer",
-          "blueprint": port_blueprint.base_blueprint.identifier,
+          "blueprint": portblueprint.base_blueprint.identifier,
           "dataset" : {
             "combinator" : "and",
             "rules" : [
@@ -35,13 +34,11 @@ description: |-
       )
     ]
   }
-  
-  
+  ```
   Dashboard Page
-  
-  
-  resource "port_page" "microservice_dashboard_page" {
-    identifier            = "microservice_dashboard_page"
+  ```hcl
+  resource "portpage" "microservicedashboardpage" {
+    identifier            = "microservicedashboard_page"
     title                 = "Microservices"
     icon                  = "GitHub"
     type                  = "dashboard"
@@ -75,14 +72,12 @@ description: |-
       )
     ]
   }
-  
-  
+  ```
   Page with parent
   Create a page inside a folder.
-  
-  
-  resource "port_page" "microservice_dashboard_page" {
-    identifier            = "microservice_dashboard_page"
+  ```hcl
+  resource "portpage" "microservicedashboardpage" {
+    identifier            = "microservicedashboard_page"
     title                 = "Microservices"
     icon                  = "GitHub"
     type                  = "dashboard"
@@ -117,18 +112,16 @@ description: |-
       )
     ]
   }
-  
-  
+  ```
   Page with after
   Create a page after another page.
-  
-  
-  resource "port_page" "microservice_dashboard_page" {
-    identifier            = "microservice_dashboard_page"
+  ```hcl
+  resource "portpage" "microservicedashboardpage" {
+    identifier            = "microservicedashboardpage"
     title                 = "Microservices"
     icon                  = "GitHub"
     type                  = "dashboard"
-    after                 = "microservices_entities_page"
+    after                 = "microservicesentities_page"
     widgets               = [
       jsonencode(
         {
@@ -159,12 +152,10 @@ description: |-
       )
     ]
   }
-  
-  
+  ```
   Home Page
-  
-  
-  resource "port_page" "home_page" {
+  ```hcl
+  resource "portpage" "homepage" {
     identifier            = "$home"
     title                 = "Home"
     type                  = "home"
@@ -209,8 +200,7 @@ description: |-
       )
     ]
   }
-  
-  
+  ```
   The home page is a special page, which is created by default when you create a new organization.
   When deleting the home page resource using terraform, the home page will not be deleted from Port as it isn't deletable page, instead, the home page will be removed from the terraform state.Due to only having one home page you'll have to import the state of the home page manually.
   

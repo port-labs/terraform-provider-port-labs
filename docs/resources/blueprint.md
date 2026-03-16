@@ -6,14 +6,13 @@ description: |-
   Blueprint Resource
   Docs about the blueprint resource in Port can be found here https://docs.getport.io/build-your-software-catalog/define-your-data-model/setup-blueprint/.
   Example Usage
-  
-  
-  resource "port_blueprint" "environment" {
+  ```hcl
+  resource "portblueprint" "environment" {
     title      = "Environment"
     icon       = "Environment"
     identifier = "environment"
     properties = {
-      string_props = {
+      stringprops = {
         "aws-region" = {
           title = "AWS Region"
         }
@@ -24,17 +23,15 @@ description: |-
       }
     }
   }
-  
-  
+  ```
   Example Usage with Relations
-  
-  
-  resource "port_blueprint" "environment" {
+  ```hcl
+  resource "portblueprint" "environment" {
     title      = "Environment"
     icon       = "Environment"
     identifier = "environment"
     properties = {
-      string_props = {
+      stringprops = {
         "aws-region" = {
           title = "AWS Region"
         }
@@ -45,13 +42,12 @@ description: |-
       }
     }
   }
-  
-  resource "port_blueprint" "microservice" {
+  resource "portblueprint" "microservice" {
     title      = "Microservice"
     icon       = "Microservice"
     identifier = "microservice"
     properties = {
-      string_props = {
+      stringprops = {
         "domain" = {
           title = "Domain"
         }
@@ -69,17 +65,15 @@ description: |-
       }
     }
   }
-  
-  
+  ```
   Example Usage with Mirror Properties
-  
-  
-  resource "port_blueprint" "microservice" {
+  ```hcl
+  resource "portblueprint" "microservice" {
     title      = "Microservice"
     icon       = "Microservice"
     identifier = "microservice"
     properties = {
-      string_props = {
+      stringprops = {
         "domain" = {
           title = "Domain"
         }
@@ -89,33 +83,32 @@ description: |-
         }
       }
     }
-    mirror_properties = {
+    mirrorproperties = {
       "aws-region" = {
         path = "environment.aws-region"
       }
     }
     relations = {
       "environment" = {
-        target   = port_blueprint.environment.identifier
+        target   = portblueprint.environment.identifier
         required = true
         many     = false
       }
     }
   }
-  
-  
+  ```
   Force Deleting a Blueprint
   There could be cases where a blueprint will be managed by Terraform, but entities will get created from other sources (e.g. Port UI, API or other supported integrations).
   In this case, when trying to delete the blueprint, Terraform will fail because it will try to delete the blueprint without deleting the entities first as they are not managed by Terraform.
   To overcome this behavior, you can set the argument force_delete_entities=true.
   On the blueprint destroy it will trigger a migration that will delete all the entities in the blueprint and then delete the blueprint itself.
-  
-  resource "port_blueprint" "microservice" {
+  ```hcl
+  resource "portblueprint" "microservice" {
     title      = "Microservice"
     icon       = "Microservice"
     identifier = "microservice"
     properties = {
-      string_props = {
+      stringprops = {
         "domain" = {
           title = "Domain"
         }
@@ -125,8 +118,9 @@ description: |-
         }
       }
     }
-    force_delete_entities = false
+    forcedeleteentities = false
   }
+  ```
 ---
 
 # port_blueprint (Resource)
@@ -288,6 +282,7 @@ resource "port_blueprint" "microservice" {
 - `description` (String) The description of the blueprint
 - `force_delete_entities` (Boolean) If set to true, the blueprint will be deleted with all its entities, even if they are not managed by Terraform
 - `icon` (String) The icon of the blueprint
+- `include_in_global_search` (Boolean) Whether to include this blueprint's entities in global search (Spotlight). When not set, the organization's `include_blueprints_in_global_search_by_default` setting applies.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `mirror_properties` (Attributes Map) The mirror properties of the blueprint (see [below for nested schema](#nestedatt--mirror_properties))
 - `ownership` (Attributes) Optional ownership field for Blueprint. 'type' can be Inherited or Direct. If 'Inherited', then 'path' is required and must be a valid relation identifiers path. (see [below for nested schema](#nestedatt--ownership))

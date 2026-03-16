@@ -6,19 +6,19 @@ description: |-
   Action resource
   Docs for the Action resource can be found here https://docs.getport.io/create-self-service-experiences/.
   Example Usage
-  hcl
+  
   resource "port_action" "create_microservice" {
-      title = "Create Microservice"
-      identifier = "create-microservice"
-      icon = "Terraform"
-      self_service_trigger = {
-          operation = "CREATE"
-          blueprint_identifier = port_blueprint.microservice.identifier
-          user_properties = {
-              string_props = {
-                  myStringIdentifier = {
-                      title = "My String Identifier"
-                      required = true
+  	title = "Create Microservice"
+  	identifier = "create-microservice"
+  	icon = "Terraform"
+  	self_service_trigger = {
+  		operation = "CREATE"
+  		blueprint_identifier = port_blueprint.microservice.identifier
+  		user_properties = {
+  			string_props = {
+  				myStringIdentifier = {
+  					title = "My String Identifier"
+  					required = true
                       format = "entity"
                       blueprint = port_blueprint.parent.identifier
                       dataset = {
@@ -35,34 +35,34 @@ description: |-
                           property = "$updatedAt"
                           order = "DESC"
                       }
-                  }
-              }
-              number_props = {
-                  myNumberIdentifier = {
-                      title = "My Number Identifier"
-                      required = true
-                      maximum = 100
-                      minimum = 0
-                  }
-              }
-              boolean_props = {
-                  myBooleanIdentifier = {
-                      title = "My Boolean Identifier"
-                      required = true
-                  }
-              }
-              object_props = {
-                  myObjectIdentifier = {
-                      title = "My Object Identifier"
-                      required = true
-                  }
-              }
-              array_props = {
-                  myArrayIdentifier = {
-                      title = "My Array Identifier"
-                      required = true
-                      string_items = {
-                          format = "entity"
+  				}
+  			}
+  			number_props = {
+  				myNumberIdentifier = {
+  					title = "My Number Identifier"
+  					required = true
+  					maximum = 100
+  					minimum = 0
+  				}
+  			}
+  			boolean_props = {
+  				myBooleanIdentifier = {
+  					title = "My Boolean Identifier"
+  					required = true
+  				}
+  			}
+  			object_props = {
+  				myObjectIdentifier = {
+  					title = "My Object Identifier"
+  					required = true
+  				}
+  			}
+  			array_props = {
+  				myArrayIdentifier = {
+  					title = "My Array Identifier"
+  					required = true
+  					string_items = {
+  						format = "entity"
                           blueprint = port_blueprint.parent.identifier
                           dataset = jsonencode({
                               combinator = "and"
@@ -72,82 +72,84 @@ description: |-
                                   value    = "specificValue"
                               }]
                           })
-                      }
+  					}
                       sort = {
                           property = "$updatedAt"
                           order = "DESC"
                       }
-                  }
-              }
-          }
-      }
-      kafka_method = {
-          payload = jsonencode({
-            runId: "{{.run.id}}"
-          })
-      }
+  				}
+  			}
+  		}
+  	}
+  	kafka_method = {
+  		payload = jsonencode({
+  		  runId: "{{"{{.run.id}}"}}"
+  		})
+  	}
   }
   
   Example Usage with Automation trigger
   Port allows setting an automation trigger to an action, for executing an action based on event occurred to an entity in Port.
-  ```hcl
-  resource "portaction" "deletetemporarymicroservice" {
-      title = "Delete Temporary Microservice"
-      identifier = "delete-temp-microservice"
-      icon = "Terraform"
-      automationtrigger = {
-          timerpropertyexpiredevent = {
-              blueprintidentifier = portblueprint.microservice.identifier
-              propertyidentifier = "ttl"
-          }
-      }
-      kafka_method = {
-          payload = jsonencode({
-            runId: "{{.run.id}}"
-          })
-      }
+  
+  resource "port_action" "delete_temporary_microservice" {
+  	title = "Delete Temporary Microservice"
+  	identifier = "delete-temp-microservice"
+  	icon = "Terraform"
+  	automation_trigger = {
+  		timer_property_expired_event = {
+  			blueprint_identifier = port_blueprint.microservice.identifier
+  			property_identifier = "ttl"
+  		}
+  	}
+  	kafka_method = {
+  		payload = jsonencode({
+  		  runId: "{{"{{.run.id}}"}}"
+  		})
+  	}
   }
-  ```
+  
+  
   Example Usage With Condition
-  ```hcl
-  resource "portaction" "createmicroservice" {
-      title = "Create Microservice"
-      identifier = "create-microservice"
-      icon = "Terraform"
-      selfservicetrigger = {
-          operation = "CREATE"
-          blueprintidentifier = portblueprint.microservice.identifier
-          condition = jsonencode({
-              type = "SEARCH"
-              combinator = "and"
-              rules = [
-                  {
-                      property = "$title"
-                      operator = "!="
-                      value = "Test"
-                  }
-              ]
-          })
-          userproperties = {
-              stringprops = {
-                  myStringIdentifier = {
-                      title = "My String Identifier"
-                      required = true
-                  }
-              }
-          }
-      }
-      kafka_method = {
-          payload = jsonencode({
-            runId: "{{.run.id}}"
-          })
-      }
-  ```
+  
+  resource "port_action" "create_microservice" {
+  	title = "Create Microservice"
+  	identifier = "create-microservice"
+  	icon = "Terraform"
+  	self_service_trigger = {
+  		operation = "CREATE"
+  		blueprint_identifier = port_blueprint.microservice.identifier
+  		condition = jsonencode({
+  			type = "SEARCH"
+  			combinator = "and"
+  			rules = [
+  				{
+  					property = "$title"
+  					operator = "!="
+  					value = "Test"
+  				}
+  			]
+  		})
+  		user_properties = {
+  			string_props = {
+  				myStringIdentifier = {
+  					title = "My String Identifier"
+  					required = true
+  				}
+  			}
+  		}
+  	}
+  	kafka_method = {
+  		payload = jsonencode({
+  		  runId: "{{"{{.run.id}}"}}"
+  		})
+  	}
+  	
+  
   Limitations
   Mixed static and dynamic values in dataset rules
   When defining dataset rules in self-service actions that mix static values with jq_query values, the Terraform provider may not handle them correctly.
   To work around this, use jsonencode() for the entire dataset object:
-  hcl
+  
   resource "port_action" "myAction" {
     # ...action properties
     self_service_trigger = {
@@ -268,7 +270,7 @@ resource "port_action" "create_microservice" {
 	}
 	kafka_method = {
 		payload = jsonencode({
-		  runId: "{{.run.id}}"
+		  runId: "{{"{{.run.id}}"}}"
 		})
 	}
 }
@@ -291,7 +293,7 @@ resource "port_action" "delete_temporary_microservice" {
 	}
 	kafka_method = {
 		payload = jsonencode({
-		  runId: "{{.run.id}}"
+		  runId: "{{"{{.run.id}}"}}"
 		})
 	}
 }
@@ -330,7 +332,7 @@ resource "port_action" "create_microservice" {
 	}
 	kafka_method = {
 		payload = jsonencode({
-		  runId: "{{.run.id}}"
+		  runId: "{{"{{.run.id}}"}}"
 		})
 	}
 	
@@ -682,7 +684,7 @@ Optional:
 - `visible_jq_query` (String) The visibility condition jq query of the array property
 
 <a id="nestedatt--self_service_trigger--user_properties--array_props--boolean_items"></a>
-### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
+### Nested Schema for `self_service_trigger.user_properties.array_props.boolean_items`
 
 Optional:
 
@@ -690,7 +692,7 @@ Optional:
 
 
 <a id="nestedatt--self_service_trigger--user_properties--array_props--number_items"></a>
-### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
+### Nested Schema for `self_service_trigger.user_properties.array_props.number_items`
 
 Optional:
 
@@ -700,7 +702,7 @@ Optional:
 
 
 <a id="nestedatt--self_service_trigger--user_properties--array_props--object_items"></a>
-### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
+### Nested Schema for `self_service_trigger.user_properties.array_props.object_items`
 
 Optional:
 
@@ -708,7 +710,7 @@ Optional:
 
 
 <a id="nestedatt--self_service_trigger--user_properties--array_props--sort"></a>
-### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
+### Nested Schema for `self_service_trigger.user_properties.array_props.sort`
 
 Required:
 
@@ -720,7 +722,7 @@ Optional:
 
 
 <a id="nestedatt--self_service_trigger--user_properties--array_props--string_items"></a>
-### Nested Schema for `self_service_trigger.user_properties.array_props.visible_jq_query`
+### Nested Schema for `self_service_trigger.user_properties.array_props.string_items`
 
 Optional:
 
@@ -794,7 +796,7 @@ Optional:
 - `visible_jq_query` (String) The visibility condition jq query of the object property
 
 <a id="nestedatt--self_service_trigger--user_properties--object_props--client_side_encryption"></a>
-### Nested Schema for `self_service_trigger.user_properties.object_props.visible_jq_query`
+### Nested Schema for `self_service_trigger.user_properties.object_props.client_side_encryption`
 
 Required:
 
@@ -834,7 +836,7 @@ Optional:
 - `visible_jq_query` (String) The visibility condition jq query of the string property
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--client_side_encryption"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query`
+### Nested Schema for `self_service_trigger.user_properties.string_props.client_side_encryption`
 
 Required:
 
@@ -843,27 +845,15 @@ Required:
 
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query`
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset`
 
 Required:
 
 - `combinator` (String) The combinator of the dataset
-- `rules` (Attributes List) The rules of the dataset. Can be leaf rules (with operator) or group rules (with combinator and nested rules). (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules))
+- `rules` (Attributes List) The rules of the dataset. Can be leaf rules (with operator) or group rules (with combinator and nested rules). (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules))
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules`
-
-Optional:
-
-- `blueprint` (String) The blueprint identifier of the rule
-- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
-- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
-- `property` (String) The property identifier of the rule
-- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--rules))
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value))
-
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules`
 
 Optional:
 
@@ -871,23 +861,11 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
-- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--rules))
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value))
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--value))
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value`
-
-Optional:
-
-- `blueprint` (String) The blueprint identifier of the rule
-- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
-- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
-- `property` (String) The property identifier of the rule
-- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--rules))
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value))
-
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules`
 
 Optional:
 
@@ -895,23 +873,11 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
-- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules))
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--value))
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--value))
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules`
-
-Optional:
-
-- `blueprint` (String) The blueprint identifier of the rule
-- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
-- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
-- `property` (String) The property identifier of the rule
-- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--rules))
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value))
-
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules`
 
 Optional:
 
@@ -919,23 +885,11 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
-- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--rules))
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value))
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--value))
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules.value.value`
-
-Optional:
-
-- `blueprint` (String) The blueprint identifier of the rule
-- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
-- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
-- `property` (String) The property identifier of the rule
-- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--rules))
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value))
-
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules.value.value.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules`
 
 Optional:
 
@@ -943,23 +897,11 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
-- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--rules))
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--value))
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--value))
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules.value.value.value.value`
-
-Optional:
-
-- `blueprint` (String) The blueprint identifier of the rule
-- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
-- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
-- `property` (String) The property identifier of the rule
-- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--value--rules))
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--value--value))
-
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--value--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules.value.value.value.value.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules`
 
 Optional:
 
@@ -967,11 +909,11 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
-- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--value--value--rules))
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--value--value--value))
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--value))
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--value--value--rules"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules.value.value.value.value.value.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules`
 
 Optional:
 
@@ -979,10 +921,70 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
-- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--value--value--value--value))
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--value))
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--value--value--value--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules.value.value.value.value.value.value.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.value`
 
 Optional:
 
@@ -990,8 +992,8 @@ Optional:
 
 
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--value--value--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules.value.value.value.value.value.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.value`
 
 Optional:
 
@@ -999,8 +1001,8 @@ Optional:
 
 
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--value--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules.value.value.value.value.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.value`
 
 Optional:
 
@@ -1008,8 +1010,8 @@ Optional:
 
 
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules.value.value.value.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.value`
 
 Optional:
 
@@ -1017,8 +1019,8 @@ Optional:
 
 
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules.value.value.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.value`
 
 Optional:
 
@@ -1026,8 +1028,8 @@ Optional:
 
 
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules.value.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.value`
 
 Optional:
 
@@ -1035,8 +1037,8 @@ Optional:
 
 
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--rules--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.rules.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.value`
 
 Optional:
 
@@ -1044,8 +1046,8 @@ Optional:
 
 
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.value`
 
 Optional:
 
@@ -1053,8 +1055,8 @@ Optional:
 
 
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.value`
 
 Optional:
 
@@ -1062,8 +1064,8 @@ Optional:
 
 
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.value`
 
 Optional:
 
@@ -1071,8 +1073,8 @@ Optional:
 
 
 
-<a id="nestedatt--self_service_trigger--user_properties--string_props--visible_jq_query--rules--value"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query.rules.value`
+<a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--value"></a>
+### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.value`
 
 Optional:
 
@@ -1082,7 +1084,7 @@ Optional:
 
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--sort"></a>
-### Nested Schema for `self_service_trigger.user_properties.string_props.visible_jq_query`
+### Nested Schema for `self_service_trigger.user_properties.string_props.sort`
 
 Required:
 

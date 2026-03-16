@@ -7,7 +7,7 @@ description: |-
   Docs about page permissions can be found here https://docs.getport.io/customize-pages-dashboards-and-plugins/page/page-permissions?view-permissions=api.
   Example Usage
   Allow read access to all members:
-  hcl
+  
   resource "port_page_permissions" "microservices_permissions" {
     page_identifier = "microservices"
     read = {
@@ -18,7 +18,7 @@ description: |-
   }
   
   Allow read access to all admins and a specific user and team:
-  hcl
+  
   resource "port_page_permissions" "microservices_permissions" {
     page_identifier = "microservices"
     read = {
@@ -31,7 +31,7 @@ description: |-
   }
   
   Allow read access to specific users and teams:
-  hcl
+  
   resource "port_page_permissions" "microservices_permissions" {
     page_identifier = "microservices"
     read = {

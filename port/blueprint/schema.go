@@ -545,6 +545,10 @@ func BlueprintSchema() map[string]schema.Attribute {
 			Default:             booldefault.StaticBool(true),
 		},
 		"ownership": OwnershipSchema(),
+		"include_in_global_search": schema.BoolAttribute{
+			MarkdownDescription: "Whether to include this blueprint's entities in global search (Spotlight). When not set, the organization's `include_blueprints_in_global_search_by_default` setting applies.",
+			Optional:            true,
+		},
 	}
 }
 

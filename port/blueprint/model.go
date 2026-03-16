@@ -190,4 +190,5 @@ type BlueprintModel struct {
 	ForceDeleteEntities         types.Bool                          `tfsdk:"force_delete_entities"`
 	CreateCatalogPage           types.Bool                          `tfsdk:"create_catalog_page"`
 	Ownership                   *OwnershipModel                     `tfsdk:"ownership"`
+	IncludeInGlobalSearch       types.Bool                          `tfsdk:"include_in_global_search"`
 }

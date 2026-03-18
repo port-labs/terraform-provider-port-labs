@@ -178,3 +178,52 @@ func TestAccPortFolderResourceImport(t *testing.T) {
 		},
 	})
 }
+
+// TestAccPortFolderResourceAutomaticParentInheritance verifies parent inheritance from 'after' folder.
+func TestAccPortFolderResourceAutomaticParentInheritance(t *testing.T) {
+	parentFolderIdentifier := utils.GenID()
+	firstChildIdentifier := utils.GenID()
+	secondChildIdentifier := utils.GenID()
+
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var testAccPortFolderResourceConfig = fmt.Sprintf(`
+    resource "port_folder" "parent_folder" {
+        identifier = "%s"
+        title      = "Parent Folder"
+    }
+
+    resource "port_folder" "first_child" {
+        identifier = "%s"
+        parent     = port_folder.parent_folder.identifier
+        title      = "First Child"
+    }
+
+    resource "port_folder" "second_child" {
+        identifier = "%s"
+        after      = port_folder.first_child.identifier
+        title      = "Second Child"
+    }
+    `, parentFolderIdentifier, firstChildIdentifier, secondChildIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccPortFolderResourceConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_folder.parent_folder", "identifier", parentFolderIdentifier),
+					resource.TestCheckResourceAttr("port_folder.first_child", "identifier", firstChildIdentifier),
+					resource.TestCheckResourceAttr("port_folder.first_child", "parent", parentFolderIdentifier),
+					resource.TestCheckResourceAttr("port_folder.second_child", "identifier", secondChildIdentifier),
+					resource.TestCheckResourceAttr("port_folder.second_child", "parent", parentFolderIdentifier),
+					resource.TestCheckResourceAttr("port_folder.second_child", "after", firstChildIdentifier),
+				),
+			},
+		},
+	})
+}

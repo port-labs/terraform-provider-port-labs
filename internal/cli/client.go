@@ -8,6 +8,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/ratelimit"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 	"log/slog"
+	"net/http"
 	"os"
 	"slices"
 	"strings"
@@ -100,13 +101,37 @@ func (c *PortClient) Authenticate(ctx context.Context, clientID, clientSecret st
 		SetContext(ctx).
 		Post(url)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to connect to Port API for authentication: %w", err)
 	}
+
+	// Check for specific authentication errors first
+	if resp.StatusCode() == http.StatusUnauthorized {
+		return "", fmt.Errorf("authentication failed: invalid client ID or secret (status: 401). Please verify your PORT_CLIENT_ID and PORT_CLIENT_SECRET")
+	}
+
+	if resp.StatusCode() == http.StatusForbidden {
+		return "", fmt.Errorf("authentication forbidden: access denied (status: 403). Please check your client permissions")
+	}
+
+	// General HTTP error check (matches organization.go pattern)
+	if resp.IsError() {
+		return "", fmt.Errorf("authentication request failed (status: %d), got: %s", resp.StatusCode(), string(resp.Body()))
+	}
+
 	var tokenResp AccessTokenResponse
 	err = json.Unmarshal(resp.Body(), &tokenResp)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("failed to parse authentication response: %w", err)
 	}
+
+	if !tokenResp.Ok {
+		return "", fmt.Errorf("authentication failed: Port API returned ok=false, got: %s", string(resp.Body()))
+	}
+
+	if tokenResp.AccessToken == "" {
+		return "", fmt.Errorf("authentication response contained empty access token, got: %s", string(resp.Body()))
+	}
+
 	c.Client.SetAuthToken(tokenResp.AccessToken)
 	return tokenResp.AccessToken, nil
 }

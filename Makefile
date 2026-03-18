@@ -63,7 +63,7 @@ dev-run-integration: build
 	PORT_BETA_FEATURES_ENABLED=true go run . --debug
 
 dev-setup: setup
-	wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.64.5
+	wget -O- -nv https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v2.8.0
 
 dev-debug: build
 	PORT_BETA_FEATURES_ENABLED=true dlv exec --accept-multiclient --continue --headless ./terraform-provider-port-labs -- --debug

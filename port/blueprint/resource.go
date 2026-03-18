@@ -119,6 +119,8 @@ func (r *BlueprintResource) refreshBlueprintState(ctx context.Context, bm *Bluep
 		bm.Ownership = nil
 	}
 
+	bm.IncludeInGlobalSearch = flex.GoBoolToFramework(b.IncludeInGlobalSearch)
+
 	if len(b.Schema.Properties) > 0 {
 		err := r.updatePropertiesToState(ctx, b, bm)
 		if err != nil {
@@ -388,6 +390,8 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 			Path: state.TeamInheritance.Path.ValueString(),
 		}
 	}
+
+	b.IncludeInGlobalSearch = state.IncludeInGlobalSearch.ValueBoolPointer()
 
 	if state.Ownership != nil && !state.Ownership.Type.IsNull() {
 		ownershipType := state.Ownership.Type.ValueString()

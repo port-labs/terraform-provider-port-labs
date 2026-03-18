@@ -51,6 +51,60 @@ func TestAccPortBlueprintBasic(t *testing.T) {
 	})
 }
 
+func TestAccPortBlueprintIncludeInGlobalSearch(t *testing.T) {
+	identifier := utils.GenID()
+	var configTrue = fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		include_in_global_search = true
+	}
+`, identifier)
+	var configFalse = fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+		include_in_global_search = false
+	}
+`, identifier)
+	var configUnset = fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		description = ""
+	}
+`, identifier)
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + configTrue,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "include_in_global_search", "true"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + configFalse,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "include_in_global_search", "false"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + configUnset,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr("port_blueprint.microservice", "include_in_global_search"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortBlueprintStringProperty(t *testing.T) {
 	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`

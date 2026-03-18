@@ -288,6 +288,7 @@ resource "port_blueprint" "microservice" {
 - `description` (String) The description of the blueprint
 - `force_delete_entities` (Boolean) If set to true, the blueprint will be deleted with all its entities, even if they are not managed by Terraform
 - `icon` (String) The icon of the blueprint
+- `include_in_global_search` (Boolean) Whether to include this blueprint's entities in global search (Spotlight). When not set, the organization's `include_blueprints_in_global_search_by_default` setting applies.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `mirror_properties` (Attributes Map) The mirror properties of the blueprint (see [below for nested schema](#nestedatt--mirror_properties))
 - `ownership` (Attributes) Optional ownership field for Blueprint. 'type' can be Inherited or Direct. If 'Inherited', then 'path' is required and must be a valid relation identifiers path. (see [below for nested schema](#nestedatt--ownership))

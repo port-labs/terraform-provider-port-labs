@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
 )
 
 func writeBlueprintComputedFieldsToState(b *cli.Blueprint, state *SystemBlueprintModel) {
@@ -112,6 +113,8 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
 		return
 	}
+
+	state.IncludeInGlobalSearch = flex.GoBoolToFramework(b.IncludeInGlobalSearch)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }
@@ -227,6 +230,7 @@ func (r *Resource) mergeSystemBlueprint(ctx context.Context, state *SystemBluepr
 		MirrorProperties:      mirrorProps,
 		CalculationProperties: calcProps,
 		AggregationProperties: existingBp.AggregationProperties,
+		IncludeInGlobalSearch: state.IncludeInGlobalSearch.ValueBoolPointer(),
 	}
 
 	if existingBp.Ownership != nil {

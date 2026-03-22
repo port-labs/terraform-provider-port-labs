@@ -12,4 +12,5 @@ type SystemBlueprintModel struct {
 	Relations             map[string]blueprint.RelationModel            `tfsdk:"relations"`
 	MirrorProperties      map[string]blueprint.MirrorPropertyModel      `tfsdk:"mirror_properties"`
 	CalculationProperties map[string]blueprint.CalculationPropertyModel `tfsdk:"calculation_properties"`
+	IncludeInGlobalSearch types.Bool                                    `tfsdk:"include_in_global_search"`
 }

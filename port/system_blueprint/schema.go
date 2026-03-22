@@ -47,10 +47,11 @@ func (r *Resource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *r
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"properties":             blueprintSchemas["properties"],
-			"relations":              blueprintSchemas["relations"],
-			"mirror_properties":      blueprintSchemas["mirror_properties"],
-			"calculation_properties": blueprintSchemas["calculation_properties"],
+			"properties":              blueprintSchemas["properties"],
+			"relations":               blueprintSchemas["relations"],
+			"mirror_properties":       blueprintSchemas["mirror_properties"],
+			"calculation_properties":  blueprintSchemas["calculation_properties"],
+			"include_in_global_search": blueprintSchemas["include_in_global_search"],
 		},
 	}
 }

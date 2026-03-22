@@ -39,8 +39,6 @@ func (r *Resource) refreshBlueprintState(ctx context.Context, bm *SystemBlueprin
 		addCalculationPropertiesToState(ctx, b, systemBp, bm)
 	}
 
-	bm.IncludeInGlobalSearch = flex.GoBoolToFramework(b.IncludeInGlobalSearch)
-
 	return nil
 }
 
@@ -74,19 +72,7 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
-	merged, err := r.mergeSystemBlueprint(ctx, state, b, systemBp)
-	if err != nil {
-		resp.Diagnostics.AddError("Failed to merge blueprint with planned state", err.Error())
-		return
-	}
-
-	bp, err := r.client.UpdateBlueprint(ctx, merged, b.Identifier)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update blueprint", err.Error())
-		return
-	}
-
-	err = r.refreshBlueprintState(ctx, state, bp, systemBp)
+	err = r.refreshBlueprintState(ctx, state, b, systemBp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
 		return
@@ -127,6 +113,8 @@ func (r *Resource) Read(ctx context.Context, req resource.ReadRequest, resp *res
 		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
 		return
 	}
+
+	state.IncludeInGlobalSearch = flex.GoBoolToFramework(b.IncludeInGlobalSearch)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)
 }

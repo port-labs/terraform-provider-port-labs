@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
 )
 
 func writeBlueprintComputedFieldsToState(b *cli.Blueprint, state *SystemBlueprintModel) {
@@ -37,6 +38,8 @@ func (r *Resource) refreshBlueprintState(ctx context.Context, bm *SystemBlueprin
 	if len(b.CalculationProperties)-len(systemBp.CalculationProperties) > 0 {
 		addCalculationPropertiesToState(ctx, b, systemBp, bm)
 	}
+
+	bm.IncludeInGlobalSearch = flex.GoBoolToFramework(b.IncludeInGlobalSearch)
 
 	return nil
 }
@@ -227,6 +230,7 @@ func (r *Resource) mergeSystemBlueprint(ctx context.Context, state *SystemBluepr
 		MirrorProperties:      mirrorProps,
 		CalculationProperties: calcProps,
 		AggregationProperties: existingBp.AggregationProperties,
+		IncludeInGlobalSearch: state.IncludeInGlobalSearch.ValueBoolPointer(),
 	}
 
 	if existingBp.Ownership != nil {

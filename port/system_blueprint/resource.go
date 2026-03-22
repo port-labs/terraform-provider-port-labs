@@ -74,7 +74,19 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
-	err = r.refreshBlueprintState(ctx, state, b, systemBp)
+	merged, err := r.mergeSystemBlueprint(ctx, state, b, systemBp)
+	if err != nil {
+		resp.Diagnostics.AddError("Failed to merge blueprint with planned state", err.Error())
+		return
+	}
+
+	bp, err := r.client.UpdateBlueprint(ctx, merged, b.Identifier)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to update blueprint", err.Error())
+		return
+	}
+
+	err = r.refreshBlueprintState(ctx, state, bp, systemBp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
 		return

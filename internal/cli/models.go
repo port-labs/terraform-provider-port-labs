@@ -353,6 +353,7 @@ type (
 		TeamInheritance       *TeamInheritance                        `json:"teamInheritance,omitempty"`
 		Relations             map[string]Relation                     `json:"relations"`
 		Ownership             *Ownership                              `json:"ownership,omitempty"`
+		IncludeInGlobalSearch *bool                                   `json:"includeInGlobalSearch,omitempty"`
 	}
 
 	Action struct {

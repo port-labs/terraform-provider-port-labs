@@ -22,6 +22,7 @@ Port System Blueprint Resource. This resource is used to extend system blueprint
 ### Optional
 
 - `calculation_properties` (Attributes Map) The calculation properties of the blueprint (see [below for nested schema](#nestedatt--calculation_properties))
+- `include_in_global_search` (Boolean) Whether to include this blueprint's entities in global search (Spotlight). When not set, the organization's `include_blueprints_in_global_search_by_default` setting applies.
 - `mirror_properties` (Attributes Map) The mirror properties of the blueprint (see [below for nested schema](#nestedatt--mirror_properties))
 - `properties` (Attributes) The properties of the blueprint (see [below for nested schema](#nestedatt--properties))
 - `relations` (Attributes Map) The relations of the blueprint (see [below for nested schema](#nestedatt--relations))

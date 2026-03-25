@@ -287,6 +287,53 @@ func TestAccPortSystemBlueprintRelations(t *testing.T) {
 	})
 }
 
+func TestAccPortSystemBlueprintIncludeInGlobalSearch(t *testing.T) {
+	identifier := "_user"
+
+	var configTrue = fmt.Sprintf(`
+	resource "port_system_blueprint" "test" {
+		identifier = "%s"
+		include_in_global_search = true
+	}`, identifier)
+
+	var configFalse = fmt.Sprintf(`
+	resource "port_system_blueprint" "test" {
+		identifier = "%s"
+		include_in_global_search = false
+	}`, identifier)
+
+	var configUnset = fmt.Sprintf(`
+	resource "port_system_blueprint" "test" {
+		identifier = "%s"
+	}`, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + configTrue,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_system_blueprint.test", "identifier", identifier),
+					resource.TestCheckResourceAttr("port_system_blueprint.test", "include_in_global_search", "true"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + configFalse,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_system_blueprint.test", "include_in_global_search", "false"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + configUnset,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr("port_system_blueprint.test", "include_in_global_search"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortSystemBlueprintMirrorProperties(t *testing.T) {
 	identifier := "_user"
 

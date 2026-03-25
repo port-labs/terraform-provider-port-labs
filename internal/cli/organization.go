@@ -27,6 +27,28 @@ func (c *PortClient) ReadOrganization(ctx context.Context) (*Organization, int, 
 	return pb.Organization, resp.StatusCode(), nil
 }
 
+func (c *PortClient) UpdateOrganization(ctx context.Context, org *OrganizationUpdate) (*Organization, int, error) {
+	resp, err := c.Client.R().
+		SetBody(org).
+		SetContext(ctx).
+		Patch(orgUrl)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	var pb PortBody
+	if err := json.Unmarshal(resp.Body(), &pb); err != nil {
+		return nil, resp.StatusCode(), err
+	}
+
+	if !pb.OK {
+		return nil, resp.StatusCode(), fmt.Errorf("failed to update organization, got: %s", resp.Body())
+	}
+
+	// PATCH returns only {"ok":true}, so fetch the updated organization
+	return c.ReadOrganization(ctx)
+}
+
 func (c *PortClient) CreateOrganizationSecret(ctx context.Context, secret *OrganizationSecret) (*OrganizationSecret, error) {
 	resp, err := c.Client.R().
 		SetBody(secret).

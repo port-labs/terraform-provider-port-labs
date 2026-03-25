@@ -759,6 +759,10 @@ type Organization struct {
 	FeatureFlags []string `json:"featureFlags"`
 }
 
+type OrganizationUpdate struct {
+	Name *string `json:"name,omitempty"`
+}
+
 type OrganizationSecret struct {
 	SecretName  string  `json:"secretName,omitempty"`
 	SecretValue *string `json:"secretValue,omitempty"`

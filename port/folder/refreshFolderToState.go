@@ -15,6 +15,8 @@ func refreshFolderToState(fm *FolderModel, f *cli.Folder) error {
 
 	if f.After != "" {
 		fm.After = types.StringValue(f.After)
+	} else if !fm.After.IsNull() {
+		fm.After = types.StringNull()
 	}
 
 	if f.Parent != "" {

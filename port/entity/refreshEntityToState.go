@@ -3,6 +3,7 @@ package entity
 import (
 	"context"
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
@@ -194,20 +195,13 @@ func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityMo
 	state.UpdatedAt = types.StringValue(e.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(e.UpdatedBy)
 
-	if len(e.Team) != 0 {
-		state.Teams = make([]types.String, len(e.Team))
-		for i, t := range e.Team {
-			state.Teams[i] = types.StringValue(t)
-		}
+	state.Teams = make([]types.String, len(e.Team))
+	for i, t := range e.Team {
+		state.Teams[i] = types.StringValue(t)
 	}
 
-	if len(e.Properties) != 0 {
-		r.refreshPropertiesEntityState(ctx, state, e, blueprint)
-	}
-
-	if len(e.Relations) != 0 {
-		refreshRelationsEntityState(ctx, state, e)
-	}
+	r.refreshPropertiesEntityState(ctx, state, e, blueprint)
+	refreshRelationsEntityState(ctx, state, e)
 
 	return nil
 }

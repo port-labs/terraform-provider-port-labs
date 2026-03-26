@@ -195,13 +195,26 @@ func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityMo
 	state.UpdatedAt = types.StringValue(e.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(e.UpdatedBy)
 
-	state.Teams = make([]types.String, len(e.Team))
-	for i, t := range e.Team {
-		state.Teams[i] = types.StringValue(t)
+	if len(e.Team) == 0 {
+		state.Teams = nil
+	} else {
+		state.Teams = make([]types.String, len(e.Team))
+		for i, t := range e.Team {
+			state.Teams[i] = types.StringValue(t)
+		}
 	}
 
-	r.refreshPropertiesEntityState(ctx, state, e, blueprint)
-	refreshRelationsEntityState(ctx, state, e)
+	if len(e.Properties) == 0 {
+		state.Properties = nil
+	} else {
+		r.refreshPropertiesEntityState(ctx, state, e, blueprint)
+	}
+
+	if len(e.Relations) == 0 {
+		state.Relations = nil
+	} else {
+		refreshRelationsEntityState(ctx, state, e)
+	}
 
 	return nil
 }

@@ -72,10 +72,48 @@ func (r *Resource) Create(ctx context.Context, req resource.CreateRequest, resp 
 		return
 	}
 
-	err = r.refreshBlueprintState(ctx, state, b, systemBp)
+	// Preserve which nested blocks were omitted from config. After UpdateBlueprint, the API
+	// response can be fuller than the initial ReadBlueprint, which would populate nested
+	// attributes and break Terraform's apply consistency check when those blocks were null in the plan.
+	planProperties := state.Properties
+	planRelations := state.Relations
+	planMirrorProperties := state.MirrorProperties
+	planCalculationProperties := state.CalculationProperties
+
+	sourceBp := b
+	if !state.IncludeInGlobalSearch.IsNull() && !state.IncludeInGlobalSearch.IsUnknown() {
+		merged, mergeErr := r.mergeSystemBlueprint(ctx, state, b, systemBp)
+		if mergeErr != nil {
+			resp.Diagnostics.AddError("Failed to merge blueprint with planned state", mergeErr.Error())
+			return
+		}
+		updatedBp, updateErr := r.client.UpdateBlueprint(ctx, merged, b.Identifier)
+		if updateErr != nil {
+			resp.Diagnostics.AddError("failed to update blueprint", updateErr.Error())
+			return
+		}
+		sourceBp = updatedBp
+	}
+
+	err = r.refreshBlueprintState(ctx, state, sourceBp, systemBp)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
 		return
+	}
+
+	state.IncludeInGlobalSearch = flex.GoBoolToFramework(sourceBp.IncludeInGlobalSearch)
+
+	if planProperties == nil {
+		state.Properties = nil
+	}
+	if planRelations == nil {
+		state.Relations = nil
+	}
+	if planMirrorProperties == nil {
+		state.MirrorProperties = nil
+	}
+	if planCalculationProperties == nil {
+		state.CalculationProperties = nil
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, state)...)

@@ -147,6 +147,8 @@ func writeFolderComputedFieldsToState(state *FolderModel, fr *cli.Folder) {
 
 	if fr.After != "" {
 		state.After = types.StringValue(fr.After)
+	} else if !state.After.IsNull() {
+		state.After = types.StringNull()
 	}
 
 	if fr.Title != "" {

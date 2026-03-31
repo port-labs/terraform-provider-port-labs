@@ -146,6 +146,91 @@ func TestAccPortFolderResourceUpdateFolder(t *testing.T) {
 	})
 }
 
+func TestAccPortFolderResourceAfterNoDrift(t *testing.T) {
+	folderIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testAccPortFolderResource = fmt.Sprintf(`
+    resource "port_folder" "example_folder" {
+        identifier  = "%s"
+        title              = "Example Folder"
+    }
+    `, folderIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccPortFolderResource,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_folder.example_folder", "identifier", folderIdentifier),
+					resource.TestCheckResourceAttr("port_folder.example_folder", "title", "Example Folder"),
+				),
+			},
+			{
+				Config:   acctest.ProviderConfig + testAccPortFolderResource,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
+func TestAccPortFolderResourceAfterExplicitValue(t *testing.T) {
+	folderAIdentifier := utils.GenID()
+	folderBIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testAccPortFolderResourceInitial = fmt.Sprintf(`
+    resource "port_folder" "folder_a" {
+        identifier  = "%s"
+        title       = "Folder A"
+    }
+
+    resource "port_folder" "folder_b" {
+        identifier  = "%s"
+        title       = "Folder B"
+    }
+    `, folderAIdentifier, folderBIdentifier)
+
+	var testAccPortFolderResourceWithAfter = fmt.Sprintf(`
+    resource "port_folder" "folder_a" {
+        identifier  = "%s"
+        title       = "Folder A"
+    }
+
+    resource "port_folder" "folder_b" {
+        identifier  = "%s"
+        title       = "Folder B"
+        after       = port_folder.folder_a.identifier
+    }
+    `, folderAIdentifier, folderBIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccPortFolderResourceInitial,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_folder.folder_a", "identifier", folderAIdentifier),
+					resource.TestCheckResourceAttr("port_folder.folder_b", "identifier", folderBIdentifier),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccPortFolderResourceWithAfter,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_folder.folder_b", "after", folderAIdentifier),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortFolderResourceImport(t *testing.T) {
 	folderIdentifier := utils.GenID()
 	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")

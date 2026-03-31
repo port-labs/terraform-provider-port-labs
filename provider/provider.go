@@ -2,6 +2,8 @@ package provider
 
 import (
 	"context"
+	"os"
+
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -25,7 +27,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/team"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/webhook"
 	"github.com/port-labs/terraform-provider-port-labs/v2/version"
-	"os"
 )
 
 var (
@@ -170,6 +171,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		system_blueprint.NewResource,
 		folder.NewFolderResource,
 		organization.NewOrganizationSecretResource,
+		organization.NewOrganizationResource,
 	}
 }
 

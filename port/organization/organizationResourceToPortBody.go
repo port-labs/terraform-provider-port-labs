@@ -12,113 +12,91 @@ func organizationResourceToPortBody(ctx context.Context, state *OrganizationMode
 	update := &cli.OrganizationUpdate{}
 
 	if !state.Name.IsNull() && !state.Name.IsUnknown() {
-		name := state.Name.ValueString()
-		update.Name = &name
+		update.Name = state.Name.ValueStringPointer()
 	}
 
-	// Settings fields
+	// Settings: fill a local struct and assign once. If we set update.Settings to a non-nil
+	// pointer up front, encoding/json still emits "settings":{} (omitempty only drops nil
+	// pointers), which can differ from omitting the key entirely.
+	settings := &cli.OrganizationSettings{}
+	settingsSet := false
+
 	if !state.HiddenBlueprints.IsNull() && !state.HiddenBlueprints.IsUnknown() {
 		var blueprints []string
 		diags := state.HiddenBlueprints.ElementsAs(ctx, &blueprints, false)
 		if diags.HasError() {
 			return nil, fmt.Errorf("%s", diags.Errors()[0].Detail())
 		}
-		if update.Settings == nil {
-			update.Settings = &cli.OrganizationSettings{}
-		}
-		update.Settings.HiddenBlueprints = blueprints
+		settings.HiddenBlueprints = blueprints
+		settingsSet = true
 	}
 	if !state.FederatedLogout.IsNull() && !state.FederatedLogout.IsUnknown() {
-		if update.Settings == nil {
-			update.Settings = &cli.OrganizationSettings{}
-		}
-		v := state.FederatedLogout.ValueBool()
-		update.Settings.FederatedLogout = &v
+		settings.FederatedLogout = state.FederatedLogout.ValueBoolPointer()
+		settingsSet = true
 	}
 	if !state.PortalIcon.IsNull() && !state.PortalIcon.IsUnknown() {
-		if update.Settings == nil {
-			update.Settings = &cli.OrganizationSettings{}
-		}
-		v := state.PortalIcon.ValueString()
-		update.Settings.PortalIcon = &v
+		settings.PortalIcon = state.PortalIcon.ValueStringPointer()
+		settingsSet = true
 	}
 	if !state.PortalTitle.IsNull() && !state.PortalTitle.IsUnknown() {
-		if update.Settings == nil {
-			update.Settings = &cli.OrganizationSettings{}
-		}
-		v := state.PortalTitle.ValueString()
-		update.Settings.PortalTitle = &v
+		settings.PortalTitle = state.PortalTitle.ValueStringPointer()
+		settingsSet = true
 	}
 	if !state.SupportUserPermission.IsNull() && !state.SupportUserPermission.IsUnknown() {
-		if update.Settings == nil {
-			update.Settings = &cli.OrganizationSettings{}
-		}
-		v := state.SupportUserPermission.ValueString()
-		update.Settings.SupportUserPermission = &v
+		settings.SupportUserPermission = state.SupportUserPermission.ValueStringPointer()
+		settingsSet = true
 	}
 	if !state.SupportUserTTL.IsNull() && !state.SupportUserTTL.IsUnknown() {
-		if update.Settings == nil {
-			update.Settings = &cli.OrganizationSettings{}
-		}
-		v := state.SupportUserTTL.ValueString()
-		update.Settings.SupportUserTTL = &v
+		settings.SupportUserTTL = state.SupportUserTTL.ValueStringPointer()
+		settingsSet = true
 	}
 	if !state.SupportUserExpiresAt.IsNull() && !state.SupportUserExpiresAt.IsUnknown() {
-		if update.Settings == nil {
-			update.Settings = &cli.OrganizationSettings{}
-		}
-		v := state.SupportUserExpiresAt.ValueString()
-		update.Settings.SupportUserExpiresAt = &v
+		settings.SupportUserExpiresAt = state.SupportUserExpiresAt.ValueStringPointer()
+		settingsSet = true
 	}
 	if !state.PortAgentStreamerName.IsNull() && !state.PortAgentStreamerName.IsUnknown() {
-		if update.Settings == nil {
-			update.Settings = &cli.OrganizationSettings{}
-		}
-		v := state.PortAgentStreamerName.ValueString()
-		update.Settings.PortAgentStreamerName = &v
+		settings.PortAgentStreamerName = state.PortAgentStreamerName.ValueStringPointer()
+		settingsSet = true
 	}
 	if !state.IncludeBlueprintsInGlobalSearchByDefault.IsNull() && !state.IncludeBlueprintsInGlobalSearchByDefault.IsUnknown() {
-		if update.Settings == nil {
-			update.Settings = &cli.OrganizationSettings{}
-		}
-		v := state.IncludeBlueprintsInGlobalSearchByDefault.ValueBool()
-		update.Settings.IncludeBlueprintsInGlobalSearchByDefault = &v
+		settings.IncludeBlueprintsInGlobalSearchByDefault = state.IncludeBlueprintsInGlobalSearchByDefault.ValueBoolPointer()
+		settingsSet = true
+	}
+	if settingsSet {
+		update.Settings = settings
 	}
 
 	// Top-level fields
 	if !state.IsOnboarded.IsNull() && !state.IsOnboarded.IsUnknown() {
-		v := state.IsOnboarded.ValueBool()
-		update.IsOnboarded = &v
+		update.IsOnboarded = state.IsOnboarded.ValueBoolPointer()
 	}
 
 	// Tool selection provisioning
 	if !state.ToolSelectionProvisioningStatus.IsNull() && !state.ToolSelectionProvisioningStatus.IsUnknown() {
-		v := state.ToolSelectionProvisioningStatus.ValueString()
-		update.ToolSelectionProvisioning = &cli.OrganizationToolSelectionProvisioning{Status: &v}
+		update.ToolSelectionProvisioning = &cli.OrganizationToolSelectionProvisioning{
+			Status: state.ToolSelectionProvisioningStatus.ValueStringPointer(),
+		}
 	}
 
-	// Announcement
-	hasAnnouncement := (!state.AnnouncementEnabled.IsNull() && !state.AnnouncementEnabled.IsUnknown()) ||
-		(!state.AnnouncementContent.IsNull() && !state.AnnouncementContent.IsUnknown()) ||
-		(!state.AnnouncementLink.IsNull() && !state.AnnouncementLink.IsUnknown()) ||
-		(!state.AnnouncementColor.IsNull() && !state.AnnouncementColor.IsUnknown())
-	if hasAnnouncement {
-		update.Announcement = &cli.OrganizationAnnouncement{}
+	// Announcement: default enabled to false when any announcement attribute is set, then apply
+	// known values from state (so content/link/color without an explicit enabled still disables by default).
+	if state.AnnouncementEnabled.ValueBoolPointer() != nil ||
+		state.AnnouncementContent.ValueStringPointer() != nil ||
+		state.AnnouncementLink.ValueStringPointer() != nil ||
+		state.AnnouncementColor.ValueStringPointer() != nil {
+		enabledFalse := false
+		update.Announcement = &cli.OrganizationAnnouncement{Enabled: &enabledFalse}
 		if !state.AnnouncementEnabled.IsNull() && !state.AnnouncementEnabled.IsUnknown() {
-			v := state.AnnouncementEnabled.ValueBool()
-			update.Announcement.Enabled = &v
+			update.Announcement.Enabled = state.AnnouncementEnabled.ValueBoolPointer()
 		}
 		if !state.AnnouncementContent.IsNull() && !state.AnnouncementContent.IsUnknown() {
-			v := state.AnnouncementContent.ValueString()
-			update.Announcement.Content = &v
+			update.Announcement.Content = state.AnnouncementContent.ValueStringPointer()
 		}
 		if !state.AnnouncementLink.IsNull() && !state.AnnouncementLink.IsUnknown() {
-			v := state.AnnouncementLink.ValueString()
-			update.Announcement.Link = &v
+			update.Announcement.Link = state.AnnouncementLink.ValueStringPointer()
 		}
 		if !state.AnnouncementColor.IsNull() && !state.AnnouncementColor.IsUnknown() {
-			v := state.AnnouncementColor.ValueString()
-			update.Announcement.Color = &v
+			update.Announcement.Color = state.AnnouncementColor.ValueStringPointer()
 		}
 	}
 

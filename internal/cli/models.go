@@ -754,13 +754,44 @@ type Integration struct {
 	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
 }
 
+type OrganizationSettings struct {
+	HiddenBlueprints                         []string `json:"hiddenBlueprints,omitempty"`
+	FederatedLogout                          *bool    `json:"federatedLogout,omitempty"`
+	PortalIcon                               *string  `json:"portalIcon,omitempty"`
+	PortalTitle                              *string  `json:"portalTitle,omitempty"`
+	SupportUserPermission                    *string  `json:"supportUserPermission,omitempty"`
+	SupportUserTTL                           *string  `json:"supportUserTTL,omitempty"`
+	SupportUserExpiresAt                     *string  `json:"supportUserExpiresAt,omitempty"`
+	PortAgentStreamerName                    *string  `json:"portAgentStreamerName,omitempty"`
+	IncludeBlueprintsInGlobalSearchByDefault *bool    `json:"includeBlueprintsInGlobalSearchByDefault,omitempty"`
+}
+
+type OrganizationAnnouncement struct {
+	Enabled *bool   `json:"enabled,omitempty"`
+	Content *string `json:"content,omitempty"`
+	Link    *string `json:"link,omitempty"`
+	Color   *string `json:"color,omitempty"`
+}
+
+type OrganizationToolSelectionProvisioning struct {
+	Status *string `json:"status,omitempty"`
+}
+
 type Organization struct {
-	Name         string   `json:"name"`
-	FeatureFlags []string `json:"featureFlags"`
+	Name                      string                                 `json:"name"`
+	FeatureFlags              []string                               `json:"featureFlags"`
+	Settings                  *OrganizationSettings                  `json:"settings,omitempty"`
+	IsOnboarded               *bool                                  `json:"isOnboarded,omitempty"`
+	Announcement              *OrganizationAnnouncement              `json:"announcement,omitempty"`
+	ToolSelectionProvisioning *OrganizationToolSelectionProvisioning `json:"toolSelectionProvisioning,omitempty"`
 }
 
 type OrganizationUpdate struct {
-	Name *string `json:"name,omitempty"`
+	Name                      *string                                `json:"name,omitempty"`
+	Settings                  *OrganizationSettings                  `json:"settings,omitempty"`
+	IsOnboarded               *bool                                  `json:"isOnboarded,omitempty"`
+	Announcement              *OrganizationAnnouncement              `json:"announcement,omitempty"`
+	ToolSelectionProvisioning *OrganizationToolSelectionProvisioning `json:"toolSelectionProvisioning,omitempty"`
 }
 
 type OrganizationSecret struct {

@@ -25,6 +25,7 @@ func FolderSchema() map[string]schema.Attribute {
 		"after": schema.StringAttribute{
 			MarkdownDescription: "The identifier of the folder after which the folder should be placed",
 			Optional:            true,
+			Computed:            true,
 		},
 		"parent": schema.StringAttribute{
 			MarkdownDescription: "The identifier of the parent folder",

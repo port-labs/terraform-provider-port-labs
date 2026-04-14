@@ -31,6 +31,7 @@ type StringPropModel struct {
 	Default            types.String             `tfsdk:"default"`
 	Required           types.Bool               `tfsdk:"required"`
 	Format             types.String             `tfsdk:"format"`
+	DateFormat         types.String             `tfsdk:"date_format"`
 	MaxLength          types.Int64              `tfsdk:"max_length"`
 	MinLength          types.Int64              `tfsdk:"min_length"`
 	Pattern            types.String             `tfsdk:"pattern"`

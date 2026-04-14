@@ -13,11 +13,12 @@ import (
 
 func AddStringPropertiesToState(ctx context.Context, v *cli.BlueprintProperty) *StringPropModel {
 	stringProp := &StringPropModel{
-		MinLength: flex.GoInt64ToFramework(v.MinLength),
-		MaxLength: flex.GoInt64ToFramework(v.MaxLength),
-		Format:    flex.GoStringToFramework(v.Format),
-		Spec:      flex.GoStringToFramework(v.Spec),
-		Pattern:   flex.GoStringToFramework(v.Pattern),
+		MinLength:  flex.GoInt64ToFramework(v.MinLength),
+		MaxLength:  flex.GoInt64ToFramework(v.MaxLength),
+		Format:     flex.GoStringToFramework(v.Format),
+		DateFormat: flex.GoStringToFramework(v.DateFormat),
+		Spec:       flex.GoStringToFramework(v.Spec),
+		Pattern:    flex.GoStringToFramework(v.Pattern),
 	}
 
 	if v.Enum != nil {
@@ -66,6 +67,11 @@ func stringPropResourceToBody(ctx context.Context, state *PropertiesModel, props
 		if !prop.Format.IsNull() {
 			format := prop.Format.ValueString()
 			property.Format = &format
+		}
+
+		if !prop.DateFormat.IsNull() {
+			dateFormat := prop.DateFormat.ValueString()
+			property.DateFormat = &dateFormat
 		}
 
 		if !prop.Icon.IsNull() {

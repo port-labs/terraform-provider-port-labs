@@ -185,6 +185,7 @@ Optional:
 
 Optional:
 
+- `date_format` (String) Display format for `date-time` string properties (for example `24-hour`)
 - `default` (String) The default of the string property
 - `description` (String) The description of the property
 - `enum` (List of String) The enum of the string property

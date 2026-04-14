@@ -4,6 +4,14 @@ resource "port_blueprint" "environment" {
   identifier = "hedwig-env"
   properties = {
     string_props = {
+      "myDatetimeProp" = {
+        title        = "My datetime"
+        icon         = "My icon"
+        description  = "My datetime property"
+        format       = "date-time"
+        date_format  = "24-hour"
+        default      = "2022-04-18T11:44:15.345Z"
+      }
       "name" = {
         type  = "string"
         title = "name"

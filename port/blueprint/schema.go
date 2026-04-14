@@ -51,6 +51,10 @@ func StringPropertySchema() schema.Attribute {
 			MarkdownDescription: "The format of the string property",
 			Optional:            true,
 		},
+		"date_format": schema.StringAttribute{
+			MarkdownDescription: "Display format for `date-time` string properties (for example `24-hour`)",
+			Optional:            true,
+		},
 		"min_length": schema.Int64Attribute{
 			MarkdownDescription: "The min length of the string property",
 			Optional:            true,

@@ -163,6 +163,43 @@ func TestAccPortBlueprintStringProperty(t *testing.T) {
 	})
 }
 
+func TestAccPortBlueprintStringPropertyDateFormat(t *testing.T) {
+	identifier := utils.GenID()
+	config := fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title        = "TF Provider Test"
+		icon         = "Terraform"
+		identifier   = "%s"
+		properties = {
+			string_props = {
+				publish_date = {
+					title       = "Publish date"
+					icon        = "DefaultProperty"
+					format      = "date-time"
+					date_format = "24-hour"
+					required    = true
+				}
+			}
+		}
+	}
+`, identifier)
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + config,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.publish_date.title", "Publish date"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.publish_date.format", "date-time"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.publish_date.date_format", "24-hour"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.publish_date.required", "true"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortBlueprintNumberProperty(t *testing.T) {
 	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`

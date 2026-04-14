@@ -55,6 +55,7 @@ type (
 		Default            any                 `json:"default,omitempty"`
 		Icon               *string             `json:"icon,omitempty"`
 		Format             *string             `json:"format,omitempty"`
+		DateFormat         *string             `json:"dateFormat,omitempty"`
 		MaxLength          *int                `json:"maxLength,omitempty"`
 		MinLength          *int                `json:"minLength,omitempty"`
 		MaxItems           *int                `json:"maxItems,omitempty"`

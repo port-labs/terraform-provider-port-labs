@@ -123,6 +123,14 @@ resource "port_blueprint" "microservice" {
       type        = "number"
       description = "A simple calculation without spec"
     }
+    "current-date" = {
+      icon          = "DefaultProperty"
+      title         = "Current Date"
+      type          = "string"
+      format        = "date-time"
+      date_format   = "12-hour"
+      calculation   = "now | todateiso8601"
+    }
   }
 
   relations = {

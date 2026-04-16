@@ -130,6 +130,7 @@ type CalculationPropertyModel struct {
 	Calculation        types.String             `tfsdk:"calculation"`
 	Title              types.String             `tfsdk:"title"`
 	Format             types.String             `tfsdk:"format"`
+	DateFormat         types.String             `tfsdk:"date_format"`
 	Icon               types.String             `tfsdk:"icon"`
 	Description        types.String             `tfsdk:"description"`
 	Type               types.String             `tfsdk:"type"`

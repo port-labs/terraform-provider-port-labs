@@ -501,6 +501,10 @@ func BlueprintSchema() map[string]schema.Attribute {
 						MarkdownDescription: "The format of the calculation property",
 						Optional:            true,
 					},
+					"date_format": schema.StringAttribute{
+						MarkdownDescription: "Display format for `date-time` calculation properties (for example `24-hour`)",
+						Optional:            true,
+					},
 					"colorized": schema.BoolAttribute{
 						MarkdownDescription: "The colorized of the calculation property",
 						Optional:            true,

@@ -181,6 +181,7 @@ func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, syst
 			Icon:        flex.GoStringToFramework(v.Icon),
 			Description: flex.GoStringToFramework(v.Description),
 			Format:      flex.GoStringToFramework(v.Format),
+			DateFormat:  flex.GoStringToFramework(v.DateFormat),
 			Colorized:   flex.GoBoolToFramework(v.Colorized),
 		}
 
@@ -190,6 +191,6 @@ func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, syst
 			calculationPropertyModel.Colors = types.MapNull(types.StringType)
 		}
 
-		bm.CalculationProperties[k] = *calculationPropertyModel
+				bm.CalculationProperties[k] = *calculationPropertyModel
 	}
 }

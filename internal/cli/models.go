@@ -202,6 +202,7 @@ type (
 		Default            any                 `json:"default,omitempty"`
 		Icon               *string             `json:"icon,omitempty"`
 		Format             *string             `json:"format,omitempty"`
+		DateFormat         *string             `json:"dateFormat,omitempty"`
 		Description        *string             `json:"description,omitempty"`
 		Colorized          *bool               `json:"colorized,omitempty"`
 		Colors             map[string]string   `json:"colors,omitempty"`

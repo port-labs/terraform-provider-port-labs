@@ -43,6 +43,7 @@ Optional:
 
 - `colorized` (Boolean) The colorized of the calculation property
 - `colors` (Map of String) The colors of the calculation property
+- `date_format` (String) Display format for `date-time` calculation properties (for example `24-hour`)
 - `description` (String) The description of the calculation property
 - `format` (String) The format of the calculation property
 - `icon` (String) The icon of the calculation property

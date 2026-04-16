@@ -191,6 +191,6 @@ func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, syst
 			calculationPropertyModel.Colors = types.MapNull(types.StringType)
 		}
 
-				bm.CalculationProperties[k] = *calculationPropertyModel
+		bm.CalculationProperties[k] = *calculationPropertyModel
 	}
 }

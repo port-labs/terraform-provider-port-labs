@@ -238,6 +238,5 @@ func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *
 		}
 
 		bm.CalculationProperties[k] = *calculationPropertyModel
-		
 	}
 }

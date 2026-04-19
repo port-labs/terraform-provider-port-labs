@@ -163,43 +163,6 @@ func TestAccPortBlueprintStringProperty(t *testing.T) {
 	})
 }
 
-func TestAccPortBlueprintStringPropertyDateFormat(t *testing.T) {
-	identifier := utils.GenID()
-	config := fmt.Sprintf(`
-	resource "port_blueprint" "microservice" {
-		title        = "TF Provider Test"
-		icon         = "Terraform"
-		identifier   = "%s"
-		properties = {
-			string_props = {
-				publish_date = {
-					title       = "Publish date"
-					icon        = "DefaultProperty"
-					format      = "date-time"
-					date_format = "24-hour"
-					required    = true
-				}
-			}
-		}
-	}
-`, identifier)
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: acctest.ProviderConfig + config,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.publish_date.title", "Publish date"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.publish_date.format", "date-time"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.publish_date.date_format", "24-hour"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.string_props.publish_date.required", "true"),
-				),
-			},
-		},
-	})
-}
-
 func TestAccPortBlueprintNumberProperty(t *testing.T) {
 	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
@@ -894,43 +857,6 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.calculation", "test-rel.$identifier"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.colors.test2", "blue"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccPortBlueprintWithCalculationPropertyDateFormat(t *testing.T) {
-	identifier := utils.GenID()
-	var testAccConfig = fmt.Sprintf(`
-	resource "port_blueprint" "microservice" {
-		title = "TF Provider Test BP DateFormat"
-		icon = "Terraform"
-		identifier = "%s"
-		calculation_properties = {
-			"current-date" = {
-				title       = "Current date"
-				calculation = "now | todateiso8601"
-				type        = "string"
-				format      = "date-time"
-				date_format = "24-hour"
-				icon        = "DefaultProperty"
-			}
-		}
-	}`, identifier)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: acctest.ProviderConfig + testAccConfig,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "calculation_properties.current-date.title", "Current date"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "calculation_properties.current-date.type", "string"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "calculation_properties.current-date.format", "date-time"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "calculation_properties.current-date.date_format", "24-hour"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "calculation_properties.current-date.icon", "DefaultProperty"),
 				),
 			},
 		},

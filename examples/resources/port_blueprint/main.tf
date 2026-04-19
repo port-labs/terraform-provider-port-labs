@@ -4,6 +4,14 @@ resource "port_blueprint" "environment" {
   identifier = "hedwig-env"
   properties = {
     string_props = {
+      "myDatetimeProp" = {
+        title        = "My datetime"
+        icon         = "My icon"
+        description  = "My datetime property"
+        format       = "date-time"
+        date_format  = "24-hour"
+        default      = "2022-04-18T11:44:15.345Z"
+      }
       "name" = {
         type  = "string"
         title = "name"
@@ -114,6 +122,14 @@ resource "port_blueprint" "microservice" {
       calculation = "1 + 1"
       type        = "number"
       description = "A simple calculation without spec"
+    }
+    "current-date" = {
+      icon          = "DefaultProperty"
+      title         = "Current Date"
+      type          = "string"
+      format        = "date-time"
+      date_format   = "12-hour"
+      calculation   = "now | todateiso8601"
     }
   }
 

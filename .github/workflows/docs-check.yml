@@ -8,7 +8,7 @@ jobs:
     name: Check Documentation Matches Provider Schema
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Go
         uses: actions/setup-go@v6
@@ -18,6 +18,11 @@ jobs:
       
       - name: Install tfplugindocs
         run: make setup
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
 
       - name: Generate Documentation
         run: make gen-docs

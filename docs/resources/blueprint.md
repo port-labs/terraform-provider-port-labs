@@ -317,6 +317,7 @@ Optional:
 
 - `colorized` (Boolean) The colorized of the calculation property
 - `colors` (Map of String) The colors of the calculation property
+- `date_format` (String) Display format for `date-time` calculation properties (for example `24-hour`)
 - `description` (String) The description of the calculation property
 - `format` (String) The format of the calculation property
 - `icon` (String) The icon of the calculation property
@@ -479,6 +480,7 @@ Optional:
 
 Optional:
 
+- `date_format` (String) Display format for `date-time` string properties (for example `24-hour`)
 - `default` (String) The default of the string property
 - `description` (String) The description of the property
 - `enum` (List of String) The enum of the string property

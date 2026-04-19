@@ -123,6 +123,11 @@ func CalculationPropertiesToBody(ctx context.Context, state map[string]Calculati
 			calculationProp.Format = &format
 		}
 
+		if !prop.DateFormat.IsNull() {
+			df := prop.DateFormat.ValueString()
+			calculationProp.DateFormat = &df
+		}
+
 		if !prop.Colorized.IsNull() {
 			colorized := prop.Colorized.ValueBool()
 			calculationProp.Colorized = &colorized

@@ -422,6 +422,7 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 			return nil, err
 		}
 	}
+	NormalizeAIAgentPromptMaxLengths(state.Identifier.ValueString(), props)
 
 	properties := props
 

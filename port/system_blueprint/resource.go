@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint"
 )
 
 func writeBlueprintComputedFieldsToState(b *cli.Blueprint, state *SystemBlueprintModel) {
@@ -248,6 +249,7 @@ func (r *Resource) mergeSystemBlueprint(ctx context.Context, state *SystemBluepr
 	if err != nil {
 		return nil, fmt.Errorf("error merging properties: %w", err)
 	}
+	blueprint.NormalizeAIAgentPromptMaxLengths(state.Identifier.ValueString(), props)
 
 	relations := MergeRelations(structure.Relations, state.Relations)
 	mirrorProps := MergeMirrorProperties(structure.MirrorProperties, state.MirrorProperties)

@@ -115,6 +115,9 @@ func (r *Resource) updatePropertiesToState(ctx context.Context, b *cli.Blueprint
 
 func addRelationsToState(b *cli.Blueprint, systemBp *cli.Blueprint, bm *SystemBlueprintModel) {
 	for k, v := range b.Relations {
+		if b.Identifier == ruleResultSystemBlueprintIdentifier && RelationIsRuleResultTarget(v) {
+			continue
+		}
 		// Skip if the relation exists in systemBp
 		if systemBp != nil {
 			if _, exists := systemBp.Relations[k]; exists {

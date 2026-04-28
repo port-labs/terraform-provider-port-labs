@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	ruleResultTargetRelationType       = "rule_result_target"
+	ruleResultTargetRelationType        = "rule_result_target"
 	ruleResultSystemBlueprintIdentifier = "_rule_result"
 )
 
@@ -18,15 +18,15 @@ func RelationIsRuleResultTarget(r cli.Relation) bool {
 	return r.Type != nil && *r.Type == ruleResultTargetRelationType
 }
 
-func MergeRelationsForSystemBlueprint(blueprintIdentifier string, live, structure map[string]cli.Relation, state map[string]blueprint.RelationModel) map[string]cli.Relation {
+func MergeRelationsForSystemBlueprint(blueprintIdentifier string, currentRelations, structure map[string]cli.Relation, state map[string]blueprint.RelationModel) map[string]cli.Relation {
 	merged := MergeRelations(structure, state)
 	if blueprintIdentifier != ruleResultSystemBlueprintIdentifier {
 		return merged
 	}
-	if live == nil {
+	if currentRelations == nil {
 		return merged
 	}
-	for k, v := range live {
+	for k, v := range currentRelations {
 		if RelationIsRuleResultTarget(v) {
 			merged[k] = v
 		}

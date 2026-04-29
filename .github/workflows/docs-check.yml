@@ -16,6 +16,11 @@ jobs:
           go-version: '1.25'
           cache: true
       
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
       - name: Install tfplugindocs
         run: make setup
 

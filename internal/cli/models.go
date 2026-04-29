@@ -445,6 +445,7 @@ type (
 		Target      *string `json:"target,omitempty"`
 		Required    *bool   `json:"required,omitempty"`
 		Many        *bool   `json:"many,omitempty"`
+		Type        *string `json:"type,omitempty"`
 	}
 
 	Scorecard struct {

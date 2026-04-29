@@ -249,7 +249,7 @@ func (r *Resource) mergeSystemBlueprint(ctx context.Context, state *SystemBluepr
 		return nil, fmt.Errorf("error merging properties: %w", err)
 	}
 
-	relations := MergeRelations(structure.Relations, state.Relations)
+	relations := MergeRelationsForSystemBlueprint(existingBp.Identifier, existingBp.Relations, structure.Relations, state.Relations)
 	mirrorProps := MergeMirrorProperties(structure.MirrorProperties, state.MirrorProperties)
 	calcProps := MergeCalculationProperties(ctx, structure.CalculationProperties, state.CalculationProperties)
 

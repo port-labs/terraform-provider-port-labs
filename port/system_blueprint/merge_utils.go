@@ -9,6 +9,31 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint"
 )
 
+const (
+	ruleResultTargetRelationType        = "rule_result_target"
+	ruleResultSystemBlueprintIdentifier = "_rule_result"
+)
+
+func RelationIsRuleResultTarget(r cli.Relation) bool {
+	return r.Type != nil && *r.Type == ruleResultTargetRelationType
+}
+
+func MergeRelationsForSystemBlueprint(blueprintIdentifier string, currentRelations, structure map[string]cli.Relation, state map[string]blueprint.RelationModel) map[string]cli.Relation {
+	merged := MergeRelations(structure, state)
+	if blueprintIdentifier != ruleResultSystemBlueprintIdentifier {
+		return merged
+	}
+	if currentRelations == nil {
+		return merged
+	}
+	for k, v := range currentRelations {
+		if RelationIsRuleResultTarget(v) {
+			merged[k] = v
+		}
+	}
+	return merged
+}
+
 func MergeProperties(ctx context.Context, existing map[string]cli.BlueprintProperty, state *blueprint.PropertiesModel) (map[string]cli.BlueprintProperty, []string, error) {
 	merged := make(map[string]cli.BlueprintProperty)
 	for k, v := range existing {

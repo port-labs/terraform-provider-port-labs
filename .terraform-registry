@@ -1,0 +1,3 @@
+Request: Remove erroneously published provider version v10.1.1 (should have been v2.21.9) from the Terraform Registry, and publish the correct version v2.21.9.
+Registry Link: https://registry.terraform.io/providers/port-labs/port-labs
+Request by: gilm@port.io

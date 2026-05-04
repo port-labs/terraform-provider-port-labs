@@ -4,7 +4,7 @@ page_title: "port_folder Resource - port"
 subcategory: ""
 description: |-
   Folder resource
-  A full list of the available folder types and their identifiers can be found here https://docs.getport.io/customize-pages-dashboards-and-plugins/folder/catalog-folder.
+  For more information about folders, see the Port documentation https://docs.port.io/customize-pages-dashboards-and-plugins/page/folders#folder-identifiers.
   ~> WARNING
   The folder resource is currently in beta and is subject to change in future versions.
   Use it by setting the Environment Variable PORT_BETA_FEATURES_ENABLED=true.
@@ -45,7 +45,7 @@ description: |-
 
 # Folder resource
 
-A full list of the available folder types and their identifiers can be found [here](https://docs.getport.io/customize-pages-dashboards-and-plugins/folder/catalog-folder).
+For more information about folders, see the [Port documentation](https://docs.port.io/customize-pages-dashboards-and-plugins/page/folders#folder-identifiers).
 
 ~> **WARNING**
 The folder resource is currently in beta and is subject to change in future versions.

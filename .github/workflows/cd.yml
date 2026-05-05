@@ -13,7 +13,7 @@ name: release
 on:
   push:
     tags:
-      - 'v*'
+      - 'v2.*'
 jobs:
   goreleaser:
     runs-on: ubuntu-latest

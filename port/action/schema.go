@@ -620,7 +620,7 @@ func ActionSchema() map[string]schema.Attribute {
 			},
 		},
 		"approval_email_notification": schema.ObjectAttribute{
-			MarkdownDescription: "The email notification of the approval",
+			MarkdownDescription: "The email notification of the approval. This is a presence-based block — defining it enables email notifications for approval; no nested attributes are required.",
 			Optional:            true,
 			AttributeTypes:      map[string]attr.Type{},
 			Validators: []validator.Object{

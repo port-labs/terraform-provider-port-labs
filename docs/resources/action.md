@@ -394,7 +394,7 @@ resource "port_action" "myAction" {
 ### Optional
 
 - `allow_anyone_to_view_runs` (Boolean) Whether members can view the runs of this action
-- `approval_email_notification` (Object) The email notification of the approval (see [below for nested schema](#nestedatt--approval_email_notification))
+- `approval_email_notification` (Object) The email notification of the approval. This is a presence-based block — defining it enables email notifications for approval; no nested attributes are required. (see [below for nested schema](#nestedatt--approval_email_notification))
 - `approval_webhook_notification` (Attributes) The webhook notification of the approval (see [below for nested schema](#nestedatt--approval_webhook_notification))
 - `automation_trigger` (Attributes) Automation trigger for the action (see [below for nested schema](#nestedatt--automation_trigger))
 - `azure_method` (Attributes) Azure DevOps invocation method (see [below for nested schema](#nestedatt--azure_method))

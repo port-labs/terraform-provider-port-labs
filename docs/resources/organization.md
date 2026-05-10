@@ -17,7 +17,22 @@ Organization resource to manage organization-level settings such as name and hid
 
 ### Optional
 
+- `announcement_color` (String) The color of the organization announcement (e.g. blue)
+- `announcement_content` (String) The content of the organization announcement
+- `announcement_enabled` (Boolean) Whether the organization announcement is enabled
+- `announcement_link` (String) A link for the organization announcement
+- `federated_logout` (Boolean) Enable or disable federated logout
+- `hidden_blueprints` (List of String) A list of blueprint identifiers to hide from the portal
+- `include_blueprints_in_global_search_by_default` (Boolean) Whether to include blueprints in global search by default
+- `is_onboarded` (Boolean) Whether the organization has completed onboarding
 - `name` (String) The name of the organization
+- `port_agent_streamer_name` (String) The name of the Port agent streamer (e.g. KAFKA)
+- `portal_icon` (String) The icon URI for the portal (must be a valid URI)
+- `portal_title` (String) The title for the portal
+- `support_user_expires_at` (String) The expiration date for support user access (ISO 8601 format)
+- `support_user_permission` (String) The support user permission level (e.g. OPT_OUT)
+- `support_user_ttl` (String) The TTL for support user access (e.g. ONE_DAY)
+- `tool_selection_provisioning_status` (String) The status of tool selection provisioning (e.g. IN_PROGRESS)
 
 ### Read-Only
 

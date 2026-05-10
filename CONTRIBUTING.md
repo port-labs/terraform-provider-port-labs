@@ -36,6 +36,7 @@ _This will create a shell where all required tools are installed._
 If you don't want to use `devbox`:
 
 - Have [golang](https://go.dev/doc/install) installed
+- Have [Terraform](https://developer.hashicorp.com/terraform/install) installed (same minimum as [README](README.md#requirements))
 - Have `wget` installed
 - Run `make dev-setup`
 

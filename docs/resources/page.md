@@ -78,8 +78,6 @@ description: |-
   
   
   Entity Page
-
-  
   Customize the entity page https://docs.getport.io/customize-pages-dashboards-and-plugins/page/entity-page template for a blueprint.
   Entity pages are auto-created when a blueprint is created (identifier: <blueprint>Entity).
   

@@ -145,6 +145,7 @@ resource "port_page" "microservice_entity_page" {
                     "widgets" = [
                       {
                         "id"   = "relatedTable",
+                        "title" = "Related Entities Table",
                         "type" = "table-entities-explorer-by-direction",
                       },
                     ],

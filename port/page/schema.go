@@ -23,13 +23,14 @@ func PageSchema() map[string]schema.Attribute {
 			Required:    true,
 		},
 		"type": schema.StringAttribute{
-			Description: "The type of the page, can be one of \"blueprint-entities\", \"dashboard\" or \"home\"",
+			Description: "The type of the page, can be one of \"blueprint-entities\", \"dashboard\", \"home\" or \"entity\"",
 			Required:    true,
 			Validators: []validator.String{
 				stringvalidator.OneOf(
 					"blueprint-entities",
 					"dashboard",
 					"home",
+					"entity",
 				),
 			},
 		},
@@ -54,7 +55,7 @@ func PageSchema() map[string]schema.Attribute {
 			Optional:    true,
 		},
 		"blueprint": schema.StringAttribute{
-			Description: "The blueprint for which the page is created, relevant only for pages of type \"blueprint-entities\"",
+			Description: "The blueprint for which the page is created, relevant for pages of type \"blueprint-entities\" and \"entity\"",
 			Optional:    true,
 		},
 		"widgets": schema.ListAttribute{
@@ -203,6 +204,161 @@ resource "port_page" "microservice_dashboard_page" {
 
 ` + "```" + `
 
+### Entity Page
+
+Customize the [entity page](https://docs.getport.io/customize-pages-dashboards-and-plugins/page/entity-page) template for a blueprint.
+Entity pages are auto-created when a blueprint is created (identifier: ` + "`<blueprint>Entity`" + `).
+
+` + "```hcl" + `
+
+resource "port_page" "microservice_entity_page" {
+  identifier = "microserviceEntity"
+  title      = "Microservices"
+  icon       = "Microservice"
+  type       = "entity"
+  blueprint  = port_blueprint.base_blueprint.identifier
+  widgets = [
+    jsonencode(
+      {
+        "id" : "entityPageGrouper",
+        "type" : "grouper",
+        "displayMode" : "tabs",
+        "activeGroupUrlParam" : "activeTab",
+        "groupsOrder" : [
+          "Overview",
+          "Related Entities",
+          "Runs",
+          "Audit Log",
+        ],
+        "groups" : [
+          {
+            "title" : "Overview",
+            "widgets" : [
+              {
+                "id" : "overviewDashboard",
+                "type" : "dashboard-widget",
+                "layout" : [
+                  {
+                    "height" : 400,
+                    "columns" : [
+                      {
+                        "id" : "entityDetails",
+                        "size" : 12
+                      }
+                    ]
+                  }
+                ],
+                "widgets" : [
+                  {
+                    "id" : "entityDetails",
+                    "type" : "entity-info",
+                    "title" : "Details",
+                    "blueprint" : "{{blueprint}}",
+                    "entity" : "{{url.identifier}}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title" : "Related Entities",
+            "widgets" : [
+              {
+                "id" : "relatedEntitiesGrouper",
+                "type" : "grouper",
+                "title" : "Related Entities",
+                "displayMode" : "switch",
+                "groups" : [
+                  {
+                    "title" : "Table",
+                    "icon" : "Table",
+                    "widgets" : [
+                      {
+                        "id" : "relatedTable",
+                        "type" : "table-entities-explorer-by-direction"
+                      }
+                    ]
+                  },
+                  {
+                    "title" : "Graph",
+                    "icon" : "Relation",
+                    "widgets" : [
+                      {
+                        "id" : "relatedGraph",
+                        "type" : "graph-entities-explorer",
+                        "hiddenBlueprints" : [],
+                        "dataset" : {
+                          "combinator" : "or",
+                          "rules" : [
+                            {
+                              "operator" : "relatedTo",
+                              "value" : "{{url.identifier}}",
+                              "blueprint" : "{{blueprint}}"
+                            },
+                            {
+                              "combinator" : "and",
+                              "rules" : [
+                                {
+                                  "operator" : "=",
+                                  "value" : "{{url.identifier}}",
+                                  "property" : "$identifier"
+                                },
+                                {
+                                  "operator" : "=",
+                                  "value" : "{{blueprint}}",
+                                  "property" : "$blueprint"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title" : "Runs",
+            "widgets" : [
+              {
+                "id" : "runsTable",
+                "type" : "runs-table",
+                "title" : "Run Log",
+                "query" : {
+                  "entity" : "{{url.identifier}}",
+                  "blueprint" : "{{blueprint}}"
+                }
+              }
+            ]
+          },
+          {
+            "title" : "Audit Log",
+            "widgets" : [
+              {
+                "id" : "auditLogTable",
+                "type" : "table-audit-log",
+                "query" : {
+                  "entity" : "{{url.identifier}}",
+                  "blueprint" : "{{blueprint}}"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    )
+  ]
+}
+
+` + "```" + `
+
+Import the existing entity page before the first apply:
+
+` + "```" + `
+terraform import port_page.microservice_entity_page microserviceEntity
+` + "```" + `
 
 ### Page with parent
 

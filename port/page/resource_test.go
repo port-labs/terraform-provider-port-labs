@@ -468,8 +468,8 @@ func TestAccPortPageResourceEntityPage(t *testing.T) {
 	entityPageConfig := fmt.Sprintf(`
 resource "port_page" "entity_page" {
   identifier = "%s"
-  title      = "Entity Page Test"
-  icon       = "Microservice"
+  title      = "TF test microservice"
+  icon       = "Terraform"
   type       = "entity"
   blueprint  = port_blueprint.microservice.identifier
 
@@ -502,11 +502,12 @@ resource "port_page" "entity_page" {
                 ],
                 "widgets" = [
                   {
-                    "id"        = "entityDetails",
-                    "type"      = "entity-info",
-                    "title"     = "Details",
-                    "blueprint" = "{{blueprint}}",
-                    "entity"    = "{{url.identifier}}",
+                    "id"          = "entityDetails",
+                    "type"        = "entity-info",
+                    "title"       = "Details",
+                    "blueprint"   = "{{blueprint}}",
+                    "entity"      = "{{url.identifier}}",
+                    "hiddenQuery" = [],
                   },
                 ],
               },
@@ -522,8 +523,8 @@ resource "port_page" "entity_page" {
 	updatedEntityPageConfig := fmt.Sprintf(`
 resource "port_page" "entity_page" {
   identifier = "%s"
-  title      = "Updated Entity Page"
-  icon       = "Microservice"
+  title      = "TF test microservice"
+  icon       = "Terraform"
   type       = "entity"
   blueprint  = port_blueprint.microservice.identifier
 
@@ -557,10 +558,11 @@ resource "port_page" "entity_page" {
                 "widgets" = [
                   {
                     "id"        = "entityDetails",
-                    "type"      = "entity-info",
-                    "title"     = "Updated Details",
-                    "blueprint" = "{{blueprint}}",
-                    "entity"    = "{{url.identifier}}",
+                    "type"        = "entity-info",
+                    "title"       = "Updated Details",
+                    "blueprint"   = "{{blueprint}}",
+                    "entity"      = "{{url.identifier}}",
+                    "hiddenQuery" = [],
                   },
                 ],
               },
@@ -591,8 +593,8 @@ resource "port_page" "entity_page" {
 				Config: acctest.ProviderConfig + blueprintConfig + entityPageConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_page.entity_page", "identifier", entityPageIdentifier),
-					resource.TestCheckResourceAttr("port_page.entity_page", "title", "Entity Page Test"),
-					resource.TestCheckResourceAttr("port_page.entity_page", "icon", "Microservice"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "title", "TF test microservice"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_page.entity_page", "type", "entity"),
 					resource.TestCheckResourceAttr("port_page.entity_page", "blueprint", blueprintIdentifier),
 					resource.TestCheckResourceAttr("port_page.entity_page", "widgets.#", "1"),
@@ -601,7 +603,7 @@ resource "port_page" "entity_page" {
 			{
 				Config: acctest.ProviderConfig + blueprintConfig + updatedEntityPageConfig,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_page.entity_page", "title", "Updated Entity Page"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "title", "TF test microservice"),
 					resource.TestCheckResourceAttr("port_page.entity_page", "type", "entity"),
 					resource.TestCheckResourceAttr("port_page.entity_page", "widgets.#", "1"),
 				),
@@ -631,7 +633,7 @@ resource "port_page" "invalid_type_page" {
 		Steps: []resource.TestStep{
 			{
 				Config:      acctest.ProviderConfig + config,
-				ExpectError: regexp.MustCompile(`expected type to be one of`),
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
 			},
 		},
 	})

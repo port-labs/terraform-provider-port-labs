@@ -88,6 +88,12 @@ func (r *PageResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		resp.State.RemoveResource(ctx)
 		return
 	}
+
+	if state.Type.ValueString() == "entity" {
+		tflog.Debug(ctx, "entity page is tied to its blueprint and is not deletable, unregistering from state")
+		resp.State.RemoveResource(ctx)
+		return
+	}
 	statusCode, err := r.portClient.DeletePage(ctx, state.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {

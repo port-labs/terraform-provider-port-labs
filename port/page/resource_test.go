@@ -455,6 +455,188 @@ resource "port_page" "for_expression_page" {
 	})
 }
 
+func TestAccPortPageResourceEntityPage(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	entityPageIdentifier := blueprintIdentifier + "Entity"
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	blueprintConfig := testAccCreateBlueprintConfig(blueprintIdentifier)
+
+	entityPageConfig := fmt.Sprintf(`
+resource "port_page" "entity_page" {
+  identifier = "%s"
+  title      = "Entity Page Test"
+  icon       = "Microservice"
+  type       = "entity"
+  blueprint  = port_blueprint.microservice.identifier
+
+  depends_on = [port_blueprint.microservice]
+
+  widgets = [
+    jsonencode(
+      {
+        "id"          = "entityPageGrouper",
+        "type"        = "grouper",
+        "displayMode" = "tabs",
+        "groupsOrder" = ["Overview"],
+        "groups" = [
+          {
+            "title" = "Overview",
+            "widgets" = [
+              {
+                "id"   = "overviewDashboard",
+                "type" = "dashboard-widget",
+                "layout" = [
+                  {
+                    "height" = 400,
+                    "columns" = [
+                      {
+                        "id"   = "entityDetails",
+                        "size" = 12,
+                      },
+                    ],
+                  },
+                ],
+                "widgets" = [
+                  {
+                    "id"        = "entityDetails",
+                    "type"      = "entity-info",
+                    "title"     = "Details",
+                    "blueprint" = "{{blueprint}}",
+                    "entity"    = "{{url.identifier}}",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+    ),
+  ]
+}
+`, entityPageIdentifier)
+
+	updatedEntityPageConfig := fmt.Sprintf(`
+resource "port_page" "entity_page" {
+  identifier = "%s"
+  title      = "Updated Entity Page"
+  icon       = "Microservice"
+  type       = "entity"
+  blueprint  = port_blueprint.microservice.identifier
+
+  depends_on = [port_blueprint.microservice]
+
+  widgets = [
+    jsonencode(
+      {
+        "id"          = "entityPageGrouper",
+        "type"        = "grouper",
+        "displayMode" = "tabs",
+        "groupsOrder" = ["Overview"],
+        "groups" = [
+          {
+            "title" = "Overview",
+            "widgets" = [
+              {
+                "id"   = "overviewDashboard",
+                "type" = "dashboard-widget",
+                "layout" = [
+                  {
+                    "height" = 400,
+                    "columns" = [
+                      {
+                        "id"   = "entityDetails",
+                        "size" = 12,
+                      },
+                    ],
+                  },
+                ],
+                "widgets" = [
+                  {
+                    "id"        = "entityDetails",
+                    "type"      = "entity-info",
+                    "title"     = "Updated Details",
+                    "blueprint" = "{{blueprint}}",
+                    "entity"    = "{{url.identifier}}",
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+    ),
+  ]
+}
+`, entityPageIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + blueprintConfig,
+			},
+			{
+				Config:             acctest.ProviderConfig + blueprintConfig + entityPageConfig,
+				ResourceName:       "port_page.entity_page",
+				ImportStateId:      entityPageIdentifier,
+				ImportState:        true,
+				ImportStatePersist: true,
+			},
+			{
+				Config: acctest.ProviderConfig + blueprintConfig + entityPageConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.entity_page", "identifier", entityPageIdentifier),
+					resource.TestCheckResourceAttr("port_page.entity_page", "title", "Entity Page Test"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "icon", "Microservice"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "type", "entity"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_page.entity_page", "widgets.#", "1"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + blueprintConfig + updatedEntityPageConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.entity_page", "title", "Updated Entity Page"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "type", "entity"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "widgets.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortPageResourceInvalidType(t *testing.T) {
+	pageIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config := fmt.Sprintf(`
+resource "port_page" "invalid_type_page" {
+  identifier = "%s"
+  title      = "Invalid Page"
+  type       = "invalid-type"
+}
+`, pageIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + config,
+				ExpectError: regexp.MustCompile(`expected type to be one of`),
+			},
+		},
+	})
+}
+
 func TestAccPortPageResourceWithFilters(t *testing.T) {
 	serviceBlueprintIdentifier := utils.GenID()
 	clusterBlueprintIdentifier := utils.GenID()

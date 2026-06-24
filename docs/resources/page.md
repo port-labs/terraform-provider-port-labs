@@ -80,6 +80,12 @@ description: |-
   Entity Page
   Customize the entity page https://docs.getport.io/customize-pages-dashboards-and-plugins/page/entity-page template for a blueprint.
   Entity pages are auto-created when a blueprint is created (identifier: <blueprint>Entity).
+  The provider does not call the create page API for entity pages; it updates the existing page instead.
+  If the entity page does not exist yet, import it before applying:
+  
+  terraform import port_page.microservice_entity_page microserviceEntity
+  
+  When the blueprint is managed in the same Terraform configuration, you can apply the entity page resource directly after the blueprint is created.
   
   
   resource "port_page" "microservice_entity_page" {
@@ -244,10 +250,6 @@ description: |-
     ]
   }
   
-  
-  Import the existing entity page before the first apply:
-  
-  terraform import port_page.microservice_entity_page microserviceEntity
   
   Page with parent
   Create a page inside a folder.
@@ -478,6 +480,14 @@ resource "port_page" "microservice_dashboard_page" {
 
 Customize the [entity page](https://docs.getport.io/customize-pages-dashboards-and-plugins/page/entity-page) template for a blueprint.
 Entity pages are auto-created when a blueprint is created (identifier: `<blueprint>Entity`).
+The provider does not call the create page API for entity pages; it updates the existing page instead.
+If the entity page does not exist yet, import it before applying:
+
+```
+terraform import port_page.microservice_entity_page microserviceEntity
+```
+
+When the blueprint is managed in the same Terraform configuration, you can apply the entity page resource directly after the blueprint is created.
 
 ```hcl
 
@@ -643,12 +653,6 @@ resource "port_page" "microservice_entity_page" {
   ]
 }
 
-```
-
-Import the existing entity page before the first apply:
-
-```
-terraform import port_page.microservice_entity_page microserviceEntity
 ```
 
 ### Page with parent

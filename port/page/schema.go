@@ -208,6 +208,14 @@ resource "port_page" "microservice_dashboard_page" {
 
 Customize the [entity page](https://docs.getport.io/customize-pages-dashboards-and-plugins/page/entity-page) template for a blueprint.
 Entity pages are auto-created when a blueprint is created (identifier: ` + "`<blueprint>Entity`" + `).
+The provider does not call the create page API for entity pages; it updates the existing page instead.
+If the entity page does not exist yet, import it before applying:
+
+` + "```" + `
+terraform import port_page.microservice_entity_page microserviceEntity
+` + "```" + `
+
+When the blueprint is managed in the same Terraform configuration, you can apply the entity page resource directly after the blueprint is created.
 
 ` + "```hcl" + `
 
@@ -217,6 +225,27 @@ resource "port_page" "microservice_entity_page" {
   icon       = "Microservice"
   type       = "entity"
   blueprint  = port_blueprint.base_blueprint.identifier
+  page_filters = [
+    jsonencode(
+      {
+        "identifier" : "fac6b5aa-272c-4a20-9635-add07d097bb9",
+        "title" : "Entity Creation Date is in the past 30 days",
+        "query" : {
+          "combinator" : "and",
+          "rules" : [
+            {
+              "property" : "$createdAt",
+              "operator" : "between",
+              "value" : {
+                "preset" : "lastMonth"
+              }
+            }
+          ],
+          "blueprint" : "dashboard-filters-meta-blueprint"
+        }
+      }
+    )
+  ],
   widgets = [
     jsonencode(
       {
@@ -352,12 +381,6 @@ resource "port_page" "microservice_entity_page" {
   ]
 }
 
-` + "```" + `
-
-Import the existing entity page before the first apply:
-
-` + "```" + `
-terraform import port_page.microservice_entity_page microserviceEntity
 ` + "```" + `
 
 ### Page with parent

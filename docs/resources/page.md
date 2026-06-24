@@ -88,6 +88,27 @@ description: |-
     icon       = "Microservice"
     type       = "entity"
     blueprint  = port_blueprint.base_blueprint.identifier
+    page_filters = [
+      jsonencode(
+        {
+          "identifier" : "fac6b5aa-272c-4a20-9635-add07d097bb9",
+          "title" : "Entity Creation Date is in the past 30 days",
+          "query" : {
+            "combinator" : "and",
+            "rules" : [
+              {
+                "property" : "$createdAt",
+                "operator" : "between",
+                "value" : {
+                  "preset" : "lastMonth"
+                }
+              }
+            ],
+            "blueprint" : "dashboard-filters-meta-blueprint"
+          }
+        }
+      )
+    ],
     widgets = [
       jsonencode(
         {
@@ -466,6 +487,27 @@ resource "port_page" "microservice_entity_page" {
   icon       = "Microservice"
   type       = "entity"
   blueprint  = port_blueprint.base_blueprint.identifier
+  page_filters = [
+    jsonencode(
+      {
+        "identifier" : "fac6b5aa-272c-4a20-9635-add07d097bb9",
+        "title" : "Entity Creation Date is in the past 30 days",
+        "query" : {
+          "combinator" : "and",
+          "rules" : [
+            {
+              "property" : "$createdAt",
+              "operator" : "between",
+              "value" : {
+                "preset" : "lastMonth"
+              }
+            }
+          ],
+          "blueprint" : "dashboard-filters-meta-blueprint"
+        }
+      }
+    )
+  ],
   widgets = [
     jsonencode(
       {

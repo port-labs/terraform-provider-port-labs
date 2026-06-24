@@ -475,6 +475,28 @@ resource "port_page" "entity_page" {
 
   depends_on = [port_blueprint.microservice]
 
+  page_filters = [
+    jsonencode(
+      {
+        "identifier" = "fac6b5aa-272c-4a20-9635-add07d097bb9"
+        "title"      = "Entity Creation Date is in the past 30 days"
+        "query" = {
+          "combinator" = "and"
+          "rules" = [
+            {
+              "property" = "$createdAt"
+              "operator" = "between"
+              "value" = {
+                "preset" = "lastMonth"
+              }
+            }
+          ]
+          "blueprint" = "dashboard-filters-meta-blueprint"
+        }
+      }
+    ),
+  ]
+
   widgets = [
     jsonencode(
       {
@@ -530,6 +552,28 @@ resource "port_page" "entity_page" {
 
   depends_on = [port_blueprint.microservice]
 
+  page_filters = [
+    jsonencode(
+      {
+        "identifier" = "fac6b5aa-272c-4a20-9635-add07d097bb9"
+        "title"      = "Entity Creation Date is in the past 30 days"
+        "query" = {
+          "combinator" = "and"
+          "rules" = [
+            {
+              "property" = "$createdAt"
+              "operator" = "between"
+              "value" = {
+                "preset" = "lastMonth"
+              }
+            }
+          ]
+          "blueprint" = "dashboard-filters-meta-blueprint"
+        }
+      }
+    ),
+  ]
+
   widgets = [
     jsonencode(
       {
@@ -580,16 +624,6 @@ resource "port_page" "entity_page" {
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: acctest.ProviderConfig + blueprintConfig,
-			},
-			{
-				Config:             acctest.ProviderConfig + blueprintConfig + entityPageConfig,
-				ResourceName:       "port_page.entity_page",
-				ImportStateId:      entityPageIdentifier,
-				ImportState:        true,
-				ImportStatePersist: true,
-			},
-			{
 				Config: acctest.ProviderConfig + blueprintConfig + entityPageConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_page.entity_page", "identifier", entityPageIdentifier),
@@ -598,6 +632,7 @@ resource "port_page" "entity_page" {
 					resource.TestCheckResourceAttr("port_page.entity_page", "type", "entity"),
 					resource.TestCheckResourceAttr("port_page.entity_page", "blueprint", blueprintIdentifier),
 					resource.TestCheckResourceAttr("port_page.entity_page", "widgets.#", "1"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "page_filters.#", "1"),
 				),
 			},
 			{
@@ -606,7 +641,37 @@ resource "port_page" "entity_page" {
 					resource.TestCheckResourceAttr("port_page.entity_page", "title", "TF test microservice"),
 					resource.TestCheckResourceAttr("port_page.entity_page", "type", "entity"),
 					resource.TestCheckResourceAttr("port_page.entity_page", "widgets.#", "1"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "page_filters.#", "1"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccPortPageResourceEntityPageCreateNotSupported(t *testing.T) {
+	entityPageIdentifier := utils.GenID() + "Entity"
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config := fmt.Sprintf(`
+resource "port_page" "entity_page" {
+  identifier = "%s"
+  title      = "TF test microservice"
+  icon       = "Terraform"
+  type       = "entity"
+  blueprint  = "non-existent-blueprint"
+}
+`, entityPageIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + config,
+				ExpectError: regexp.MustCompile(`Entity pages cannot be created`),
 			},
 		},
 	})

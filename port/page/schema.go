@@ -23,13 +23,14 @@ func PageSchema() map[string]schema.Attribute {
 			Required:    true,
 		},
 		"type": schema.StringAttribute{
-			Description: "The type of the page, can be one of \"blueprint-entities\", \"dashboard\" or \"home\"",
+			Description: "The type of the page, can be one of \"blueprint-entities\", \"dashboard\", \"home\" or \"entity\"",
 			Required:    true,
 			Validators: []validator.String{
 				stringvalidator.OneOf(
 					"blueprint-entities",
 					"dashboard",
 					"home",
+					"entity",
 				),
 			},
 		},
@@ -54,7 +55,7 @@ func PageSchema() map[string]schema.Attribute {
 			Optional:    true,
 		},
 		"blueprint": schema.StringAttribute{
-			Description: "The blueprint for which the page is created, relevant only for pages of type \"blueprint-entities\"",
+			Description: "The blueprint for which the page is created, relevant for pages of type \"blueprint-entities\" and \"entity\"",
 			Optional:    true,
 		},
 		"widgets": schema.ListAttribute{
@@ -203,6 +204,184 @@ resource "port_page" "microservice_dashboard_page" {
 
 ` + "```" + `
 
+### Entity Page
+
+Customize the [entity page](https://docs.getport.io/customize-pages-dashboards-and-plugins/page/entity-page) template for a blueprint.
+Entity pages are auto-created when a blueprint is created (identifier: ` + "`<blueprint>Entity`" + `).
+The provider does not call the create page API for entity pages; it updates the existing page instead.
+If the entity page does not exist yet, import it before applying:
+
+` + "```" + `
+terraform import port_page.microservice_entity_page microserviceEntity
+` + "```" + `
+
+When the blueprint is managed in the same Terraform configuration, you can apply the entity page resource directly after the blueprint is created.
+
+` + "```hcl" + `
+
+resource "port_page" "microservice_entity_page" {
+  identifier = "microserviceEntity"
+  title      = "Microservices"
+  icon       = "Microservice"
+  type       = "entity"
+  blueprint  = port_blueprint.base_blueprint.identifier
+  page_filters = [
+    jsonencode(
+      {
+        "identifier" : "fac6b5aa-272c-4a20-9635-add07d097bb9",
+        "title" : "Entity Creation Date is in the past 30 days",
+        "query" : {
+          "combinator" : "and",
+          "rules" : [
+            {
+              "property" : "$createdAt",
+              "operator" : "between",
+              "value" : {
+                "preset" : "lastMonth"
+              }
+            }
+          ],
+          "blueprint" : "dashboard-filters-meta-blueprint"
+        }
+      }
+    )
+  ],
+  widgets = [
+    jsonencode(
+      {
+        "id" : "entityPageGrouper",
+        "type" : "grouper",
+        "displayMode" : "tabs",
+        "activeGroupUrlParam" : "activeTab",
+        "groupsOrder" : [
+          "Overview",
+          "Related Entities",
+          "Runs",
+          "Audit Log",
+        ],
+        "groups" : [
+          {
+            "title" : "Overview",
+            "widgets" : [
+              {
+                "id" : "overviewDashboard",
+                "type" : "dashboard-widget",
+                "layout" : [
+                  {
+                    "height" : 400,
+                    "columns" : [
+                      {
+                        "id" : "entityDetails",
+                        "size" : 12
+                      }
+                    ]
+                  }
+                ],
+                "widgets" : [
+                  {
+                    "id" : "entityDetails",
+                    "type" : "entity-info",
+                    "title" : "Details",
+                    "blueprint" : "{{blueprint}}",
+                    "entity" : "{{url.identifier}}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title" : "Related Entities",
+            "widgets" : [
+              {
+                "id" : "relatedEntitiesGrouper",
+                "type" : "grouper",
+                "title" : "Related Entities",
+                "displayMode" : "switch",
+                "groups" : [
+                  {
+                    "title" : "Table",
+                    "icon" : "Table",
+                    "widgets" : [
+                      {
+                        "id" : "relatedTable",
+                        "type" : "table-entities-explorer-by-direction"
+                      }
+                    ]
+                  },
+                  {
+                    "title" : "Graph",
+                    "icon" : "Relation",
+                    "widgets" : [
+                      {
+                        "id" : "relatedGraph",
+                        "type" : "graph-entities-explorer",
+                        "hiddenBlueprints" : [],
+                        "dataset" : {
+                          "combinator" : "or",
+                          "rules" : [
+                            {
+                              "operator" : "relatedTo",
+                              "value" : "{{url.identifier}}",
+                              "blueprint" : "{{blueprint}}"
+                            },
+                            {
+                              "combinator" : "and",
+                              "rules" : [
+                                {
+                                  "operator" : "=",
+                                  "value" : "{{url.identifier}}",
+                                  "property" : "$identifier"
+                                },
+                                {
+                                  "operator" : "=",
+                                  "value" : "{{blueprint}}",
+                                  "property" : "$blueprint"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title" : "Runs",
+            "widgets" : [
+              {
+                "id" : "runsTable",
+                "type" : "runs-table",
+                "title" : "Run Log",
+                "query" : {
+                  "entity" : "{{url.identifier}}",
+                  "blueprint" : "{{blueprint}}"
+                }
+              }
+            ]
+          },
+          {
+            "title" : "Audit Log",
+            "widgets" : [
+              {
+                "id" : "auditLogTable",
+                "type" : "table-audit-log",
+                "query" : {
+                  "entity" : "{{url.identifier}}",
+                  "blueprint" : "{{blueprint}}"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    )
+  ]
+}
+
+` + "```" + `
 
 ### Page with parent
 

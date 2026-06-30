@@ -455,6 +455,255 @@ resource "port_page" "for_expression_page" {
 	})
 }
 
+func TestAccPortPageResourceEntityPage(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	entityPageIdentifier := blueprintIdentifier + "Entity"
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	blueprintConfig := testAccCreateBlueprintConfig(blueprintIdentifier)
+
+	entityPageConfig := fmt.Sprintf(`
+resource "port_page" "entity_page" {
+  identifier = "%s"
+  title      = "TF test microservice"
+  icon       = "Terraform"
+  type       = "entity"
+  blueprint  = port_blueprint.microservice.identifier
+
+  depends_on = [port_blueprint.microservice]
+
+  page_filters = [
+    jsonencode(
+      {
+        "identifier" = "fac6b5aa-272c-4a20-9635-add07d097bb9"
+        "title"      = "Entity Creation Date is in the past 30 days"
+        "query" = {
+          "combinator" = "and"
+          "rules" = [
+            {
+              "property" = "$createdAt"
+              "operator" = "between"
+              "value" = {
+                "preset" = "lastMonth"
+              }
+            }
+          ]
+          "blueprint" = "dashboard-filters-meta-blueprint"
+        }
+      }
+    ),
+  ]
+
+  widgets = [
+    jsonencode(
+      {
+        "id"          = "entityPageGrouper",
+        "type"        = "grouper",
+        "displayMode" = "tabs",
+        "groupsOrder" = ["Overview"],
+        "groups" = [
+          {
+            "title" = "Overview",
+            "widgets" = [
+              {
+                "id"   = "overviewDashboard",
+                "type" = "dashboard-widget",
+                "layout" = [
+                  {
+                    "height" = 400,
+                    "columns" = [
+                      {
+                        "id"   = "entityDetails",
+                        "size" = 12,
+                      },
+                    ],
+                  },
+                ],
+                "widgets" = [
+                  {
+                    "id"          = "entityDetails",
+                    "type"        = "entity-info",
+                    "title"       = "Details",
+                    "blueprint"   = "{{blueprint}}",
+                    "entity"      = "{{url.identifier}}",
+                    "hiddenQuery" = [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+    ),
+  ]
+}
+`, entityPageIdentifier)
+
+	updatedEntityPageConfig := fmt.Sprintf(`
+resource "port_page" "entity_page" {
+  identifier = "%s"
+  title      = "TF test microservice"
+  icon       = "Terraform"
+  type       = "entity"
+  blueprint  = port_blueprint.microservice.identifier
+
+  depends_on = [port_blueprint.microservice]
+
+  page_filters = [
+    jsonencode(
+      {
+        "identifier" = "fac6b5aa-272c-4a20-9635-add07d097bb9"
+        "title"      = "Entity Creation Date is in the past 30 days"
+        "query" = {
+          "combinator" = "and"
+          "rules" = [
+            {
+              "property" = "$createdAt"
+              "operator" = "between"
+              "value" = {
+                "preset" = "lastMonth"
+              }
+            }
+          ]
+          "blueprint" = "dashboard-filters-meta-blueprint"
+        }
+      }
+    ),
+  ]
+
+  widgets = [
+    jsonencode(
+      {
+        "id"          = "entityPageGrouper",
+        "type"        = "grouper",
+        "displayMode" = "tabs",
+        "groupsOrder" = ["Overview"],
+        "groups" = [
+          {
+            "title" = "Overview",
+            "widgets" = [
+              {
+                "id"   = "overviewDashboard",
+                "type" = "dashboard-widget",
+                "layout" = [
+                  {
+                    "height" = 400,
+                    "columns" = [
+                      {
+                        "id"   = "entityDetails",
+                        "size" = 12,
+                      },
+                    ],
+                  },
+                ],
+                "widgets" = [
+                  {
+                    "id"        = "entityDetails",
+                    "type"        = "entity-info",
+                    "title"       = "Updated Details",
+                    "blueprint"   = "{{blueprint}}",
+                    "entity"      = "{{url.identifier}}",
+                    "hiddenQuery" = [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+    ),
+  ]
+}
+`, entityPageIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + blueprintConfig + entityPageConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.entity_page", "identifier", entityPageIdentifier),
+					resource.TestCheckResourceAttr("port_page.entity_page", "title", "TF test microservice"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "type", "entity"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "blueprint", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_page.entity_page", "widgets.#", "1"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "page_filters.#", "1"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + blueprintConfig + updatedEntityPageConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.entity_page", "title", "TF test microservice"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "type", "entity"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "widgets.#", "1"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "page_filters.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortPageResourceEntityPageCreateNotSupported(t *testing.T) {
+	entityPageIdentifier := utils.GenID() + "Entity"
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config := fmt.Sprintf(`
+resource "port_page" "entity_page" {
+  identifier = "%s"
+  title      = "TF test microservice"
+  icon       = "Terraform"
+  type       = "entity"
+  blueprint  = "non-existent-blueprint"
+}
+`, entityPageIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + config,
+				ExpectError: regexp.MustCompile(`Entity pages cannot be created`),
+			},
+		},
+	})
+}
+
+func TestAccPortPageResourceInvalidType(t *testing.T) {
+	pageIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config := fmt.Sprintf(`
+resource "port_page" "invalid_type_page" {
+  identifier = "%s"
+  title      = "Invalid Page"
+  type       = "invalid-type"
+}
+`, pageIdentifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + config,
+				ExpectError: regexp.MustCompile(`Invalid Attribute Value Match`),
+			},
+		},
+	})
+}
+
 func TestAccPortPageResourceWithFilters(t *testing.T) {
 	serviceBlueprintIdentifier := utils.GenID()
 	clusterBlueprintIdentifier := utils.GenID()

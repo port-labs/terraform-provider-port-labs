@@ -18,10 +18,13 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	pm.Locked = types.BoolPointerValue(b.Locked)
 	pm.Blueprint = types.StringPointerValue(b.Blueprint)
 	pm.Description = types.StringPointerValue(b.Description)
+	pm.CreatedAt = types.StringValue(b.CreatedAt.String())
+	pm.CreatedBy = types.StringValue(b.CreatedBy)
+	pm.UpdatedAt = types.StringValue(b.UpdatedAt.String())
+	pm.UpdatedBy = types.StringValue(b.UpdatedBy)
 
 	if b.Widgets != nil {
 		widgetAttrs := make([]attr.Value, len(*b.Widgets))
-		// go over each widget and convert it to a string and store it in the widgets array
 		for i, widget := range *b.Widgets {
 			bWidget, err := utils.GoObjectToTerraformString(widget, r.portClient.JSONEscapeHTML)
 			if err != nil {
@@ -36,7 +39,6 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 
 	if b.PageFilters != nil {
 		filterAttrs := make([]attr.Value, len(*b.PageFilters))
-		// go over each page filter and convert it to a string and store it in the page filters array
 		for i, pageFilter := range *b.PageFilters {
 			bFilter, err := utils.GoObjectToTerraformString(pageFilter, r.portClient.JSONEscapeHTML)
 			if err != nil {

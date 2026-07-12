@@ -88,7 +88,7 @@ description: |-
             workflowInputs = {
               node_type       = "fetch_pr_context"
               pr_link         = "{{ .outputs.trigger.pr_link }}"
-              workflow_run_id = "{{ .run.id }}"
+              workflow_run_id = "{{ .workflowRun.identifier }}"
             }
             reportWorkflowStatus = true
           }
@@ -197,7 +197,7 @@ resource "port_workflow" "dispatch_github_workflow" {
           workflowInputs = {
             node_type       = "fetch_pr_context"
             pr_link         = "{{ .outputs.trigger.pr_link }}"
-            workflow_run_id = "{{ .run.id }}"
+            workflow_run_id = "{{ .workflowRun.identifier }}"
           }
           reportWorkflowStatus = true
         }

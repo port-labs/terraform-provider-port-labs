@@ -45,6 +45,40 @@ func TestWorkflowResourceToPortBodyDelayNode(t *testing.T) {
 	assert.Equal(t, float64(300), config["seconds"])
 }
 
+func TestWorkflowResourceToPortBodyDelayNodeDynamicExpression(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	nodes := []map[string]any{
+		{
+			"identifier": "wait",
+			"title":      "Wait Before Next Step",
+			"config": map[string]any{
+				"type":    "DELAY",
+				"seconds": "{{ .outputs.trigger.wait_seconds }}",
+			},
+		},
+	}
+	nodesJSON, err := json.Marshal(nodes)
+	require.NoError(t, err)
+
+	state := &WorkflowModel{
+		Identifier:  types.StringValue("delayed-action"),
+		Title:       types.StringValue("Workflow with Delay"),
+		Nodes:       types.StringValue(string(nodesJSON)),
+		Connections: types.StringValue("[]"),
+	}
+
+	body, err := workflowResourceToPortBody(ctx, state)
+	require.NoError(t, err)
+	require.Len(t, body.Nodes, 1)
+
+	config, ok := body.Nodes[0]["config"].(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "DELAY", config["type"])
+	assert.Equal(t, "{{ .outputs.trigger.wait_seconds }}", config["seconds"])
+}
+
 func TestRefreshWorkflowStateDelayNode(t *testing.T) {
 	t.Parallel()
 

@@ -53,7 +53,7 @@ func WorkflowSchema() map[string]schema.Attribute {
 			Optional:            true,
 		},
 		"nodes": schema.StringAttribute{
-			MarkdownDescription: "Workflow nodes in JSON format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Supports all workflow node types including `CURSOR_AGENT`, `DELAY`, `INTEGRATION_ACTION`, `WEBHOOK`, `SELF_SERVE_TRIGGER`, and `EVENT_TRIGGER`.",
+			MarkdownDescription: "Workflow nodes in JSON format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Supports all workflow node types including `CURSOR_AGENT`, `DELAY`, `INTEGRATION_ACTION`, `WEBHOOK`, `SELF_SERVE_TRIGGER`, and `EVENT_TRIGGER`. A `DELAY` node config requires `type = \"DELAY\"` and `seconds` (positive integer up to 86400, or a Port dynamic expression string).",
 			Required:            true,
 		},
 		"connections": schema.StringAttribute{
@@ -217,7 +217,7 @@ resource "port_workflow" "delayed_action" {
       title      = "Wait Before Next Step"
       config = {
         type    = "DELAY"
-        seconds = 300
+        seconds = 300 # pause for 5 minutes (max 86400 / 24 hours)
       }
     },
     {

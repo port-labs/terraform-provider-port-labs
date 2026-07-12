@@ -128,7 +128,7 @@ description: |-
         title      = "Wait Before Next Step"
         config = {
           type    = "DELAY"
-          seconds = 300
+          seconds = 300 # pause for 5 minutes (max 86400 / 24 hours)
         }
       },
       {
@@ -288,7 +288,7 @@ resource "port_workflow" "delayed_action" {
       title      = "Wait Before Next Step"
       config = {
         type    = "DELAY"
-        seconds = 300
+        seconds = 300 # pause for 5 minutes (max 86400 / 24 hours)
       }
     },
     {
@@ -324,7 +324,7 @@ resource "port_workflow" "delayed_action" {
 
 - `connections` (String) Workflow connections in JSON format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Each connection requires `sourceIdentifier` and `targetIdentifier`.
 - `identifier` (String) The identifier of the workflow
-- `nodes` (String) Workflow nodes in JSON format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Supports all workflow node types including `CURSOR_AGENT`, `DELAY`, `INTEGRATION_ACTION`, `WEBHOOK`, `SELF_SERVE_TRIGGER`, and `EVENT_TRIGGER`.
+- `nodes` (String) Workflow nodes in JSON format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Supports all workflow node types including `CURSOR_AGENT`, `DELAY`, `INTEGRATION_ACTION`, `WEBHOOK`, `SELF_SERVE_TRIGGER`, and `EVENT_TRIGGER`. A `DELAY` node config requires `type = "DELAY"` and `seconds` (positive integer up to 86400, or a Port dynamic expression string).
 - `title` (String) The title of the workflow
 
 ### Optional

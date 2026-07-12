@@ -394,7 +394,6 @@ resource "port_action" "myAction" {
 ### Optional
 
 - `allow_anyone_to_view_runs` (Boolean) Whether members can view the runs of this action
-- `tags` (List of String) Optional list of free-form tags for filtering and grouping workflows. Maximum 20 tags, each up to 64 characters.
 - `approval_email_notification` (Object) The email notification of the approval. This is a presence-based block — defining it enables email notifications for approval; no nested attributes are required. (see [below for nested schema](#nestedatt--approval_email_notification))
 - `approval_webhook_notification` (Attributes) The webhook notification of the approval (see [below for nested schema](#nestedatt--approval_webhook_notification))
 - `automation_trigger` (Attributes) Automation trigger for the action (see [below for nested schema](#nestedatt--automation_trigger))
@@ -409,6 +408,7 @@ resource "port_action" "myAction" {
 - `publish` (Boolean) Publish action
 - `required_approval` (String) Require approval before invoking the action. Can be one of "true", "false", "ANY" or "ALL"
 - `self_service_trigger` (Attributes) Self service trigger for the action. Note: you can define only one of `order_properties` and `steps` (see [below for nested schema](#nestedatt--self_service_trigger))
+- `tags` (List of String) Optional list of free-form tags for filtering and grouping workflows. Maximum 20 tags, each up to 64 characters.
 - `title` (String) Title
 - `upsert_entity_method` (Attributes) Upsert Entity invocation method (see [below for nested schema](#nestedatt--upsert_entity_method))
 - `webhook_method` (Attributes) Webhook invocation method (see [below for nested schema](#nestedatt--webhook_method))

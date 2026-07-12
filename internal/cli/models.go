@@ -372,6 +372,18 @@ type (
 		AllowAnyoneToViewRuns *bool                 `json:"allowAnyoneToViewRuns,omitempty"`
 	}
 
+	Workflow struct {
+		Meta
+		Identifier            string           `json:"identifier,omitempty"`
+		Title                 string           `json:"title,omitempty"`
+		Icon                  *string          `json:"icon,omitempty"`
+		Description           *string          `json:"description,omitempty"`
+		Tags                  []string         `json:"tags,omitempty"`
+		AllowAnyoneToViewRuns *bool            `json:"allowAnyoneToViewRuns,omitempty"`
+		Nodes                 []map[string]any `json:"nodes,omitempty"`
+		Connections           []map[string]any `json:"connections,omitempty"`
+	}
+
 	ActionExecutePermissions struct {
 		Users       []string        `json:"users"`
 		Roles       []string        `json:"roles"`
@@ -680,6 +692,7 @@ type PortBody struct {
 	Blueprint            Blueprint         `json:"blueprint"`
 	BlueprintPermissions Blueprint         `json:"blueprint_permissions"`
 	Action               Action            `json:"action"`
+	Workflow             Workflow          `json:"workflow"`
 	ActionPermissions    ActionPermissions `json:"permissions"`
 	Webhook              Webhook           `json:"integration"`
 	Scorecard            Scorecard         `json:"Scorecard"`

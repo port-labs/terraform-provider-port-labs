@@ -53,7 +53,7 @@ func WorkflowSchema() map[string]schema.Attribute {
 			Optional:            true,
 		},
 		"nodes": schema.StringAttribute{
-			MarkdownDescription: "Workflow nodes in JSON format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Supports all workflow node types including `CURSOR_AGENT`, `INTEGRATION_ACTION`, `WEBHOOK`, `SELF_SERVE_TRIGGER`, and `EVENT_TRIGGER`.",
+			MarkdownDescription: "Workflow nodes in JSON format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode). Supports all workflow node types including `CURSOR_AGENT`, `DELAY`, `INTEGRATION_ACTION`, `WEBHOOK`, `SELF_SERVE_TRIGGER`, and `EVENT_TRIGGER`.",
 			Required:            true,
 		},
 		"connections": schema.StringAttribute{
@@ -188,6 +188,56 @@ resource "port_workflow" "dispatch_github_workflow" {
     {
       sourceIdentifier = "trigger"
       targetIdentifier = "fetch_pr_context"
+    }
+  ])
+}
+` + "\n```" + `
+
+## Example Usage with DELAY node
+
+` + "```hcl" + `
+resource "port_workflow" "delayed_action" {
+  identifier = "delayed-action"
+  title      = "Workflow with Delay"
+
+  nodes = jsonencode([
+    {
+      identifier = "trigger"
+      title      = "Start"
+      config = {
+        type = "SELF_SERVE_TRIGGER"
+        userInputs = {
+          properties = {}
+          required   = []
+        }
+      }
+    },
+    {
+      identifier = "wait"
+      title      = "Wait Before Next Step"
+      config = {
+        type    = "DELAY"
+        seconds = 300
+      }
+    },
+    {
+      identifier = "next_step"
+      title      = "Continue After Delay"
+      config = {
+        type = "WEBHOOK"
+        url  = "https://example.com/webhook"
+      }
+    }
+  ])
+
+  connections = jsonencode([
+    {
+      sourceIdentifier = "trigger"
+      targetIdentifier = "wait"
+    },
+    {
+      sourceIdentifier = "wait"
+      targetIdentifier = "next_step"
     }
   ])
 }

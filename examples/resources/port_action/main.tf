@@ -76,6 +76,7 @@ resource "port_action" "restart_microservice" {
   title      = "Restart microservice"
   icon       = "Terraform"
   identifier = "examples-action-restart-microservice"
+  tags       = ["infrastructure", "restart"]
   self_service_trigger = {
     operation            = "DAY-2"
     blueprint_identifier = port_blueprint.microservice.identifier

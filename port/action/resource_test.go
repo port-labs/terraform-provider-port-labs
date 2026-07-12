@@ -3,6 +3,7 @@ package action_test
 import (
 	"fmt"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -3985,6 +3986,69 @@ func TestAccPortActionAllowAnyoneToViewRuns(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "allow_anyone_to_view_runs", "false"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortActionTags(t *testing.T) {
+	identifier := utils.GenID()
+	actionIdentifier := utils.GenID()
+
+	type testTagsParams struct {
+		tags []string
+	}
+
+	testConfig := func(params testTagsParams) string {
+		tagsHCL := "[]"
+		if len(params.tags) > 0 {
+			quoted := make([]string, len(params.tags))
+			for i, tag := range params.tags {
+				quoted[i] = fmt.Sprintf("%q", tag)
+			}
+			tagsHCL = fmt.Sprintf("[%s]", strings.Join(quoted, ", "))
+		}
+
+		return testAccCreateBlueprintConfig(identifier) + fmt.Sprintf(`
+	resource "port_action" "create_microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+		icon = "Terraform"
+		self_service_trigger = {
+			operation = "DAY-2"
+			blueprint_identifier = port_blueprint.microservice.identifier
+		}
+		kafka_method = {}
+		tags = %s
+	}`, actionIdentifier, tagsHCL)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testConfig(testTagsParams{tags: []string{"infrastructure", "terraform"}}),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "title", "TF Provider Test"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "identifier", actionIdentifier),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "tags.#", "2"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "tags.0", "infrastructure"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "tags.1", "terraform"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testConfig(testTagsParams{tags: []string{"updated-tag"}}),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "tags.#", "1"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "tags.0", "updated-tag"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testConfig(testTagsParams{}),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_action.create_microservice", "tags.#", "0"),
 				),
 			},
 		},

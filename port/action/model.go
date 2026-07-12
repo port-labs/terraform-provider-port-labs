@@ -453,6 +453,7 @@ type ActionModel struct {
 	Title                       types.String                      `tfsdk:"title"`
 	Icon                        types.String                      `tfsdk:"icon"`
 	Description                 types.String                      `tfsdk:"description"`
+	Tags                        types.List                        `tfsdk:"tags"`
 	SelfServiceTrigger          *SelfServiceTriggerModel          `tfsdk:"self_service_trigger"`
 	AutomationTrigger           *AutomationTriggerModel           `tfsdk:"automation_trigger"`
 	KafkaMethod                 *KafkaMethodModel                 `tfsdk:"kafka_method"`
@@ -477,6 +478,7 @@ type ActionValidationModel struct {
 	Title                       types.String `tfsdk:"title"`
 	Icon                        types.String `tfsdk:"icon"`
 	Description                 types.String `tfsdk:"description"`
+	Tags                        types.List   `tfsdk:"tags"`
 	SelfServiceTrigger          types.Object `tfsdk:"self_service_trigger"`
 	AutomationTrigger           types.Object `tfsdk:"automation_trigger"`
 	KafkaMethod                 types.Object `tfsdk:"kafka_method"`

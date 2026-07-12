@@ -104,6 +104,14 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action,
 		action.AllowAnyoneToViewRuns = data.AllowAnyoneToViewRuns.ValueBoolPointer()
 	}
 
+	if !data.Tags.IsNull() && !data.Tags.IsUnknown() {
+		tags, err := utils.TerraformListToGoArray(ctx, data.Tags, "string")
+		if err != nil {
+			return nil, err
+		}
+		action.Tags = utils.InterfaceToStringArray(tags)
+	}
+
 	return action, nil
 }
 

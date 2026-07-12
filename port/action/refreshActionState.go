@@ -586,6 +586,7 @@ func (r *ActionResource) refreshActionState(ctx context.Context, state *ActionMo
 	}
 	state.Publish = flex.GoBoolToFramework(a.Publish)
 	state.AllowAnyoneToViewRuns = flex.GoBoolToFramework(a.AllowAnyoneToViewRuns)
+	state.Tags = flex.GoArrayStringToTerraformList(ctx, a.Tags)
 
 	return nil
 }

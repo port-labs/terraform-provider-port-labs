@@ -145,6 +145,17 @@ func ActionSchema() map[string]schema.Attribute {
 			MarkdownDescription: "Description",
 			Optional:            true,
 		},
+		"tags": schema.ListAttribute{
+			MarkdownDescription: "Optional list of free-form tags for filtering and grouping workflows. Maximum 20 tags, each up to 64 characters.",
+			Optional:            true,
+			ElementType:         types.StringType,
+			Validators: []validator.List{
+				listvalidator.SizeAtMost(20),
+				listvalidator.ValueStringsAre(
+					stringvalidator.LengthBetween(1, 64),
+				),
+			},
+		},
 		"self_service_trigger": schema.SingleNestedAttribute{
 			MarkdownDescription: "Self service trigger for the action. Note: you can define only one of `order_properties` and `steps`",
 			Optional:            true,

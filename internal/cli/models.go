@@ -364,7 +364,7 @@ type (
 		Title                 *string               `json:"title,omitempty"`
 		Icon                  *string               `json:"icon,omitempty"`
 		Description           *string               `json:"description,omitempty"`
-		Tags                  []string              `json:"tags,omitempty"`
+		Tags                  *[]string             `json:"tags,omitempty"`
 		Trigger               *Trigger              `json:"trigger"`
 		InvocationMethod      *InvocationMethod     `json:"invocationMethod,omitempty"`
 		RequiredApproval      any                   `json:"requiredApproval,omitempty"`

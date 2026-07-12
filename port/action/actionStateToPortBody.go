@@ -109,7 +109,8 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action,
 		if err != nil {
 			return nil, err
 		}
-		action.Tags = utils.InterfaceToStringArray(tags)
+		tagArray := utils.InterfaceToStringArray(tags)
+		action.Tags = &tagArray
 	}
 
 	return action, nil

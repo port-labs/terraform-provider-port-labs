@@ -378,7 +378,7 @@ type (
 		Title                 string           `json:"title,omitempty"`
 		Icon                  *string          `json:"icon,omitempty"`
 		Description           *string          `json:"description,omitempty"`
-		Tags                  []string         `json:"tags,omitempty"`
+		Tags                  *[]string        `json:"tags,omitempty"`
 		AllowAnyoneToViewRuns *bool            `json:"allowAnyoneToViewRuns,omitempty"`
 		Nodes                 []map[string]any `json:"nodes,omitempty"`
 		Connections           []map[string]any `json:"connections,omitempty"`

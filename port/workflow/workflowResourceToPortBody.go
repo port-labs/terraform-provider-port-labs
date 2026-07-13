@@ -3,7 +3,6 @@ package workflow
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -26,17 +25,13 @@ func workflowResourceToPortBody(ctx context.Context, state *WorkflowModel) (*cli
 	if !state.AllowAnyoneToViewRuns.IsNull() {
 		w.AllowAnyoneToViewRuns = state.AllowAnyoneToViewRuns.ValueBoolPointer()
 	}
-	if !state.Tags.IsNull() {
+	if !state.Tags.IsNull() && !state.Tags.IsUnknown() {
 		tagValues, err := utils.TerraformListToGoArray(ctx, state.Tags, "string")
 		if err != nil {
 			return nil, err
 		}
-		w.Tags = make([]string, 0, len(tagValues))
-		for _, tag := range tagValues {
-			if tagString, ok := tag.(string); ok {
-				w.Tags = append(w.Tags, tagString)
-			}
-		}
+		tagArray := utils.InterfaceToStringArray(tagValues)
+		w.Tags = &tagArray
 	}
 
 	nodes, err := utils.TerraformStringToGoType[[]map[string]any](state.Nodes)
@@ -71,15 +66,11 @@ func refreshWorkflowState(ctx context.Context, state *WorkflowModel, w *cli.Work
 	state.CreatedBy = types.StringValue(w.CreatedBy)
 	state.UpdatedBy = types.StringValue(w.UpdatedBy)
 
-	if len(w.Tags) > 0 {
-		tags, diags := types.ListValueFrom(ctx, types.StringType, w.Tags)
-		if diags.HasError() {
-			return fmt.Errorf("failed to convert workflow tags: %s", diags)
-		}
-		state.Tags = tags
-	} else {
-		state.Tags = types.ListNull(types.StringType)
+	var tags []string
+	if w.Tags != nil {
+		tags = *w.Tags
 	}
+	state.Tags = flex.GoArrayStringToTerraformList(ctx, tags)
 
 	nodesJSON, err := json.Marshal(w.Nodes)
 	if err != nil {

@@ -135,8 +135,10 @@ resource "port_action" "restart_microservice" {
     }
   }
   webhook_method = {
-    type = "WEBHOOK"
-    url  = "https://app.getport.io"
+    type             = "WEBHOOK"
+    url              = "https://app.getport.io"
+    label            = "Restart microservice webhook"
+    timeout_seconds  = 30
   }
 }
 

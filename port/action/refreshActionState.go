@@ -44,12 +44,14 @@ func (r *ActionResource) writeInvocationMethodToResource(ctx context.Context, a 
 		}
 
 		state.WebhookMethod = &WebhookMethodModel{
-			Url:          types.StringValue(*a.InvocationMethod.Url),
-			Agent:        agent,
-			Synchronized: synchronized,
-			Method:       flex.GoStringToFramework(a.InvocationMethod.Method),
-			Headers:      headers,
-			Body:         body,
+			Url:            types.StringValue(*a.InvocationMethod.Url),
+			Agent:          agent,
+			Synchronized:   synchronized,
+			Method:         flex.GoStringToFramework(a.InvocationMethod.Method),
+			Headers:        headers,
+			Body:           body,
+			Label:          flex.GoStringToFramework(a.InvocationMethod.Label),
+			TimeoutSeconds: flex.GoInt64ToFramework(a.InvocationMethod.TimeoutSeconds),
 		}
 	}
 

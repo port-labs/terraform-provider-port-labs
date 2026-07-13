@@ -391,6 +391,12 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 			Method:       data.WebhookMethod.Method.ValueStringPointer(),
 			Headers:      headers,
 			Body:         body,
+			Description:  data.WebhookMethod.Description.ValueStringPointer(),
+		}
+
+		if !data.WebhookMethod.TimeoutSeconds.IsNull() {
+			timeoutSeconds := int(data.WebhookMethod.TimeoutSeconds.ValueInt64())
+			webhookInvocation.TimeoutSeconds = &timeoutSeconds
 		}
 
 		return webhookInvocation, nil

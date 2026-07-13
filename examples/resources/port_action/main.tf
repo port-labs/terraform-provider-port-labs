@@ -187,8 +187,10 @@ resource "port_action" "restart_microservice_with_steps" {
     ]
   }
   webhook_method = {
-    type = "WEBHOOK"
-    url  = "https://api.example.com/restart"
+    type            = "WEBHOOK"
+    url             = "https://api.example.com/restart"
+    description     = "Restart the selected microservice via webhook"
+    timeout_seconds = 60
   }
 }
 

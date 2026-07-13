@@ -221,6 +221,8 @@ func TestAccPortActionWebhookInvocation(t *testing.T) {
 			method = "PUT"
 			headers = {"X-HEADER-TEST": "{{action.identifier}}"}
 			body = jsonencode({"runId": "{{run.id}}"})
+			description = "Invoke the restart webhook"
+			timeout_seconds = 30
 		}
 	}`, actionIdentifier)
 
@@ -242,6 +244,8 @@ func TestAccPortActionWebhookInvocation(t *testing.T) {
 					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.method", "PUT"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.headers.X-HEADER-TEST", "{{action.identifier}}"),
 					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.body", "{\"runId\":\"{{run.id}}\"}"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.description", "Invoke the restart webhook"),
+					resource.TestCheckResourceAttr("port_action.create_microservice", "webhook_method.timeout_seconds", "30"),
 				),
 			},
 		},

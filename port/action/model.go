@@ -383,12 +383,14 @@ type KafkaMethodModel struct {
 }
 
 type WebhookMethodModel struct {
-	Url          types.String `tfsdk:"url"`
-	Agent        types.String `tfsdk:"agent"`
-	Synchronized types.String `tfsdk:"synchronized"`
-	Method       types.String `tfsdk:"method"`
-	Headers      types.Map    `tfsdk:"headers"`
-	Body         types.String `tfsdk:"body"`
+	Url            types.String `tfsdk:"url"`
+	Agent          types.String `tfsdk:"agent"`
+	Synchronized   types.String `tfsdk:"synchronized"`
+	Method         types.String `tfsdk:"method"`
+	Headers        types.Map    `tfsdk:"headers"`
+	Body           types.String `tfsdk:"body"`
+	Description    types.String `tfsdk:"description"`
+	TimeoutSeconds types.Int64  `tfsdk:"timeout_seconds"`
 }
 
 type GithubMethodModel struct {

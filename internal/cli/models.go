@@ -254,6 +254,8 @@ type (
 		Method                               *string                               `json:"method,omitempty"`
 		Headers                              map[string]string                     `json:"headers,omitempty"`
 		Body                                 any                                   `json:"body,omitempty"`
+		Description                          *string                               `json:"description,omitempty"`
+		TimeoutSeconds                       *int                                  `json:"timeoutSeconds,omitempty"`
 		Org                                  *string                               `json:"org,omitempty"`
 		Repo                                 *string                               `json:"repo,omitempty"`
 		Workflow                             *string                               `json:"workflow,omitempty"`

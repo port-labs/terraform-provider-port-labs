@@ -389,6 +389,7 @@ type WebhookMethodModel struct {
 	Method       types.String `tfsdk:"method"`
 	Headers      types.Map    `tfsdk:"headers"`
 	Body         types.String `tfsdk:"body"`
+	Label        types.String `tfsdk:"label"`
 }
 
 type GithubMethodModel struct {

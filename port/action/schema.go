@@ -437,6 +437,10 @@ func ActionSchema() map[string]schema.Attribute {
 					MarkdownDescription: "The Webhook body should be in `JSON` format, encoded as a string. Use [jsonencode](https://developer.hashicorp.com/terraform/language/functions/jsonencode) to encode arrays or objects. Learn about how to [define the action payload](https://docs.getport.io/create-self-service-experiences/setup-backend/#define-the-actions-payload).",
 					Optional:            true,
 				},
+				"label": schema.StringAttribute{
+					MarkdownDescription: "Optional human-readable label for this webhook invocation.",
+					Optional:            true,
+				},
 			},
 		},
 		"github_method": schema.SingleNestedAttribute{

@@ -391,6 +391,7 @@ func invocationMethodToBody(ctx context.Context, data *ActionModel) (*cli.Invoca
 			Method:       data.WebhookMethod.Method.ValueStringPointer(),
 			Headers:      headers,
 			Body:         body,
+			Label:        data.WebhookMethod.Label.ValueStringPointer(),
 		}
 
 		return webhookInvocation, nil

@@ -50,6 +50,7 @@ func (r *ActionResource) writeInvocationMethodToResource(ctx context.Context, a 
 			Method:       flex.GoStringToFramework(a.InvocationMethod.Method),
 			Headers:      headers,
 			Body:         body,
+			Label:        flex.GoStringToFramework(a.InvocationMethod.Label),
 		}
 	}
 

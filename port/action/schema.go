@@ -624,7 +624,21 @@ func ActionSchema() map[string]schema.Attribute {
 			Optional:            true,
 			AttributeTypes:      map[string]attr.Type{},
 			Validators: []validator.Object{
-				objectvalidator.ConflictsWith(path.MatchRoot("approval_webhook_notification")),
+				objectvalidator.ConflictsWith(
+					path.MatchRoot("approval_webhook_notification"),
+					path.MatchRoot("approval_none_notification"),
+				),
+			},
+		},
+		"approval_none_notification": schema.ObjectAttribute{
+			MarkdownDescription: "Disables approval notifications. This is a presence-based block — defining it disables notifications for approval; no nested attributes are required.",
+			Optional:            true,
+			AttributeTypes:      map[string]attr.Type{},
+			Validators: []validator.Object{
+				objectvalidator.ConflictsWith(
+					path.MatchRoot("approval_webhook_notification"),
+					path.MatchRoot("approval_email_notification"),
+				),
 			},
 		},
 		"publish": schema.BoolAttribute{

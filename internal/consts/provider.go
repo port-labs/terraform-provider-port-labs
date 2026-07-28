@@ -21,4 +21,8 @@ const (
 	RunUpdated           = "RUN_UPDATED"
 	AnyRunChange         = "ANY_RUN_CHANGE"
 	JqCondition          = "JQ"
+
+	// Workflow node types
+	CursorAgent = "CURSOR_AGENT"
+	Delay       = "DELAY"
 )

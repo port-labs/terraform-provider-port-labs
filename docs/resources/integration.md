@@ -8,6 +8,7 @@ description: |-
   Docs about integrations can be found here https://docs.getport.io/integrations-index/.
   If you have an integration that was installed before you started managing it with Terraform, you can bring it under Terraform management by importing it instead of creating a new one - see Import and manage an integration https://docs.getport.io/guides/all/import-and-manage-integration.
   Creating a self-hosted (OnPrem) integration
+  
   resource "port_integration" "my_custom_integration" {
   	installation_id       = "my-custom-integration-id"
   	installation_app_type = "my-custom-kind"
@@ -39,6 +40,7 @@ description: |-
   
   With installation_type = "OnPrem" (the default), Terraform only creates/manages the Port-side registration and mapping - you still need to run the integration's own agent/container (e.g. via Helm or Docker) separately, pointed at the same installation_id.
   Creating a Port-hosted (SaaS) integration
+  
   resource "port_integration" "my_hosted_integration" {
   	installation_id       = "my-hosted-integration-id"
   	installation_app_type = "githubOcean"
@@ -95,6 +97,7 @@ resource "port_integration" "my_custom_integration" {
 }
 ```
 
+
 With `installation_type = "OnPrem"` (the default), Terraform only creates/manages the Port-side registration and mapping - you still need to run the integration's own agent/container (e.g. via Helm or Docker) separately, pointed at the same `installation_id`.
 
 ## Creating a Port-hosted (SaaS) integration
@@ -107,6 +110,7 @@ resource "port_integration" "my_hosted_integration" {
 	title                 = "My Hosted Integration"
 }
 ```
+
 
 With `installation_type = "Saas"`, Port provisions and runs the integration for you; `terraform apply` waits for provisioning to finish (and `terraform destroy` waits for teardown to finish) before returning.
 

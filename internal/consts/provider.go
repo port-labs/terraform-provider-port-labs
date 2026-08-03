@@ -40,4 +40,13 @@ const (
 	// Workflow self serve trigger context types
 	CreateEntityContext = "CREATE_ENTITY"
 	EntityContext       = "ENTITY"
+
+	InstallationTypeOnPrem = "OnPrem"
+	InstallationTypeSaas   = "Saas"
+
+	IntegrationStatusCreating = "Creating"
+	IntegrationStatusUpdating = "Updating"
+	IntegrationStatusDeleting = "Deleting"
+	IntegrationStatusDeleted  = "Deleted"
+	IntegrationStatusError    = "Error"
 )

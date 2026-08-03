@@ -749,12 +749,23 @@ type PortBodyDelete struct {
 }
 
 type Integration struct {
-	InstallationId       string                `json:"installationId"`
-	Title                *string               `json:"title"`
-	InstallationAppType  *string               `json:"installationAppType"`
-	Version              *string               `json:"version"`
-	Config               *map[string]any       `json:"config"`
-	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
+	InstallationId       string                 `json:"installationId"`
+	Title                *string                `json:"title"`
+	InstallationAppType  *string                `json:"installationAppType"`
+	InstallationType     *string                `json:"installationType,omitempty"`
+	Version              *string                `json:"version"`
+	Config               *map[string]any        `json:"config"`
+	ChangelogDestination *ChangelogDestination  `json:"changelogDestination,omitempty"`
+	StatusInfo           *IntegrationStatusInfo `json:"statusInfo,omitempty"`
+}
+
+type IntegrationStatusInfo struct {
+	IntegrationStatus IntegrationStatus `json:"integrationStatus"`
+}
+
+type IntegrationStatus struct {
+	Status  string  `json:"status"`
+	Message *string `json:"message,omitempty"`
 }
 
 type Organization struct {

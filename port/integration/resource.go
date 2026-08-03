@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -52,9 +53,14 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 
 	integrationIdentifier := state.InstallationId.ValueString()
 
-	a, err := r.portClient.GetIntegration(ctx, integrationIdentifier)
+	a, statusCode, err := r.portClient.GetIntegration(ctx, integrationIdentifier)
 
 	if err != nil {
+		if statusCode == http.StatusNotFound {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError("failed to read integration", err.Error())
 		return
 	}
 

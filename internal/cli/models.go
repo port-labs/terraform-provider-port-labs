@@ -422,11 +422,13 @@ type (
 		Roles       []string `json:"roles"`
 		Teams       []string `json:"teams"`
 		OwnedByTeam *bool    `json:"ownedByTeam"`
+		Policy      *map[string]any `json:"policy,omitempty"`
 	}
 
 	BlueprintRolesOrPropertiesPermissionsBlock map[string]BlueprintPermissionsBlock
 
 	BlueprintPermissionsEntities struct {
+		Read             *BlueprintPermissionsBlock                 `json:"read,omitempty"`
 		Register         BlueprintPermissionsBlock                  `json:"register"`
 		Unregister       BlueprintPermissionsBlock                  `json:"unregister"`
 		Update           BlueprintPermissionsBlock                  `json:"update"`

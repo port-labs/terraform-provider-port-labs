@@ -63,7 +63,7 @@ func (r *BlueprintPermissionsResource) Read(ctx context.Context, req resource.Re
 		return
 	}
 
-	err = refreshBlueprintPermissionsState(state, a, blueprintIdentifier)
+	err = refreshBlueprintPermissionsState(state, a, blueprintIdentifier, r.portClient.JSONEscapeHTML)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to refresh blueprint permissions state", err.Error())
 		return

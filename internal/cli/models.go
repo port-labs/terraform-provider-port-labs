@@ -418,10 +418,10 @@ type (
 	}
 
 	BlueprintPermissionsBlock struct {
-		Users       []string `json:"users"`
-		Roles       []string `json:"roles"`
-		Teams       []string `json:"teams"`
-		OwnedByTeam *bool    `json:"ownedByTeam"`
+		Users       []string        `json:"users"`
+		Roles       []string        `json:"roles"`
+		Teams       []string        `json:"teams"`
+		OwnedByTeam *bool           `json:"ownedByTeam"`
 		Policy      *map[string]any `json:"policy,omitempty"`
 	}
 

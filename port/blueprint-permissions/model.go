@@ -31,9 +31,9 @@ type EntitiesBlueprintPermissionsModel struct {
 	Register                 *BlueprintPermissionsTFBlockWithPolicy `tfsdk:"register"`
 	Unregister               *BlueprintPermissionsTFBlockWithPolicy `tfsdk:"unregister"`
 	Update                   *BlueprintPermissionsTFBlockWithPolicy `tfsdk:"update"`
-	UpdateProperties         *BlueprintRelationsPermissionsTFBlock   `tfsdk:"update_properties"`
-	UpdateMetadataProperties *BlueprintMetadataPermissionsTFBlock    `tfsdk:"update_metadata_properties"`
-	UpdateRelations          *BlueprintRelationsPermissionsTFBlock   `tfsdk:"update_relations"`
+	UpdateProperties         *BlueprintRelationsPermissionsTFBlock  `tfsdk:"update_properties"`
+	UpdateMetadataProperties *BlueprintMetadataPermissionsTFBlock   `tfsdk:"update_metadata_properties"`
+	UpdateRelations          *BlueprintRelationsPermissionsTFBlock  `tfsdk:"update_relations"`
 }
 
 type BlueprintPermissionsModel struct {

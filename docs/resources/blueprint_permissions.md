@@ -116,11 +116,11 @@ description: |-
   			}
   		}
   }
-
+  
   Configure a dynamic policy with a Port search query (including contextual rules):
   Policy is expected to be passed as a JSON string (use jsonencode). Evaluation is done by Port, not Terraform.
   Docs about catalog RBAC policies: Govern data access https://docs.port.io/context-lake/consuming-the-lake/govern-data-access/overview/.
-
+  
   resource "port_blueprint_permissions" "microservices_permissions" {
   	blueprint_identifier = "my_blueprint_identifier"
   	entities = {
@@ -155,7 +155,7 @@ description: |-
   		# ... remaining required permission blocks ...
   	}
   }
-
+  
   Disclaimer
   
   Blueprint permissions are created by default when blueprint is first created, this means that you should use this resource when you want to change the default permissions of a blueprint.

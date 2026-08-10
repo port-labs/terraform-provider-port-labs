@@ -93,13 +93,10 @@ Optional:
 <a id="nestedblock--node--event_trigger"></a>
 ### Nested Schema for `node.event_trigger`
 
-Required:
-
-- `type` (String) The event type that triggers the workflow
-
 Optional:
 
 - `blueprint_identifier` (String) The blueprint identifier the event relates to
+- `type` (String) The event type that triggers the workflow
 
 
 <a id="nestedblock--node--integration_action"></a>

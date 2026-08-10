@@ -87,7 +87,7 @@ func eventTriggerBlock() schema.Block {
 		Attributes: map[string]schema.Attribute{
 			"type": schema.StringAttribute{
 				MarkdownDescription: "The event type that triggers the workflow",
-				Required:            true,
+				Optional: true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						consts.EntityCreated,

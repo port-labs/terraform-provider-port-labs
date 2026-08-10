@@ -21,11 +21,11 @@ Workflow resource for managing Port workflows and their node/connection graph
 
 ### Optional
 
+- `category` (String) A free-form category used to group the workflow (max 40 characters)
 - `connections` (Block List) A directed connection between two nodes (see [below for nested schema](#nestedblock--connections))
 - `description` (String) The description of the workflow
 - `icon` (String) The icon of the workflow
 - `node` (Block List) A node of the workflow graph (see [below for nested schema](#nestedblock--node))
-- `tags` (List of String) Free-form tags for filtering and grouping workflows (max 20 tags, each 1-64 characters)
 - `title` (String) The title of the workflow
 
 ### Read-Only
@@ -50,10 +50,9 @@ Required:
 
 Optional:
 
-- `cursor_agent` (Block, Optional) A Cursor agent node that runs a Cursor agent decision (see [below for nested schema](#nestedblock--node--cursor_agent))
-- `delay` (Block, Optional) A delay node that pauses the workflow for a number of seconds (see [below for nested schema](#nestedblock--node--delay))
+- `cursor_agent` (Block, Optional) A Cursor agent node that runs a Cursor agent task (see [below for nested schema](#nestedblock--node--cursor_agent))
 - `event_trigger` (Block, Optional) An event trigger node that starts the workflow when an entity event occurs (see [below for nested schema](#nestedblock--node--event_trigger))
-- `integration_action` (Block, Optional) An integration action node that triggers an integration workflow (see [below for nested schema](#nestedblock--node--integration_action))
+- `integration_action` (Block, Optional) An integration action node that invokes an integration (see [below for nested schema](#nestedblock--node--integration_action))
 - `title` (String) The title of the node
 
 <a id="nestedblock--node--cursor_agent"></a>
@@ -63,7 +62,7 @@ Optional:
 
 - `api_key` (String, Sensitive) The Cursor API key (supports Port secret references)
 - `prompt` (Block, Optional) The prompt passed to the Cursor agent (see [below for nested schema](#nestedblock--node--cursor_agent--prompt))
-- `source` (Block, Optional) The source the Cursor agent operates on (see [below for nested schema](#nestedblock--node--cursor_agent--source))
+- `source` (Block, Optional) The source the Cursor agent operates on. Provide either repository (with an optional ref) or pr_url. (see [below for nested schema](#nestedblock--node--cursor_agent--source))
 
 <a id="nestedblock--node--cursor_agent--prompt"></a>
 ### Nested Schema for `node.cursor_agent.prompt`
@@ -78,16 +77,10 @@ Optional:
 
 Optional:
 
-- `pr_url` (String) The pull request URL the agent operates on
+- `pr_url` (String) The pull request URL the agent operates on. When set, repository and ref are ignored.
+- `ref` (String) The git ref (branch, tag or commit) to use as the base
+- `repository` (String) The GitHub repository URL the agent operates on
 
-
-
-<a id="nestedblock--node--delay"></a>
-### Nested Schema for `node.delay`
-
-Optional:
-
-- `seconds` (String) The number of seconds to wait (1-86400) or a dynamic expression
 
 
 <a id="nestedblock--node--event_trigger"></a>
@@ -96,6 +89,7 @@ Optional:
 Optional:
 
 - `blueprint_identifier` (String) The blueprint identifier the event relates to
+- `property_identifier` (String) The property identifier the timer event relates to (only for the TIMER_EXPIRED event type)
 - `type` (String) The event type that triggers the workflow
 
 
@@ -104,10 +98,9 @@ Optional:
 
 Optional:
 
-- `installation_id` (String) The installation id of the integration
-- `integration_action_type` (String) The integration action type
-- `org` (String) The org the workflow belongs to
-- `repo` (String) The repo the workflow belongs to
-- `report_workflow_status` (String) Whether to report the workflow status back to Port
-- `workflow` (String) The workflow to run
-- `workflow_inputs` (String) The workflow inputs as a JSON encoded string
+- `defer_integration_installation` (Boolean) When true, allows saving the workflow before the integration is installed
+- `execution_properties` (String) The integration action execution properties as a JSON encoded string
+- `installation_id` (String) The installation id of the integration. Omit when defer_integration_installation is true.
+- `integration_invocation_type` (String) The invocation type of the integration action
+- `integration_provider` (String) The provider of the integration action
+- `on_failure` (String) The action to take if the integration action fails

@@ -2,9 +2,7 @@ package workflow
 
 import (
 	"context"
-	"regexp"
 
-	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -13,32 +11,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 )
-
-func secondsValidators() []validator.String {
-	return []validator.String{
-		stringvalidator.Any(
-			// A positive integer up to 86400 (1 day), or a dynamic Port expression.
-			stringvalidator.RegexMatches(
-				regexp.MustCompile(`^(?:[1-9][0-9]*)$`),
-				"must be a positive integer or a dynamic expression ({{ ... }})",
-			),
-			stringvalidator.RegexMatches(
-				regexp.MustCompile(`^[\n\r\s]*{{.*}}[\n\r\s]*$`),
-				"must be a positive integer or a dynamic expression ({{ ... }})",
-			),
-		),
-	}
-}
 
 func nodeExactlyOneOfValidator() []validator.Object {
 	return []validator.Object{
 		objectvalidator.ExactlyOneOf(
 			path.MatchRelative().AtParent().AtName("event_trigger"),
 			path.MatchRelative().AtParent().AtName("cursor_agent"),
-			path.MatchRelative().AtParent().AtName("delay"),
 			path.MatchRelative().AtParent().AtName("integration_action"),
 		),
 	}
@@ -69,13 +49,11 @@ func WorkflowSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The description of the workflow",
 			Optional:            true,
 		},
-		"tags": schema.ListAttribute{
-			MarkdownDescription: "Free-form tags for filtering and grouping workflows (max 20 tags, each 1-64 characters)",
+		"category": schema.StringAttribute{
+			MarkdownDescription: "A free-form category used to group the workflow (max 40 characters)",
 			Optional:            true,
-			ElementType:         types.StringType,
-			Validators: []validator.List{
-				listvalidator.SizeAtMost(20),
-				listvalidator.ValueStringsAre(stringvalidator.LengthBetween(1, 64)),
+			Validators: []validator.String{
+				stringvalidator.LengthAtMost(40),
 			},
 		},
 	}
@@ -87,19 +65,23 @@ func eventTriggerBlock() schema.Block {
 		Attributes: map[string]schema.Attribute{
 			"type": schema.StringAttribute{
 				MarkdownDescription: "The event type that triggers the workflow",
-				Optional: true,
+				Optional:            true,
 				Validators: []validator.String{
 					stringvalidator.OneOf(
 						consts.EntityCreated,
 						consts.EntityUpdated,
 						consts.EntityDeleted,
 						consts.AnyEntityChange,
-						consts.TimerPropertyExpired,
+						consts.WorkflowTimerExpired,
 					),
 				},
 			},
 			"blueprint_identifier": schema.StringAttribute{
 				MarkdownDescription: "The blueprint identifier the event relates to",
+				Optional:            true,
+			},
+			"property_identifier": schema.StringAttribute{
+				MarkdownDescription: "The property identifier the timer event relates to (only for the TIMER_EXPIRED event type)",
 				Optional:            true,
 			},
 		},
@@ -109,7 +91,7 @@ func eventTriggerBlock() schema.Block {
 
 func cursorAgentBlock() schema.Block {
 	return schema.SingleNestedBlock{
-		MarkdownDescription: "A Cursor agent node that runs a Cursor agent decision",
+		MarkdownDescription: "A Cursor agent node that runs a Cursor agent task",
 		Attributes: map[string]schema.Attribute{
 			"api_key": schema.StringAttribute{
 				MarkdownDescription: "The Cursor API key (supports Port secret references)",
@@ -128,10 +110,18 @@ func cursorAgentBlock() schema.Block {
 				},
 			},
 			"source": schema.SingleNestedBlock{
-				MarkdownDescription: "The source the Cursor agent operates on",
+				MarkdownDescription: "The source the Cursor agent operates on. Provide either repository (with an optional ref) or pr_url.",
 				Attributes: map[string]schema.Attribute{
+					"repository": schema.StringAttribute{
+						MarkdownDescription: "The GitHub repository URL the agent operates on",
+						Optional:            true,
+					},
+					"ref": schema.StringAttribute{
+						MarkdownDescription: "The git ref (branch, tag or commit) to use as the base",
+						Optional:            true,
+					},
 					"pr_url": schema.StringAttribute{
-						MarkdownDescription: "The pull request URL the agent operates on",
+						MarkdownDescription: "The pull request URL the agent operates on. When set, repository and ref are ignored.",
 						Optional:            true,
 					},
 				},
@@ -140,50 +130,36 @@ func cursorAgentBlock() schema.Block {
 	}
 }
 
-func delayBlock() schema.Block {
-	return schema.SingleNestedBlock{
-		MarkdownDescription: "A delay node that pauses the workflow for a number of seconds",
-		Attributes: map[string]schema.Attribute{
-			"seconds": schema.StringAttribute{
-				MarkdownDescription: "The number of seconds to wait (1-86400) or a dynamic expression",
-				Optional:            true,
-				Validators:          secondsValidators(),
-			},
-		},
-	}
-}
-
 func integrationActionBlock() schema.Block {
 	return schema.SingleNestedBlock{
-		MarkdownDescription: "An integration action node that triggers an integration workflow",
+		MarkdownDescription: "An integration action node that invokes an integration",
 		Attributes: map[string]schema.Attribute{
 			"installation_id": schema.StringAttribute{
-				MarkdownDescription: "The installation id of the integration",
+				MarkdownDescription: "The installation id of the integration. Omit when defer_integration_installation is true.",
 				Optional:            true,
 			},
-			"integration_action_type": schema.StringAttribute{
-				MarkdownDescription: "The integration action type",
+			"integration_provider": schema.StringAttribute{
+				MarkdownDescription: "The provider of the integration action",
 				Optional:            true,
 			},
-			"org": schema.StringAttribute{
-				MarkdownDescription: "The org the workflow belongs to",
+			"integration_invocation_type": schema.StringAttribute{
+				MarkdownDescription: "The invocation type of the integration action",
 				Optional:            true,
 			},
-			"repo": schema.StringAttribute{
-				MarkdownDescription: "The repo the workflow belongs to",
+			"execution_properties": schema.StringAttribute{
+				MarkdownDescription: "The integration action execution properties as a JSON encoded string",
 				Optional:            true,
 			},
-			"workflow": schema.StringAttribute{
-				MarkdownDescription: "The workflow to run",
+			"defer_integration_installation": schema.BoolAttribute{
+				MarkdownDescription: "When true, allows saving the workflow before the integration is installed",
 				Optional:            true,
 			},
-			"workflow_inputs": schema.StringAttribute{
-				MarkdownDescription: "The workflow inputs as a JSON encoded string",
+			"on_failure": schema.StringAttribute{
+				MarkdownDescription: "The action to take if the integration action fails",
 				Optional:            true,
-			},
-			"report_workflow_status": schema.StringAttribute{
-				MarkdownDescription: "Whether to report the workflow status back to Port",
-				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("continue", "terminate"),
+				},
 			},
 		},
 	}
@@ -206,7 +182,6 @@ func nodeBlock() schema.Block {
 			Blocks: map[string]schema.Block{
 				"event_trigger":      eventTriggerBlock(),
 				"cursor_agent":       cursorAgentBlock(),
-				"delay":              delayBlock(),
 				"integration_action": integrationActionBlock(),
 			},
 		},
@@ -236,9 +211,7 @@ func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaReques
 		MarkdownDescription: "Workflow resource for managing Port workflows and their node/connection graph",
 		Attributes:          WorkflowSchema(),
 		Blocks: map[string]schema.Block{
-			"node": nodeBlock(),
-			// "connection" is a reserved Terraform block name, so the plural
-			// "connections" block is used for the directed edges of the graph.
+			"node":        nodeBlock(),
 			"connections": connectionBlock(),
 		},
 	}

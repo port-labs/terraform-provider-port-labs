@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -12,8 +11,7 @@ import (
 )
 
 func (r *WorkflowResource) refreshWorkflowState(ctx context.Context, state *WorkflowModel, w *cli.Workflow) error {
-	// Preserve prior nodes/connections so we can keep ordering stable and
-	// re-use secret values that the API does not return.
+	// Keep prior node order stable and reuse secret values the API does not return.
 	priorNodes := make(map[string]WorkflowNodeModel, len(state.Nodes))
 	for _, n := range state.Nodes {
 		priorNodes[n.Identifier.ValueString()] = n
@@ -24,12 +22,7 @@ func (r *WorkflowResource) refreshWorkflowState(ctx context.Context, state *Work
 	state.Title = flex.GoStringToFramework(w.Title)
 	state.Icon = flex.GoStringToFramework(w.Icon)
 	state.Description = flex.GoStringToFramework(w.Description)
-
-	if w.Tags == nil {
-		state.Tags = types.ListNull(types.StringType)
-	} else {
-		state.Tags = flex.GoArrayStringToTerraformList(ctx, *w.Tags)
-	}
+	state.Category = flex.GoStringToFramework(w.Category)
 
 	orderedNodes := reorderNodes(state.Nodes, w.Nodes)
 	nodes := make([]WorkflowNodeModel, 0, len(orderedNodes))
@@ -53,64 +46,64 @@ func (r *WorkflowResource) nodeToModel(apiNode cli.WorkflowNode, prior WorkflowN
 		Title:      flex.GoStringToFramework(apiNode.Title),
 	}
 
-	switch apiNode.Type {
+	config := apiNode.Config
+	switch config.Type {
 	case consts.CursorAgent:
-		apiKey := flex.GoStringToFramework(apiNode.ApiKey)
-		// The API may not return the api_key (secret); keep the prior value.
+		apiKey := flex.GoStringToFramework(config.ApiKey)
+		// api_key is a secret the API does not echo back; keep the prior value.
 		if apiKey.IsNull() && prior.CursorAgent != nil {
 			apiKey = prior.CursorAgent.ApiKey
 		}
 		cursorAgent := &CursorAgentModel{ApiKey: apiKey}
-		if apiNode.Prompt != nil {
-			cursorAgent.Prompt = &CursorPromptModel{Text: flex.GoStringToFramework(apiNode.Prompt.Text)}
+		if config.Prompt != nil {
+			cursorAgent.Prompt = &CursorPromptModel{Text: flex.GoStringToFramework(config.Prompt.Text)}
 		}
-		if apiNode.Source != nil {
-			cursorAgent.Source = &CursorSourceModel{PrUrl: flex.GoStringToFramework(apiNode.Source.PrUrl)}
+		if config.Source != nil {
+			cursorAgent.Source = &CursorSourceModel{
+				Repository: flex.GoStringToFramework(config.Source.Repository),
+				Ref:        flex.GoStringToFramework(config.Source.Ref),
+				PrUrl:      flex.GoStringToFramework(config.Source.PrUrl),
+			}
 		}
 		node.CursorAgent = cursorAgent
 
-	case consts.Delay:
-		node.Delay = &DelayModel{Seconds: secondsToModel(apiNode.Seconds)}
-
 	case consts.IntegrationAction:
 		integrationAction := &IntegrationActionModel{
-			InstallationId:        flex.GoStringToFramework(apiNode.InstallationId),
-			IntegrationActionType: flex.GoStringToFramework(apiNode.IntegrationActionType),
-			WorkflowInputs:        types.StringNull(),
-			ReportWorkflowStatus:  types.StringNull(),
+			InstallationId:            flex.GoStringToFramework(config.InstallationId),
+			IntegrationProvider:       flex.GoStringToFramework(config.IntegrationProvider),
+			IntegrationInvocationType: flex.GoStringToFramework(config.IntegrationInvocationType),
+			OnFailure:                 flex.GoStringToFramework(config.OnFailure),
+			ExecutionProperties:       types.StringNull(),
+			DeferIntegrationInstallation: func() types.Bool {
+				if config.DeferIntegrationInstallation == nil {
+					return types.BoolNull()
+				}
+				return types.BoolValue(*config.DeferIntegrationInstallation)
+			}(),
 		}
-		if props := apiNode.IntegrationActionExecutionProperties; props != nil {
-			integrationAction.Org = flex.GoStringToFramework(props.Org)
-			integrationAction.Repo = flex.GoStringToFramework(props.Repo)
-			integrationAction.Workflow = flex.GoStringToFramework(props.Workflow)
-			workflowInputs, err := utils.GoObjectToTerraformString(props.WorkflowInputs, r.portClient.JSONEscapeHTML)
+		if config.IntegrationActionExecutionProperties != nil {
+			executionProperties, err := utils.GoObjectToTerraformString(config.IntegrationActionExecutionProperties, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return node, err
 			}
-			integrationAction.WorkflowInputs = workflowInputs
-			reportWorkflowStatus, err := utils.GoObjectToTerraformString(props.ReportWorkflowStatus, r.portClient.JSONEscapeHTML)
-			if err != nil {
-				return node, err
-			}
-			integrationAction.ReportWorkflowStatus = reportWorkflowStatus
+			integrationAction.ExecutionProperties = executionProperties
 		}
 		node.IntegrationAction = integrationAction
 
-	default:
-		// Any other type is treated as an event trigger, whose discriminator is
-		// the event type itself.
-		node.EventTrigger = &EventTriggerModel{
-			Type:                types.StringValue(apiNode.Type),
-			BlueprintIdentifier: flex.GoStringToFramework(apiNode.BlueprintIdentifier),
+	case consts.EventTrigger:
+		eventTrigger := &EventTriggerModel{}
+		if config.Event != nil {
+			eventTrigger.Type = types.StringValue(config.Event.Type)
+			eventTrigger.BlueprintIdentifier = types.StringValue(config.Event.BlueprintIdentifier)
+			eventTrigger.PropertyIdentifier = flex.GoStringToFramework(config.Event.PropertyIdentifier)
 		}
+		node.EventTrigger = eventTrigger
 	}
 
 	return node, nil
 }
 
-// reorderNodes returns the API nodes ordered to match the prior state order
-// (matched by identifier), with any new nodes appended at the end. This keeps
-// the resource stable against non-deterministic API ordering.
+// reorderNodes orders API nodes by the prior state order, appending new nodes last.
 func reorderNodes(prior []WorkflowNodeModel, apiNodes []cli.WorkflowNode) []cli.WorkflowNode {
 	byID := make(map[string]cli.WorkflowNode, len(apiNodes))
 	for _, n := range apiNodes {
@@ -167,23 +160,4 @@ func reorderConnections(prior []ConnectionModel, apiConnections []cli.WorkflowCo
 		}
 	}
 	return ordered
-}
-
-// secondsToModel converts the API seconds value (a number or a dynamic
-// expression string) to a string.
-func secondsToModel(seconds any) types.String {
-	switch v := seconds.(type) {
-	case nil:
-		return types.StringNull()
-	case string:
-		return types.StringValue(v)
-	case float64:
-		return types.StringValue(strconv.FormatInt(int64(v), 10))
-	case int64:
-		return types.StringValue(strconv.FormatInt(v, 10))
-	case int:
-		return types.StringValue(strconv.Itoa(v))
-	default:
-		return types.StringNull()
-	}
 }

@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
@@ -15,16 +14,7 @@ func workflowStateToPortBody(ctx context.Context, state *WorkflowModel) (*cli.Wo
 		Title:       state.Title.ValueStringPointer(),
 		Icon:        state.Icon.ValueStringPointer(),
 		Description: state.Description.ValueStringPointer(),
-	}
-
-	if !state.Tags.IsNull() {
-		tagsRaw, err := utils.TerraformListToGoArray(ctx, state.Tags, "string")
-		if err != nil {
-			return nil, err
-		}
-		tags := utils.InterfaceToStringArray(tagsRaw)
-		// Use a pointer so an explicit empty list clears tags on update.
-		w.Tags = &tags
+		Category:    state.Category.ValueStringPointer(),
 	}
 
 	nodes, err := nodesToPortBody(state.Nodes)
@@ -48,48 +38,45 @@ func nodesToPortBody(nodes []WorkflowNodeModel) ([]cli.WorkflowNode, error) {
 
 		switch {
 		case n.EventTrigger != nil:
-			node.Type = n.EventTrigger.Type.ValueString()
-			node.BlueprintIdentifier = n.EventTrigger.BlueprintIdentifier.ValueStringPointer()
+			node.Config.Type = consts.EventTrigger
+			node.Config.Event = &cli.WorkflowTriggerEvent{
+				Type:                n.EventTrigger.Type.ValueString(),
+				BlueprintIdentifier: n.EventTrigger.BlueprintIdentifier.ValueString(),
+				PropertyIdentifier:  n.EventTrigger.PropertyIdentifier.ValueStringPointer(),
+			}
 
 		case n.CursorAgent != nil:
-			node.Type = consts.CursorAgent
-			node.ApiKey = n.CursorAgent.ApiKey.ValueStringPointer()
+			node.Config.Type = consts.CursorAgent
+			node.Config.ApiKey = n.CursorAgent.ApiKey.ValueStringPointer()
 			if n.CursorAgent.Prompt != nil {
-				node.Prompt = &cli.CursorAgentPrompt{
+				node.Config.Prompt = &cli.CursorAgentPrompt{
 					Text: n.CursorAgent.Prompt.Text.ValueStringPointer(),
 				}
 			}
 			if n.CursorAgent.Source != nil {
-				node.Source = &cli.CursorAgentSource{
-					PrUrl: n.CursorAgent.Source.PrUrl.ValueStringPointer(),
+				node.Config.Source = &cli.CursorAgentSource{
+					Repository: n.CursorAgent.Source.Repository.ValueStringPointer(),
+					Ref:        n.CursorAgent.Source.Ref.ValueStringPointer(),
+					PrUrl:      n.CursorAgent.Source.PrUrl.ValueStringPointer(),
 				}
 			}
 
-		case n.Delay != nil:
-			node.Type = consts.Delay
-			node.Seconds = secondsToPortBody(n.Delay.Seconds.ValueString())
-
 		case n.IntegrationAction != nil:
-			node.Type = consts.IntegrationAction
-			node.InstallationId = n.IntegrationAction.InstallationId.ValueStringPointer()
-			node.IntegrationActionType = n.IntegrationAction.IntegrationActionType.ValueStringPointer()
-
-			execProps := &cli.WorkflowIntegrationActionExecutionProperties{
-				Org:      n.IntegrationAction.Org.ValueStringPointer(),
-				Repo:     n.IntegrationAction.Repo.ValueStringPointer(),
-				Workflow: n.IntegrationAction.Workflow.ValueStringPointer(),
+			node.Config.Type = consts.IntegrationAction
+			node.Config.InstallationId = n.IntegrationAction.InstallationId.ValueStringPointer()
+			node.Config.IntegrationProvider = n.IntegrationAction.IntegrationProvider.ValueStringPointer()
+			node.Config.IntegrationInvocationType = n.IntegrationAction.IntegrationInvocationType.ValueStringPointer()
+			node.Config.OnFailure = n.IntegrationAction.OnFailure.ValueStringPointer()
+			if !n.IntegrationAction.DeferIntegrationInstallation.IsNull() {
+				node.Config.DeferIntegrationInstallation = n.IntegrationAction.DeferIntegrationInstallation.ValueBoolPointer()
 			}
-			if !n.IntegrationAction.WorkflowInputs.IsNull() {
-				wi, err := utils.TerraformStringToGoType[map[string]any](n.IntegrationAction.WorkflowInputs)
+			if !n.IntegrationAction.ExecutionProperties.IsNull() {
+				props, err := utils.TerraformStringToGoType[any](n.IntegrationAction.ExecutionProperties)
 				if err != nil {
 					return nil, err
 				}
-				execProps.WorkflowInputs = wi
+				node.Config.IntegrationActionExecutionProperties = props
 			}
-			if !n.IntegrationAction.ReportWorkflowStatus.IsNull() {
-				execProps.ReportWorkflowStatus = utils.TerraformStringToBooleanOrString(n.IntegrationAction.ReportWorkflowStatus)
-			}
-			node.IntegrationActionExecutionProperties = execProps
 		}
 
 		result = append(result, node)
@@ -106,16 +93,4 @@ func connectionsToPortBody(connections []ConnectionModel) []cli.WorkflowConnecti
 		})
 	}
 	return result
-}
-
-// secondsToPortBody sends a plain integer as a number and a dynamic expression
-// as a string.
-func secondsToPortBody(seconds string) any {
-	if seconds == "" {
-		return nil
-	}
-	if v, err := strconv.ParseInt(seconds, 10, 64); err == nil {
-		return v
-	}
-	return seconds
 }

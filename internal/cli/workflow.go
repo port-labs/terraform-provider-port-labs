@@ -39,7 +39,7 @@ func (c *PortClient) CreateWorkflow(ctx context.Context, workflow *Workflow) (*W
 		return nil, err
 	}
 	if !pb.OK {
-		return nil, fmt.Errorf("failed to create workflow, got: %s", resp.Body())
+		return nil, fmt.Errorf("failed to create workflow, got (HTTP %d): %s", resp.StatusCode(), resp.Body())
 	}
 	return &pb.Workflow, nil
 }
@@ -60,7 +60,7 @@ func (c *PortClient) UpdateWorkflow(ctx context.Context, workflowID string, work
 		return nil, err
 	}
 	if !pb.OK {
-		return nil, fmt.Errorf("failed to update workflow, got: %s", resp.Body())
+		return nil, fmt.Errorf("failed to update workflow, got (HTTP %d): %s", resp.StatusCode(), resp.Body())
 	}
 	return &pb.Workflow, nil
 }

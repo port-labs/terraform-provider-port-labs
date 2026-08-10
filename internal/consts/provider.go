@@ -22,7 +22,8 @@ const (
 	AnyRunChange         = "ANY_RUN_CHANGE"
 	JqCondition          = "JQ"
 
-	// Workflow node types
-	CursorAgent = "CURSOR_AGENT"
-	Delay       = "DELAY"
+	// Workflow node config types
+	EventTrigger         = "EVENT_TRIGGER"
+	CursorAgent          = "CURSOR_AGENT"
+	WorkflowTimerExpired = "TIMER_EXPIRED"
 )

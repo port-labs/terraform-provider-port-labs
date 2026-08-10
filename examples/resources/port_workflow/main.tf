@@ -1,7 +1,7 @@
 resource "port_workflow" "review_pr" {
   identifier = "review-pr"
   title      = "Review PR"
-  tags       = ["lorekeeper"]
+  category   = "engineering"
 
   node {
     identifier = "trigger"

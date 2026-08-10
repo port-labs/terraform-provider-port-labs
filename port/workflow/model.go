@@ -10,25 +10,23 @@ type WorkflowModel struct {
 	Title       types.String        `tfsdk:"title"`
 	Icon        types.String        `tfsdk:"icon"`
 	Description types.String        `tfsdk:"description"`
-	Tags        types.List          `tfsdk:"tags"`
+	Category    types.String        `tfsdk:"category"`
 	Nodes       []WorkflowNodeModel `tfsdk:"node"`
 	Connections []ConnectionModel   `tfsdk:"connections"`
 }
 
-// WorkflowNodeModel models a single node of the workflow graph. Exactly one of
-// the typed sub-blocks is set, enforced by an ExactlyOneOf validator.
 type WorkflowNodeModel struct {
 	Identifier        types.String            `tfsdk:"identifier"`
 	Title             types.String            `tfsdk:"title"`
 	EventTrigger      *EventTriggerModel      `tfsdk:"event_trigger"`
 	CursorAgent       *CursorAgentModel       `tfsdk:"cursor_agent"`
-	Delay             *DelayModel             `tfsdk:"delay"`
 	IntegrationAction *IntegrationActionModel `tfsdk:"integration_action"`
 }
 
 type EventTriggerModel struct {
 	Type                types.String `tfsdk:"type"`
 	BlueprintIdentifier types.String `tfsdk:"blueprint_identifier"`
+	PropertyIdentifier  types.String `tfsdk:"property_identifier"`
 }
 
 type CursorAgentModel struct {
@@ -42,23 +40,18 @@ type CursorPromptModel struct {
 }
 
 type CursorSourceModel struct {
-	PrUrl types.String `tfsdk:"pr_url"`
-}
-
-type DelayModel struct {
-	// Seconds accepts a positive integer (as a string) or a dynamic Port
-	// expression ("{{ ... }}").
-	Seconds types.String `tfsdk:"seconds"`
+	Repository types.String `tfsdk:"repository"`
+	Ref        types.String `tfsdk:"ref"`
+	PrUrl      types.String `tfsdk:"pr_url"`
 }
 
 type IntegrationActionModel struct {
-	InstallationId        types.String `tfsdk:"installation_id"`
-	IntegrationActionType types.String `tfsdk:"integration_action_type"`
-	Org                   types.String `tfsdk:"org"`
-	Repo                  types.String `tfsdk:"repo"`
-	Workflow              types.String `tfsdk:"workflow"`
-	WorkflowInputs        types.String `tfsdk:"workflow_inputs"`
-	ReportWorkflowStatus  types.String `tfsdk:"report_workflow_status"`
+	InstallationId               types.String `tfsdk:"installation_id"`
+	IntegrationProvider          types.String `tfsdk:"integration_provider"`
+	IntegrationInvocationType    types.String `tfsdk:"integration_invocation_type"`
+	ExecutionProperties          types.String `tfsdk:"execution_properties"`
+	DeferIntegrationInstallation types.Bool   `tfsdk:"defer_integration_installation"`
+	OnFailure                    types.String `tfsdk:"on_failure"`
 }
 
 type ConnectionModel struct {

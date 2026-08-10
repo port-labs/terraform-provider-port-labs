@@ -1,44 +1,44 @@
 package cli
 
-// Workflow represents a Port workflow and its polymorphic node/connection graph.
 type Workflow struct {
-	ID          string  `json:"id,omitempty"`
-	Identifier  string  `json:"identifier"`
-	Title       *string `json:"title,omitempty"`
-	Icon        *string `json:"icon,omitempty"`
-	Description *string `json:"description,omitempty"`
-	// Tags is a pointer to a slice so that an explicit empty list (`tags = []`)
-	// clears the tags on update instead of being omitted by `omitempty`.
-	Tags        *[]string            `json:"tags,omitempty"`
+	ID          string               `json:"id,omitempty"`
+	Identifier  string               `json:"identifier"`
+	Title       *string              `json:"title,omitempty"`
+	Icon        *string              `json:"icon,omitempty"`
+	Description *string              `json:"description,omitempty"`
+	Category    *string              `json:"category,omitempty"`
 	Nodes       []WorkflowNode       `json:"nodes"`
 	Connections []WorkflowConnection `json:"connections"`
 }
 
-// WorkflowNode is a discriminated union keyed by Type. Only the fields relevant
-// to the node's Type are populated. Type holds either one of the entity event
-// types (for event trigger nodes) or one of the workflow node type constants
-// (CURSOR_AGENT, DELAY, INTEGRATION_ACTION).
 type WorkflowNode struct {
-	Identifier string  `json:"identifier"`
-	Title      *string `json:"title,omitempty"`
-	Type       string  `json:"type"`
+	Identifier string             `json:"identifier"`
+	Title      *string            `json:"title,omitempty"`
+	Config     WorkflowNodeConfig `json:"config"`
+}
 
-	// Event trigger fields (Type is one of the entity event types).
-	BlueprintIdentifier *string `json:"blueprintIdentifier,omitempty"`
+type WorkflowNodeConfig struct {
+	Type string `json:"type"`
 
-	// CURSOR_AGENT fields.
+	Event *WorkflowTriggerEvent `json:"event,omitempty"`
+
 	ApiKey *string            `json:"apiKey,omitempty"`
 	Prompt *CursorAgentPrompt `json:"prompt,omitempty"`
 	Source *CursorAgentSource `json:"source,omitempty"`
 
-	// DELAY fields. Seconds is an int for a fixed delay or a string for a
-	// dynamic Port expression ("{{ ... }}").
-	Seconds any `json:"seconds,omitempty"`
+	InstallationId                       *string `json:"installationId,omitempty"`
+	IntegrationProvider                  *string `json:"integrationProvider,omitempty"`
+	IntegrationInvocationType            *string `json:"integrationInvocationType,omitempty"`
+	IntegrationActionExecutionProperties any     `json:"integrationActionExecutionProperties,omitempty"`
+	DeferIntegrationInstallation         *bool   `json:"deferIntegrationInstallation,omitempty"`
 
-	// INTEGRATION_ACTION fields.
-	InstallationId                       *string                                       `json:"installationId,omitempty"`
-	IntegrationActionType                *string                                       `json:"integrationActionType,omitempty"`
-	IntegrationActionExecutionProperties *WorkflowIntegrationActionExecutionProperties `json:"integrationActionExecutionProperties,omitempty"`
+	OnFailure *string `json:"onFailure,omitempty"`
+}
+
+type WorkflowTriggerEvent struct {
+	Type                string  `json:"type"`
+	BlueprintIdentifier string  `json:"blueprintIdentifier"`
+	PropertyIdentifier  *string `json:"propertyIdentifier,omitempty"`
 }
 
 type CursorAgentPrompt struct {
@@ -46,15 +46,9 @@ type CursorAgentPrompt struct {
 }
 
 type CursorAgentSource struct {
-	PrUrl *string `json:"prUrl,omitempty"`
-}
-
-type WorkflowIntegrationActionExecutionProperties struct {
-	Org                  *string        `json:"org,omitempty"`
-	Repo                 *string        `json:"repo,omitempty"`
-	Workflow             *string        `json:"workflow,omitempty"`
-	WorkflowInputs       map[string]any `json:"workflowInputs,omitempty"`
-	ReportWorkflowStatus any            `json:"reportWorkflowStatus,omitempty"`
+	Repository *string `json:"repository,omitempty"`
+	Ref        *string `json:"ref,omitempty"`
+	PrUrl      *string `json:"prUrl,omitempty"`
 }
 
 type WorkflowConnection struct {

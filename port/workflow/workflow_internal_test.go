@@ -28,12 +28,11 @@ func strPtr(s string) *string { return &s }
 
 func TestWorkflowStateToPortBody(t *testing.T) {
 	ctx := context.Background()
-	tags, _ := types.ListValueFrom(ctx, types.StringType, []string{"lorekeeper"})
 
 	state := &WorkflowModel{
 		Identifier: types.StringValue("review-pr"),
 		Title:      types.StringValue("Review PR"),
-		Tags:       tags,
+		Category:   types.StringValue("engineering"),
 		Nodes: []WorkflowNodeModel{
 			{
 				Identifier: types.StringValue("trigger"),
@@ -65,39 +64,57 @@ func TestWorkflowStateToPortBody(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.Equal(t, "review-pr", w.Identifier)
-	require.NotNil(t, w.Tags)
-	assert.Equal(t, []string{"lorekeeper"}, *w.Tags)
+	require.NotNil(t, w.Category)
+	assert.Equal(t, "engineering", *w.Category)
 
 	require.Len(t, w.Nodes, 2)
-	assert.Equal(t, consts.EntityUpdated, w.Nodes[0].Type)
-	assert.Equal(t, "githubPullRequest", *w.Nodes[0].BlueprintIdentifier)
+	assert.Equal(t, consts.EventTrigger, w.Nodes[0].Config.Type)
+	require.NotNil(t, w.Nodes[0].Config.Event)
+	assert.Equal(t, consts.EntityUpdated, w.Nodes[0].Config.Event.Type)
+	assert.Equal(t, "githubPullRequest", w.Nodes[0].Config.Event.BlueprintIdentifier)
 
-	assert.Equal(t, consts.CursorAgent, w.Nodes[1].Type)
-	require.NotNil(t, w.Nodes[1].Prompt)
-	assert.Equal(t, "Review this PR.", *w.Nodes[1].Prompt.Text)
-	require.NotNil(t, w.Nodes[1].Source)
-	assert.Equal(t, "{{ .outputs.trigger.link }}", *w.Nodes[1].Source.PrUrl)
+	assert.Equal(t, consts.CursorAgent, w.Nodes[1].Config.Type)
+	require.NotNil(t, w.Nodes[1].Config.Prompt)
+	assert.Equal(t, "Review this PR.", *w.Nodes[1].Config.Prompt.Text)
+	require.NotNil(t, w.Nodes[1].Config.Source)
+	assert.Equal(t, "{{ .outputs.trigger.link }}", *w.Nodes[1].Config.Source.PrUrl)
 
 	require.Len(t, w.Connections, 1)
 	assert.Equal(t, "trigger", w.Connections[0].SourceIdentifier)
 	assert.Equal(t, "decision", w.Connections[0].TargetIdentifier)
 }
 
-func TestWorkflowStateToPortBodyEmptyTagsClears(t *testing.T) {
+func TestWorkflowStateToPortBodyIntegrationAction(t *testing.T) {
 	ctx := context.Background()
-	emptyTags, _ := types.ListValueFrom(ctx, types.StringType, []string{})
 
-	state := &WorkflowModel{Identifier: types.StringValue("wf"), Tags: emptyTags}
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("run"),
+				IntegrationAction: &IntegrationActionModel{
+					IntegrationProvider:       types.StringValue("github"),
+					IntegrationInvocationType: types.StringValue("WORKFLOW_DISPATCH"),
+					ExecutionProperties:       types.StringValue(`{"workflow":"deploy.yml","ref":"main"}`),
+				},
+			},
+		},
+	}
+
 	w, err := workflowStateToPortBody(ctx, state)
 	require.NoError(t, err)
-	require.NotNil(t, w.Tags)
-	assert.Empty(t, *w.Tags)
 
-	// A null tags list should be omitted (nil pointer), leaving tags untouched.
-	state.Tags = types.ListNull(types.StringType)
-	w, err = workflowStateToPortBody(ctx, state)
-	require.NoError(t, err)
-	assert.Nil(t, w.Tags)
+	require.Len(t, w.Nodes, 1)
+	config := w.Nodes[0].Config
+	assert.Equal(t, consts.IntegrationAction, config.Type)
+	require.NotNil(t, config.IntegrationProvider)
+	assert.Equal(t, "github", *config.IntegrationProvider)
+	require.NotNil(t, config.IntegrationInvocationType)
+	assert.Equal(t, "WORKFLOW_DISPATCH", *config.IntegrationInvocationType)
+	props, ok := config.IntegrationActionExecutionProperties.(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "deploy.yml", props["workflow"])
+	assert.Equal(t, "main", props["ref"])
 }
 
 func TestRefreshWorkflowStatePreservesOrderAndSecret(t *testing.T) {
@@ -123,10 +140,10 @@ func TestRefreshWorkflowStatePreservesOrderAndSecret(t *testing.T) {
 	// API returns nodes in a different order and without the api_key.
 	apiWorkflow := &cli.Workflow{
 		Identifier: "review-pr",
-		Tags:       &[]string{"lorekeeper"},
+		Category:   strPtr("engineering"),
 		Nodes: []cli.WorkflowNode{
-			{Identifier: "decision", Type: consts.CursorAgent, Prompt: &cli.CursorAgentPrompt{Text: strPtr("Review this PR.")}},
-			{Identifier: "trigger", Type: consts.EntityUpdated, BlueprintIdentifier: strPtr("githubPullRequest")},
+			{Identifier: "decision", Config: cli.WorkflowNodeConfig{Type: consts.CursorAgent, Prompt: &cli.CursorAgentPrompt{Text: strPtr("Review this PR.")}}},
+			{Identifier: "trigger", Config: cli.WorkflowNodeConfig{Type: consts.EventTrigger, Event: &cli.WorkflowTriggerEvent{Type: consts.EntityUpdated, BlueprintIdentifier: "githubPullRequest"}}},
 		},
 		Connections: []cli.WorkflowConnection{
 			{SourceIdentifier: "trigger", TargetIdentifier: "decision"},
@@ -144,20 +161,14 @@ func TestRefreshWorkflowStatePreservesOrderAndSecret(t *testing.T) {
 	// Event trigger classified from discriminator.
 	require.NotNil(t, state.Nodes[0].EventTrigger)
 	assert.Equal(t, consts.EntityUpdated, state.Nodes[0].EventTrigger.Type.ValueString())
+	assert.Equal(t, "githubPullRequest", state.Nodes[0].EventTrigger.BlueprintIdentifier.ValueString())
 
 	// Secret preserved from prior state.
 	require.NotNil(t, state.Nodes[1].CursorAgent)
 	assert.Equal(t, "super-secret", state.Nodes[1].CursorAgent.ApiKey.ValueString())
 	require.NotNil(t, state.Nodes[1].CursorAgent.Prompt)
 	assert.Equal(t, "Review this PR.", state.Nodes[1].CursorAgent.Prompt.Text.ValueString())
-}
 
-func TestSecondsRoundTrip(t *testing.T) {
-	assert.Equal(t, int64(30), secondsToPortBody("30"))
-	assert.Equal(t, "{{ .outputs.x }}", secondsToPortBody("{{ .outputs.x }}"))
-	assert.Nil(t, secondsToPortBody(""))
-
-	assert.Equal(t, "30", secondsToModel(float64(30)).ValueString())
-	assert.Equal(t, "{{ .outputs.x }}", secondsToModel("{{ .outputs.x }}").ValueString())
-	assert.True(t, secondsToModel(nil).IsNull())
+	// Category refreshed from the API.
+	assert.Equal(t, "engineering", state.Category.ValueString())
 }

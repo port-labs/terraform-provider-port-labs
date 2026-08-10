@@ -35,7 +35,7 @@ func TestAccPortWorkflowBasic(t *testing.T) {
 	resource "port_workflow" "review_pr" {
 		identifier = "%s"
 		title      = "Review PR"
-		tags       = ["lorekeeper"]
+		category   = "engineering"
 
 		node {
 			identifier = "trigger"
@@ -75,7 +75,7 @@ func TestAccPortWorkflowBasic(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_workflow.review_pr", "identifier", workflowIdentifier),
 					resource.TestCheckResourceAttr("port_workflow.review_pr", "title", "Review PR"),
-					resource.TestCheckResourceAttr("port_workflow.review_pr", "tags.0", "lorekeeper"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "category", "engineering"),
 					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.0.identifier", "trigger"),
 					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.0.title", "PR Trigger"),
 					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.0.event_trigger.type", "ENTITY_UPDATED"),
@@ -99,7 +99,7 @@ func TestAccPortWorkflowUpdate(t *testing.T) {
 	resource "port_workflow" "review_pr" {
 		identifier = "%s"
 		title      = "Review PR"
-		tags       = ["lorekeeper"]
+		category   = "engineering"
 
 		node {
 			identifier = "trigger"
@@ -110,15 +110,17 @@ func TestAccPortWorkflowUpdate(t *testing.T) {
 		}
 
 		node {
-			identifier = "wait"
-			delay {
-				seconds = "30"
+			identifier = "run"
+			integration_action {
+				integration_provider        = "github"
+				integration_invocation_type = "WORKFLOW_DISPATCH"
+				execution_properties        = jsonencode({ workflow = "deploy.yml", ref = "main" })
 			}
 		}
 
 		connections {
 			source_identifier = "trigger"
-			target_identifier = "wait"
+			target_identifier = "run"
 		}
 	}`, workflowIdentifier)
 
@@ -126,7 +128,7 @@ func TestAccPortWorkflowUpdate(t *testing.T) {
 	resource "port_workflow" "review_pr" {
 		identifier = "%s"
 		title      = "Review PR (updated)"
-		tags       = ["lorekeeper", "dora"]
+		category   = "platform"
 
 		node {
 			identifier = "trigger"
@@ -137,26 +139,29 @@ func TestAccPortWorkflowUpdate(t *testing.T) {
 		}
 
 		node {
-			identifier = "wait"
-			delay {
-				seconds = "60"
+			identifier = "run"
+			integration_action {
+				integration_provider        = "github"
+				integration_invocation_type = "WORKFLOW_DISPATCH"
+				execution_properties        = jsonencode({ workflow = "release.yml", ref = "main" })
 			}
 		}
 
 		node {
 			identifier = "notify"
-			delay {
-				seconds = "10"
+			integration_action {
+				integration_provider        = "slack"
+				integration_invocation_type = "SEND_MESSAGE"
 			}
 		}
 
 		connections {
 			source_identifier = "trigger"
-			target_identifier = "wait"
+			target_identifier = "run"
 		}
 
 		connections {
-			source_identifier = "wait"
+			source_identifier = "run"
 			target_identifier = "notify"
 		}
 	}`, workflowIdentifier)
@@ -169,20 +174,19 @@ func TestAccPortWorkflowUpdate(t *testing.T) {
 				Config: acctest.ProviderConfig + testAccWorkflowConfigCreate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_workflow.review_pr", "title", "Review PR"),
-					resource.TestCheckResourceAttr("port_workflow.review_pr", "tags.#", "1"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "category", "engineering"),
 					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.#", "2"),
-					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.1.delay.seconds", "30"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.1.integration_action.integration_provider", "github"),
 				),
 			},
 			{
 				Config: acctest.ProviderConfig + testAccWorkflowConfigUpdate,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_workflow.review_pr", "title", "Review PR (updated)"),
-					resource.TestCheckResourceAttr("port_workflow.review_pr", "tags.#", "2"),
-					resource.TestCheckResourceAttr("port_workflow.review_pr", "tags.1", "dora"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "category", "platform"),
 					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.#", "3"),
-					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.1.delay.seconds", "60"),
 					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.2.identifier", "notify"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.2.integration_action.integration_provider", "slack"),
 					resource.TestCheckResourceAttr("port_workflow.review_pr", "connections.#", "2"),
 				),
 			},
@@ -210,15 +214,17 @@ func TestAccPortWorkflowImport(t *testing.T) {
 		}
 
 		node {
-			identifier = "wait"
-			delay {
-				seconds = "30"
+			identifier = "run"
+			integration_action {
+				integration_provider        = "github"
+				integration_invocation_type = "WORKFLOW_DISPATCH"
+				execution_properties        = jsonencode({ workflow = "deploy.yml", ref = "main" })
 			}
 		}
 
 		connections {
 			source_identifier = "trigger"
-			target_identifier = "wait"
+			target_identifier = "run"
 		}
 	}`, workflowIdentifier)
 

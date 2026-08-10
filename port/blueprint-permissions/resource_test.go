@@ -306,6 +306,9 @@ resource "port_blueprint" "microservice" {
 
 	resource "port_system_blueprint" "team" {
 		identifier = "_team"
+		lifecycle {
+			ignore_changes = all
+		}
 	}
 
 	resource "port_entity" "team" {
@@ -316,6 +319,12 @@ resource "port_blueprint" "microservice" {
 			"string_props" = {
 				"description" =  "My Description"
 			}
+		}
+		lifecycle {
+			ignore_changes = [
+				properties,
+				relations,
+			]
 		}
 	}
 

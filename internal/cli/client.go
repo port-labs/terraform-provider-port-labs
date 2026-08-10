@@ -107,6 +107,9 @@ func (c *PortClient) Authenticate(ctx context.Context, clientID, clientSecret st
 	if err != nil {
 		return "", err
 	}
+	if !tokenResp.Ok || tokenResp.AccessToken == "" {
+		return "", fmt.Errorf("failed to authenticate with Port, got: %s", resp.Body())
+	}
 	c.Client.SetAuthToken(tokenResp.AccessToken)
 	return tokenResp.AccessToken, nil
 }

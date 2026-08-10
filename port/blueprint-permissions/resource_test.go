@@ -306,6 +306,9 @@ resource "port_blueprint" "microservice" {
 
 	resource "port_system_blueprint" "team" {
 		identifier = "_team"
+		lifecycle {
+			ignore_changes = all
+		}
 	}
 
 	resource "port_entity" "team" {
@@ -316,6 +319,12 @@ resource "port_blueprint" "microservice" {
 			"string_props" = {
 				"description" =  "My Description"
 			}
+		}
+		lifecycle {
+			ignore_changes = [
+				properties,
+				relations,
+			]
 		}
 	}
 
@@ -507,6 +516,172 @@ func TestAccPortBlueprintPermissionsWithInvalidProperties(t *testing.T) {
 			{
 				Config:      testAccPortBlueprintResourceBasic + testAccBaseBlueprintPermissionsConfigUpdate,
 				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+			},
+		},
+	})
+}
+
+func TestAccPortBlueprintPermissionsWithPolicy(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testAccPortBlueprintResourceBasic = createBlueprint(blueprintIdentifier)
+
+	readPolicy := `{"combinator":"and","rules":[{"operator":"=","property":{"context":"user","property":"$identifier"},"value":"true"}]}`
+	registerPolicy := `{"combinator":"and","rules":[{"operator":"=","property":"$blueprint","value":"` + blueprintIdentifier + `"}]}`
+
+	var testAccBlueprintPermissionsWithPolicy = fmt.Sprintf(`
+	resource "port_blueprint_permissions" "microservice_permissions" {
+		blueprint_identifier = port_blueprint.microservice.identifier
+		entities = {
+			"read" = {
+				"roles": ["Admin", "Member"],
+				"users": [],
+				"teams": [],
+				"policy": jsonencode({
+					combinator = "and"
+					rules = [{
+						property = {
+							property = "$identifier"
+							context  = "user"
+						}
+						operator = "="
+						value    = "true"
+					}]
+				})
+			},
+			"register" = {
+				"roles": ["Admin"],
+				"users": [],
+				"teams": [],
+				"policy": jsonencode({
+					combinator = "and"
+					rules = [{
+						property = "$blueprint"
+						operator = "="
+						value    = "%s"
+					}]
+				})
+			},
+			"unregister" = {
+				"roles": ["Admin"],
+				"users": [],
+				"teams": []
+			},
+			"update" = {
+				"roles": ["Admin", "Member"],
+				"users": [],
+				"teams": [],
+				"policy": jsonencode({
+					combinator = "and"
+					rules = [{
+						property = {
+							property = "$identifier"
+							context  = "user"
+						}
+						operator = "="
+						value    = "true"
+					}]
+				})
+			},
+			"update_metadata_properties" = {
+				"icon" = {
+					"roles": ["Admin"],
+					"users": [],
+					"teams": []
+				},
+				"identifier" = {
+					"roles": ["Admin"],
+					"users": [],
+					"teams": []
+				},
+				"team" = {
+					"roles": ["Admin"],
+					"users": [],
+					"teams": []
+				},
+				"title" = {
+					"roles": ["Admin"],
+					"users": [],
+					"teams": []
+				},
+			}
+		}
+	}`, blueprintIdentifier)
+
+	var testAccBlueprintPermissionsWithoutPolicy = `
+	resource "port_blueprint_permissions" "microservice_permissions" {
+		blueprint_identifier = port_blueprint.microservice.identifier
+		entities = {
+			"read" = {
+				"roles": ["Admin", "Member"],
+				"users": [],
+				"teams": []
+			},
+			"register" = {
+				"roles": ["Admin"],
+				"users": [],
+				"teams": []
+			},
+			"unregister" = {
+				"roles": ["Admin"],
+				"users": [],
+				"teams": []
+			},
+			"update" = {
+				"roles": ["Admin", "Member"],
+				"users": [],
+				"teams": []
+			},
+			"update_metadata_properties" = {
+				"icon" = {
+					"roles": ["Admin"],
+					"users": [],
+					"teams": []
+				},
+				"identifier" = {
+					"roles": ["Admin"],
+					"users": [],
+					"teams": []
+				},
+				"team" = {
+					"roles": ["Admin"],
+					"users": [],
+					"teams": []
+				},
+				"title" = {
+					"roles": ["Admin"],
+					"users": [],
+					"teams": []
+				},
+			}
+		}
+	}`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccPortBlueprintResourceBasic + testAccBlueprintPermissionsWithPolicy,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint_permissions.microservice_permissions", "blueprint_identifier", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_blueprint_permissions.microservice_permissions", "entities.read.roles.#", "2"),
+					resource.TestCheckResourceAttr("port_blueprint_permissions.microservice_permissions", "entities.read.policy", readPolicy),
+					resource.TestCheckResourceAttr("port_blueprint_permissions.microservice_permissions", "entities.register.policy", registerPolicy),
+					resource.TestCheckResourceAttr("port_blueprint_permissions.microservice_permissions", "entities.update.policy", readPolicy),
+				),
+			},
+			{
+				Config: testAccPortBlueprintResourceBasic + testAccBlueprintPermissionsWithoutPolicy,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint_permissions.microservice_permissions", "entities.read.roles.#", "2"),
+					resource.TestCheckNoResourceAttr("port_blueprint_permissions.microservice_permissions", "entities.read.policy"),
+					resource.TestCheckNoResourceAttr("port_blueprint_permissions.microservice_permissions", "entities.register.policy"),
+					resource.TestCheckNoResourceAttr("port_blueprint_permissions.microservice_permissions", "entities.update.policy"),
+				),
 			},
 		},
 	})

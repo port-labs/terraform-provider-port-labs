@@ -117,6 +117,45 @@ description: |-
   		}
   }
   
+  Configure a dynamic policy with a Port search query (including contextual rules):
+  Policy is expected to be passed as a JSON string (use jsonencode). Evaluation is done by Port, not Terraform.
+  Docs about catalog RBAC policies: Govern data access https://docs.port.io/context-lake/consuming-the-lake/govern-data-access/overview/.
+  
+  resource "port_blueprint_permissions" "microservices_permissions" {
+  	blueprint_identifier = "my_blueprint_identifier"
+  	entities = {
+  		"read" = {
+  			"roles" = ["Admin", "Member"]
+  			"users" = []
+  			"teams" = []
+  			"policy" = jsonencode({
+  				combinator = "and"
+  				rules = [{
+  					property = {
+  						property = "$identifier"
+  						context  = "user"
+  					}
+  					operator = "="
+  					value    = "true"
+  				}]
+  			})
+  		}
+  		"register" = {
+  			"roles" = ["Admin"]
+  			"policy" = jsonencode({
+  				combinator = "and"
+  				rules = [{
+  					property = "$blueprint"
+  					operator = "="
+  					value    = "my_blueprint_identifier"
+  				}]
+  			})
+  		}
+  		# unregister / update can also set policy the same way
+  		# ... remaining required permission blocks ...
+  	}
+  }
+  
   Disclaimer
   
   Blueprint permissions are created by default when blueprint is first created, this means that you should use this resource when you want to change the default permissions of a blueprint.
@@ -279,6 +318,48 @@ resource "port_blueprint_permissions" "microservices_permissions" {
 }
 ```
 
+### Configure a dynamic policy with a Port search query (including contextual rules):
+
+Policy is expected to be passed as a JSON string (use `jsonencode`). Evaluation is done by Port, not Terraform.
+Docs about catalog RBAC policies: [Govern data access](https://docs.port.io/context-lake/consuming-the-lake/govern-data-access/overview/).
+
+```hcl
+resource "port_blueprint_permissions" "microservices_permissions" {
+	blueprint_identifier = "my_blueprint_identifier"
+	entities = {
+		"read" = {
+			"roles" = ["Admin", "Member"]
+			"users" = []
+			"teams" = []
+			"policy" = jsonencode({
+				combinator = "and"
+				rules = [{
+					property = {
+						property = "$identifier"
+						context  = "user"
+					}
+					operator = "="
+					value    = "true"
+				}]
+			})
+		}
+		"register" = {
+			"roles" = ["Admin"]
+			"policy" = jsonencode({
+				combinator = "and"
+				rules = [{
+					property = "$blueprint"
+					operator = "="
+					value    = "my_blueprint_identifier"
+				}]
+			})
+		}
+		# unregister / update can also set policy the same way
+		# ... remaining required permission blocks ...
+	}
+}
+```
+
 ## Disclaimer
 
 - Blueprint permissions are created by default when blueprint is first created, this means that you should use this resource when you want to change the default permissions of a blueprint.
@@ -343,6 +424,7 @@ See [here](https://docs.getport.io/build-your-software-catalog/customize-integra
 
 Optional:
 
+- `read` (Attributes) Manage permissions to read entities of the blueprint (see [below for nested schema](#nestedatt--entities--read))
 - `update_properties` (Attributes Map) Manage permissions to update the entity properties (see [below for nested schema](#nestedatt--entities--update_properties))
 - `update_relations` (Attributes Map) Manage permissions to update the entity relations (see [below for nested schema](#nestedatt--entities--update_relations))
 
@@ -352,6 +434,7 @@ Optional:
 Optional:
 
 - `owned_by_team` (Boolean) Owned by team
+- `policy` (String) Policy as a Port search query JSON string for register permissions. Supports contextual query rules. Pass with jsonencode(). Evaluated by Port, not Terraform.
 - `roles` (Set of String) Roles with register permissions
 - `teams` (Set of String) Teams with register permissions
 - `users` (Set of String) Users with register permissions
@@ -363,6 +446,7 @@ Optional:
 Optional:
 
 - `owned_by_team` (Boolean) Owned by team
+- `policy` (String) Policy as a Port search query JSON string for unregister permissions. Supports contextual query rules. Pass with jsonencode(). Evaluated by Port, not Terraform.
 - `roles` (Set of String) Roles with unregister permissions
 - `teams` (Set of String) Teams with unregister permissions
 - `users` (Set of String) Users with unregister permissions
@@ -374,6 +458,7 @@ Optional:
 Optional:
 
 - `owned_by_team` (Boolean) Owned by team
+- `policy` (String) Policy as a Port search query JSON string for update permissions. Supports contextual query rules. Pass with jsonencode(). Evaluated by Port, not Terraform.
 - `roles` (Set of String) Roles with update permissions
 - `teams` (Set of String) Teams with update permissions
 - `users` (Set of String) Users with update permissions
@@ -432,6 +517,18 @@ Optional:
 - `teams` (Set of String) Teams with update `$title` metadata permissions
 - `users` (Set of String) Users with update `$title` metadata permissions
 
+
+
+<a id="nestedatt--entities--read"></a>
+### Nested Schema for `entities.read`
+
+Optional:
+
+- `owned_by_team` (Boolean) Owned by team
+- `policy` (String) Policy as a Port search query JSON string for read permissions. Supports contextual query rules. Pass with jsonencode(). Evaluated by Port, not Terraform.
+- `roles` (Set of String) Roles with read permissions
+- `teams` (Set of String) Teams with read permissions
+- `users` (Set of String) Users with read permissions
 
 
 <a id="nestedatt--entities--update_properties"></a>

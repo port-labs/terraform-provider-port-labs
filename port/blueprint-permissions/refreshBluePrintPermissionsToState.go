@@ -1,14 +1,50 @@
 package blueprint_permissions
 
 import (
-	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func refreshBlueprintPermissionsState(state *BlueprintPermissionsModel, a *cli.BlueprintPermissions, blueprintId string) error {
+func refreshEntityScopePermissionsState(oldBlock *BlueprintPermissionsTFBlockWithPolicy, apiBlock cli.BlueprintPermissionsBlock, jsonEscapeHTML bool) (*BlueprintPermissionsTFBlockWithPolicy, error) {
+	var users, roles, teams []types.String
+	if oldBlock == nil {
+		users = utils.Map(apiBlock.Users, types.StringValue)
+		roles = utils.Map(apiBlock.Roles, types.StringValue)
+		teams = utils.Map(apiBlock.Teams, types.StringValue)
+	} else {
+		users = utils.Map(utils.SortStringSliceByOther(apiBlock.Users, utils.TFStringListToStringArray(oldBlock.Users)), types.StringValue)
+		roles = utils.Map(utils.SortStringSliceByOther(apiBlock.Roles, utils.TFStringListToStringArray(oldBlock.Roles)), types.StringValue)
+		teams = utils.Map(utils.SortStringSliceByOther(apiBlock.Teams, utils.TFStringListToStringArray(oldBlock.Teams)), types.StringValue)
+	}
+
+	ownedByTeam := false
+	if apiBlock.OwnedByTeam != nil {
+		ownedByTeam = *apiBlock.OwnedByTeam
+	}
+
+	result := &BlueprintPermissionsTFBlockWithPolicy{
+		Users:       users,
+		Roles:       roles,
+		Teams:       teams,
+		OwnedByTeam: types.BoolValue(ownedByTeam),
+		Policy:      types.StringNull(),
+	}
+
+	if apiBlock.Policy != nil {
+		policy, err := utils.GoObjectToTerraformString(apiBlock.Policy, jsonEscapeHTML)
+		if err != nil {
+			return nil, err
+		}
+		result.Policy = policy
+	}
+
+	return result, nil
+}
+
+func refreshBlueprintPermissionsState(state *BlueprintPermissionsModel, a *cli.BlueprintPermissions, blueprintId string, jsonEscapeHTML bool) error {
 	oldPermissions := state.Entities
 	if oldPermissions == nil {
 		oldPermissions = &EntitiesBlueprintPermissionsModel{}
@@ -18,52 +54,34 @@ func refreshBlueprintPermissionsState(state *BlueprintPermissionsModel, a *cli.B
 	state.BlueprintIdentifier = types.StringValue(blueprintId)
 	state.Entities = &EntitiesBlueprintPermissionsModel{}
 
-	if oldPermissions.Update == nil {
-		state.Entities.Update = &BlueprintPermissionsTFBlock{
-			Users:       utils.Map(a.Entities.Update.Users, types.StringValue),
-			Roles:       utils.Map(a.Entities.Update.Roles, types.StringValue),
-			Teams:       utils.Map(a.Entities.Update.Teams, types.StringValue),
-			OwnedByTeam: types.BoolValue(*a.Entities.Update.OwnedByTeam),
-		}
-	} else {
-		state.Entities.Update = &BlueprintPermissionsTFBlock{
-			Users:       utils.Map(utils.SortStringSliceByOther(a.Entities.Update.Users, utils.TFStringListToStringArray(oldPermissions.Update.Users)), types.StringValue),
-			Roles:       utils.Map(utils.SortStringSliceByOther(a.Entities.Update.Roles, utils.TFStringListToStringArray(oldPermissions.Update.Roles)), types.StringValue),
-			Teams:       utils.Map(utils.SortStringSliceByOther(a.Entities.Update.Teams, utils.TFStringListToStringArray(oldPermissions.Update.Teams)), types.StringValue),
-			OwnedByTeam: types.BoolValue(*a.Entities.Update.OwnedByTeam),
-		}
+	updateBlock, err := refreshEntityScopePermissionsState(oldPermissions.Update, a.Entities.Update, jsonEscapeHTML)
+	if err != nil {
+		return err
 	}
+	state.Entities.Update = updateBlock
 
-	if oldPermissions.Unregister == nil {
-		state.Entities.Unregister = &BlueprintPermissionsTFBlock{
-			Users:       utils.Map(a.Entities.Unregister.Users, types.StringValue),
-			Roles:       utils.Map(a.Entities.Unregister.Roles, types.StringValue),
-			Teams:       utils.Map(a.Entities.Unregister.Teams, types.StringValue),
-			OwnedByTeam: types.BoolValue(*a.Entities.Unregister.OwnedByTeam),
-		}
-	} else {
-		state.Entities.Unregister = &BlueprintPermissionsTFBlock{
-			Users:       utils.Map(utils.SortStringSliceByOther(a.Entities.Unregister.Users, utils.TFStringListToStringArray(oldPermissions.Unregister.Users)), types.StringValue),
-			Roles:       utils.Map(utils.SortStringSliceByOther(a.Entities.Unregister.Roles, utils.TFStringListToStringArray(oldPermissions.Unregister.Roles)), types.StringValue),
-			Teams:       utils.Map(utils.SortStringSliceByOther(a.Entities.Unregister.Teams, utils.TFStringListToStringArray(oldPermissions.Unregister.Teams)), types.StringValue),
-			OwnedByTeam: types.BoolValue(*a.Entities.Unregister.OwnedByTeam),
-		}
+	unregisterBlock, err := refreshEntityScopePermissionsState(oldPermissions.Unregister, a.Entities.Unregister, jsonEscapeHTML)
+	if err != nil {
+		return err
 	}
+	state.Entities.Unregister = unregisterBlock
 
-	if oldPermissions.Register == nil {
-		state.Entities.Register = &BlueprintPermissionsTFBlock{
-			Users:       utils.Map(a.Entities.Register.Users, types.StringValue),
-			Roles:       utils.Map(a.Entities.Register.Roles, types.StringValue),
-			Teams:       utils.Map(a.Entities.Register.Teams, types.StringValue),
-			OwnedByTeam: types.BoolValue(*a.Entities.Register.OwnedByTeam),
+	registerBlock, err := refreshEntityScopePermissionsState(oldPermissions.Register, a.Entities.Register, jsonEscapeHTML)
+	if err != nil {
+		return err
+	}
+	state.Entities.Register = registerBlock
+
+	// Only manage read in state when it was previously configured, to avoid
+	// forcing existing configs without entities.read to adopt API defaults.
+	if oldPermissions.Read != nil && a.Entities.Read != nil {
+		readBlock, err := refreshEntityScopePermissionsState(oldPermissions.Read, *a.Entities.Read, jsonEscapeHTML)
+		if err != nil {
+			return err
 		}
+		state.Entities.Read = readBlock
 	} else {
-		state.Entities.Register = &BlueprintPermissionsTFBlock{
-			Users:       utils.Map(utils.SortStringSliceByOther(a.Entities.Register.Users, utils.TFStringListToStringArray(oldPermissions.Register.Users)), types.StringValue),
-			Roles:       utils.Map(utils.SortStringSliceByOther(a.Entities.Register.Roles, utils.TFStringListToStringArray(oldPermissions.Register.Roles)), types.StringValue),
-			Teams:       utils.Map(utils.SortStringSliceByOther(a.Entities.Register.Teams, utils.TFStringListToStringArray(oldPermissions.Register.Teams)), types.StringValue),
-			OwnedByTeam: types.BoolValue(*a.Entities.Register.OwnedByTeam),
-		}
+		state.Entities.Read = nil
 	}
 
 	if oldPermissions.UpdateProperties == nil {

@@ -106,6 +106,9 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 	var testAccActionPermissionsConfigUpdate = testAccCreateBlueprintAndActionConfig(blueprintIdentifier, actionIdentifier) + fmt.Sprintf(`
 	resource "port_system_blueprint" "team" {
 		identifier = "_team"
+		lifecycle {
+			ignore_changes = all
+		}
 	}
 
 	resource "port_entity" "team" {
@@ -116,6 +119,12 @@ func TestAccPortActionPermissionsUpdate(t *testing.T) {
 			"string_props" = {
 				"description" =  "My Description"
 			}
+		}
+		lifecycle {
+			ignore_changes = [
+				properties,
+				relations,
+			]
 		}
 	}
 

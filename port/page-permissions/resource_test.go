@@ -108,6 +108,9 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 	var testAccBasePagePermissionsConfigUpdate = fmt.Sprintf(`
 	resource "port_system_blueprint" "team" {
 		identifier = "_team"
+		lifecycle {
+			ignore_changes = all
+		}
 	}
 
 	resource "port_entity" "team" {
@@ -118,6 +121,12 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 			"string_props" = {
 				"description" =  "My Description"
 			}
+		}
+		lifecycle {
+			ignore_changes = [
+				properties,
+				relations,
+			]
 		}
 	}
 

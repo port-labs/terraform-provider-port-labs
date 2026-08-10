@@ -21,4 +21,13 @@ const (
 	RunUpdated           = "RUN_UPDATED"
 	AnyRunChange         = "ANY_RUN_CHANGE"
 	JqCondition          = "JQ"
+
+	InstallationTypeOnPrem = "OnPrem"
+	InstallationTypeSaas   = "Saas"
+
+	IntegrationStatusCreating = "Creating"
+	IntegrationStatusUpdating = "Updating"
+	IntegrationStatusDeleting = "Deleting"
+	IntegrationStatusDeleted  = "Deleted"
+	IntegrationStatusError    = "Error"
 )

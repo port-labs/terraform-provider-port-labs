@@ -197,12 +197,14 @@ func TestWorkflowStateToPortBodyConditionAndConnections(t *testing.T) {
 
 	config := w.Nodes[0].Config
 	assert.Equal(t, consts.ConditionNode, config.Type)
-	require.Len(t, config.Outlets, 1)
-	assert.Equal(t, "approved", config.Outlets[0].Identifier)
-	require.NotNil(t, config.Outlets[0].Expression)
-	assert.Equal(t, ".outputs.review.approved", *config.Outlets[0].Expression)
-	require.NotNil(t, config.Outlets[0].StatusLabel)
-	assert.Equal(t, "Approved", config.Outlets[0].StatusLabel.Text)
+	require.NotNil(t, config.Outlets)
+	outlets := *config.Outlets
+	require.Len(t, outlets, 1)
+	assert.Equal(t, "approved", outlets[0].Identifier)
+	require.NotNil(t, outlets[0].Expression)
+	assert.Equal(t, ".outputs.review.approved", *outlets[0].Expression)
+	require.NotNil(t, outlets[0].StatusLabel)
+	assert.Equal(t, "Approved", outlets[0].StatusLabel.Text)
 
 	require.Len(t, w.Connections, 2)
 	require.NotNil(t, w.Connections[0].SourceOutletIdentifier)
@@ -541,8 +543,8 @@ func TestValidateNodeRequiredAttributes(t *testing.T) {
 			},
 			summary: "Missing required attribute",
 		},
-		"condition without outlets": {
-			node:    WorkflowNodeModel{Identifier: types.StringValue("branch"), Condition: &ConditionModel{}},
+		"input without user inputs": {
+			node:    WorkflowNodeModel{Identifier: types.StringValue("approval"), Input: &InputModel{}},
 			summary: "Missing required block",
 		},
 	}
@@ -1390,4 +1392,95 @@ func TestQueryValidator(t *testing.T) {
 	for _, value := range invalid {
 		assert.NotEmpty(t, errorSummaries(runStringValidator(queryValidator("Invalid policy"), value)), value)
 	}
+}
+
+// The API requires the `outlets` and `buttons` keys on the node types that own
+// them and accepts an empty list, so an empty one must survive serialization
+// rather than being dropped by omitempty.
+func TestEmptyOutletsAndButtonsAreSerializedNotOmitted(t *testing.T) {
+	ctx := context.Background()
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{Identifier: types.StringValue("branch"), Condition: &ConditionModel{}},
+			{
+				Identifier: types.StringValue("approval"),
+				Input:      &InputModel{UserInputs: &InputUserInputsModel{}},
+			},
+			{Identifier: types.StringValue("notify"), Webhook: &WebhookModel{Url: types.StringValue("https://example.com")}},
+		},
+	}
+
+	body, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	encoded, err := json.Marshal(body.Nodes)
+	require.NoError(t, err)
+
+	var nodes []map[string]any
+	require.NoError(t, json.Unmarshal(encoded, &nodes))
+
+	condition := nodes[0]["config"].(map[string]any)
+	require.Contains(t, condition, "outlets")
+	assert.Empty(t, condition["outlets"])
+
+	input := nodes[1]["config"].(map[string]any)
+	require.Contains(t, input, "outlets")
+	assert.Empty(t, input["outlets"])
+	userInputs := input["userInputs"].(map[string]any)
+	require.Contains(t, userInputs, "buttons")
+	assert.Empty(t, userInputs["buttons"])
+
+	// A node type that has no outlets must not gain the key.
+	assert.NotContains(t, nodes[2]["config"].(map[string]any), "outlets")
+}
+
+func TestSelfServeTriggerDoesNotSendButtons(t *testing.T) {
+	ctx := context.Background()
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{{
+			Identifier:       types.StringValue("trigger"),
+			SelfServeTrigger: &SelfServeTriggerModel{UserInputs: &SelfServeUserInputsModel{}},
+		}},
+	}
+
+	body, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	encoded, err := json.Marshal(body.Nodes[0].Config)
+	require.NoError(t, err)
+
+	var config map[string]any
+	require.NoError(t, json.Unmarshal(encoded, &config))
+	assert.NotContains(t, config["userInputs"].(map[string]any), "buttons")
+}
+
+func TestValidateAcceptsEmptyOutletsAndButtons(t *testing.T) {
+	nodes := []WorkflowNodeModel{
+		eventTriggerNode("trigger"),
+		{Identifier: types.StringValue("branch"), Condition: &ConditionModel{}},
+		{
+			Identifier: types.StringValue("approval"),
+			Input:      &InputModel{UserInputs: &InputUserInputsModel{}},
+		},
+	}
+
+	assert.Empty(t, errorSummaries(validateWorkflow(nodes, nil)))
+}
+
+// With no buttons declared, an outlet cannot reference a valid one, which the
+// API rejects through its `outlets should refer to valid button identifiers` rule.
+func TestValidateInputOutletWithoutButtonsIsRejected(t *testing.T) {
+	node := WorkflowNodeModel{
+		Identifier: types.StringValue("approval"),
+		Input: &InputModel{
+			UserInputs: &InputUserInputsModel{},
+			Outlets:    []InputOutletModel{{Identifier: types.StringValue("approve")}},
+		},
+	}
+
+	assert.Contains(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)), "Unknown button identifier")
 }

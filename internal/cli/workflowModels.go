@@ -80,8 +80,10 @@ type WorkflowNodeConfig struct {
 	McpServers      []WorkflowMcpServer `json:"mcpServers,omitempty"`
 	OutputSchema    any                 `json:"outputSchema,omitempty"`
 
-	// CONDITION and INPUT
-	Outlets []WorkflowOutlet `json:"outlets,omitempty"`
+	// CONDITION and INPUT. The API requires the key on those node types and
+	// accepts an empty list, so this is a pointer: nil omits the key for every
+	// other node type, while a pointer to an empty slice still sends `[]`.
+	Outlets *[]WorkflowOutlet `json:"outlets,omitempty"`
 
 	// INPUT
 	Description   *string                     `json:"description,omitempty"`
@@ -127,7 +129,9 @@ type WorkflowUserInputs struct {
 	Order      []string                  `json:"order,omitempty"`
 	Steps      []Step                    `json:"steps,omitempty"`
 	Titles     map[string]ActionTitle    `json:"titles,omitempty"`
-	Buttons    []WorkflowInputButton     `json:"buttons,omitempty"`
+	// Required on an input node and absent on a self serve trigger, so this is a
+	// pointer for the same reason as WorkflowNodeConfig.Outlets.
+	Buttons *[]WorkflowInputButton `json:"buttons,omitempty"`
 }
 
 type WorkflowInputButton struct {

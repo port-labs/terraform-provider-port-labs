@@ -167,16 +167,6 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 
 	case node.Condition != nil:
 		blockPath := nodePath.AtName("condition")
-		// The API requires the `outlets` key, and the request body omits empty
-		// lists, so a node without outlets is rejected on save either way.
-		if len(node.Condition.Outlets) == 0 {
-			resp.Diagnostics.AddAttributeError(
-				blockPath.AtName("outlets"),
-				"Missing required block",
-				"A `condition` node must define at least one `outlets` block.",
-			)
-		}
-
 		seenOutlets := map[string]bool{}
 		for i, outlet := range node.Condition.Outlets {
 			outletPath := blockPath.AtName("outlets").AtListIndex(i)
@@ -189,15 +179,15 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 
 	case node.Input != nil:
 		blockPath := nodePath.AtName("input")
+		// The API requires `userInputs` on an input node, so the block itself is
+		// mandatory even though the buttons it holds may be empty.
+		buttonsDeclared := node.Input.UserInputs != nil
 		buttons := map[string]bool{}
-		// As with condition outlets, the API requires the `buttons` and `outlets`
-		// keys while the request body omits empty lists, so an empty one is
-		// rejected on save regardless.
-		if node.Input.UserInputs == nil || len(node.Input.UserInputs.Buttons) == 0 {
+		if !buttonsDeclared {
 			resp.Diagnostics.AddAttributeError(
-				blockPath.AtName("user_inputs").AtName("buttons"),
-				"Missing required attribute",
-				"An `input` node must define `user_inputs.buttons`.",
+				blockPath.AtName("user_inputs"),
+				"Missing required block",
+				"An `input` node must define a `user_inputs` block.",
 			)
 		} else {
 			seenButtons := map[string]bool{}
@@ -208,20 +198,12 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 			}
 		}
 
-		if len(node.Input.Outlets) == 0 {
-			resp.Diagnostics.AddAttributeError(
-				blockPath.AtName("outlets"),
-				"Missing required block",
-				"An `input` node must define at least one `outlets` block.",
-			)
-		}
-
 		seenOutlets := map[string]bool{}
 		for i, outlet := range node.Input.Outlets {
 			outletPath := blockPath.AtName("outlets").AtListIndex(i)
 			identifier := outlet.Identifier.ValueString()
 			requireUnique(resp, outletPath.AtName("identifier"), outlet.Identifier, seenOutlets, "outlet")
-			if len(buttons) > 0 && !outlet.Identifier.IsUnknown() && !buttons[identifier] {
+			if buttonsDeclared && !outlet.Identifier.IsUnknown() && !buttons[identifier] {
 				resp.Diagnostics.AddAttributeError(
 					outletPath.AtName("identifier"),
 					"Unknown button identifier",

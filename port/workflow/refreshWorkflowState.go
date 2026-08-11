@@ -43,6 +43,13 @@ func (r *WorkflowResource) refreshWorkflowState(ctx context.Context, state *Work
 	return nil
 }
 
+func derefSlice[T any](values *[]T) []T {
+	if values == nil {
+		return nil
+	}
+	return *values
+}
+
 // The API defaults these fields to an empty string and the schema declares the
 // same default, so an absent value has to refresh as "" rather than null to keep
 // the state consistent with the plan.
@@ -217,7 +224,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 
 	case consts.ConditionNode:
 		condition := &ConditionModel{}
-		for _, o := range config.Outlets {
+		for _, o := range derefSlice(config.Outlets) {
 			condition.Outlets = append(condition.Outlets, ConditionOutletModel{
 				Identifier:          types.StringValue(o.Identifier),
 				Title:               stringOrEmpty(o.Title),
@@ -247,7 +254,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 				OrderProperties: userInputs.OrderProperties,
 				Steps:           userInputs.Steps,
 			}
-			for _, b := range config.UserInputs.Buttons {
+			for _, b := range derefSlice(config.UserInputs.Buttons) {
 				input.UserInputs.Buttons = append(input.UserInputs.Buttons, InputButtonModel{
 					Identifier: types.StringValue(b.Identifier),
 					Label:      types.StringValue(b.Label),
@@ -257,7 +264,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 			}
 		}
 
-		for _, o := range config.Outlets {
+		for _, o := range derefSlice(config.Outlets) {
 			outlet := InputOutletModel{
 				Identifier:          types.StringValue(o.Identifier),
 				Title:               stringOrEmpty(o.Title),

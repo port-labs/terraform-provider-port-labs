@@ -226,8 +226,9 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.Condition != nil:
 		config.Type = consts.ConditionNode
+		outlets := make([]cli.WorkflowOutlet, 0, len(n.Condition.Outlets))
 		for _, o := range n.Condition.Outlets {
-			config.Outlets = append(config.Outlets, cli.WorkflowOutlet{
+			outlets = append(outlets, cli.WorkflowOutlet{
 				Identifier:          o.Identifier.ValueString(),
 				Title:               o.Title.ValueStringPointer(),
 				Expression:          o.Expression.ValueStringPointer(),
@@ -235,6 +236,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 				WorkflowStatusLabel: statusLabelToPortBody(o.WorkflowStatusLabel),
 			})
 		}
+		config.Outlets = &outlets
 
 	case n.Input != nil:
 		config.Type = consts.InputNode
@@ -249,10 +251,11 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 			config.UserInputs = userInputs
 		}
 
+		outlets := make([]cli.WorkflowOutlet, 0, len(i.Outlets))
 		for _, o := range i.Outlets {
 			evaluationMethod := "button"
 			numOfResponders := o.NumOfResponders.ValueInt64()
-			config.Outlets = append(config.Outlets, cli.WorkflowOutlet{
+			outlets = append(outlets, cli.WorkflowOutlet{
 				Identifier:          o.Identifier.ValueString(),
 				Title:               o.Title.ValueStringPointer(),
 				EvaluationMethod:    &evaluationMethod,
@@ -261,6 +264,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 				WorkflowStatusLabel: statusLabelToPortBody(o.WorkflowStatusLabel),
 			})
 		}
+		config.Outlets = &outlets
 
 		for _, notification := range i.Notifications {
 			converted, err := notificationToPortBody(ctx, notification)
@@ -329,14 +333,16 @@ func inputUserInputsToPortBody(ctx context.Context, model *InputUserInputsModel)
 		Steps:      action.UserInputStepsToBody(model.Steps),
 	}
 
+	buttons := make([]cli.WorkflowInputButton, 0, len(model.Buttons))
 	for _, b := range model.Buttons {
-		userInputs.Buttons = append(userInputs.Buttons, cli.WorkflowInputButton{
+		buttons = append(buttons, cli.WorkflowInputButton{
 			Identifier: b.Identifier.ValueString(),
 			Label:      b.Label.ValueString(),
 			Variant:    b.Variant.ValueString(),
 			Icon:       b.Icon.ValueStringPointer(),
 		})
 	}
+	userInputs.Buttons = &buttons
 
 	return userInputs, nil
 }

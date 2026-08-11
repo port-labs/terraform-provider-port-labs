@@ -8,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
@@ -1104,5 +1106,288 @@ func TestValidateAIProviderAndModelMustBePaired(t *testing.T) {
 				assert.Empty(t, summaries)
 			}
 		})
+	}
+}
+
+// The event trigger is the only node type the service accepts a `condition` on.
+func TestEventTriggerConditionRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("trigger"),
+				EventTrigger: &EventTriggerModel{
+					Type:                types.StringValue(consts.EntityUpdated),
+					BlueprintIdentifier: types.StringValue("service"),
+					Condition: &NodeConditionModel{
+						Expressions: stringList(".diff.after.properties.tier == \"production\"", ".diff.before != null"),
+						Combinator:  types.StringValue("or"),
+					},
+				},
+			},
+		},
+	}
+
+	w, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	condition := w.Nodes[0].Config.Condition
+	require.NotNil(t, condition)
+	assert.Equal(t, consts.JqCondition, condition.Type)
+	assert.Len(t, condition.Expressions, 2)
+	require.NotNil(t, condition.Combinator)
+	assert.Equal(t, "or", *condition.Combinator)
+
+	refreshed := &WorkflowModel{Identifier: types.StringValue("wf")}
+	require.NoError(t, r.refreshWorkflowState(ctx, refreshed, w))
+
+	got := refreshed.Nodes[0].EventTrigger.Condition
+	require.NotNil(t, got, "the event trigger condition must survive a refresh")
+	assert.Equal(t, "or", got.Combinator.ValueString())
+	assert.False(t, got.Expressions.IsNull())
+}
+
+// Walks the real schema so that exposing a condition on a second node type fails.
+func TestConditionIsExposedOnlyOnEventTrigger(t *testing.T) {
+	blocksWithCondition := []string{}
+	for _, name := range nodeTypeBlockNames {
+		block, ok := WorkflowBlocks()["node"].(schema.ListNestedBlock).
+			NestedObject.Blocks[name].(schema.SingleNestedBlock)
+		if !ok {
+			continue
+		}
+		if _, has := block.Blocks["condition"]; has {
+			blocksWithCondition = append(blocksWithCondition, name)
+		}
+	}
+
+	assert.Equal(t, []string{"event_trigger"}, blocksWithCondition)
+}
+
+func validateWorkflow(nodes []WorkflowNodeModel, connections []ConnectionModel) diag.Diagnostics {
+	resp := &resource.ValidateConfigResponse{}
+
+	nodeTypes := make(map[string]string, len(nodes))
+	outlets := make(map[string]map[string]bool, len(nodes))
+	for i, node := range nodes {
+		nodePath := path.Root("node").AtListIndex(i)
+		nodeTypes[node.Identifier.ValueString()] = validateNode(resp, nodePath, node)
+		outlets[node.Identifier.ValueString()] = nodeOutlets(node)
+	}
+
+	validateTriggerPresence(resp, nodeTypes)
+	validateConnections(resp, connections, nodeTypes, outlets)
+
+	return resp.Diagnostics
+}
+
+func connection(source, target string) ConnectionModel {
+	return ConnectionModel{
+		SourceIdentifier: types.StringValue(source),
+		TargetIdentifier: types.StringValue(target),
+	}
+}
+
+func TestValidateRejectsConnectionCycles(t *testing.T) {
+	nodes := []WorkflowNodeModel{
+		eventTriggerNode("trigger"),
+		webhookNode("a"),
+		webhookNode("b"),
+		webhookNode("c"),
+	}
+
+	// trigger -> a -> b -> c -> a is a cycle the API rejects, but every node
+	// still has only one outgoing connection.
+	diags := validateWorkflow(nodes, []ConnectionModel{
+		connection("trigger", "a"),
+		connection("a", "b"),
+		connection("b", "c"),
+		connection("c", "a"),
+	})
+
+	assert.Contains(t, errorSummaries(diags), "Cyclic connections")
+}
+
+func TestValidateAcceptsBranchingAcyclicGraph(t *testing.T) {
+	nodes := []WorkflowNodeModel{
+		eventTriggerNode("trigger"),
+		conditionNode("route", "left", "right"),
+		webhookNode("a"),
+		webhookNode("b"),
+		webhookNode("join"),
+	}
+
+	// A diamond re-joins on `join`, which is acyclic despite the shared target.
+	diags := validateWorkflow(nodes, []ConnectionModel{
+		connection("trigger", "route"),
+		{
+			SourceIdentifier:       types.StringValue("route"),
+			TargetIdentifier:       types.StringValue("a"),
+			SourceOutletIdentifier: types.StringValue("left"),
+		},
+		{
+			SourceIdentifier:       types.StringValue("route"),
+			TargetIdentifier:       types.StringValue("b"),
+			SourceOutletIdentifier: types.StringValue("right"),
+		},
+		connection("a", "join"),
+		connection("b", "join"),
+	})
+
+	assert.Empty(t, errorSummaries(diags))
+}
+
+func TestValidateConnectionEndpointsMustBeDeclaredNodes(t *testing.T) {
+	nodes := []WorkflowNodeModel{eventTriggerNode("trigger"), webhookNode("notify")}
+
+	diags := validateWorkflow(nodes, []ConnectionModel{
+		connection("trigger", "typo"),
+		connection("ghost", "notify"),
+	})
+
+	summaries := errorSummaries(diags)
+	assert.Equal(t, 2, countSummary(summaries, "Unknown node identifier"))
+}
+
+func TestValidateTriggerCannotHaveIncomingConnections(t *testing.T) {
+	nodes := []WorkflowNodeModel{eventTriggerNode("trigger"), webhookNode("notify")}
+
+	diags := validateWorkflow(nodes, []ConnectionModel{
+		connection("trigger", "notify"),
+		connection("notify", "trigger"),
+	})
+
+	assert.Contains(t, errorSummaries(diags), "Invalid connection")
+}
+
+func TestValidateWorkflowRequiresATriggerNode(t *testing.T) {
+	diags := validateWorkflow([]WorkflowNodeModel{webhookNode("notify")}, nil)
+	assert.Contains(t, errorSummaries(diags), "Missing trigger node")
+
+	diags = validateWorkflow([]WorkflowNodeModel{eventTriggerNode("trigger")}, nil)
+	assert.Empty(t, errorSummaries(diags))
+}
+
+func TestValidateRejectsDuplicateOutletIdentifiers(t *testing.T) {
+	diags := validateNodes([]WorkflowNodeModel{conditionNode("route", "same", "same")}, nil)
+	assert.Contains(t, errorSummaries(diags), "Duplicate outlet identifier")
+}
+
+func TestValidateRejectsDuplicateButtonIdentifiers(t *testing.T) {
+	node := WorkflowNodeModel{
+		Identifier: types.StringValue("approval"),
+		Input: &InputModel{
+			UserInputs: &InputUserInputsModel{
+				Buttons: []InputButtonModel{
+					{Identifier: types.StringValue("approve"), Label: types.StringValue("Approve")},
+					{Identifier: types.StringValue("approve"), Label: types.StringValue("Approve again")},
+				},
+			},
+			Outlets: []InputOutletModel{{Identifier: types.StringValue("approve")}},
+		},
+	}
+
+	assert.Contains(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)), "Duplicate button identifier")
+}
+
+func TestValidateEmailNotificationRequiresFields(t *testing.T) {
+	inputNode := func(notification NotificationModel) WorkflowNodeModel {
+		return WorkflowNodeModel{
+			Identifier: types.StringValue("approval"),
+			Input: &InputModel{
+				UserInputs: &InputUserInputsModel{
+					Buttons: []InputButtonModel{{Identifier: types.StringValue("approve"), Label: types.StringValue("Approve")}},
+				},
+				Outlets:       []InputOutletModel{{Identifier: types.StringValue("approve")}},
+				Notifications: []NotificationModel{notification},
+			},
+		}
+	}
+
+	missing := inputNode(NotificationModel{Target: types.StringValue("email")})
+	assert.Contains(t, errorSummaries(validateNodes([]WorkflowNodeModel{missing}, nil)), "Missing required block")
+
+	complete := inputNode(NotificationModel{
+		Target: types.StringValue("email"),
+		Fields: []NotificationFieldModel{{Label: types.StringValue("Service"), Value: types.StringValue("api")}},
+	})
+	assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{complete}, nil)))
+}
+
+func TestValidateRejectsBlankRequiredStrings(t *testing.T) {
+	blankExpression := WorkflowNodeModel{
+		Identifier: types.StringValue("route"),
+		Condition: &ConditionModel{
+			Outlets: []ConditionOutletModel{{
+				Identifier: types.StringValue("outlet"),
+				Expression: types.StringValue("   "),
+			}},
+		},
+	}
+	assert.Contains(t, errorSummaries(validateNodes([]WorkflowNodeModel{blankExpression}, nil)), "Missing required attribute")
+
+	blankUserInput := WorkflowNodeModel{
+		Identifier: types.StringValue("trigger"),
+		SelfServeTrigger: &SelfServeTriggerModel{
+			Contexts: []TriggerContextModel{{
+				On:        types.StringValue(consts.EntityContext),
+				UserInput: types.StringValue(""),
+			}},
+		},
+	}
+	assert.Contains(t, errorSummaries(validateNodes([]WorkflowNodeModel{blankUserInput}, nil)), "Missing required attribute")
+}
+
+func countSummary(summaries []string, summary string) int {
+	count := 0
+	for _, s := range summaries {
+		if s == summary {
+			count++
+		}
+	}
+	return count
+}
+
+func runStringValidator(v validator.String, value string) diag.Diagnostics {
+	resp := &validator.StringResponse{}
+	v.ValidateString(context.Background(), validator.StringRequest{
+		Path:        path.Root("attribute"),
+		ConfigValue: types.StringValue(value),
+	}, resp)
+	return resp.Diagnostics
+}
+
+func TestCronValidator(t *testing.T) {
+	valid := []string{"0 9 * * 1-5", "*/5 * * * *", "0 0 1 1 * 2030", "@daily", "0 2 * * MON"}
+	for _, expression := range valid {
+		assert.Empty(t, errorSummaries(runStringValidator(cronValidator(), expression)), expression)
+	}
+
+	invalid := []string{"", "0 9 * *", "not a cron", "@sometimes", "0 9 * * 1-5 * *"}
+	for _, expression := range invalid {
+		assert.NotEmpty(t, errorSummaries(runStringValidator(cronValidator(), expression)), expression)
+	}
+}
+
+func TestOutputSchemaValidator(t *testing.T) {
+	assert.Empty(t, errorSummaries(runStringValidator(outputSchemaValidator(),
+		`{"type":"object","properties":{"summary":{"type":"string"}}}`)))
+
+	invalid := []string{`{"type":"string"}`, `[]`, `{"properties":{}}`, `not json`}
+	for _, value := range invalid {
+		assert.NotEmpty(t, errorSummaries(runStringValidator(outputSchemaValidator(), value)), value)
+	}
+}
+
+func TestQueryValidator(t *testing.T) {
+	assert.Empty(t, errorSummaries(runStringValidator(queryValidator("Invalid policy"),
+		`{"combinator":"and","rules":[{"property":{"context":"user","property":"department"},"operator":"=","value":"engineering"}]}`)))
+
+	invalid := []string{`{"combinator":"maybe","rules":[]}`, `{"rules":[]}`, `{"combinator":"and"}`, `"and"`, `{`}
+	for _, value := range invalid {
+		assert.NotEmpty(t, errorSummaries(runStringValidator(queryValidator("Invalid policy"), value)), value)
 	}
 }

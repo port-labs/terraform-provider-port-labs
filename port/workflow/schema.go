@@ -4,6 +4,7 @@ import (
 	"context"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -20,10 +21,14 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/action"
 )
 
-// CURSOR_AGENT is intentionally absent. It is still a live member of the service
-// invocation union, but is deprecated and not exposed through Terraform. The same
-// applies to the integration action `deferIntegrationInstallation` field, which is
-// onboarding-only.
+// CURSOR_AGENT is intentionally absent: it is still a live member of the service
+// invocation union, but is deprecated and not exposed through Terraform.
+//
+// The integration action `deferIntegrationInstallation` field is omitted for a
+// different reason. It lets a workflow be saved before its integration is installed,
+// but Terraform users are expected to install the integration first, so an
+// integration_action node always needs an installation_id that resolves against the
+// integrations installed in the organization.
 var nodeTypeBlockNames = []string{
 	"self_serve_trigger",
 	"event_trigger",
@@ -137,7 +142,8 @@ func permissionsBlock(description string) schema.Block {
 		MarkdownDescription: "A JSON encoded RBAC query that dynamically resolves who is permitted, of the form " +
 			"`{\"combinator\":\"and\",\"rules\":[{\"property\":{\"context\":\"user\",\"property\":\"department\"},\"operator\":\"=\",\"value\":\"engineering\"}]}`. " +
 			"`context` is one of `user`, `userTeams`, `form`, `workflowRun`.",
-		Optional: true,
+		Optional:   true,
+		Validators: []validator.String{queryValidator("Invalid permissions policy")},
 	}
 
 	return schema.SingleNestedBlock{
@@ -151,7 +157,8 @@ func respondersBlock(description string) schema.Block {
 	attributes["users_query"] = schema.StringAttribute{
 		MarkdownDescription: "A JSON encoded entity search query, run against the `_user` blueprint, " +
 			"resolving additional responders.",
-		Optional: true,
+		Optional:   true,
+		Validators: []validator.String{queryValidator("Invalid responders query")},
 	}
 
 	return schema.SingleNestedBlock{
@@ -363,6 +370,7 @@ func scheduleTriggerBlock() schema.Block {
 			"cron": schema.StringAttribute{
 				MarkdownDescription: "The cron expression defining when the workflow triggers (e.g. `0 9 * * 1-5`), evaluated in UTC.",
 				Optional:            true,
+				Validators:          []validator.String{cronValidator()},
 			},
 			"published": publishedAttribute(),
 		},
@@ -521,6 +529,8 @@ func aiBlock() schema.Block {
 			"system_prompt": schema.StringAttribute{
 				MarkdownDescription: "Instructions describing the AI's role and operational rules.",
 				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(""),
 			},
 			"provider": schema.StringAttribute{
 				MarkdownDescription: "The AI provider to use. Must be set together with `model`.",
@@ -559,6 +569,7 @@ func aiBlock() schema.Block {
 			"output_schema": schema.StringAttribute{
 				MarkdownDescription: "A JSON schema, encoded as a JSON string, the AI response is validated against.",
 				Optional:            true,
+				Validators:          []validator.String{outputSchemaValidator()},
 			},
 		},
 		Validators: nodeTypeValidators(),
@@ -594,6 +605,7 @@ func aiAgentBlock() schema.Block {
 			"output_schema": schema.StringAttribute{
 				MarkdownDescription: "A JSON schema, encoded as a JSON string, the agent response is validated against.",
 				Optional:            true,
+				Validators:          []validator.String{outputSchemaValidator()},
 			},
 		},
 		Validators: nodeTypeValidators(),
@@ -616,6 +628,8 @@ func conditionBlock() schema.Block {
 						"title": schema.StringAttribute{
 							MarkdownDescription: "The title of the outlet.",
 							Optional:            true,
+							Computed:            true,
+							Default:             stringdefault.StaticString(""),
 							Validators:          titleValidators(),
 						},
 						"expression": schema.StringAttribute{
@@ -691,11 +705,16 @@ func inputBlock() schema.Block {
 						"title": schema.StringAttribute{
 							MarkdownDescription: "The title of the outlet.",
 							Optional:            true,
+							Computed:            true,
+							Default:             stringdefault.StaticString(""),
 							Validators:          titleValidators(),
 						},
 						"num_of_responders": schema.Int64Attribute{
 							MarkdownDescription: "How many responders must press the button before the workflow continues.",
 							Required:            true,
+							Validators: []validator.Int64{
+								int64validator.AtLeast(1),
+							},
 						},
 					},
 					Blocks: map[string]schema.Block{

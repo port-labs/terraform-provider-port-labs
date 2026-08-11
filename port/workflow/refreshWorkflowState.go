@@ -43,6 +43,16 @@ func (r *WorkflowResource) refreshWorkflowState(ctx context.Context, state *Work
 	return nil
 }
 
+// The API defaults these fields to an empty string and the schema declares the
+// same default, so an absent value has to refresh as "" rather than null to keep
+// the state consistent with the plan.
+func stringOrEmpty(value *string) types.String {
+	if value == nil {
+		return types.StringValue("")
+	}
+	return types.StringValue(*value)
+}
+
 func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.WorkflowNode, prior WorkflowNodeModel) (WorkflowNodeModel, error) {
 	node := WorkflowNodeModel{
 		Identifier:  types.StringValue(apiNode.Identifier),
@@ -181,7 +191,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 		}
 		ai := &AIModel{
 			UserPrompt:   flex.GoStringToFramework(config.UserPrompt),
-			SystemPrompt: flex.GoStringToFramework(config.SystemPrompt),
+			SystemPrompt: stringOrEmpty(config.SystemPrompt),
 			Provider:     flex.GoStringToFramework(config.Provider),
 			Model:        flex.GoStringToFramework(config.Model),
 			Tools:        stringsToList(ctx, config.Tools, priorTools),
@@ -210,7 +220,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 		for _, o := range config.Outlets {
 			condition.Outlets = append(condition.Outlets, ConditionOutletModel{
 				Identifier:          types.StringValue(o.Identifier),
-				Title:               flex.GoStringToFramework(o.Title),
+				Title:               stringOrEmpty(o.Title),
 				Expression:          flex.GoStringToFramework(o.Expression),
 				StatusLabel:         statusLabelToModel(o.StatusLabel),
 				WorkflowStatusLabel: statusLabelToModel(o.WorkflowStatusLabel),
@@ -250,7 +260,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 		for _, o := range config.Outlets {
 			outlet := InputOutletModel{
 				Identifier:          types.StringValue(o.Identifier),
-				Title:               flex.GoStringToFramework(o.Title),
+				Title:               stringOrEmpty(o.Title),
 				StatusLabel:         statusLabelToModel(o.StatusLabel),
 				WorkflowStatusLabel: statusLabelToModel(o.WorkflowStatusLabel),
 			}

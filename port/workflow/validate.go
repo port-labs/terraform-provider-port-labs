@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -40,7 +41,28 @@ func (r *WorkflowResource) ValidateConfig(ctx context.Context, req resource.Vali
 		outlets[identifier] = nodeOutlets(node)
 	}
 
+	validateTriggerPresence(resp, nodeTypes)
 	validateConnections(resp, data.Connections, nodeTypes, outlets)
+}
+
+var triggerTypes = map[string]bool{
+	consts.SelfServeTrigger: true,
+	consts.EventTrigger:     true,
+	consts.ScheduleTrigger:  true,
+}
+
+func validateTriggerPresence(resp *resource.ValidateConfigResponse, nodeTypes map[string]string) {
+	for _, nodeType := range nodeTypes {
+		if triggerTypes[nodeType] {
+			return
+		}
+	}
+
+	resp.Diagnostics.AddAttributeError(
+		path.Root("node"),
+		"Missing trigger node",
+		"A workflow must define at least one trigger node: `self_serve_trigger`, `event_trigger` or `schedule_trigger`.",
+	)
 }
 
 func nodeOutlets(node WorkflowNodeModel) map[string]bool {
@@ -71,7 +93,7 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 				rejectSet(resp, contextPath.AtName("user_input"), context.UserInput,
 					"`user_input` cannot be set when `on` is `CREATE_ENTITY`.")
 			case consts.EntityContext:
-				requireSet(resp, contextPath.AtName("user_input"), context.UserInput,
+				requireNonEmpty(resp, contextPath.AtName("user_input"), context.UserInput,
 					"`user_input` is required when `on` is `ENTITY`.")
 				rejectSet(resp, contextPath.AtName("blueprint_identifier"), context.BlueprintIdentifier,
 					"`blueprint_identifier` cannot be set when `on` is `ENTITY`.")
@@ -145,6 +167,8 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 
 	case node.Condition != nil:
 		blockPath := nodePath.AtName("condition")
+		// The API requires the `outlets` key, and the request body omits empty
+		// lists, so a node without outlets is rejected on save either way.
 		if len(node.Condition.Outlets) == 0 {
 			resp.Diagnostics.AddAttributeError(
 				blockPath.AtName("outlets"),
@@ -152,14 +176,23 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 				"A `condition` node must define at least one `outlets` block.",
 			)
 		}
+
+		seenOutlets := map[string]bool{}
 		for i, outlet := range node.Condition.Outlets {
-			validateStatusLabels(resp, blockPath.AtName("outlets").AtListIndex(i), outlet.StatusLabel, outlet.WorkflowStatusLabel)
+			outletPath := blockPath.AtName("outlets").AtListIndex(i)
+			requireUnique(resp, outletPath.AtName("identifier"), outlet.Identifier, seenOutlets, "outlet")
+			requireNonEmpty(resp, outletPath.AtName("expression"), outlet.Expression,
+				"`expression` cannot be empty.")
+			validateStatusLabels(resp, outletPath, outlet.StatusLabel, outlet.WorkflowStatusLabel)
 		}
 		return consts.ConditionNode
 
 	case node.Input != nil:
 		blockPath := nodePath.AtName("input")
 		buttons := map[string]bool{}
+		// As with condition outlets, the API requires the `buttons` and `outlets`
+		// keys while the request body omits empty lists, so an empty one is
+		// rejected on save regardless.
 		if node.Input.UserInputs == nil || len(node.Input.UserInputs.Buttons) == 0 {
 			resp.Diagnostics.AddAttributeError(
 				blockPath.AtName("user_inputs").AtName("buttons"),
@@ -167,7 +200,10 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 				"An `input` node must define `user_inputs.buttons`.",
 			)
 		} else {
-			for _, button := range node.Input.UserInputs.Buttons {
+			seenButtons := map[string]bool{}
+			for i, button := range node.Input.UserInputs.Buttons {
+				buttonPath := blockPath.AtName("user_inputs").AtName("buttons").AtListIndex(i)
+				requireUnique(resp, buttonPath.AtName("identifier"), button.Identifier, seenButtons, "button")
 				buttons[button.Identifier.ValueString()] = true
 			}
 		}
@@ -180,9 +216,11 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 			)
 		}
 
+		seenOutlets := map[string]bool{}
 		for i, outlet := range node.Input.Outlets {
 			outletPath := blockPath.AtName("outlets").AtListIndex(i)
 			identifier := outlet.Identifier.ValueString()
+			requireUnique(resp, outletPath.AtName("identifier"), outlet.Identifier, seenOutlets, "outlet")
 			if len(buttons) > 0 && !outlet.Identifier.IsUnknown() && !buttons[identifier] {
 				resp.Diagnostics.AddAttributeError(
 					outletPath.AtName("identifier"),
@@ -195,9 +233,18 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 
 		for i, notification := range node.Input.Notifications {
 			notificationPath := blockPath.AtName("notifications").AtListIndex(i)
-			if notification.Target.ValueString() == "webhook" {
+			switch notification.Target.ValueString() {
+			case "webhook":
 				requireSet(resp, notificationPath.AtName("url"), notification.Url,
 					"`url` is required when `target` is `webhook`.")
+			case "email":
+				if len(notification.Fields) == 0 {
+					resp.Diagnostics.AddAttributeError(
+						notificationPath.AtName("fields"),
+						"Missing required block",
+						"At least one `fields` block is required when `target` is `email`.",
+					)
+				}
 			}
 		}
 		return consts.InputNode
@@ -210,7 +257,7 @@ func validateStatusLabels(resp *resource.ValidateConfigResponse, outletPath path
 	names := []string{"status_label", "workflow_status_label"}
 	for i, label := range labels {
 		if label != nil {
-			requireSet(resp, outletPath.AtName(names[i]).AtName("text"), label.Text,
+			requireNonEmpty(resp, outletPath.AtName(names[i]).AtName("text"), label.Text,
 				fmt.Sprintf("`text` is required when a `%s` block is set.", names[i]))
 		}
 	}
@@ -230,12 +277,24 @@ func validateConnections(resp *resource.ValidateConfigResponse, connections []Co
 	for i, connection := range connections {
 		connectionPath := path.Root("connections").AtListIndex(i)
 		source := connection.SourceIdentifier.ValueString()
+		target := connection.TargetIdentifier.ValueString()
 
-		if source == connection.TargetIdentifier.ValueString() && !connection.SourceIdentifier.IsUnknown() {
+		if source == target && !connection.SourceIdentifier.IsUnknown() {
 			resp.Diagnostics.AddAttributeError(
 				connectionPath,
 				"Invalid connection",
 				fmt.Sprintf("Node %q cannot connect to itself. Self-connections are not supported.", source),
+			)
+		}
+
+		validateEndpoint(resp, connectionPath, "source_identifier", connection.SourceIdentifier, nodeTypes)
+		validateEndpoint(resp, connectionPath, "target_identifier", connection.TargetIdentifier, nodeTypes)
+
+		if targetType, known := nodeTypes[target]; known && triggerTypes[targetType] {
+			resp.Diagnostics.AddAttributeError(
+				connectionPath.AtName("target_identifier"),
+				"Invalid connection",
+				fmt.Sprintf("Node %q is a trigger. Trigger nodes start a workflow, so they cannot have incoming connections.", target),
 			)
 		}
 
@@ -294,6 +353,76 @@ func validateConnections(resp *resource.ValidateConfigResponse, connections []Co
 			)
 		}
 	}
+
+	validateNoCycles(resp, connections)
+}
+
+func validateEndpoint(resp *resource.ValidateConfigResponse, connectionPath path.Path, attribute string, value types.String, nodeTypes map[string]string) {
+	if value.IsNull() || value.IsUnknown() {
+		return
+	}
+
+	if _, known := nodeTypes[value.ValueString()]; !known {
+		resp.Diagnostics.AddAttributeError(
+			connectionPath.AtName(attribute),
+			"Unknown node identifier",
+			fmt.Sprintf("No node is declared with the identifier %q.", value.ValueString()),
+		)
+	}
+}
+
+// Mirrors the service's topological sort over the connection graph. Self-loops
+// are skipped because they are reported with a more specific message.
+func validateNoCycles(resp *resource.ValidateConfigResponse, connections []ConnectionModel) {
+	adjacency := map[string][]string{}
+	incoming := map[string]int{}
+
+	for _, connection := range connections {
+		if connection.SourceIdentifier.IsUnknown() || connection.TargetIdentifier.IsUnknown() {
+			return
+		}
+
+		source := connection.SourceIdentifier.ValueString()
+		target := connection.TargetIdentifier.ValueString()
+		if source == target {
+			continue
+		}
+
+		if _, seen := incoming[source]; !seen {
+			incoming[source] = 0
+		}
+		incoming[target]++
+		adjacency[source] = append(adjacency[source], target)
+	}
+
+	frontier := make([]string, 0, len(incoming))
+	for node, degree := range incoming {
+		if degree == 0 {
+			frontier = append(frontier, node)
+		}
+	}
+
+	processed := 0
+	for len(frontier) > 0 {
+		node := frontier[len(frontier)-1]
+		frontier = frontier[:len(frontier)-1]
+		processed++
+
+		for _, target := range adjacency[node] {
+			incoming[target]--
+			if incoming[target] == 0 {
+				frontier = append(frontier, target)
+			}
+		}
+	}
+
+	if processed < len(incoming) {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("connections"),
+			"Cyclic connections",
+			"The connections form a cycle. A workflow graph must be acyclic, so a node cannot be reachable from itself.",
+		)
+	}
 }
 
 // The service falls back to defaults for both or neither, so a lone value is rejected.
@@ -319,6 +448,33 @@ func requireSet(resp *resource.ValidateConfigResponse, attributePath path.Path, 
 	if value.IsNull() && !value.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(attributePath, "Missing required attribute", detail)
 	}
+}
+
+// The API trims these values and rejects the result when it is empty, so a
+// blank string is as invalid as an absent one.
+func requireNonEmpty(resp *resource.ValidateConfigResponse, attributePath path.Path, value types.String, detail string) {
+	if value.IsUnknown() {
+		return
+	}
+	if value.IsNull() || strings.TrimSpace(value.ValueString()) == "" {
+		resp.Diagnostics.AddAttributeError(attributePath, "Missing required attribute", detail)
+	}
+}
+
+func requireUnique(resp *resource.ValidateConfigResponse, attributePath path.Path, value types.String, seen map[string]bool, noun string) {
+	if value.IsUnknown() {
+		return
+	}
+
+	identifier := value.ValueString()
+	if seen[identifier] {
+		resp.Diagnostics.AddAttributeError(
+			attributePath,
+			fmt.Sprintf("Duplicate %s identifier", noun),
+			fmt.Sprintf("The %s identifier %q is used more than once. Each %s of a node must have a unique identifier.", noun, identifier, noun),
+		)
+	}
+	seen[identifier] = true
 }
 
 func rejectSet(resp *resource.ValidateConfigResponse, attributePath path.Path, value types.String, detail string) {

@@ -4,7 +4,6 @@ resource "port_workflow" "deploy_service" {
   description = "Collects deployment inputs, asks for approval and deploys"
   category    = "engineering"
 
-  # A self service trigger renders a form in Port.
   node {
     identifier = "trigger"
     title      = "Deploy request"
@@ -36,7 +35,6 @@ resource "port_workflow" "deploy_service" {
     }
   }
 
-  # Pause the workflow until someone approves.
   node {
     identifier = "approval"
 

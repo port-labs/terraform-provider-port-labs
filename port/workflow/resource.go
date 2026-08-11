@@ -5,7 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
@@ -84,8 +83,10 @@ func (r *WorkflowResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
-	state.ID = types.StringValue(w.Identifier)
-	state.Identifier = types.StringValue(w.Identifier)
+	if err := r.refreshWorkflowState(ctx, state, w); err != nil {
+		resp.Diagnostics.AddError("failed writing workflow fields to resource", err.Error())
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -113,8 +114,10 @@ func (r *WorkflowResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	state.ID = types.StringValue(w.Identifier)
-	state.Identifier = types.StringValue(w.Identifier)
+	if err := r.refreshWorkflowState(ctx, state, w); err != nil {
+		resp.Diagnostics.AddError("failed writing workflow fields to resource", err.Error())
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

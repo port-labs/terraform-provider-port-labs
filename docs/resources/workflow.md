@@ -21,11 +21,12 @@ Workflow resource for managing Port workflows and their node/connection graph
 
 ### Optional
 
+- `allow_anyone_to_view_runs` (Boolean) Whether any user can view this workflow's runs
 - `category` (String) A free-form category used to group the workflow (max 40 characters)
 - `connections` (Block List) A directed connection between two nodes (see [below for nested schema](#nestedblock--connections))
 - `description` (String) The description of the workflow
 - `icon` (String) The icon of the workflow
-- `node` (Block List) A node of the workflow graph (see [below for nested schema](#nestedblock--node))
+- `node` (Block List) A node of the workflow graph. Exactly one node config block must be set. (see [below for nested schema](#nestedblock--node))
 - `title` (String) The title of the workflow
 
 ### Read-Only
@@ -40,6 +41,12 @@ Required:
 - `source_identifier` (String) The identifier of the source node
 - `target_identifier` (String) The identifier of the target node
 
+Optional:
+
+- `description` (String) The description of the connection
+- `fallback` (Boolean) Marks this connection as the fallback branch of a `condition` node, taken when no outlet matches. Cannot be combined with `source_outlet_identifier`.
+- `source_outlet_identifier` (String) The outlet of the source node this connection leaves from. Required for `condition` and `input` nodes, and not allowed for any other node type.
+
 
 <a id="nestedblock--node"></a>
 ### Nested Schema for `node`
@@ -50,36 +57,96 @@ Required:
 
 Optional:
 
-- `cursor_agent` (Block, Optional) A Cursor agent node that runs a Cursor agent task (see [below for nested schema](#nestedblock--node--cursor_agent))
-- `event_trigger` (Block, Optional) An event trigger node that starts the workflow when an entity event occurs (see [below for nested schema](#nestedblock--node--event_trigger))
-- `integration_action` (Block, Optional) An integration action node that invokes an integration (see [below for nested schema](#nestedblock--node--integration_action))
+- `ai` (Block, Optional) An AI node that runs a prompt through Port AI. (see [below for nested schema](#nestedblock--node--ai))
+- `ai_agent` (Block, Optional) An AI agent node that invokes a configured Port AI agent. (see [below for nested schema](#nestedblock--node--ai_agent))
+- `condition` (Block, Optional) A condition node that branches the workflow based on JQ expressions. Connections leaving this node must set `source_outlet_identifier` or `fallback`. (see [below for nested schema](#nestedblock--node--condition))
+- `description` (String) The description of the node
+- `event_trigger` (Block, Optional) An event trigger node that starts the workflow when an entity event occurs. (see [below for nested schema](#nestedblock--node--event_trigger))
+- `icon` (String) The icon of the node
+- `input` (Block, Optional) An input node that pauses the workflow and waits for a human response. Connections leaving this node must set `source_outlet_identifier`. (see [below for nested schema](#nestedblock--node--input))
+- `integration_action` (Block, Optional) An integration action node that invokes an installed integration. (see [below for nested schema](#nestedblock--node--integration_action))
+- `kafka` (Block, Optional) A Kafka node that publishes a message to the organization's Kafka topic. (see [below for nested schema](#nestedblock--node--kafka))
+- `links` (List of String) Link templates (supporting `{{ .result.field }}` interpolation) evaluated when the node run completes (max 3)
+- `schedule_trigger` (Block, Optional) A schedule trigger node that starts the workflow on a cron schedule. (see [below for nested schema](#nestedblock--node--schedule_trigger))
+- `self_serve_trigger` (Block, Optional) A self service trigger node that starts the workflow from a user submitted form. (see [below for nested schema](#nestedblock--node--self_serve_trigger))
 - `title` (String) The title of the node
+- `upsert_entity` (Block, Optional) An upsert entity node that creates or updates an entity in the catalog. (see [below for nested schema](#nestedblock--node--upsert_entity))
+- `variables` (Map of String) Named expressions made available to the node at run time
+- `verbose` (Boolean) When true, the workflow service writes extended per-node run logs
+- `webhook` (Block, Optional) A webhook node that sends an HTTP request. (see [below for nested schema](#nestedblock--node--webhook))
 
-<a id="nestedblock--node--cursor_agent"></a>
-### Nested Schema for `node.cursor_agent`
-
-Optional:
-
-- `api_key` (String, Sensitive) The Cursor API key (supports Port secret references)
-- `prompt` (Block, Optional) The prompt passed to the Cursor agent (see [below for nested schema](#nestedblock--node--cursor_agent--prompt))
-- `source` (Block, Optional) The source the Cursor agent operates on. Provide either repository (with an optional ref) or pr_url. (see [below for nested schema](#nestedblock--node--cursor_agent--source))
-
-<a id="nestedblock--node--cursor_agent--prompt"></a>
-### Nested Schema for `node.cursor_agent.prompt`
+<a id="nestedblock--node--ai"></a>
+### Nested Schema for `node.ai`
 
 Optional:
 
-- `text` (String) The prompt text
+- `mcp_servers` (Attributes List) The MCP servers available to the AI node (max 5). (see [below for nested schema](#nestedatt--node--ai--mcp_servers))
+- `model` (String) The AI model to use. Must be set together with `provider`.
+- `output_schema` (String) A JSON schema, encoded as a JSON string, the AI response is validated against.
+- `provider` (String) The AI provider to use. Must be set together with `model`.
+- `system_prompt` (String) Instructions describing the AI's role and operational rules.
+- `tools` (List of String) Regex patterns matched against the available tool names.
+- `user_prompt` (String) The message or query processed by Port AI.
+
+<a id="nestedatt--node--ai--mcp_servers"></a>
+### Nested Schema for `node.ai.mcp_servers`
+
+Required:
+
+- `identifier` (String) The identifier of the MCP server.
 
 
-<a id="nestedblock--node--cursor_agent--source"></a>
-### Nested Schema for `node.cursor_agent.source`
+
+<a id="nestedblock--node--ai_agent"></a>
+### Nested Schema for `node.ai_agent`
 
 Optional:
 
-- `pr_url` (String) The pull request URL the agent operates on. When set, repository and ref are ignored.
-- `ref` (String) The git ref (branch, tag or commit) to use as the base
-- `repository` (String) The GitHub repository URL the agent operates on
+- `agent_identifier` (String) The identifier of the agent to invoke.
+- `model` (String) The AI model to use. Must be set together with `provider`.
+- `output_schema` (String) A JSON schema, encoded as a JSON string, the agent response is validated against.
+- `provider` (String) The AI provider to use. Must be set together with `model`.
+- `user_prompt` (String) The message or query processed by the agent.
+
+
+<a id="nestedblock--node--condition"></a>
+### Nested Schema for `node.condition`
+
+Optional:
+
+- `outlets` (Block List) The branches of the condition, evaluated in order. (see [below for nested schema](#nestedblock--node--condition--outlets))
+
+<a id="nestedblock--node--condition--outlets"></a>
+### Nested Schema for `node.condition.outlets`
+
+Required:
+
+- `expression` (String) The JQ expression that selects this outlet.
+- `identifier` (String) The identifier of the outlet, referenced by a connection's `source_outlet_identifier`.
+
+Optional:
+
+- `status_label` (Block, Optional) A custom status label displayed on the node run. (see [below for nested schema](#nestedblock--node--condition--outlets--status_label))
+- `title` (String) The title of the outlet.
+- `workflow_status_label` (Block, Optional) A custom status label displayed on the workflow run. (see [below for nested schema](#nestedblock--node--condition--outlets--workflow_status_label))
+
+<a id="nestedblock--node--condition--outlets--status_label"></a>
+### Nested Schema for `node.condition.outlets.status_label`
+
+Optional:
+
+- `text` (String) The label text. Supports JQ expressions for dynamic content.
+- `variant` (String) Semantic variant controlling the label color/style. One of `success`, `alert`.
+
+
+<a id="nestedblock--node--condition--outlets--workflow_status_label"></a>
+### Nested Schema for `node.condition.outlets.workflow_status_label`
+
+Optional:
+
+- `text` (String) The label text. Supports JQ expressions for dynamic content.
+- `variant` (String) Semantic variant controlling the label color/style. One of `success`, `alert`.
+
 
 
 
@@ -88,9 +155,607 @@ Optional:
 
 Optional:
 
-- `blueprint_identifier` (String) The blueprint identifier the event relates to
-- `property_identifier` (String) The property identifier the timer event relates to (only for the TIMER_EXPIRED event type)
-- `type` (String) The event type that triggers the workflow
+- `blueprint_identifier` (String) The blueprint identifier the event relates to.
+- `condition` (Block, Optional) A JQ condition gating whether the event starts the workflow. (see [below for nested schema](#nestedblock--node--event_trigger--condition))
+- `property_identifier` (String) The property identifier the timer event relates to. Required for the `TIMER_EXPIRED` event type.
+- `published` (Boolean) Whether the trigger is published.
+- `type` (String) The event type that triggers the workflow. One of `ENTITY_CREATED`, `ENTITY_UPDATED`, `ENTITY_DELETED`, `TIMER_EXPIRED`, `ANY_ENTITY_CHANGE`.
+
+<a id="nestedblock--node--event_trigger--condition"></a>
+### Nested Schema for `node.event_trigger.condition`
+
+Optional:
+
+- `combinator` (String) How the expressions are combined. One of `and`, `or`.
+- `expressions` (List of String) The JQ expressions evaluated against the event.
+
+
+
+<a id="nestedblock--node--input"></a>
+### Nested Schema for `node.input`
+
+Optional:
+
+- `description` (String) The description shown on the response form.
+- `notifications` (Block List) Notifications sent when the input node starts waiting. (see [below for nested schema](#nestedblock--node--input--notifications))
+- `outlets` (Block List) The branches of the input node, each bound to a button. (see [below for nested schema](#nestedblock--node--input--outlets))
+- `responders` (Block, Optional) Who is allowed to respond to this input node. (see [below for nested schema](#nestedblock--node--input--responders))
+- `user_inputs` (Block, Optional) The form presented to the responders. (see [below for nested schema](#nestedblock--node--input--user_inputs))
+
+<a id="nestedblock--node--input--notifications"></a>
+### Nested Schema for `node.input.notifications`
+
+Required:
+
+- `target` (String) The notification target. One of `email`, `webhook`.
+
+Optional:
+
+- `agent` (Boolean) Whether the webhook is routed through the Port agent.
+- `body` (String) The webhook body as a JSON encoded string.
+- `fields` (Block List) The fields rendered in the email notification. Only valid when `target` is `email`. (see [below for nested schema](#nestedblock--node--input--notifications--fields))
+- `headers` (Map of String) The webhook headers.
+- `method` (String) The webhook HTTP method. One of `GET`, `POST`, `PUT`, `PATCH`, `DELETE`.
+- `url` (String) The webhook URL. Required when `target` is `webhook`.
+
+<a id="nestedblock--node--input--notifications--fields"></a>
+### Nested Schema for `node.input.notifications.fields`
+
+Required:
+
+- `label` (String) The label of the field.
+- `value` (String) The value of the field.
+
+
+
+<a id="nestedblock--node--input--outlets"></a>
+### Nested Schema for `node.input.outlets`
+
+Required:
+
+- `identifier` (String) The identifier of the outlet. Must match a button identifier.
+- `num_of_responders` (Number) How many responders must press the button before the workflow continues.
+
+Optional:
+
+- `status_label` (Block, Optional) A custom status label displayed on the node run. (see [below for nested schema](#nestedblock--node--input--outlets--status_label))
+- `title` (String) The title of the outlet.
+- `workflow_status_label` (Block, Optional) A custom status label displayed on the workflow run. (see [below for nested schema](#nestedblock--node--input--outlets--workflow_status_label))
+
+<a id="nestedblock--node--input--outlets--status_label"></a>
+### Nested Schema for `node.input.outlets.status_label`
+
+Optional:
+
+- `text` (String) The label text. Supports JQ expressions for dynamic content.
+- `variant` (String) Semantic variant controlling the label color/style. One of `success`, `alert`.
+
+
+<a id="nestedblock--node--input--outlets--workflow_status_label"></a>
+### Nested Schema for `node.input.outlets.workflow_status_label`
+
+Optional:
+
+- `text` (String) The label text. Supports JQ expressions for dynamic content.
+- `variant` (String) Semantic variant controlling the label color/style. One of `success`, `alert`.
+
+
+
+<a id="nestedblock--node--input--responders"></a>
+### Nested Schema for `node.input.responders`
+
+Optional:
+
+- `roles` (List of String) The roles allowed to respond.
+- `teams` (List of String) The identifiers of the teams allowed to respond. They must exist in the organization.
+- `users` (List of String) The emails of the users allowed to respond. They must exist in the organization.
+- `users_query` (String) A JSON encoded entity search query, run against the `_user` blueprint, resolving additional responders.
+
+
+<a id="nestedblock--node--input--user_inputs"></a>
+### Nested Schema for `node.input.user_inputs`
+
+Optional:
+
+- `buttons` (Attributes List) The buttons rendered on the response form. Each outlet must reference one of these identifiers. (see [below for nested schema](#nestedatt--node--input--user_inputs--buttons))
+- `order_properties` (List of String) The order the inputs are rendered in. Cannot be combined with `steps`.
+- `required_jq_query` (String) A jq query resolving which inputs are required.
+- `steps` (Attributes List) Splits the form into steps. Cannot be combined with `order_properties`. (see [below for nested schema](#nestedatt--node--input--user_inputs--steps))
+- `titles` (Attributes Map) Static titles rendered between the inputs of the form. (see [below for nested schema](#nestedatt--node--input--user_inputs--titles))
+- `user_properties` (Attributes) The user inputs the form collects. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties))
+
+<a id="nestedatt--node--input--user_inputs--buttons"></a>
+### Nested Schema for `node.input.user_inputs.buttons`
+
+Required:
+
+- `identifier` (String) The identifier of the button.
+- `label` (String) The label of the button.
+- `variant` (String) The button variant. One of `PRIMARY`, `SECONDARY`, `DANGER`.
+
+Optional:
+
+- `icon` (String) The icon of the button.
+
+
+<a id="nestedatt--node--input--user_inputs--steps"></a>
+### Nested Schema for `node.input.user_inputs.steps`
+
+Required:
+
+- `order` (List of String) The order of the inputs in this step.
+- `title` (String) The step's title (max 25 characters).
+
+Optional:
+
+- `visible` (Boolean) The visibility of the step.
+- `visible_jq_query` (String) The visibility condition jq query of the step.
+
+
+<a id="nestedatt--node--input--user_inputs--titles"></a>
+### Nested Schema for `node.input.user_inputs.titles`
+
+Required:
+
+- `title` (String) The title text.
+
+Optional:
+
+- `description` (String) The title description.
+- `visible` (Boolean) The visibility of the title.
+- `visible_jq_query` (String) The visibility condition jq query of the title.
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties"></a>
+### Nested Schema for `node.input.user_inputs.user_properties`
+
+Optional:
+
+- `array_props` (Attributes Map) The array property of the action (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--array_props))
+- `boolean_props` (Attributes Map) The boolean property of the action (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--boolean_props))
+- `number_props` (Attributes Map) The number property of the action (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--number_props))
+- `object_props` (Attributes Map) The object property of the action (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--object_props))
+- `string_props` (Attributes Map) The string property of the action (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props))
+
+<a id="nestedatt--node--input--user_inputs--user_properties--array_props"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.array_props`
+
+Optional:
+
+- `boolean_items` (Attributes) An array of boolean items within the property (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--array_props--boolean_items))
+- `default_jq_query` (String) The default jq query of the array property
+- `depends_on` (List of String) The properties that this property depends on
+- `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the array property
+- `disabled_jq_query` (String) The disabled state jq query of the array property
+- `icon` (String) The icon of the property
+- `max_items` (Number) The max items of the array property
+- `max_items_jq_query` (String) The max items jq query of the array property
+- `min_items` (Number) The min items of the array property
+- `min_items_jq_query` (String) The min items jq query of the array property
+- `number_items` (Attributes) An array of number items within the property (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--array_props--number_items))
+- `object_items` (Attributes) An array of object items within the property (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--array_props--object_items))
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
+- `sort` (Attributes) How to sort entities when in the self service action form in the UI (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--array_props--sort))
+- `string_items` (Attributes) An array of string items within the property (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--array_props--string_items))
+- `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the array property
+- `visible_jq_query` (String) The visibility condition jq query of the array property
+
+<a id="nestedatt--node--input--user_inputs--user_properties--array_props--boolean_items"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.array_props.boolean_items`
+
+Optional:
+
+- `default` (List of Boolean) The default values for the boolean items
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--array_props--number_items"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.array_props.number_items`
+
+Optional:
+
+- `default` (List of Number) The default values for the number items
+- `enum` (List of Number) The enum of possible values for the number items
+- `enum_jq_query` (String) The jq query for the enum number items
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--array_props--object_items"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.array_props.object_items`
+
+Optional:
+
+- `default` (List of Map of String) The default values for the object items
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--array_props--sort"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.array_props.sort`
+
+Required:
+
+- `property` (String) The property to sort the entities by
+
+Optional:
+
+- `order` (String) The order to sort the entities in
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--array_props--string_items"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.array_props.string_items`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier related to each string item
+- `dataset` (String) The dataset of the entity-format items
+- `default` (List of String) The default value of the items
+- `enum` (List of String) The enum of possible values for the string items
+- `enum_jq_query` (String) The jq query for the enum of string items
+- `format` (String) The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
+
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--boolean_props"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.boolean_props`
+
+Optional:
+
+- `default` (Boolean) The default of the boolean property
+- `default_jq_query` (String) The default jq query of the boolean property
+- `depends_on` (List of String) The properties that this property depends on
+- `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the boolean property
+- `disabled_jq_query` (String) The disabled state jq query of the boolean property
+- `icon` (String) The icon of the property
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
+- `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the boolean property
+- `visible_jq_query` (String) The visibility condition jq query of the boolean property
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--number_props"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.number_props`
+
+Optional:
+
+- `default` (Number) The default of the number property
+- `default_jq_query` (String) The default jq query of the number property
+- `depends_on` (List of String) The properties that this property depends on
+- `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the number property
+- `disabled_jq_query` (String) The disabled state jq query of the number property
+- `enum` (List of Number) The enum of the number property
+- `enum_colors` (Map of String) The enum colors of the number property
+- `enum_jq_query` (String) The enum jq query of the string property
+- `icon` (String) The icon of the property
+- `maximum` (Number) The min of the number property
+- `minimum` (Number) The max of the number property
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
+- `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the number property
+- `visible_jq_query` (String) The visibility condition jq query of the number property
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--object_props"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.object_props`
+
+Optional:
+
+- `client_side_encryption` (Attributes) Client-side encryption configuration for the property. The value will be encrypted on the client side before being sent to Port. Cannot be used with `encryption`. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--object_props--client_side_encryption))
+- `default` (String) The default of the object property
+- `default_jq_query` (String) The default jq query of the object property
+- `depends_on` (List of String) The properties that this property depends on
+- `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the object property
+- `disabled_jq_query` (String) The disabled state jq query of the object property
+- `encryption` (String) The algorithm to encrypt the property with for server-side encryption. Accepted value: `aes256-gcm`. Cannot be used with `client_side_encryption`.
+- `icon` (String) The icon of the property
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
+- `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the object property
+- `visible_jq_query` (String) The visibility condition jq query of the object property
+
+<a id="nestedatt--node--input--user_inputs--user_properties--object_props--client_side_encryption"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.object_props.client_side_encryption`
+
+Required:
+
+- `algorithm` (String) The encryption algorithm. Accepted value: `client-side`
+- `key` (String) The public key (PEM format) to use for encryption
+
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier the string property relates to
+- `client_side_encryption` (Attributes) Client-side encryption configuration for the property. The value will be encrypted on the client side before being sent to Port. Cannot be used with `encryption`. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--client_side_encryption))
+- `dataset` (Attributes) The dataset of an the entity-format property. Supports nested rules with combinator groups. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset))
+- `default` (String) The default of the string property
+- `default_jq_query` (String) The default jq query of the string property
+- `depends_on` (List of String) The properties that this property depends on
+- `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the string property
+- `disabled_jq_query` (String) The disabled state jq query of the string property
+- `encryption` (String) The algorithm to encrypt the property with for server-side encryption. Accepted value: `aes256-gcm`. Cannot be used with `client_side_encryption`.
+- `enum` (List of String) The enum of the string property
+- `enum_colors` (Map of String) The enum colors of the string property
+- `enum_jq_query` (String) The enum jq query of the string property
+- `format` (String) The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
+- `icon` (String) The icon of the property
+- `max_length` (Number) The max length of the string property
+- `min_length` (Number) The min length of the string property
+- `pattern` (String) The pattern of the string property
+- `pattern_jq_query` (String) The pattern jq query of the string property. This field accepts a JQ expression to dynamically generate either a regex pattern (as a string) or a list of allowed values (as an array). Cannot be used with `pattern`. Empty values are not allowed. Examples: `"if .env == \"prod\" then \"^[a-z]+$\" else \"^[a-zA-Z]+$\" end"` for dynamic regex patterns, or `"[\"value1\", \"value2\"]"` for a fixed list of allowed values.
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
+- `sort` (Attributes) How to sort entities when in the self service action form in the UI (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--sort))
+- `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the string property
+- `visible_jq_query` (String) The visibility condition jq query of the string property
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--client_side_encryption"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.client_side_encryption`
+
+Required:
+
+- `algorithm` (String) The encryption algorithm. Accepted value: `client-side`
+- `key` (String) The public key (PEM format) to use for encryption
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset`
+
+Required:
+
+- `combinator` (String) The combinator of the dataset
+- `rules` (Attributes List) The rules of the dataset. Can be leaf rules (with operator) or group rules (with combinator and nested rules). (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules))
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--value))
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--value))
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--value))
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--value"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--value"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--value"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--sort"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.sort`
+
+Required:
+
+- `property` (String) The property to sort the entities by
+
+Optional:
+
+- `order` (String) The order to sort the entities in
+
+
+
+
 
 
 <a id="nestedblock--node--integration_action"></a>
@@ -98,9 +763,592 @@ Optional:
 
 Optional:
 
-- `defer_integration_installation` (Boolean) When true, allows saving the workflow before the integration is installed
-- `execution_properties` (String) The integration action execution properties as a JSON encoded string
-- `installation_id` (String) The installation id of the integration. Omit when defer_integration_installation is true.
-- `integration_invocation_type` (String) The invocation type of the integration action
-- `integration_provider` (String) The provider of the integration action
-- `on_failure` (String) The action to take if the integration action fails
+- `execution_properties` (String) The integration action execution properties as a JSON encoded string.
+- `installation_id` (String) The installation id of the integration.
+- `integration_invocation_type` (String) The invocation type of the integration action.
+- `integration_provider` (String) The provider of the integration action.
+- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
+
+
+<a id="nestedblock--node--kafka"></a>
+### Nested Schema for `node.kafka`
+
+Optional:
+
+- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
+- `payload` (String) The Kafka message payload as a JSON encoded string.
+
+
+<a id="nestedblock--node--schedule_trigger"></a>
+### Nested Schema for `node.schedule_trigger`
+
+Optional:
+
+- `cron` (String) The cron expression defining when the workflow triggers (e.g. `0 9 * * 1-5`), evaluated in UTC.
+- `published` (Boolean) Whether the trigger is published.
+
+
+<a id="nestedblock--node--self_serve_trigger"></a>
+### Nested Schema for `node.self_serve_trigger`
+
+Optional:
+
+- `action_card_button_text` (String) The text of the button displayed on the self service card (max 15 characters).
+- `contexts` (Block List) Where the trigger is surfaced in the UI. (see [below for nested schema](#nestedblock--node--self_serve_trigger--contexts))
+- `execute_action_button_text` (String) The text of the button that executes the workflow (max 15 characters).
+- `permissions` (Block, Optional) Who is allowed to execute this trigger. (see [below for nested schema](#nestedblock--node--self_serve_trigger--permissions))
+- `published` (Boolean) Whether the trigger is published.
+- `user_inputs` (Block, Optional) The form presented to the user when triggering the workflow. (see [below for nested schema](#nestedblock--node--self_serve_trigger--user_inputs))
+- `variant` (String) The trigger variant. One of `DEFAULT`, `ALERT`.
+
+<a id="nestedblock--node--self_serve_trigger--contexts"></a>
+### Nested Schema for `node.self_serve_trigger.contexts`
+
+Required:
+
+- `on` (String) The context type. One of `CREATE_ENTITY`, `ENTITY`.
+
+Optional:
+
+- `blueprint_identifier` (String) The blueprint the trigger creates an entity for. Required when `on` is `CREATE_ENTITY`.
+- `user_input` (String) The user input the trigger is bound to. Required when `on` is `ENTITY`.
+
+
+<a id="nestedblock--node--self_serve_trigger--permissions"></a>
+### Nested Schema for `node.self_serve_trigger.permissions`
+
+Optional:
+
+- `policy` (String) A JSON encoded RBAC query that dynamically resolves who is permitted, of the form `{"combinator":"and","rules":[{"property":{"context":"user","property":"department"},"operator":"=","value":"engineering"}]}`. `context` is one of `user`, `userTeams`, `form`, `workflowRun`.
+- `roles` (List of String) The roles the permission applies to.
+- `teams` (List of String) The identifiers of the teams the permission applies to. They must exist in the organization.
+- `users` (List of String) The emails of the users the permission applies to. They must exist in the organization.
+
+
+<a id="nestedblock--node--self_serve_trigger--user_inputs"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs`
+
+Optional:
+
+- `order_properties` (List of String) The order the inputs are rendered in. Cannot be combined with `steps`.
+- `required_jq_query` (String) A jq query resolving which inputs are required.
+- `steps` (Attributes List) Splits the form into steps. Cannot be combined with `order_properties`. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--steps))
+- `titles` (Attributes Map) Static titles rendered between the inputs of the form. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--titles))
+- `user_properties` (Attributes) The user inputs the form collects. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--steps"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.steps`
+
+Required:
+
+- `order` (List of String) The order of the inputs in this step.
+- `title` (String) The step's title (max 25 characters).
+
+Optional:
+
+- `visible` (Boolean) The visibility of the step.
+- `visible_jq_query` (String) The visibility condition jq query of the step.
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--titles"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.titles`
+
+Required:
+
+- `title` (String) The title text.
+
+Optional:
+
+- `description` (String) The title description.
+- `visible` (Boolean) The visibility of the title.
+- `visible_jq_query` (String) The visibility condition jq query of the title.
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties`
+
+Optional:
+
+- `array_props` (Attributes Map) The array property of the action (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--array_props))
+- `boolean_props` (Attributes Map) The boolean property of the action (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--boolean_props))
+- `number_props` (Attributes Map) The number property of the action (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--number_props))
+- `object_props` (Attributes Map) The object property of the action (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--object_props))
+- `string_props` (Attributes Map) The string property of the action (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--array_props"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.array_props`
+
+Optional:
+
+- `boolean_items` (Attributes) An array of boolean items within the property (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--array_props--boolean_items))
+- `default_jq_query` (String) The default jq query of the array property
+- `depends_on` (List of String) The properties that this property depends on
+- `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the array property
+- `disabled_jq_query` (String) The disabled state jq query of the array property
+- `icon` (String) The icon of the property
+- `max_items` (Number) The max items of the array property
+- `max_items_jq_query` (String) The max items jq query of the array property
+- `min_items` (Number) The min items of the array property
+- `min_items_jq_query` (String) The min items jq query of the array property
+- `number_items` (Attributes) An array of number items within the property (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--array_props--number_items))
+- `object_items` (Attributes) An array of object items within the property (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--array_props--object_items))
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
+- `sort` (Attributes) How to sort entities when in the self service action form in the UI (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--array_props--sort))
+- `string_items` (Attributes) An array of string items within the property (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--array_props--string_items))
+- `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the array property
+- `visible_jq_query` (String) The visibility condition jq query of the array property
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--array_props--boolean_items"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.array_props.boolean_items`
+
+Optional:
+
+- `default` (List of Boolean) The default values for the boolean items
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--array_props--number_items"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.array_props.number_items`
+
+Optional:
+
+- `default` (List of Number) The default values for the number items
+- `enum` (List of Number) The enum of possible values for the number items
+- `enum_jq_query` (String) The jq query for the enum number items
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--array_props--object_items"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.array_props.object_items`
+
+Optional:
+
+- `default` (List of Map of String) The default values for the object items
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--array_props--sort"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.array_props.sort`
+
+Required:
+
+- `property` (String) The property to sort the entities by
+
+Optional:
+
+- `order` (String) The order to sort the entities in
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--array_props--string_items"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.array_props.string_items`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier related to each string item
+- `dataset` (String) The dataset of the entity-format items
+- `default` (List of String) The default value of the items
+- `enum` (List of String) The enum of possible values for the string items
+- `enum_jq_query` (String) The jq query for the enum of string items
+- `format` (String) The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
+
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--boolean_props"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.boolean_props`
+
+Optional:
+
+- `default` (Boolean) The default of the boolean property
+- `default_jq_query` (String) The default jq query of the boolean property
+- `depends_on` (List of String) The properties that this property depends on
+- `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the boolean property
+- `disabled_jq_query` (String) The disabled state jq query of the boolean property
+- `icon` (String) The icon of the property
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
+- `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the boolean property
+- `visible_jq_query` (String) The visibility condition jq query of the boolean property
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--number_props"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.number_props`
+
+Optional:
+
+- `default` (Number) The default of the number property
+- `default_jq_query` (String) The default jq query of the number property
+- `depends_on` (List of String) The properties that this property depends on
+- `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the number property
+- `disabled_jq_query` (String) The disabled state jq query of the number property
+- `enum` (List of Number) The enum of the number property
+- `enum_colors` (Map of String) The enum colors of the number property
+- `enum_jq_query` (String) The enum jq query of the string property
+- `icon` (String) The icon of the property
+- `maximum` (Number) The min of the number property
+- `minimum` (Number) The max of the number property
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
+- `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the number property
+- `visible_jq_query` (String) The visibility condition jq query of the number property
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--object_props"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.object_props`
+
+Optional:
+
+- `client_side_encryption` (Attributes) Client-side encryption configuration for the property. The value will be encrypted on the client side before being sent to Port. Cannot be used with `encryption`. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--object_props--client_side_encryption))
+- `default` (String) The default of the object property
+- `default_jq_query` (String) The default jq query of the object property
+- `depends_on` (List of String) The properties that this property depends on
+- `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the object property
+- `disabled_jq_query` (String) The disabled state jq query of the object property
+- `encryption` (String) The algorithm to encrypt the property with for server-side encryption. Accepted value: `aes256-gcm`. Cannot be used with `client_side_encryption`.
+- `icon` (String) The icon of the property
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
+- `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the object property
+- `visible_jq_query` (String) The visibility condition jq query of the object property
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--object_props--client_side_encryption"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.object_props.client_side_encryption`
+
+Required:
+
+- `algorithm` (String) The encryption algorithm. Accepted value: `client-side`
+- `key` (String) The public key (PEM format) to use for encryption
+
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier the string property relates to
+- `client_side_encryption` (Attributes) Client-side encryption configuration for the property. The value will be encrypted on the client side before being sent to Port. Cannot be used with `encryption`. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--client_side_encryption))
+- `dataset` (Attributes) The dataset of an the entity-format property. Supports nested rules with combinator groups. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset))
+- `default` (String) The default of the string property
+- `default_jq_query` (String) The default jq query of the string property
+- `depends_on` (List of String) The properties that this property depends on
+- `description` (String) The description of the property
+- `disabled` (Boolean) The disabled state of the string property
+- `disabled_jq_query` (String) The disabled state jq query of the string property
+- `encryption` (String) The algorithm to encrypt the property with for server-side encryption. Accepted value: `aes256-gcm`. Cannot be used with `client_side_encryption`.
+- `enum` (List of String) The enum of the string property
+- `enum_colors` (Map of String) The enum colors of the string property
+- `enum_jq_query` (String) The enum jq query of the string property
+- `format` (String) The format of the string property, Accepted values include `date-time`, `url`, `email`, `ipv4`, `ipv6`, `yaml`, `entity`, `user`, `team`, `proto`, `markdown`
+- `icon` (String) The icon of the property
+- `max_length` (Number) The max length of the string property
+- `min_length` (Number) The min length of the string property
+- `pattern` (String) The pattern of the string property
+- `pattern_jq_query` (String) The pattern jq query of the string property. This field accepts a JQ expression to dynamically generate either a regex pattern (as a string) or a list of allowed values (as an array). Cannot be used with `pattern`. Empty values are not allowed. Examples: `"if .env == \"prod\" then \"^[a-z]+$\" else \"^[a-zA-Z]+$\" end"` for dynamic regex patterns, or `"[\"value1\", \"value2\"]"` for a fixed list of allowed values.
+- `required` (Boolean) Whether the property is required, by default not required, this property can't be set at the same time if `required_jq_query` is set, and only supports true as value
+- `sort` (Attributes) How to sort entities when in the self service action form in the UI (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--sort))
+- `title` (String) The title of the property
+- `visible` (Boolean) The visibility of the string property
+- `visible_jq_query` (String) The visibility condition jq query of the string property
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--client_side_encryption"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.client_side_encryption`
+
+Required:
+
+- `algorithm` (String) The encryption algorithm. Accepted value: `client-side`
+- `key` (String) The public key (PEM format) to use for encryption
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset`
+
+Required:
+
+- `combinator` (String) The combinator of the dataset
+- `rules` (Attributes List) The rules of the dataset. Can be leaf rules (with operator) or group rules (with combinator and nested rules). (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--value))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--value))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--value))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules`
+
+Optional:
+
+- `blueprint` (String) The blueprint identifier of the rule
+- `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
+- `property` (String) The property identifier of the rule
+- `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--value"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--value"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--value"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--value"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset.rules.value`
+
+Optional:
+
+- `jq_query` (String)
+
+
+
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--sort"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.sort`
+
+Required:
+
+- `property` (String) The property to sort the entities by
+
+Optional:
+
+- `order` (String) The order to sort the entities in
+
+
+
+
+
+
+<a id="nestedblock--node--upsert_entity"></a>
+### Nested Schema for `node.upsert_entity`
+
+Optional:
+
+- `blueprint_identifier` (String) The identifier of the blueprint to upsert into.
+- `mapping` (Block, Optional) The entity fields to upsert. (see [below for nested schema](#nestedblock--node--upsert_entity--mapping))
+- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
+
+<a id="nestedblock--node--upsert_entity--mapping"></a>
+### Nested Schema for `node.upsert_entity.mapping`
+
+Optional:
+
+- `icon` (String) The icon of the entity to upsert.
+- `identifier` (String) The identifier of the entity to upsert.
+- `properties` (String) The properties of the entity as a JSON encoded string.
+- `relations` (String) The relations of the entity as a JSON encoded string.
+- `teams` (List of String) The teams of the entity to upsert. Values may contain `{{ }}` template expressions that are resolved when the node runs.
+- `title` (String) The title of the entity to upsert.
+
+
+
+<a id="nestedblock--node--webhook"></a>
+### Nested Schema for `node.webhook`
+
+Optional:
+
+- `agent` (Boolean) Whether the request is routed through the Port agent.
+- `body` (String) The request body as a JSON encoded string.
+- `headers` (Map of String) The HTTP headers of the request.
+- `method` (String) The HTTP method. One of `GET`, `POST`, `PUT`, `PATCH`, `DELETE`.
+- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
+- `on_timeout` (String) The action to take if the webhook times out. One of `fail`, `continue`.
+- `synchronized` (Boolean) Whether the request is sent synchronously.
+- `url` (String) The URL of the webhook.

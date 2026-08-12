@@ -21,4 +21,23 @@ const (
 	RunUpdated           = "RUN_UPDATED"
 	AnyRunChange         = "ANY_RUN_CHANGE"
 	JqCondition          = "JQ"
+
+	// Workflow trigger node config types
+	SelfServeTrigger = "SELF_SERVE_TRIGGER"
+	EventTrigger     = "EVENT_TRIGGER"
+	ScheduleTrigger  = "SCHEDULE_TRIGGER"
+
+	// Workflow invocation node config types. Kafka, Webhook, UpsertEntity and
+	// IntegrationAction reuse the constants declared above.
+	AI            = "AI"
+	AIAgent       = "AI_AGENT"
+	ConditionNode = "CONDITION"
+	InputNode     = "INPUT"
+
+	// Workflow trigger event types
+	WorkflowTimerExpired = "TIMER_EXPIRED"
+
+	// Workflow self serve trigger context types
+	CreateEntityContext = "CREATE_ENTITY"
+	EntityContext       = "ENTITY"
 )

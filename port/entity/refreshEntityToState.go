@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayProperties map[string][]interface{}, blueprint *cli.Blueprint) {
+func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayProperties map[string][]interface{}, blueprint *cli.Blueprint, oldProperties *EntityPropertiesModel) {
 	mapStringItems := make(map[string][]*string)
 	mapNumberItems := make(map[string][]*float64)
 	mapBooleanItems := make(map[string][]*bool)
@@ -70,8 +71,20 @@ func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *Ent
 
 		case "object":
 			if t != nil {
-				for _, item := range t {
-					stringJs, _ := utils.GoObjectToTerraformString(&item, r.portClient.JSONEscapeHTML)
+				var oldObjectItems []attr.Value
+				if oldProperties != nil && oldProperties.ArrayProps != nil && !oldProperties.ArrayProps.ObjectItems.IsNull() {
+					if oldListVal, ok := oldProperties.ArrayProps.ObjectItems.Elements()[k]; ok {
+						if oldList, ok := oldListVal.(types.List); ok && !oldList.IsNull() {
+							oldObjectItems = oldList.Elements()
+						}
+					}
+				}
+				for i, item := range t {
+					var oldValue types.String
+					if i < len(oldObjectItems) {
+						oldValue = oldObjectItems[i].(types.String)
+					}
+					stringJs, _ := utils.GoObjectToTerraformStringPreferExisting(oldValue, &item, r.portClient.JSONEscapeHTML)
 					mapObjectItems[k] = append(mapObjectItems[k], stringJs.ValueStringPointer())
 				}
 				if len(t) == 0 {
@@ -86,6 +99,7 @@ func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *Ent
 }
 
 func (r *EntityResource) refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) {
+	oldProperties := state.Properties
 	state.Properties = &EntityPropertiesModel{}
 	arrayProperties := make(map[string][]interface{})
 	for k, v := range e.Properties {
@@ -111,7 +125,11 @@ func (r *EntityResource) refreshPropertiesEntityState(ctx context.Context, state
 			if state.Properties.ObjectProps == nil {
 				state.Properties.ObjectProps = make(map[string]types.String)
 			}
-			state.Properties.ObjectProps[k], _ = utils.GoObjectToTerraformString(&t, r.portClient.JSONEscapeHTML)
+			var oldValue types.String
+			if oldProperties != nil && oldProperties.ObjectProps != nil {
+				oldValue = oldProperties.ObjectProps[k]
+			}
+			state.Properties.ObjectProps[k], _ = utils.GoObjectToTerraformStringPreferExisting(oldValue, &t, r.portClient.JSONEscapeHTML)
 		case nil:
 			switch blueprint.Schema.Properties[k].Type {
 			case "string":
@@ -140,7 +158,7 @@ func (r *EntityResource) refreshPropertiesEntityState(ctx context.Context, state
 		}
 	}
 	if len(arrayProperties) != 0 {
-		r.refreshArrayEntityState(ctx, state, arrayProperties, blueprint)
+		r.refreshArrayEntityState(ctx, state, arrayProperties, blueprint, oldProperties)
 	}
 }
 

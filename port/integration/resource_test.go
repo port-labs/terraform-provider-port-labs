@@ -48,6 +48,73 @@ func createIntegration(
 `, installationId, installationAppType)
 }
 
+func createIntegrationNonAlphabeticalKeyOrder(
+	installationId string,
+	installationAppType string,
+) string {
+	return fmt.Sprintf(`
+	resource "port_integration" "kafkush" {
+		installation_id       = "%s"
+		installation_app_type = "%s"
+		title                 = "my-kafka-cluster"
+		version               = "1.33.7"
+		config = jsonencode({
+			resources = [{
+				kind = "ZOMG"
+				selector = {
+					query = ".title"
+				}
+				port = {
+					entity = {
+						mappings = [{
+							identifier = "'my-identifier'"
+							title      = ".title"
+							blueprint  = "'my-blueprint'"
+							properties = {
+								zebra = 123
+								alpha = 456
+							}
+							relations  = {}
+						}]
+					}
+				}
+			}]
+			deleteDependentEntities = true
+		})
+	}
+`, installationId, installationAppType)
+}
+
+func TestPortIntegrationConfigKeyOrder(t *testing.T) {
+	integrationIdentifier := utils.GenID()
+	installationAppType := "kafka"
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	testConfig := createIntegrationNonAlphabeticalKeyOrder(integrationIdentifier, installationAppType)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "my-kafka-cluster"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
+				),
+			},
+			{
+				Config:   testConfig,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func createIntegrationWithWebHook(
 	installationId string,
 	installationAppType string,

@@ -34,7 +34,11 @@ func refreshEntityScopePermissionsState(oldBlock *BlueprintPermissionsTFBlockWit
 	}
 
 	if apiBlock.Policy != nil {
-		policy, err := utils.GoObjectToTerraformString(apiBlock.Policy, jsonEscapeHTML)
+		var oldPolicy types.String
+		if oldBlock != nil {
+			oldPolicy = oldBlock.Policy
+		}
+		policy, err := utils.GoObjectToTerraformStringPreferExisting(oldPolicy, apiBlock.Policy, jsonEscapeHTML)
 		if err != nil {
 			return nil, err
 		}

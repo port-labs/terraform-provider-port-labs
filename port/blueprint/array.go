@@ -136,7 +136,7 @@ func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props 
 	return nil
 }
 
-func AddArrayPropertiesToState(ctx context.Context, v *cli.BlueprintProperty, jsonEscapeHTML bool) *ArrayPropModel {
+func AddArrayPropertiesToState(ctx context.Context, v *cli.BlueprintProperty, jsonEscapeHTML bool, oldArrayProp *ArrayPropModel) *ArrayPropModel {
 	arrayProp := &ArrayPropModel{
 		MinItems: flex.GoInt64ToFramework(v.MinItems),
 		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
@@ -217,8 +217,16 @@ func AddArrayPropertiesToState(ctx context.Context, v *cli.BlueprintProperty, js
 						objectArray[i] = v.(map[string]interface{})
 					}
 					attrs := make([]attr.Value, 0, len(objectArray))
-					for _, value := range objectArray {
-						stringValue, _ := utils.GoObjectToTerraformString(&value, jsonEscapeHTML)
+					var oldDefaultElements []attr.Value
+					if oldArrayProp != nil && oldArrayProp.ObjectItems != nil && !oldArrayProp.ObjectItems.Default.IsNull() {
+						oldDefaultElements = oldArrayProp.ObjectItems.Default.Elements()
+					}
+					for i, value := range objectArray {
+						var oldValue types.String
+						if i < len(oldDefaultElements) {
+							oldValue = oldDefaultElements[i].(types.String)
+						}
+						stringValue, _ := utils.GoObjectToTerraformStringPreferExisting(oldValue, &value, jsonEscapeHTML)
 						attrs = append(attrs, stringValue)
 					}
 					arrayProp.ObjectItems.Default, _ = types.ListValue(types.StringType, attrs)

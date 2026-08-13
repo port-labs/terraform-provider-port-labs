@@ -10,9 +10,16 @@ import (
 func (r *AggregationPropertiesResource) refreshAggregationPropertiesState(state *AggregationPropertiesModel, aggregationProperties map[string]cli.BlueprintAggregationProperty) error {
 	state.ID = state.BlueprintIdentifier
 
+	oldProperties := state.Properties
 	state.Properties = map[string]*AggregationPropertyModel{}
 
 	for aggregationPropertyIdentifier, aggregationProperty := range aggregationProperties {
+		var oldQuery types.String
+		if oldProperties != nil {
+			if oldProp, ok := oldProperties[aggregationPropertyIdentifier]; ok && oldProp != nil {
+				oldQuery = oldProp.Query
+			}
+		}
 
 		state.Properties[aggregationPropertyIdentifier] = &AggregationPropertyModel{
 			Title:                     types.StringPointerValue(aggregationProperty.Title),
@@ -24,7 +31,7 @@ func (r *AggregationPropertiesResource) refreshAggregationPropertiesState(state 
 			PathFilter:                nil,
 		}
 
-		query, err := utils.GoObjectToTerraformString(aggregationProperty.Query, r.portClient.JSONEscapeHTML)
+		query, err := utils.GoObjectToTerraformStringPreferExisting(oldQuery, aggregationProperty.Query, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}

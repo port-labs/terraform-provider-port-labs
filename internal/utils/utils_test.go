@@ -112,3 +112,86 @@ func TestGoObjectToTerraformString(t *testing.T) {
 		})
 	}
 }
+
+func TestJSONStringsSemanticallyEqual(t *testing.T) {
+	t.Run("identical strings", func(t *testing.T) {
+		s := `{"a":1,"b":2}`
+		equal, err := JSONStringsSemanticallyEqual(s, s, false)
+		assert.NoError(t, err)
+		assert.True(t, equal)
+	})
+
+	t.Run("different key order", func(t *testing.T) {
+		a := `{"resources":[],"deleteDependentEntities":true}`
+		b := `{"deleteDependentEntities":true,"resources":[]}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, false)
+		assert.NoError(t, err)
+		assert.True(t, equal)
+	})
+
+	t.Run("nested key reordering", func(t *testing.T) {
+		a := `{"outer":{"zebra":1,"alpha":2}}`
+		b := `{"outer":{"alpha":2,"zebra":1}}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, false)
+		assert.NoError(t, err)
+		assert.True(t, equal)
+	})
+
+	t.Run("html escape equivalence", func(t *testing.T) {
+		a := `{"operator":">","property":"sum","value":2}`
+		b := `{"operator":"\u003e","property":"sum","value":2}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, true)
+		assert.NoError(t, err)
+		assert.True(t, equal)
+	})
+
+	t.Run("semantically different", func(t *testing.T) {
+		a := `{"a":1}`
+		b := `{"a":2}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, false)
+		assert.NoError(t, err)
+		assert.False(t, equal)
+	})
+
+	t.Run("invalid json", func(t *testing.T) {
+		_, err := JSONStringsSemanticallyEqual(`{invalid`, `{"a":1}`, false)
+		assert.Error(t, err)
+	})
+}
+
+func TestGoObjectToTerraformStringPreferExisting(t *testing.T) {
+	v := map[string]any{
+		"deleteDependentEntities": true,
+		"resources":                 []any{},
+	}
+
+	t.Run("returns preferred when semantically equal", func(t *testing.T) {
+		preferred := types.StringValue(`{"resources":[],"deleteDependentEntities":true}`)
+		got, err := GoObjectToTerraformStringPreferExisting(preferred, v, false)
+		assert.NoError(t, err)
+		assert.Equal(t, preferred, got)
+	})
+
+	t.Run("returns encoded when preferred is null", func(t *testing.T) {
+		got, err := GoObjectToTerraformStringPreferExisting(types.StringNull(), v, false)
+		assert.NoError(t, err)
+		want, _ := GoObjectToTerraformString(v, false)
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("returns encoded when semantically different", func(t *testing.T) {
+		preferred := types.StringValue(`{"deleteDependentEntities":false,"resources":[]}`)
+		got, err := GoObjectToTerraformStringPreferExisting(preferred, v, false)
+		assert.NoError(t, err)
+		want, _ := GoObjectToTerraformString(v, false)
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("falls back to encoded when preferred is invalid json", func(t *testing.T) {
+		preferred := types.StringValue(`{invalid`)
+		got, err := GoObjectToTerraformStringPreferExisting(preferred, v, false)
+		assert.NoError(t, err)
+		want, _ := GoObjectToTerraformString(v, false)
+		assert.Equal(t, want, got)
+	})
+}

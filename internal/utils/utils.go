@@ -103,6 +103,51 @@ func GoObjectToTerraformString(v interface{}, jsonEscapeHTML bool) (types.String
 	return types.StringValue(jsonStr), nil
 }
 
+func normalizeJSONString(s string, jsonEscapeHTML bool) (string, error) {
+	var v any
+	if err := json.Unmarshal([]byte(s), &v); err != nil {
+		return "", err
+	}
+	encoded, err := GoObjectToTerraformString(v, jsonEscapeHTML)
+	if err != nil {
+		return "", err
+	}
+	return encoded.ValueString(), nil
+}
+
+func JSONStringsSemanticallyEqual(a, b string, jsonEscapeHTML bool) (bool, error) {
+	if a == b {
+		return true, nil
+	}
+	normalizedA, err := normalizeJSONString(a, jsonEscapeHTML)
+	if err != nil {
+		return false, err
+	}
+	normalizedB, err := normalizeJSONString(b, jsonEscapeHTML)
+	if err != nil {
+		return false, err
+	}
+	return normalizedA == normalizedB, nil
+}
+
+func GoObjectToTerraformStringPreferExisting(preferred types.String, v interface{}, jsonEscapeHTML bool) (types.String, error) {
+	encoded, err := GoObjectToTerraformString(v, jsonEscapeHTML)
+	if err != nil {
+		return types.StringNull(), err
+	}
+
+	if preferred.IsNull() || preferred.IsUnknown() {
+		return encoded, nil
+	}
+
+	equal, err := JSONStringsSemanticallyEqual(preferred.ValueString(), encoded.ValueString(), jsonEscapeHTML)
+	if err != nil || !equal {
+		return encoded, nil
+	}
+
+	return preferred, nil
+}
+
 func TerraformStringToGoType[T any](s types.String) (T, error) {
 	var obj T
 

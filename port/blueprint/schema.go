@@ -267,6 +267,14 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 				},
 			},
 		},
+		"union": schema.BoolAttribute{
+			MarkdownDescription: "Combine values from multiple sources. Each source keeps its own contribution and cannot erase another's. This cannot be changed after the property is created. Supported for string and number array items only.",
+			Optional:            true,
+		},
+		"include_duplicates": schema.BoolAttribute{
+			MarkdownDescription: "When union is enabled, controls whether a value reported by several sources appears once (false) or once per source (true). Can be changed at any time.",
+			Optional:            true,
+		},
 	}
 
 	utils.CopyMaps(arrayPropertySchema, MetadataProperties())

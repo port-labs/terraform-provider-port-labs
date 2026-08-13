@@ -124,14 +124,83 @@ type WorkflowNodePermissions struct {
 }
 
 type WorkflowUserInputs struct {
-	Properties map[string]ActionProperty `json:"properties"`
-	Required   any                       `json:"required,omitempty"`
-	Order      []string                  `json:"order,omitempty"`
-	Steps      []Step                    `json:"steps,omitempty"`
-	Titles     map[string]ActionTitle    `json:"titles,omitempty"`
+	Properties  map[string]WorkflowInputProperty `json:"properties"`
+	Required    any                              `json:"required,omitempty"`
+	Order       []string                         `json:"order,omitempty"`
+	Steps       []WorkflowUserInputsStep         `json:"steps,omitempty"`
+	Titles      map[string]ActionTitle           `json:"titles,omitempty"`
+	Validations []WorkflowInputValidation        `json:"validations,omitempty"`
 	// Required on an input node and absent on a self serve trigger, so this is a
 	// pointer for the same reason as WorkflowNodeConfig.Outlets.
 	Buttons *[]WorkflowInputButton `json:"buttons,omitempty"`
+}
+
+// WorkflowInputProperty is a single input of a workflow form. It is kept apart
+// from ActionProperty because the workflow service accepts `readOnly` and
+// rejects action only attributes such as encryption.
+type WorkflowInputProperty struct {
+	Type             string             `json:"type,omitempty"`
+	Title            *string            `json:"title,omitempty"`
+	Description      *string            `json:"description,omitempty"`
+	Icon             *string            `json:"icon,omitempty"`
+	Format           *string            `json:"format,omitempty"`
+	Blueprint        *string            `json:"blueprint,omitempty"`
+	Default          any                `json:"default,omitempty"`
+	DependsOn        []string           `json:"dependsOn,omitempty"`
+	Dataset          *WorkflowDataset   `json:"dataset,omitempty"`
+	Sort             *EntitiesSortModel `json:"sort,omitempty"`
+	Enum             any                `json:"enum,omitempty"`
+	EnumColors       map[string]string  `json:"enumColors,omitempty"`
+	Pattern          any                `json:"pattern,omitempty"`
+	MinLength        *int               `json:"minLength,omitempty"`
+	MaxLength        *int               `json:"maxLength,omitempty"`
+	Minimum          *float64           `json:"minimum,omitempty"`
+	Maximum          *float64           `json:"maximum,omitempty"`
+	ExclusiveMinimum *float64           `json:"exclusiveMinimum,omitempty"`
+	ExclusiveMaximum *float64           `json:"exclusiveMaximum,omitempty"`
+	MinItems         any                `json:"minItems,omitempty"`
+	MaxItems         any                `json:"maxItems,omitempty"`
+	UniqueItems      *bool              `json:"uniqueItems,omitempty"`
+	Items            map[string]any     `json:"items,omitempty"`
+	Visible          any                `json:"visible,omitempty"`
+	ReadOnly         any                `json:"readOnly,omitempty"`
+	Disabled         any                `json:"disabled,omitempty"`
+}
+
+// WorkflowDataset filters the entities an entity input offers. It is kept apart
+// from Dataset because a workflow rule value is either a fixed value or a
+// `{jqQuery}` object resolved against the form, and Dataset flattens both into a
+// single string.
+type WorkflowDataset struct {
+	Combinator string                `json:"combinator"`
+	Rules      []WorkflowDatasetRule `json:"rules"`
+}
+
+type WorkflowDatasetRule struct {
+	Blueprint *string `json:"blueprint,omitempty"`
+	Property  *string `json:"property,omitempty"`
+	Operator  string  `json:"operator,omitempty"`
+	Value     any     `json:"value,omitempty"`
+	// Group rules carry a combinator and nested rules instead of an operator.
+	Combinator *string               `json:"combinator,omitempty"`
+	Rules      []WorkflowDatasetRule `json:"rules,omitempty"`
+}
+
+// WorkflowUserInputsStep mirrors cli.Step but carries the step level validations
+// that only workflow forms support.
+type WorkflowUserInputsStep struct {
+	Title       string                    `json:"title"`
+	Order       []string                  `json:"order"`
+	Visible     any                       `json:"visible,omitempty"`
+	Validations []WorkflowInputValidation `json:"validations,omitempty"`
+}
+
+// WorkflowInputValidation is a jq constraint evaluated against the form data when
+// the form is submitted. The engine is omitted because jq is the only one the
+// service accepts, and it defaults to jq server side.
+type WorkflowInputValidation struct {
+	Constraint string `json:"constraint"`
+	Message    string `json:"message"`
 }
 
 type WorkflowInputButton struct {

@@ -29,6 +29,28 @@ func (v stringValidator) ValidateString(_ context.Context, req validator.StringR
 	}
 }
 
+// isTrueValidator rejects `required = false`. Leaving an input out of the
+// required list is how it is marked optional, so an explicit false would be
+// silently dropped.
+type isTrueValidator struct{}
+
+var _ validator.Bool = isTrueValidator{}
+
+func (v isTrueValidator) Description(context.Context) string { return "value must be true" }
+
+func (v isTrueValidator) MarkdownDescription(ctx context.Context) string { return v.Description(ctx) }
+
+func (v isTrueValidator) ValidateBool(_ context.Context, req validator.BoolRequest, resp *validator.BoolResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() || req.ConfigValue.ValueBool() {
+		return
+	}
+	resp.Diagnostics.AddAttributeError(
+		req.Path,
+		"Invalid required value",
+		"Only `true` is accepted. Leave `required` out to make the input optional.",
+	)
+}
+
 func decodeJSONObject(value string) (map[string]any, error) {
 	var decoded any
 	if err := json.Unmarshal([]byte(value), &decoded); err != nil {

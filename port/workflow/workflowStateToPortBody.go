@@ -8,7 +8,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/action"
 )
 
 func workflowStateToPortBody(ctx context.Context, state *WorkflowModel) (*cli.Workflow, error) {
@@ -285,53 +284,25 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 }
 
 func selfServeUserInputsToPortBody(ctx context.Context, model *SelfServeUserInputsModel) (*cli.WorkflowUserInputs, error) {
-	properties, required, err := action.UserPropertiesToBody(ctx, model.UserProperties, model.RequiredJqQuery)
+	userInputs, err := userInputsToPortBody(ctx, model.UserProperties, model.Titles, model.RequiredJqQuery, model.OrderProperties)
 	if err != nil {
 		return nil, err
 	}
 
-	titles, err := action.UserInputTitlesToBody(ctx, model.Titles)
-	if err != nil {
-		return nil, err
-	}
+	userInputs.Steps = userInputStepsToPortBody(model.Steps)
+	userInputs.Validations = validationsToPortBody(model.Validations)
 
-	order, err := action.UserInputsOrderToBody(ctx, model.OrderProperties)
-	if err != nil {
-		return nil, err
-	}
-
-	return &cli.WorkflowUserInputs{
-		Properties: properties,
-		Required:   required,
-		Titles:     titles,
-		Order:      order,
-		Steps:      action.UserInputStepsToBody(model.Steps),
-	}, nil
+	return userInputs, nil
 }
 
 func inputUserInputsToPortBody(ctx context.Context, model *InputUserInputsModel) (*cli.WorkflowUserInputs, error) {
-	properties, required, err := action.UserPropertiesToBody(ctx, model.UserProperties, model.RequiredJqQuery)
+	userInputs, err := userInputsToPortBody(ctx, model.UserProperties, model.Titles, model.RequiredJqQuery, model.OrderProperties)
 	if err != nil {
 		return nil, err
 	}
 
-	titles, err := action.UserInputTitlesToBody(ctx, model.Titles)
-	if err != nil {
-		return nil, err
-	}
-
-	order, err := action.UserInputsOrderToBody(ctx, model.OrderProperties)
-	if err != nil {
-		return nil, err
-	}
-
-	userInputs := &cli.WorkflowUserInputs{
-		Properties: properties,
-		Required:   required,
-		Titles:     titles,
-		Order:      order,
-		Steps:      action.UserInputStepsToBody(model.Steps),
-	}
+	userInputs.Steps = userInputStepsToPortBody(model.Steps)
+	userInputs.Validations = validationsToPortBody(model.Validations)
 
 	buttons := make([]cli.WorkflowInputButton, 0, len(model.Buttons))
 	for _, b := range model.Buttons {
@@ -345,6 +316,112 @@ func inputUserInputsToPortBody(ctx context.Context, model *InputUserInputsModel)
 	userInputs.Buttons = &buttons
 
 	return userInputs, nil
+}
+
+// userInputsToPortBody builds the parts of the payload a self serve trigger form
+// and an input node form have in common.
+func userInputsToPortBody(
+	ctx context.Context,
+	userProperties *UserPropertiesModel,
+	titles map[string]UserInputText,
+	requiredJqQuery types.String,
+	orderProperties types.List,
+) (*cli.WorkflowUserInputs, error) {
+	properties, required, err := userPropertiesToBody(ctx, userProperties)
+	if err != nil {
+		return nil, err
+	}
+
+	userInputs := &cli.WorkflowUserInputs{
+		Properties: properties,
+		Titles:     userInputTitlesToPortBody(titles),
+	}
+
+	if !requiredJqQuery.IsNull() {
+		userInputs.Required = map[string]string{"jqQuery": requiredJqQuery.ValueString()}
+	} else if len(required) > 0 {
+		userInputs.Required = required
+	}
+
+	if !orderProperties.IsNull() {
+		order, err := terraformListToStrings(ctx, orderProperties)
+		if err != nil {
+			return nil, err
+		}
+		userInputs.Order = order
+	}
+
+	return userInputs, nil
+}
+
+func userInputTitlesToPortBody(titles map[string]UserInputText) map[string]cli.ActionTitle {
+	if titles == nil {
+		return nil
+	}
+
+	result := make(map[string]cli.ActionTitle, len(titles))
+	for identifier, title := range titles {
+		converted := cli.ActionTitle{
+			Title:       title.Title.ValueString(),
+			Description: title.Description.ValueStringPointer(),
+		}
+
+		if !title.VisibleJqQuery.IsNull() {
+			converted.Visible = map[string]string{"jqQuery": title.VisibleJqQuery.ValueString()}
+		} else if !title.Visible.IsNull() {
+			converted.Visible = title.Visible.ValueBool()
+		}
+
+		result[identifier] = converted
+	}
+
+	return result
+}
+
+func userInputStepsToPortBody(steps []UserInputsStepModel) []cli.WorkflowUserInputsStep {
+	if steps == nil {
+		return nil
+	}
+
+	result := make([]cli.WorkflowUserInputsStep, 0, len(steps))
+	for _, s := range steps {
+		order := make([]string, 0, len(s.Order))
+		for _, p := range s.Order {
+			order = append(order, p.ValueString())
+		}
+
+		step := cli.WorkflowUserInputsStep{
+			Title:       s.Title.ValueString(),
+			Order:       order,
+			Validations: validationsToPortBody(s.Validations),
+		}
+
+		if !s.VisibleJqQuery.IsNull() {
+			step.Visible = map[string]string{"jqQuery": s.VisibleJqQuery.ValueString()}
+		} else if !s.Visible.IsNull() {
+			step.Visible = s.Visible.ValueBool()
+		}
+
+		result = append(result, step)
+	}
+
+	return result
+}
+
+func validationsToPortBody(validations []InputValidationModel) []cli.WorkflowInputValidation {
+	if validations == nil {
+		return nil
+	}
+
+	result := make([]cli.WorkflowInputValidation, 0, len(validations))
+	for _, v := range validations {
+		result = append(result, cli.WorkflowInputValidation{
+			Constraint: v.Constraint.ValueString(),
+			Message:    v.Message.ValueString(),
+		})
+	}
+
+	return result
 }
 
 func upsertMappingToPortBody(ctx context.Context, model *UpsertMappingModel) (*cli.WorkflowUpsertMapping, error) {

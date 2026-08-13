@@ -365,7 +365,7 @@ func TestRefreshWorkflowStateSelfServeTriggerUserInputs(t *testing.T) {
 					Type:      consts.SelfServeTrigger,
 					Published: boolPtr(true),
 					UserInputs: &cli.WorkflowUserInputs{
-						Properties: map[string]cli.ActionProperty{
+						Properties: map[string]cli.WorkflowInputProperty{
 							"service": {Type: "string", Title: strPtr("Service")},
 						},
 						Required: []any{"service"},
@@ -409,7 +409,7 @@ func TestSelfServeTriggerUserInputsRoundTrip(t *testing.T) {
 				Config: cli.WorkflowNodeConfig{
 					Type: consts.SelfServeTrigger,
 					UserInputs: &cli.WorkflowUserInputs{
-						Properties: map[string]cli.ActionProperty{
+						Properties: map[string]cli.WorkflowInputProperty{
 							"service":  {Type: "string", Title: strPtr("Service")},
 							"replicas": {Type: "number", Title: strPtr("Replicas")},
 						},
@@ -432,6 +432,222 @@ func TestSelfServeTriggerUserInputsRoundTrip(t *testing.T) {
 	assert.Equal(t, "string", userInputs.Properties["service"].Type)
 	assert.Equal(t, "number", userInputs.Properties["replicas"].Type)
 	assert.Equal(t, []string{"service"}, userInputs.Required)
+}
+
+// selfServeTriggerRoundTrip pushes a form through the API mapping in both
+// directions and hands back what the second write would send.
+func selfServeTriggerRoundTrip(t *testing.T, userInputs *cli.WorkflowUserInputs) *cli.WorkflowUserInputs {
+	t.Helper()
+
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes:      []WorkflowNodeModel{{Identifier: types.StringValue("trigger")}},
+	}
+
+	apiWorkflow := &cli.Workflow{
+		Identifier: "wf",
+		Nodes: []cli.WorkflowNode{
+			{
+				Identifier: "trigger",
+				Config: cli.WorkflowNodeConfig{
+					Type:       consts.SelfServeTrigger,
+					UserInputs: userInputs,
+				},
+			},
+		},
+	}
+
+	require.NoError(t, r.refreshWorkflowState(ctx, state, apiWorkflow))
+
+	body, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	result := body.Nodes[0].Config.UserInputs
+	require.NotNil(t, result)
+	return result
+}
+
+func TestUserInputReadOnlyAndDisabledRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"requested_by": {
+				Type:     "string",
+				Format:   strPtr("user"),
+				ReadOnly: true,
+				Default:  map[string]any{"jqQuery": ".trigger.by.user.email"},
+			},
+			"approver": {
+				Type:     "string",
+				Format:   strPtr("user"),
+				Disabled: map[string]any{"jqQuery": ".form.tier != \"production\""},
+			},
+			"notes": {
+				Type:     "string",
+				ReadOnly: map[string]any{"jqQuery": ".form.locked"},
+			},
+		},
+	})
+
+	assert.Equal(t, true, result.Properties["requested_by"].ReadOnly)
+	assert.Equal(t, map[string]string{"jqQuery": ".trigger.by.user.email"}, result.Properties["requested_by"].Default)
+	assert.Equal(t, map[string]string{"jqQuery": ".form.tier != \"production\""}, result.Properties["approver"].Disabled)
+	assert.Equal(t, map[string]string{"jqQuery": ".form.locked"}, result.Properties["notes"].ReadOnly)
+
+	// read_only and disabled are independent, so neither leaks into the other.
+	assert.Nil(t, result.Properties["requested_by"].Disabled)
+	assert.Nil(t, result.Properties["approver"].ReadOnly)
+}
+
+func TestUserInputValidationsRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"min_replicas": {Type: "number"},
+			"max_replicas": {Type: "number"},
+		},
+		Validations: []cli.WorkflowInputValidation{
+			{Constraint: ".form.max_replicas >= .form.min_replicas", Message: "max must be at least min"},
+		},
+	})
+
+	require.Len(t, result.Validations, 1)
+	assert.Equal(t, ".form.max_replicas >= .form.min_replicas", result.Validations[0].Constraint)
+	assert.Equal(t, "max must be at least min", result.Validations[0].Message)
+}
+
+func TestUserInputStepValidationsRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"cpu": {Type: "number"},
+		},
+		Steps: []cli.WorkflowUserInputsStep{
+			{
+				Title:   "Limits",
+				Order:   []string{"cpu"},
+				Visible: map[string]any{"jqQuery": ".form.advanced"},
+				Validations: []cli.WorkflowInputValidation{
+					{Constraint: ".form.cpu <= 8", Message: "CPU limit cannot exceed 8 cores"},
+				},
+			},
+		},
+	})
+
+	require.Len(t, result.Steps, 1)
+	assert.Equal(t, "Limits", result.Steps[0].Title)
+	assert.Equal(t, map[string]string{"jqQuery": ".form.advanced"}, result.Steps[0].Visible)
+	require.Len(t, result.Steps[0].Validations, 1)
+	assert.Equal(t, ".form.cpu <= 8", result.Steps[0].Validations[0].Constraint)
+	assert.Empty(t, result.Validations)
+}
+
+func TestUserInputDatasetRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"service": {
+				Type:      "string",
+				Format:    strPtr("entity"),
+				Blueprint: strPtr("service"),
+				Dataset: &cli.WorkflowDataset{
+					Combinator: "and",
+					Rules: []cli.WorkflowDatasetRule{
+						// A value resolved from the form while it is filled in.
+						{Property: strPtr("tier"), Operator: "=", Value: map[string]any{"jqQuery": ".form.tier"}},
+						// A fixed value.
+						{Property: strPtr("archived"), Operator: "=", Value: false},
+					},
+				},
+			},
+		},
+	})
+
+	dataset := result.Properties["service"].Dataset
+	require.NotNil(t, dataset)
+	assert.Equal(t, "and", dataset.Combinator)
+	require.Len(t, dataset.Rules, 2)
+	assert.Equal(t, map[string]string{"jqQuery": ".form.tier"}, dataset.Rules[0].Value)
+	assert.Equal(t, false, dataset.Rules[1].Value)
+}
+
+func TestUserInputNumberBoundsAndUniqueItemsRoundTrip(t *testing.T) {
+	minimum, maximum := 1.0, 10.0
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"replicas": {
+				Type:             "number",
+				Minimum:          &minimum,
+				ExclusiveMaximum: &maximum,
+			},
+			"tags": {
+				Type:        "array",
+				UniqueItems: boolPtr(true),
+				Items:       map[string]any{"type": "string"},
+			},
+		},
+	})
+
+	assert.Equal(t, &minimum, result.Properties["replicas"].Minimum)
+	assert.Equal(t, &maximum, result.Properties["replicas"].ExclusiveMaximum)
+	assert.Nil(t, result.Properties["replicas"].Maximum)
+	assert.Equal(t, boolPtr(true), result.Properties["tags"].UniqueItems)
+}
+
+// An input node that only offers buttons declares no user_properties, so the
+// refreshed state must leave the block unset instead of filling in an empty one.
+func TestInputNodeWithoutUserPropertiesStaysUnset(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{{
+			Identifier: types.StringValue("approval"),
+			Input: &InputModel{
+				UserInputs: &InputUserInputsModel{
+					Buttons: []InputButtonModel{{
+						Identifier: types.StringValue("approve"),
+						Label:      types.StringValue("Approve"),
+						Variant:    types.StringValue("PRIMARY"),
+					}},
+				},
+			},
+		}},
+	}
+
+	apiWorkflow := &cli.Workflow{
+		Identifier: "wf",
+		Nodes: []cli.WorkflowNode{{
+			Identifier: "approval",
+			Config: cli.WorkflowNodeConfig{
+				Type: consts.InputNode,
+				UserInputs: &cli.WorkflowUserInputs{
+					Properties: map[string]cli.WorkflowInputProperty{},
+					Buttons: &[]cli.WorkflowInputButton{
+						{Identifier: "approve", Label: "Approve", Variant: "PRIMARY"},
+					},
+				},
+			},
+		}},
+	}
+
+	require.NoError(t, r.refreshWorkflowState(ctx, state, apiWorkflow))
+
+	userInputs := state.Nodes[0].Input.UserInputs
+	require.NotNil(t, userInputs)
+	assert.Nil(t, userInputs.UserProperties)
+	assert.Len(t, userInputs.Buttons, 1)
+}
+
+func TestUserInputRequiredJqQueryRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"service": {Type: "string"},
+		},
+		Required: map[string]any{"jqQuery": ".form.tier == \"production\""},
+	})
+
+	assert.Equal(t, map[string]string{"jqQuery": ".form.tier == \"production\""}, result.Required)
 }
 
 func validateNodes(nodes []WorkflowNodeModel, connections []ConnectionModel) diag.Diagnostics {

@@ -50,35 +50,6 @@ func UserInputTitlesToBody(ctx context.Context, titles map[string]ActionTitle) (
 	return trigger.UserInputs.Titles, nil
 }
 
-func UserInputStepsToBody(steps []Step) []cli.Step {
-	if steps == nil {
-		return nil
-	}
-
-	result := make([]cli.Step, 0, len(steps))
-	for _, s := range steps {
-		order := make([]string, 0, len(s.Order))
-		for _, p := range s.Order {
-			order = append(order, p.ValueString())
-		}
-
-		step := cli.Step{
-			Title: s.Title.ValueString(),
-			Order: order,
-		}
-
-		if !s.VisibleJqQuery.IsNull() {
-			step.Visible = map[string]string{"jqQuery": s.VisibleJqQuery.ValueString()}
-		} else if !s.Visible.IsNull() {
-			step.Visible = s.Visible.ValueBool()
-		}
-
-		result = append(result, step)
-	}
-
-	return result
-}
-
 // configured reports whether a user_properties block was declared, which decides
 // whether an empty result becomes an empty model or nil.
 func (m *UserInputsMapper) UserPropertiesToState(ctx context.Context, userInputs *cli.ActionUserInputs, configured bool) (*UserPropertiesModel, error) {
@@ -101,37 +72,6 @@ func (m *UserInputsMapper) UserInputTitlesToState(userInputs *cli.ActionUserInpu
 	}
 
 	return m.resource.buildActionTitles(&cli.Action{Trigger: &cli.Trigger{UserInputs: userInputs}})
-}
-
-func UserInputStepsToState(steps []cli.Step) []Step {
-	if len(steps) == 0 {
-		return nil
-	}
-
-	result := make([]Step, 0, len(steps))
-	for _, step := range steps {
-		order := make([]types.String, 0, len(step.Order))
-		for _, p := range step.Order {
-			order = append(order, types.StringValue(p))
-		}
-
-		s := Step{
-			Title: types.StringValue(step.Title),
-			Order: order,
-		}
-
-		visible, visibleJq := buildBoolOrJq(step.Visible)
-		if !visible.IsNull() {
-			s.Visible = visible
-		}
-		if !visibleJq.IsNull() {
-			s.VisibleJqQuery = visibleJq
-		}
-
-		result = append(result, s)
-	}
-
-	return result
 }
 
 func UserInputsRequiredToState(userInputs *cli.ActionUserInputs) types.String {

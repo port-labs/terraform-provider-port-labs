@@ -18,6 +18,10 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	pm.Locked = types.BoolPointerValue(b.Locked)
 	pm.Blueprint = types.StringPointerValue(b.Blueprint)
 	pm.Description = types.StringPointerValue(b.Description)
+	pm.CreatedAt = types.StringValue(b.CreatedAt.String())
+	pm.CreatedBy = types.StringValue(b.CreatedBy)
+	pm.UpdatedAt = types.StringValue(b.UpdatedAt.String())
+	pm.UpdatedBy = types.StringValue(b.UpdatedBy)
 
 	if b.Widgets != nil {
 		widgetAttrs := make([]attr.Value, len(*b.Widgets))

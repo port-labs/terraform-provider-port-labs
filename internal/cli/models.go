@@ -691,6 +691,7 @@ type PortBody struct {
 	Migration            Migration         `json:"migration"`
 	Folder               Folder            `json:"folder"`
 	Organization         *Organization     `json:"organization"`
+	Workflow             Workflow          `json:"workflow"`
 }
 
 type SearchEntityResult struct {

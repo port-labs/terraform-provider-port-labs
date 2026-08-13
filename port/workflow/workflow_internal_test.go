@@ -434,8 +434,6 @@ func TestSelfServeTriggerUserInputsRoundTrip(t *testing.T) {
 	assert.Equal(t, []string{"service"}, userInputs.Required)
 }
 
-// selfServeTriggerRoundTrip pushes a form through the API mapping in both
-// directions and hands back what the second write would send.
 func selfServeTriggerRoundTrip(t *testing.T, userInputs *cli.WorkflowUserInputs) *cli.WorkflowUserInputs {
 	t.Helper()
 
@@ -496,7 +494,6 @@ func TestUserInputReadOnlyAndDisabledRoundTrip(t *testing.T) {
 	assert.Equal(t, map[string]string{"jqQuery": ".form.tier != \"production\""}, result.Properties["approver"].Disabled)
 	assert.Equal(t, map[string]string{"jqQuery": ".form.locked"}, result.Properties["notes"].ReadOnly)
 
-	// read_only and disabled are independent, so neither leaks into the other.
 	assert.Nil(t, result.Properties["requested_by"].Disabled)
 	assert.Nil(t, result.Properties["approver"].ReadOnly)
 }
@@ -552,9 +549,7 @@ func TestUserInputDatasetRoundTrip(t *testing.T) {
 				Dataset: &cli.WorkflowDataset{
 					Combinator: "and",
 					Rules: []cli.WorkflowDatasetRule{
-						// A value resolved from the form while it is filled in.
 						{Property: strPtr("tier"), Operator: "=", Value: map[string]any{"jqQuery": ".form.tier"}},
-						// A fixed value.
 						{Property: strPtr("archived"), Operator: "=", Value: false},
 					},
 				},
@@ -593,8 +588,6 @@ func TestUserInputNumberBoundsAndUniqueItemsRoundTrip(t *testing.T) {
 	assert.Equal(t, boolPtr(true), result.Properties["tags"].UniqueItems)
 }
 
-// An input node that only offers buttons declares no user_properties, so the
-// refreshed state must leave the block unset instead of filling in an empty one.
 func TestInputNodeWithoutUserPropertiesStaysUnset(t *testing.T) {
 	ctx := context.Background()
 	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}

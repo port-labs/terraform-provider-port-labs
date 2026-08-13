@@ -14,16 +14,11 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-// The formats the workflow service accepts per input type. There is no `none`
-// format: the service compiles the form into a JSON schema and rejects any
-// format it does not know, so an unformatted input leaves `format` out.
 var (
 	stringPropertyFormats = []string{
 		"multi-line", "date-time", "email", "entity", "team", "user", "url", "markdown", "yaml", "proto",
 	}
 	stringItemFormats = []string{"entity", "team", "user", "date-time", "email", "url", "yaml"}
-	// An object carries no `format` beyond `labeled-url`, because the JSON
-	// schema `format` keyword only applies to strings and numbers.
 	objectFormats     = []string{"labeled-url"}
 	objectItemFormats = []string{"labeled-url"}
 )
@@ -42,7 +37,6 @@ func userPropertiesSchema() schema.Attribute {
 	}
 }
 
-// propertyMetadataSchema holds the attributes shared by every input type.
 func propertyMetadataSchema(propertyType string) map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"title": schema.StringAttribute{
@@ -68,9 +62,6 @@ func propertyMetadataSchema(propertyType string) map[string]schema.Attribute {
 			Optional:            true,
 			Validators: []validator.Bool{
 				isTrueValidator{},
-				// Hops from `required` up to the user inputs block that owns
-				// required_jq_query: the property, the property map, and
-				// user_properties.
 				boolvalidator.ConflictsWith(
 					path.MatchRelative().AtParent().AtParent().AtParent().AtParent().AtName("required_jq_query"),
 				),
@@ -501,8 +492,6 @@ func datasetSchema() schema.Attribute {
 				MarkdownDescription: "The rules of the dataset. A rule either filters on a property or groups nested rules under a combinator.",
 				Required:            true,
 				NestedObject: schema.NestedAttributeObject{
-					// 10 levels of nesting, past which the schema stops
-					// recursing while the Go model keeps accepting rules.
 					Attributes: datasetRuleSchema(10),
 				},
 			},

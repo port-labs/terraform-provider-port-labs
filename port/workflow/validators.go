@@ -29,9 +29,6 @@ func (v stringValidator) ValidateString(_ context.Context, req validator.StringR
 	}
 }
 
-// isTrueValidator rejects `required = false`. Leaving an input out of the
-// required list is how it is marked optional, so an explicit false would be
-// silently dropped.
 type isTrueValidator struct{}
 
 var _ validator.Bool = isTrueValidator{}

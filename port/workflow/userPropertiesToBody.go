@@ -11,8 +11,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-// userPropertiesToBody converts the declared inputs into the request payload and
-// collects the identifiers of the inputs marked as required.
 func userPropertiesToBody(ctx context.Context, model *UserPropertiesModel) (map[string]cli.WorkflowInputProperty, []string, error) {
 	properties := map[string]cli.WorkflowInputProperty{}
 	var required []string
@@ -66,8 +64,6 @@ func userPropertiesToBody(ctx context.Context, model *UserPropertiesModel) (map[
 		required = appendIfRequired(required, identifier, prop.Required)
 	}
 
-	// Map iteration order is random, so the list is sorted to keep the payload
-	// stable between plans.
 	sort.Strings(required)
 
 	return properties, required, nil
@@ -80,7 +76,6 @@ func appendIfRequired(required []string, identifier string, value types.Bool) []
 	return required
 }
 
-// commonPropToBody writes the attributes shared by every input type.
 func commonPropToBody(ctx context.Context, property *cli.WorkflowInputProperty, common propCommon) error {
 	property.Title = common.Title.ValueStringPointer()
 	property.Icon = common.Icon.ValueStringPointer()
@@ -296,7 +291,6 @@ func arrayItemsToBody(ctx context.Context, property *cli.WorkflowInputProperty, 
 			items["enumColors"] = enumColors
 		}
 
-		// The service reads the array default off the property, not the items.
 		if !prop.StringItems.Default.IsNull() {
 			defaults, err := utils.TerraformListToGoArray(ctx, prop.StringItems.Default, "string")
 			if err != nil {

@@ -2,12 +2,6 @@ package workflow
 
 import "github.com/hashicorp/terraform-plugin-framework/types"
 
-// The models below intentionally do not reuse the ones from the action package.
-// Workflow forms and action forms look alike but are validated by different
-// services: workflow inputs additionally support `read_only`, give `disabled` a
-// different meaning, and reject attributes such as encryption or boolean array
-// items that actions accept.
-
 type UserPropertiesModel struct {
 	StringProps  map[string]StringPropModel  `tfsdk:"string_props"`
 	NumberProps  map[string]NumberPropModel  `tfsdk:"number_props"`
@@ -160,12 +154,11 @@ type DatasetModel struct {
 }
 
 type DatasetRuleModel struct {
-	Blueprint types.String `tfsdk:"blueprint"`
-	Property  types.String `tfsdk:"property"`
-	Operator  types.String `tfsdk:"operator"`
-	Value     *ValueModel  `tfsdk:"value"`
-	ValueJson types.String `tfsdk:"value_json"`
-	// Group rules carry a combinator and nested rules instead of an operator.
+	Blueprint  types.String       `tfsdk:"blueprint"`
+	Property   types.String       `tfsdk:"property"`
+	Operator   types.String       `tfsdk:"operator"`
+	Value      *ValueModel        `tfsdk:"value"`
+	ValueJson  types.String       `tfsdk:"value_json"`
 	Combinator types.String       `tfsdk:"combinator"`
 	Rules      []DatasetRuleModel `tfsdk:"rules"`
 }
@@ -174,10 +167,6 @@ type ValueModel struct {
 	JqQuery types.String `tfsdk:"jq_query"`
 }
 
-// propCommon points at the attributes every input type shares so the mappers can
-// read and write them once instead of switching on the property type. The
-// framework needs a flat struct per property, so the fields cannot simply be
-// embedded.
 type propCommon struct {
 	Title           *types.String
 	Icon            *types.String

@@ -58,7 +58,6 @@ type SelfServeUserInputsModel struct {
 	Validations     []InputValidationModel   `tfsdk:"validations"`
 }
 
-// UserInputText is a static title rendered between the inputs of the form.
 type UserInputText struct {
 	Title          types.String `tfsdk:"title"`
 	Description    types.String `tfsdk:"description"`

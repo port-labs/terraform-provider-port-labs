@@ -12,9 +12,6 @@ import (
 	"github.com/samber/lo"
 )
 
-// userPropertiesToState rebuilds the declared inputs from the API response.
-// configured reports whether a user_properties block was declared, which decides
-// whether a form without inputs becomes an empty block or no block at all.
 func (r *WorkflowResource) userPropertiesToState(ctx context.Context, userInputs *cli.WorkflowUserInputs, configured bool) (*UserPropertiesModel, error) {
 	model := &UserPropertiesModel{}
 	_, required := requiredToState(userInputs.Required)
@@ -116,7 +113,6 @@ func boolOrJqToState(value any) (types.Bool, types.String) {
 	return types.BoolNull(), types.StringNull()
 }
 
-// jqQueryToState reports the jq query of a `{jqQuery}` envelope.
 func jqQueryToState(value any) (string, bool) {
 	switch value := value.(type) {
 	case map[string]any:
@@ -283,8 +279,6 @@ func arrayPropToState(ctx context.Context, property cli.WorkflowInputProperty, j
 		return prop, nil
 	}
 
-	// The default of an array lives on the property while the rest of the item
-	// configuration lives on items, so it is only read when it is not a jq query.
 	defaults, _ := property.Default.([]any)
 	if !prop.DefaultJqQuery.IsNull() {
 		defaults = nil

@@ -250,8 +250,6 @@ func userInputsAttributes() map[string]schema.Attribute {
 	}
 }
 
-// validationsSchema is the `validations` list shared by the form and its steps.
-// The service accepts jq as the only engine, so the engine is not configurable.
 func validationsSchema(description string) schema.ListNestedAttribute {
 	return schema.ListNestedAttribute{
 		MarkdownDescription: description + " Up to 10 rules are allowed.",
@@ -272,8 +270,6 @@ func validationsSchema(description string) schema.ListNestedAttribute {
 			},
 		},
 		Validators: []validator.List{
-			// An empty list is rejected rather than sent, because the API drops
-			// it on read and the next plan would show a diff.
 			listvalidator.SizeAtLeast(1),
 			listvalidator.SizeAtMost(10),
 		},

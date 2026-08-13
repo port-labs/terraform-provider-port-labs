@@ -135,9 +135,6 @@ type WorkflowUserInputs struct {
 	Buttons *[]WorkflowInputButton `json:"buttons,omitempty"`
 }
 
-// WorkflowInputProperty is a single input of a workflow form. It is kept apart
-// from ActionProperty because the workflow service accepts `readOnly` and
-// rejects action only attributes such as encryption.
 type WorkflowInputProperty struct {
 	Type             string             `json:"type,omitempty"`
 	Title            *string            `json:"title,omitempty"`
@@ -167,27 +164,20 @@ type WorkflowInputProperty struct {
 	Disabled         any                `json:"disabled,omitempty"`
 }
 
-// WorkflowDataset filters the entities an entity input offers. It is kept apart
-// from Dataset because a workflow rule value is either a fixed value or a
-// `{jqQuery}` object resolved against the form, and Dataset flattens both into a
-// single string.
 type WorkflowDataset struct {
 	Combinator string                `json:"combinator"`
 	Rules      []WorkflowDatasetRule `json:"rules"`
 }
 
 type WorkflowDatasetRule struct {
-	Blueprint *string `json:"blueprint,omitempty"`
-	Property  *string `json:"property,omitempty"`
-	Operator  string  `json:"operator,omitempty"`
-	Value     any     `json:"value,omitempty"`
-	// Group rules carry a combinator and nested rules instead of an operator.
+	Blueprint  *string               `json:"blueprint,omitempty"`
+	Property   *string               `json:"property,omitempty"`
+	Operator   string                `json:"operator,omitempty"`
+	Value      any                   `json:"value,omitempty"`
 	Combinator *string               `json:"combinator,omitempty"`
 	Rules      []WorkflowDatasetRule `json:"rules,omitempty"`
 }
 
-// WorkflowUserInputsStep mirrors cli.Step but carries the step level validations
-// that only workflow forms support.
 type WorkflowUserInputsStep struct {
 	Title       string                    `json:"title"`
 	Order       []string                  `json:"order"`
@@ -195,9 +185,6 @@ type WorkflowUserInputsStep struct {
 	Validations []WorkflowInputValidation `json:"validations,omitempty"`
 }
 
-// WorkflowInputValidation is a jq constraint evaluated against the form data when
-// the form is submitted. The engine is omitted because jq is the only one the
-// service accepts, and it defaults to jq server side.
 type WorkflowInputValidation struct {
 	Constraint string `json:"constraint"`
 	Message    string `json:"message"`

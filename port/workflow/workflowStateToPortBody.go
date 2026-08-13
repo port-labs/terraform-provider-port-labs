@@ -318,8 +318,6 @@ func inputUserInputsToPortBody(ctx context.Context, model *InputUserInputsModel)
 	return userInputs, nil
 }
 
-// userInputsToPortBody builds the parts of the payload a self serve trigger form
-// and an input node form have in common.
 func userInputsToPortBody(
 	ctx context.Context,
 	userProperties *UserPropertiesModel,

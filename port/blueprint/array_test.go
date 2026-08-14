@@ -14,6 +14,34 @@ func TestArrayPropResourceToBodyWithUnion(t *testing.T) {
 	state := &PropertiesModel{
 		ArrayProps: map[string]ArrayPropModel{
 			"tags": {
+				Title: types.StringValue("Tags"),
+				Union: types.BoolValue(true),
+				StringItems: &StringItems{
+					Format: types.StringNull(),
+					Enum:   types.ListNull(types.StringType),
+				},
+			},
+		},
+	}
+
+	props := map[string]cli.BlueprintProperty{}
+	required := []string{}
+
+	err := arrayPropResourceToBody(ctx, state, props, &required)
+	require.NoError(t, err)
+
+	prop, ok := props["tags"]
+	require.True(t, ok)
+	require.NotNil(t, prop.Union)
+	require.True(t, *prop.Union)
+	require.Nil(t, prop.IncludeDuplicates)
+}
+
+func TestArrayPropResourceToBodyWithUnionAndIncludeDuplicates(t *testing.T) {
+	ctx := context.Background()
+	state := &PropertiesModel{
+		ArrayProps: map[string]ArrayPropModel{
+			"tags": {
 				Title:             types.StringValue("Tags"),
 				Union:             types.BoolValue(true),
 				IncludeDuplicates: types.BoolValue(true),

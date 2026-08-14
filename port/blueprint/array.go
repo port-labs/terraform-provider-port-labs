@@ -128,8 +128,10 @@ func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props 
 			if prop.Union.ValueBool() {
 				union := true
 				property.Union = &union
-				includeDuplicates := prop.IncludeDuplicates.ValueBool()
-				property.IncludeDuplicates = &includeDuplicates
+				if !prop.IncludeDuplicates.IsNull() {
+					includeDuplicates := prop.IncludeDuplicates.ValueBool()
+					property.IncludeDuplicates = &includeDuplicates
+				}
 			}
 
 			props[propIdentifier] = property

@@ -366,13 +366,11 @@ func TestAccPortBlueprintArrayPropertyUnion(t *testing.T) {
 				myUnionStringArray = {
 					title = "Union String Array"
 					union = true
-					include_duplicates = true
 					string_items = {}
 				}
 				myUnionNumberArray = {
 					title = "Union Number Array"
 					union = true
-					include_duplicates = false
 					number_items = {}
 				}
 			}
@@ -388,9 +386,7 @@ func TestAccPortBlueprintArrayPropertyUnion(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myUnionStringArray.union", "true"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myUnionStringArray.include_duplicates", "true"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myUnionNumberArray.union", "true"),
-					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myUnionNumberArray.include_duplicates", "false"),
 				),
 			},
 		},

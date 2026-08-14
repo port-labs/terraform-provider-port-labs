@@ -2,12 +2,16 @@ package entity
 
 import (
 	"context"
+	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -76,7 +80,7 @@ func EntitySchema() map[string]schema.Attribute {
 					ElementType:         types.StringType,
 				},
 				"array_props": schema.SingleNestedAttribute{
-					MarkdownDescription: "The array properties of the entity",
+					MarkdownDescription: "The array properties of the entity. Use this for plain array blueprint properties. For union array properties, use `union_array_props` instead.",
 					Optional:            true,
 					Attributes: map[string]schema.Attribute{
 						"string_items": schema.MapAttribute{
@@ -95,6 +99,14 @@ func EntitySchema() map[string]schema.Attribute {
 							ElementType: types.ListType{ElemType: types.StringType},
 							Optional:    true,
 						},
+					},
+				},
+				"union_array_props": schema.SingleNestedAttribute{
+					MarkdownDescription: "Union array property values. On write, each entry updates one source slice using `source_key`. On read, assembled values are returned in `array_props`.",
+					Optional:            true,
+					Attributes: map[string]schema.Attribute{
+						"string_items": unionArrayItemsSchema(types.StringType),
+						"number_items": unionArrayItemsSchema(types.Float64Type),
 					},
 				},
 			},
@@ -141,5 +153,27 @@ func (r *EntityResource) Schema(ctx context.Context, req resource.SchemaRequest,
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Entity resource",
 		Attributes:          EntitySchema(),
+	}
+}
+
+func unionArrayItemsSchema(elementType attr.Type) schema.Attribute {
+	return schema.MapNestedAttribute{
+		Optional: true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"source_key": schema.StringAttribute{
+					MarkdownDescription: "Stable source key for this writer's slice. Must match `^[A-Za-z0-9._:@/-]{1,128}$`.",
+					Required:            true,
+					Validators: []validator.String{
+						stringvalidator.RegexMatches(regexp.MustCompile(`^[A-Za-z0-9._:@/-]{1,128}$`), "must be a valid union array source key"),
+					},
+				},
+				"items": schema.ListAttribute{
+					MarkdownDescription: "The array values for this source slice.",
+					Required:            true,
+					ElementType:         elementType,
+				},
+			},
+		},
 	}
 }

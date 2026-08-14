@@ -43,11 +43,12 @@ Entity resource
 
 Optional:
 
-- `array_props` (Attributes) The array properties of the entity (see [below for nested schema](#nestedatt--properties--array_props))
+- `array_props` (Attributes) The array properties of the entity. Use this for plain array blueprint properties. For union array properties, use `union_array_props` instead. (see [below for nested schema](#nestedatt--properties--array_props))
 - `boolean_props` (Map of Boolean) The bool properties of the entity
 - `number_props` (Map of Number) The number properties of the entity
 - `object_props` (Map of String) The object properties of the entity
 - `string_props` (Map of String) The string properties of the entity
+- `union_array_props` (Attributes) Union array property values. On write, each entry updates one source slice using `source_key`. On read, assembled values are returned in `array_props`. (see [below for nested schema](#nestedatt--properties--union_array_props))
 
 <a id="nestedatt--properties--array_props"></a>
 ### Nested Schema for `properties.array_props`
@@ -58,6 +59,33 @@ Optional:
 - `number_items` (Map of List of Number)
 - `object_items` (Map of List of String)
 - `string_items` (Map of List of String)
+
+
+<a id="nestedatt--properties--union_array_props"></a>
+### Nested Schema for `properties.union_array_props`
+
+Optional:
+
+- `number_items` (Attributes Map) (see [below for nested schema](#nestedatt--properties--union_array_props--number_items))
+- `string_items` (Attributes Map) (see [below for nested schema](#nestedatt--properties--union_array_props--string_items))
+
+<a id="nestedatt--properties--union_array_props--number_items"></a>
+### Nested Schema for `properties.union_array_props.number_items`
+
+Required:
+
+- `items` (List of Number) The array values for this source slice.
+- `source_key` (String) Stable source key for this writer's slice. Must match `^[A-Za-z0-9._:@/-]{1,128}$`.
+
+
+<a id="nestedatt--properties--union_array_props--string_items"></a>
+### Nested Schema for `properties.union_array_props.string_items`
+
+Required:
+
+- `items` (List of String) The array values for this source slice.
+- `source_key` (String) Stable source key for this writer's slice. Must match `^[A-Za-z0-9._:@/-]{1,128}$`.
+
 
 
 

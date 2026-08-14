@@ -4,13 +4,16 @@ import (
 	"context"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
@@ -183,11 +186,29 @@ func BooleanPropertySchema() schema.Attribute {
 
 func ArrayPropertySchema() schema.MapNestedAttribute {
 	arrayPropertySchema := map[string]schema.Attribute{
+		"union": schema.BoolAttribute{
+			MarkdownDescription: "When `true`, enables union array semantics so multiple writers can each own a slice of the array. Can only be set at property creation.",
+			Optional:            true,
+			PlanModifiers: []planmodifier.Bool{
+				boolplanmodifier.RequiresReplace(),
+			},
+			Validators: []validator.Bool{
+				boolvalidator.ConflictsWith(
+					path.MatchRelative().AtParent().AtName("min_items"),
+					path.MatchRelative().AtParent().AtName("max_items"),
+				),
+			},
+		},
+		"include_duplicates": schema.BoolAttribute{
+			MarkdownDescription: "When `union` is `true`, controls read-time assembly. If `false` (default), each distinct value appears once. If `true`, a value reported by multiple sources appears once per source. Can be changed after property creation.",
+			Optional:            true,
+		},
 		"min_items": schema.Int64Attribute{
 			MarkdownDescription: "The min items of the array property",
 			Optional:            true,
 			Validators: []validator.Int64{
 				int64validator.AtLeast(0),
+				int64validator.ConflictsWith(path.MatchRelative().AtParent().AtName("union")),
 			},
 		},
 		"max_items": schema.Int64Attribute{
@@ -195,6 +216,7 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 			Optional:            true,
 			Validators: []validator.Int64{
 				int64validator.AtLeast(0),
+				int64validator.ConflictsWith(path.MatchRelative().AtParent().AtName("union")),
 			},
 		},
 		"string_items": schema.SingleNestedAttribute{

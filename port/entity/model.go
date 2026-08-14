@@ -11,12 +11,23 @@ type ArrayPropsModel struct {
 	ObjectItems  types.Map `tfsdk:"object_items"`
 }
 
+type UnionArrayItemModel struct {
+	SourceKey types.String `tfsdk:"source_key"`
+	Items     types.List   `tfsdk:"items"`
+}
+
+type UnionArrayPropsModel struct {
+	StringItems map[string]UnionArrayItemModel `tfsdk:"string_items"`
+	NumberItems map[string]UnionArrayItemModel `tfsdk:"number_items"`
+}
+
 type EntityPropertiesModel struct {
-	StringProps  map[string]types.String  `tfsdk:"string_props"`
-	NumberProps  map[string]types.Float64 `tfsdk:"number_props"`
-	BooleanProps map[string]types.Bool    `tfsdk:"boolean_props"`
-	ObjectProps  map[string]types.String  `tfsdk:"object_props"`
-	ArrayProps   *ArrayPropsModel         `tfsdk:"array_props"`
+	StringProps     map[string]types.String  `tfsdk:"string_props"`
+	NumberProps     map[string]types.Float64 `tfsdk:"number_props"`
+	BooleanProps    map[string]types.Bool    `tfsdk:"boolean_props"`
+	ObjectProps     map[string]types.String  `tfsdk:"object_props"`
+	ArrayProps      *ArrayPropsModel         `tfsdk:"array_props"`
+	UnionArrayProps *UnionArrayPropsModel    `tfsdk:"union_array_props"`
 }
 
 type RelationModel struct {

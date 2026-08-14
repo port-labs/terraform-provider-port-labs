@@ -3,60 +3,129 @@ package entity
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func writeArrayResourceToBody(ctx context.Context, state *EntityModel, properties map[string]interface{}) error {
+func isUnionArrayProperty(prop cli.BlueprintProperty) bool {
+	return prop.Union != nil && *prop.Union
+}
+
+func writeArrayResourceToBody(ctx context.Context, state *EntityModel, properties map[string]interface{}, bp *cli.Blueprint) error {
+	if state.Properties.ArrayProps == nil {
+		return nil
+	}
+
 	if !state.Properties.ArrayProps.StringItems.IsNull() {
 		for identifier, itemArray := range state.Properties.ArrayProps.StringItems.Elements() {
-			if !itemArray.IsNull() {
-				var stringItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "string")
-				if err != nil {
-					return err
-				}
-				properties[identifier] = stringItems
+			if itemArray.IsNull() {
+				continue
 			}
+			if prop, ok := bp.Schema.Properties[identifier]; ok && isUnionArrayProperty(prop) {
+				return fmt.Errorf("property %q is a union array; use union_array_props instead of array_props", identifier)
+			}
+			stringItems, err := utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "string")
+			if err != nil {
+				return err
+			}
+			properties[identifier] = stringItems
 		}
 	}
 
 	if !state.Properties.ArrayProps.NumberItems.IsNull() {
 		for identifier, itemArray := range state.Properties.ArrayProps.NumberItems.Elements() {
-			if !itemArray.IsNull() {
-				var numberItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "float64")
-				if err != nil {
-					return err
-				}
-				properties[identifier] = numberItems
+			if itemArray.IsNull() {
+				continue
 			}
+			if prop, ok := bp.Schema.Properties[identifier]; ok && isUnionArrayProperty(prop) {
+				return fmt.Errorf("property %q is a union array; use union_array_props instead of array_props", identifier)
+			}
+			numberItems, err := utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "float64")
+			if err != nil {
+				return err
+			}
+			properties[identifier] = numberItems
 		}
 	}
 
 	if !state.Properties.ArrayProps.BooleanItems.IsNull() {
 		for identifier, itemArray := range state.Properties.ArrayProps.BooleanItems.Elements() {
-			if !itemArray.IsNull() {
-				var booleanItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "bool")
-				if err != nil {
-					return err
-				}
-				properties[identifier] = booleanItems
+			if itemArray.IsNull() {
+				continue
 			}
+			if prop, ok := bp.Schema.Properties[identifier]; ok && isUnionArrayProperty(prop) {
+				return fmt.Errorf("property %q is a union array; use union_array_props instead of array_props", identifier)
+			}
+			booleanItems, err := utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "bool")
+			if err != nil {
+				return err
+			}
+			properties[identifier] = booleanItems
 		}
 	}
 
 	if !state.Properties.ArrayProps.ObjectItems.IsNull() {
 		for identifier, itemArray := range state.Properties.ArrayProps.ObjectItems.Elements() {
-			if !itemArray.IsNull() {
-				var objectItems, err = utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "object")
-				if err != nil {
-					return err
-				}
-				properties[identifier] = objectItems
+			if itemArray.IsNull() {
+				continue
 			}
+			if prop, ok := bp.Schema.Properties[identifier]; ok && isUnionArrayProperty(prop) {
+				return fmt.Errorf("property %q is a union array; use union_array_props instead of array_props", identifier)
+			}
+			objectItems, err := utils.TerraformListToGoArray(ctx, itemArray.(basetypes.ListValue), "object")
+			if err != nil {
+				return err
+			}
+			properties[identifier] = objectItems
 		}
 	}
+	return nil
+}
+
+func writeUnionArrayResourceToBody(ctx context.Context, state *EntityModel, properties map[string]interface{}, bp *cli.Blueprint) error {
+	if state.Properties.UnionArrayProps == nil {
+		return nil
+	}
+
+	for identifier, prop := range state.Properties.UnionArrayProps.StringItems {
+		blueprintProp, ok := bp.Schema.Properties[identifier]
+		if !ok {
+			return fmt.Errorf("union array property %q does not exist on blueprint %q", identifier, bp.Identifier)
+		}
+		if !isUnionArrayProperty(blueprintProp) {
+			return fmt.Errorf("property %q is not a union array; use array_props instead of union_array_props", identifier)
+		}
+
+		items, err := utils.TerraformListToGoArray(ctx, prop.Items, "string")
+		if err != nil {
+			return err
+		}
+		properties[identifier] = map[string]interface{}{
+			prop.SourceKey.ValueString(): items,
+		}
+	}
+
+	for identifier, prop := range state.Properties.UnionArrayProps.NumberItems {
+		blueprintProp, ok := bp.Schema.Properties[identifier]
+		if !ok {
+			return fmt.Errorf("union array property %q does not exist on blueprint %q", identifier, bp.Identifier)
+		}
+		if !isUnionArrayProperty(blueprintProp) {
+			return fmt.Errorf("property %q is not a union array; use array_props instead of union_array_props", identifier)
+		}
+
+		items, err := utils.TerraformListToGoArray(ctx, prop.Items, "float64")
+		if err != nil {
+			return err
+		}
+		properties[identifier] = map[string]interface{}{
+			prop.SourceKey.ValueString(): items,
+		}
+	}
+
 	return nil
 }
 
@@ -129,7 +198,14 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 		}
 
 		if state.Properties.ArrayProps != nil {
-			err := writeArrayResourceToBody(ctx, state, properties)
+			err := writeArrayResourceToBody(ctx, state, properties, bp)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if state.Properties.UnionArrayProps != nil {
+			err := writeUnionArrayResourceToBody(ctx, state, properties, bp)
 			if err != nil {
 				return nil, err
 			}

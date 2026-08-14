@@ -9,7 +9,31 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func writeArrayResourceToBody(ctx context.Context, state *EntityModel, properties map[string]interface{}) error {
+func unionArraySourceKey(state *EntityModel) string {
+	if state.UnionArraySourceKey.IsNull() || state.UnionArraySourceKey.ValueString() == "" {
+		return "terraform"
+	}
+	return state.UnionArraySourceKey.ValueString()
+}
+
+func isUnionArrayProperty(bp *cli.Blueprint, identifier string) bool {
+	prop, ok := bp.Schema.Properties[identifier]
+	if !ok || prop.Type != "array" {
+		return false
+	}
+	return prop.Union != nil && *prop.Union
+}
+
+func wrapUnionArrayValue(state *EntityModel, bp *cli.Blueprint, identifier string, value interface{}) interface{} {
+	if !isUnionArrayProperty(bp, identifier) {
+		return value
+	}
+	return map[string]interface{}{
+		unionArraySourceKey(state): value,
+	}
+}
+
+func writeArrayResourceToBody(ctx context.Context, state *EntityModel, properties map[string]interface{}, bp *cli.Blueprint) error {
 	if !state.Properties.ArrayProps.StringItems.IsNull() {
 		for identifier, itemArray := range state.Properties.ArrayProps.StringItems.Elements() {
 			if !itemArray.IsNull() {
@@ -17,7 +41,7 @@ func writeArrayResourceToBody(ctx context.Context, state *EntityModel, propertie
 				if err != nil {
 					return err
 				}
-				properties[identifier] = stringItems
+				properties[identifier] = wrapUnionArrayValue(state, bp, identifier, stringItems)
 			}
 		}
 	}
@@ -29,7 +53,7 @@ func writeArrayResourceToBody(ctx context.Context, state *EntityModel, propertie
 				if err != nil {
 					return err
 				}
-				properties[identifier] = numberItems
+				properties[identifier] = wrapUnionArrayValue(state, bp, identifier, numberItems)
 			}
 		}
 	}
@@ -129,7 +153,7 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 		}
 
 		if state.Properties.ArrayProps != nil {
-			err := writeArrayResourceToBody(ctx, state, properties)
+			err := writeArrayResourceToBody(ctx, state, properties, bp)
 			if err != nil {
 				return nil, err
 			}

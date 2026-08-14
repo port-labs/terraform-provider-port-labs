@@ -29,6 +29,7 @@ Entity resource
 - `relations` (Attributes) The relations of the entity (see [below for nested schema](#nestedatt--relations))
 - `run_id` (String) The runID of the action run that created the entity
 - `teams` (Set of String) The teams the entity belongs to
+- `union_array_source_key` (String) Source key used when writing union array properties. Union array properties require a map with exactly one source key per write; the provider wraps `properties.array_props` values automatically for blueprint properties with `union = true`.
 
 ### Read-Only
 

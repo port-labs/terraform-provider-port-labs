@@ -42,6 +42,10 @@ func EntitySchema() map[string]schema.Attribute {
 			Computed:            true,
 			Default:             booldefault.StaticBool(false),
 		},
+		"union_array_source_key": schema.StringAttribute{
+			MarkdownDescription: "Source key used when writing union array properties. Union array properties require a map with exactly one source key per write; the provider wraps `properties.array_props` values automatically for blueprint properties with `union = true`.",
+			Optional:            true,
+		},
 		"teams": schema.SetAttribute{
 			MarkdownDescription: "The teams the entity belongs to",
 			Optional:            true,

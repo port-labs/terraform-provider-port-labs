@@ -39,4 +39,5 @@ type EntityModel struct {
 	Teams                        []types.String         `tfsdk:"teams"`
 	Relations                    *RelationModel         `tfsdk:"relations"`
 	CreateMissingRelatedEntities types.Bool             `tfsdk:"create_missing_related_entities"`
+	UnionArraySourceKey          types.String           `tfsdk:"union_array_source_key"`
 }

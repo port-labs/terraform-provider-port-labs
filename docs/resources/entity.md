@@ -58,6 +58,32 @@ Optional:
 - `number_items` (Map of List of Number)
 - `object_items` (Map of List of String)
 - `string_items` (Map of List of String)
+- `union_number_slices` (Attributes Map) Write-only slices for union array number properties. Each entry names a property and the source key whose array value should be written. On read, assembled values are returned in `number_items` for non-union properties only. (see [below for nested schema](#nestedatt--properties--array_props--union_number_slices))
+- `union_string_slices` (Attributes Map) Write-only slices for union array string properties. Each entry names a property and the source key whose array value should be written. On read, assembled values are returned in `string_items` for non-union properties only. (see [below for nested schema](#nestedatt--properties--array_props--union_string_slices))
+
+<a id="nestedatt--properties--array_props--union_number_slices"></a>
+### Nested Schema for `properties.array_props.union_number_slices`
+
+Required:
+
+- `source_key` (String) Stable source key for this writer's slice. Must match `^[A-Za-z0-9._:@/-]{1,128}$`.
+
+Optional:
+
+- `items` (List of Number) The number array values for this source slice.
+
+
+<a id="nestedatt--properties--array_props--union_string_slices"></a>
+### Nested Schema for `properties.array_props.union_string_slices`
+
+Required:
+
+- `source_key` (String) Stable source key for this writer's slice. Must match `^[A-Za-z0-9._:@/-]{1,128}$`.
+
+Optional:
+
+- `items` (List of String) The string array values for this source slice.
+
 
 
 

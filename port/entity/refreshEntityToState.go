@@ -9,6 +9,18 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
+func isUnionArrayProperty(prop cli.BlueprintProperty) bool {
+	if prop.Union != nil {
+		return *prop.Union
+	}
+
+	if value, ok := prop.UnknownFields["union"].(bool); ok {
+		return value
+	}
+
+	return false
+}
+
 func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayProperties map[string][]interface{}, blueprint *cli.Blueprint) {
 	mapStringItems := make(map[string][]*string)
 	mapNumberItems := make(map[string][]*float64)
@@ -24,6 +36,10 @@ func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *Ent
 		}
 	}
 	for k, t := range arrayProperties {
+		prop, ok := blueprint.Schema.Properties[k]
+		if ok && isUnionArrayProperty(prop) {
+			continue
+		}
 
 		switch blueprint.Schema.Properties[k].Items["type"] {
 		// array without items type is array of string by default

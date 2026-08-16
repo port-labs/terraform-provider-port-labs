@@ -4,6 +4,10 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -35,11 +39,17 @@ func querySchema() map[string]schema.Attribute {
 		"combinator": schema.StringAttribute{
 			MarkdownDescription: "The combinator of the query.",
 			Required:            true,
+			Validators: []validator.String{
+				stringvalidator.OneOf("and", "or"),
+			},
 		},
 		"conditions": schema.ListAttribute{
 			MarkdownDescription: "The conditions of the query. Each condition object should be encoded to a string.",
 			Required:            true,
 			ElementType:         types.StringType,
+			Validators: []validator.List{
+				listvalidator.SizeAtLeast(1),
+			},
 		},
 	}
 }
@@ -70,28 +80,43 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 				},
 			},
 			"blueprints": schema.ListAttribute{
-				MarkdownDescription: "Blueprint identifiers that share the same rules (and optional filter). Use this for shared-rules mode.",
+				MarkdownDescription: "Blueprint identifiers that share the same rules (and optional filter). Use this for shared-rules mode. Conflicts with `scorecards`.",
 				Optional:            true,
 				ElementType:         types.StringType,
 				Validators: []validator.List{
 					listvalidator.SizeAtLeast(1),
+					listvalidator.ConflictsWith(path.MatchRoot("scorecards")),
 				},
 			},
 			"rules": schema.ListNestedAttribute{
-				MarkdownDescription: "The rules applied to every blueprint in shared-rules mode.",
+				MarkdownDescription: "The rules applied to every blueprint in shared-rules mode. Conflicts with `scorecards`.",
 				Optional:            true,
+				Validators: []validator.List{
+					listvalidator.ConflictsWith(path.MatchRoot("scorecards")),
+				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: scorecard.RuleSchema(),
 				},
 			},
 			"filter": schema.SingleNestedAttribute{
-				MarkdownDescription: "An optional filter applied to every blueprint in shared-rules mode.",
+				MarkdownDescription: "An optional filter applied to every blueprint in shared-rules mode. Conflicts with `scorecards`.",
 				Optional:            true,
 				Attributes:          querySchema(),
+				Validators: []validator.Object{
+					objectvalidator.ConflictsWith(path.MatchRoot("scorecards")),
+				},
 			},
 			"scorecards": schema.MapNestedAttribute{
-				MarkdownDescription: "Map of blueprint identifier to member scorecard filter/rules. Use this for per-blueprint mode.",
+				MarkdownDescription: "Map of blueprint identifier to member scorecard filter/rules. Use this for per-blueprint mode. Conflicts with `blueprints`, `rules`, and `filter`.",
 				Optional:            true,
+				Validators: []validator.Map{
+					mapvalidator.SizeAtLeast(1),
+					mapvalidator.ConflictsWith(
+						path.MatchRoot("blueprints"),
+						path.MatchRoot("rules"),
+						path.MatchRoot("filter"),
+					),
+				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: memberSpecSchema(),
 				},

@@ -131,11 +131,11 @@ resource "port_scorecard_group" "readiness" {
 
 ### Optional
 
-- `blueprints` (List of String) Blueprint identifiers that share the same rules (and optional filter). Use this for shared-rules mode.
-- `filter` (Attributes) An optional filter applied to every blueprint in shared-rules mode. (see [below for nested schema](#nestedatt--filter))
+- `blueprints` (List of String) Blueprint identifiers that share the same rules (and optional filter). Use this for shared-rules mode. Conflicts with `scorecards`.
+- `filter` (Attributes) An optional filter applied to every blueprint in shared-rules mode. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--filter))
 - `levels` (Attributes List) The available levels of the scorecard group, shared by all members. (see [below for nested schema](#nestedatt--levels))
-- `rules` (Attributes List) The rules applied to every blueprint in shared-rules mode. (see [below for nested schema](#nestedatt--rules))
-- `scorecards` (Attributes Map) Map of blueprint identifier to member scorecard filter/rules. Use this for per-blueprint mode. (see [below for nested schema](#nestedatt--scorecards))
+- `rules` (Attributes List) The rules applied to every blueprint in shared-rules mode. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--rules))
+- `scorecards` (Attributes Map) Map of blueprint identifier to member scorecard filter/rules. Use this for per-blueprint mode. Conflicts with `blueprints`, `rules`, and `filter`. (see [below for nested schema](#nestedatt--scorecards))
 
 ### Read-Only
 

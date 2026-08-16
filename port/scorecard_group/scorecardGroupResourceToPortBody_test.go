@@ -1,6 +1,7 @@
 package scorecard_group
 
 import (
+	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -27,7 +28,7 @@ func TestScorecardGroupResourceToPortBodySharedRules(t *testing.T) {
 		},
 	}
 
-	group, err := scorecardGroupResourceToPortBody(nil, state)
+	group, err := scorecardGroupResourceToPortBody(context.TODO(), state)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
@@ -69,7 +70,7 @@ func TestScorecardGroupResourceToPortBodyPerBlueprint(t *testing.T) {
 		},
 	}
 
-	group, err := scorecardGroupResourceToPortBody(nil, state)
+	group, err := scorecardGroupResourceToPortBody(context.TODO(), state)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

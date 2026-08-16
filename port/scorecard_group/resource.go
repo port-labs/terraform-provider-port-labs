@@ -84,13 +84,18 @@ func (r *ScorecardGroupResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
+	if err := r.deleteMemberScorecards(ctx, previousState); err != nil {
+		resp.Diagnostics.AddError("failed to replace scorecard group", err.Error())
+		return
+	}
+
 	group, err := scorecardGroupResourceToPortBody(ctx, state)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert scorecard group resource to body", err.Error())
 		return
 	}
 
-	updatedGroup, err := r.portClient.UpdateScorecardGroup(ctx, previousState.Identifier.ValueString(), group)
+	updatedGroup, err := r.portClient.CreateScorecardGroup(ctx, group)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update scorecard group", err.Error())
 		return
@@ -107,8 +112,7 @@ func (r *ScorecardGroupResource) Delete(ctx context.Context, req resource.Delete
 		return
 	}
 
-	err := r.portClient.DeleteScorecardGroup(ctx, state.Identifier.ValueString())
-	if err != nil {
+	if err := r.deleteMemberScorecards(ctx, state); err != nil {
 		resp.Diagnostics.AddError("failed to delete scorecard group", err.Error())
 		return
 	}

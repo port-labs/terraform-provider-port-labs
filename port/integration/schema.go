@@ -31,6 +31,10 @@ func IntegrationSchema() map[string]schema.Attribute {
 			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`)",
 			Optional:            true,
 		},
+		"oauth_broker_url": schema.StringAttribute{
+			MarkdownDescription: "The base URL of the OAuth broker hosted by this integration. Port uses this URL to build the re-authentication link sent to users when the integration requires a new token. Must not contain a query string — Port appends query parameters at runtime.",
+			Optional:            true,
+		},
 		"webhook_changelog_destination": schema.SingleNestedAttribute{
 			MarkdownDescription: "The webhook changelog destination of the integration",
 			Optional:            true,

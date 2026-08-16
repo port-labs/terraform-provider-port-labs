@@ -86,6 +86,7 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 				Validators: []validator.List{
 					listvalidator.SizeAtLeast(1),
 					listvalidator.ConflictsWith(path.MatchRoot("scorecards")),
+					listvalidator.AlsoRequires(path.MatchRoot("rules")),
 				},
 			},
 			"rules": schema.ListNestedAttribute{
@@ -93,6 +94,7 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 				Optional:            true,
 				Validators: []validator.List{
 					listvalidator.ConflictsWith(path.MatchRoot("scorecards")),
+					listvalidator.AlsoRequires(path.MatchRoot("blueprints")),
 				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: scorecard.RuleSchema(),

@@ -2,6 +2,7 @@ package scorecard_group
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -30,10 +31,31 @@ func (r *ScorecardGroupResource) Configure(ctx context.Context, req resource.Con
 	r.portClient = req.ProviderData.(*cli.PortClient)
 }
 
+func validateScorecardGroupConfiguration(state *ScorecardGroupModel) error {
+	hasScorecards := len(state.Scorecards) > 0
+	hasSharedRules := len(state.Blueprints) > 0 || len(state.Rules) > 0 || state.Filter != nil
+
+	switch {
+	case hasScorecards && hasSharedRules:
+		return fmt.Errorf("cannot configure both `scorecards` and shared-rules fields (`blueprints`, `rules`, or `filter`)")
+	case !hasScorecards && !hasSharedRules:
+		return fmt.Errorf("must configure either `scorecards` or shared-rules fields (`blueprints` and `rules`)")
+	case hasSharedRules && (len(state.Blueprints) == 0 || len(state.Rules) == 0):
+		return fmt.Errorf("shared-rules mode requires both `blueprints` and `rules`")
+	default:
+		return nil
+	}
+}
+
 func (r *ScorecardGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var state *ScorecardGroupModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := validateScorecardGroupConfiguration(state); err != nil {
+		resp.Diagnostics.AddError("invalid scorecard group configuration", err.Error())
 		return
 	}
 
@@ -81,6 +103,11 @@ func (r *ScorecardGroupResource) Update(ctx context.Context, req resource.Update
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
 	resp.Diagnostics.Append(req.State.Get(ctx, &previousState)...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := validateScorecardGroupConfiguration(state); err != nil {
+		resp.Diagnostics.AddError("invalid scorecard group configuration", err.Error())
 		return
 	}
 

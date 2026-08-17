@@ -1504,6 +1504,41 @@ func TestValidateRejectsDuplicateButtonIdentifiers(t *testing.T) {
 	assert.Contains(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)), "Duplicate button identifier")
 }
 
+func TestSlackNotificationRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{{
+			Identifier: types.StringValue("approval"),
+			Input: &InputModel{
+				UserInputs: &InputUserInputsModel{
+					Buttons: []InputButtonModel{{
+						Identifier: types.StringValue("approve"),
+						Label:      types.StringValue("Approve"),
+						Variant:    types.StringValue("PRIMARY"),
+					}},
+				},
+				Outlets: []InputOutletModel{{Identifier: types.StringValue("approve")}},
+				Notifications: []NotificationModel{{
+					Target: types.StringValue("slack"),
+				}},
+			},
+		}},
+	}
+
+	apiWorkflow, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+	require.Len(t, apiWorkflow.Nodes, 1)
+	require.Len(t, apiWorkflow.Nodes[0].Config.Notifications, 1)
+	assert.Equal(t, "slack", apiWorkflow.Nodes[0].Config.Notifications[0].Target)
+
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+	require.NoError(t, r.refreshWorkflowState(ctx, state, apiWorkflow))
+	require.Len(t, state.Nodes[0].Input.Notifications, 1)
+	assert.Equal(t, "slack", state.Nodes[0].Input.Notifications[0].Target.ValueString())
+}
+
 func TestValidateEmailNotificationRequiresFields(t *testing.T) {
 	inputNode := func(notification NotificationModel) WorkflowNodeModel {
 		return WorkflowNodeModel{
@@ -1526,6 +1561,23 @@ func TestValidateEmailNotificationRequiresFields(t *testing.T) {
 		Fields: []NotificationFieldModel{{Label: types.StringValue("Service"), Value: types.StringValue("api")}},
 	})
 	assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{complete}, nil)))
+}
+
+func TestValidateSlackNotificationRequiresOnlyTarget(t *testing.T) {
+	node := WorkflowNodeModel{
+		Identifier: types.StringValue("approval"),
+		Input: &InputModel{
+			UserInputs: &InputUserInputsModel{
+				Buttons: []InputButtonModel{{Identifier: types.StringValue("approve"), Label: types.StringValue("Approve")}},
+			},
+			Outlets: []InputOutletModel{{Identifier: types.StringValue("approve")}},
+			Notifications: []NotificationModel{{
+				Target: types.StringValue("slack"),
+			}},
+		},
+	}
+
+	assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)))
 }
 
 func TestValidateRejectsBlankRequiredStrings(t *testing.T) {

@@ -137,6 +137,22 @@ func TestJSONStringsSemanticallyEqual(t *testing.T) {
 		assert.True(t, equal)
 	})
 
+	t.Run("deep nested key reordering", func(t *testing.T) {
+		a := `{"z1":{"z2":{"z3":{"z4":{"zebra":1,"alpha":2}}}}}`
+		b := `{"z1":{"z2":{"z3":{"z4":{"alpha":2,"zebra":1}}}}}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, false)
+		assert.NoError(t, err)
+		assert.True(t, equal)
+	})
+
+	t.Run("different array order", func(t *testing.T) {
+		a := `{"resources":[1,2,3]}`
+		b := `{"resources":[2,3,1]}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, false)
+		assert.NoError(t, err)
+		assert.False(t, equal)
+	})
+
 	t.Run("html escape equivalence", func(t *testing.T) {
 		a := `{"operator":">","property":"sum","value":2}`
 		b := `{"operator":"\u003e","property":"sum","value":2}`

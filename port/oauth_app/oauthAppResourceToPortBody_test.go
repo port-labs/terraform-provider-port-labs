@@ -36,6 +36,18 @@ func TestValidateRedirectURI(t *testing.T) {
 			t.Fatal("expected error for non-https non-localhost redirect uri")
 		}
 	})
+
+	t.Run("fragment redirect uri", func(t *testing.T) {
+		if err := validateRedirectURI("https://example.com/callback#token"); err == nil {
+			t.Fatal("expected error for redirect uri with fragment")
+		}
+	})
+
+	t.Run("disallowed characters redirect uri", func(t *testing.T) {
+		if err := validateRedirectURI("https://example.com/callback?foo=bar|baz"); err == nil {
+			t.Fatal("expected error for redirect uri with disallowed characters")
+		}
+	})
 }
 
 func TestOAuthAppResourceToPortBodyCreate(t *testing.T) {

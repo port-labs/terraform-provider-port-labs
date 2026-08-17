@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -82,9 +83,19 @@ resource "port_oauth_app" "mcp_connector" {
 }
 ` + "\n```"
 
+var safeRedirectURIChars = regexp.MustCompile(`^[a-zA-Z0-9\-._~:/?[\]@!$&'()+,;=%]+$`)
+
 func validateRedirectURI(redirectURI string) error {
 	if strings.Contains(redirectURI, "*") {
 		return fmt.Errorf("redirect_uri must be an absolute, exact (non-wildcard) URI")
+	}
+
+	if strings.Contains(redirectURI, "#") {
+		return fmt.Errorf("redirect_uri must not contain a fragment")
+	}
+
+	if !safeRedirectURIChars.MatchString(redirectURI) {
+		return fmt.Errorf("redirect_uri contains characters not permitted in a URI")
 	}
 
 	parsed, err := url.Parse(redirectURI)

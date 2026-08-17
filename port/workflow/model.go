@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/action"
 )
 
 type WorkflowModel struct {
@@ -51,11 +50,32 @@ type SelfServeTriggerModel struct {
 }
 
 type SelfServeUserInputsModel struct {
-	UserProperties  *action.UserPropertiesModel   `tfsdk:"user_properties"`
-	Titles          map[string]action.ActionTitle `tfsdk:"titles"`
-	RequiredJqQuery types.String                  `tfsdk:"required_jq_query"`
-	OrderProperties types.List                    `tfsdk:"order_properties"`
-	Steps           []action.Step                 `tfsdk:"steps"`
+	UserProperties  *UserPropertiesModel     `tfsdk:"user_properties"`
+	Titles          map[string]UserInputText `tfsdk:"titles"`
+	RequiredJqQuery types.String             `tfsdk:"required_jq_query"`
+	OrderProperties types.List               `tfsdk:"order_properties"`
+	Steps           []UserInputsStepModel    `tfsdk:"steps"`
+	Validations     []InputValidationModel   `tfsdk:"validations"`
+}
+
+type UserInputText struct {
+	Title          types.String `tfsdk:"title"`
+	Description    types.String `tfsdk:"description"`
+	Visible        types.Bool   `tfsdk:"visible"`
+	VisibleJqQuery types.String `tfsdk:"visible_jq_query"`
+}
+
+type UserInputsStepModel struct {
+	Title          types.String           `tfsdk:"title"`
+	Order          []types.String         `tfsdk:"order"`
+	Visible        types.Bool             `tfsdk:"visible"`
+	VisibleJqQuery types.String           `tfsdk:"visible_jq_query"`
+	Validations    []InputValidationModel `tfsdk:"validations"`
+}
+
+type InputValidationModel struct {
+	Constraint types.String `tfsdk:"constraint"`
+	Message    types.String `tfsdk:"message"`
 }
 
 type TriggerContextModel struct {
@@ -169,12 +189,13 @@ type InputModel struct {
 }
 
 type InputUserInputsModel struct {
-	UserProperties  *action.UserPropertiesModel   `tfsdk:"user_properties"`
-	Titles          map[string]action.ActionTitle `tfsdk:"titles"`
-	RequiredJqQuery types.String                  `tfsdk:"required_jq_query"`
-	OrderProperties types.List                    `tfsdk:"order_properties"`
-	Steps           []action.Step                 `tfsdk:"steps"`
-	Buttons         []InputButtonModel            `tfsdk:"buttons"`
+	UserProperties  *UserPropertiesModel     `tfsdk:"user_properties"`
+	Titles          map[string]UserInputText `tfsdk:"titles"`
+	RequiredJqQuery types.String             `tfsdk:"required_jq_query"`
+	OrderProperties types.List               `tfsdk:"order_properties"`
+	Steps           []UserInputsStepModel    `tfsdk:"steps"`
+	Validations     []InputValidationModel   `tfsdk:"validations"`
+	Buttons         []InputButtonModel       `tfsdk:"buttons"`
 }
 
 type InputButtonModel struct {

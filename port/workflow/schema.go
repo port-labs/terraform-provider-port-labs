@@ -18,7 +18,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/action"
 )
 
 // CURSOR_AGENT is intentionally absent: it is still a live member of the service
@@ -169,17 +168,7 @@ func respondersBlock(description string) schema.Block {
 
 func userInputsAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
-		"user_properties": schema.SingleNestedAttribute{
-			MarkdownDescription: "The user inputs the form collects.",
-			Optional:            true,
-			Attributes: map[string]schema.Attribute{
-				"string_props":  action.StringPropertySchema(),
-				"number_props":  action.NumberPropertySchema(),
-				"boolean_props": action.BooleanPropertySchema(),
-				"object_props":  action.ObjectPropertySchema(),
-				"array_props":   action.ArrayPropertySchema(),
-			},
-		},
+		"user_properties": userPropertiesSchema(),
 		"titles": schema.MapNestedAttribute{
 			MarkdownDescription: "Static titles rendered between the inputs of the form.",
 			Optional:            true,
@@ -244,11 +233,45 @@ func userInputsAttributes() map[string]schema.Attribute {
 							stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("visible")),
 						},
 					},
+					"validations": validationsSchema("Validation rules evaluated when the step is submitted."),
 				},
 			},
 			Validators: []validator.List{
-				listvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("order_properties")),
+				listvalidator.ConflictsWith(
+					path.MatchRelative().AtParent().AtName("order_properties"),
+					path.MatchRelative().AtParent().AtName("validations"),
+				),
 			},
+		},
+		"validations": validationsSchema(
+			"Validation rules evaluated against the whole form when it is submitted. " +
+				"Cannot be combined with `steps`, add the rules to the individual steps instead.",
+		),
+	}
+}
+
+func validationsSchema(description string) schema.ListNestedAttribute {
+	return schema.ListNestedAttribute{
+		MarkdownDescription: description + " Up to 10 rules are allowed.",
+		Optional:            true,
+		NestedObject: schema.NestedAttributeObject{
+			Attributes: map[string]schema.Attribute{
+				"constraint": schema.StringAttribute{
+					MarkdownDescription: "A jq expression that has to evaluate to `true` for the form to be valid.",
+					Required:            true,
+				},
+				"message": schema.StringAttribute{
+					MarkdownDescription: "The error message shown when the constraint evaluates to `false` (max 100 characters).",
+					Required:            true,
+					Validators: []validator.String{
+						stringvalidator.LengthAtMost(100),
+					},
+				},
+			},
+		},
+		Validators: []validator.List{
+			listvalidator.SizeAtLeast(1),
+			listvalidator.SizeAtMost(10),
 		},
 	}
 }

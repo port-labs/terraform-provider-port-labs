@@ -788,8 +788,13 @@ type OAuthAppUpdate struct {
 }
 
 type OAuthAppBody struct {
-	OK       bool     `json:"ok"`
-	OAuthApp OAuthApp `json:"oauthApp"`
+	OK  bool     `json:"ok"`
+	App OAuthApp `json:"app"`
+}
+
+type OAuthAppsListBody struct {
+	OK   bool       `json:"ok"`
+	Apps []OAuthApp `json:"apps"`
 }
 
 type OrganizationUpdate struct {

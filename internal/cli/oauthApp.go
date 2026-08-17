@@ -8,21 +8,35 @@ import (
 
 const oauthAppsUrl = "/v1/organization/oauth-apps"
 
-func (c *PortClient) ReadOAuthApp(ctx context.Context, oauthAppID string) (*OAuthApp, int, error) {
-	pb := &OAuthAppBody{}
+func (c *PortClient) ListOAuthApps(ctx context.Context) ([]OAuthApp, int, error) {
+	pb := &OAuthAppsListBody{}
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
 		SetResult(pb).
-		SetPathParam("oauth_app_id", oauthAppID).
-		Get(oauthAppsUrl + "/{oauth_app_id}")
+		Get(oauthAppsUrl)
 	if err != nil {
 		return nil, resp.StatusCode(), err
 	}
 	if !pb.OK {
-		return nil, resp.StatusCode(), fmt.Errorf("failed to read oauth app, got: %s", resp.Body())
+		return nil, resp.StatusCode(), fmt.Errorf("failed to list oauth apps, got: %s", resp.Body())
 	}
-	return &pb.OAuthApp, resp.StatusCode(), nil
+	return pb.Apps, resp.StatusCode(), nil
+}
+
+func (c *PortClient) ReadOAuthApp(ctx context.Context, oauthAppID string) (*OAuthApp, int, error) {
+	apps, statusCode, err := c.ListOAuthApps(ctx)
+	if err != nil {
+		return nil, statusCode, err
+	}
+
+	for i := range apps {
+		if apps[i].ID == oauthAppID {
+			return &apps[i], statusCode, nil
+		}
+	}
+
+	return nil, 404, fmt.Errorf("oauth app %q not found", oauthAppID)
 }
 
 func (c *PortClient) CreateOAuthApp(ctx context.Context, oauthApp *OAuthAppCreate) (*OAuthApp, error) {
@@ -41,7 +55,7 @@ func (c *PortClient) CreateOAuthApp(ctx context.Context, oauthApp *OAuthAppCreat
 	if !pb.OK {
 		return nil, fmt.Errorf("failed to create oauth app, got: %s", resp.Body())
 	}
-	return &pb.OAuthApp, nil
+	return &pb.App, nil
 }
 
 func (c *PortClient) UpdateOAuthApp(ctx context.Context, oauthAppID string, oauthApp *OAuthAppUpdate) (*OAuthApp, error) {
@@ -61,7 +75,7 @@ func (c *PortClient) UpdateOAuthApp(ctx context.Context, oauthAppID string, oaut
 	if !pb.OK {
 		return nil, fmt.Errorf("failed to update oauth app, got: %s", resp.Body())
 	}
-	return &pb.OAuthApp, nil
+	return &pb.App, nil
 }
 
 func (c *PortClient) DeleteOAuthApp(ctx context.Context, oauthAppID string) error {

@@ -171,6 +171,14 @@ func TestJSONStringsSemanticallyEqual(t *testing.T) {
 		assert.False(t, equal)
 	})
 
+	t.Run("semantically different deep", func(t *testing.T) {
+		a := `{"z1":{"z2":{"z3":{"z4":{"zebra":1,"alpha":2}}}}}`
+		b := `{"z1":{"z2":{"z3":{"z4":{"alpha":1,"zebra":2}}}}}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, false)
+		assert.NoError(t, err)
+		assert.False(t, equal)
+	})
+
 	t.Run("invalid json", func(t *testing.T) {
 		_, err := JSONStringsSemanticallyEqual(`{invalid`, `{"a":1}`, false)
 		assert.Error(t, err)

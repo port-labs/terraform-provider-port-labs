@@ -773,6 +773,7 @@ type OAuthApp struct {
 	Name         string     `json:"name,omitempty"`
 	RedirectURI  string     `json:"redirectUri,omitempty"`
 	CreatedAt    *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt    *time.Time `json:"updatedAt,omitempty"`
 	ClientSecret string     `json:"clientSecret,omitempty"`
 }
 

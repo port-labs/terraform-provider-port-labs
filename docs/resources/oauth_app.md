@@ -51,3 +51,4 @@ resource "port_oauth_app" "mcp_connector" {
 - `client_id` (String) The OAuth client ID assigned to this app registration
 - `created_at` (String) The creation date of the OAuth app registration
 - `id` (String) The ID of the OAuth app registration
+- `updated_at` (String) The last update date of the OAuth app registration

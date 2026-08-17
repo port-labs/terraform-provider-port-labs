@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
@@ -71,20 +70,17 @@ func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *Ent
 
 		case "object":
 			if t != nil {
-				var oldObjectItems []attr.Value
+				var oldList types.List
 				if oldProperties != nil && oldProperties.ArrayProps != nil && !oldProperties.ArrayProps.ObjectItems.IsNull() {
 					if oldListVal, ok := oldProperties.ArrayProps.ObjectItems.Elements()[k]; ok {
-						if oldList, ok := oldListVal.(types.List); ok && !oldList.IsNull() {
-							oldObjectItems = oldList.Elements()
+						if objectList, ok := oldListVal.(types.List); ok {
+							oldList = objectList
 						}
 					}
 				}
 				for i, item := range t {
-					var oldValue types.String
-					if i < len(oldObjectItems) {
-						oldValue = oldObjectItems[i].(types.String)
-					}
-					stringJs, _ := utils.GoObjectToTerraformStringPreferExisting(oldValue, &item, r.portClient.JSONEscapeHTML)
+					stringJs, _ := utils.GoObjectToTerraformStringPreferExisting(
+						utils.TerraformStringAtList(oldList, i), &item, r.portClient.JSONEscapeHTML)
 					mapObjectItems[k] = append(mapObjectItems[k], stringJs.ValueStringPointer())
 				}
 				if len(t) == 0 {

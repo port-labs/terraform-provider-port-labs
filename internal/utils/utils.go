@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-uuid"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -146,6 +147,24 @@ func GoObjectToTerraformStringPreferExisting(preferred types.String, v interface
 	}
 
 	return preferred, nil
+}
+
+func TerraformStringAt[T attr.Value](elements []T, i int) types.String {
+	if i < 0 || i >= len(elements) {
+		return types.StringNull()
+	}
+	s, ok := any(elements[i]).(types.String)
+	if !ok {
+		return types.StringNull()
+	}
+	return s
+}
+
+func TerraformStringAtList(list types.List, i int) types.String {
+	if list.IsNull() || list.IsUnknown() {
+		return types.StringNull()
+	}
+	return TerraformStringAt(list.Elements(), i)
 }
 
 func TerraformStringToGoType[T any](s types.String) (T, error) {

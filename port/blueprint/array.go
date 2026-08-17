@@ -217,16 +217,13 @@ func AddArrayPropertiesToState(ctx context.Context, v *cli.BlueprintProperty, js
 						objectArray[i] = v.(map[string]interface{})
 					}
 					attrs := make([]attr.Value, 0, len(objectArray))
-					var oldDefaultElements []attr.Value
-					if oldArrayProp != nil && oldArrayProp.ObjectItems != nil && !oldArrayProp.ObjectItems.Default.IsNull() {
-						oldDefaultElements = oldArrayProp.ObjectItems.Default.Elements()
+					var oldDefaults types.List
+					if oldArrayProp != nil && oldArrayProp.ObjectItems != nil {
+						oldDefaults = oldArrayProp.ObjectItems.Default
 					}
 					for i, value := range objectArray {
-						var oldValue types.String
-						if i < len(oldDefaultElements) {
-							oldValue = oldDefaultElements[i].(types.String)
-						}
-						stringValue, _ := utils.GoObjectToTerraformStringPreferExisting(oldValue, &value, jsonEscapeHTML)
+						stringValue, _ := utils.GoObjectToTerraformStringPreferExisting(
+							utils.TerraformStringAtList(oldDefaults, i), &value, jsonEscapeHTML)
 						attrs = append(attrs, stringValue)
 					}
 					arrayProp.ObjectItems.Default, _ = types.ListValue(types.StringType, attrs)

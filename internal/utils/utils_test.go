@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestGoObjectToTerraformString(t *testing.T) {
@@ -210,4 +212,31 @@ func TestGoObjectToTerraformStringPreferExisting(t *testing.T) {
 		want, _ := GoObjectToTerraformString(v, false)
 		assert.Equal(t, want, got)
 	})
+}
+
+func TestTerraformStringAt(t *testing.T) {
+	elements := []attr.Value{types.StringValue("a"), types.StringValue("b")}
+
+	assert.Equal(t, types.StringValue("a"), TerraformStringAt(elements, 0))
+	assert.Equal(t, types.StringValue("b"), TerraformStringAt(elements, 1))
+	assert.True(t, TerraformStringAt(elements, 2).IsNull())
+	assert.True(t, TerraformStringAt(elements, -1).IsNull())
+	assert.True(t, TerraformStringAt([]attr.Value(nil), 0).IsNull())
+	assert.True(t, TerraformStringAt([]attr.Value{types.BoolValue(true)}, 0).IsNull())
+
+	stringElements := []types.String{types.StringValue("x")}
+	assert.Equal(t, types.StringValue("x"), TerraformStringAt(stringElements, 0))
+	assert.True(t, TerraformStringAt(stringElements, 1).IsNull())
+}
+
+func TestTerraformStringAtList(t *testing.T) {
+	list, diags := types.ListValue(types.StringType, []attr.Value{types.StringValue("a"), types.StringValue("b")})
+	assert.False(t, diags.HasError())
+
+	assert.Equal(t, types.StringValue("a"), TerraformStringAtList(list, 0))
+	assert.Equal(t, types.StringValue("b"), TerraformStringAtList(list, 1))
+	assert.True(t, TerraformStringAtList(list, 2).IsNull())
+	assert.True(t, TerraformStringAtList(types.ListNull(types.StringType), 0).IsNull())
+	assert.True(t, TerraformStringAtList(types.ListUnknown(types.StringType), 0).IsNull())
+	assert.True(t, TerraformStringAtList(types.List{}, 0).IsNull())
 }

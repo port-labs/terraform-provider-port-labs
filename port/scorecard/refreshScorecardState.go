@@ -81,12 +81,13 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 			Combinator: types.StringValue(s.Filter.Combinator),
 		}
 		stateFilter.Conditions = make([]types.String, len(s.Filter.Conditions))
+		var oldConditions []types.String
+		if oldFilter != nil {
+			oldConditions = oldFilter.Conditions
+		}
 		for i, u := range s.Filter.Conditions {
-			var oldValue types.String
-			if oldFilter != nil && i < len(oldFilter.Conditions) {
-				oldValue = oldFilter.Conditions[i]
-			}
-			cond, _ := utils.GoObjectToTerraformStringPreferExisting(oldValue, u, r.portClient.JSONEscapeHTML)
+			cond, _ := utils.GoObjectToTerraformStringPreferExisting(
+				utils.TerraformStringAt(oldConditions, i), u, r.portClient.JSONEscapeHTML)
 			stateFilter.Conditions[i] = cond
 		}
 		state.Filter = stateFilter
@@ -158,12 +159,13 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 					Combinator: types.StringValue(apiRule.Query.Combinator),
 				}
 				stateQuery.Conditions = make([]types.String, len(apiRule.Query.Conditions))
+				var oldConditions []types.String
+				if existingRule.Query != nil {
+					oldConditions = existingRule.Query.Conditions
+				}
 				for i, u := range apiRule.Query.Conditions {
-					var oldValue types.String
-					if existingRule.Query != nil && i < len(existingRule.Query.Conditions) {
-						oldValue = existingRule.Query.Conditions[i]
-					}
-					cond, _ := utils.GoObjectToTerraformStringPreferExisting(oldValue, u, r.portClient.JSONEscapeHTML)
+					cond, _ := utils.GoObjectToTerraformStringPreferExisting(
+						utils.TerraformStringAt(oldConditions, i), u, r.portClient.JSONEscapeHTML)
 					stateQuery.Conditions[i] = cond
 				}
 				updatedRule.Query = stateQuery

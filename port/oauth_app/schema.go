@@ -52,6 +52,10 @@ func OAuthAppSchema() map[string]schema.Attribute {
 				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
+		"updated_at": schema.StringAttribute{
+			MarkdownDescription: "The last update date of the OAuth app registration",
+			Computed:            true,
+		},
 	}
 }
 
@@ -86,6 +90,11 @@ func validateRedirectURI(redirectURI string) error {
 	parsed, err := url.Parse(redirectURI)
 	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
 		return fmt.Errorf("redirect_uri must be an absolute, exact (non-wildcard) URI")
+	}
+
+	isLocalhost := parsed.Hostname() == "localhost" || parsed.Hostname() == "127.0.0.1"
+	if parsed.Scheme != "https" && !(parsed.Scheme == "http" && isLocalhost) {
+		return fmt.Errorf("redirect_uri must use https, or http only for localhost")
 	}
 
 	return nil

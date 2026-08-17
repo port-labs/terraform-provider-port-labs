@@ -48,6 +48,10 @@ func refreshOAuthAppState(ctx context.Context, state *OAuthAppModel, app *cli.OA
 		state.CreatedAt = types.StringValue(app.CreatedAt.String())
 	}
 
+	if app.UpdatedAt != nil {
+		state.UpdatedAt = types.StringValue(app.UpdatedAt.String())
+	}
+
 	if app.ClientSecret != "" {
 		state.ClientSecret = types.StringValue(app.ClientSecret)
 	}

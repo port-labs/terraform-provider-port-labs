@@ -24,6 +24,18 @@ func TestValidateRedirectURI(t *testing.T) {
 			t.Fatal("expected error for relative redirect uri")
 		}
 	})
+
+	t.Run("http localhost redirect uri", func(t *testing.T) {
+		if err := validateRedirectURI("http://localhost:3000/callback"); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("http non-localhost redirect uri", func(t *testing.T) {
+		if err := validateRedirectURI("http://example.com/callback"); err == nil {
+			t.Fatal("expected error for non-https non-localhost redirect uri")
+		}
+	})
 }
 
 func TestOAuthAppResourceToPortBodyCreate(t *testing.T) {

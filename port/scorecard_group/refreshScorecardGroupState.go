@@ -3,12 +3,23 @@ package scorecard_group
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
 )
+
+func shouldRefreshGroupLevels(stateLevels []scorecard.Level, cliLevels []cli.Level) bool {
+	if len(stateLevels) == 0 && reflect.DeepEqual(cliLevels, scorecard.DefaultCliLevels()) {
+		return false
+	}
+	if len(stateLevels) > 0 || (len(stateLevels) == 0 && !reflect.DeepEqual(cliLevels, scorecard.DefaultCliLevels())) {
+		return true
+	}
+	return false
+}
 
 func queryFromCLI(q *cli.Query, jsonEscapeHTML bool) *scorecard.Query {
 	if q == nil {
@@ -71,10 +82,12 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	state.UpdatedAt = types.StringValue(group.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(group.UpdatedBy)
 
-	if len(group.Levels) > 0 {
-		state.Levels = levelsFromCLI(group.Levels)
-	} else {
-		state.Levels = nil
+	if shouldRefreshGroupLevels(state.Levels, group.Levels) {
+		if len(group.Levels) > 0 {
+			state.Levels = levelsFromCLI(group.Levels)
+		} else {
+			state.Levels = nil
+		}
 	}
 
 	if len(group.Scorecards) > 0 {

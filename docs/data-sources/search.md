@@ -171,6 +171,7 @@ resource "jira_issue" "microservice_ownership_without_gold_level" {
 Optional:
 
 - `icon` (String) The icon of the entity
+- `mapping_warnings` (List of String) Entity mapping fields that had warnings during ingest (for example, `properties` or `team`)
 - `properties` (Attributes) The properties of the entity (see [below for nested schema](#nestedatt--entities--properties))
 - `relations` (Attributes) The relations of the entity (see [below for nested schema](#nestedatt--entities--relations))
 - `run_id` (String) The runID of the action run that created the entity

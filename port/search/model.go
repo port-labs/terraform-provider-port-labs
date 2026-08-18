@@ -50,8 +50,9 @@ type EntityModel struct {
 	UpdatedAt  types.String               `tfsdk:"updated_at"`
 	UpdatedBy  types.String               `tfsdk:"updated_by"`
 	Properties *EntityPropertiesModel     `tfsdk:"properties"`
-	Teams      []types.String             `tfsdk:"teams"`
-	Scorecards *map[string]ScorecardModel `tfsdk:"scorecards"`
+	Teams           []types.String             `tfsdk:"teams"`
+	MappingWarnings []types.String             `tfsdk:"mapping_warnings"`
+	Scorecards      *map[string]ScorecardModel `tfsdk:"scorecards"`
 	Relations  *RelationModel             `tfsdk:"relations"`
 }
 

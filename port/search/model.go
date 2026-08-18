@@ -49,11 +49,11 @@ type EntityModel struct {
 	CreatedBy  types.String               `tfsdk:"created_by"`
 	UpdatedAt  types.String               `tfsdk:"updated_at"`
 	UpdatedBy  types.String               `tfsdk:"updated_by"`
-	Properties *EntityPropertiesModel     `tfsdk:"properties"`
+	Properties      *EntityPropertiesModel     `tfsdk:"properties"`
 	Teams           []types.String             `tfsdk:"teams"`
 	MappingWarnings []types.String             `tfsdk:"mapping_warnings"`
 	Scorecards      *map[string]ScorecardModel `tfsdk:"scorecards"`
-	Relations  *RelationModel             `tfsdk:"relations"`
+	Relations       *RelationModel             `tfsdk:"relations"`
 }
 
 type SearchDataModel struct {

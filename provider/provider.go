@@ -18,6 +18,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/entity"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/folder"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/integration"
+	mcp_server "github.com/port-labs/terraform-provider-port-labs/v2/port/mcp_server"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/organization"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/page"
 	page_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
@@ -174,6 +175,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		organization.NewOrganizationSecretResource,
 		organization.NewOrganizationResource,
 		workflow.NewWorkflowResource,
+		mcp_server.NewMcpServerResource,
 	}
 }
 

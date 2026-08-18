@@ -244,6 +244,7 @@ func TestTerraformStringAtList(t *testing.T) {
 	assert.Equal(t, types.StringValue("a"), TerraformStringAtList(list, 0))
 	assert.Equal(t, types.StringValue("b"), TerraformStringAtList(list, 1))
 	assert.True(t, TerraformStringAtList(list, 2).IsNull())
+	assert.True(t, TerraformStringAtList(list, -1).IsNull())
 	assert.True(t, TerraformStringAtList(types.ListNull(types.StringType), 0).IsNull())
 	assert.True(t, TerraformStringAtList(types.ListUnknown(types.StringType), 0).IsNull())
 	assert.True(t, TerraformStringAtList(types.List{}, 0).IsNull())

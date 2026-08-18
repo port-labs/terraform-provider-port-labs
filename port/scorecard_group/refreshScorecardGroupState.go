@@ -2,7 +2,6 @@ package scorecard_group
 
 import (
 	"context"
-	"fmt"
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -113,30 +112,4 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 
 	state.Rules = rulesFromCLI(group.Rules, r.portClient.JSONEscapeHTML)
 	state.Filter = queryFromCLI(group.Filter, r.portClient.JSONEscapeHTML)
-}
-
-func blueprintIdentifiersFromState(state *ScorecardGroupModel) []string {
-	if len(state.Scorecards) > 0 {
-		blueprints := make([]string, 0, len(state.Scorecards))
-		for blueprint := range state.Scorecards {
-			blueprints = append(blueprints, blueprint)
-		}
-		return blueprints
-	}
-
-	blueprints := make([]string, 0, len(state.Blueprints))
-	for _, blueprint := range state.Blueprints {
-		blueprints = append(blueprints, blueprint.ValueString())
-	}
-	return blueprints
-}
-
-func (r *ScorecardGroupResource) deleteMemberScorecards(ctx context.Context, state *ScorecardGroupModel) error {
-	identifier := state.Identifier.ValueString()
-	for _, blueprintIdentifier := range blueprintIdentifiersFromState(state) {
-		if err := r.portClient.DeleteScorecard(ctx, blueprintIdentifier, identifier); err != nil {
-			return fmt.Errorf("failed to delete scorecard %q on blueprint %q: %w", identifier, blueprintIdentifier, err)
-		}
-	}
-	return nil
 }

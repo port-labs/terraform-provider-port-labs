@@ -1,7 +1,9 @@
 package scorecard_group
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -49,5 +51,102 @@ func TestShouldRefreshGroupLevels(t *testing.T) {
 				t.Fatalf("shouldRefreshGroupLevels() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestRefreshScorecardGroupStateNilMetadata(t *testing.T) {
+	t.Parallel()
+
+	resource := &ScorecardGroupResource{
+		portClient: &cli.PortClient{},
+	}
+	state := &ScorecardGroupModel{
+		Identifier: types.StringValue("group-1"),
+		Title:      types.StringValue("Group 1"),
+	}
+	group := &cli.ScorecardGroup{
+		Identifier: "group-1",
+		Title:      "Group 1",
+		Blueprints: []string{"bp-1"},
+		Rules: []cli.Rule{
+			{
+				Identifier: "rule-1",
+				Title:      "Rule 1",
+				Level:      "Gold",
+				Query: cli.Query{
+					Combinator: "and",
+					Conditions: []interface{}{
+						map[string]interface{}{
+							"property": "$team",
+							"operator": "isNotEmpty",
+						},
+					},
+				},
+			},
+		},
+	}
+
+	resource.refreshScorecardGroupState(context.Background(), state, group)
+
+	if !state.CreatedAt.IsNull() || !state.UpdatedAt.IsNull() {
+		t.Fatalf("expected null timestamps, got created_at=%v updated_at=%v", state.CreatedAt, state.UpdatedAt)
+	}
+	if !state.CreatedBy.IsNull() || !state.UpdatedBy.IsNull() {
+		t.Fatalf("expected null metadata users, got created_by=%v updated_by=%v", state.CreatedBy, state.UpdatedBy)
+	}
+}
+
+func TestRefreshScorecardGroupStateSharedRulesFilters(t *testing.T) {
+	t.Parallel()
+
+	createdAt := time.Date(2026, 1, 2, 3, 4, 5, 0, time.UTC)
+	resource := &ScorecardGroupResource{
+		portClient: &cli.PortClient{},
+	}
+	state := &ScorecardGroupModel{}
+	group := &cli.ScorecardGroup{
+		Meta: cli.Meta{
+			CreatedAt: &createdAt,
+			CreatedBy: "user-1",
+		},
+		Identifier: "group-1",
+		Title:      "Group 1",
+		Blueprints: []string{"bp-1"},
+		Rules: []cli.Rule{
+			{
+				Identifier: "rule-1",
+				Title:      "Rule 1",
+				Level:      "Gold",
+				Query: cli.Query{
+					Combinator: "and",
+					Conditions: []interface{}{
+						map[string]interface{}{
+							"property": "$team",
+							"operator": "isNotEmpty",
+						},
+					},
+				},
+			},
+		},
+		Filters: map[string]*cli.Query{
+			"bp-1": {
+				Combinator: "and",
+				Conditions: []interface{}{
+					map[string]interface{}{
+						"property": "author",
+						"operator": "isNotEmpty",
+					},
+				},
+			},
+		},
+	}
+
+	resource.refreshScorecardGroupState(context.Background(), state, group)
+
+	if len(state.Filters) != 1 {
+		t.Fatalf("expected one filter in state, got %d", len(state.Filters))
+	}
+	if state.Filters["bp-1"] == nil || state.Filters["bp-1"].Combinator.ValueString() != "and" {
+		t.Fatalf("unexpected filters in state: %v", state.Filters)
 	}
 }

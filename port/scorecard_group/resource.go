@@ -33,18 +33,30 @@ func (r *ScorecardGroupResource) Configure(ctx context.Context, req resource.Con
 
 func validateScorecardGroupConfiguration(state *ScorecardGroupModel) error {
 	hasScorecards := len(state.Scorecards) > 0
-	hasSharedRules := len(state.Blueprints) > 0 || len(state.Rules) > 0 || state.Filter != nil
+	hasSharedRules := len(state.Blueprints) > 0 || len(state.Rules) > 0 || len(state.Filters) > 0
 
 	switch {
 	case hasScorecards && hasSharedRules:
-		return fmt.Errorf("cannot configure both `scorecards` and shared-rules fields (`blueprints`, `rules`, or `filter`)")
+		return fmt.Errorf("cannot configure both `scorecards` and shared-rules fields (`blueprints`, `rules`, or `filters`)")
 	case !hasScorecards && !hasSharedRules:
 		return fmt.Errorf("must configure either `scorecards` or shared-rules fields (`blueprints` and `rules`)")
 	case hasSharedRules && (len(state.Blueprints) == 0 || len(state.Rules) == 0):
 		return fmt.Errorf("shared-rules mode requires both `blueprints` and `rules`")
-	default:
-		return nil
 	}
+
+	if len(state.Filters) > 0 {
+		blueprints := make(map[string]struct{}, len(state.Blueprints))
+		for _, blueprint := range state.Blueprints {
+			blueprints[blueprint.ValueString()] = struct{}{}
+		}
+		for blueprintID := range state.Filters {
+			if _, ok := blueprints[blueprintID]; !ok {
+				return fmt.Errorf("filters key %q must be one of the configured blueprints", blueprintID)
+			}
+		}
+	}
+
+	return nil
 }
 
 func (r *ScorecardGroupResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {

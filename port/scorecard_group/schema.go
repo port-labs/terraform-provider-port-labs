@@ -5,7 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -80,7 +79,7 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 				},
 			},
 			"blueprints": schema.ListAttribute{
-				MarkdownDescription: "Blueprint identifiers that share the same rules (and optional filter). Use this for shared-rules mode. Conflicts with `scorecards`.",
+				MarkdownDescription: "Blueprint identifiers that share the same rules (and optional filters). Use this for shared-rules mode. Conflicts with `scorecards`.",
 				Optional:            true,
 				ElementType:         types.StringType,
 				Validators: []validator.List{
@@ -100,23 +99,25 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 					Attributes: scorecard.RuleSchema(),
 				},
 			},
-			"filter": schema.SingleNestedAttribute{
-				MarkdownDescription: "An optional filter applied to every blueprint in shared-rules mode. Conflicts with `scorecards`.",
+			"filters": schema.MapNestedAttribute{
+				MarkdownDescription: "Optional filters per blueprint in shared-rules mode, keyed by blueprint identifier. Conflicts with `scorecards`.",
 				Optional:            true,
-				Attributes:          querySchema(),
-				Validators: []validator.Object{
-					objectvalidator.ConflictsWith(path.MatchRoot("scorecards")),
+				Validators: []validator.Map{
+					mapvalidator.ConflictsWith(path.MatchRoot("scorecards")),
+				},
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: querySchema(),
 				},
 			},
 			"scorecards": schema.MapNestedAttribute{
-				MarkdownDescription: "Map of blueprint identifier to member scorecard filter/rules. Use this for per-blueprint mode. Conflicts with `blueprints`, `rules`, and `filter`.",
+				MarkdownDescription: "Map of blueprint identifier to member scorecard filter/rules. Use this for per-blueprint mode. Conflicts with `blueprints`, `rules`, and `filters`.",
 				Optional:            true,
 				Validators: []validator.Map{
 					mapvalidator.SizeAtLeast(1),
 					mapvalidator.ConflictsWith(
 						path.MatchRoot("blueprints"),
 						path.MatchRoot("rules"),
-						path.MatchRoot("filter"),
+						path.MatchRoot("filters"),
 					),
 				},
 				NestedObject: schema.NestedAttributeObject{
@@ -156,7 +157,7 @@ This resource allows you to manage a scorecard group that creates scorecards acr
 
 A scorecard group can be configured in one of two modes:
 
-- **Shared rules mode** — set ` + "`blueprints`" + `, ` + "`rules`" + `, and optionally ` + "`filter`" + ` to apply the same rules to multiple blueprints.
+- **Shared rules mode** — set ` + "`blueprints`" + `, ` + "`rules`" + `, and optionally ` + "`filters`" + ` to apply the same rules to multiple blueprints.
 - **Per-blueprint mode** — set ` + "`scorecards`" + ` to define different filter/rules per blueprint.
 
 See the [Port documentation](https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/) for more information about scorecards.

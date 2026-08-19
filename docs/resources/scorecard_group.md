@@ -6,7 +6,7 @@ description: |-
   Scorecard Group
   This resource allows you to manage a scorecard group that creates scorecards across multiple blueprints.
   A scorecard group can be configured in one of two modes:
-  Shared rules mode — set blueprints, rules, and optionally filter to apply the same rules to multiple blueprints.Per-blueprint mode — set scorecards to define different filter/rules per blueprint.
+  Shared rules mode — set blueprints, rules, and optionally filters to apply the same rules to multiple blueprints.Per-blueprint mode — set scorecards to define different filter/rules per blueprint.
   See the Port documentation https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/ for more information about scorecards.
   Example Usage (shared rules)
   
@@ -63,7 +63,7 @@ This resource allows you to manage a scorecard group that creates scorecards acr
 
 A scorecard group can be configured in one of two modes:
 
-- **Shared rules mode** — set `blueprints`, `rules`, and optionally `filter` to apply the same rules to multiple blueprints.
+- **Shared rules mode** — set `blueprints`, `rules`, and optionally `filters` to apply the same rules to multiple blueprints.
 - **Per-blueprint mode** — set `scorecards` to define different filter/rules per blueprint.
 
 See the [Port documentation](https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/) for more information about scorecards.
@@ -131,11 +131,11 @@ resource "port_scorecard_group" "readiness" {
 
 ### Optional
 
-- `blueprints` (List of String) Blueprint identifiers that share the same rules (and optional filter). Use this for shared-rules mode. Conflicts with `scorecards`.
-- `filter` (Attributes) An optional filter applied to every blueprint in shared-rules mode. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--filter))
+- `blueprints` (List of String) Blueprint identifiers that share the same rules (and optional filters). Use this for shared-rules mode. Conflicts with `scorecards`.
+- `filters` (Attributes Map) Optional filters per blueprint in shared-rules mode, keyed by blueprint identifier. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--filters))
 - `levels` (Attributes List) The available levels of the scorecard group, shared by all members. (see [below for nested schema](#nestedatt--levels))
 - `rules` (Attributes List) The rules applied to every blueprint in shared-rules mode. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--rules))
-- `scorecards` (Attributes Map) Map of blueprint identifier to member scorecard filter/rules. Use this for per-blueprint mode. Conflicts with `blueprints`, `rules`, and `filter`. (see [below for nested schema](#nestedatt--scorecards))
+- `scorecards` (Attributes Map) Map of blueprint identifier to member scorecard filter/rules. Use this for per-blueprint mode. Conflicts with `blueprints`, `rules`, and `filters`. (see [below for nested schema](#nestedatt--scorecards))
 
 ### Read-Only
 
@@ -145,8 +145,8 @@ resource "port_scorecard_group" "readiness" {
 - `updated_at` (String) The last update date of the scorecard group.
 - `updated_by` (String) The last updater of the scorecard group.
 
-<a id="nestedatt--filter"></a>
-### Nested Schema for `filter`
+<a id="nestedatt--filters"></a>
+### Nested Schema for `filters`
 
 Required:
 

@@ -52,6 +52,24 @@ func TestValidateScorecardGroupConfiguration(t *testing.T) {
 			wantErr: true,
 		},
 		{
+			name: "filters key not in blueprints",
+			state: &ScorecardGroupModel{
+				Blueprints: []types.String{types.StringValue("bp-1")},
+				Rules: []scorecard.Rule{
+					{Identifier: types.StringValue("rule-1")},
+				},
+				Filters: map[string]*scorecard.Query{
+					"bp-2": {
+						Combinator: types.StringValue("and"),
+						Conditions: []types.String{
+							types.StringValue(`{"property":"$team","operator":"isNotEmpty"}`),
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
 			name: "mixed modes",
 			state: &ScorecardGroupModel{
 				Blueprints: []types.String{types.StringValue("bp-1")},

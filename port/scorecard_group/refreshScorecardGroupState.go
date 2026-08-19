@@ -76,10 +76,26 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	state.ID = types.StringValue(group.Identifier)
 	state.Identifier = types.StringValue(group.Identifier)
 	state.Title = types.StringValue(group.Title)
-	state.CreatedAt = types.StringValue(group.CreatedAt.String())
-	state.CreatedBy = types.StringValue(group.CreatedBy)
-	state.UpdatedAt = types.StringValue(group.UpdatedAt.String())
-	state.UpdatedBy = types.StringValue(group.UpdatedBy)
+	if group.CreatedAt != nil {
+		state.CreatedAt = types.StringValue(group.CreatedAt.String())
+	} else {
+		state.CreatedAt = types.StringNull()
+	}
+	if group.CreatedBy != "" {
+		state.CreatedBy = types.StringValue(group.CreatedBy)
+	} else {
+		state.CreatedBy = types.StringNull()
+	}
+	if group.UpdatedAt != nil {
+		state.UpdatedAt = types.StringValue(group.UpdatedAt.String())
+	} else {
+		state.UpdatedAt = types.StringNull()
+	}
+	if group.UpdatedBy != "" {
+		state.UpdatedBy = types.StringValue(group.UpdatedBy)
+	} else {
+		state.UpdatedBy = types.StringNull()
+	}
 
 	if shouldRefreshGroupLevels(state.Levels, group.Levels) {
 		if len(group.Levels) > 0 {
@@ -96,7 +112,7 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 		}
 		state.Blueprints = nil
 		state.Rules = nil
-		state.Filter = nil
+		state.Filters = nil
 		return
 	}
 
@@ -111,5 +127,12 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	}
 
 	state.Rules = rulesFromCLI(group.Rules, r.portClient.JSONEscapeHTML)
-	state.Filter = queryFromCLI(group.Filter, r.portClient.JSONEscapeHTML)
+	if len(group.Filters) > 0 {
+		state.Filters = make(map[string]*scorecard.Query, len(group.Filters))
+		for blueprintID, filter := range group.Filters {
+			state.Filters[blueprintID] = queryFromCLI(filter, r.portClient.JSONEscapeHTML)
+		}
+	} else {
+		state.Filters = nil
+	}
 }

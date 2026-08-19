@@ -15,9 +15,9 @@ type ScorecardGroupModel struct {
 	Identifier types.String              `tfsdk:"identifier"`
 	Title      types.String              `tfsdk:"title"`
 	Levels     []scorecard.Level         `tfsdk:"levels"`
-	Blueprints []types.String            `tfsdk:"blueprints"`
-	Rules      []scorecard.Rule          `tfsdk:"rules"`
-	Filter     *scorecard.Query          `tfsdk:"filter"`
+	Blueprints []types.String             `tfsdk:"blueprints"`
+	Rules      []scorecard.Rule           `tfsdk:"rules"`
+	Filters    map[string]*scorecard.Query `tfsdk:"filters"`
 	Scorecards map[string]MemberSpecModel `tfsdk:"scorecards"`
 	CreatedAt  types.String              `tfsdk:"created_at"`
 	CreatedBy  types.String              `tfsdk:"created_by"`

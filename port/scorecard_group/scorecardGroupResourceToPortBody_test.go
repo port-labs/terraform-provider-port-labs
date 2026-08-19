@@ -47,6 +47,47 @@ func TestScorecardGroupResourceToPortBodySharedRules(t *testing.T) {
 	}
 }
 
+func TestScorecardGroupResourceToPortBodySharedRulesWithFilters(t *testing.T) {
+	state := &ScorecardGroupModel{
+		Identifier: types.StringValue("group-1"),
+		Title:      types.StringValue("Group 1"),
+		Blueprints: []types.String{types.StringValue("bp-1")},
+		Rules: []scorecard.Rule{
+			{
+				Identifier: types.StringValue("rule-1"),
+				Title:      types.StringValue("Rule 1"),
+				Level:      types.StringValue("Gold"),
+				Query: &scorecard.Query{
+					Combinator: types.StringValue("and"),
+					Conditions: []types.String{
+						types.StringValue(`{"property":"$team","operator":"isNotEmpty"}`),
+					},
+				},
+			},
+		},
+		Filters: map[string]*scorecard.Query{
+			"bp-1": {
+				Combinator: types.StringValue("and"),
+				Conditions: []types.String{
+					types.StringValue(`{"property":"$team","operator":"isNotEmpty"}`),
+				},
+			},
+		},
+	}
+
+	group, err := scorecardGroupResourceToPortBody(context.TODO(), state)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if len(group.Filters) != 1 {
+		t.Fatalf("expected one filter, got %d", len(group.Filters))
+	}
+	if group.Filters["bp-1"] == nil || group.Filters["bp-1"].Combinator != "and" {
+		t.Fatalf("unexpected filters: %v", group.Filters)
+	}
+}
+
 func TestScorecardGroupResourceToPortBodyPerBlueprint(t *testing.T) {
 	state := &ScorecardGroupModel{
 		Identifier: types.StringValue("group-2"),

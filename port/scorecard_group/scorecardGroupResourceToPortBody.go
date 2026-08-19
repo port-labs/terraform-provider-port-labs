@@ -117,11 +117,17 @@ func scorecardGroupResourceToPortBody(ctx context.Context, state *ScorecardGroup
 	}
 	group.Rules = rules
 
-	filter, err := queryToCLI(state.Filter)
-	if err != nil {
-		return nil, err
+	if len(state.Filters) > 0 {
+		filters := make(map[string]*cli.Query, len(state.Filters))
+		for blueprintID, filter := range state.Filters {
+			query, err := queryToCLI(filter)
+			if err != nil {
+				return nil, err
+			}
+			filters[blueprintID] = query
+		}
+		group.Filters = filters
 	}
-	group.Filter = filter
 
 	return group, nil
 }

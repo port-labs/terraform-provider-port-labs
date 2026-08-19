@@ -41,6 +41,16 @@ func (c *PortClient) CreateScorecardGroup(ctx context.Context, scorecardGroup *S
 	if !pb.OK {
 		return nil, fmt.Errorf("failed to create scorecard group, got: %s", resp.Body())
 	}
+	if pb.ScorecardGroup.Identifier == "" {
+		created, statusCode, err := c.ReadScorecardGroup(ctx, scorecardGroup.Identifier)
+		if err != nil {
+			if statusCode == 404 {
+				return nil, fmt.Errorf("failed to create scorecard group: API returned success but scorecard group was not found")
+			}
+			return nil, fmt.Errorf("failed to read scorecard group after create: %w", err)
+		}
+		return created, nil
+	}
 	return &pb.ScorecardGroup, nil
 }
 

@@ -473,7 +473,7 @@ type (
 		Scorecards map[string]ScorecardGroupMemberSpec `json:"scorecards,omitempty"`
 		Blueprints []string                          `json:"blueprints,omitempty"`
 		Rules      []Rule                            `json:"rules,omitempty"`
-		Filter     *Query                            `json:"filter,omitempty"`
+		Filters    map[string]*Query                 `json:"filters,omitempty"`
 	}
 
 	Rule struct {

@@ -38,20 +38,63 @@ func queryFromCLI(q *cli.Query, jsonEscapeHTML bool) *scorecard.Query {
 func rulesFromCLI(rules []cli.Rule, jsonEscapeHTML bool) []scorecard.Rule {
 	stateRules := make([]scorecard.Rule, 0, len(rules))
 	for _, rule := range rules {
-		stateRule := scorecard.Rule{
-			Title:      types.StringValue(rule.Title),
-			Level:      types.StringValue(rule.Level),
-			Identifier: types.StringValue(rule.Identifier),
-		}
-		if rule.Description != "" {
-			stateRule.Description = types.StringValue(rule.Description)
-		} else {
-			stateRule.Description = types.StringNull()
-		}
-		stateRule.Query = queryFromCLI(&rule.Query, jsonEscapeHTML)
-		stateRules = append(stateRules, stateRule)
+		stateRules = append(stateRules, ruleFromCLI(rule, scorecard.Rule{}, jsonEscapeHTML))
 	}
 	return stateRules
+}
+
+func ruleFromCLI(rule cli.Rule, existingRule scorecard.Rule, jsonEscapeHTML bool) scorecard.Rule {
+	stateRule := scorecard.Rule{
+		Title:      types.StringValue(rule.Title),
+		Level:      types.StringValue(rule.Level),
+		Identifier: types.StringValue(rule.Identifier),
+	}
+	if !existingRule.Description.IsNull() && !existingRule.Description.IsUnknown() {
+		stateRule.Description = existingRule.Description
+	} else if rule.Description != "" {
+		stateRule.Description = types.StringValue(rule.Description)
+	} else {
+		stateRule.Description = types.StringNull()
+	}
+	stateRule.Query = queryFromCLI(&rule.Query, jsonEscapeHTML)
+	return stateRule
+}
+
+func rulesFromStateAndCLI(stateRules []scorecard.Rule, apiRules []cli.Rule, jsonEscapeHTML bool) []scorecard.Rule {
+	apiStateRules := rulesFromCLI(apiRules, jsonEscapeHTML)
+	if len(stateRules) == 0 {
+		return apiStateRules
+	}
+
+	apiRulesByIdentifier := make(map[string]scorecard.Rule, len(apiStateRules))
+	for _, rule := range apiStateRules {
+		apiRulesByIdentifier[rule.Identifier.ValueString()] = rule
+	}
+
+	orderedRules := make([]scorecard.Rule, 0, len(apiStateRules))
+	processedIdentifiers := make(map[string]bool)
+
+	for _, existingRule := range stateRules {
+		identifier := existingRule.Identifier.ValueString()
+		apiRule, exists := apiRulesByIdentifier[identifier]
+		if !exists {
+			continue
+		}
+		updatedRule := apiRule
+		if !existingRule.Description.IsNull() && !existingRule.Description.IsUnknown() {
+			updatedRule.Description = existingRule.Description
+		}
+		orderedRules = append(orderedRules, updatedRule)
+		processedIdentifiers[identifier] = true
+	}
+
+	for _, apiRule := range apiStateRules {
+		if !processedIdentifiers[apiRule.Identifier.ValueString()] {
+			orderedRules = append(orderedRules, apiRule)
+		}
+	}
+
+	return orderedRules
 }
 
 func levelsFromCLI(levels []cli.Level) []scorecard.Level {
@@ -65,10 +108,10 @@ func levelsFromCLI(levels []cli.Level) []scorecard.Level {
 	return stateLevels
 }
 
-func memberSpecFromCLI(spec cli.ScorecardGroupMemberSpec, jsonEscapeHTML bool) MemberSpecModel {
+func memberSpecFromCLI(spec cli.ScorecardGroupMemberSpec, stateSpec MemberSpecModel, jsonEscapeHTML bool) MemberSpecModel {
 	return MemberSpecModel{
 		Filter: queryFromCLI(spec.Filter, jsonEscapeHTML),
-		Rules:  rulesFromCLI(spec.Rules, jsonEscapeHTML),
+		Rules:  rulesFromStateAndCLI(stateSpec.Rules, spec.Rules, jsonEscapeHTML),
 	}
 }
 
@@ -108,7 +151,11 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	if len(group.Scorecards) > 0 {
 		state.Scorecards = make(map[string]MemberSpecModel, len(group.Scorecards))
 		for blueprintID, memberSpec := range group.Scorecards {
-			state.Scorecards[blueprintID] = memberSpecFromCLI(memberSpec, r.portClient.JSONEscapeHTML)
+			existingSpec := MemberSpecModel{}
+			if state.Scorecards != nil {
+				existingSpec = state.Scorecards[blueprintID]
+			}
+			state.Scorecards[blueprintID] = memberSpecFromCLI(memberSpec, existingSpec, r.portClient.JSONEscapeHTML)
 		}
 		state.Blueprints = nil
 		state.Rules = nil
@@ -126,7 +173,7 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 		state.Blueprints = nil
 	}
 
-	state.Rules = rulesFromCLI(group.Rules, r.portClient.JSONEscapeHTML)
+	state.Rules = rulesFromStateAndCLI(state.Rules, group.Rules, r.portClient.JSONEscapeHTML)
 	if len(group.Filters) > 0 {
 		state.Filters = make(map[string]*scorecard.Query, len(group.Filters))
 		for blueprintID, filter := range group.Filters {

@@ -76,19 +76,46 @@ resource "port_scorecard_group" "production_readiness" {
     port_blueprint.microservice.identifier,
     port_blueprint.database.identifier,
   ]
-  rules = [{
-    identifier = "has-platform-author"
-    title      = "Has Platform Author"
-    level      = "Gold"
-    query = {
-      combinator = "and"
-      conditions = [jsonencode({
-        property = "author"
-        operator = "="
-        value    = "Platform Team"
-      })]
-    }
-  }]
+  rules = [
+    {
+      identifier = "zebra-production-environment"
+      title      = "Production Environment"
+      level      = "Gold"
+      query = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "environment"
+          operator = "="
+          value    = "production"
+        })]
+      }
+    },
+    {
+      identifier = "alpha-has-platform-author"
+      title      = "Has Platform Author"
+      level      = "Silver"
+      query = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "author"
+          operator = "="
+          value    = "Platform Team"
+        })]
+      }
+    },
+    {
+      identifier = "beta-has-author"
+      title      = "Has Author"
+      level      = "Bronze"
+      query = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "author"
+          operator = "isNotEmpty"
+        })]
+      }
+    },
+  ]
   filters = {
     (port_blueprint.microservice.identifier) = {
       combinator = "and"
@@ -129,19 +156,34 @@ resource "port_scorecard_group" "blueprint_specific_readiness" {
           value    = "staging"
         })]
       }
-      rules = [{
-        identifier = "has-platform-author"
-        title      = "Has Platform Author"
-        level      = "Gold"
-        query = {
-          combinator = "and"
-          conditions = [jsonencode({
-            property = "author"
-            operator = "="
-            value    = "Platform Team"
-          })]
-        }
-      }]
+      rules = [
+        {
+          identifier = "zebra-staging-environment"
+          title      = "Staging Environment"
+          level      = "Gold"
+          query = {
+            combinator = "and"
+            conditions = [jsonencode({
+              property = "environment"
+              operator = "="
+              value    = "staging"
+            })]
+          }
+        },
+        {
+          identifier = "alpha-has-platform-author"
+          title      = "Has Platform Author"
+          level      = "Silver"
+          query = {
+            combinator = "and"
+            conditions = [jsonencode({
+              property = "author"
+              operator = "="
+              value    = "Platform Team"
+            })]
+          }
+        },
+      ]
     }
     (port_blueprint.database.identifier) = {
       filter = {
@@ -152,18 +194,33 @@ resource "port_scorecard_group" "blueprint_specific_readiness" {
           value    = "production"
         })]
       }
-      rules = [{
-        identifier = "has-author"
-        title      = "Has Author"
-        level      = "Gold"
-        query = {
-          combinator = "and"
-          conditions = [jsonencode({
-            property = "author"
-            operator = "isNotEmpty"
-          })]
-        }
-      }]
+      rules = [
+        {
+          identifier = "zebra-production-environment"
+          title      = "Production Environment"
+          level      = "Gold"
+          query = {
+            combinator = "and"
+            conditions = [jsonencode({
+              property = "environment"
+              operator = "="
+              value    = "production"
+            })]
+          }
+        },
+        {
+          identifier = "beta-has-author"
+          title      = "Has Author"
+          level      = "Bronze"
+          query = {
+            combinator = "and"
+            conditions = [jsonencode({
+              property = "author"
+              operator = "isNotEmpty"
+            })]
+          }
+        },
+      ]
     }
   }
   depends_on = [

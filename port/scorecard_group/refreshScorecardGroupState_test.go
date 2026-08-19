@@ -150,3 +150,33 @@ func TestRefreshScorecardGroupStateSharedRulesFilters(t *testing.T) {
 		t.Fatalf("unexpected filters in state: %v", state.Filters)
 	}
 }
+
+func TestRulesFromStateAndCLIPreservesOrder(t *testing.T) {
+	t.Parallel()
+
+	stateRules := []scorecard.Rule{
+		{Identifier: types.StringValue("zebra-rule")},
+		{Identifier: types.StringValue("alpha-rule")},
+		{Identifier: types.StringValue("beta-rule")},
+	}
+	apiRules := []cli.Rule{
+		{Identifier: "alpha-rule", Title: "Alpha Rule", Level: "Silver", Query: cli.Query{Combinator: "and"}},
+		{Identifier: "beta-rule", Title: "Beta Rule", Level: "Bronze", Query: cli.Query{Combinator: "and"}},
+		{Identifier: "zebra-rule", Title: "Zebra Rule", Level: "Gold", Query: cli.Query{Combinator: "and"}},
+	}
+
+	got := rulesFromStateAndCLI(stateRules, apiRules, false)
+
+	if len(got) != 3 {
+		t.Fatalf("expected 3 rules, got %d", len(got))
+	}
+	if got[0].Identifier.ValueString() != "zebra-rule" {
+		t.Fatalf("expected zebra-rule first, got %s", got[0].Identifier.ValueString())
+	}
+	if got[1].Identifier.ValueString() != "alpha-rule" {
+		t.Fatalf("expected alpha-rule second, got %s", got[1].Identifier.ValueString())
+	}
+	if got[2].Identifier.ValueString() != "beta-rule" {
+		t.Fatalf("expected beta-rule third, got %s", got[2].Identifier.ValueString())
+	}
+}

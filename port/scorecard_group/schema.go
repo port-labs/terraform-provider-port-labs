@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -78,14 +79,14 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 					Attributes: scorecard.LevelSchema(),
 				},
 			},
-			"blueprints": schema.ListAttribute{
+			"blueprints": schema.SetAttribute{
 				MarkdownDescription: "Blueprint identifiers that share the same rules (and optional filters). Use this for shared-rules mode. Conflicts with `scorecards`.",
 				Optional:            true,
 				ElementType:         types.StringType,
-				Validators: []validator.List{
-					listvalidator.SizeAtLeast(1),
-					listvalidator.ConflictsWith(path.MatchRoot("scorecards")),
-					listvalidator.AlsoRequires(path.MatchRoot("rules")),
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(1),
+					setvalidator.ConflictsWith(path.MatchRoot("scorecards")),
+					setvalidator.AlsoRequires(path.MatchRoot("rules")),
 				},
 			},
 			"rules": schema.ListNestedAttribute{

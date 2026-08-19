@@ -93,6 +93,7 @@ Optional:
 - `boolean_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--properties--array_props--boolean_items))
 - `description` (String) The description of the property
 - `icon` (String) The icon of the property
+- `include_duplicates` (Boolean) Only applicable when `union` is `true`. When `false` (the default) the returned value contains each value once. When `true`, a value contributed by several sources is returned once per source. This only affects how the value is assembled when read, so it can be changed at any time.
 - `max_items` (Number) The max items of the array property
 - `min_items` (Number) The min items of the array property
 - `number_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--properties--array_props--number_items))
@@ -100,6 +101,7 @@ Optional:
 - `required` (Boolean) Whether the property is required
 - `string_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--properties--array_props--string_items))
 - `title` (String) The title of the property
+- `union` (Boolean) Only applicable to `array` properties with `string` or `number` items. When `true`, every writer owns its own slice of the value and the property returns the combination of all slices. Writers send `{ "<sourceKey>": [values] }` instead of a plain array. Cannot be changed after the property is created.
 
 <a id="nestedatt--properties--array_props--boolean_items"></a>
 ### Nested Schema for `properties.array_props.boolean_items`

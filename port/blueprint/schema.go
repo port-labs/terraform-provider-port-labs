@@ -267,6 +267,14 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 				},
 			},
 		},
+		"union": schema.BoolAttribute{
+			MarkdownDescription: "Only applicable to `array` properties with `string` or `number` items. When `true`, every writer owns its own slice of the value and the property returns the combination of all slices. Writers send `{ \"<sourceKey>\": [values] }` instead of a plain array. Cannot be changed after the property is created.",
+			Optional:            true,
+		},
+		"include_duplicates": schema.BoolAttribute{
+			MarkdownDescription: "Only applicable when `union` is `true`. When `false` (the default) the returned value contains each value once. When `true`, a value contributed by several sources is returned once per source. This only affects how the value is assembled when read, so it can be changed at any time.",
+			Optional:            true,
+		},
 	}
 
 	utils.CopyMaps(arrayPropertySchema, MetadataProperties())

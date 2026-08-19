@@ -149,11 +149,12 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	}
 
 	if len(group.Scorecards) > 0 {
+		previousScorecards := state.Scorecards
 		state.Scorecards = make(map[string]MemberSpecModel, len(group.Scorecards))
 		for blueprintID, memberSpec := range group.Scorecards {
 			existingSpec := MemberSpecModel{}
-			if state.Scorecards != nil {
-				existingSpec = state.Scorecards[blueprintID]
+			if previousScorecards != nil {
+				existingSpec = previousScorecards[blueprintID]
 			}
 			state.Scorecards[blueprintID] = memberSpecFromCLI(memberSpec, existingSpec, r.portClient.JSONEscapeHTML)
 		}

@@ -180,3 +180,46 @@ func TestRulesFromStateAndCLIPreservesOrder(t *testing.T) {
 		t.Fatalf("expected beta-rule third, got %s", got[2].Identifier.ValueString())
 	}
 }
+
+func TestRefreshScorecardGroupStatePreservesPerBlueprintRuleOrder(t *testing.T) {
+	t.Parallel()
+
+	resource := &ScorecardGroupResource{
+		portClient: &cli.PortClient{},
+	}
+	state := &ScorecardGroupModel{
+		Scorecards: map[string]MemberSpecModel{
+			"bp-1": {
+				Rules: []scorecard.Rule{
+					{Identifier: types.StringValue("zebra-rule")},
+					{Identifier: types.StringValue("alpha-rule")},
+				},
+			},
+		},
+	}
+	group := &cli.ScorecardGroup{
+		Identifier: "group-1",
+		Title:      "Group 1",
+		Scorecards: map[string]cli.ScorecardGroupMemberSpec{
+			"bp-1": {
+				Rules: []cli.Rule{
+					{Identifier: "alpha-rule", Title: "Alpha Rule", Level: "Silver", Query: cli.Query{Combinator: "and"}},
+					{Identifier: "zebra-rule", Title: "Zebra Rule", Level: "Gold", Query: cli.Query{Combinator: "and"}},
+				},
+			},
+		},
+	}
+
+	resource.refreshScorecardGroupState(context.Background(), state, group)
+
+	rules := state.Scorecards["bp-1"].Rules
+	if len(rules) != 2 {
+		t.Fatalf("expected 2 rules, got %d", len(rules))
+	}
+	if rules[0].Identifier.ValueString() != "zebra-rule" {
+		t.Fatalf("expected zebra-rule first, got %s", rules[0].Identifier.ValueString())
+	}
+	if rules[1].Identifier.ValueString() != "alpha-rule" {
+		t.Fatalf("expected alpha-rule second, got %s", rules[1].Identifier.ValueString())
+	}
+}

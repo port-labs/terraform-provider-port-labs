@@ -5,6 +5,7 @@ subcategory: ""
 description: |-
   Scorecard Group
   This resource allows you to manage a scorecard group that creates scorecards across multiple blueprints.
+  ~> Note: Scorecard groups are currently protected by the SCORECARD_GROUPS organization feature flag and are not available in all Port organizations. If you need access, contact your Port account team.
   A scorecard group can be configured in one of two modes:
   Shared rules mode — set blueprints, rules, and optionally filters to apply the same rules to multiple blueprints.Per-blueprint mode — set scorecards to define different filter/rules per blueprint.
   See the Port documentation https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/ for more information about scorecards.
@@ -61,7 +62,10 @@ description: |-
 
 This resource allows you to manage a scorecard group that creates scorecards across multiple blueprints.
 
+~> **Note:** Scorecard groups are currently protected by the `SCORECARD_GROUPS` organization feature flag and are not available in all Port organizations. If you need access, contact your Port account team.
+
 A scorecard group can be configured in one of two modes:
+
 
 - **Shared rules mode** — set `blueprints`, `rules`, and optionally `filters` to apply the same rules to multiple blueprints.
 - **Per-blueprint mode** — set `scorecards` to define different filter/rules per blueprint.

@@ -63,8 +63,9 @@ resource "port_blueprint" "microservice" {
         }
       }
       tags = {
-        title = "Tags"
-        union = true
+        title              = "Tags"
+        union              = true
+        include_duplicates = true
         string_items = {
           format = "user"
         }

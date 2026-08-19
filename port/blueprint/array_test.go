@@ -34,7 +34,8 @@ func TestArrayPropResourceToBodyWithUnion(t *testing.T) {
 	require.True(t, ok)
 	require.NotNil(t, prop.Union)
 	require.True(t, *prop.Union)
-	require.Nil(t, prop.IncludeDuplicates)
+	require.NotNil(t, prop.IncludeDuplicates)
+	require.False(t, *prop.IncludeDuplicates)
 }
 
 func TestArrayPropResourceToBodyWithUnionAndIncludeDuplicates(t *testing.T) {

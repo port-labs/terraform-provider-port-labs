@@ -2,9 +2,6 @@ resource "port_blueprint" "microservice" {
   title      = "VM"
   icon       = "GPU"
   identifier = "examples-scorecard-group-svc"
-  ownership = {
-    type = "Direct"
-  }
   properties = {
     string_props = {
       author = {
@@ -19,9 +16,6 @@ resource "port_blueprint" "database" {
   title      = "Database"
   icon       = "Database"
   identifier = "examples-scorecard-group-db"
-  ownership = {
-    type = "Direct"
-  }
   properties = {
     string_props = {
       author = {
@@ -32,16 +26,9 @@ resource "port_blueprint" "database" {
   }
 }
 
-resource "port_team" "platform" {
-  name        = "Scorecard Group Platform"
-  description = "Team for scorecard group example entities"
-  users       = ["test-admin-user@test.com"]
-}
-
 resource "port_entity" "vm_alpha" {
   title     = "VM Alpha"
   blueprint = port_blueprint.microservice.identifier
-  teams     = [port_team.platform.identifier]
   properties = {
     string_props = {
       author = "Platform Team"
@@ -62,7 +49,6 @@ resource "port_entity" "vm_unowned" {
 resource "port_entity" "db_primary" {
   title     = "Primary DB"
   blueprint = port_blueprint.database.identifier
-  teams     = [port_team.platform.identifier]
   properties = {
     string_props = {
       author = "Platform Team"
@@ -78,14 +64,15 @@ resource "port_scorecard_group" "production_readiness" {
     port_blueprint.database.identifier,
   ]
   rules = [{
-    identifier = "has-owner"
-    title      = "Has Owner"
+    identifier = "has-platform-author"
+    title      = "Has Platform Author"
     level      = "Gold"
     query = {
       combinator = "and"
       conditions = [jsonencode({
-        property = "$team"
-        operator = "isNotEmpty"
+        property = "author"
+        operator = "="
+        value    = "Platform Team"
       })]
     }
   }]

@@ -6,6 +6,8 @@ import (
 	"fmt"
 )
 
+const FeatureFlagScorecardGroups = "SCORECARD_GROUPS"
+
 func (c *PortClient) ReadScorecardGroup(ctx context.Context, identifier string) (*ScorecardGroup, int, error) {
 	pb := &PortBody{}
 	url := "v1/scorecard-groups/{scorecard_group_identifier}"
@@ -76,6 +78,25 @@ func (c *PortClient) UpdateScorecardGroup(ctx context.Context, identifier string
 		return nil, nil
 	}
 	return &pb.ScorecardGroup, nil
+}
+
+func (c *PortClient) EnableScorecardGroups(ctx context.Context) error {
+	url := "v1/scorecards/enable-groups"
+	resp, err := c.Client.R().
+		SetContext(ctx).
+		Post(url)
+	if err != nil {
+		return err
+	}
+	var pb PortBody
+	if err := json.Unmarshal(resp.Body(), &pb); err != nil {
+		return err
+	}
+	if !pb.OK {
+		return fmt.Errorf("failed to enable scorecard groups, got: %s", resp.Body())
+	}
+	c.featureFlags = nil
+	return nil
 }
 
 func (c *PortClient) DeleteScorecardGroup(ctx context.Context, identifier string) error {

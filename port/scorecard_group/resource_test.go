@@ -59,7 +59,7 @@ func TestAccPortScorecardGroupSharedRules(t *testing.T) {
 	}`, groupIdentifier)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		PreCheck:                 func() { acctest.TestAccPreCheckScorecardGroups(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -103,7 +103,7 @@ func TestAccPortScorecardGroupPerBlueprint(t *testing.T) {
 	}`, groupIdentifier)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		PreCheck:                 func() { acctest.TestAccPreCheckScorecardGroups(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{

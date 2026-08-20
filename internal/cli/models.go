@@ -692,6 +692,7 @@ type PortBody struct {
 	Folder               Folder            `json:"folder"`
 	Organization         *Organization     `json:"organization"`
 	Workflow             Workflow          `json:"workflow"`
+	OAuthApp             OAuthApp          `json:"oauthApp"`
 }
 
 type SearchEntityResult struct {
@@ -763,6 +764,32 @@ type Integration struct {
 type Organization struct {
 	Name         string   `json:"name"`
 	FeatureFlags []string `json:"featureFlags"`
+}
+
+type OAuthApp struct {
+	ID           string     `json:"id,omitempty"`
+	OrgID        string     `json:"orgId,omitempty"`
+	ClientID     string     `json:"clientId,omitempty"`
+	Name         string     `json:"name,omitempty"`
+	RedirectURI  string     `json:"redirectUri,omitempty"`
+	CreatedAt    *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt    *time.Time `json:"updatedAt,omitempty"`
+	ClientSecret string     `json:"clientSecret,omitempty"`
+}
+
+type OAuthAppCreate struct {
+	Name        string `json:"name"`
+	RedirectURI string `json:"redirectUri"`
+}
+
+type OAuthAppUpdate struct {
+	Name        *string `json:"name,omitempty"`
+	RedirectURI *string `json:"redirectUri,omitempty"`
+}
+
+type OAuthAppBody struct {
+	OK       bool     `json:"ok"`
+	OAuthApp OAuthApp `json:"oauthApp"`
 }
 
 type OrganizationUpdate struct {

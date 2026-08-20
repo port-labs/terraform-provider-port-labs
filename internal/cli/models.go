@@ -36,14 +36,15 @@ type (
 
 	Entity struct {
 		Meta
-		Identifier string                    `json:"identifier,omitempty"`
-		Title      string                    `json:"title"`
-		Icon       string                    `json:"icon,omitempty"`
-		Blueprint  string                    `json:"blueprint"`
-		Team       []string                  `json:"team,omitempty"`
-		Properties map[string]any            `json:"properties"`
-		Relations  map[string]any            `json:"relations"`
-		Scorecards map[string]ScorecardModel `json:"scorecards,omitempty"`
+		Identifier      string                    `json:"identifier,omitempty"`
+		Title           string                    `json:"title"`
+		Icon            string                    `json:"icon,omitempty"`
+		Blueprint       string                    `json:"blueprint"`
+		Team            []string                  `json:"team,omitempty"`
+		Properties      map[string]any            `json:"properties"`
+		Relations       map[string]any            `json:"relations"`
+		Scorecards      map[string]ScorecardModel `json:"scorecards,omitempty"`
+		PropertySources map[string]any            `json:"propertySources,omitempty"`
 		// TODO: add the rest of the fields.
 	}
 
@@ -137,6 +138,39 @@ type (
 		Rules      []DatasetRule `json:"rules,omitempty"`
 	}
 )
+
+func (e *Entity) UnmarshalJSON(data []byte) error {
+	type entityAlias Entity
+	if err := json.Unmarshal(data, (*entityAlias)(e)); err != nil {
+		return err
+	}
+
+	if e.PropertySources != nil {
+		return nil
+	}
+
+	raw := map[string]json.RawMessage{}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	for _, key := range []string{"propertySources", "_propertySources"} {
+		value, ok := raw[key]
+		if !ok {
+			continue
+		}
+
+		var propertySources map[string]any
+		if err := json.Unmarshal(value, &propertySources); err != nil {
+			return err
+		}
+
+		e.PropertySources = propertySources
+		break
+	}
+
+	return nil
+}
 
 // Custom UnmarshalJSON for DatasetValue to handle both simple values and jqQuery objects
 func (dv *DatasetValue) UnmarshalJSON(data []byte) error {

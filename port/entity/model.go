@@ -36,6 +36,7 @@ type EntityModel struct {
 	UpdatedAt                    types.String           `tfsdk:"updated_at"`
 	UpdatedBy                    types.String           `tfsdk:"updated_by"`
 	Properties                   *EntityPropertiesModel `tfsdk:"properties"`
+	PropertySources              types.Map              `tfsdk:"property_sources"`
 	Teams                        []types.String         `tfsdk:"teams"`
 	Relations                    *RelationModel         `tfsdk:"relations"`
 	CreateMissingRelatedEntities types.Bool             `tfsdk:"create_missing_related_entities"`

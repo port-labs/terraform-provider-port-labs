@@ -18,6 +18,11 @@ func OrganizationSchema() map[string]schema.Attribute {
 			Optional:            true,
 			Computed:            true,
 		},
+		"portal_icon": schema.StringAttribute{
+			MarkdownDescription: "The portal icon for the organization. Can be a URL or an uploaded asset path in the format `organizations/{org_id}/portal_icon/{asset_id}`. Set to an empty string to remove the portal icon.",
+			Optional:            true,
+			Computed:            true,
+		},
 	}
 }
 

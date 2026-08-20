@@ -14,5 +14,13 @@ func organizationResourceToPortBody(ctx context.Context, state *OrganizationMode
 		update.Name = &name
 	}
 
+	if !state.PortalIcon.IsNull() && !state.PortalIcon.IsUnknown() {
+		if update.Settings == nil {
+			update.Settings = &cli.OrganizationSettingsUpdate{}
+		}
+		portalIcon := state.PortalIcon.ValueString()
+		update.Settings.PortalIcon = &portalIcon
+	}
+
 	return update, nil
 }

@@ -18,6 +18,7 @@ Organization resource to manage organization-level settings such as name and hid
 ### Optional
 
 - `name` (String) The name of the organization
+- `portal_icon` (String) The portal icon for the organization. Can be a URL or an uploaded asset path in the format `organizations/{org_id}/portal_icon/{asset_id}`. Set to an empty string to remove the portal icon.
 
 ### Read-Only
 

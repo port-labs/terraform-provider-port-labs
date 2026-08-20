@@ -5,6 +5,7 @@ import (
 )
 
 type OrganizationModel struct {
-	ID   types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
+	ID         types.String `tfsdk:"id"`
+	Name       types.String `tfsdk:"name"`
+	PortalIcon types.String `tfsdk:"portal_icon"`
 }

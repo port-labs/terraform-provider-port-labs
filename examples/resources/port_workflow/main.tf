@@ -81,6 +81,10 @@ resource "port_workflow" "deploy_service" {
         num_of_responders = 1
       }
 
+      notifications {
+        target = "slack"
+      }
+
       responders {
         roles = ["Admin"]
       }

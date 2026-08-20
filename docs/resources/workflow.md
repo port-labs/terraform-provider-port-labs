@@ -187,7 +187,7 @@ Optional:
 
 Required:
 
-- `target` (String) The notification target. One of `email`, `webhook`.
+- `target` (String) The notification target. One of `email`, `webhook`, `slack`.
 
 Optional:
 

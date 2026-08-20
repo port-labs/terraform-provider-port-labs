@@ -751,10 +751,10 @@ func inputBlock() schema.Block {
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"target": schema.StringAttribute{
-							MarkdownDescription: "The notification target. One of `email`, `webhook`.",
+							MarkdownDescription: "The notification target. One of `email`, `webhook`, `slack`.",
 							Required:            true,
 							Validators: []validator.String{
-								stringvalidator.OneOf("email", "webhook"),
+								stringvalidator.OneOf("email", "webhook", "slack"),
 							},
 						},
 						"url": schema.StringAttribute{

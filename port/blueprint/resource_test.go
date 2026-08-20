@@ -397,6 +397,45 @@ func TestAccPortBlueprintObjectProperty(t *testing.T) {
 	})
 }
 
+func TestAccPortBlueprintObjectDefaultKeyOrder(t *testing.T) {
+	identifier := utils.GenID()
+	testConfig := fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			object_props = {
+				myObjectIdentifier = {
+					title = "object"
+					default = jsonencode({
+						zebra = 123
+						alpha = 456
+					})
+				}
+			}
+		}
+	}`, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_props.myObjectIdentifier.title", "object"),
+				),
+			},
+			{
+				Config:   acctest.ProviderConfig + testConfig,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func TestAccPortBlueprintChangePropertyType(t *testing.T) {
 	type data struct{ Identifier, PropType string }
 	identifier := utils.GenID()

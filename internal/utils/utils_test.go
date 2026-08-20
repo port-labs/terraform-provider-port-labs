@@ -205,6 +205,13 @@ func TestGoObjectToTerraformStringPreferExisting(t *testing.T) {
 		assert.Equal(t, want, got)
 	})
 
+	t.Run("returns encoded when preferred is unknown", func(t *testing.T) {
+		got, err := GoObjectToTerraformStringPreferExisting(types.StringUnknown(), v, false)
+		assert.NoError(t, err)
+		want, _ := GoObjectToTerraformString(v, false)
+		assert.Equal(t, want, got)
+	})
+
 	t.Run("returns encoded when semantically different", func(t *testing.T) {
 		preferred := types.StringValue(`{"deleteDependentEntities":false,"resources":[]}`)
 		got, err := GoObjectToTerraformStringPreferExisting(preferred, v, false)
@@ -248,4 +255,25 @@ func TestTerraformStringAtList(t *testing.T) {
 	assert.True(t, TerraformStringAtList(types.ListNull(types.StringType), 0).IsNull())
 	assert.True(t, TerraformStringAtList(types.ListUnknown(types.StringType), 0).IsNull())
 	assert.True(t, TerraformStringAtList(types.List{}, 0).IsNull())
+}
+
+func TestGoObjectToTerraformStringPreferExistingAtListIndex(t *testing.T) {
+	object0 := map[string]any{"alpha": 456, "zebra": 123}
+	object1 := map[string]any{"changed": true}
+
+	oldList, diags := types.ListValue(types.StringType, []attr.Value{
+		types.StringValue(`{"zebra":123,"alpha":456}`),
+		types.StringValue(`{"changed":false}`),
+	})
+	assert.False(t, diags.HasError())
+
+	got0, err := GoObjectToTerraformStringPreferExisting(TerraformStringAtList(oldList, 0), object0, false)
+	assert.NoError(t, err)
+	assert.Equal(t, types.StringValue(`{"zebra":123,"alpha":456}`), got0)
+
+	got1, err := GoObjectToTerraformStringPreferExisting(TerraformStringAtList(oldList, 1), object1, false)
+	assert.NoError(t, err)
+	want1, _ := GoObjectToTerraformString(object1, false)
+	assert.Equal(t, want1, got1)
+	assert.NotEqual(t, TerraformStringAtList(oldList, 1), got1)
 }

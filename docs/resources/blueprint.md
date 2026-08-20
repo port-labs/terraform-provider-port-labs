@@ -387,6 +387,7 @@ Optional:
 - `boolean_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--properties--array_props--boolean_items))
 - `description` (String) The description of the property
 - `icon` (String) The icon of the property
+- `include_duplicates` (Boolean) When union is enabled, controls whether a value reported by several sources appears once (false) or once per source (true). Can be changed at any time.
 - `max_items` (Number) The max items of the array property
 - `min_items` (Number) The min items of the array property
 - `number_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--properties--array_props--number_items))
@@ -394,6 +395,7 @@ Optional:
 - `required` (Boolean) Whether the property is required
 - `string_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--properties--array_props--string_items))
 - `title` (String) The title of the property
+- `union` (Boolean) Combine values from multiple sources. Each source keeps its own contribution and cannot erase another's. This cannot be changed after the property is created. Supported for string and number array items only.
 
 <a id="nestedatt--properties--array_props--boolean_items"></a>
 ### Nested Schema for `properties.array_props.boolean_items`

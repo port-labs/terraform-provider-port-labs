@@ -354,6 +354,47 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 	})
 }
 
+func TestAccPortBlueprintArrayPropertyUnion(t *testing.T) {
+	identifier := utils.GenID()
+	var testAccActionConfigCreate = fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			array_props = {
+				myUnionStringArray = {
+					title = "Union String Array"
+					union = true
+					include_duplicates = true
+					string_items = {}
+				}
+				myUnionNumberArray = {
+					title = "Union Number Array"
+					union = true
+					number_items = {}
+				}
+			}
+		}
+	}`, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccActionConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myUnionStringArray.union", "true"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myUnionStringArray.include_duplicates", "true"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.array_props.myUnionNumberArray.union", "true"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortBlueprintObjectProperty(t *testing.T) {
 	identifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`

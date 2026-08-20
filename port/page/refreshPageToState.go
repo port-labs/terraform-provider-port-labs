@@ -8,6 +8,9 @@ import (
 )
 
 func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
+	oldWidgets := pm.Widgets
+	oldPageFilters := pm.PageFilters
+
 	pm.ID = types.StringValue(b.Identifier)
 	pm.Identifier = types.StringValue(b.Identifier)
 	pm.Type = types.StringValue(b.Type)
@@ -21,9 +24,9 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 
 	if b.Widgets != nil {
 		widgetAttrs := make([]attr.Value, len(*b.Widgets))
-		// go over each widget and convert it to a string and store it in the widgets array
 		for i, widget := range *b.Widgets {
-			bWidget, err := utils.GoObjectToTerraformString(widget, r.portClient.JSONEscapeHTML)
+			bWidget, err := utils.GoObjectToTerraformStringPreferExisting(
+				utils.TerraformStringAtList(oldWidgets, i), widget, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return err
 			}
@@ -36,9 +39,9 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 
 	if b.PageFilters != nil {
 		filterAttrs := make([]attr.Value, len(*b.PageFilters))
-		// go over each page filter and convert it to a string and store it in the page filters array
 		for i, pageFilter := range *b.PageFilters {
-			bFilter, err := utils.GoObjectToTerraformString(pageFilter, r.portClient.JSONEscapeHTML)
+			bFilter, err := utils.GoObjectToTerraformStringPreferExisting(
+				utils.TerraformStringAtList(oldPageFilters, i), pageFilter, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return err
 			}

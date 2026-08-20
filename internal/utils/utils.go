@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-uuid"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -101,6 +102,69 @@ func GoObjectToTerraformString(v interface{}, jsonEscapeHTML bool) (types.String
 
 	jsonStr, _ := strings.CutSuffix(jsonBuilder.String(), "\n")
 	return types.StringValue(jsonStr), nil
+}
+
+func normalizeJSONString(s string, jsonEscapeHTML bool) (string, error) {
+	var v any
+	if err := json.Unmarshal([]byte(s), &v); err != nil {
+		return "", err
+	}
+	encoded, err := GoObjectToTerraformString(v, jsonEscapeHTML)
+	if err != nil {
+		return "", err
+	}
+	return encoded.ValueString(), nil
+}
+
+func JSONStringsSemanticallyEqual(a, b string, jsonEscapeHTML bool) (bool, error) {
+	if a == b {
+		return true, nil
+	}
+	normalizedA, err := normalizeJSONString(a, jsonEscapeHTML)
+	if err != nil {
+		return false, err
+	}
+	normalizedB, err := normalizeJSONString(b, jsonEscapeHTML)
+	if err != nil {
+		return false, err
+	}
+	return normalizedA == normalizedB, nil
+}
+
+func GoObjectToTerraformStringPreferExisting(preferred types.String, v interface{}, jsonEscapeHTML bool) (types.String, error) {
+	encoded, err := GoObjectToTerraformString(v, jsonEscapeHTML)
+	if err != nil {
+		return types.StringNull(), err
+	}
+
+	if preferred.IsNull() || preferred.IsUnknown() {
+		return encoded, nil
+	}
+
+	equal, err := JSONStringsSemanticallyEqual(preferred.ValueString(), encoded.ValueString(), jsonEscapeHTML)
+	if err != nil || !equal {
+		return encoded, nil
+	}
+
+	return preferred, nil
+}
+
+func TerraformStringAt[T attr.Value](elements []T, i int) types.String {
+	if i < 0 || i >= len(elements) {
+		return types.StringNull()
+	}
+	s, ok := any(elements[i]).(types.String)
+	if !ok {
+		return types.StringNull()
+	}
+	return s
+}
+
+func TerraformStringAtList(list types.List, i int) types.String {
+	if list.IsNull() || list.IsUnknown() {
+		return types.StringNull()
+	}
+	return TerraformStringAt(list.Elements(), i)
 }
 
 func TerraformStringToGoType[T any](s types.String) (T, error) {

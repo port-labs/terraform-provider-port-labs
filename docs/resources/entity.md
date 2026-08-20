@@ -37,6 +37,7 @@ Entity resource
 - `id` (String) The ID of this resource.
 - `updated_at` (String) The last update date of the entity
 - `updated_by` (String) The last updater of the entity
+- `property_sources` (Map of String) Per-source contributions for union array properties. Each map value is a JSON object mapping source identifiers to their contributed values. Read-only; populated when the blueprint has union array properties.
 
 <a id="nestedatt--properties"></a>
 ### Nested Schema for `properties`

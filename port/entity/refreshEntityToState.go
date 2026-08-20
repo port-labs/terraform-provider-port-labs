@@ -2,6 +2,7 @@ package entity
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -216,5 +217,33 @@ func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityMo
 		refreshRelationsEntityState(ctx, state, e)
 	}
 
+	if err := refreshPropertySourcesEntityState(ctx, state, e); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func refreshPropertySourcesEntityState(ctx context.Context, state *EntityModel, e *cli.Entity) error {
+	if len(e.PropertySources) == 0 {
+		state.PropertySources = types.MapNull(types.StringType)
+		return nil
+	}
+
+	propertySources := make(map[string]string, len(e.PropertySources))
+	for propertyIdentifier, sources := range e.PropertySources {
+		encodedSources, err := json.Marshal(sources)
+		if err != nil {
+			return fmt.Errorf("failed to encode property sources for %q: %w", propertyIdentifier, err)
+		}
+		propertySources[propertyIdentifier] = string(encodedSources)
+	}
+
+	propertySourcesState, diags := types.MapValueFrom(ctx, types.StringType, propertySources)
+	if diags.HasError() {
+		return fmt.Errorf("failed to convert property sources to state: %s", diags.Errors()[0].Summary())
+	}
+
+	state.PropertySources = propertySourcesState
 	return nil
 }

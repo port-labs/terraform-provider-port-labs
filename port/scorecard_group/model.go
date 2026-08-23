@@ -11,13 +11,14 @@ type MemberSpecModel struct {
 }
 
 type ScorecardGroupModel struct {
-	ID         types.String              `tfsdk:"id"`
-	Identifier types.String              `tfsdk:"identifier"`
-	Title      types.String              `tfsdk:"title"`
-	Levels     []scorecard.Level         `tfsdk:"levels"`
-	Blueprints []types.String            `tfsdk:"blueprints"`
-	Rules      []scorecard.Rule          `tfsdk:"rules"`
-	Filter     *scorecard.Query          `tfsdk:"filter"`
+	ID         types.String               `tfsdk:"id"`
+	Identifier types.String               `tfsdk:"identifier"`
+	Title      types.String               `tfsdk:"title"`
+	Levels     []scorecard.Level          `tfsdk:"levels"`
+	Properties types.Map                  `tfsdk:"properties"`
+	Blueprints []types.String             `tfsdk:"blueprints"`
+	Rules      []scorecard.Rule           `tfsdk:"rules"`
+	Filter     *scorecard.Query           `tfsdk:"filter"`
 	Scorecards map[string]MemberSpecModel `tfsdk:"scorecards"`
 	CreatedAt  types.String              `tfsdk:"created_at"`
 	CreatedBy  types.String              `tfsdk:"created_by"`

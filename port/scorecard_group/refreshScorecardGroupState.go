@@ -89,6 +89,8 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 		}
 	}
 
+	state.Properties = propertiesFromCLI(group.Properties, r.portClient.JSONEscapeHTML)
+
 	if len(group.Scorecards) > 0 {
 		state.Scorecards = make(map[string]MemberSpecModel, len(group.Scorecards))
 		for blueprintID, memberSpec := range group.Scorecards {

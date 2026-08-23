@@ -467,13 +467,14 @@ type (
 
 	ScorecardGroup struct {
 		Meta
-		Identifier string                            `json:"identifier,omitempty"`
-		Title      string                            `json:"title,omitempty"`
-		Levels     []Level                           `json:"levels,omitempty"`
+		Identifier string                              `json:"identifier,omitempty"`
+		Title      string                              `json:"title,omitempty"`
+		Levels     []Level                             `json:"levels,omitempty"`
+		Properties map[string]any                      `json:"properties,omitempty"`
 		Scorecards map[string]ScorecardGroupMemberSpec `json:"scorecards,omitempty"`
-		Blueprints []string                          `json:"blueprints,omitempty"`
-		Rules      []Rule                            `json:"rules,omitempty"`
-		Filter     *Query                            `json:"filter,omitempty"`
+		Blueprints []string                            `json:"blueprints,omitempty"`
+		Rules      []Rule                              `json:"rules,omitempty"`
+		Filter     *Query                              `json:"filter,omitempty"`
 	}
 
 	Rule struct {

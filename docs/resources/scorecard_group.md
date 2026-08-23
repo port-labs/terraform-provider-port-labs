@@ -76,6 +76,10 @@ resource "port_scorecard_group" "readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
   blueprints = [port_blueprint.microservice.identifier]
+  properties = {
+    test_string = "shared-value"
+    test        = "https://example.com"
+  }
   rules = [{
     identifier = "has-owner"
     title      = "Has Owner"
@@ -134,6 +138,7 @@ resource "port_scorecard_group" "readiness" {
 - `blueprints` (List of String) Blueprint identifiers that share the same rules (and optional filter). Use this for shared-rules mode. Conflicts with `scorecards`.
 - `filter` (Attributes) An optional filter applied to every blueprint in shared-rules mode. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--filter))
 - `levels` (Attributes List) The available levels of the scorecard group, shared by all members. (see [below for nested schema](#nestedatt--levels))
+- `properties` (Map of String) Additional scorecard properties applied to every member scorecard in the group. Values that are not plain strings should be encoded with `jsonencode()`.
 - `rules` (Attributes List) The rules applied to every blueprint in shared-rules mode. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--rules))
 - `scorecards` (Attributes Map) Map of blueprint identifier to member scorecard filter/rules. Use this for per-blueprint mode. Conflicts with `blueprints`, `rules`, and `filter`. (see [below for nested schema](#nestedatt--scorecards))
 

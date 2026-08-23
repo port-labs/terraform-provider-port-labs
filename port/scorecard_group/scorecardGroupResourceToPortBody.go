@@ -90,6 +90,14 @@ func scorecardGroupResourceToPortBody(ctx context.Context, state *ScorecardGroup
 		group.Levels = levelsToCLI(state.Levels)
 	}
 
+	properties, err := propertiesToCLI(ctx, state.Properties)
+	if err != nil {
+		return nil, err
+	}
+	if len(properties) > 0 {
+		group.Properties = properties
+	}
+
 	if len(state.Scorecards) > 0 {
 		scorecards := make(map[string]cli.ScorecardGroupMemberSpec, len(state.Scorecards))
 		for blueprintID, memberSpec := range state.Scorecards {

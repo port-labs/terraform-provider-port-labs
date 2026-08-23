@@ -79,6 +79,11 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 					Attributes: scorecard.LevelSchema(),
 				},
 			},
+			"properties": schema.MapAttribute{
+				MarkdownDescription: "Additional scorecard properties applied to every member scorecard in the group. Values that are not plain strings should be encoded with `jsonencode()`.",
+				Optional:            true,
+				ElementType:         types.StringType,
+			},
 			"blueprints": schema.ListAttribute{
 				MarkdownDescription: "Blueprint identifiers that share the same rules (and optional filter). Use this for shared-rules mode. Conflicts with `scorecards`.",
 				Optional:            true,
@@ -169,6 +174,10 @@ resource "port_scorecard_group" "readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
   blueprints = [port_blueprint.microservice.identifier]
+  properties = {
+    test_string = "shared-value"
+    test        = "https://example.com"
+  }
   rules = [{
     identifier = "has-owner"
     title      = "Has Owner"

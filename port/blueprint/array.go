@@ -136,7 +136,7 @@ func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props 
 	return nil
 }
 
-func AddArrayPropertiesToState(ctx context.Context, v *cli.BlueprintProperty, jsonEscapeHTML bool) *ArrayPropModel {
+func AddArrayPropertiesToState(ctx context.Context, v *cli.BlueprintProperty, jsonEscapeHTML bool, oldArrayProp *ArrayPropModel) *ArrayPropModel {
 	arrayProp := &ArrayPropModel{
 		MinItems: flex.GoInt64ToFramework(v.MinItems),
 		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
@@ -217,8 +217,13 @@ func AddArrayPropertiesToState(ctx context.Context, v *cli.BlueprintProperty, js
 						objectArray[i] = v.(map[string]interface{})
 					}
 					attrs := make([]attr.Value, 0, len(objectArray))
-					for _, value := range objectArray {
-						stringValue, _ := utils.GoObjectToTerraformString(&value, jsonEscapeHTML)
+					var oldDefaults types.List
+					if oldArrayProp != nil && oldArrayProp.ObjectItems != nil {
+						oldDefaults = oldArrayProp.ObjectItems.Default
+					}
+					for i, value := range objectArray {
+						stringValue, _ := utils.GoObjectToTerraformStringPreferExisting(
+							utils.TerraformStringAtList(oldDefaults, i), &value, jsonEscapeHTML)
 						attrs = append(attrs, stringValue)
 					}
 					arrayProp.ObjectItems.Default, _ = types.ListValue(types.StringType, attrs)

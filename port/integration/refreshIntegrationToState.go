@@ -16,7 +16,7 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 	state.Version = types.StringPointerValue(a.Version)
 
 	if a.Config != nil {
-		config, _ := utils.GoObjectToTerraformString(a.Config, r.portClient.JSONEscapeHTML)
+		config, _ := utils.GoObjectToTerraformStringPreferExisting(state.Config, a.Config, r.portClient.JSONEscapeHTML)
 		state.Config = config
 	}
 	if a.ChangelogDestination != nil {

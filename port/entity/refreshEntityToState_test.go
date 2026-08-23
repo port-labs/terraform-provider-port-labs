@@ -2,6 +2,7 @@ package entity
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -61,6 +62,48 @@ func TestRefreshEntityStateClearsStaleCollectionsOnEmptyAPIResponse(t *testing.T
 
 	if state.Relations != nil {
 		t.Fatalf("expected relations to be nil when API returns empty, got: %#v", state.Relations)
+	}
+
+	if !state.PropertySources.IsNull() {
+		t.Fatalf("expected property_sources to be null when API returns empty, got: %#v", state.PropertySources)
+	}
+}
+
+func TestRefreshPropertySourcesEntityState(t *testing.T) {
+	ctx := context.Background()
+	state := &EntityModel{}
+
+	apiEntity := &cli.Entity{
+		PropertySources: map[string]any{
+			"tags": map[string]any{
+				"integration-a": []any{"tag-a", "tag-b"},
+				"manual":        []any{"tag-c"},
+			},
+		},
+	}
+
+	err := refreshPropertySourcesEntityState(ctx, state, apiEntity)
+	if err != nil {
+		t.Fatalf("refreshPropertySourcesEntityState returned error: %v", err)
+	}
+
+	if state.PropertySources.IsNull() {
+		t.Fatal("expected property_sources to be populated")
+	}
+
+	tagsValue, ok := state.PropertySources.Elements()["tags"]
+	if !ok {
+		t.Fatal("expected tags property source in state")
+	}
+
+	var tagsSources map[string][]string
+	err = json.Unmarshal([]byte(tagsValue.(types.String).ValueString()), &tagsSources)
+	if err != nil {
+		t.Fatalf("failed to decode tags property sources: %v", err)
+	}
+
+	if len(tagsSources["integration-a"]) != 2 || tagsSources["integration-a"][0] != "tag-a" {
+		t.Fatalf("unexpected integration-a sources: %#v", tagsSources["integration-a"])
 	}
 }
 

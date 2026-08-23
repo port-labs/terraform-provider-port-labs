@@ -80,7 +80,7 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 				},
 			},
 			"properties": schema.MapAttribute{
-				MarkdownDescription: "Additional scorecard properties applied to every member scorecard in the group. Values that are not plain strings should be encoded with `jsonencode()`.",
+				MarkdownDescription: "Additional `_scorecard` blueprint properties applied to every member scorecard in the group. Keys must match properties defined on the scorecard blueprint schema. Values that are not plain strings should be encoded with `jsonencode()`.",
 				Optional:            true,
 				ElementType:         types.StringType,
 			},

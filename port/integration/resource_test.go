@@ -340,54 +340,23 @@ func TestPortIntegrationValidIdentifier(t *testing.T) {
 	installationAppType := "kafka"
 
 	testCases := []struct {
-		name       string
-		identifier string
+		name    string
+		buildID func(uniqueID string) string
 	}{
-		{
-			name:       "simple lowercase",
-			identifier: "myintegration",
-		},
-		{
-			name:       "with dashes",
-			identifier: "my-integration",
-		},
-		{
-			name:       "with numbers",
-			identifier: "my-integration-123",
-		},
-		{
-			name:       "starts with letter ends with number",
-			identifier: "integration1",
-		},
-		{
-			name:       "multiple dashes",
-			identifier: "my-custom-integration-v2",
-		},
-		{
-			name:       "starts with number",
-			identifier: "123-integration",
-		},
-		{
-			name:       "ends with dash",
-			identifier: "my-integration-",
-		},
-		{
-			name:       "starts with dash",
-			identifier: "-my-integration",
-		},
-		{
-			name:       "only numbers",
-			identifier: "12345",
-		},
-		{
-			name:       "only dashes",
-			identifier: "---",
-		},
+		{"simple lowercase", func(id string) string { return "myintegration-" + id }},
+		{"with dashes", func(id string) string { return "my-integration-" + id }},
+		{"with numbers", func(id string) string { return "my-integration-123-" + id }},
+		{"starts with letter ends with number", func(id string) string { return "integration1-" + id }},
+		{"multiple dashes", func(id string) string { return "my-custom-integration-v2-" + id }},
+		{"starts with number", func(id string) string { return "123-integration-" + id }},
+		{"ends with dash", func(id string) string { return "my-integration-" + id + "-" }},
+		{"starts with dash", func(id string) string { return "-" + id + "-my-integration" }},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			config := createIntegration(tc.identifier, installationAppType)
+			installationID := tc.buildID(utils.GenID())
+			config := createIntegration(installationID, installationAppType)
 			resource.Test(t, resource.TestCase{
 				PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 				ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -395,7 +364,7 @@ func TestPortIntegrationValidIdentifier(t *testing.T) {
 					{
 						Config: config,
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", tc.identifier),
+							resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", installationID),
 							resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
 						),
 					},

@@ -15,6 +15,10 @@ description: |-
     identifier = "production-readiness"
     title      = "Production Readiness"
     blueprints = [port_blueprint.microservice.identifier]
+    properties = {
+      test_string = "shared-value"
+      test        = "https://example.com"
+    }
     rules = [{
       identifier = "has-owner"
       title      = "Has Owner"

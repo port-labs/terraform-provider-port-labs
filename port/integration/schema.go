@@ -27,6 +27,10 @@ func IntegrationSchema() map[string]schema.Attribute {
 		"installation_app_type": schema.StringAttribute{
 			Optional: true,
 		},
+		"oauth_broker_url": schema.StringAttribute{
+			MarkdownDescription: "The OAuth broker URL for the integration",
+			Optional:            true,
+		},
 		"config": schema.StringAttribute{
 			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`)",
 			Optional:            true,

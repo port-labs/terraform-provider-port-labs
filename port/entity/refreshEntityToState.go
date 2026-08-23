@@ -209,7 +209,33 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 	}
 }
 
+func preserveUnionArraySlices(state *EntityModel) (map[string]UnionStringSliceModel, map[string]UnionNumberSliceModel) {
+	if state.Properties == nil || state.Properties.ArrayProps == nil {
+		return nil, nil
+	}
+
+	return state.Properties.ArrayProps.UnionStringSlices, state.Properties.ArrayProps.UnionNumberSlices
+}
+
+func restoreUnionArraySlices(state *EntityModel, unionStringSlices map[string]UnionStringSliceModel, unionNumberSlices map[string]UnionNumberSliceModel) {
+	if len(unionStringSlices) == 0 && len(unionNumberSlices) == 0 {
+		return
+	}
+
+	if state.Properties == nil {
+		state.Properties = &EntityPropertiesModel{}
+	}
+	if state.Properties.ArrayProps == nil {
+		state.Properties.ArrayProps = &ArrayPropsModel{}
+	}
+
+	state.Properties.ArrayProps.UnionStringSlices = unionStringSlices
+	state.Properties.ArrayProps.UnionNumberSlices = unionNumberSlices
+}
+
 func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) error {
+	unionStringSlices, unionNumberSlices := preserveUnionArraySlices(state)
+
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprint.Identifier, e.Identifier))
 	state.Identifier = types.StringValue(e.Identifier)
 	state.Blueprint = types.StringValue(blueprint.Identifier)
@@ -250,6 +276,8 @@ func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityMo
 	if err := refreshPropertySourcesEntityState(ctx, state, e); err != nil {
 		return err
 	}
+
+	restoreUnionArraySlices(state, unionStringSlices, unionNumberSlices)
 
 	return nil
 }

@@ -40,31 +40,42 @@ func TestInstallationIdPattern(t *testing.T) {
 	}
 }
 
-func TestIntegrationToPortBodyOauthBrokerUrl(t *testing.T) {
-	t.Run("valid oauth broker url", func(t *testing.T) {
-		state := &IntegrationModel{
-			InstallationId: types.StringValue("my-integration"),
-			OauthBrokerUrl: types.StringValue("https://oauth.example.com"),
-		}
+func TestOauthBrokerUrlValidation(t *testing.T) {
+	validURL := "https://oauth.example.com/broker"
+	state := &IntegrationModel{
+		InstallationId: types.StringValue("my-integration"),
+		OauthBrokerUrl: types.StringValue(validURL),
+	}
 
-		integration, err := integrationToPortBody(state)
-		if err != nil {
-			t.Fatalf("expected no error, got %v", err)
-		}
-		if integration.OauthBrokerUrl == nil || *integration.OauthBrokerUrl != "https://oauth.example.com" {
-			t.Fatalf("expected oauth broker url to be set, got %#v", integration.OauthBrokerUrl)
-		}
-	})
+	integration, err := integrationToPortBody(state)
+	if err != nil {
+		t.Fatalf("expected valid oauth_broker_url to succeed, got: %v", err)
+	}
+	if integration.OauthBrokerUrl == nil || *integration.OauthBrokerUrl != validURL {
+		t.Fatalf("expected oauthBrokerUrl %q, got %#v", validURL, integration.OauthBrokerUrl)
+	}
+}
 
-	t.Run("rejects oauth broker url with query string", func(t *testing.T) {
-		state := &IntegrationModel{
-			InstallationId: types.StringValue("my-integration"),
-			OauthBrokerUrl: types.StringValue("https://oauth.example.com?foo=bar"),
-		}
+func TestOauthBrokerUrlRejectsQueryString(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId: types.StringValue("my-integration"),
+		OauthBrokerUrl: types.StringValue("https://oauth.example.com/broker?foo=bar"),
+	}
 
-		_, err := integrationToPortBody(state)
-		if err == nil {
-			t.Fatal("expected error for oauth broker url with query string")
-		}
-	})
+	_, err := integrationToPortBody(state)
+	if err == nil {
+		t.Fatal("expected oauth_broker_url with query string to fail")
+	}
+}
+
+func TestOauthBrokerUrlRejectsInvalidURL(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId: types.StringValue("my-integration"),
+		OauthBrokerUrl: types.StringValue("not-a-url"),
+	}
+
+	_, err := integrationToPortBody(state)
+	if err == nil {
+		t.Fatal("expected invalid oauth_broker_url to fail")
+	}
 }

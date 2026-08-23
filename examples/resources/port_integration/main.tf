@@ -2,7 +2,7 @@ resource "port_integration" "my_custom_integration" {
   installation_id       = "my-custom-integration-id"
   title                 = "My Custom Integration"
   installation_app_type = "WEBHOOK"
-  oauth_broker_url      = "https://oauth.example.com"
+  oauth_broker_url      = "https://oauth.example.com/broker"
   config = jsonencode({
     createMissingRelatedEntitiesboolean = true
     deleteDependentEntities             = true

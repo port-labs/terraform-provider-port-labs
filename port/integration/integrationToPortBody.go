@@ -33,6 +33,21 @@ func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
 	integration.Version = state.Version.ValueStringPointer()
 	integration.InstallationAppType = state.InstallationAppType.ValueStringPointer()
 
+	if !state.OauthBrokerUrl.IsNull() {
+		oauthBrokerUrl := state.OauthBrokerUrl.ValueString()
+		parsed, err := url.Parse(oauthBrokerUrl)
+		if err != nil {
+			return nil, fmt.Errorf("oauth_broker_url must be a valid URL: %w", err)
+		}
+		if parsed.Scheme == "" || parsed.Host == "" {
+			return nil, fmt.Errorf("oauth_broker_url must be an absolute URL with a scheme and host")
+		}
+		if parsed.RawQuery != "" {
+			return nil, fmt.Errorf("oauth_broker_url must not contain a query string — Port appends query parameters at runtime")
+		}
+		integration.OauthBrokerUrl = &oauthBrokerUrl
+	}
+
 	if !state.Config.IsNull() {
 		configStr := state.Config.ValueString()
 		config, err := utils.TerraformJsonStringToGoObject(&configStr)
@@ -52,17 +67,6 @@ func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
 			Url:   state.WebhookChangelogDestination.Url.ValueString(),
 			Agent: state.WebhookChangelogDestination.Agent.ValueBoolPointer(),
 		}
-	}
-	if !state.OauthBrokerUrl.IsNull() {
-		oauthBrokerUrl := state.OauthBrokerUrl.ValueString()
-		parsed, err := url.Parse(oauthBrokerUrl)
-		if err != nil {
-			return nil, fmt.Errorf("oauth_broker_url must be a valid URL: %w", err)
-		}
-		if parsed.RawQuery != "" {
-			return nil, fmt.Errorf("oauth_broker_url must not contain a query string — Port appends query parameters at runtime")
-		}
-		integration.OauthBrokerUrl = &oauthBrokerUrl
 	}
 
 	return integration, nil

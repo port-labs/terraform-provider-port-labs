@@ -13,6 +13,7 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 
 	state.Title = types.StringPointerValue(a.Title)
 	state.InstallationAppType = types.StringPointerValue(a.InstallationAppType)
+	state.OauthBrokerUrl = types.StringPointerValue(a.OauthBrokerUrl)
 	state.Version = types.StringPointerValue(a.Version)
 	state.OauthBrokerUrl = types.StringPointerValue(a.OauthBrokerUrl)
 

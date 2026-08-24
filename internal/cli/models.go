@@ -761,12 +761,30 @@ type Integration struct {
 }
 
 type Organization struct {
-	Name         string   `json:"name"`
-	FeatureFlags []string `json:"featureFlags"`
+	Name              string   `json:"name"`
+	FeatureFlags      []string `json:"featureFlags"`
+	InactivityTimeout *int     `json:"inactivityTimeout"`
 }
 
 type OrganizationUpdate struct {
-	Name *string `json:"name,omitempty"`
+	Name                     *string
+	InactivityTimeout        *int
+	IncludeInactivityTimeout bool
+}
+
+func (u *OrganizationUpdate) ToPatchBody() map[string]any {
+	body := map[string]any{}
+	if u.Name != nil {
+		body["name"] = *u.Name
+	}
+	if u.IncludeInactivityTimeout {
+		if u.InactivityTimeout == nil {
+			body["inactivityTimeout"] = nil
+		} else {
+			body["inactivityTimeout"] = *u.InactivityTimeout
+		}
+	}
+	return body
 }
 
 type OrganizationSecret struct {

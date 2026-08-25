@@ -48,11 +48,6 @@ func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props 
 				property.Union = &union
 			}
 
-			if !prop.IncludeDuplicates.IsNull() {
-				includeDuplicates := prop.IncludeDuplicates.ValueBool()
-				property.IncludeDuplicates = &includeDuplicates
-			}
-
 			if prop.StringItems != nil {
 				items := map[string]interface{}{}
 				items["type"] = "string"
@@ -148,10 +143,9 @@ func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props 
 
 func AddArrayPropertiesToState(ctx context.Context, v *cli.BlueprintProperty, jsonEscapeHTML bool, oldArrayProp *ArrayPropModel) *ArrayPropModel {
 	arrayProp := &ArrayPropModel{
-		MinItems:          flex.GoInt64ToFramework(v.MinItems),
-		MaxItems:          flex.GoInt64ToFramework(v.MaxItems),
-		Union:             flex.GoBoolToFramework(v.Union),
-		IncludeDuplicates: flex.GoBoolToFramework(v.IncludeDuplicates),
+		MinItems: flex.GoInt64ToFramework(v.MinItems),
+		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
+		Union:    flex.GoBoolToFramework(v.Union),
 	}
 
 	if v.Items != nil {

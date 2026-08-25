@@ -124,10 +124,20 @@ func (r *UserResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	user, err := r.portClient.UpdateUser(ctx, state.Email.ValueString(), update)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update user", err.Error())
-		return
+	email := state.Email.ValueString()
+	var user *cli.User
+	if update.IncludeRoles || update.IncludeTeams || update.IncludeInactivityTimeout {
+		user, err = r.portClient.UpdateUser(ctx, email, update)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to update user", err.Error())
+			return
+		}
+	} else {
+		user, _, err = r.portClient.ReadUser(ctx, email)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to read user", err.Error())
+			return
+		}
 	}
 
 	err = refreshUserState(ctx, state, user)

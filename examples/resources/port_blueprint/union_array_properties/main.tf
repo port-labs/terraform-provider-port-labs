@@ -5,17 +5,15 @@ resource "port_blueprint" "vulnerability_tracker" {
   properties = {
     array_props = {
       vulnerabilities = {
-        title              = "Vulnerabilities"
-        description        = "CVEs reported by multiple scanners"
-        union              = true
-        include_duplicates = false
-        string_items       = {}
+        title        = "Vulnerabilities"
+        description  = "CVEs reported by multiple scanners"
+        union        = true
+        string_items = {}
       }
       scanner_scores = {
-        title              = "Scanner Scores"
-        union              = true
-        include_duplicates = true
-        number_items       = {}
+        title        = "Scanner Scores"
+        union        = true
+        number_items = {}
       }
     }
   }

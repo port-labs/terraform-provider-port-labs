@@ -22,6 +22,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/page"
 	page_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
+	scorecard_group "github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard_group"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/search"
 	system_blueprint "github.com/port-labs/terraform-provider-port-labs/v2/port/system_blueprint"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/team"
@@ -166,6 +167,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		action_permissions.NewActionPermissionsResource,
 		webhook.NewWebhookResource,
 		scorecard.NewScorecardResource,
+		scorecard_group.NewScorecardGroupResource,
 		team.NewTeamResource,
 		page.NewPageResource,
 		page_permissions.NewPagePermissionsResource,

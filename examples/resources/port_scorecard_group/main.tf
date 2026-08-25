@@ -15,6 +15,9 @@ resource "port_blueprint" "microservice" {
 resource "port_scorecard_group" "production_readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
+  properties = {
+    owner = "platform-team"
+  }
   blueprints = [port_blueprint.microservice.identifier]
   rules = [{
     identifier = "has-owner"

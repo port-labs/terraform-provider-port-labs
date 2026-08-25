@@ -19,6 +19,7 @@ type ScorecardGroupModel struct {
 	Rules      []scorecard.Rule          `tfsdk:"rules"`
 	Filter     *scorecard.Query          `tfsdk:"filter"`
 	Scorecards map[string]MemberSpecModel `tfsdk:"scorecards"`
+	Properties types.Dynamic              `tfsdk:"properties"`
 	CreatedAt  types.String              `tfsdk:"created_at"`
 	CreatedBy  types.String              `tfsdk:"created_by"`
 	UpdatedAt  types.String              `tfsdk:"updated_at"`

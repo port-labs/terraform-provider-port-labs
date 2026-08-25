@@ -90,6 +90,12 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 		}
 	}
 
+	properties, diags := propertiesFromCLI(ctx, group.Properties)
+	if diags.HasError() {
+		return
+	}
+	state.Properties = properties
+
 	if len(group.Scorecards) > 0 {
 		state.Scorecards = make(map[string]MemberSpecModel, len(group.Scorecards))
 		for blueprintID, memberSpec := range group.Scorecards {

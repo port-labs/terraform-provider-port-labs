@@ -79,6 +79,10 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 					Attributes: scorecard.LevelSchema(),
 				},
 			},
+			"properties": schema.DynamicAttribute{
+				MarkdownDescription: "Additional `_scorecard` blueprint properties applied to every member scorecard in the group. Keys must match properties defined on the scorecard blueprint schema.",
+				Optional:            true,
+			},
 			"blueprints": schema.ListAttribute{
 				MarkdownDescription: "Blueprint identifiers that share the same rules (and optional filter). Use this for shared-rules mode. Conflicts with `scorecards`.",
 				Optional:            true,

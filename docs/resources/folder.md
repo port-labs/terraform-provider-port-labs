@@ -100,14 +100,19 @@ resource "port_folder" "another_folder" {
 
 ### Required
 
-- `identifier` (String) The identifier of the folder
+- `identifier` (String) The unique identifier of the folder
 
 ### Optional
 
-- `after` (String) The identifier of the folder after which the folder should be placed
-- `parent` (String) The identifier of the parent folder
-- `title` (String) The title of the folder
+- `title` (String) The display title of the folder
 
 ### Read-Only
 
+- `after` (String) The identifier of the sibling item after which this folder appears. Omitted when the folder is the first item in its parent
+- `created_at` (String) The creation date of the folder
+- `created_by` (String) The creator of the folder
 - `id` (String) Folder state identifier
+- `parent` (String) The identifier of the parent folder. Omitted when the folder is at the root level of the sidebar
+- `sidebar` (String) The identifier of the sidebar that contains the folder. Currently only `catalog` is supported
+- `updated_at` (String) The last update date of the folder
+- `updated_by` (String) The last updater of the folder

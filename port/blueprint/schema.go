@@ -198,11 +198,7 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 			},
 		},
 		"union": schema.BoolAttribute{
-			MarkdownDescription: "When `true`, enables union array semantics so multiple writers can each own a slice of the same array property. Immutable after the property is created. Only supported for `string` or `number` item types.",
-			Optional:            true,
-		},
-		"include_duplicates": schema.BoolAttribute{
-			MarkdownDescription: "Controls read-time assembly for union array properties. When `false` or omitted, each distinct value appears once in the assembled array. When `true`, a value reported by multiple sources appears once per source. Only valid when `union` is `true`. Can be changed after creation.",
+			MarkdownDescription: "Only applicable to array properties with `string` or `number` items. When `true`, every writer owns its own slice of the value and the property returns the combination of all slices, with each value appearing once. Writers send `{ \"<sourceKey>\": [values] }` instead of a plain array. Cannot be changed after the property is created.",
 			Optional:            true,
 		},
 		"string_items": schema.SingleNestedAttribute{

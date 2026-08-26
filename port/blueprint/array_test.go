@@ -95,6 +95,32 @@ func TestArrayPropResourceToBody_unionFields(t *testing.T) {
 	}
 }
 
+func TestArrayPropResourceToBody_omitsIncludeDuplicatesWhenNull(t *testing.T) {
+	t.Parallel()
+
+	state := &PropertiesModel{
+		ArrayProps: map[string]ArrayPropModel{
+			"tags": {
+				Union:       types.BoolValue(true),
+				StringItems: &StringItems{},
+			},
+		},
+	}
+	props := map[string]cli.BlueprintProperty{}
+
+	if err := arrayPropResourceToBody(context.Background(), state, props, &[]string{}); err != nil {
+		t.Fatalf("arrayPropResourceToBody: %v", err)
+	}
+
+	prop := props["tags"]
+	if prop.Union == nil || !*prop.Union {
+		t.Fatal("expected union to be true")
+	}
+	if prop.IncludeDuplicates != nil {
+		t.Fatal("expected include_duplicates to be omitted when unset")
+	}
+}
+
 func TestArrayPropResourceToBody_omitsUnionWhenFalse(t *testing.T) {
 	t.Parallel()
 

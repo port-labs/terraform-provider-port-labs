@@ -123,6 +123,7 @@ type IntegrationActionModel struct {
 	IntegrationProvider       types.String `tfsdk:"integration_provider"`
 	IntegrationInvocationType types.String `tfsdk:"integration_invocation_type"`
 	ExecutionProperties       types.String `tfsdk:"execution_properties"`
+	OnTimeout                 types.String `tfsdk:"on_timeout"`
 	OnFailure                 types.String `tfsdk:"on_failure"`
 }
 

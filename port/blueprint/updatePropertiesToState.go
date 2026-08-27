@@ -63,16 +63,22 @@ func SetCommonProperties(v cli.BlueprintProperty, prop interface{}, jsonEscapeHT
 					p.Default = types.Float64Value(v.Default.(float64))
 				case *BooleanPropModel:
 					p.Default = types.BoolValue(v.Default.(bool))
-				case *ObjectPropModel:
-					p.Default, _ = utils.GoObjectToTerraformString(v.Default, jsonEscapeHTML)
 				}
 			}
 		}
 	}
 }
 
+func SetObjectDefault(objectProp *ObjectPropModel, defaultValue interface{}, jsonEscapeHTML bool, oldObjectDefault types.String) {
+	if defaultValue == nil {
+		return
+	}
+	objectProp.Default, _ = utils.GoObjectToTerraformStringPreferExisting(oldObjectDefault, defaultValue, jsonEscapeHTML)
+}
+
 func (r *BlueprintResource) updatePropertiesToState(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel) error {
 	properties := &PropertiesModel{}
+	oldProperties := bm.Properties
 
 	for k, v := range b.Schema.Properties {
 		switch v.Type {
@@ -114,7 +120,13 @@ func (r *BlueprintResource) updatePropertiesToState(ctx context.Context, b *cli.
 				properties.ArrayProps = make(map[string]ArrayPropModel)
 			}
 
-			arrayProp := AddArrayPropertiesToState(ctx, &v, r.portClient.JSONEscapeHTML)
+			var oldArrayProp *ArrayPropModel
+			if oldProperties != nil && oldProperties.ArrayProps != nil {
+				if old, ok := oldProperties.ArrayProps[k]; ok {
+					oldArrayProp = &old
+				}
+			}
+			arrayProp := AddArrayPropertiesToState(ctx, &v, r.portClient.JSONEscapeHTML, oldArrayProp)
 
 			if lo.Contains(b.Schema.Required, k) {
 				arrayProp.Required = types.BoolValue(true)
@@ -156,7 +168,15 @@ func (r *BlueprintResource) updatePropertiesToState(ctx context.Context, b *cli.
 				objectProp.Required = types.BoolValue(false)
 			}
 
+			var oldObjectDefault types.String
+			if oldProperties != nil && oldProperties.ObjectProps != nil {
+				if old, ok := oldProperties.ObjectProps[k]; ok {
+					oldObjectDefault = old.Default
+				}
+			}
+
 			SetCommonProperties(v, objectProp, r.portClient.JSONEscapeHTML)
+			SetObjectDefault(objectProp, v.Default, r.portClient.JSONEscapeHTML, oldObjectDefault)
 
 			properties.ObjectProps[k] = *objectProp
 		}

@@ -45,3 +45,23 @@ func TestAddArrayPropertiesToStateUnionFields(t *testing.T) {
 
 	require.True(t, prop.Union.ValueBool())
 }
+
+func TestArrayPropResourceToBodyUnionRequiresStringOrNumberItems(t *testing.T) {
+	state := &PropertiesModel{
+		ArrayProps: map[string]ArrayPropModel{
+			"configs": {
+				Title: types.StringValue("Configs"),
+				Union: types.BoolValue(true),
+				ObjectItems: &ObjectItems{
+					Format: types.StringNull(),
+				},
+			},
+		},
+	}
+
+	props := make(map[string]cli.BlueprintProperty)
+	var required []string
+	err := arrayPropResourceToBody(context.Background(), state, props, &required)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "union is only supported for string or number items")
+}

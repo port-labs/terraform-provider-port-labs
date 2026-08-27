@@ -230,6 +230,30 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 		b.AggregationProperties = existingBp.AggregationProperties
 		prevB.AggregationProperties = existingBp.AggregationProperties
 
+		for propKey, prop := range b.Schema.Properties {
+			if prop.Type != "array" {
+				continue
+			}
+
+			existingProp, ok := existingBp.Schema.Properties[propKey]
+			if !ok {
+				continue
+			}
+
+			existingUnion := existingProp.Union != nil && *existingProp.Union
+			newUnion := prop.Union != nil && *prop.Union
+			if existingUnion != newUnion {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("properties").AtName("array_props").AtName(propKey).AtName("union"),
+					"Union setting cannot be changed",
+					fmt.Sprintf("The union setting of array property %q cannot be changed after creation", propKey),
+				)
+			}
+		}
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
 		propsWithChangedTypes := make(map[string]string, 0)
 		for propKey, prop := range b.Schema.Properties {
 			if prevProp, prevHasProp := prevB.Schema.Properties[propKey]; prevHasProp && prop.Type != prevProp.Type {

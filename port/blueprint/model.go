@@ -89,9 +89,9 @@ type ArrayPropModel struct {
 	MaxItems          types.Int64   `tfsdk:"max_items"`
 	MinItems          types.Int64   `tfsdk:"min_items"`
 	Required          types.Bool    `tfsdk:"required"`
-	Union       types.Bool    `tfsdk:"union"`
-	StringItems *StringItems  `tfsdk:"string_items"`
-	NumberItems       *NumberItems  `tfsdk:"number_items"`
+	Union        types.Bool    `tfsdk:"union"`
+	StringItems  *StringItems  `tfsdk:"string_items"`
+	NumberItems  *NumberItems  `tfsdk:"number_items"`
 	BooleanItems      *BooleanItems `tfsdk:"boolean_items"`
 	ObjectItems       *ObjectItems  `tfsdk:"object_items"`
 }

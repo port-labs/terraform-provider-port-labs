@@ -2,6 +2,7 @@ package blueprint
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -45,6 +46,14 @@ func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props 
 
 			if !prop.Union.IsNull() {
 				union := prop.Union.ValueBool()
+				if union {
+					if prop.StringItems == nil && prop.NumberItems == nil {
+						return fmt.Errorf("array property %q: union is only supported for string or number items", propIdentifier)
+					}
+					if prop.BooleanItems != nil || prop.ObjectItems != nil {
+						return fmt.Errorf("array property %q: union cannot be used with boolean or object items", propIdentifier)
+					}
+				}
 				property.Union = &union
 			}
 

@@ -2,14 +2,19 @@ package entity
 
 import (
 	"context"
+	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
+
+var unionArraySourceKeyPattern = regexp.MustCompile(`^[A-Za-z0-9._:@/-]{1,128}$`)
 
 func EntitySchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
@@ -103,6 +108,9 @@ func EntitySchema() map[string]schema.Attribute {
 									"source_key": schema.StringAttribute{
 										MarkdownDescription: "Stable source key for this writer's slice. Must match `^[A-Za-z0-9._:@/-]{1,128}$`.",
 										Required:            true,
+										Validators: []validator.String{
+											stringvalidator.RegexMatches(unionArraySourceKeyPattern, "must match ^[A-Za-z0-9._:@/-]{1,128}$"),
+										},
 									},
 									"items": schema.ListAttribute{
 										MarkdownDescription: "The string array values for this source slice.",
@@ -120,6 +128,9 @@ func EntitySchema() map[string]schema.Attribute {
 									"source_key": schema.StringAttribute{
 										MarkdownDescription: "Stable source key for this writer's slice. Must match `^[A-Za-z0-9._:@/-]{1,128}$`.",
 										Required:            true,
+										Validators: []validator.String{
+											stringvalidator.RegexMatches(unionArraySourceKeyPattern, "must match ^[A-Za-z0-9._:@/-]{1,128}$"),
+										},
 									},
 									"items": schema.ListAttribute{
 										MarkdownDescription: "The number array values for this source slice.",

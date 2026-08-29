@@ -2,6 +2,7 @@ package blueprint
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -41,6 +42,19 @@ func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props 
 			if !prop.MaxItems.IsNull() {
 				maxItems := int(prop.MaxItems.ValueInt64())
 				property.MaxItems = &maxItems
+			}
+
+			if !prop.Union.IsNull() {
+				union := prop.Union.ValueBool()
+				if union {
+					if prop.StringItems == nil && prop.NumberItems == nil {
+						return fmt.Errorf("array property %q: union is only supported for string or number items", propIdentifier)
+					}
+					if prop.BooleanItems != nil || prop.ObjectItems != nil {
+						return fmt.Errorf("array property %q: union cannot be used with boolean or object items", propIdentifier)
+					}
+				}
+				property.Union = &union
 			}
 
 			if prop.StringItems != nil {
@@ -140,6 +154,7 @@ func AddArrayPropertiesToState(ctx context.Context, v *cli.BlueprintProperty, js
 	arrayProp := &ArrayPropModel{
 		MinItems: flex.GoInt64ToFramework(v.MinItems),
 		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
+		Union:    flex.GoBoolToFramework(v.Union),
 	}
 
 	if v.Items != nil {

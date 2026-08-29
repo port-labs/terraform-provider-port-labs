@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -61,6 +62,8 @@ func McpServerSchema() map[string]schema.Attribute {
 				"grant_type": schema.StringAttribute{
 					MarkdownDescription: "OAuth grant type used when connecting to the MCP server. Use `authorization_code` for interactive user consent flows, or `client_credentials` for machine-to-machine authentication without a browser redirect. Defaults to `authorization_code` when omitted.",
 					Optional:            true,
+					Computed:            true,
+					Default:             stringdefault.StaticString(GrantTypeAuthorizationCode),
 					Validators: []validator.String{
 						stringvalidator.OneOf(GrantTypeAuthorizationCode, GrantTypeClientCredentials),
 					},

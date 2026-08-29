@@ -763,10 +763,28 @@ type Integration struct {
 type Organization struct {
 	Name         string   `json:"name"`
 	FeatureFlags []string `json:"featureFlags"`
+	IdleTimeMS   *int     `json:"idleTimeMS"`
 }
 
 type OrganizationUpdate struct {
-	Name *string `json:"name,omitempty"`
+	Name              *string
+	IdleTimeMS        *int
+	IncludeIdleTimeMS bool
+}
+
+func (u *OrganizationUpdate) ToPatchBody() map[string]any {
+	body := map[string]any{}
+	if u.Name != nil {
+		body["name"] = *u.Name
+	}
+	if u.IncludeIdleTimeMS {
+		if u.IdleTimeMS == nil {
+			body["idleTimeMS"] = nil
+		} else {
+			body["idleTimeMS"] = *u.IdleTimeMS
+		}
+	}
+	return body
 }
 
 type OrganizationSecret struct {

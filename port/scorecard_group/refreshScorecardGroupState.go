@@ -115,6 +115,81 @@ func memberSpecFromCLI(spec cli.ScorecardGroupMemberSpec, stateSpec MemberSpecMo
 	}
 }
 
+func (r *ScorecardGroupResource) jsonEscapeHTML() bool {
+	if r.portClient == nil {
+		return false
+	}
+	return r.portClient.JSONEscapeHTML
+}
+
+func refreshPerBlueprintState(state *ScorecardGroupModel, group *cli.ScorecardGroup, jsonEscapeHTML bool) {
+	state.Scorecards = memberSpecsFromGroup(state.Scorecards, group, jsonEscapeHTML)
+	state.Blueprints = nil
+	state.Rules = nil
+	state.Filters = nil
+}
+
+func memberSpecsFromGroup(previous map[string]MemberSpecModel, group *cli.ScorecardGroup, jsonEscapeHTML bool) map[string]MemberSpecModel {
+	if len(group.Scorecards) > 0 {
+		scorecards := make(map[string]MemberSpecModel, len(group.Scorecards))
+		for blueprintID, memberSpec := range group.Scorecards {
+			existingSpec := MemberSpecModel{}
+			if previous != nil {
+				existingSpec = previous[blueprintID]
+			}
+			scorecards[blueprintID] = memberSpecFromCLI(memberSpec, existingSpec, jsonEscapeHTML)
+		}
+		return scorecards
+	}
+
+	blueprints := group.Blueprints
+	if len(blueprints) == 0 {
+		blueprints = make([]string, 0, len(previous))
+		for blueprintID := range previous {
+			blueprints = append(blueprints, blueprintID)
+		}
+	}
+
+	scorecards := make(map[string]MemberSpecModel, len(blueprints))
+	for _, blueprintID := range blueprints {
+		existingSpec := MemberSpecModel{}
+		if previous != nil {
+			existingSpec = previous[blueprintID]
+		}
+		var filter *cli.Query
+		if group.Filters != nil {
+			filter = group.Filters[blueprintID]
+		}
+		scorecards[blueprintID] = MemberSpecModel{
+			Filter: queryFromCLI(filter, jsonEscapeHTML),
+			Rules:  rulesFromStateAndCLI(existingSpec.Rules, group.Rules, jsonEscapeHTML),
+		}
+	}
+	return scorecards
+}
+
+func refreshSharedRulesState(state *ScorecardGroupModel, group *cli.ScorecardGroup, jsonEscapeHTML bool) {
+	state.Scorecards = nil
+	if len(group.Blueprints) > 0 {
+		state.Blueprints = make([]types.String, len(group.Blueprints))
+		for i, blueprint := range group.Blueprints {
+			state.Blueprints[i] = types.StringValue(blueprint)
+		}
+	} else {
+		state.Blueprints = nil
+	}
+
+	state.Rules = rulesFromStateAndCLI(state.Rules, group.Rules, jsonEscapeHTML)
+	if len(group.Filters) > 0 {
+		state.Filters = make(map[string]*scorecard.Query, len(group.Filters))
+		for blueprintID, filter := range group.Filters {
+			state.Filters[blueprintID] = queryFromCLI(filter, jsonEscapeHTML)
+		}
+	} else {
+		state.Filters = nil
+	}
+}
+
 func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context, state *ScorecardGroupModel, group *cli.ScorecardGroup) {
 	state.ID = types.StringValue(group.Identifier)
 	state.Identifier = types.StringValue(group.Identifier)
@@ -148,39 +223,16 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 		}
 	}
 
-	if len(group.Scorecards) > 0 {
-		previousScorecards := state.Scorecards
-		state.Scorecards = make(map[string]MemberSpecModel, len(group.Scorecards))
-		for blueprintID, memberSpec := range group.Scorecards {
-			existingSpec := MemberSpecModel{}
-			if previousScorecards != nil {
-				existingSpec = previousScorecards[blueprintID]
-			}
-			state.Scorecards[blueprintID] = memberSpecFromCLI(memberSpec, existingSpec, r.portClient.JSONEscapeHTML)
-		}
-		state.Blueprints = nil
-		state.Rules = nil
-		state.Filters = nil
-		return
-	}
-
-	state.Scorecards = nil
-	if len(group.Blueprints) > 0 {
-		state.Blueprints = make([]types.String, len(group.Blueprints))
-		for i, blueprint := range group.Blueprints {
-			state.Blueprints[i] = types.StringValue(blueprint)
-		}
-	} else {
-		state.Blueprints = nil
-	}
-
-	state.Rules = rulesFromStateAndCLI(state.Rules, group.Rules, r.portClient.JSONEscapeHTML)
-	if len(group.Filters) > 0 {
-		state.Filters = make(map[string]*scorecard.Query, len(group.Filters))
-		for blueprintID, filter := range group.Filters {
-			state.Filters[blueprintID] = queryFromCLI(filter, r.portClient.JSONEscapeHTML)
-		}
-	} else {
-		state.Filters = nil
+	jsonEscapeHTML := r.jsonEscapeHTML()
+	switch {
+	case len(state.Scorecards) > 0:
+		// Keep per-blueprint config even when the API canonicalizes to shared-rules.
+		refreshPerBlueprintState(state, group, jsonEscapeHTML)
+	case len(state.Blueprints) > 0 || len(state.Rules) > 0 || len(state.Filters) > 0:
+		refreshSharedRulesState(state, group, jsonEscapeHTML)
+	case len(group.Scorecards) > 0:
+		refreshPerBlueprintState(state, group, jsonEscapeHTML)
+	default:
+		refreshSharedRulesState(state, group, jsonEscapeHTML)
 	}
 }

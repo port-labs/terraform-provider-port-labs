@@ -57,6 +57,19 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
+	// Relations owned by port_blueprint_relation must not reach this resource's state, or every
+	// plan would propose removing them.
+	managedRelations, diags := resolveManagedRelations(ctx, req.Private, b)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(setManagedRelations(ctx, resp.Private, managedRelations)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	b.Relations = filterRelations(b.Relations, managedRelations)
+
 	err = r.refreshBlueprintState(ctx, state, b)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
@@ -168,6 +181,7 @@ func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateReque
 
 	writeBlueprintComputedFieldsToState(state, bp)
 
+	resp.Diagnostics.Append(setManagedRelationsFromState(ctx, resp.Private, state)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -230,6 +244,13 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 		b.AggregationProperties = existingBp.AggregationProperties
 		prevB.AggregationProperties = existingBp.AggregationProperties
 
+		// relations may also be managed one at a time by port_blueprint_relation. Those must survive
+		// this write, while relations removed from this resource's configuration must still be deleted.
+		// prevB gets the same treatment because it is written back on its own when a property changes type.
+		mergedRelations := mergeUnmanagedRelations(b.Relations, prevB.Relations, existingBp.Relations)
+		prevB.Relations = mergeUnmanagedRelations(prevB.Relations, prevB.Relations, existingBp.Relations)
+		b.Relations = mergedRelations
+
 		propsWithChangedTypes := make(map[string]string, 0)
 		for propKey, prop := range b.Schema.Properties {
 			if prevProp, prevHasProp := prevB.Schema.Properties[propKey]; prevHasProp && prop.Type != prevProp.Type {
@@ -269,6 +290,7 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 
 	writeBlueprintComputedFieldsToState(state, bp)
 
+	resp.Diagnostics.Append(setManagedRelationsFromState(ctx, resp.Private, state)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 
 }

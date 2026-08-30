@@ -116,22 +116,6 @@ func (c *PortClient) PatchBlueprintRelation(ctx context.Context, blueprintID str
 	return &pb.Blueprint, nil
 }
 
-func (c *PortClient) PutBlueprintRelation(ctx context.Context, blueprintID string, relationID string, relation *Relation) (*Blueprint, error) {
-	defer c.LockBlueprint(blueprintID)()
-
-	b, _, err := c.ReadBlueprint(ctx, blueprintID)
-	if err != nil {
-		return nil, err
-	}
-
-	if b.Relations == nil {
-		b.Relations = map[string]Relation{}
-	}
-	b.Relations[relationID] = *relation
-
-	return c.updateBlueprint(ctx, b, blueprintID)
-}
-
 func (c *PortClient) DeleteBlueprintRelation(ctx context.Context, blueprintID string, relationID string) (int, error) {
 	defer c.LockBlueprint(blueprintID)()
 

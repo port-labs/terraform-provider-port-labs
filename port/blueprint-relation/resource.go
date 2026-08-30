@@ -60,6 +60,15 @@ func relationToPortBody(state *BlueprintRelationModel) *cli.Relation {
 	return relation
 }
 
+func resolveUnsetOptionalFields(state *BlueprintRelationModel) {
+	if state.Title.IsUnknown() {
+		state.Title = types.StringNull()
+	}
+	if state.Description.IsUnknown() {
+		state.Description = types.StringNull()
+	}
+}
+
 func refreshRelationState(state *BlueprintRelationModel, relation *cli.Relation) {
 	state.ID = types.StringValue(resourceId(state.Blueprint.ValueString(), state.Identifier.ValueString()))
 	state.Target = flex.GoStringToFramework(relation.Target)
@@ -142,39 +151,29 @@ func (r *BlueprintRelationResource) Create(ctx context.Context, req resource.Cre
 	}
 
 	state.ID = types.StringValue(resourceId(blueprintIdentifier, relationIdentifier))
+	resolveUnsetOptionalFields(state)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
 func (r *BlueprintRelationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var state *BlueprintRelationModel
-	var previousState *BlueprintRelationModel
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
-	resp.Diagnostics.Append(req.State.Get(ctx, &previousState)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
 	blueprintIdentifier := state.Blueprint.ValueString()
 	relationIdentifier := state.Identifier.ValueString()
-	relation := relationToPortBody(state)
 
-	clearsField := (state.Title.IsNull() && !previousState.Title.IsNull()) ||
-		(state.Description.IsNull() && !previousState.Description.IsNull())
-
-	var err error
-	if clearsField {
-		_, err = r.portClient.PutBlueprintRelation(ctx, blueprintIdentifier, relationIdentifier, relation)
-	} else {
-		_, err = r.portClient.PatchBlueprintRelation(ctx, blueprintIdentifier, relationIdentifier, relation)
-	}
-	if err != nil {
+	if _, err := r.portClient.PatchBlueprintRelation(ctx, blueprintIdentifier, relationIdentifier, relationToPortBody(state)); err != nil {
 		resp.Diagnostics.AddError("failed to update relation", err.Error())
 		return
 	}
 
 	state.ID = types.StringValue(resourceId(blueprintIdentifier, relationIdentifier))
+	resolveUnsetOptionalFields(state)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

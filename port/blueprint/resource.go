@@ -57,16 +57,10 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	managedRelations, diags := resolveManagedRelations(ctx, req.Private, b)
-	resp.Diagnostics.Append(diags...)
+	resp.Diagnostics.Append(retainManagedRelations(ctx, req.Private, resp.Private, b)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	resp.Diagnostics.Append(setManagedRelations(ctx, resp.Private, managedRelations)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	b.Relations = filterRelations(b.Relations, managedRelations)
 
 	err = r.refreshBlueprintState(ctx, state, b)
 	if err != nil {

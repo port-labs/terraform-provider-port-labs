@@ -38,12 +38,14 @@ func BlueprintRelationSchema() map[string]schema.Attribute {
 			Required:            true,
 		},
 		"title": schema.StringAttribute{
-			MarkdownDescription: "The title of the relation",
+			MarkdownDescription: "The title of the relation. Port does not accept an empty value for this field, so removing it from the configuration leaves the existing title in place rather than clearing it.",
 			Optional:            true,
+			Computed:            true,
 		},
 		"description": schema.StringAttribute{
-			MarkdownDescription: "The description of the relation",
+			MarkdownDescription: "The description of the relation. Port does not accept an empty value for this field, so removing it from the configuration leaves the existing description in place rather than clearing it.",
 			Optional:            true,
+			Computed:            true,
 		},
 		"many": schema.BoolAttribute{
 			MarkdownDescription: "Whether the relation points at many entities",

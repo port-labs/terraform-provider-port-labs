@@ -137,10 +137,10 @@ terraform import port_blueprint_relation.members "entra-id-group:members"
 
 ### Optional
 
-- `description` (String) The description of the relation
+- `description` (String) The description of the relation. Port does not accept an empty value for this field, so removing it from the configuration leaves the existing description in place rather than clearing it.
 - `many` (Boolean) Whether the relation points at many entities
 - `required` (Boolean) Whether the relation is required. Port rejects a required relation whose target blueprint already has a required relation back to this one, so at most one direction of a circular pair can be required.
-- `title` (String) The title of the relation
+- `title` (String) The title of the relation. Port does not accept an empty value for this field, so removing it from the configuration leaves the existing title in place rather than clearing it.
 
 ### Read-Only
 

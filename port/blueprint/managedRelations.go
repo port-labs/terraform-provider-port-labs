@@ -11,42 +11,50 @@ import (
 
 const managedRelationsKey = "managed_relations"
 
-type privateStateReader interface {
+type privateState interface {
 	GetKey(ctx context.Context, key string) ([]byte, diag.Diagnostics)
-}
-
-type privateStateWriter interface {
 	SetKey(ctx context.Context, key string, value []byte) diag.Diagnostics
 }
 
-func resolveManagedRelations(ctx context.Context, private privateStateReader, b *cli.Blueprint) ([]string, diag.Diagnostics) {
+func retainManagedRelations(ctx context.Context, req privateState, resp privateState, b *cli.Blueprint) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	if private != nil {
-		raw, getDiags := private.GetKey(ctx, managedRelationsKey)
+	managed := relationIdentifiers(b.Relations)
+
+	if req != nil {
+		raw, getDiags := req.GetKey(ctx, managedRelationsKey)
 		diags.Append(getDiags...)
 		if diags.HasError() {
-			return nil, diags
+			return diags
 		}
 
 		if raw != nil {
-			var managed []string
-			if err := json.Unmarshal(raw, &managed); err == nil {
-				return managed, diags
+			var recorded []string
+			if err := json.Unmarshal(raw, &recorded); err == nil {
+				managed = recorded
 			}
 		}
 	}
 
-	managed := make([]string, 0, len(b.Relations))
-	for identifier := range b.Relations {
-		managed = append(managed, identifier)
+	diags.Append(setManagedRelations(ctx, resp, managed)...)
+	if diags.HasError() {
+		return diags
 	}
-	sort.Strings(managed)
 
-	return managed, diags
+	owned := make(map[string]struct{}, len(managed))
+	for _, identifier := range managed {
+		owned[identifier] = struct{}{}
+	}
+	for identifier := range b.Relations {
+		if _, ok := owned[identifier]; !ok {
+			delete(b.Relations, identifier)
+		}
+	}
+
+	return diags
 }
 
-func setManagedRelations(ctx context.Context, private privateStateWriter, identifiers []string) diag.Diagnostics {
+func setManagedRelations(ctx context.Context, private privateState, identifiers []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
 	if private == nil {
@@ -67,7 +75,7 @@ func setManagedRelations(ctx context.Context, private privateStateWriter, identi
 	return diags
 }
 
-func setManagedRelationsFromState(ctx context.Context, private privateStateWriter, state *BlueprintModel) diag.Diagnostics {
+func setManagedRelationsFromState(ctx context.Context, private privateState, state *BlueprintModel) diag.Diagnostics {
 	identifiers := make([]string, 0, len(state.Relations))
 	for identifier := range state.Relations {
 		identifiers = append(identifiers, identifier)
@@ -75,20 +83,13 @@ func setManagedRelationsFromState(ctx context.Context, private privateStateWrite
 	return setManagedRelations(ctx, private, identifiers)
 }
 
-func filterRelations(relations map[string]cli.Relation, managed []string) map[string]cli.Relation {
-	owned := make(map[string]struct{}, len(managed))
-	for _, identifier := range managed {
-		owned[identifier] = struct{}{}
+func relationIdentifiers(relations map[string]cli.Relation) []string {
+	identifiers := make([]string, 0, len(relations))
+	for identifier := range relations {
+		identifiers = append(identifiers, identifier)
 	}
-
-	filtered := make(map[string]cli.Relation, len(relations))
-	for identifier, relation := range relations {
-		if _, ok := owned[identifier]; ok {
-			filtered[identifier] = relation
-		}
-	}
-
-	return filtered
+	sort.Strings(identifiers)
+	return identifiers
 }
 
 func mergeUnmanagedRelations(desired map[string]cli.Relation, previouslyManaged map[string]cli.Relation, existing map[string]cli.Relation) map[string]cli.Relation {

@@ -81,6 +81,45 @@ func BlueprintPermissionsSchema() map[string]schema.Attribute {
 					Required:            true,
 					Attributes:          getAssigneePropsWithPolicy("update"),
 				},
+				"read_metadata_properties": schema.SingleNestedAttribute{
+					Optional: true,
+					MarkdownDescription: `Manage permissions to read the metadata properties (` + "`" + `$icon|$title|$team` + "`" + `).
+These are translated to the readProperties in the Port API, proxied since we can't have Terraform properties starting with ` + "`$`" + ` signs.
+The ` + "`" + `$identifier` + "`" + ` meta property cannot have read restrictions.
+See [here](https://docs.getport.io/build-your-software-catalog/customize-integrations/configure-data-model/setup-blueprint/properties/meta-properties/) for more details.`,
+					Attributes: map[string]schema.Attribute{
+						"icon": schema.SingleNestedAttribute{
+							MarkdownDescription: "The entity's icon",
+							Optional:            true,
+							Attributes:          getAssigneeProps("read `$icon` metadata"),
+						},
+						"title": schema.SingleNestedAttribute{
+							MarkdownDescription: "A human-readable name for the entity",
+							Optional:            true,
+							Attributes:          getAssigneeProps("read `$title` metadata"),
+						},
+						"team": schema.SingleNestedAttribute{
+							MarkdownDescription: "The team this entity belongs to",
+							Optional:            true,
+							Attributes:          getAssigneeProps("read `$team` metadata"),
+						},
+					},
+				},
+				"read_properties": schema.MapNestedAttribute{
+					MarkdownDescription: "Manage permissions to read specific entity properties. Meta properties starting with `$` must be configured under `read_metadata_properties`. The `$identifier` meta property cannot have read restrictions.",
+					Optional:            true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: getAssigneeProps("read specific property"),
+					},
+					Validators: []validator.Map{
+						mapvalidator.KeysAre(
+							stringvalidator.RegexMatches(
+								regexp.MustCompile(`^[^\$]`),
+								"`read_properties` can not start with `$`, those are reserved to read_metadata_properties. The `$identifier` property cannot have read restrictions.",
+							),
+						),
+					},
+				},
 				"update_metadata_properties": schema.SingleNestedAttribute{
 					Required: true,
 					MarkdownDescription: `Manage permissions to the metadata properties (` + "`" + `$icon|$title|$team|$identifier` + "`)" + `
@@ -226,6 +265,35 @@ resource "port_blueprint_permissions" "microservices_permissions" {
 		}
 }` + "\n```" + `
 
+
+### Allow read ` + "`" + `myStringProperty` + "`" + ` for admins and a specific user and team:
+
+` + "```hcl" + `
+resource "port_blueprint_permissions" "microservices_permissions" {
+	blueprint_identifier = "my_blueprint_identifier"
+		entities = {
+			# all properties from the previous example...
+			"read_properties" = {
+				"myStringProperty" = {
+					"roles": [
+						"Admin",
+					],
+					"users": ["test-admin-user@test.com"],
+					"teams": ["Team Spiderman"],
+				}
+			},
+			"read_metadata_properties" = {
+				"title" = {
+					"roles": [
+						"Admin",
+					],
+					"users": [],
+					"teams": []
+				}
+			}
+		}
+	}
+}` + "\n```" + `
 
 ### Allow update ` + "`" + `myStringProperty` + "``" + ` for admins and a specific user and team:
 

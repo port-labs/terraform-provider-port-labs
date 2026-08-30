@@ -9,13 +9,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
-// managedRelationsKey names the private state entry holding the relation identifiers this
-// port_blueprint resource owns.
-//
-// Relations can also be managed one at a time by port_blueprint_relation. Without a record of
-// which ones belong here, Read would pull those foreign relations into state and plan their
-// removal on every run, and Update would delete them from the blueprint. Terraform state has no
-// room for that distinction, so it is kept in private state.
 const managedRelationsKey = "managed_relations"
 
 type privateStateReader interface {
@@ -26,13 +19,6 @@ type privateStateWriter interface {
 	SetKey(ctx context.Context, key string, value []byte) diag.Diagnostics
 }
 
-// resolveManagedRelations reports which relations this resource owns.
-//
-// When the private state entry is missing - state written by an older provider version, or a
-// freshly imported resource - it falls back to every relation on the blueprint, which is exactly
-// what the provider did before this entry existed. Read seeds the entry from that fallback, so
-// the first refresh after upgrading behaves identically to previous versions and later refreshes
-// have a baseline to filter against.
 func resolveManagedRelations(ctx context.Context, private privateStateReader, b *cli.Blueprint) ([]string, diag.Diagnostics) {
 	var diags diag.Diagnostics
 
@@ -48,7 +34,6 @@ func resolveManagedRelations(ctx context.Context, private privateStateReader, b 
 			if err := json.Unmarshal(raw, &managed); err == nil {
 				return managed, diags
 			}
-			// unreadable entry, fall through and rebuild it from the blueprint
 		}
 	}
 
@@ -90,7 +75,6 @@ func setManagedRelationsFromState(ctx context.Context, private privateStateWrite
 	return setManagedRelations(ctx, private, identifiers)
 }
 
-// filterRelations drops relations this resource does not own, so they never reach Terraform state.
 func filterRelations(relations map[string]cli.Relation, managed []string) map[string]cli.Relation {
 	owned := make(map[string]struct{}, len(managed))
 	for _, identifier := range managed {
@@ -107,17 +91,11 @@ func filterRelations(relations map[string]cli.Relation, managed []string) map[st
 	return filtered
 }
 
-// mergeUnmanagedRelations builds the relations map to write to Port.
-//
-// Blueprint writes go through PUT, which replaces the blueprint wholesale and deletes any relation
-// absent from the body. Relations owned by port_blueprint_relation must survive that, while
-// relations dropped from this resource's configuration must still be deleted.
 func mergeUnmanagedRelations(desired map[string]cli.Relation, previouslyManaged map[string]cli.Relation, existing map[string]cli.Relation) map[string]cli.Relation {
 	merged := make(map[string]cli.Relation, len(existing)+len(desired))
 
 	for identifier, relation := range existing {
 		if _, wasManaged := previouslyManaged[identifier]; wasManaged {
-			// owned here before; keep it only if it is still configured
 			continue
 		}
 		merged[identifier] = relation

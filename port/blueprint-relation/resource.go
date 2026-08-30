@@ -68,8 +68,6 @@ func refreshRelationState(state *BlueprintRelationModel, relation *cli.Relation)
 	state.Many = flex.GoBoolToFramework(relation.Many)
 	state.Required = flex.GoBoolToFramework(relation.Required)
 
-	// many and required are always sent, and Port always returns them, but keep the
-	// schema defaults rather than writing nulls if the API ever omits them.
 	if state.Many.IsNull() {
 		state.Many = types.BoolValue(false)
 	}
@@ -128,8 +126,6 @@ func (r *BlueprintRelationResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	// A relation must be owned by exactly one place. Refusing here surfaces an overlap with an
-	// inline relations block on port_blueprint, instead of the two resources silently fighting.
 	if _, ok := b.Relations[relationIdentifier]; ok {
 		resp.Diagnostics.AddError(
 			"relation already exists",
@@ -164,8 +160,6 @@ func (r *BlueprintRelationResource) Update(ctx context.Context, req resource.Upd
 	relationIdentifier := state.Identifier.ValueString()
 	relation := relationToPortBody(state)
 
-	// PATCH deep-merges and the API rejects null for title and description, so a field that was
-	// set and is now unset can only be removed by rewriting the whole blueprint.
 	clearsField := (state.Title.IsNull() && !previousState.Title.IsNull()) ||
 		(state.Description.IsNull() && !previousState.Description.IsNull())
 
@@ -196,7 +190,6 @@ func (r *BlueprintRelationResource) Delete(ctx context.Context, req resource.Del
 	statusCode, err := r.portClient.DeleteBlueprintRelation(ctx, state.Blueprint.ValueString(), state.Identifier.ValueString())
 	if err != nil {
 		if statusCode == 404 {
-			// the blueprint is already gone, and the relation with it
 			resp.State.RemoveResource(ctx)
 			return
 		}

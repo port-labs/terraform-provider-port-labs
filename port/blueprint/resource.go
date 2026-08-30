@@ -57,8 +57,6 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	// Relations owned by port_blueprint_relation must not reach this resource's state, or every
-	// plan would propose removing them.
 	managedRelations, diags := resolveManagedRelations(ctx, req.Private, b)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -244,9 +242,6 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 		b.AggregationProperties = existingBp.AggregationProperties
 		prevB.AggregationProperties = existingBp.AggregationProperties
 
-		// relations may also be managed one at a time by port_blueprint_relation. Those must survive
-		// this write, while relations removed from this resource's configuration must still be deleted.
-		// prevB gets the same treatment because it is written back on its own when a property changes type.
 		mergedRelations := mergeUnmanagedRelations(b.Relations, prevB.Relations, existingBp.Relations)
 		prevB.Relations = mergeUnmanagedRelations(prevB.Relations, prevB.Relations, existingBp.Relations)
 		b.Relations = mergedRelations

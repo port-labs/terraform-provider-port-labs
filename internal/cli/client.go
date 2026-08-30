@@ -24,16 +24,9 @@ type PortClient struct {
 	JSONEscapeHTML                        bool
 	BlueprintPropertyTypeChangeProtection bool
 
-	// blueprintLocks serializes read-modify-write sequences against a single blueprint.
-	// Port has no endpoint to delete an individual relation, so removing one requires
-	// reading the whole blueprint and writing it back without that relation. Several
-	// port_blueprint_relation resources targeting the same blueprint would otherwise
-	// race and lose each other's writes.
-	blueprintLocks sync.Map // blueprint identifier -> *sync.Mutex
+	blueprintLocks sync.Map
 }
 
-// LockBlueprint blocks until no other goroutine holds the lock for the given blueprint,
-// and returns the function that releases it.
 func (c *PortClient) LockBlueprint(identifier string) func() {
 	value, _ := c.blueprintLocks.LoadOrStore(identifier, &sync.Mutex{})
 	mutex := value.(*sync.Mutex)

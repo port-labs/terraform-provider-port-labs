@@ -432,6 +432,7 @@ type (
 		Register         BlueprintPermissionsBlock                  `json:"register"`
 		Unregister       BlueprintPermissionsBlock                  `json:"unregister"`
 		Update           BlueprintPermissionsBlock                  `json:"update"`
+		ReadProperties   BlueprintRolesOrPropertiesPermissionsBlock `json:"readProperties,omitempty"`
 		UpdateProperties BlueprintRolesOrPropertiesPermissionsBlock `json:"updateProperties,omitempty"`
 		UpdateRelations  BlueprintRolesOrPropertiesPermissionsBlock `json:"updateRelations,omitempty"`
 	}

@@ -537,6 +537,20 @@ func BlueprintSchema() map[string]schema.Attribute {
 							},
 						},
 					},
+					"items": schema.SingleNestedAttribute{
+						MarkdownDescription: "The items of an `array` calculation property",
+						Optional:            true,
+						Attributes: map[string]schema.Attribute{
+							"type": schema.StringAttribute{
+								MarkdownDescription: "The type of the items",
+								Optional:            true,
+							},
+							"format": schema.StringAttribute{
+								MarkdownDescription: "The format of the items",
+								Optional:            true,
+							},
+						},
+					},
 				},
 			},
 		},

@@ -257,6 +257,13 @@ func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *
 			}
 		}
 
+		if v.Items != nil {
+			calculationPropertyModel.Items = &CalculationItems{
+				Type:   flex.GoStringToFramework(v.Items.Type),
+				Format: flex.GoStringToFramework(v.Items.Format),
+			}
+		}
+
 		bm.CalculationProperties[k] = *calculationPropertyModel
 
 	}

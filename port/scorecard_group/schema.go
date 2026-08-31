@@ -177,7 +177,10 @@ See the [Port documentation](https://docs.getport.io/governance/standards-and-co
 resource "port_scorecard_group" "readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
-  blueprints = [port_blueprint.microservice.identifier]
+  blueprints = [
+    port_blueprint.microservice.identifier,
+    port_blueprint.database.identifier,
+  ]
   properties = jsonencode({
     owner = "platform-team"
   })
@@ -193,6 +196,24 @@ resource "port_scorecard_group" "readiness" {
       })]
     }
   }]
+  filters = {
+    (port_blueprint.microservice.identifier) = {
+      combinator = "and"
+      conditions = [jsonencode({
+        property = "environment"
+        operator = "="
+        value    = "production"
+      })]
+    }
+    (port_blueprint.database.identifier) = {
+      combinator = "and"
+      conditions = [jsonencode({
+        property = "environment"
+        operator = "="
+        value    = "production"
+      })]
+    }
+  }
 }
 
 ` + "```" + `
@@ -206,15 +227,47 @@ resource "port_scorecard_group" "readiness" {
   title      = "Production Readiness"
   scorecards = {
     (port_blueprint.microservice.identifier) = {
+      filter = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "environment"
+          operator = "="
+          value    = "staging"
+        })]
+      }
       rules = [{
-        identifier = "has-owner"
-        title      = "Has Owner"
+        identifier = "staging-environment"
+        title      = "Staging Environment"
         level      = "Gold"
         query = {
           combinator = "and"
           conditions = [jsonencode({
-            property = "$team"
-            operator = "isNotEmpty"
+            property = "environment"
+            operator = "="
+            value    = "staging"
+          })]
+        }
+      }]
+    }
+    (port_blueprint.database.identifier) = {
+      filter = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "environment"
+          operator = "="
+          value    = "production"
+        })]
+      }
+      rules = [{
+        identifier = "production-environment"
+        title      = "Production Environment"
+        level      = "Gold"
+        query = {
+          combinator = "and"
+          conditions = [jsonencode({
+            property = "environment"
+            operator = "="
+            value    = "production"
           })]
         }
       }]

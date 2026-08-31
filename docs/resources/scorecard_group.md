@@ -15,7 +15,13 @@ description: |-
   resource "port_scorecard_group" "readiness" {
     identifier = "production-readiness"
     title      = "Production Readiness"
-    blueprints = [port_blueprint.microservice.identifier]
+    blueprints = [
+      port_blueprint.microservice.identifier,
+      port_blueprint.database.identifier,
+    ]
+    properties = jsonencode({
+      owner = "platform-team"
+    })
     rules = [{
       identifier = "has-owner"
       title      = "Has Owner"
@@ -28,6 +34,24 @@ description: |-
         })]
       }
     }]
+    filters = {
+      (port_blueprint.microservice.identifier) = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "environment"
+          operator = "="
+          value    = "production"
+        })]
+      }
+      (port_blueprint.database.identifier) = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "environment"
+          operator = "="
+          value    = "production"
+        })]
+      }
+    }
   }
   
   
@@ -39,15 +63,47 @@ description: |-
     title      = "Production Readiness"
     scorecards = {
       (port_blueprint.microservice.identifier) = {
+        filter = {
+          combinator = "and"
+          conditions = [jsonencode({
+            property = "environment"
+            operator = "="
+            value    = "staging"
+          })]
+        }
         rules = [{
-          identifier = "has-owner"
-          title      = "Has Owner"
+          identifier = "staging-environment"
+          title      = "Staging Environment"
           level      = "Gold"
           query = {
             combinator = "and"
             conditions = [jsonencode({
-              property = "$team"
-              operator = "isNotEmpty"
+              property = "environment"
+              operator = "="
+              value    = "staging"
+            })]
+          }
+        }]
+      }
+      (port_blueprint.database.identifier) = {
+        filter = {
+          combinator = "and"
+          conditions = [jsonencode({
+            property = "environment"
+            operator = "="
+            value    = "production"
+          })]
+        }
+        rules = [{
+          identifier = "production-environment"
+          title      = "Production Environment"
+          level      = "Gold"
+          query = {
+            combinator = "and"
+            conditions = [jsonencode({
+              property = "environment"
+              operator = "="
+              value    = "production"
             })]
           }
         }]
@@ -79,7 +135,13 @@ See the [Port documentation](https://docs.getport.io/governance/standards-and-co
 resource "port_scorecard_group" "readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
-  blueprints = [port_blueprint.microservice.identifier]
+  blueprints = [
+    port_blueprint.microservice.identifier,
+    port_blueprint.database.identifier,
+  ]
+  properties = jsonencode({
+    owner = "platform-team"
+  })
   rules = [{
     identifier = "has-owner"
     title      = "Has Owner"
@@ -92,6 +154,24 @@ resource "port_scorecard_group" "readiness" {
       })]
     }
   }]
+  filters = {
+    (port_blueprint.microservice.identifier) = {
+      combinator = "and"
+      conditions = [jsonencode({
+        property = "environment"
+        operator = "="
+        value    = "production"
+      })]
+    }
+    (port_blueprint.database.identifier) = {
+      combinator = "and"
+      conditions = [jsonencode({
+        property = "environment"
+        operator = "="
+        value    = "production"
+      })]
+    }
+  }
 }
 
 ```
@@ -105,15 +185,47 @@ resource "port_scorecard_group" "readiness" {
   title      = "Production Readiness"
   scorecards = {
     (port_blueprint.microservice.identifier) = {
+      filter = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "environment"
+          operator = "="
+          value    = "staging"
+        })]
+      }
       rules = [{
-        identifier = "has-owner"
-        title      = "Has Owner"
+        identifier = "staging-environment"
+        title      = "Staging Environment"
         level      = "Gold"
         query = {
           combinator = "and"
           conditions = [jsonencode({
-            property = "$team"
-            operator = "isNotEmpty"
+            property = "environment"
+            operator = "="
+            value    = "staging"
+          })]
+        }
+      }]
+    }
+    (port_blueprint.database.identifier) = {
+      filter = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "environment"
+          operator = "="
+          value    = "production"
+        })]
+      }
+      rules = [{
+        identifier = "production-environment"
+        title      = "Production Environment"
+        level      = "Gold"
+        query = {
+          combinator = "and"
+          conditions = [jsonencode({
+            property = "environment"
+            operator = "="
+            value    = "production"
           })]
         }
       }]
@@ -138,6 +250,7 @@ resource "port_scorecard_group" "readiness" {
 - `blueprints` (Set of String) Blueprint identifiers that share the same rules (and optional filters). Use this for shared-rules mode. Conflicts with `scorecards`.
 - `filters` (Attributes Map) Optional filters per blueprint in shared-rules mode, keyed by blueprint identifier. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--filters))
 - `levels` (Attributes List) The available levels of the scorecard group, shared by all members. (see [below for nested schema](#nestedatt--levels))
+- `properties` (String) Additional `_scorecard` blueprint properties applied to every member scorecard in the group, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint.
 - `rules` (Attributes List) The rules applied to every blueprint in shared-rules mode. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--rules))
 - `scorecards` (Attributes Map) Map of blueprint identifier to member scorecard filter/rules. Use this for per-blueprint mode. Conflicts with `blueprints`, `rules`, and `filters`. (see [below for nested schema](#nestedatt--scorecards))
 

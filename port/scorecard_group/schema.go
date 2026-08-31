@@ -79,6 +79,10 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 					Attributes: scorecard.LevelSchema(),
 				},
 			},
+			"properties": schema.StringAttribute{
+				MarkdownDescription: "Additional `_scorecard` blueprint properties applied to every member scorecard in the group, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint.",
+				Optional:            true,
+			},
 			"blueprints": schema.SetAttribute{
 				MarkdownDescription: "Blueprint identifiers that share the same rules (and optional filters). Use this for shared-rules mode. Conflicts with `scorecards`.",
 				Optional:            true,
@@ -174,6 +178,9 @@ resource "port_scorecard_group" "readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
   blueprints = [port_blueprint.microservice.identifier]
+  properties = jsonencode({
+    owner = "platform-team"
+  })
   rules = [{
     identifier = "has-owner"
     title      = "Has Owner"

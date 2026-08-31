@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
 )
 
@@ -88,6 +89,16 @@ func scorecardGroupResourceToPortBody(ctx context.Context, state *ScorecardGroup
 
 	if len(state.Levels) > 0 {
 		group.Levels = levelsToCLI(state.Levels)
+	}
+
+	if !state.Properties.IsNull() && !state.Properties.IsUnknown() {
+		properties, err := utils.TerraformJsonStringToGoObject(state.Properties.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if properties != nil {
+			group.Properties = *properties
+		}
 	}
 
 	if len(state.Scorecards) > 0 {

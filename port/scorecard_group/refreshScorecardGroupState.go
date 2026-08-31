@@ -224,6 +224,12 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	}
 
 	jsonEscapeHTML := r.jsonEscapeHTML()
+	if len(group.Properties) > 0 {
+		properties, _ := utils.GoObjectToTerraformStringPreferExisting(state.Properties, group.Properties, jsonEscapeHTML)
+		state.Properties = properties
+	} else if state.Properties.IsNull() || state.Properties.IsUnknown() {
+		state.Properties = types.StringNull()
+	}
 	switch {
 	case len(state.Scorecards) > 0:
 		// Keep per-blueprint config even when the API canonicalizes to shared-rules.

@@ -30,6 +30,17 @@ resource "port_workflow" "deploy_service" {
               default = 3
             }
           }
+          array_props = {
+            "regions" = {
+              title = "Regions"
+              string_items = {
+                enum        = ["us-east-1", "us-west-2"]
+                pattern     = "^[a-z]{2}-[a-z]+-[0-9]$"
+                min_length  = 9
+                max_length  = 14
+              }
+            }
+          }
         }
 
         # Checked when the form is submitted. Move the rules into the individual

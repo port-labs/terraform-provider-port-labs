@@ -291,6 +291,18 @@ func arrayItemsToBody(ctx context.Context, property *cli.WorkflowInputProperty, 
 			items["enumColors"] = enumColors
 		}
 
+		if !prop.StringItems.Pattern.IsNull() {
+			items["pattern"] = prop.StringItems.Pattern.ValueString()
+		}
+		if !prop.StringItems.MinLength.IsNull() {
+			minLength := int(prop.StringItems.MinLength.ValueInt64())
+			items["minLength"] = minLength
+		}
+		if !prop.StringItems.MaxLength.IsNull() {
+			maxLength := int(prop.StringItems.MaxLength.ValueInt64())
+			items["maxLength"] = maxLength
+		}
+
 		if !prop.StringItems.Default.IsNull() {
 			defaults, err := utils.TerraformListToGoArray(ctx, prop.StringItems.Default, "string")
 			if err != nil {

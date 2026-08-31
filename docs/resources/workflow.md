@@ -399,6 +399,9 @@ Optional:
 - `enum_colors` (Map of String) The colors of the enum values.
 - `enum_jq_query` (String) A jq query resolving the values the user can pick from.
 - `format` (String) The format of each item.
+- `max_length` (Number) The max length of each item.
+- `min_length` (Number) The min length of each item.
+- `pattern` (String) The regex pattern each item has to match.
 
 
 
@@ -973,6 +976,9 @@ Optional:
 - `enum_colors` (Map of String) The colors of the enum values.
 - `enum_jq_query` (String) A jq query resolving the values the user can pick from.
 - `format` (String) The format of each item.
+- `max_length` (Number) The max length of each item.
+- `min_length` (Number) The min length of each item.
+- `pattern` (String) The regex pattern each item has to match.
 
 
 

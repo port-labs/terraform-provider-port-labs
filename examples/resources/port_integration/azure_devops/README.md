@@ -10,6 +10,7 @@ No Terraform provider schema changes are required. The `port_integration` resour
 
 | Resource kind | Change |
 | --- | --- |
+| `environment` | `project` relation strips spaces via `gsub(" "; "")` |
 | `build` | Selector filters to finished builds (`.finishTime != null`) |
 | `pipeline-stage` | Selector filters to finished stages (`.finishTime != null`) |
 | `pipeline-run` | Selector filters to finished runs (`.finishedDate != null`) |
@@ -19,4 +20,4 @@ No Terraform provider schema changes are required. The `port_integration` resour
 
 ## System blueprint change
 
-The `azureDevopsReleaseDeployment` system blueprint now includes a `project` relation targeting `azureDevopsProject`. This relation is provisioned by Port and appears automatically when refreshing a `port_system_blueprint` resource for that identifier.
+The `azureDevopsReleaseDeployment` system blueprint now includes a `project` relation targeting `azureDevopsProject`. See `examples/resources/port_system_blueprint/azure_devops_release_deployment/` for an example of extending this system blueprint via Terraform.

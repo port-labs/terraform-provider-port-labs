@@ -1,12 +1,6 @@
 # Azure DevOps integration mapping snippets aligned with Port PR #17668.
 # Import an existing Azure DevOps integration and apply updated mappings.
 # https://github.com/port-labs/Port/pull/17668
-#
-# Changes covered:
-# - build / pipeline-stage / pipeline-deployment: only ingest finished records (.finishTime != null)
-# - pipeline-run: only ingest finished runs (.finishedDate != null)
-# - release-deployment: filter unset completedOn, normalize startedOn, update title/url, add project relation
-# - project relations: strip spaces from project IDs via gsub(" "; "")
 
 resource "port_integration" "azure_devops" {
   installation_id       = "my-azure-devops-installation-id"
@@ -18,6 +12,29 @@ resource "port_integration" "azure_devops" {
     deleteDependentEntities      = true
     resources = [
       {
+        kind = "environment"
+        selector = {
+          query = "true"
+        }
+        port = {
+          entity = {
+            mappings = [{
+              identifier = ".project.id + \"/\" + (.id | tostring) | gsub(\" \"; \"\")"
+              title      = ".name | tostring"
+              blueprint  = "'azureDevopsEnvironment'"
+              properties = {
+                description    = ".description"
+                createdOn      = ".createdOn"
+                lastModifiedOn = ".lastModifiedOn"
+              }
+              relations = {
+                project = ".project.id | gsub(\" \"; \"\")"
+              }
+            }]
+          }
+        }
+      },
+      {
         kind = "build"
         selector = {
           query = ".finishTime != null"
@@ -25,7 +42,7 @@ resource "port_integration" "azure_devops" {
         port = {
           entity = {
             mappings = [{
-              identifier = ".__project.id + \"/\" + (.id | tostring) | gsub(\" \"; \"\")"
+              identifier = ".__project.id + \"/\" + (.repository.id | tostring) + \"/\" + (.id | tostring) | gsub(\" \"; \"\")"
               title      = ".buildNumber"
               blueprint  = "'azureDevopsBuild'"
               properties = {
@@ -55,7 +72,7 @@ resource "port_integration" "azure_devops" {
         port = {
           entity = {
             mappings = [{
-              identifier = ".__project.id + \"/\" + (.__build.id | tostring) + \"/\" + (.id | tostring) | gsub(\" \"; \"\")"
+              identifier = ".__project.id + \"/\" + (.__build.repository.id | tostring) + \"/\" + (.__build.id | tostring) + \"/\" + (.id | tostring) | gsub(\" \"; \"\")"
               title      = ".name"
               blueprint  = "'azureDevopsPipelineStage'"
               properties = {
@@ -67,7 +84,7 @@ resource "port_integration" "azure_devops" {
               }
               relations = {
                 project = ".__project.id | gsub(\" \"; \"\")"
-                build   = ".__project.id + \"/\" + (.__build.id | tostring) | gsub(\" \"; \"\")"
+                build   = "(.__project.id + \"/\" + (.__build.repository.id | tostring) + \"/\" + (.__build.id | tostring)) | gsub(\" \"; \"\")"
               }
             }]
           }
@@ -81,7 +98,7 @@ resource "port_integration" "azure_devops" {
         port = {
           entity = {
             mappings = [{
-              identifier = ".__project.id + \"/\" + (.id | tostring) | gsub(\" \"; \"\")"
+              identifier = ".__project.id + \"/\" + (.__pipeline.id | tostring) + \"/\" + (.id | tostring) | gsub(\" \"; \"\")"
               title      = ".name"
               blueprint  = "'azureDevopsPipelineRun'"
               properties = {
@@ -93,7 +110,7 @@ resource "port_integration" "azure_devops" {
               }
               relations = {
                 project  = ".__project.id | gsub(\" \"; \"\")"
-                pipeline = ".__project.id + \"/\" + (.__pipeline.id | tostring) | gsub(\" \"; \"\")"
+                pipeline = ".__project.id + \"/\" + (.__pipeline.id | tostring)"
               }
             }]
           }
@@ -102,8 +119,8 @@ resource "port_integration" "azure_devops" {
       {
         kind = "release-deployment"
         selector = {
-          query           = ".completedOn != null and .completedOn != \"0001-01-01T00:00:00\""
-          includeRelease  = true
+          query          = ".completedOn != null and .completedOn != \"0001-01-01T00:00:00\""
+          includeRelease = true
         }
         port = {
           entity = {
@@ -141,12 +158,12 @@ resource "port_integration" "azure_devops" {
               title      = ".owner.name // (.id | tostring)"
               blueprint  = "'azureDevopsPipelineDeployment'"
               properties = {
-                planType   = ".planType"
-                stageName  = ".stageName"
-                jobName    = ".jobName"
-                result     = ".result"
-                startTime  = ".startTime"
-                finishTime = ".finishTime"
+                planType    = ".planType"
+                stageName   = ".stageName"
+                jobName     = ".jobName"
+                result      = ".result"
+                startTime   = ".startTime"
+                finishTime  = ".finishTime"
               }
               relations = {
                 project     = ".__project.id | gsub(\" \"; \"\")"

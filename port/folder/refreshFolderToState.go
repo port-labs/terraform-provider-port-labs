@@ -13,6 +13,12 @@ func refreshFolderToState(fm *FolderModel, f *cli.Folder) error {
 		fm.Title = types.StringValue(f.Title)
 	}
 
+	if f.Icon != "" {
+		fm.Icon = types.StringValue(f.Icon)
+	} else if !fm.Icon.IsNull() {
+		fm.Icon = types.StringNull()
+	}
+
 	if f.After != "" {
 		fm.After = types.StringValue(f.After)
 	} else if !fm.After.IsNull() {

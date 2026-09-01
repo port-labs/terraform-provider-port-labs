@@ -157,6 +157,7 @@ Optional:
 
 - `blueprint_identifier` (String) The blueprint identifier the event relates to.
 - `condition` (Block, Optional) A JQ condition gating whether the event starts the workflow. (see [below for nested schema](#nestedblock--node--event_trigger--condition))
+- `next_expire_at` (String) A JQ expression returning the next expiration time as an ISO date. The timer property is set to it after the trigger fires, so the timer keeps running. Only valid for the `TIMER_EXPIRED` event type.
 - `property_identifier` (String) The property identifier the timer event relates to. Required for the `TIMER_EXPIRED` event type.
 - `published` (Boolean) Whether the trigger is published.
 - `type` (String) The event type that triggers the workflow. One of `ENTITY_CREATED`, `ENTITY_UPDATED`, `ENTITY_DELETED`, `TIMER_EXPIRED`, `ANY_ENTITY_CHANGE`.

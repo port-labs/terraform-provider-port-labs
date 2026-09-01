@@ -98,6 +98,7 @@ type WorkflowTriggerEvent struct {
 	Type                string  `json:"type"`
 	BlueprintIdentifier string  `json:"blueprintIdentifier"`
 	PropertyIdentifier  *string `json:"propertyIdentifier,omitempty"`
+	NextExpireAt        *string `json:"nextExpireAt,omitempty"`
 }
 
 type WorkflowNodeCondition struct {

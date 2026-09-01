@@ -775,6 +775,7 @@ type Integration struct {
 	Version              *string               `json:"version"`
 	Config               *map[string]any       `json:"config"`
 	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
+	OauthBrokerUrl       *string               `json:"oauthBrokerUrl,omitempty"`
 }
 
 type Organization struct {

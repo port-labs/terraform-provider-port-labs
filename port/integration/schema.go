@@ -6,6 +6,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
 
 func IntegrationSchema() map[string]schema.Attribute {
@@ -14,8 +16,11 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"installation_id": schema.StringAttribute{
-			MarkdownDescription: "The installation ID of the integration. Must contain only lowercase letters, numbers, and dashes (pattern: `" + installationIdPattern + "`).",
+			MarkdownDescription: "The installation ID of the integration. Must contain only lowercase letters, numbers, and dashes (pattern: `" + installationIdPattern + "`). Changing this forces the integration to be destroyed and recreated under the new ID.",
 			Required:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.RequiresReplace(),
+			},
 		},
 		"version": schema.StringAttribute{
 			Optional: true,

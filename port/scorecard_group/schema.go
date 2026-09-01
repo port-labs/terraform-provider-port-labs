@@ -170,9 +170,29 @@ A scorecard group can be configured in one of two modes:
 
 See the [Port documentation](https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/) for more information about scorecards.
 
+` + "`properties`" + ` sets ` + "`_scorecard`" + ` blueprint property values on every member scorecard in the group. Define the property schema on the ` + "`_scorecard`" + ` system blueprint first (for example with ` + "`port_system_blueprint`" + `), then reference those keys in ` + "`jsonencode({...})`" + `. Use ` + "`depends_on`" + ` so the scorecard group is created only after the blueprint properties exist.
+
 ## Example Usage (shared rules)
 
 ` + "```hcl" + `
+
+resource "port_system_blueprint" "scorecard" {
+  identifier = "_scorecard"
+  properties = {
+    string_props = {
+      owner = {
+        type  = "string"
+        title = "Owner"
+      }
+    }
+    number_props = {
+      priority = {
+        type  = "number"
+        title = "Priority"
+      }
+    }
+  }
+}
 
 resource "port_scorecard_group" "readiness" {
   identifier = "production-readiness"
@@ -182,7 +202,8 @@ resource "port_scorecard_group" "readiness" {
     port_blueprint.database.identifier,
   ]
   properties = jsonencode({
-    owner = "platform-team"
+    owner    = "platform-team"
+    priority = 1
   })
   rules = [{
     identifier = "has-owner"
@@ -214,6 +235,7 @@ resource "port_scorecard_group" "readiness" {
       })]
     }
   }
+  depends_on = [port_system_blueprint.scorecard]
 }
 
 ` + "```" + `
@@ -222,9 +244,24 @@ resource "port_scorecard_group" "readiness" {
 
 ` + "```hcl" + `
 
+resource "port_system_blueprint" "scorecard" {
+  identifier = "_scorecard"
+  properties = {
+    string_props = {
+      owner = {
+        type  = "string"
+        title = "Owner"
+      }
+    }
+  }
+}
+
 resource "port_scorecard_group" "readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
+  properties = jsonencode({
+    owner = "platform-team"
+  })
   scorecards = {
     (port_blueprint.microservice.identifier) = {
       filter = {
@@ -273,6 +310,7 @@ resource "port_scorecard_group" "readiness" {
       }]
     }
   }
+  depends_on = [port_system_blueprint.scorecard]
 }
 
 ` + "```"

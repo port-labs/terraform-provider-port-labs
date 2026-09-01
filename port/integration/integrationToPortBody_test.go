@@ -1,6 +1,10 @@
 package integration
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
 
 func TestInstallationIdPattern(t *testing.T) {
 	valid := []string{
@@ -33,5 +37,38 @@ func TestInstallationIdPattern(t *testing.T) {
 		if installationIdRegex.MatchString(id) {
 			t.Errorf("expected %q not to match installation ID pattern", id)
 		}
+	}
+}
+
+func TestIntegrationToPortBodyIncludesVersionWhenSet(t *testing.T) {
+	version := "1.33.7"
+	state := &IntegrationModel{
+		InstallationId: types.StringValue("my-integration"),
+		Version:        types.StringValue(version),
+	}
+
+	body, err := integrationToPortBody(state)
+	if err != nil {
+		t.Fatalf("integrationToPortBody returned error: %v", err)
+	}
+	if body.Version == nil {
+		t.Fatal("expected version to be included in integration body")
+	}
+	if *body.Version != version {
+		t.Fatalf("expected version %q, got %q", version, *body.Version)
+	}
+}
+
+func TestIntegrationToPortBodyOmitsVersionWhenUnset(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId: types.StringValue("my-integration"),
+	}
+
+	body, err := integrationToPortBody(state)
+	if err != nil {
+		t.Fatalf("integrationToPortBody returned error: %v", err)
+	}
+	if body.Version != nil {
+		t.Fatalf("expected version to be omitted, got %q", *body.Version)
 	}
 }

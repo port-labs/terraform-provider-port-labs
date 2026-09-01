@@ -31,8 +31,7 @@ resource "port_integration" "my_k8s_exporter" {
   installation_id       = "my-"
   title                 = "My K8S Exporter with version managed by Terraform"
   installation_app_type = "K8S EXPORTER"
-  # NOTE: This property is by default not used, since it can change outside of terraform
-  # Include this only if you explicitly want to control the version with Terraform
+  # Optional: pin the integration version in Terraform. Omit to ignore version changes made outside Terraform.
   version               = "1.33.7"
   config = jsonencode({
     createMissingRelatedEntitiesboolean = true

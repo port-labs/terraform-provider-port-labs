@@ -137,6 +137,7 @@ func TestWorkflowStateToPortBodyIntegrationAction(t *testing.T) {
 					IntegrationProvider:       types.StringValue("github"),
 					IntegrationInvocationType: types.StringValue("WORKFLOW_DISPATCH"),
 					ExecutionProperties:       types.StringValue(`{"workflow":"deploy.yml","ref":"main"}`),
+					OnTimeout:                 types.StringValue("continue"),
 				},
 			},
 		},
@@ -156,6 +157,8 @@ func TestWorkflowStateToPortBodyIntegrationAction(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "deploy.yml", props["workflow"])
 	assert.Equal(t, "main", props["ref"])
+	require.NotNil(t, config.OnTimeout)
+	assert.Equal(t, "continue", *config.OnTimeout)
 }
 
 func TestWorkflowStateToPortBodyConditionAndConnections(t *testing.T) {

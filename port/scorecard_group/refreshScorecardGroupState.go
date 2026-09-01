@@ -2,6 +2,7 @@ package scorecard_group
 
 import (
 	"context"
+	"encoding/json"
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -9,6 +10,54 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
 )
+
+func configuredPropertyKeys(stateProperties types.String) map[string]struct{} {
+	if stateProperties.IsNull() || stateProperties.IsUnknown() {
+		return nil
+	}
+
+	var props map[string]any
+	if err := json.Unmarshal([]byte(stateProperties.ValueString()), &props); err != nil || len(props) == 0 {
+		return nil
+	}
+
+	keys := make(map[string]struct{}, len(props))
+	for key := range props {
+		keys[key] = struct{}{}
+	}
+	return keys
+}
+
+func propertiesFromStateAndAPI(stateProperties types.String, apiProperties map[string]any, jsonEscapeHTML bool) types.String {
+	if stateProperties.IsNull() || stateProperties.IsUnknown() {
+		return types.StringNull()
+	}
+
+	configuredKeys := configuredPropertyKeys(stateProperties)
+	if len(configuredKeys) == 0 {
+		return types.StringNull()
+	}
+
+	var stateMap map[string]any
+	if err := json.Unmarshal([]byte(stateProperties.ValueString()), &stateMap); err != nil {
+		return stateProperties
+	}
+
+	merged := make(map[string]any, len(stateMap))
+	for key, value := range stateMap {
+		if apiValue, ok := apiProperties[key]; ok && apiValue != nil {
+			merged[key] = apiValue
+		} else {
+			merged[key] = value
+		}
+	}
+
+	properties, err := utils.GoObjectToTerraformString(merged, jsonEscapeHTML)
+	if err != nil {
+		return stateProperties
+	}
+	return properties
+}
 
 func shouldRefreshGroupLevels(stateLevels []scorecard.Level, cliLevels []cli.Level) bool {
 	if len(stateLevels) == 0 && reflect.DeepEqual(cliLevels, scorecard.DefaultCliLevels()) {
@@ -224,12 +273,7 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	}
 
 	jsonEscapeHTML := r.jsonEscapeHTML()
-	if len(group.Properties) > 0 {
-		properties, _ := utils.GoObjectToTerraformStringPreferExisting(state.Properties, group.Properties, jsonEscapeHTML)
-		state.Properties = properties
-	} else if state.Properties.IsNull() || state.Properties.IsUnknown() {
-		state.Properties = types.StringNull()
-	}
+	state.Properties = propertiesFromStateAndAPI(state.Properties, group.Properties, jsonEscapeHTML)
 	switch {
 	case len(state.Scorecards) > 0:
 		// Keep per-blueprint config even when the API canonicalizes to shared-rules.

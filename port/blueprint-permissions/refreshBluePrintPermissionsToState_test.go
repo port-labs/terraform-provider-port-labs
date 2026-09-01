@@ -298,3 +298,73 @@ func TestRefreshBlueprintPermissionsStateDoesNotAdoptReadWhenUnconfigured(t *tes
 		t.Fatal("Read should remain nil when it was not previously configured")
 	}
 }
+
+func TestRefreshBlueprintPermissionsStateWithReadProperties(t *testing.T) {
+	ownedByTeam := false
+	state := &BlueprintPermissionsModel{
+		ID:                  types.StringValue("testBlueprint"),
+		BlueprintIdentifier: types.StringValue("testBlueprint"),
+		Entities:            nil,
+	}
+
+	apiResponse := &cli.BlueprintPermissions{
+		Entities: cli.BlueprintPermissionsEntities{
+			Register: cli.BlueprintPermissionsBlock{
+				Users:       []string{},
+				Roles:       []string{"Admin"},
+				Teams:       []string{},
+				OwnedByTeam: &ownedByTeam,
+			},
+			Unregister: cli.BlueprintPermissionsBlock{
+				Users:       []string{},
+				Roles:       []string{"Admin"},
+				Teams:       []string{},
+				OwnedByTeam: &ownedByTeam,
+			},
+			Update: cli.BlueprintPermissionsBlock{
+				Users:       []string{},
+				Roles:       []string{"Admin"},
+				Teams:       []string{},
+				OwnedByTeam: &ownedByTeam,
+			},
+			ReadProperties: cli.BlueprintRolesOrPropertiesPermissionsBlock{
+				"$title": cli.BlueprintPermissionsBlock{
+					Users:       []string{},
+					Roles:       []string{"Member"},
+					Teams:       []string{},
+					OwnedByTeam: &ownedByTeam,
+				},
+				"$identifier": cli.BlueprintPermissionsBlock{
+					Users:       []string{},
+					Roles:       []string{"Member"},
+					Teams:       []string{},
+					OwnedByTeam: &ownedByTeam,
+				},
+				"myProp": cli.BlueprintPermissionsBlock{
+					Users:       []string{},
+					Roles:       []string{"Admin"},
+					Teams:       []string{},
+					OwnedByTeam: &ownedByTeam,
+				},
+			},
+		},
+	}
+
+	err := refreshBlueprintPermissionsState(state, apiResponse, "testBlueprint", false)
+	if err != nil {
+		t.Fatalf("refreshBlueprintPermissionsState failed: %v", err)
+	}
+
+	if state.Entities.ReadMetadataProperties == nil {
+		t.Fatal("ReadMetadataProperties should not be nil after refresh")
+	}
+	if state.Entities.ReadMetadataProperties.Title == nil {
+		t.Fatal("ReadMetadataProperties.Title should not be nil")
+	}
+	if state.Entities.ReadProperties == nil {
+		t.Fatal("ReadProperties should not be nil after refresh")
+	}
+	if _, ok := (*state.Entities.ReadProperties)["myProp"]; !ok {
+		t.Fatal("expected myProp in ReadProperties")
+	}
+}

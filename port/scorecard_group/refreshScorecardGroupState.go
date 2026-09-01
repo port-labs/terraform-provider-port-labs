@@ -3,6 +3,7 @@ package scorecard_group
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -57,6 +58,38 @@ func propertiesFromAPIForRead(stateProperties types.String, apiProperties map[st
 		return stateProperties
 	}
 	return properties
+}
+
+func syncPropertiesState(state *ScorecardGroupModel, apiProperties map[string]any, jsonEscapeHTML bool, syncFromAPI bool) error {
+	if state.Properties.IsNull() || state.Properties.IsUnknown() {
+		return nil
+	}
+
+	apiState := propertiesFromAPIForRead(state.Properties, apiProperties, jsonEscapeHTML)
+	if syncFromAPI {
+		state.Properties = apiState
+		return nil
+	}
+
+	equal, err := utils.JSONStringsSemanticallyEqual(
+		state.Properties.ValueString(),
+		apiState.ValueString(),
+		jsonEscapeHTML,
+	)
+	if err != nil {
+		return err
+	}
+	if equal {
+		return nil
+	}
+
+	configured := state.Properties.ValueString()
+	state.Properties = apiState
+	return fmt.Errorf(
+		"properties were not applied by the API: configured %s, API returned %s",
+		configured,
+		apiState.ValueString(),
+	)
 }
 
 func shouldRefreshGroupLevels(stateLevels []scorecard.Level, cliLevels []cli.Level) bool {
@@ -239,7 +272,7 @@ func refreshSharedRulesState(state *ScorecardGroupModel, group *cli.ScorecardGro
 	}
 }
 
-func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context, state *ScorecardGroupModel, group *cli.ScorecardGroup, syncPropertiesFromAPI bool) {
+func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context, state *ScorecardGroupModel, group *cli.ScorecardGroup, syncPropertiesFromAPI bool) error {
 	state.ID = types.StringValue(group.Identifier)
 	state.Identifier = types.StringValue(group.Identifier)
 	state.Title = types.StringValue(group.Title)
@@ -273,8 +306,8 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	}
 
 	jsonEscapeHTML := r.jsonEscapeHTML()
-	if syncPropertiesFromAPI {
-		state.Properties = propertiesFromAPIForRead(state.Properties, group.Properties, jsonEscapeHTML)
+	if err := syncPropertiesState(state, group.Properties, jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+		return err
 	}
 	switch {
 	case len(state.Scorecards) > 0:
@@ -287,4 +320,5 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	default:
 		refreshSharedRulesState(state, group, jsonEscapeHTML)
 	}
+	return nil
 }

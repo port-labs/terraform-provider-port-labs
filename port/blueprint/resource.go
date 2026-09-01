@@ -57,7 +57,7 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	resp.Diagnostics.Append(retainManagedRelations(ctx, req.Private, resp.Private, b)...)
+	resp.Diagnostics.Append(retainManagedRelations(ctx, req.Private, resp.Private, b, stateRelationIdentifiers(state.Relations))...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

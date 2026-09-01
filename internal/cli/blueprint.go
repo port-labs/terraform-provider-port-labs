@@ -93,6 +93,8 @@ func (c *PortClient) updateBlueprint(ctx context.Context, b *Blueprint, id strin
 }
 
 func (c *PortClient) PatchBlueprintRelation(ctx context.Context, blueprintID string, relationID string, relation *Relation) (*Blueprint, error) {
+	defer c.LockBlueprint(blueprintID)()
+
 	const url = "v1/blueprints/{identifier}"
 	body := map[string]any{
 		"relations": map[string]*Relation{relationID: relation},

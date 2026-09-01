@@ -16,10 +16,10 @@ type privateState interface {
 	SetKey(ctx context.Context, key string, value []byte) diag.Diagnostics
 }
 
-func retainManagedRelations(ctx context.Context, req privateState, resp privateState, b *cli.Blueprint) diag.Diagnostics {
+func retainManagedRelations(ctx context.Context, req privateState, resp privateState, b *cli.Blueprint, fallbackManaged []string) diag.Diagnostics {
 	var diags diag.Diagnostics
 
-	managed := relationIdentifiers(b.Relations)
+	managed := fallbackManaged
 
 	if req != nil {
 		raw, getDiags := req.GetKey(ctx, managedRelationsKey)
@@ -83,7 +83,7 @@ func setManagedRelationsFromState(ctx context.Context, private privateState, sta
 	return setManagedRelations(ctx, private, identifiers)
 }
 
-func relationIdentifiers(relations map[string]cli.Relation) []string {
+func stateRelationIdentifiers(relations map[string]RelationModel) []string {
 	identifiers := make([]string, 0, len(relations))
 	for identifier := range relations {
 		identifiers = append(identifiers, identifier)

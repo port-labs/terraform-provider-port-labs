@@ -796,3 +796,59 @@ type OrganizationSecretBody struct {
 	OK     bool               `json:"ok"`
 	Secret OrganizationSecret `json:"secret"`
 }
+
+type UserRole struct {
+	Name string `json:"name"`
+}
+
+type User struct {
+	Email             string     `json:"email"`
+	ID                string     `json:"id,omitempty"`
+	Status            string     `json:"status,omitempty"`
+	Teams             []string   `json:"teams,omitempty"`
+	Roles             []UserRole `json:"roles,omitempty"`
+	ManagedByScim     *bool      `json:"managedByScim,omitempty"`
+	InactivityTimeout *int       `json:"inactivityTimeout,omitempty"`
+}
+
+type UserBody struct {
+	OK   bool  `json:"ok"`
+	User *User `json:"user,omitempty"`
+}
+
+type UserInviteRequest struct {
+	Invitee UserInvitee `json:"invitee"`
+}
+
+type UserInvitee struct {
+	Email string   `json:"email"`
+	Roles []string `json:"roles,omitempty"`
+	Teams []string `json:"teams,omitempty"`
+}
+
+type UserUpdate struct {
+	Roles                    []string
+	Teams                    []string
+	InactivityTimeout        *int
+	IncludeRoles             bool
+	IncludeTeams             bool
+	IncludeInactivityTimeout bool
+}
+
+func (u *UserUpdate) ToPatchBody() map[string]any {
+	body := map[string]any{}
+	if u.IncludeRoles {
+		body["roles"] = u.Roles
+	}
+	if u.IncludeTeams {
+		body["teams"] = u.Teams
+	}
+	if u.IncludeInactivityTimeout {
+		if u.InactivityTimeout == nil {
+			body["inactivityTimeout"] = nil
+		} else {
+			body["inactivityTimeout"] = *u.InactivityTimeout
+		}
+	}
+	return body
+}

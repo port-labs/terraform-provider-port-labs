@@ -774,6 +774,7 @@ type Integration struct {
 	Title                *string               `json:"title"`
 	InstallationAppType  *string               `json:"installationAppType"`
 	Version              *string               `json:"version"`
+	OauthBrokerUrl       *string               `json:"oauthBrokerUrl,omitempty"`
 	Config               *map[string]any       `json:"config"`
 	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
 }

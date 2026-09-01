@@ -106,7 +106,7 @@ See [here](https://docs.getport.io/build-your-software-catalog/customize-integra
 					},
 				},
 				"read_properties": schema.MapNestedAttribute{
-					MarkdownDescription: "Manage permissions to read specific entity properties. Meta properties starting with `$` must be configured under `read_metadata_properties`. The `$identifier` meta property cannot have read restrictions.",
+					MarkdownDescription: "Manage permissions to read specific blueprint properties (schema, calculation, and aggregation properties). Meta properties starting with `$` must be configured under `read_metadata_properties`. Mirror properties and the `$identifier` meta property cannot have read restrictions.",
 					Optional:            true,
 					NestedObject: schema.NestedAttributeObject{
 						Attributes: getAssigneeProps("read specific property"),

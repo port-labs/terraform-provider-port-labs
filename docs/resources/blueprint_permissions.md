@@ -487,7 +487,7 @@ Optional:
 These are translated to the readProperties in the Port API, proxied since we can't have Terraform properties starting with `$` signs.
 The `$identifier` meta property cannot have read restrictions.
 See [here](https://docs.getport.io/build-your-software-catalog/customize-integrations/configure-data-model/setup-blueprint/properties/meta-properties/) for more details. (see [below for nested schema](#nestedatt--entities--read_metadata_properties))
-- `read_properties` (Attributes Map) Manage permissions to read specific entity properties. Meta properties starting with `$` must be configured under `read_metadata_properties`. The `$identifier` meta property cannot have read restrictions. (see [below for nested schema](#nestedatt--entities--read_properties))
+- `read_properties` (Attributes Map) Manage permissions to read specific blueprint properties (schema, calculation, and aggregation properties). Meta properties starting with `$` must be configured under `read_metadata_properties`. Mirror properties and the `$identifier` meta property cannot have read restrictions. (see [below for nested schema](#nestedatt--entities--read_properties))
 - `update_properties` (Attributes Map) Manage permissions to update the entity properties (see [below for nested schema](#nestedatt--entities--update_properties))
 - `update_relations` (Attributes Map) Manage permissions to update the entity relations (see [below for nested schema](#nestedatt--entities--update_relations))
 

@@ -33,11 +33,15 @@ func (c *PortClient) GetFolder(ctx context.Context, id string) (*Folder, int, er
 	for _, item := range sb.Sidebar.Items {
 		if item.SidebarType == "folder" && item.Identifier == id {
 			folder := &Folder{
+				Meta:       item.Meta,
 				Identifier: item.Identifier,
-				Sidebar:    sidebarId,
+				Sidebar:    item.Sidebar,
 				Title:      item.Title,
 				After:      item.After,
 				Parent:     item.Parent,
+			}
+			if folder.Sidebar == "" {
+				folder.Sidebar = sidebarId
 			}
 			return folder, resp.StatusCode(), nil
 		}

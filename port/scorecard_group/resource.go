@@ -83,7 +83,10 @@ func (r *ScorecardGroupResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	r.refreshScorecardGroupState(ctx, state, createdGroup)
+	if err := r.refreshScorecardGroupState(ctx, state, createdGroup, false); err != nil {
+		resp.Diagnostics.AddError("scorecard group properties were not applied", err.Error())
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -104,7 +107,10 @@ func (r *ScorecardGroupResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	r.refreshScorecardGroupState(ctx, state, group)
+	if err := r.refreshScorecardGroupState(ctx, state, group, true); err != nil {
+		resp.Diagnostics.AddError("failed to refresh scorecard group state", err.Error())
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -139,7 +145,10 @@ func (r *ScorecardGroupResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	r.refreshScorecardGroupState(ctx, state, updatedGroup)
+	if err := r.refreshScorecardGroupState(ctx, state, updatedGroup, false); err != nil {
+		resp.Diagnostics.AddError("scorecard group properties were not applied", err.Error())
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 

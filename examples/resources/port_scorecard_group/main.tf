@@ -70,7 +70,7 @@ resource "port_entity" "db_primary" {
 }
 
 resource "port_scorecard_group" "production_readiness" {
-  identifier = "production-readiness1"
+  identifier = "production-readiness"
   title      = "Production Readiness"
   blueprints = [
     port_blueprint.microservice.identifier,

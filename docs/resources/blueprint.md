@@ -394,6 +394,7 @@ Optional:
 - `required` (Boolean) Whether the property is required
 - `string_items` (Attributes) The items of the array property (see [below for nested schema](#nestedatt--properties--array_props--string_items))
 - `title` (String) The title of the property
+- `union` (Boolean) Only applicable to array properties with `string` or `number` items. When `true`, every writer owns its own slice of the value and the property returns the combination of all slices, with each value appearing once. Writers send `{ "<sourceKey>": [values] }` instead of a plain array. Cannot be changed after the property is created.
 
 <a id="nestedatt--properties--array_props--boolean_items"></a>
 ### Nested Schema for `properties.array_props.boolean_items`

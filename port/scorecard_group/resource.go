@@ -83,7 +83,7 @@ func (r *ScorecardGroupResource) Create(ctx context.Context, req resource.Create
 		return
 	}
 
-	r.refreshScorecardGroupState(ctx, state, createdGroup)
+	r.refreshScorecardGroupState(ctx, state, createdGroup, true)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -104,7 +104,7 @@ func (r *ScorecardGroupResource) Read(ctx context.Context, req resource.ReadRequ
 		return
 	}
 
-	r.refreshScorecardGroupState(ctx, state, group)
+	r.refreshScorecardGroupState(ctx, state, group, false)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -139,7 +139,7 @@ func (r *ScorecardGroupResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	r.refreshScorecardGroupState(ctx, state, updatedGroup)
+	r.refreshScorecardGroupState(ctx, state, updatedGroup, true)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 

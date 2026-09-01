@@ -28,7 +28,7 @@ func configuredPropertyKeys(stateProperties types.String) map[string]struct{} {
 	return keys
 }
 
-func propertiesFromStateAndAPI(stateProperties types.String, apiProperties map[string]any, jsonEscapeHTML bool) types.String {
+func propertiesFromStateAndAPI(stateProperties types.String, apiProperties map[string]any, jsonEscapeHTML bool, preserveConfiguredProperties bool) types.String {
 	if stateProperties.IsNull() || stateProperties.IsUnknown() {
 		return types.StringNull()
 	}
@@ -45,10 +45,14 @@ func propertiesFromStateAndAPI(stateProperties types.String, apiProperties map[s
 
 	merged := make(map[string]any, len(stateMap))
 	for key, value := range stateMap {
-		if apiValue, ok := apiProperties[key]; ok && apiValue != nil {
-			merged[key] = apiValue
-		} else {
+		apiValue, ok := apiProperties[key]
+		switch {
+		case preserveConfiguredProperties && (!ok || apiValue == nil):
 			merged[key] = value
+		case ok:
+			merged[key] = apiValue
+		default:
+			merged[key] = nil
 		}
 	}
 
@@ -239,7 +243,7 @@ func refreshSharedRulesState(state *ScorecardGroupModel, group *cli.ScorecardGro
 	}
 }
 
-func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context, state *ScorecardGroupModel, group *cli.ScorecardGroup) {
+func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context, state *ScorecardGroupModel, group *cli.ScorecardGroup, preserveConfiguredProperties bool) {
 	state.ID = types.StringValue(group.Identifier)
 	state.Identifier = types.StringValue(group.Identifier)
 	state.Title = types.StringValue(group.Title)
@@ -273,7 +277,7 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	}
 
 	jsonEscapeHTML := r.jsonEscapeHTML()
-	state.Properties = propertiesFromStateAndAPI(state.Properties, group.Properties, jsonEscapeHTML)
+	state.Properties = propertiesFromStateAndAPI(state.Properties, group.Properties, jsonEscapeHTML, preserveConfiguredProperties)
 	switch {
 	case len(state.Scorecards) > 0:
 		// Keep per-blueprint config even when the API canonicalizes to shared-rules.

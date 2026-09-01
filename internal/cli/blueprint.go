@@ -67,6 +67,11 @@ func (c *PortClient) CreateBlueprint(ctx context.Context, b *Blueprint, createCa
 }
 
 func (c *PortClient) UpdateBlueprint(ctx context.Context, b *Blueprint, id string) (*Blueprint, error) {
+	defer c.LockBlueprint(id)()
+	return c.updateBlueprint(ctx, b, id)
+}
+
+func (c *PortClient) updateBlueprint(ctx context.Context, b *Blueprint, id string) (*Blueprint, error) {
 	const url = "v1/blueprints/{identifier}"
 	resp, err := c.Client.R().
 		SetBody(b).
@@ -82,9 +87,53 @@ func (c *PortClient) UpdateBlueprint(ctx context.Context, b *Blueprint, id strin
 		return nil, err
 	}
 	if !pb.OK {
-		return nil, fmt.Errorf("failed to create blueprint, got: %s", resp.Body())
+		return nil, fmt.Errorf("failed to update blueprint, got: %s", resp.Body())
 	}
 	return &pb.Blueprint, nil
+}
+
+func (c *PortClient) PatchBlueprintRelation(ctx context.Context, blueprintID string, relationID string, relation *Relation) (*Blueprint, error) {
+	defer c.LockBlueprint(blueprintID)()
+
+	const url = "v1/blueprints/{identifier}"
+	body := map[string]any{
+		"relations": map[string]*Relation{relationID: relation},
+	}
+	resp, err := c.Client.R().
+		SetBody(body).
+		SetContext(ctx).
+		SetPathParam("identifier", blueprintID).
+		Patch(url)
+	if err != nil {
+		return nil, err
+	}
+	var pb PortBody
+	err = json.Unmarshal(resp.Body(), &pb)
+	if err != nil {
+		return nil, err
+	}
+	if !pb.OK {
+		return nil, fmt.Errorf("failed to write relation %q on blueprint %q, got: %s", relationID, blueprintID, resp.Body())
+	}
+	return &pb.Blueprint, nil
+}
+
+func (c *PortClient) DeleteBlueprintRelation(ctx context.Context, blueprintID string, relationID string) (int, error) {
+	defer c.LockBlueprint(blueprintID)()
+
+	b, statusCode, err := c.ReadBlueprint(ctx, blueprintID)
+	if err != nil {
+		return statusCode, err
+	}
+
+	if _, ok := b.Relations[relationID]; !ok {
+		return statusCode, nil
+	}
+
+	delete(b.Relations, relationID)
+
+	_, err = c.updateBlueprint(ctx, b, blueprintID)
+	return statusCode, err
 }
 
 func (c *PortClient) DeleteBlueprint(ctx context.Context, id string) error {

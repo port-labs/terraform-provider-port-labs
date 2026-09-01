@@ -11,6 +11,7 @@ import (
 	"os"
 	"slices"
 	"strings"
+	"sync"
 )
 
 type Option func(*PortClient)
@@ -22,6 +23,15 @@ type PortClient struct {
 	featureFlags                          []string
 	JSONEscapeHTML                        bool
 	BlueprintPropertyTypeChangeProtection bool
+
+	blueprintLocks sync.Map
+}
+
+func (c *PortClient) LockBlueprint(identifier string) func() {
+	value, _ := c.blueprintLocks.LoadOrStore(identifier, &sync.Mutex{})
+	mutex := value.(*sync.Mutex)
+	mutex.Lock()
+	return mutex.Unlock
 }
 
 func isTooManyRequests(r *resty.Response, _ error) bool {

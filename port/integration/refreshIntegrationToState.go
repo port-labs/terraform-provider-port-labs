@@ -13,6 +13,7 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 
 	state.Title = types.StringPointerValue(a.Title)
 	state.InstallationAppType = types.StringPointerValue(a.InstallationAppType)
+	state.InstallationType = types.StringPointerValue(a.InstallationType)
 	state.Version = types.StringPointerValue(a.Version)
 
 	if a.Config != nil {

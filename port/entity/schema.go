@@ -95,6 +95,40 @@ func EntitySchema() map[string]schema.Attribute {
 							ElementType: types.ListType{ElemType: types.StringType},
 							Optional:    true,
 						},
+						"union_string_slices": schema.MapNestedAttribute{
+							MarkdownDescription: "Write-only slices for union array string properties. Each entry names a property and the source key whose array value should be written. On read, assembled values are returned in `string_items` for non-union properties only.",
+							Optional:            true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"source_key": schema.StringAttribute{
+										MarkdownDescription: "Stable source key for this writer's slice. Must match `^[A-Za-z0-9._:@/-]{1,128}$`.",
+										Required:            true,
+									},
+									"items": schema.ListAttribute{
+										MarkdownDescription: "The string array values for this source slice.",
+										Optional:            true,
+										ElementType:         types.StringType,
+									},
+								},
+							},
+						},
+						"union_number_slices": schema.MapNestedAttribute{
+							MarkdownDescription: "Write-only slices for union array number properties. Each entry names a property and the source key whose array value should be written. On read, assembled values are returned in `number_items` for non-union properties only.",
+							Optional:            true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"source_key": schema.StringAttribute{
+										MarkdownDescription: "Stable source key for this writer's slice. Must match `^[A-Za-z0-9._:@/-]{1,128}$`.",
+										Required:            true,
+									},
+									"items": schema.ListAttribute{
+										MarkdownDescription: "The number array values for this source slice.",
+										Optional:            true,
+										ElementType:         types.Float64Type,
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -133,6 +167,11 @@ func EntitySchema() map[string]schema.Attribute {
 		"updated_by": schema.StringAttribute{
 			MarkdownDescription: "The last updater of the entity",
 			Computed:            true,
+		},
+		"property_sources": schema.MapAttribute{
+			MarkdownDescription: "Per-source contributions for union array properties. Each map value is a JSON object mapping source identifiers to their contributed values. Read-only; populated when the blueprint has union array properties.",
+			Computed:            true,
+			ElementType:         types.StringType,
 		},
 	}
 }

@@ -1,6 +1,7 @@
 package oauth_app
 
 import (
+	"context"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -50,35 +51,96 @@ func TestValidateRedirectURI(t *testing.T) {
 	})
 }
 
-func TestOAuthAppResourceToPortBodyCreate(t *testing.T) {
-	state := &OAuthAppModel{
-		Name:        types.StringValue("My App"),
-		RedirectURI: types.StringValue("https://example.com/callback"),
+func TestValidateRedirectURIs(t *testing.T) {
+	t.Run("valid redirect uris", func(t *testing.T) {
+		if err := validateRedirectURIs([]string{
+			"https://example.com/callback",
+			"http://localhost:3000/callback",
+		}); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("empty redirect uris", func(t *testing.T) {
+		if err := validateRedirectURIs([]string{}); err == nil {
+			t.Fatal("expected error for empty redirect uris")
+		}
+	})
+
+	t.Run("too many redirect uris", func(t *testing.T) {
+		if err := validateRedirectURIs([]string{
+			"https://example.com/callback-1",
+			"https://example.com/callback-2",
+			"https://example.com/callback-3",
+			"https://example.com/callback-4",
+			"https://example.com/callback-5",
+			"https://example.com/callback-6",
+		}); err == nil {
+			t.Fatal("expected error for too many redirect uris")
+		}
+	})
+
+	t.Run("duplicate redirect uris", func(t *testing.T) {
+		if err := validateRedirectURIs([]string{
+			"https://example.com/callback",
+			"https://example.com/callback",
+		}); err == nil {
+			t.Fatal("expected error for duplicate redirect uris")
+		}
+	})
+}
+
+func TestRedirectURIsEqual(t *testing.T) {
+	if !redirectURIsEqual(
+		[]string{"https://b.example.com", "https://a.example.com"},
+		[]string{"https://a.example.com", "https://b.example.com"},
+	) {
+		t.Fatal("expected redirect uri sets with different order to be equal")
 	}
 
-	body, err := oauthAppResourceToPortBodyCreate(state)
+	if redirectURIsEqual(
+		[]string{"https://a.example.com"},
+		[]string{"https://b.example.com"},
+	) {
+		t.Fatal("expected different redirect uri sets to be unequal")
+	}
+}
+
+func TestOAuthAppResourceToPortBodyCreate(t *testing.T) {
+	ctx := context.Background()
+	redirectURIs, _ := types.ListValueFrom(ctx, types.StringType, []string{"https://example.com/callback"})
+
+	state := &OAuthAppModel{
+		Name:         types.StringValue("My App"),
+		RedirectURIs: redirectURIs,
+	}
+
+	body, err := oauthAppResourceToPortBodyCreate(ctx, state)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if body.Name != "My App" || body.RedirectURI != "https://example.com/callback" {
+	if body.Name != "My App" || len(body.RedirectURIs) != 1 || body.RedirectURIs[0] != "https://example.com/callback" {
 		t.Fatalf("unexpected body: %+v", body)
 	}
 }
 
 func TestOAuthAppResourceToPortBodyUpdate(t *testing.T) {
+	ctx := context.Background()
+	redirectURIs, _ := types.ListValueFrom(ctx, types.StringType, []string{"https://example.com/new-callback"})
+
 	state := &OAuthAppModel{
-		Name:        types.StringValue("Updated App"),
-		RedirectURI: types.StringValue("https://example.com/new-callback"),
+		Name:         types.StringValue("Updated App"),
+		RedirectURIs: redirectURIs,
 	}
 
-	body, err := oauthAppResourceToPortBodyUpdate(state)
+	body, err := oauthAppResourceToPortBodyUpdate(ctx, state)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	if body.Name == nil || *body.Name != "Updated App" {
 		t.Fatalf("expected name to be set, got %+v", body.Name)
 	}
-	if body.RedirectURI == nil || *body.RedirectURI != "https://example.com/new-callback" {
-		t.Fatalf("expected redirect uri to be set, got %+v", body.RedirectURI)
+	if len(body.RedirectURIs) != 1 || body.RedirectURIs[0] != "https://example.com/new-callback" {
+		t.Fatalf("expected redirect uris to be set, got %+v", body.RedirectURIs)
 	}
 }

@@ -9,8 +9,10 @@ description: |-
   Example Usage
   
   resource "port_oauth_app" "mcp_connector" {
-    name         = "My MCP Connector"
-    redirect_uri = "https://api.port.io/v1/mcp/oauth2/callback"
+    name = "My MCP Connector"
+    redirect_uris = [
+      "https://api.port.io/v1/mcp/oauth2/callback",
+    ]
   }
 ---
 
@@ -26,10 +28,11 @@ The `client_secret` is returned only when the app is created. Port does not expo
 
 ```hcl
 resource "port_oauth_app" "mcp_connector" {
-  name         = "My MCP Connector"
-  redirect_uri = "https://api.port.io/v1/mcp/oauth2/callback"
+  name = "My MCP Connector"
+  redirect_uris = [
+    "https://api.port.io/v1/mcp/oauth2/callback",
+  ]
 }
-
 ```
 
 
@@ -40,7 +43,7 @@ resource "port_oauth_app" "mcp_connector" {
 ### Required
 
 - `name` (String) The display name of the OAuth app registration
-- `redirect_uri` (String) The redirect URI for the OAuth app. Must be an absolute, exact (non-wildcard) URI.
+- `redirect_uris` (List of String) Between 1 and 5 exact, non-wildcard redirect URIs for the OAuth app. Must be absolute URIs.
 
 ### Optional
 

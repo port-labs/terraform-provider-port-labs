@@ -39,7 +39,7 @@ func (r *OAuthAppResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
-	oauthApp, err := oauthAppResourceToPortBodyCreate(state)
+	oauthApp, err := oauthAppResourceToPortBodyCreate(ctx, state)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert oauth app resource to body", err.Error())
 		return
@@ -100,7 +100,7 @@ func (r *OAuthAppResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	oauthAppUpdate, err := oauthAppResourceToPortBodyUpdate(state)
+	oauthAppUpdate, err := oauthAppResourceToPortBodyUpdate(ctx, state)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert oauth app resource to body", err.Error())
 		return

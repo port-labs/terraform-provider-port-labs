@@ -784,24 +784,24 @@ type Organization struct {
 }
 
 type OAuthApp struct {
-	ID           string     `json:"id,omitempty"`
-	OrgID        string     `json:"orgId,omitempty"`
-	ClientID     string     `json:"clientId,omitempty"`
-	Name         string     `json:"name,omitempty"`
-	RedirectURI  string     `json:"redirectUri,omitempty"`
-	CreatedAt    *time.Time `json:"createdAt,omitempty"`
-	UpdatedAt    *time.Time `json:"updatedAt,omitempty"`
-	ClientSecret string     `json:"clientSecret,omitempty"`
+	ID            string     `json:"id,omitempty"`
+	OrgID         string     `json:"orgId,omitempty"`
+	ClientID      string     `json:"clientId,omitempty"`
+	Name          string     `json:"name,omitempty"`
+	RedirectURIs  []string   `json:"redirectUris,omitempty"`
+	CreatedAt     *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt     *time.Time `json:"updatedAt,omitempty"`
+	ClientSecret  string     `json:"clientSecret,omitempty"`
 }
 
 type OAuthAppCreate struct {
-	Name        string `json:"name"`
-	RedirectURI string `json:"redirectUri"`
+	Name         string   `json:"name"`
+	RedirectURIs []string `json:"redirectUris"`
 }
 
 type OAuthAppUpdate struct {
-	Name        *string `json:"name,omitempty"`
-	RedirectURI *string `json:"redirectUri,omitempty"`
+	Name         *string  `json:"name,omitempty"`
+	RedirectURIs []string `json:"redirectUris,omitempty"`
 }
 
 type OAuthAppBody struct {

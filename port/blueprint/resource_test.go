@@ -882,6 +882,15 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 					"test4" = "yellow"
 				}
 			}
+			"links-for-microservice1" = {
+				title = "Links for microservice1"
+				calculation = "[.properties.text]"
+				type = "array"
+				items = {
+					type = "string"
+					format = "url"
+				}
+			}
 		}
 	}`, identifier1)
 
@@ -896,6 +905,9 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.calculation", "test-rel.$identifier"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.colors.test2", "blue"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.links-for-microservice1.type", "array"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.links-for-microservice1.items.type", "string"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.links-for-microservice1.items.format", "url"),
 				),
 			},
 		},

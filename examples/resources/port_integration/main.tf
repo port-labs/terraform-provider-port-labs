@@ -1,7 +1,8 @@
-resource "port_integration" "my_custom_integration" {
-  installation_id       = "my-custom-integration-id"
-  title                 = "My Custom Integration"
-  installation_app_type = "WEBHOOK"
+resource "port_integration" "my_onprem_integration" {
+  installation_id       = "my-onprem-integration-id"
+  installation_app_type = "github"
+  version               = "1.0.0"
+  title                 = "My OnPrem Integration"
   config = jsonencode({
     createMissingRelatedEntitiesboolean = true
     deleteDependentEntities             = true

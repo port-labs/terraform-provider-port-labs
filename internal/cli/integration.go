@@ -11,6 +11,21 @@ type PortBodyForIntegration struct {
 	Integration Integration `json:"integration"`
 }
 
+type RegisterIntegrationRequest struct {
+	InstallationId      string         `json:"installationId"`
+	InstallationAppType string         `json:"installationAppType"`
+	Version             string         `json:"version"`
+	Config              map[string]any `json:"config"`
+	Title               *string        `json:"title,omitempty"`
+	ShouldUpdate        bool           `json:"shouldUpdate,omitempty"`
+}
+
+type RegisterIntegrationResponse struct {
+	OK          bool        `json:"ok"`
+	Integration Integration `json:"integration"`
+	Created     bool        `json:"created"`
+}
+
 func (c *PortClient) GetIntegration(ctx context.Context, id string) (*Integration, error) {
 	pb := &PortBodyForIntegration{}
 	url := "v1/integration/{identifier}"
@@ -50,6 +65,29 @@ func (c *PortClient) UpdateIntegration(ctx context.Context, id string, integrati
 		return nil, fmt.Errorf("failed to update integration, got: %s", resp.Body())
 	}
 	return &pppb.Integration, nil
+}
+
+func (c *PortClient) RegisterIntegration(ctx context.Context, request *RegisterIntegrationRequest) (*Integration, error) {
+	url := "v1/integration/register"
+
+	resp, err := c.Client.R().
+		SetBody(request).
+		SetContext(ctx).
+		Post(url)
+	if err != nil {
+		return nil, err
+	}
+
+	var registerResp RegisterIntegrationResponse
+	err = json.Unmarshal(resp.Body(), &registerResp)
+	if err != nil {
+		return nil, err
+	}
+	if !registerResp.OK {
+		return nil, fmt.Errorf("failed to register integration, got: %s", resp.Body())
+	}
+
+	return &registerResp.Integration, nil
 }
 
 func (c *PortClient) CreateIntegration(ctx context.Context, integration *Integration) (*Integration, error) {

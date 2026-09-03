@@ -86,14 +86,17 @@ func memberSpecToPatchCLI(spec MemberSpecModel) (cli.PatchScorecardGroupMemberSp
 	if err != nil {
 		return cli.PatchScorecardGroupMemberSpec{}, err
 	}
-	rules, err := rulesToCLI(spec.Rules)
-	if err != nil {
-		return cli.PatchScorecardGroupMemberSpec{}, err
-	}
-	return cli.PatchScorecardGroupMemberSpec{
+	patchSpec := cli.PatchScorecardGroupMemberSpec{
 		Filter: filter,
-		Rules:  rules,
-	}, nil
+	}
+	if len(spec.Rules) > 0 {
+		rules, err := rulesToCLI(spec.Rules)
+		if err != nil {
+			return cli.PatchScorecardGroupMemberSpec{}, err
+		}
+		patchSpec.Rules = rules
+	}
+	return patchSpec, nil
 }
 
 func scorecardGroupResourceToPortBody(ctx context.Context, state *ScorecardGroupModel) (*cli.ScorecardGroup, error) {

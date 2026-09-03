@@ -86,14 +86,17 @@ func memberSpecToPatchCLI(spec MemberSpecModel) (cli.PatchScorecardGroupMemberSp
 	if err != nil {
 		return cli.PatchScorecardGroupMemberSpec{}, err
 	}
-	rules, err := rulesToCLI(spec.Rules)
-	if err != nil {
-		return cli.PatchScorecardGroupMemberSpec{}, err
-	}
-	return cli.PatchScorecardGroupMemberSpec{
+	patchSpec := cli.PatchScorecardGroupMemberSpec{
 		Filter: filter,
-		Rules:  rules,
-	}, nil
+	}
+	if len(spec.Rules) > 0 {
+		rules, err := rulesToCLI(spec.Rules)
+		if err != nil {
+			return cli.PatchScorecardGroupMemberSpec{}, err
+		}
+		patchSpec.Rules = rules
+	}
+	return patchSpec, nil
 }
 
 func scorecardGroupResourceToPortBody(ctx context.Context, state *ScorecardGroupModel) (*cli.ScorecardGroup, error) {
@@ -197,13 +200,43 @@ func scorecardGroupResourceToPatchBody(ctx context.Context, state *ScorecardGrou
 		patch.Levels = levelsToCLI(state.Levels)
 	}
 
-	if !state.Properties.IsNull() && !state.Properties.IsUnknown() {
-		properties, err := utils.TerraformJsonStringToGoObject(state.Properties.ValueStringPointer())
+	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
+		properties, err := utils.TerraformJsonStringToGoObject(state.ScorecardProperties.ValueStringPointer())
 		if err != nil {
 			return nil, err
 		}
 		if properties != nil {
-			patch.Properties = *properties
+			patch.ScorecardProperties = *properties
+		}
+	}
+
+	if !state.GroupProperties.IsNull() && !state.GroupProperties.IsUnknown() {
+		properties, err := utils.TerraformJsonStringToGoObject(state.GroupProperties.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if properties != nil {
+			patch.GroupProperties = *properties
+		}
+	}
+
+	if !state.GroupRelations.IsNull() && !state.GroupRelations.IsUnknown() {
+		relations, err := utils.TerraformJsonStringToGoObject(state.GroupRelations.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if relations != nil {
+			patch.GroupRelations = *relations
+		}
+	}
+
+	if !state.ScorecardRelations.IsNull() && !state.ScorecardRelations.IsUnknown() {
+		relations, err := utils.TerraformJsonStringToGoObject(state.ScorecardRelations.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if relations != nil {
+			patch.ScorecardRelations = *relations
 		}
 	}
 

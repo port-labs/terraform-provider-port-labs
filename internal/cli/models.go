@@ -492,12 +492,15 @@ type (
 	}
 
 	PatchScorecardGroup struct {
-		Title      string                                   `json:"title,omitempty"`
-		Levels     []Level                                  `json:"levels,omitempty"`
-		Properties map[string]any                           `json:"properties,omitempty"`
-		Scorecards map[string]PatchScorecardGroupMemberSpec `json:"scorecards,omitempty"`
-		Rules      []Rule                                   `json:"rules,omitempty"`
-		Filters    map[string]*Query                        `json:"filters,omitempty"`
+		Title               string                                   `json:"title,omitempty"`
+		Levels              []Level                                  `json:"levels,omitempty"`
+		GroupProperties     map[string]any                           `json:"groupProperties,omitempty"`
+		ScorecardProperties map[string]any                           `json:"scorecardProperties,omitempty"`
+		GroupRelations      map[string]any                           `json:"groupRelations,omitempty"`
+		ScorecardRelations  map[string]any                           `json:"scorecardRelations,omitempty"`
+		Scorecards          map[string]PatchScorecardGroupMemberSpec `json:"scorecards,omitempty"`
+		Rules               []Rule                                   `json:"rules,omitempty"`
+		Filters             map[string]*Query                        `json:"filters,omitempty"`
 	}
 
 	Rule struct {

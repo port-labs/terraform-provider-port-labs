@@ -129,16 +129,31 @@ func (r *ScorecardGroupResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	patch, err := scorecardGroupResourceToPatchBody(ctx, state)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert scorecard group resource to patch body", err.Error())
-		return
-	}
+	var updatedGroup *cli.ScorecardGroup
+	if scorecardGroupMembershipChanged(previousState, state) {
+		group, err := scorecardGroupResourceToPortBody(ctx, state)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to convert scorecard group resource to body", err.Error())
+			return
+		}
 
-	updatedGroup, err := r.portClient.PatchScorecardGroup(ctx, previousState.Identifier.ValueString(), patch)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to update scorecard group", err.Error())
-		return
+		updatedGroup, err = r.portClient.UpdateScorecardGroup(ctx, previousState.Identifier.ValueString(), group)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to update scorecard group", err.Error())
+			return
+		}
+	} else {
+		patch, err := scorecardGroupResourceToPatchBody(ctx, state)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to convert scorecard group resource to patch body", err.Error())
+			return
+		}
+
+		updatedGroup, err = r.portClient.PatchScorecardGroup(ctx, previousState.Identifier.ValueString(), patch)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to update scorecard group", err.Error())
+			return
+		}
 	}
 	if updatedGroup == nil {
 		resp.Diagnostics.AddError("failed to update scorecard group", "scorecard group was deleted by the API")

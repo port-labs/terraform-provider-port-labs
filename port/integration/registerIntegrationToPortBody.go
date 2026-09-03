@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -70,4 +71,23 @@ func isRegisterUpdateFallbackError(err error) bool {
 	message := err.Error()
 	return strings.Contains(message, "invalid_installation_type") ||
 		strings.Contains(message, "Register can only update OnPrem integrations")
+}
+
+func updateIntegration(ctx context.Context, client *cli.PortClient, state *IntegrationModel, integrationIdentifier string) (*cli.Integration, error) {
+	if registerRequest, err := integrationToRegisterRequest(state, true); err == nil {
+		updated, registerErr := client.RegisterIntegration(ctx, registerRequest)
+		if registerErr == nil {
+			return updated, nil
+		}
+		if !isRegisterUpdateFallbackError(registerErr) {
+			return nil, registerErr
+		}
+	}
+
+	integration, err := integrationToPortBody(state)
+	if err != nil {
+		return nil, err
+	}
+
+	return client.UpdateIntegration(ctx, integrationIdentifier, integration)
 }

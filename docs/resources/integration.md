@@ -42,6 +42,7 @@ description: |-
   
   NOTICE:
   The following config properties (selector.query|entity.mappings.*) are jq expressions, which means that you need to input either a valid jq expression (E.g .title), or if you want a string value, a qouted escaped string val (E.g 'my-string').
+  installation_app_type, version, and config (with at least one entry in config.resources) are required when creating a new integration.
 ---
 
 # port_integration (Resource)

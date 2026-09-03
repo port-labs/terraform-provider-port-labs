@@ -63,6 +63,15 @@ func integrationHasChangelogDestination(state *IntegrationModel) bool {
 	return state.WebhookChangelogDestination != nil || !state.KafkaChangelogDestination.IsNull()
 }
 
+func isRegisterEndpointUnavailableError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	message := err.Error()
+	return strings.Contains(message, "not_found") && strings.Contains(message, "integration/register")
+}
+
 func isRegisterUpdateFallbackError(err error) bool {
 	if err == nil {
 		return false
@@ -70,7 +79,8 @@ func isRegisterUpdateFallbackError(err error) bool {
 
 	message := err.Error()
 	return strings.Contains(message, "invalid_installation_type") ||
-		strings.Contains(message, "Register can only update OnPrem integrations")
+		strings.Contains(message, "Register can only update OnPrem integrations") ||
+		isRegisterEndpointUnavailableError(err)
 }
 
 func updateIntegration(ctx context.Context, client *cli.PortClient, state *IntegrationModel, integrationIdentifier string) (*cli.Integration, error) {

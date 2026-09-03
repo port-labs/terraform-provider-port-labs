@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -89,6 +90,16 @@ func TestIntegrationToRegisterRequestRequiresResources(t *testing.T) {
 	_, err := integrationToRegisterRequest(state, false)
 	if err == nil {
 		t.Fatal("expected error when config.resources is missing")
+	}
+}
+
+func TestIsRegisterEndpointUnavailableError(t *testing.T) {
+	if !isRegisterEndpointUnavailableError(fmt.Errorf(`failed to register integration, got: {"ok":false,"error":"not_found","message":"Route POST:/v1/integration/register not found"}`)) {
+		t.Fatal("expected not_found register route to be treated as unavailable")
+	}
+
+	if isRegisterEndpointUnavailableError(fmt.Errorf("failed to register integration, got: integration already exists")) {
+		t.Fatal("expected unrelated errors to not be treated as unavailable")
 	}
 }
 

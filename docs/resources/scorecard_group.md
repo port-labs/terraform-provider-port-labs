@@ -9,13 +9,39 @@ description: |-
   A scorecard group can be configured in one of two modes:
   Shared rules mode — set blueprints, rules, and optionally filters to apply the same rules to multiple blueprints.Per-blueprint mode — set scorecards to define different filter/rules per blueprint.
   See the Port documentation https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/ for more information about scorecards.
+  properties sets _scorecard blueprint property values on every member scorecard in the group. Define the property schema on the _scorecard system blueprint first (for example with port_system_blueprint), then reference those keys in jsonencode({...}). Use depends_on so the scorecard group is created only after the blueprint properties exist.
   Example Usage (shared rules)
   
+  
+  resource "port_system_blueprint" "scorecard" {
+    identifier = "_scorecard"
+    properties = {
+      string_props = {
+        owner = {
+          type  = "string"
+          title = "Owner"
+        }
+      }
+      number_props = {
+        priority = {
+          type  = "number"
+          title = "Priority"
+        }
+      }
+    }
+  }
   
   resource "port_scorecard_group" "readiness" {
     identifier = "production-readiness"
     title      = "Production Readiness"
-    blueprints = [port_blueprint.microservice.identifier]
+    blueprints = [
+      port_blueprint.microservice.identifier,
+      port_blueprint.database.identifier,
+    ]
+    properties = jsonencode({
+      owner    = "platform-team"
+      priority = 1
+    })
     rules = [{
       identifier = "has-owner"
       title      = "Has Owner"
@@ -28,31 +54,98 @@ description: |-
         })]
       }
     }]
+    filters = {
+      (port_blueprint.microservice.identifier) = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "environment"
+          operator = "="
+          value    = "production"
+        })]
+      }
+      (port_blueprint.database.identifier) = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "environment"
+          operator = "="
+          value    = "production"
+        })]
+      }
+    }
+    depends_on = [port_system_blueprint.scorecard]
   }
   
   
   Example Usage (per blueprint)
   
   
+  resource "port_system_blueprint" "scorecard" {
+    identifier = "_scorecard"
+    properties = {
+      string_props = {
+        owner = {
+          type  = "string"
+          title = "Owner"
+        }
+      }
+    }
+  }
+  
   resource "port_scorecard_group" "readiness" {
     identifier = "production-readiness"
     title      = "Production Readiness"
+    properties = jsonencode({
+      owner = "platform-team"
+    })
     scorecards = {
       (port_blueprint.microservice.identifier) = {
+        filter = {
+          combinator = "and"
+          conditions = [jsonencode({
+            property = "environment"
+            operator = "="
+            value    = "staging"
+          })]
+        }
         rules = [{
-          identifier = "has-owner"
-          title      = "Has Owner"
+          identifier = "staging-environment"
+          title      = "Staging Environment"
           level      = "Gold"
           query = {
             combinator = "and"
             conditions = [jsonencode({
-              property = "$team"
-              operator = "isNotEmpty"
+              property = "environment"
+              operator = "="
+              value    = "staging"
+            })]
+          }
+        }]
+      }
+      (port_blueprint.database.identifier) = {
+        filter = {
+          combinator = "and"
+          conditions = [jsonencode({
+            property = "environment"
+            operator = "="
+            value    = "production"
+          })]
+        }
+        rules = [{
+          identifier = "production-environment"
+          title      = "Production Environment"
+          level      = "Gold"
+          query = {
+            combinator = "and"
+            conditions = [jsonencode({
+              property = "environment"
+              operator = "="
+              value    = "production"
             })]
           }
         }]
       }
     }
+    depends_on = [port_system_blueprint.scorecard]
   }
 ---
 
@@ -72,14 +165,41 @@ A scorecard group can be configured in one of two modes:
 
 See the [Port documentation](https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/) for more information about scorecards.
 
+`properties` sets `_scorecard` blueprint property values on every member scorecard in the group. Define the property schema on the `_scorecard` system blueprint first (for example with `port_system_blueprint`), then reference those keys in `jsonencode({...})`. Use `depends_on` so the scorecard group is created only after the blueprint properties exist.
+
 ## Example Usage (shared rules)
 
 ```hcl
 
+resource "port_system_blueprint" "scorecard" {
+  identifier = "_scorecard"
+  properties = {
+    string_props = {
+      owner = {
+        type  = "string"
+        title = "Owner"
+      }
+    }
+    number_props = {
+      priority = {
+        type  = "number"
+        title = "Priority"
+      }
+    }
+  }
+}
+
 resource "port_scorecard_group" "readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
-  blueprints = [port_blueprint.microservice.identifier]
+  blueprints = [
+    port_blueprint.microservice.identifier,
+    port_blueprint.database.identifier,
+  ]
+  properties = jsonencode({
+    owner    = "platform-team"
+    priority = 1
+  })
   rules = [{
     identifier = "has-owner"
     title      = "Has Owner"
@@ -92,6 +212,25 @@ resource "port_scorecard_group" "readiness" {
       })]
     }
   }]
+  filters = {
+    (port_blueprint.microservice.identifier) = {
+      combinator = "and"
+      conditions = [jsonencode({
+        property = "environment"
+        operator = "="
+        value    = "production"
+      })]
+    }
+    (port_blueprint.database.identifier) = {
+      combinator = "and"
+      conditions = [jsonencode({
+        property = "environment"
+        operator = "="
+        value    = "production"
+      })]
+    }
+  }
+  depends_on = [port_system_blueprint.scorecard]
 }
 
 ```
@@ -100,25 +239,73 @@ resource "port_scorecard_group" "readiness" {
 
 ```hcl
 
+resource "port_system_blueprint" "scorecard" {
+  identifier = "_scorecard"
+  properties = {
+    string_props = {
+      owner = {
+        type  = "string"
+        title = "Owner"
+      }
+    }
+  }
+}
+
 resource "port_scorecard_group" "readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
+  properties = jsonencode({
+    owner = "platform-team"
+  })
   scorecards = {
     (port_blueprint.microservice.identifier) = {
+      filter = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "environment"
+          operator = "="
+          value    = "staging"
+        })]
+      }
       rules = [{
-        identifier = "has-owner"
-        title      = "Has Owner"
+        identifier = "staging-environment"
+        title      = "Staging Environment"
         level      = "Gold"
         query = {
           combinator = "and"
           conditions = [jsonencode({
-            property = "$team"
-            operator = "isNotEmpty"
+            property = "environment"
+            operator = "="
+            value    = "staging"
+          })]
+        }
+      }]
+    }
+    (port_blueprint.database.identifier) = {
+      filter = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "environment"
+          operator = "="
+          value    = "production"
+        })]
+      }
+      rules = [{
+        identifier = "production-environment"
+        title      = "Production Environment"
+        level      = "Gold"
+        query = {
+          combinator = "and"
+          conditions = [jsonencode({
+            property = "environment"
+            operator = "="
+            value    = "production"
           })]
         }
       }]
     }
   }
+  depends_on = [port_system_blueprint.scorecard]
 }
 
 ```
@@ -138,6 +325,7 @@ resource "port_scorecard_group" "readiness" {
 - `blueprints` (Set of String) Blueprint identifiers that share the same rules (and optional filters). Use this for shared-rules mode. Conflicts with `scorecards`.
 - `filters` (Attributes Map) Optional filters per blueprint in shared-rules mode, keyed by blueprint identifier. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--filters))
 - `levels` (Attributes List) The available levels of the scorecard group, shared by all members. (see [below for nested schema](#nestedatt--levels))
+- `properties` (String) Additional `_scorecard` blueprint properties applied to every member scorecard in the group, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint.
 - `rules` (Attributes List) The rules applied to every blueprint in shared-rules mode. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--rules))
 - `scorecards` (Attributes Map) Map of blueprint identifier to member scorecard filter/rules. Use this for per-blueprint mode. Conflicts with `blueprints`, `rules`, and `filters`. (see [below for nested schema](#nestedatt--scorecards))
 

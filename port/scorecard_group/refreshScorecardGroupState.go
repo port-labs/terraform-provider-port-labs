@@ -2,6 +2,8 @@ package scorecard_group
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -9,6 +11,86 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
 )
+
+func configuredPropertyKeys(stateProperties types.String) map[string]struct{} {
+	if stateProperties.IsNull() || stateProperties.IsUnknown() {
+		return nil
+	}
+
+	var props map[string]any
+	if err := json.Unmarshal([]byte(stateProperties.ValueString()), &props); err != nil || len(props) == 0 {
+		return nil
+	}
+
+	keys := make(map[string]struct{}, len(props))
+	for key := range props {
+		keys[key] = struct{}{}
+	}
+	return keys
+}
+
+func propertiesFromAPIForRead(stateProperties types.String, apiProperties map[string]any, jsonEscapeHTML bool) types.String {
+	if stateProperties.IsNull() || stateProperties.IsUnknown() {
+		return types.StringNull()
+	}
+
+	configuredKeys := configuredPropertyKeys(stateProperties)
+	if len(configuredKeys) == 0 {
+		return types.StringNull()
+	}
+
+	var stateMap map[string]any
+	if err := json.Unmarshal([]byte(stateProperties.ValueString()), &stateMap); err != nil {
+		return stateProperties
+	}
+
+	merged := make(map[string]any, len(stateMap))
+	for key := range stateMap {
+		if apiValue, ok := apiProperties[key]; ok {
+			merged[key] = apiValue
+		} else {
+			merged[key] = nil
+		}
+	}
+
+	properties, err := utils.GoObjectToTerraformString(merged, jsonEscapeHTML)
+	if err != nil {
+		return stateProperties
+	}
+	return properties
+}
+
+func syncPropertiesState(state *ScorecardGroupModel, apiProperties map[string]any, jsonEscapeHTML bool, syncFromAPI bool) error {
+	if state.Properties.IsNull() || state.Properties.IsUnknown() {
+		return nil
+	}
+
+	apiState := propertiesFromAPIForRead(state.Properties, apiProperties, jsonEscapeHTML)
+	if syncFromAPI {
+		state.Properties = apiState
+		return nil
+	}
+
+	equal, err := utils.JSONStringsSemanticallyEqual(
+		state.Properties.ValueString(),
+		apiState.ValueString(),
+		jsonEscapeHTML,
+	)
+	if err != nil {
+		return err
+	}
+	if equal {
+		return nil
+	}
+
+	configured := state.Properties.ValueString()
+	state.Properties = apiState
+	return fmt.Errorf(
+		"properties were not applied by the API: configured %s, API returned %s",
+		configured,
+		apiState.ValueString(),
+	)
+}
 
 func shouldRefreshGroupLevels(stateLevels []scorecard.Level, cliLevels []cli.Level) bool {
 	if len(stateLevels) == 0 && reflect.DeepEqual(cliLevels, scorecard.DefaultCliLevels()) {
@@ -190,7 +272,7 @@ func refreshSharedRulesState(state *ScorecardGroupModel, group *cli.ScorecardGro
 	}
 }
 
-func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context, state *ScorecardGroupModel, group *cli.ScorecardGroup) {
+func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context, state *ScorecardGroupModel, group *cli.ScorecardGroup, syncPropertiesFromAPI bool) error {
 	state.ID = types.StringValue(group.Identifier)
 	state.Identifier = types.StringValue(group.Identifier)
 	state.Title = types.StringValue(group.Title)
@@ -224,6 +306,9 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	}
 
 	jsonEscapeHTML := r.jsonEscapeHTML()
+	if err := syncPropertiesState(state, group.Properties, jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+		return err
+	}
 	switch {
 	case len(state.Scorecards) > 0:
 		// Keep per-blueprint config even when the API canonicalizes to shared-rules.
@@ -235,4 +320,5 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	default:
 		refreshSharedRulesState(state, group, jsonEscapeHTML)
 	}
+	return nil
 }

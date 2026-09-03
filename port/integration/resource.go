@@ -79,22 +79,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	integrationIdentifier := state.InstallationId.ValueString()
 
-	registerRequest, err := integrationToRegisterRequest(state, true)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert integration to register request", err.Error())
-		return
-	}
-
-	updated, err := r.portClient.RegisterIntegration(ctx, registerRequest)
-	if err != nil && isRegisterUpdateFallbackError(err) {
-		integration, patchErr := integrationToPortBody(state)
-		if patchErr != nil {
-			resp.Diagnostics.AddError("failed to convert integration to port body", patchErr.Error())
-			return
-		}
-
-		updated, err = r.portClient.UpdateIntegration(ctx, integrationIdentifier, integration)
-	}
+	updated, err := updateIntegration(ctx, r.portClient, state, integrationIdentifier)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update integration", err.Error())
 		return

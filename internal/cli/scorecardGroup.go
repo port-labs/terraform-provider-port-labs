@@ -56,6 +56,30 @@ func (c *PortClient) CreateScorecardGroup(ctx context.Context, scorecardGroup *S
 	return &pb.ScorecardGroup, nil
 }
 
+func (c *PortClient) UpdateScorecardGroup(ctx context.Context, identifier string, scorecardGroup *ScorecardGroup) (*ScorecardGroup, error) {
+	url := "v1/scorecard-groups/{scorecard_group_identifier}"
+	resp, err := c.Client.R().
+		SetBody(scorecardGroup).
+		SetContext(ctx).
+		SetPathParam("scorecard_group_identifier", identifier).
+		Put(url)
+	if err != nil {
+		return nil, err
+	}
+	var pb PortBody
+	err = json.Unmarshal(resp.Body(), &pb)
+	if err != nil {
+		return nil, err
+	}
+	if !pb.OK {
+		return nil, fmt.Errorf("failed to update scorecard group, got: %s", resp.Body())
+	}
+	if pb.ScorecardGroup.Identifier == "" {
+		return nil, nil
+	}
+	return &pb.ScorecardGroup, nil
+}
+
 func (c *PortClient) PatchScorecardGroup(ctx context.Context, identifier string, patch *PatchScorecardGroup) (*ScorecardGroup, error) {
 	url := "v1/scorecard-groups/{scorecard_group_identifier}"
 	resp, err := c.Client.R().

@@ -149,7 +149,16 @@ func (r *ScorecardGroupResource) Update(ctx context.Context, req resource.Update
 			return
 		}
 
-		updatedGroup, err = r.portClient.PatchScorecardGroup(ctx, previousState.Identifier.ValueString(), patch)
+		var statusCode int
+		updatedGroup, statusCode, err = r.portClient.PatchScorecardGroup(ctx, previousState.Identifier.ValueString(), patch)
+		if err != nil && statusCode == 404 {
+			group, convErr := scorecardGroupResourceToPortBody(ctx, state)
+			if convErr != nil {
+				resp.Diagnostics.AddError("failed to convert scorecard group resource to body", convErr.Error())
+				return
+			}
+			updatedGroup, err = r.portClient.UpdateScorecardGroup(ctx, previousState.Identifier.ValueString(), group)
+		}
 		if err != nil {
 			resp.Diagnostics.AddError("failed to update scorecard group", err.Error())
 			return

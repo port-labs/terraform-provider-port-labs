@@ -47,9 +47,19 @@ Optional:
 - `description` (String) The description of the calculation property
 - `format` (String) The format of the calculation property
 - `icon` (String) The icon of the calculation property
+- `items` (Attributes) The items of an `array` calculation property (see [below for nested schema](#nestedatt--calculation_properties--items))
 - `spec` (String) The spec of the calculation property
 - `spec_authentication` (Attributes) The spec authentication of the calculation property (see [below for nested schema](#nestedatt--calculation_properties--spec_authentication))
 - `title` (String) The title of the calculation property
+
+<a id="nestedatt--calculation_properties--items"></a>
+### Nested Schema for `calculation_properties.items`
+
+Optional:
+
+- `format` (String) The format of the items
+- `type` (String) The type of the items
+
 
 <a id="nestedatt--calculation_properties--spec_authentication"></a>
 ### Nested Schema for `calculation_properties.spec_authentication`

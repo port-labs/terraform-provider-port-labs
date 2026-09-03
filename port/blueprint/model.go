@@ -126,6 +126,12 @@ type MirrorPropertyModel struct {
 	Path  types.String `tfsdk:"path"`
 }
 
+// CalculationItems describes the `items` of an `array` calculation property.
+type CalculationItems struct {
+	Type   types.String `tfsdk:"type"`
+	Format types.String `tfsdk:"format"`
+}
+
 type CalculationPropertyModel struct {
 	Calculation        types.String             `tfsdk:"calculation"`
 	Title              types.String             `tfsdk:"title"`
@@ -138,6 +144,7 @@ type CalculationPropertyModel struct {
 	Colors             types.Map                `tfsdk:"colors"`
 	Spec               types.String             `tfsdk:"spec"`
 	SpecAuthentication *SpecAuthenticationModel `tfsdk:"spec_authentication"`
+	Items              *CalculationItems        `tfsdk:"items"`
 }
 
 type AverageEntitiesModel struct {

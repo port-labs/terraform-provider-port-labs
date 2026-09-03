@@ -79,17 +79,39 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	integrationIdentifier := state.InstallationId.ValueString()
 
-	integration, err := integrationToPortBody(state)
+	registerRequest, err := integrationToRegisterRequest(state, true)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to convert integration to port body", err.Error())
+		resp.Diagnostics.AddError("failed to convert integration to register request", err.Error())
 		return
 	}
 
-	updated, err := r.portClient.UpdateIntegration(ctx, integrationIdentifier, integration)
+	updated, err := r.portClient.RegisterIntegration(ctx, registerRequest)
+	if err != nil && isRegisterUpdateFallbackError(err) {
+		integration, patchErr := integrationToPortBody(state)
+		if patchErr != nil {
+			resp.Diagnostics.AddError("failed to convert integration to port body", patchErr.Error())
+			return
+		}
 
+		updated, err = r.portClient.UpdateIntegration(ctx, integrationIdentifier, integration)
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update integration", err.Error())
 		return
+	}
+
+	if integrationHasChangelogDestination(state) {
+		integration, err := integrationToPortBody(state)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to convert integration to port body", err.Error())
+			return
+		}
+
+		updated, err = r.portClient.UpdateIntegration(ctx, integrationIdentifier, integration)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to update integration changelog destination", err.Error())
+			return
+		}
 	}
 
 	err = r.refreshIntegrationState(state, updated, integrationIdentifier)
@@ -130,23 +152,36 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	integration, err := integrationToPortBody(state)
+	registerRequest, err := integrationToRegisterRequest(state, false)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to convert integration to port body", err.Error())
+		resp.Diagnostics.AddError("failed to convert integration to register request", err.Error())
 		return
 	}
 
-	created, err := r.portClient.CreateIntegration(ctx, integration)
-
+	created, err := r.portClient.RegisterIntegration(ctx, registerRequest)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to create integration", err.Error())
+		resp.Diagnostics.AddError("failed to register integration", err.Error())
 		return
+	}
+
+	if integrationHasChangelogDestination(state) {
+		integration, err := integrationToPortBody(state)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to convert integration to port body", err.Error())
+			return
+		}
+
+		created, err = r.portClient.UpdateIntegration(ctx, created.InstallationId, integration)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to update integration changelog destination", err.Error())
+			return
+		}
 	}
 
 	err = r.refreshIntegrationState(state, created, created.InstallationId)
 
 	if err != nil {
-		resp.Diagnostics.AddError("failed to create integration", err.Error())
+		resp.Diagnostics.AddError("failed to refresh integration state", err.Error())
 		return
 	}
 

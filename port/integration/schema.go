@@ -18,17 +18,19 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Required:            true,
 		},
 		"version": schema.StringAttribute{
-			Optional: true,
-			Computed: true,
+			MarkdownDescription: "The integration version. Required when creating a new integration.",
+			Optional:            true,
+			Computed:            true,
 		},
 		"title": schema.StringAttribute{
 			Optional: true,
 		},
 		"installation_app_type": schema.StringAttribute{
-			Optional: true,
+			MarkdownDescription: "The installation app type of the integration. Required when creating a new integration.",
+			Optional:            true,
 		},
 		"config": schema.StringAttribute{
-			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`)",
+			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`). Must include at least one mapping in `config.resources` when creating a new integration.",
 			Optional:            true,
 		},
 		"webhook_changelog_destination": schema.SingleNestedAttribute{
@@ -64,7 +66,7 @@ var IntegrationResourceMarkdownDescription = `
 
 # Integration resource
 
-**NOTE:** This resource manages existing integration and integration mappings, not for creating new integrations.
+Registers and manages OnPrem integrations and their mappings in Port before deploying the Ocean runtime (for example via Terraform or Helm).
 
 Docs about integrations can be found [here](https://docs.getport.io/integrations-index/).
 
@@ -74,6 +76,8 @@ Docs about how to import existing integrations and manage their mappings can be 
 ` + "```hcl" + `
 resource "port_integration" "my_custom_integration" {
 	installation_id       = "my-custom-integration-id"
+	installation_app_type = "my-app-type"
+	version               = "1.0.0"
 	title                 = "My Custom Integration"
 	config = jsonencode({
 		createMissingRelatedEntitiesboolean = true
@@ -105,4 +109,6 @@ resource "port_integration" "my_custom_integration" {
 ### NOTICE:
 
 The following config properties (` + "`selector.query|entity.mappings.*`" + `) are jq expressions, which means that you need to input either a valid jq expression (E.g ` + "`.title`" + `), or if you want a string value, a qouted escaped string val (E.g ` + "`'my-string'`" + `).
+
+` + "`installation_app_type`" + `, ` + "`version`" + `, and ` + "`config`" + ` (with at least one entry in ` + "`config.resources`" + `) are required when creating a new integration.
 `

@@ -15,7 +15,8 @@ import (
 	aggregation_properties "github.com/port-labs/terraform-provider-port-labs/v2/port/aggregation-properties"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint"
 	blueprint_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-permissions"
-	blueprint_relation "github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-relation"
+	blueprint_relation 	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-relation"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/datasource_entities"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/entity"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/folder"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/integration"
@@ -184,5 +185,6 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 func (p *PortLabsProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		search.NewSearchDataSource,
+		datasource_entities.NewDatasourceEntitiesDataSource,
 	}
 }

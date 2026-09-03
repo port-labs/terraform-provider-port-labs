@@ -797,3 +797,25 @@ type OrganizationSecretBody struct {
 	OK     bool               `json:"ok"`
 	Secret OrganizationSecret `json:"secret"`
 }
+
+type LLMProvider struct {
+	Provider string         `json:"provider"`
+	Enabled  bool           `json:"enabled"`
+	Config   map[string]any `json:"config"`
+}
+
+type LLMProviderUpsert struct {
+	Provider string         `json:"provider"`
+	Enabled  bool           `json:"enabled"`
+	Config   map[string]any `json:"config"`
+}
+
+type LLMProvidersListBody struct {
+	OK        bool          `json:"ok"`
+	Providers []LLMProvider `json:"providers"`
+}
+
+type LLMProviderBody struct {
+	OK       bool        `json:"ok"`
+	Provider LLMProvider `json:"provider"`
+}

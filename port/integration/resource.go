@@ -145,8 +145,19 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 
 	created, err := r.portClient.RegisterIntegration(ctx, registerRequest)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to register integration", err.Error())
-		return
+		if isRegisterEndpointUnavailableError(err) {
+			integration, convErr := integrationToPortBody(state)
+			if convErr != nil {
+				resp.Diagnostics.AddError("failed to convert integration to port body", convErr.Error())
+				return
+			}
+
+			created, err = r.portClient.CreateIntegration(ctx, integration)
+		}
+		if err != nil {
+			resp.Diagnostics.AddError("failed to register integration", err.Error())
+			return
+		}
 	}
 
 	if integrationHasChangelogDestination(state) {

@@ -126,6 +126,7 @@ type MirrorPropertyModel struct {
 	Path  types.String `tfsdk:"path"`
 }
 
+// CalculationItems describes the `items` of an `array` calculation property.
 type CalculationItems struct {
 	Type   types.String `tfsdk:"type"`
 	Format types.String `tfsdk:"format"`

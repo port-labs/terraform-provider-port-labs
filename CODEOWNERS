@@ -2,7 +2,7 @@
 /port/action-permissions/ @port-labs/workflows-team
 /port/workflow/ @port-labs/workflows-team
 
-/port/organization/ @port-labs/buildops-team
+/port/organization/ @port-labs/buildops
 
 /port/integration/ @port-labs/connect-team
 
@@ -13,4 +13,4 @@
 
 /port/webhook/ @port-labs/lighthouse-team
 
-* @port-labs/builder
+* @port-labs/builder-team

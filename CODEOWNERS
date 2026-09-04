@@ -1,0 +1,16 @@
+/port/action/ @port-labs/workflows-team
+/port/action-permissions/ @port-labs/workflows-team
+/port/workflow/ @port-labs/workflows-team
+
+/port/organization/ @port-labs/buildops-team
+
+/port/integration/ @port-labs/connect-team
+
+/port/page/ @port-labs/spotlight-team
+/port/page-permissions/ @port-labs/spotlight-team
+/port/scorecard/ @port-labs/spotlight-team
+/port/scorecard_group/ @port-labs/spotlight-team
+
+/port/webhook/ @port-labs/lighthouse-team
+
+* @port-labs/builder

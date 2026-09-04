@@ -42,8 +42,22 @@ resource "port_workflow" "deploy_service" {
         ]
       }
 
+      # Mirrors the workflow builder Permissions tab (Port#18140).
       permissions {
         roles = ["Member"]
+        users = ["dev@example.com"]
+        teams = ["platform"]
+        policy = jsonencode({
+          combinator = "and"
+          rules = [{
+            property = {
+              context  = "user"
+              property = "department"
+            }
+            operator = "="
+            value    = "engineering"
+          }]
+        })
       }
     }
   }

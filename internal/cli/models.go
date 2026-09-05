@@ -465,16 +465,30 @@ type (
 		Rules  []Rule `json:"rules"`
 	}
 
+	PatchScorecardGroupMemberSpec struct {
+		Filter *Query `json:"filter,omitempty"`
+		Rules  []Rule `json:"rules,omitempty"`
+	}
+
 	ScorecardGroup struct {
 		Meta
-		Identifier string                            `json:"identifier,omitempty"`
-		Title      string                            `json:"title,omitempty"`
-		Levels     []Level                           `json:"levels,omitempty"`
-		Properties map[string]any                    `json:"properties,omitempty"`
+		Identifier string                              `json:"identifier,omitempty"`
+		Title      string                              `json:"title,omitempty"`
+		Levels     []Level                             `json:"levels,omitempty"`
+		Properties map[string]any                      `json:"properties,omitempty"`
 		Scorecards map[string]ScorecardGroupMemberSpec `json:"scorecards,omitempty"`
-		Blueprints []string                          `json:"blueprints,omitempty"`
-		Rules      []Rule                            `json:"rules,omitempty"`
-		Filters    map[string]*Query                 `json:"filters,omitempty"`
+		Blueprints []string                            `json:"blueprints,omitempty"`
+		Rules      []Rule                              `json:"rules,omitempty"`
+		Filters    map[string]*Query                   `json:"filters,omitempty"`
+	}
+
+	PatchScorecardGroup struct {
+		Title      string                                   `json:"title,omitempty"`
+		Levels     []Level                                  `json:"levels,omitempty"`
+		Properties map[string]any                           `json:"properties,omitempty"`
+		Scorecards map[string]PatchScorecardGroupMemberSpec `json:"scorecards,omitempty"`
+		Rules      []Rule                                   `json:"rules,omitempty"`
+		Filters    map[string]*Query                        `json:"filters,omitempty"`
 	}
 
 	Rule struct {

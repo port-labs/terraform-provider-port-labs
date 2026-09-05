@@ -62,6 +62,24 @@ func TestAccPortScorecardGroupSharedRules(t *testing.T) {
 		depends_on = [port_blueprint.microservice]
 	}`, groupIdentifier, testAccHasAuthorRuleHCL())
 
+	updatedConfig := testAccCreateBlueprintConfig("microservice", blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_scorecard_group" "test" {
+		identifier = "%s"
+		title      = "Scorecard Group 1 Updated"
+		blueprints = [port_blueprint.microservice.identifier]
+		rules = %s
+		filters = {
+			(port_blueprint.microservice.identifier) = {
+				combinator = "and"
+				conditions = [jsonencode({
+					property = "author"
+					operator = "isNotEmpty"
+				})]
+			}
+		}
+		depends_on = [port_blueprint.microservice]
+	}`, groupIdentifier, testAccHasAuthorRuleHCL())
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheckScorecardGroups(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -76,6 +94,17 @@ func TestAccPortScorecardGroupSharedRules(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard_group.test", "rules.0.identifier", "has-author"),
 					resource.TestCheckResourceAttr("port_scorecard_group.test", "filters.%", "1"),
 					resource.TestCheckNoResourceAttr("port_scorecard_group.test", "scorecards"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + updatedConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "title", "Scorecard Group 1 Updated"),
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "identifier", groupIdentifier),
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "blueprints.#", "1"),
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "rules.#", "1"),
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "rules.0.identifier", "has-author"),
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "filters.%", "1"),
 				),
 			},
 		},

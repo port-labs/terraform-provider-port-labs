@@ -50,6 +50,7 @@ func EntitySchema() map[string]schema.Attribute {
 		"mapping_warnings": schema.ListAttribute{
 			MarkdownDescription: "Entity mapping fields that had warnings during ingest (for example, `properties` or `team`)",
 			Optional:            true,
+			Computed:            true,
 			ElementType:         types.StringType,
 		},
 		"blueprint": schema.StringAttribute{

@@ -14,3 +14,19 @@
 /port/scorecard_group/ @port-labs/spotlight-team
 
 /port/webhook/ @port-labs/lighthouse-team
+
+/docs/resources/action.md @port-labs/workflows-team
+/docs/resources/action_permissions.md @port-labs/workflows-team
+/docs/resources/workflow.md @port-labs/workflows-team
+
+/docs/resources/organization.md @port-labs/buildops
+/docs/resources/organization_secret.md @port-labs/buildops
+
+/docs/resources/integration.md @port-labs/connect-team
+
+/docs/resources/page.md @port-labs/spotlight-team
+/docs/resources/page_permissions.md @port-labs/spotlight-team
+/docs/resources/scorecard.md @port-labs/spotlight-team
+/docs/resources/scorecard_group.md @port-labs/spotlight-team
+
+/docs/resources/webhook.md @port-labs/lighthouse-team

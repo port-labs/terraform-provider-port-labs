@@ -1,3 +1,5 @@
+* @port-labs/builder-team
+
 /port/action/ @port-labs/workflows-team
 /port/action-permissions/ @port-labs/workflows-team
 /port/workflow/ @port-labs/workflows-team
@@ -12,5 +14,3 @@
 /port/scorecard_group/ @port-labs/spotlight-team
 
 /port/webhook/ @port-labs/lighthouse-team
-
-* @port-labs/builder-team

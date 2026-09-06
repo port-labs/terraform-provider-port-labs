@@ -69,9 +69,11 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 }
 
 func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan *IntegrationModel
 	var state *IntegrationModel
 
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -79,7 +81,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	integrationIdentifier := state.InstallationId.ValueString()
 
-	integration, err := integrationToPortBody(state)
+	integration, err := integrationToPortBody(plan)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert integration to port body", err.Error())
 		return
@@ -92,13 +94,13 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	err = r.refreshIntegrationState(state, updated, integrationIdentifier)
+	err = r.refreshIntegrationState(plan, updated, integrationIdentifier)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to refresh integration state", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

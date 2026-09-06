@@ -4,9 +4,9 @@ page_title: "port_integration Resource - port"
 subcategory: ""
 description: |-
   Integration resource
-  NOTE: This resource manages existing integration and integration mappings, not for creating new integrations.
+  This resource can be used to create new custom integrations, as well as to manage the config and mappings of existing integrations (including those installed from Port's catalog of native integrations).
   Docs about integrations can be found here https://docs.getport.io/integrations-index/.
-  Docs about how to import existing integrations and manage their mappings can be found here https://docs.getport.io/guides/all/import-and-manage-integration.
+  Docs about how to use Port's Terraform provider to create and manage integrations can be found here https://docs.getport.io/context-lake/ingestion/ingest-data-into-port/other/iac/terraform/terraform.
   
   resource "port_integration" "my_custom_integration" {
   	installation_id       = "my-custom-integration-id"
@@ -46,11 +46,11 @@ description: |-
 
 # Integration resource
 
-**NOTE:** This resource manages existing integration and integration mappings, not for creating new integrations.
+This resource can be used to create new custom integrations, as well as to manage the config and mappings of existing integrations (including those installed from Port's catalog of native integrations).
 
 Docs about integrations can be found [here](https://docs.getport.io/integrations-index/).
 
-Docs about how to import existing integrations and manage their mappings can be found [here](https://docs.getport.io/guides/all/import-and-manage-integration).
+Docs about how to use Port's Terraform provider to create and manage integrations can be found [here](https://docs.getport.io/context-lake/ingestion/ingest-data-into-port/other/iac/terraform/terraform).
 
 
 ```hcl

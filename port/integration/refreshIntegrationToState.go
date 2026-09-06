@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
@@ -34,5 +35,25 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 		}
 	}
 
+	state.GithubExternalPropertiesNamespaceClaims = githubExternalPropertiesNamespaceClaimsToState(a.GithubExternalPropertiesNamespaceClaims)
+
 	return nil
+}
+
+func githubExternalPropertiesNamespaceClaimsToState(claims map[string]bool) types.Map {
+	if len(claims) == 0 {
+		return types.MapNull(types.BoolType)
+	}
+
+	elements := make(map[string]attr.Value, len(claims))
+	for org, claimed := range claims {
+		elements[org] = types.BoolValue(claimed)
+	}
+
+	result, diags := types.MapValue(types.BoolType, elements)
+	if diags.HasError() {
+		return types.MapNull(types.BoolType)
+	}
+
+	return result
 }

@@ -8,12 +8,13 @@ type WebhookChangelogDestinationModel struct {
 }
 
 type IntegrationModel struct {
-	ID                          types.String                      `tfsdk:"id"`
-	InstallationId              types.String                      `tfsdk:"installation_id"`
-	InstallationAppType         types.String                      `tfsdk:"installation_app_type"`
-	Title                       types.String                      `tfsdk:"title"`
-	Version                     types.String                      `tfsdk:"version"`
-	Config                      types.String                      `tfsdk:"config"`
-	KafkaChangelogDestination   types.Object                      `tfsdk:"kafka_changelog_destination"`
-	WebhookChangelogDestination *WebhookChangelogDestinationModel `tfsdk:"webhook_changelog_destination"`
+	ID                                      types.String                      `tfsdk:"id"`
+	InstallationId                          types.String                      `tfsdk:"installation_id"`
+	InstallationAppType                     types.String                      `tfsdk:"installation_app_type"`
+	Title                                   types.String                      `tfsdk:"title"`
+	Version                                 types.String                      `tfsdk:"version"`
+	Config                                  types.String                      `tfsdk:"config"`
+	KafkaChangelogDestination               types.Object                      `tfsdk:"kafka_changelog_destination"`
+	WebhookChangelogDestination             *WebhookChangelogDestinationModel `tfsdk:"webhook_changelog_destination"`
+	GithubExternalPropertiesNamespaceClaims types.Map                         `tfsdk:"github_external_properties_namespace_claims"`
 }

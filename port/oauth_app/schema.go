@@ -110,7 +110,7 @@ func validateRedirectURI(redirectURI string) error {
 	}
 
 	isLocalhost := parsed.Hostname() == "localhost" || parsed.Hostname() == "127.0.0.1"
-	if parsed.Scheme != "https" && !(parsed.Scheme == "http" && isLocalhost) {
+	if parsed.Scheme != "https" && (parsed.Scheme != "http" || !isLocalhost) {
 		return fmt.Errorf("redirect_uris must use https, or http only for localhost")
 	}
 

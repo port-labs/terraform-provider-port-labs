@@ -33,6 +33,7 @@ resource "port_oauth_app" "mcp_connector" {
     "https://api.port.io/v1/mcp/oauth2/callback",
   ]
 }
+
 ```
 
 

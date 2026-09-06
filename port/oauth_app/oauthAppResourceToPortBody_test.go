@@ -2,6 +2,7 @@ package oauth_app
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -47,6 +48,12 @@ func TestValidateRedirectURI(t *testing.T) {
 	t.Run("disallowed characters redirect uri", func(t *testing.T) {
 		if err := validateRedirectURI("https://example.com/callback?foo=bar|baz"); err == nil {
 			t.Fatal("expected error for redirect uri with disallowed characters")
+		}
+	})
+
+	t.Run("redirect uri exceeds max length", func(t *testing.T) {
+		if err := validateRedirectURI("https://example.com/" + strings.Repeat("a", maxRedirectURILength)); err == nil {
+			t.Fatal("expected error for redirect uri exceeding max length")
 		}
 	})
 }

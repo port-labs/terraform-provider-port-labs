@@ -95,7 +95,13 @@ resource "port_oauth_app" "mcp_connector" {
 
 var safeRedirectURIChars = regexp.MustCompile(`^[a-zA-Z0-9\-._~:/?[\]@!$&'()+,;=%]+$`)
 
+const maxRedirectURILength = 2048
+
 func validateRedirectURI(redirectURI string) error {
+	if len(redirectURI) > maxRedirectURILength {
+		return fmt.Errorf("redirect_uris must not contain URIs longer than %d characters", maxRedirectURILength)
+	}
+
 	if !safeRedirectURIChars.MatchString(redirectURI) {
 		return fmt.Errorf("redirect_uris contains a URI with characters not permitted in a URI")
 	}

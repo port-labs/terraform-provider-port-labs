@@ -3,6 +3,7 @@ package oauth_app
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -66,7 +67,10 @@ func oauthAppResourceToPortBodyUpdate(ctx context.Context, state *OAuthAppModel)
 func refreshOAuthAppState(ctx context.Context, state *OAuthAppModel, app *cli.OAuthApp) error {
 	state.ID = types.StringValue(app.ID)
 	state.Name = types.StringValue(app.Name)
-	state.RedirectURIs = flex.GoArrayStringToTerraformList(ctx, app.RedirectURIs)
+
+	redirectURIs := slices.Clone(app.RedirectURIs)
+	slices.Sort(redirectURIs)
+	state.RedirectURIs = flex.GoArrayStringToTerraformList(ctx, redirectURIs)
 	state.ClientID = types.StringValue(app.ClientID)
 
 	if app.CreatedAt != nil {

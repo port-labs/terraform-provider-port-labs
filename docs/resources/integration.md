@@ -9,10 +9,11 @@ description: |-
   Docs about how to import existing integrations and manage their mappings can be found here https://docs.getport.io/guides/all/import-and-manage-integration.
   
   resource "port_integration" "my_custom_integration" {
-  	installation_id       = "my-custom-integration-id"
-  	installation_app_type = "my-app-type"
-  	version               = "1.0.0"
-  	title                 = "My Custom Integration"
+  	installation_id                 = "my-custom-integration-id"
+  	installation_app_type           = "my-app-type"
+  	version                         = "1.0.0"
+  	title                           = "My Custom Integration"
+  	are_port_resources_initialized  = true
   	config = jsonencode({
   		createMissingRelatedEntitiesboolean = true
   		deleteDependentEntities = true,
@@ -58,10 +59,11 @@ Docs about how to import existing integrations and manage their mappings can be 
 
 ```hcl
 resource "port_integration" "my_custom_integration" {
-	installation_id       = "my-custom-integration-id"
-	installation_app_type = "my-app-type"
-	version               = "1.0.0"
-	title                 = "My Custom Integration"
+	installation_id                 = "my-custom-integration-id"
+	installation_app_type           = "my-app-type"
+	version                         = "1.0.0"
+	title                           = "My Custom Integration"
+	are_port_resources_initialized  = true
 	config = jsonencode({
 		createMissingRelatedEntitiesboolean = true
 		deleteDependentEntities = true,
@@ -107,6 +109,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 ### Optional
 
+- `are_port_resources_initialized` (Boolean) Whether Port resources (blueprints, actions, etc.) are already initialized for this integration. Set to `true` when providing a mapping via `config` before the Ocean runtime starts.
 - `config` (String) Integration Config Raw JSON string (use `jsonencode`). Must include at least one mapping in `config.resources` when creating a new integration.
 - `installation_app_type` (String) The installation app type of the integration. Required when creating a new integration.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))

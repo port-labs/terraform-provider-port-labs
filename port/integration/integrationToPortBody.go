@@ -31,6 +31,7 @@ func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
 	integration.Title = state.Title.ValueStringPointer()
 	integration.Version = state.Version.ValueStringPointer()
 	integration.InstallationAppType = state.InstallationAppType.ValueStringPointer()
+	integration.ArePortResourcesInitialized = state.ArePortResourcesInitialized.ValueBoolPointer()
 
 	if !state.Config.IsNull() {
 		configStr := state.Config.ValueString()

@@ -12,12 +12,13 @@ type PortBodyForIntegration struct {
 }
 
 type RegisterIntegrationRequest struct {
-	InstallationId      string         `json:"installationId"`
-	InstallationAppType string         `json:"installationAppType"`
-	Version             string         `json:"version"`
-	Config              map[string]any `json:"config"`
-	Title               *string        `json:"title,omitempty"`
-	ShouldUpdate        bool           `json:"shouldUpdate,omitempty"`
+	InstallationId              string         `json:"installationId"`
+	InstallationAppType         string         `json:"installationAppType"`
+	Version                     string         `json:"version"`
+	Config                      map[string]any `json:"config"`
+	Title                       *string        `json:"title,omitempty"`
+	ArePortResourcesInitialized *bool          `json:"arePortResourcesInitialized,omitempty"`
+	ShouldUpdate                bool           `json:"shouldUpdate,omitempty"`
 }
 
 type RegisterIntegrationResponse struct {
@@ -90,13 +91,17 @@ func (c *PortClient) RegisterIntegration(ctx context.Context, request *RegisterI
 	return &registerResp.Integration, nil
 }
 
-func (c *PortClient) CreateIntegration(ctx context.Context, integration *Integration) (*Integration, error) {
+func (c *PortClient) CreateIntegration(ctx context.Context, integration *Integration, upsert bool) (*Integration, error) {
 	url := "v1/integration"
 
-	resp, err := c.Client.R().
+	request := c.Client.R().
 		SetBody(integration).
-		SetContext(ctx).
-		Post(url)
+		SetContext(ctx)
+	if upsert {
+		request = request.SetQueryParam("upsert", "true")
+	}
+
+	resp, err := request.Post(url)
 	if err != nil {
 		return nil, err
 	}

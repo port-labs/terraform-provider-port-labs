@@ -1,8 +1,9 @@
 resource "port_integration" "my_onprem_integration" {
-  installation_id       = "my-onprem-integration-id"
-  installation_app_type = "github"
-  version               = "1.0.0"
-  title                 = "My OnPrem Integration"
+  installation_id                 = "my-onprem-integration-id"
+  installation_app_type           = "github"
+  version                         = "1.0.0"
+  title                           = "My OnPrem Integration"
+  are_port_resources_initialized  = true
   config = jsonencode({
     createMissingRelatedEntitiesboolean = true
     deleteDependentEntities             = true

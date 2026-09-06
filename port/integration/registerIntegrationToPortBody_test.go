@@ -93,6 +93,47 @@ func TestIntegrationToRegisterRequestRequiresResources(t *testing.T) {
 	}
 }
 
+func TestIntegrationToRegisterRequestIncludesArePortResourcesInitialized(t *testing.T) {
+	arePortResourcesInitialized := true
+	state := &IntegrationModel{
+		InstallationId:              types.StringValue("my-integration"),
+		InstallationAppType:         types.StringValue("kafka"),
+		Version:                     types.StringValue("1.0.0"),
+		ArePortResourcesInitialized: types.BoolValue(arePortResourcesInitialized),
+		Config: types.StringValue(`{
+			"resources": [{
+				"kind": "ZOMG"
+			}]
+		}`),
+	}
+
+	request, err := integrationToRegisterRequest(state, false)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if request.ArePortResourcesInitialized == nil || *request.ArePortResourcesInitialized != arePortResourcesInitialized {
+		t.Fatalf("expected arePortResourcesInitialized %v, got %v", arePortResourcesInitialized, request.ArePortResourcesInitialized)
+	}
+}
+
+func TestIntegrationToPortBodyIncludesArePortResourcesInitialized(t *testing.T) {
+	arePortResourcesInitialized := true
+	state := &IntegrationModel{
+		InstallationId:              types.StringValue("my-integration"),
+		ArePortResourcesInitialized: types.BoolValue(arePortResourcesInitialized),
+	}
+
+	integration, err := integrationToPortBody(state)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if integration.ArePortResourcesInitialized == nil || *integration.ArePortResourcesInitialized != arePortResourcesInitialized {
+		t.Fatalf("expected arePortResourcesInitialized %v, got %v", arePortResourcesInitialized, integration.ArePortResourcesInitialized)
+	}
+}
+
 func TestIsRegisterEndpointUnavailableError(t *testing.T) {
 	if !isRegisterEndpointUnavailableError(fmt.Errorf(`failed to register integration, got: {"ok":false,"error":"not_found","message":"Route POST:/v1/integration/register not found"}`)) {
 		t.Fatal("expected not_found register route to be treated as unavailable")

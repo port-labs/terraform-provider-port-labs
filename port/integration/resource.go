@@ -152,7 +152,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 				return
 			}
 
-			created, err = r.portClient.CreateIntegration(ctx, integration)
+			created, err = r.portClient.CreateIntegration(ctx, integration, false)
 		}
 		if err != nil {
 			resp.Diagnostics.AddError("failed to register integration", err.Error())

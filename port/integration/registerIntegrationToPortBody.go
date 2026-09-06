@@ -28,12 +28,13 @@ func integrationToRegisterRequest(state *IntegrationModel, shouldUpdate bool) (*
 	}
 
 	return &cli.RegisterIntegrationRequest{
-		InstallationId:      integration.InstallationId,
-		InstallationAppType: *integration.InstallationAppType,
-		Version:             *integration.Version,
-		Config:              *integration.Config,
-		Title:               integration.Title,
-		ShouldUpdate:        shouldUpdate,
+		InstallationId:              integration.InstallationId,
+		InstallationAppType:         *integration.InstallationAppType,
+		Version:                     *integration.Version,
+		Config:                      *integration.Config,
+		Title:                       integration.Title,
+		ArePortResourcesInitialized: integration.ArePortResourcesInitialized,
+		ShouldUpdate:                shouldUpdate,
 	}, nil
 }
 

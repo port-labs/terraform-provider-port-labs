@@ -30,6 +30,143 @@ func testAccCreateBlueprintConfig(identifier string) string {
 	`, identifier)
 }
 
+const testAccEntityPageWidgetsConfig = `
+  widgets = [
+    jsonencode(
+      {
+        "id"          = "entityPageGrouper"
+        "type"        = "grouper"
+        "displayMode" = "tabs"
+        "activeGroupUrlParam" = "activeTab"
+        "groupsOrder" = [
+          "Overview",
+          "Related Entities",
+          "Runs",
+          "Audit Log",
+        ]
+        "groups" = [
+          {
+            "title" = "Overview"
+            "widgets" = [
+              {
+                "id"   = "overviewDashboard"
+                "type" = "dashboard-widget"
+                "layout" = [
+                  {
+                    "height" = 400
+                    "columns" = [
+                      {
+                        "id"   = "entityDetails"
+                        "size" = 12
+                      }
+                    ]
+                  }
+                ]
+                "widgets" = [
+                  {
+                    "id"          = "entityDetails"
+                    "type"        = "entity-info"
+                    "title"       = "Details"
+                    "blueprint"   = "{{blueprint}}"
+                    "entity"      = "{{url.identifier}}"
+                    "hiddenQuery" = []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title" = "Related Entities"
+            "widgets" = [
+              {
+                "id"          = "relatedEntitiesGrouper"
+                "type"        = "grouper"
+                "title"       = "Related Entities"
+                "displayMode" = "switch"
+                "groups" = [
+                  {
+                    "title" = "Table"
+                    "icon"  = "Table"
+                    "widgets" = [
+                      {
+                        "id"   = "relatedTable"
+                        "type" = "table-entities-explorer-by-direction"
+                      }
+                    ]
+                  },
+                  {
+                    "title" = "Graph"
+                    "icon"  = "Relation"
+                    "widgets" = [
+                      {
+                        "id"               = "relatedGraph"
+                        "type"             = "graph-entities-explorer"
+                        "hiddenBlueprints" = []
+                        "dataset" = {
+                          "combinator" = "or"
+                          "rules" = [
+                            {
+                              "operator"  = "relatedTo"
+                              "value"     = "{{url.identifier}}"
+                              "blueprint" = "{{blueprint}}"
+                            },
+                            {
+                              "combinator" = "and"
+                              "rules" = [
+                                {
+                                  "operator" = "="
+                                  "value"    = "{{url.identifier}}"
+                                  "property" = "$identifier"
+                                },
+                                {
+                                  "operator" = "="
+                                  "value"    = "{{blueprint}}"
+                                  "property" = "$blueprint"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title" = "Runs"
+            "widgets" = [
+              {
+                "id"    = "runsTable"
+                "type"  = "runs-table"
+                "title" = "Run Log"
+                "query" = {
+                  "entity"    = "{{url.identifier}}"
+                  "blueprint" = "{{blueprint}}"
+                }
+              }
+            ]
+          },
+          {
+            "title" = "Audit Log"
+            "widgets" = [
+              {
+                "id"   = "auditLogTable"
+                "type" = "table-audit-log"
+                "query" = {
+                  "entity"    = "{{url.identifier}}"
+                  "blueprint" = "{{blueprint}}"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    )
+  ]
+`
+
 func TestAccPortPageResourceBasicBetaEnabled(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	pageIdentifier := utils.GenID()
@@ -497,48 +634,7 @@ resource "port_page" "entity_page" {
     ),
   ]
 
-  widgets = [
-    jsonencode(
-      {
-        "id"          = "entityPageGrouper",
-        "type"        = "grouper",
-        "displayMode" = "tabs",
-        "groupsOrder" = ["Overview"],
-        "groups" = [
-          {
-            "title" = "Overview",
-            "widgets" = [
-              {
-                "id"   = "overviewDashboard",
-                "type" = "dashboard-widget",
-                "layout" = [
-                  {
-                    "height" = 400,
-                    "columns" = [
-                      {
-                        "id"   = "entityDetails",
-                        "size" = 12,
-                      },
-                    ],
-                  },
-                ],
-                "widgets" = [
-                  {
-                    "id"          = "entityDetails",
-                    "type"        = "entity-info",
-                    "title"       = "Details",
-                    "blueprint"   = "{{blueprint}}",
-                    "entity"      = "{{url.identifier}}",
-                    "hiddenQuery" = [],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      }
-    ),
-  ]
+` + testAccEntityPageWidgetsConfig + `
 }
 `, entityPageIdentifier)
 
@@ -604,48 +700,7 @@ resource "port_page" "entity_page" {
     ),
   ]
 
-  widgets = [
-    jsonencode(
-      {
-        "id"          = "entityPageGrouper",
-        "type"        = "grouper",
-        "displayMode" = "tabs",
-        "groupsOrder" = ["Overview"],
-        "groups" = [
-          {
-            "title" = "Overview",
-            "widgets" = [
-              {
-                "id"   = "overviewDashboard",
-                "type" = "dashboard-widget",
-                "layout" = [
-                  {
-                    "height" = 400,
-                    "columns" = [
-                      {
-                        "id"   = "entityDetails",
-                        "size" = 12,
-                      },
-                    ],
-                  },
-                ],
-                "widgets" = [
-                  {
-                    "id"          = "entityDetails",
-                    "type"        = "entity-info",
-                    "title"       = "Details",
-                    "blueprint"   = "{{blueprint}}",
-                    "entity"      = "{{url.identifier}}",
-                    "hiddenQuery" = [],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      }
-    ),
-  ]
+` + testAccEntityPageWidgetsConfig + `
 }
 `, entityPageIdentifier)
 
@@ -699,6 +754,8 @@ resource "port_page" "entity_page" {
       }
     ),
   ]
+
+` + testAccEntityPageWidgetsConfig + `
 }
 `, entityPageIdentifier)
 

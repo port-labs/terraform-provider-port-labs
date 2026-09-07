@@ -24,7 +24,7 @@ func IntegrationSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The installation ID of the integration. Must contain only lowercase letters, numbers, and dashes (pattern: `" + installationIdPattern + "`). Changing this forces replacement.",
 			Required:            true,
 			Validators: []validator.String{
-				stringvalidator.RegexMatches(installationIdRegex, "must contain only lowercase letters, numbers, and dashes"),
+				stringvalidator.RegexMatches(installationIdRegex, "installation_id must match the pattern "+installationIdPattern+": must contain only lowercase letters, numbers, and dashes"),
 			},
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.RequiresReplace(),

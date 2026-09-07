@@ -42,7 +42,7 @@ description: |-
   NOTICE:
   The following config properties (selector.query|entity.mappings.*) are jq expressions, which means that you need to input either a valid jq expression (E.g .title), or if you want a string value, a qouted escaped string val (E.g 'my-string').
   NOTES:
-  installation_id and installation_app_type cannot be changed after creation - changing them recreates the integration.A changelog destination (webhook_changelog_destination / kafka_changelog_destination) can be added or updated, but not removed - the Port API does not support clearing it. To remove it, recreate the integration.Existing integrations can be brought under Terraform management with terraform import port_integration.my_integration <installation_id>.
+  installation_id cannot be changed after creation.installation_app_type is deprecated.A changelog destination (webhook_changelog_destination / kafka_changelog_destination) can be added or updated, but not removed - the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).Existing integrations can be brought under Terraform management with terraform import port_integration.my_integration <installation_id>.terraform destroy deletes the real integration in Port, not just removes it from state. Use terraform state rm if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
 ---
 
 # port_integration (Resource)
@@ -98,9 +98,11 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 ### NOTES:
 
-- `installation_id` and `installation_app_type` cannot be changed after creation - changing them recreates the integration.
-- A changelog destination (`webhook_changelog_destination` / `kafka_changelog_destination`) can be added or updated, but not removed - the Port API does not support clearing it. To remove it, recreate the integration.
+- `installation_id` cannot be changed after creation.
+- `installation_app_type` is deprecated.
+- A changelog destination (`webhook_changelog_destination` / `kafka_changelog_destination`) can be added or updated, but not removed - the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).
 - Existing integrations can be brought under Terraform management with `terraform import port_integration.my_integration <installation_id>`.
+- `terraform destroy` deletes the real integration in Port, not just removes it from state. Use `terraform state rm` if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
 
 
 
@@ -109,12 +111,12 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 ### Required
 
-- `installation_id` (String) The installation ID of the integration. Must contain only lowercase letters, numbers, and dashes (pattern: `^[a-z0-9-]+$`). Changing this forces replacement.
+- `installation_id` (String) The installation ID of the integration. Must contain only lowercase letters, numbers, and dashes (pattern: `^[a-z0-9-]+$`). Cannot be changed after creation.
 
 ### Optional
 
 - `config` (String) Integration Config Raw JSON string (use `jsonencode`)
-- `installation_app_type` (String)
+- `installation_app_type` (String) Deprecated. The integrated tool name for catalog integration types (e.g. `GitHub`, `GitLab`, `K8S EXPORTER`). Custom integrations can omit this field.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `title` (String)
 - `version` (String)

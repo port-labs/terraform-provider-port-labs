@@ -284,6 +284,33 @@ func TestPortIntegrationImport(t *testing.T) {
 	})
 }
 
+func TestPortIntegrationImmutableInstallationId(t *testing.T) {
+	integrationIdentifier := utils.GenID()
+	newInstallationId := utils.GenID()
+	installationAppType := "kafka"
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: createIntegration(integrationIdentifier, installationAppType),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
+				),
+			},
+			{
+				Config:      createIntegration(newInstallationId, installationAppType),
+				ExpectError: regexp.MustCompile(`cannot change installation_id`),
+			},
+		},
+	})
+}
+
 func TestPortIntegrationInvalidIdentifier(t *testing.T) {
 	installationAppType := "kafka"
 

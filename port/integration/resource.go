@@ -10,6 +10,7 @@ import (
 
 var _ resource.Resource = &IntegrationResource{}
 var _ resource.ResourceWithImportState = &IntegrationResource{}
+var _ resource.ResourceWithModifyPlan = &IntegrationResource{}
 
 func NewIntegrationResource() resource.Resource {
 	return &IntegrationResource{}
@@ -29,6 +30,28 @@ func (r *IntegrationResource) Configure(ctx context.Context, req resource.Config
 	}
 
 	r.portClient = req.ProviderData.(*cli.PortClient)
+}
+
+func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var plan, state IntegrationModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !plan.InstallationId.Equal(state.InstallationId) {
+		resp.Diagnostics.AddError(
+			"cannot change installation_id",
+			"The Port API does not support changing installation_id on an existing integration. Changing it requires deleting and reprovisioning the integration.",
+		)
+	}
 }
 
 func (r *IntegrationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -91,7 +114,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	if hadDestination && lostDestination {
 		resp.Diagnostics.AddError(
 			"cannot remove changelog destination",
-			"The Port API does not support removing a changelog destination from an existing integration. To remove it, recreate the integration (e.g. taint the resource or change installation_id).",
+			"The Port API does not support removing a changelog destination from an existing integration. To remove it, delete and recreate the integration (e.g. taint the resource).",
 		)
 		return
 	}

@@ -21,13 +21,10 @@ func IntegrationSchema() map[string]schema.Attribute {
 			},
 		},
 		"installation_id": schema.StringAttribute{
-			MarkdownDescription: "The installation ID of the integration. Must contain only lowercase letters, numbers, and dashes (pattern: `" + installationIdPattern + "`). Changing this forces replacement.",
+			MarkdownDescription: "The installation ID of the integration. Must contain only lowercase letters, numbers, and dashes (pattern: `" + installationIdPattern + "`). Cannot be changed after creation.",
 			Required:            true,
 			Validators: []validator.String{
 				stringvalidator.RegexMatches(installationIdRegex, "installation_id must match the pattern "+installationIdPattern+": must contain only lowercase letters, numbers, and dashes"),
-			},
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.RequiresReplace(),
 			},
 		},
 		"version": schema.StringAttribute{
@@ -38,10 +35,8 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Optional: true,
 		},
 		"installation_app_type": schema.StringAttribute{
-			Optional: true,
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.RequiresReplace(),
-			},
+			MarkdownDescription: "Deprecated. The integrated tool name for catalog integration types (e.g. `GitHub`, `GitLab`, `K8S EXPORTER`). Custom integrations can omit this field.",
+			Optional:            true,
 		},
 		"config": schema.StringAttribute{
 			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`)",
@@ -128,7 +123,9 @@ The following config properties (` + "`selector.query|entity.mappings.*`" + `) a
 
 ### NOTES:
 
-- ` + "`installation_id`" + ` and ` + "`installation_app_type`" + ` cannot be changed after creation - changing them recreates the integration.
-- A changelog destination (` + "`webhook_changelog_destination`" + ` / ` + "`kafka_changelog_destination`" + `) can be added or updated, but not removed - the Port API does not support clearing it. To remove it, recreate the integration.
+- ` + "`installation_id`" + ` cannot be changed after creation.
+- ` + "`installation_app_type`" + ` is deprecated.
+- A changelog destination (` + "`webhook_changelog_destination`" + ` / ` + "`kafka_changelog_destination`" + `) can be added or updated, but not removed - the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).
 - Existing integrations can be brought under Terraform management with ` + "`terraform import port_integration.my_integration <installation_id>`" + `.
+- ` + "`terraform destroy`" + ` deletes the real integration in Port, not just removes it from state. Use ` + "`terraform state rm`" + ` if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
 `

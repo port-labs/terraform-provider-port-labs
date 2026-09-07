@@ -116,7 +116,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	integrationIdentifier := state.InstallationId.ValueString()
 
-	hadDestination := isConfigured(state.KafkaChangelogDestination) || isConfigured(state.WebhookChangelogDestination)
+	hadDestination := !state.KafkaChangelogDestination.IsNull() || !state.WebhookChangelogDestination.IsNull()
 	lostDestination := plan.KafkaChangelogDestination.IsNull() && plan.WebhookChangelogDestination.IsNull()
 	if hadDestination && lostDestination {
 		resp.Diagnostics.AddError(

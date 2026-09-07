@@ -18,26 +18,31 @@ func TestChangelogDestinationSchema(t *testing.T) {
 	if !ok || !webhook.Computed {
 		t.Fatal("webhook_changelog_destination must be computed")
 	}
+	if want := (types.ObjectType{AttrTypes: webhookChangelogDestinationType}); !webhook.GetType().Equal(want) {
+		t.Errorf("webhook_changelog_destination type = %s, want %s", webhook.GetType(), want)
+	}
 
 	kafka, ok := attrs["kafka_changelog_destination"].(schema.ObjectAttribute)
 	if !ok || !kafka.Computed {
 		t.Fatal("kafka_changelog_destination must be computed")
 	}
-
-	wantWebhookType := types.ObjectType{AttrTypes: webhookChangelogDestinationType}
-	if got := webhook.GetType(); !got.Equal(wantWebhookType) {
-		t.Errorf("webhook_changelog_destination type = %s, want %s", got, wantWebhookType)
-	}
-
-	wantKafkaType := types.ObjectType{AttrTypes: kafkaChangelogDestinationType}
-	if got := kafka.GetType(); !got.Equal(wantKafkaType) {
-		t.Errorf("kafka_changelog_destination type = %s, want %s", got, wantKafkaType)
+	if want := (types.ObjectType{AttrTypes: kafkaChangelogDestinationType}); !kafka.GetType().Equal(want) {
+		t.Errorf("kafka_changelog_destination type = %s, want %s", kafka.GetType(), want)
 	}
 }
 
 func TestChangelogDestinationRoundTrip(t *testing.T) {
 	const portManagedURL = "https://internal.port.io/webhooks/changelog"
 	agent := true
+
+	noKafka := types.ObjectNull(kafkaChangelogDestinationType)
+	noWebhook := types.ObjectNull(webhookChangelogDestinationType)
+	webhookObject := func(url string, agent *bool) types.Object {
+		return types.ObjectValueMust(webhookChangelogDestinationType, map[string]attr.Value{
+			"url":   types.StringValue(url),
+			"agent": types.BoolPointerValue(agent),
+		})
+	}
 
 	tests := []struct {
 		name        string
@@ -49,41 +54,35 @@ func TestChangelogDestinationRoundTrip(t *testing.T) {
 		{
 			name:        "no destination",
 			dest:        nil,
-			wantKafka:   types.ObjectNull(kafkaChangelogDestinationType),
-			wantWebhook: types.ObjectNull(webhookChangelogDestinationType),
+			wantKafka:   noKafka,
+			wantWebhook: noWebhook,
 		},
 		{
 			name:        "empty destination",
 			dest:        &cli.ChangelogDestination{},
-			wantKafka:   types.ObjectNull(kafkaChangelogDestinationType),
-			wantWebhook: types.ObjectNull(webhookChangelogDestinationType),
+			wantKafka:   noKafka,
+			wantWebhook: noWebhook,
 		},
 		{
 			name:        "kafka",
 			dest:        &cli.ChangelogDestination{Type: consts.Kafka},
 			wantKafka:   types.ObjectValueMust(kafkaChangelogDestinationType, map[string]attr.Value{}),
-			wantWebhook: types.ObjectNull(webhookChangelogDestinationType),
+			wantWebhook: noWebhook,
 			wantBody:    &cli.ChangelogDestination{Type: consts.Kafka},
 		},
 		{
-			name:      "port-managed webhook, no agent",
-			dest:      &cli.ChangelogDestination{Type: consts.Webhook, Url: portManagedURL},
-			wantKafka: types.ObjectNull(kafkaChangelogDestinationType),
-			wantWebhook: types.ObjectValueMust(webhookChangelogDestinationType, map[string]attr.Value{
-				"url":   types.StringValue(portManagedURL),
-				"agent": types.BoolNull(),
-			}),
-			wantBody: &cli.ChangelogDestination{Type: consts.Webhook, Url: portManagedURL},
+			name:        "port-managed webhook, no agent",
+			dest:        &cli.ChangelogDestination{Type: consts.Webhook, Url: portManagedURL},
+			wantKafka:   noKafka,
+			wantWebhook: webhookObject(portManagedURL, nil),
+			wantBody:    &cli.ChangelogDestination{Type: consts.Webhook, Url: portManagedURL},
 		},
 		{
-			name:      "webhook through the agent",
-			dest:      &cli.ChangelogDestination{Type: consts.Webhook, Url: "https://google.com", Agent: &agent},
-			wantKafka: types.ObjectNull(kafkaChangelogDestinationType),
-			wantWebhook: types.ObjectValueMust(webhookChangelogDestinationType, map[string]attr.Value{
-				"url":   types.StringValue("https://google.com"),
-				"agent": types.BoolValue(true),
-			}),
-			wantBody: &cli.ChangelogDestination{Type: consts.Webhook, Url: "https://google.com", Agent: &agent},
+			name:        "webhook through the agent",
+			dest:        &cli.ChangelogDestination{Type: consts.Webhook, Url: "https://google.com", Agent: &agent},
+			wantKafka:   noKafka,
+			wantWebhook: webhookObject("https://google.com", &agent),
+			wantBody:    &cli.ChangelogDestination{Type: consts.Webhook, Url: "https://google.com", Agent: &agent},
 		},
 	}
 

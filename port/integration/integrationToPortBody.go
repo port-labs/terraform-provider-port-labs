@@ -43,7 +43,14 @@ func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
 	}
 	switch {
 	case isConfigured(state.WebhookChangelogDestination):
-		integration.ChangelogDestination = webhookChangelogDestinationToPortBody(state.WebhookChangelogDestination)
+		attrs := state.WebhookChangelogDestination.Attributes()
+		url, _ := attrs["url"].(types.String)
+		agent, _ := attrs["agent"].(types.Bool)
+		integration.ChangelogDestination = &cli.ChangelogDestination{
+			Type:  consts.Webhook,
+			Url:   url.ValueString(),
+			Agent: agent.ValueBoolPointer(),
+		}
 	case isConfigured(state.KafkaChangelogDestination):
 		integration.ChangelogDestination = &cli.ChangelogDestination{Type: consts.Kafka}
 	}
@@ -51,21 +58,8 @@ func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
 	return integration, nil
 }
 
+// isConfigured reports whether a computed attribute holds a value to send to
+// Port. Unknown means Port owns it and will return it on the next refresh.
 func isConfigured(obj types.Object) bool {
 	return !obj.IsNull() && !obj.IsUnknown()
-}
-
-func webhookChangelogDestinationToPortBody(obj types.Object) *cli.ChangelogDestination {
-	url, ok := obj.Attributes()["url"].(types.String)
-	if !ok || url.IsNull() {
-		return nil
-	}
-	// A missing agent leaves the zero value, which is null.
-	agent, _ := obj.Attributes()["agent"].(types.Bool)
-
-	return &cli.ChangelogDestination{
-		Type:  consts.Webhook,
-		Url:   url.ValueString(),
-		Agent: agent.ValueBoolPointer(),
-	}
 }

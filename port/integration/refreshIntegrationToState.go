@@ -21,25 +21,19 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 		state.Config = config
 	}
 
-	state.KafkaChangelogDestination, state.WebhookChangelogDestination = changelogDestinationToState(a.ChangelogDestination)
+	state.KafkaChangelogDestination = types.ObjectNull(kafkaChangelogDestinationType)
+	state.WebhookChangelogDestination = types.ObjectNull(webhookChangelogDestinationType)
 
-	return nil
-}
-
-func changelogDestinationToState(dest *cli.ChangelogDestination) (kafka, webhook types.Object) {
-	kafka = types.ObjectNull(kafkaChangelogDestinationType)
-	webhook = types.ObjectNull(webhookChangelogDestinationType)
-
-	switch {
+	switch dest := a.ChangelogDestination; {
 	case dest == nil:
 	case dest.Type == consts.Kafka:
-		kafka = types.ObjectValueMust(kafkaChangelogDestinationType, map[string]attr.Value{})
+		state.KafkaChangelogDestination = types.ObjectValueMust(kafkaChangelogDestinationType, map[string]attr.Value{})
 	case dest.Type == consts.Webhook && dest.Url != "":
-		webhook = types.ObjectValueMust(webhookChangelogDestinationType, map[string]attr.Value{
+		state.WebhookChangelogDestination = types.ObjectValueMust(webhookChangelogDestinationType, map[string]attr.Value{
 			"url":   types.StringValue(dest.Url),
 			"agent": types.BoolPointerValue(dest.Agent),
 		})
 	}
 
-	return kafka, webhook
+	return nil
 }

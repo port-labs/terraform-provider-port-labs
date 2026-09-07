@@ -144,6 +144,11 @@ func permissionsBlock(description string) schema.Block {
 		Optional:   true,
 		Validators: []validator.String{queryValidator("Invalid permissions policy")},
 	}
+	attributes["error_message"] = schema.StringAttribute{
+		MarkdownDescription: "Optional message shown when a user is not allowed to run this workflow. " +
+			"Overrides the default permission error toast.",
+		Optional: true,
+	}
 
 	return schema.SingleNestedBlock{
 		MarkdownDescription: description,

@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -521,6 +522,10 @@ func permissionsToPortBody(ctx context.Context, model *PermissionsModel) (*cli.W
 			return nil, err
 		}
 		permissions.Policy = policy
+	}
+
+	if !model.ErrorMessage.IsNull() && strings.TrimSpace(model.ErrorMessage.ValueString()) != "" {
+		permissions.ErrorMessage = strings.TrimSpace(model.ErrorMessage.ValueString())
 	}
 
 	return permissions, nil

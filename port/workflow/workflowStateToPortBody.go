@@ -523,7 +523,9 @@ func permissionsToPortBody(ctx context.Context, model *PermissionsModel) (*cli.W
 		permissions.Policy = policy
 	}
 
-	permissions.ErrorMessage = model.ErrorMessage.ValueStringPointer()
+	if !model.ErrorMessage.IsNull() {
+		permissions.ErrorMessage = model.ErrorMessage.ValueStringPointer()
+	}
 
 	return permissions, nil
 }

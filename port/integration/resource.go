@@ -116,16 +116,6 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	integrationIdentifier := state.InstallationId.ValueString()
 
-	hadDestination := !state.KafkaChangelogDestination.IsNull() || !state.WebhookChangelogDestination.IsNull()
-	lostDestination := plan.KafkaChangelogDestination.IsNull() && plan.WebhookChangelogDestination.IsNull()
-	if hadDestination && lostDestination {
-		resp.Diagnostics.AddError(
-			"cannot remove changelog destination",
-			"The Port API does not support removing a changelog destination from an existing integration. To remove it, delete and recreate the integration (e.g. taint the resource).",
-		)
-		return
-	}
-
 	integration, err := integrationToPortBody(plan)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert integration to port body", err.Error())

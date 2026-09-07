@@ -126,7 +126,6 @@ The following config properties (` + "`selector.query|entity.mappings.*`" + `) a
 ### NOTES:
 
 - ` + "`installation_id`" + ` and ` + "`installation_app_type`" + ` cannot be changed after creation.
-- A changelog destination (` + "`webhook_changelog_destination`" + ` / ` + "`kafka_changelog_destination`" + `) can be added or updated, but not removed - the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).
 - Existing integrations can be brought under Terraform management with ` + "`terraform import port_integration.my_integration <installation_id>`" + `.
 - ` + "`terraform destroy`" + ` deletes the real integration in Port, not just removes it from state. Use ` + "`terraform state rm`" + ` if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
 `

@@ -49,7 +49,14 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 	if !plan.InstallationId.Equal(state.InstallationId) {
 		resp.Diagnostics.AddError(
 			"cannot change installation_id",
-			"The Port API does not support changing installation_id on an existing integration. Changing it requires deleting and reprovisioning the integration.",
+			"The Port API does not support changing `installation_id` on an existing integration. To use a different ID, destroy this resource (which deletes the integration from Port) and create a new `port_integration`.",
+		)
+	}
+
+	if !plan.InstallationAppType.Equal(state.InstallationAppType) {
+		resp.Diagnostics.AddError(
+			"cannot change installation_app_type",
+			"The Port API does not support changing `installation_app_type` on an existing integration. To use a different app type, destroy this resource (which deletes the integration from Port) and create a new `port_integration`.",
 		)
 	}
 }

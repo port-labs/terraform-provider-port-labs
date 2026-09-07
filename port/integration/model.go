@@ -11,6 +11,7 @@ type IntegrationModel struct {
 	ID                          types.String                      `tfsdk:"id"`
 	InstallationId              types.String                      `tfsdk:"installation_id"`
 	InstallationAppType         types.String                      `tfsdk:"installation_app_type"`
+	InstallationType            types.String                      `tfsdk:"installation_type"`
 	Title                       types.String                      `tfsdk:"title"`
 	Version                     types.String                      `tfsdk:"version"`
 	Config                      types.String                      `tfsdk:"config"`

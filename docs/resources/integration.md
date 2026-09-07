@@ -101,7 +101,8 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 ### Optional
 
 - `config` (String) Integration Config Raw JSON string (use `jsonencode`)
-- `installation_app_type` (String)
+- `installation_app_type` (String) The name of the integrated tool/platform (e.g. `kubernetes`, `pagerduty`). Required when creating a new integration.
+- `installation_type` (String) Where the integration runs: `OnPrem` (default) registers a self-hosted integration you run yourself (e.g. via Helm/Docker) - Terraform only manages the Port-side record and mapping. `Saas` has Port provision and run a hosted Ocean integration on your behalf; `terraform apply` waits for it to finish provisioning before returning. Other installation types (OAuth-based GitHub App installs, etc.) require a manual browser consent step and are not supported by this resource. Immutable after creation - changing it forces recreation.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `title` (String)
 - `version` (String)

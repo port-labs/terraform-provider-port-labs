@@ -3,11 +3,16 @@ package integration
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 )
 
 func IntegrationSchema() map[string]schema.Attribute {
@@ -22,6 +27,18 @@ func IntegrationSchema() map[string]schema.Attribute {
 				stringplanmodifier.RequiresReplace(),
 			},
 		},
+		"installation_type": schema.StringAttribute{
+			MarkdownDescription: "Where the integration runs: `OnPrem` (default) registers a self-hosted integration you run yourself (e.g. via Helm/Docker) - Terraform only manages the Port-side record and mapping. `Saas` has Port provision and run a hosted Ocean integration on your behalf; `terraform apply` waits for it to finish provisioning before returning. Other installation types (OAuth-based GitHub App installs, etc.) require a manual browser consent step and are not supported by this resource. Immutable after creation - changing it forces recreation.",
+			Optional:            true,
+			Computed:            true,
+			Default:             stringdefault.StaticString(consts.InstallationTypeOnPrem),
+			Validators: []validator.String{
+				stringvalidator.OneOf(consts.InstallationTypeOnPrem, consts.InstallationTypeSaas),
+			},
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.RequiresReplace(),
+			},
+		},
 		"version": schema.StringAttribute{
 			Optional: true,
 			Computed: true,
@@ -30,7 +47,8 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Optional: true,
 		},
 		"installation_app_type": schema.StringAttribute{
-			Optional: true,
+			MarkdownDescription: "The name of the integrated tool/platform (e.g. `kubernetes`, `pagerduty`). Required when creating a new integration.",
+			Optional:            true,
 		},
 		"config": schema.StringAttribute{
 			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`)",

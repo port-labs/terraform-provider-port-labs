@@ -103,6 +103,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 - `config` (String) Integration Config Raw JSON string (use `jsonencode`)
 - `installation_app_type` (String)
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
+- `oauth_broker_url` (String) The base URL of the OAuth broker hosted by this integration. Port uses this URL to build the re-authentication link sent to users when the integration requires a new token. Must not contain a query string.
 - `title` (String)
 - `version` (String)
 - `webhook_changelog_destination` (Attributes) The webhook changelog destination of the integration (see [below for nested schema](#nestedatt--webhook_changelog_destination))

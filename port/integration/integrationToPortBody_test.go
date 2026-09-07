@@ -1,6 +1,10 @@
 package integration
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
 
 func TestInstallationIdPattern(t *testing.T) {
 	valid := []string{
@@ -33,5 +37,35 @@ func TestInstallationIdPattern(t *testing.T) {
 		if installationIdRegex.MatchString(id) {
 			t.Errorf("expected %q not to match installation ID pattern", id)
 		}
+	}
+}
+
+func TestIntegrationToPortBodyOauthBrokerUrl(t *testing.T) {
+	oauthBrokerUrl := "https://oauth.example.com"
+	state := &IntegrationModel{
+		InstallationId: types.StringValue("my-integration"),
+		OauthBrokerUrl: types.StringValue(oauthBrokerUrl),
+	}
+
+	integration, err := integrationToPortBody(state)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if integration.OauthBrokerUrl == nil || *integration.OauthBrokerUrl != oauthBrokerUrl {
+		t.Fatalf("expected oauthBrokerUrl %q, got %v", oauthBrokerUrl, integration.OauthBrokerUrl)
+	}
+}
+
+func TestIntegrationToPortBodyOmitsOauthBrokerUrlWhenUnset(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId: types.StringValue("my-integration"),
+	}
+
+	integration, err := integrationToPortBody(state)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if integration.OauthBrokerUrl != nil {
+		t.Fatalf("expected oauthBrokerUrl to be omitted, got %v", integration.OauthBrokerUrl)
 	}
 }

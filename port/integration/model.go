@@ -14,6 +14,7 @@ type IntegrationModel struct {
 	Title                       types.String                      `tfsdk:"title"`
 	Version                     types.String                      `tfsdk:"version"`
 	Config                      types.String                      `tfsdk:"config"`
+	OauthBrokerUrl              types.String                      `tfsdk:"oauth_broker_url"`
 	KafkaChangelogDestination   types.Object                      `tfsdk:"kafka_changelog_destination"`
 	WebhookChangelogDestination *WebhookChangelogDestinationModel `tfsdk:"webhook_changelog_destination"`
 }

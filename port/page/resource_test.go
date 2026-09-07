@@ -30,6 +30,133 @@ func testAccCreateBlueprintConfig(identifier string) string {
 	`, identifier)
 }
 
+const testAccEntityPageSinglePageFilter = `
+  page_filters = [
+    jsonencode(
+      {
+        "identifier" = "fac6b5aa-272c-4a20-9635-add07d097bb9"
+        "title"      = "Entity Creation Date is in the past 30 days"
+        "query" = {
+          "combinator" = "and"
+          "rules" = [
+            {
+              "property" = "$createdAt"
+              "operator" = "between"
+              "value" = {
+                "preset" = "lastMonth"
+              }
+            }
+          ]
+          "blueprint" = "dashboard-filters-meta-blueprint"
+        }
+      }
+    ),
+  ]`
+
+const testAccEntityPageDoublePageFilter = `
+  page_filters = [
+    jsonencode(
+      {
+        "identifier" = "fac6b5aa-272c-4a20-9635-add07d097bb9"
+        "title"      = "Entity Creation Date is in the past 30 days"
+        "query" = {
+          "combinator" = "and"
+          "rules" = [
+            {
+              "property" = "$createdAt"
+              "operator" = "between"
+              "value" = {
+                "preset" = "lastMonth"
+              }
+            }
+          ]
+          "blueprint" = "dashboard-filters-meta-blueprint"
+        }
+      }
+    ),
+    jsonencode(
+      {
+        "identifier" = "b2c3d4e5-272c-4a20-9635-add07d097bb9"
+        "title"      = "Entity updated in the past 7 days"
+        "query" = {
+          "combinator" = "and"
+          "rules" = [
+            {
+              "property" = "$updatedAt"
+              "operator" = "between"
+              "value" = {
+                "preset" = "lastWeek"
+              }
+            }
+          ]
+          "blueprint" = "dashboard-filters-meta-blueprint"
+        }
+      }
+    ),
+  ]`
+
+func testAccEntityPageWidgets(widgetTitle string) string {
+	return fmt.Sprintf(`
+  widgets = [
+    jsonencode(
+      {
+        "id"          = "entityPageGrouper",
+        "type"        = "grouper",
+        "displayMode" = "tabs",
+        "groupsOrder" = ["Overview"],
+        "groups" = [
+          {
+            "title" = "Overview",
+            "widgets" = [
+              {
+                "id"   = "overviewDashboard",
+                "type" = "dashboard-widget",
+                "layout" = [
+                  {
+                    "height" = 400,
+                    "columns" = [
+                      {
+                        "id"   = "entityDetails",
+                        "size" = 12,
+                      },
+                    ],
+                  },
+                ],
+                "widgets" = [
+                  {
+                    "id"          = "entityDetails",
+                    "type"        = "entity-info",
+                    "title"       = "%s",
+                    "blueprint"   = "{{blueprint}}",
+                    "entity"      = "{{url.identifier}}",
+                    "hiddenQuery" = [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+    ),
+  ]`, widgetTitle)
+}
+
+func testAccEntityPageConfig(identifier string, pageFilters string, widgetTitle string) string {
+	return fmt.Sprintf(`
+resource "port_page" "entity_page" {
+  identifier = "%s"
+  title      = "TF test microservice"
+  icon       = "Terraform"
+  type       = "entity"
+  blueprint  = port_blueprint.microservice.identifier
+
+  depends_on = [port_blueprint.microservice]
+%s
+%s
+}
+`, identifier, pageFilters, testAccEntityPageWidgets(widgetTitle))
+}
+
 func TestAccPortPageResourceBasicBetaEnabled(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	pageIdentifier := utils.GenID()
@@ -464,83 +591,7 @@ func TestAccPortPageResourceEntityPage(t *testing.T) {
 	}
 
 	blueprintConfig := testAccCreateBlueprintConfig(blueprintIdentifier)
-
-	entityPageConfig := fmt.Sprintf(`
-resource "port_page" "entity_page" {
-  identifier = "%s"
-  title      = "TF test microservice"
-  icon       = "Terraform"
-  type       = "entity"
-  blueprint  = port_blueprint.microservice.identifier
-
-  depends_on = [port_blueprint.microservice]
-
-  page_filters = [
-    jsonencode(
-      {
-        "identifier" = "fac6b5aa-272c-4a20-9635-add07d097bb9"
-        "title"      = "Entity Creation Date is in the past 30 days"
-        "query" = {
-          "combinator" = "and"
-          "rules" = [
-            {
-              "property" = "$createdAt"
-              "operator" = "between"
-              "value" = {
-                "preset" = "lastMonth"
-              }
-            }
-          ]
-          "blueprint" = "dashboard-filters-meta-blueprint"
-        }
-      }
-    ),
-  ]
-
-  widgets = [
-    jsonencode(
-      {
-        "id"          = "entityPageGrouper",
-        "type"        = "grouper",
-        "displayMode" = "tabs",
-        "groupsOrder" = ["Overview"],
-        "groups" = [
-          {
-            "title" = "Overview",
-            "widgets" = [
-              {
-                "id"   = "overviewDashboard",
-                "type" = "dashboard-widget",
-                "layout" = [
-                  {
-                    "height" = 400,
-                    "columns" = [
-                      {
-                        "id"   = "entityDetails",
-                        "size" = 12,
-                      },
-                    ],
-                  },
-                ],
-                "widgets" = [
-                  {
-                    "id"          = "entityDetails",
-                    "type"        = "entity-info",
-                    "title"       = "Details",
-                    "blueprint"   = "{{blueprint}}",
-                    "entity"      = "{{url.identifier}}",
-                    "hiddenQuery" = [],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      }
-    ),
-  ]
-}
-`, entityPageIdentifier)
+	entityPageConfig := testAccEntityPageConfig(entityPageIdentifier, testAccEntityPageSinglePageFilter, "Details")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -571,136 +622,8 @@ func TestAccPortPageResourceEntityPageUpdatePageFilters(t *testing.T) {
 	}
 
 	blueprintConfig := testAccCreateBlueprintConfig(blueprintIdentifier)
-
-	entityPageConfig := fmt.Sprintf(`
-resource "port_page" "entity_page" {
-  identifier = "%s"
-  title      = "TF test microservice"
-  icon       = "Terraform"
-  type       = "entity"
-  blueprint  = port_blueprint.microservice.identifier
-
-  depends_on = [port_blueprint.microservice]
-
-  page_filters = [
-    jsonencode(
-      {
-        "identifier" = "fac6b5aa-272c-4a20-9635-add07d097bb9"
-        "title"      = "Entity Creation Date is in the past 30 days"
-        "query" = {
-          "combinator" = "and"
-          "rules" = [
-            {
-              "property" = "$createdAt"
-              "operator" = "between"
-              "value" = {
-                "preset" = "lastMonth"
-              }
-            }
-          ]
-          "blueprint" = "dashboard-filters-meta-blueprint"
-        }
-      }
-    ),
-  ]
-
-  widgets = [
-    jsonencode(
-      {
-        "id"          = "entityPageGrouper",
-        "type"        = "grouper",
-        "displayMode" = "tabs",
-        "groupsOrder" = ["Overview"],
-        "groups" = [
-          {
-            "title" = "Overview",
-            "widgets" = [
-              {
-                "id"   = "overviewDashboard",
-                "type" = "dashboard-widget",
-                "layout" = [
-                  {
-                    "height" = 400,
-                    "columns" = [
-                      {
-                        "id"   = "entityDetails",
-                        "size" = 12,
-                      },
-                    ],
-                  },
-                ],
-                "widgets" = [
-                  {
-                    "id"          = "entityDetails",
-                    "type"        = "entity-info",
-                    "title"       = "Details",
-                    "blueprint"   = "{{blueprint}}",
-                    "entity"      = "{{url.identifier}}",
-                    "hiddenQuery" = [],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      }
-    ),
-  ]
-}
-`, entityPageIdentifier)
-
-	updatedPageFiltersConfig := fmt.Sprintf(`
-resource "port_page" "entity_page" {
-  identifier = "%s"
-  title      = "TF test microservice"
-  icon       = "Terraform"
-  type       = "entity"
-  blueprint  = port_blueprint.microservice.identifier
-
-  depends_on = [port_blueprint.microservice]
-
-  page_filters = [
-    jsonencode(
-      {
-        "identifier" = "fac6b5aa-272c-4a20-9635-add07d097bb9"
-        "title"      = "Entity Creation Date is in the past 30 days"
-        "query" = {
-          "combinator" = "and"
-          "rules" = [
-            {
-              "property" = "$createdAt"
-              "operator" = "between"
-              "value" = {
-                "preset" = "lastMonth"
-              }
-            }
-          ]
-          "blueprint" = "dashboard-filters-meta-blueprint"
-        }
-      }
-    ),
-    jsonencode(
-      {
-        "identifier" = "b2c3d4e5-272c-4a20-9635-add07d097bb9"
-        "title"      = "Entity updated in the past 7 days"
-        "query" = {
-          "combinator" = "and"
-          "rules" = [
-            {
-              "property" = "$updatedAt"
-              "operator" = "between"
-              "value" = {
-                "preset" = "lastWeek"
-              }
-            }
-          ]
-          "blueprint" = "dashboard-filters-meta-blueprint"
-        }
-      }
-    ),
-  ]
-}
-`, entityPageIdentifier)
+	entityPageConfig := testAccEntityPageConfig(entityPageIdentifier, testAccEntityPageSinglePageFilter, "Details")
+	updatedPageFiltersConfig := testAccEntityPageConfig(entityPageIdentifier, testAccEntityPageDoublePageFilter, "Details")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -710,12 +633,14 @@ resource "port_page" "entity_page" {
 				Config: acctest.ProviderConfig + blueprintConfig + entityPageConfig,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_page.entity_page", "identifier", entityPageIdentifier),
+					resource.TestCheckResourceAttr("port_page.entity_page", "widgets.#", "1"),
 					resource.TestCheckResourceAttr("port_page.entity_page", "page_filters.#", "1"),
 				),
 			},
 			{
 				Config: acctest.ProviderConfig + blueprintConfig + updatedPageFiltersConfig,
 				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.entity_page", "widgets.#", "1"),
 					resource.TestCheckResourceAttr("port_page.entity_page", "page_filters.#", "2"),
 				),
 			},

@@ -52,9 +52,14 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 
 	integrationIdentifier := state.InstallationId.ValueString()
 
-	a, err := r.portClient.GetIntegration(ctx, integrationIdentifier)
+	a, statusCode, err := r.portClient.GetIntegration(ctx, integrationIdentifier)
 
 	if err != nil {
+		if statusCode == 404 {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError("failed reading integration", err.Error())
 		return
 	}
 
@@ -80,6 +85,16 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	integrationIdentifier := state.InstallationId.ValueString()
+
+	hadDestination := !state.KafkaChangelogDestination.IsNull() || state.WebhookChangelogDestination != nil
+	lostDestination := plan.KafkaChangelogDestination.IsNull() && plan.WebhookChangelogDestination == nil
+	if hadDestination && lostDestination {
+		resp.Diagnostics.AddError(
+			"cannot remove changelog destination",
+			"The Port API does not support removing a changelog destination from an existing integration. To remove it, recreate the integration (e.g. taint the resource or change installation_id).",
+		)
+		return
+	}
 
 	integration, err := integrationToPortBody(plan)
 	if err != nil {

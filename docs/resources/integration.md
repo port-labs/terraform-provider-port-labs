@@ -4,9 +4,11 @@ page_title: "port_integration Resource - port"
 subcategory: ""
 description: |-
   Integration resource
-  This resource can be used to create new custom integrations, as well as to manage the config and mappings of existing integrations (including those installed from Port's catalog of native integrations).
+  This resource can be used to create new integrations directly from Terraform (no prior installation via the UI is required), as well as to manage the config and mappings of existing integrations (including those installed from Port's catalog of native integrations).
   Docs about integrations can be found here https://docs.getport.io/integrations-index/.
   Docs about how to use Port's Terraform provider to create and manage integrations can be found here https://docs.getport.io/context-lake/ingestion/ingest-data-into-port/other/iac/terraform/terraform.
+  Self-hosted (OnPrem) integration
+  Self-hosted integrations run on your own infrastructure (e.g. an Ocean exporter container) and pull their mapping from Port. This is the default hosting method.
   
   resource "port_integration" "my_custom_integration" {
   	installation_id       = "my-custom-integration-id"
@@ -36,22 +38,73 @@ description: |-
   	})
   }
   
+  Port-hosted (SaaS) integration
+  Port-hosted integrations run on Port's infrastructure. Set installation_type = "Saas" and provide the integration spec, which holds the hosting configuration (integrationSpec) and runtime preferences (appSpec).
+  Sensitive integrationSpec fields (tokens, keys, etc.) must reference a Port organization secret https://docs.getport.io/platform-administration/secrets-management/port-secrets/ by name - plain values are rejected. Use the port_organization_secret resource to manage them:
   
+  resource "port_organization_secret" "gitlab_token_mapping" {
+  	secret_name  = "my-gitlab-token-mapping"
+  	secret_value = jsonencode({ "glpat-example" : ["**"] })
+  	description  = "GitLab tokens and the group scopes they may ingest"
+  }
   
+  resource "port_integration" "my_gitlab_saas" {
+  	installation_id       = "my-gitlab-saas"
+  	installation_type     = "Saas"
+  	installation_app_type = "gitlab"
+  	title                 = "My GitLab (Port-hosted)"
+  
+  	spec = jsonencode({
+  		integrationSpec = {
+  			gitlabHost   = "https://gitlab.com"
+  			tokenMapping = port_organization_secret.gitlab_token_mapping.secret_name
+  		}
+  		appSpec = {
+  			scheduledResyncInterval = "2h"
+  		}
+  	})
+  
+  	config = jsonencode({
+  		createMissingRelatedEntities = true
+  		deleteDependentEntities      = true
+  		resources = [{
+  			kind = "project"
+  			selector = {
+  				query = "true"
+  			}
+  			port = {
+  				entity = {
+  					mappings = [{
+  						identifier = ".path_with_namespace"
+  						title      = ".name"
+  						blueprint  = "'gitlabProject'"
+  					}]
+  				}
+  			}
+  		}]
+  	})
+  }
+  
+  The required integrationSpec fields depend on the integration type - see each integration's documentation page for its configuration reference.
   NOTICE:
   The following config properties (selector.query|entity.mappings.*) are jq expressions, which means that you need to input either a valid jq expression (E.g .title), or if you want a string value, a qouted escaped string val (E.g 'my-string').
+  NOTES:
+  installation_id and installation_app_type cannot be changed after creation - changing them recreates the integration.For Port-hosted (SaaS) integrations, version is managed by Port once the integration is provisioned. Omit it from your configuration to avoid a perpetual diff.A changelog destination (webhook_changelog_destination / kafka_changelog_destination) can be added or updated, but not removed - the Port API does not support clearing it. To remove it, recreate the integration.Existing integrations can be brought under Terraform management with terraform import port_integration.my_integration <installation_id>.
 ---
 
 # port_integration (Resource)
 
 # Integration resource
 
-This resource can be used to create new custom integrations, as well as to manage the config and mappings of existing integrations (including those installed from Port's catalog of native integrations).
+This resource can be used to create new integrations directly from Terraform (no prior installation via the UI is required), as well as to manage the config and mappings of existing integrations (including those installed from Port's catalog of native integrations).
 
 Docs about integrations can be found [here](https://docs.getport.io/integrations-index/).
 
 Docs about how to use Port's Terraform provider to create and manage integrations can be found [here](https://docs.getport.io/context-lake/ingestion/ingest-data-into-port/other/iac/terraform/terraform).
 
+## Self-hosted (OnPrem) integration
+
+Self-hosted integrations run on your own infrastructure (e.g. an Ocean exporter container) and pull their mapping from Port. This is the default hosting method.
 
 ```hcl
 resource "port_integration" "my_custom_integration" {
@@ -81,13 +134,73 @@ resource "port_integration" "my_custom_integration" {
 		}]
 	})
 }
-
-
 ```
+
+
+## Port-hosted (SaaS) integration
+
+Port-hosted integrations run on Port's infrastructure. Set `installation_type = "Saas"` and provide the integration `spec`, which holds the hosting configuration (`integrationSpec`) and runtime preferences (`appSpec`).
+
+Sensitive `integrationSpec` fields (tokens, keys, etc.) must reference a [Port organization secret](https://docs.getport.io/platform-administration/secrets-management/port-secrets/) **by name** - plain values are rejected. Use the `port_organization_secret` resource to manage them:
+
+```hcl
+resource "port_organization_secret" "gitlab_token_mapping" {
+	secret_name  = "my-gitlab-token-mapping"
+	secret_value = jsonencode({ "glpat-example" : ["**"] })
+	description  = "GitLab tokens and the group scopes they may ingest"
+}
+
+resource "port_integration" "my_gitlab_saas" {
+	installation_id       = "my-gitlab-saas"
+	installation_type     = "Saas"
+	installation_app_type = "gitlab"
+	title                 = "My GitLab (Port-hosted)"
+
+	spec = jsonencode({
+		integrationSpec = {
+			gitlabHost   = "https://gitlab.com"
+			tokenMapping = port_organization_secret.gitlab_token_mapping.secret_name
+		}
+		appSpec = {
+			scheduledResyncInterval = "2h"
+		}
+	})
+
+	config = jsonencode({
+		createMissingRelatedEntities = true
+		deleteDependentEntities      = true
+		resources = [{
+			kind = "project"
+			selector = {
+				query = "true"
+			}
+			port = {
+				entity = {
+					mappings = [{
+						identifier = ".path_with_namespace"
+						title      = ".name"
+						blueprint  = "'gitlabProject'"
+					}]
+				}
+			}
+		}]
+	})
+}
+```
+
+
+The required `integrationSpec` fields depend on the integration type - see each integration's documentation page for its configuration reference.
 
 ### NOTICE:
 
 The following config properties (`selector.query|entity.mappings.*`) are jq expressions, which means that you need to input either a valid jq expression (E.g `.title`), or if you want a string value, a qouted escaped string val (E.g `'my-string'`).
+
+### NOTES:
+
+- `installation_id` and `installation_app_type` cannot be changed after creation - changing them recreates the integration.
+- For Port-hosted (SaaS) integrations, `version` is managed by Port once the integration is provisioned. Omit it from your configuration to avoid a perpetual diff.
+- A changelog destination (`webhook_changelog_destination` / `kafka_changelog_destination`) can be added or updated, but not removed - the Port API does not support clearing it. To remove it, recreate the integration.
+- Existing integrations can be brought under Terraform management with `terraform import port_integration.my_integration <installation_id>`.
 
 
 
@@ -102,7 +215,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 - `config` (String) Integration Config Raw JSON string (use `jsonencode`)
 - `installation_app_type` (String)
-- `installation_type` (String) How the integration is hosted: `OnPrem`, `Saas`, `SaasOAuth2`, `CustomGithubApp`, or `EnterpriseGithubApp`. Defaults to `OnPrem` when omitted on create. Changing this forces replacement.
+- `installation_type` (String) How the integration is hosted: `OnPrem`, `Saas`, `SaasOAuth2`, `CustomGithubApp`, or `EnterpriseGithubApp`. Defaults to `OnPrem` when omitted on create.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `spec` (String, Sensitive) SaaS integration spec JSON (`integrationSpec` / `appSpec`). Use `jsonencode`. Required for most SaaS integrations.
 - `title` (String)

@@ -104,7 +104,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 - `installation_app_type` (String)
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `title` (String)
-- `version` (String)
+- `version` (String) The integration version. When set in Terraform, Port applies it via the integration PATCH API. When omitted, version changes made outside Terraform (for example by a deployment upgrade) are ignored in state.
 - `webhook_changelog_destination` (Attributes) The webhook changelog destination of the integration (see [below for nested schema](#nestedatt--webhook_changelog_destination))
 
 ### Read-Only

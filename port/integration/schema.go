@@ -18,8 +18,9 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Required:            true,
 		},
 		"version": schema.StringAttribute{
-			Optional: true,
-			Computed: true,
+			MarkdownDescription: "The integration version. When set in Terraform, Port applies it via the integration PATCH API. When omitted, version changes made outside Terraform (for example by a deployment upgrade) are ignored in state.",
+			Optional:            true,
+			Computed:            true,
 		},
 		"title": schema.StringAttribute{
 			Optional: true,

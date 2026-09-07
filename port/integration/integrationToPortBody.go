@@ -31,7 +31,6 @@ func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
 	integration.Title = state.Title.ValueStringPointer()
 	integration.Version = state.Version.ValueStringPointer()
 	integration.InstallationAppType = state.InstallationAppType.ValueStringPointer()
-	integration.InstallationType = state.InstallationType.ValueStringPointer()
 
 	if !state.Config.IsNull() {
 		configStr := state.Config.ValueString()
@@ -40,14 +39,6 @@ func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
 			return nil, err
 		}
 		integration.Config = config
-	}
-	if !state.Spec.IsNull() {
-		specStr := state.Spec.ValueString()
-		spec, err := utils.TerraformJsonStringToGoObject(&specStr)
-		if err != nil {
-			return nil, err
-		}
-		integration.Spec = spec
 	}
 	if !state.KafkaChangelogDestination.IsNull() {
 		integration.ChangelogDestination = &cli.ChangelogDestination{

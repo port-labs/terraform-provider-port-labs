@@ -30,6 +30,225 @@ func testAccCreateBlueprintConfig(identifier string) string {
 	`, identifier)
 }
 
+const testAccEntityPageSinglePageFilter = `
+  page_filters = [
+    jsonencode(
+      {
+        "identifier" = "fac6b5aa-272c-4a20-9635-add07d097bb9"
+        "title"      = "Entity Creation Date is in the past 30 days"
+        "query" = {
+          "combinator" = "and"
+          "rules" = [
+            {
+              "property" = "$createdAt"
+              "operator" = "between"
+              "value" = {
+                "preset" = "lastMonth"
+              }
+            }
+          ]
+          "blueprint" = "dashboard-filters-meta-blueprint"
+        }
+      }
+    ),
+  ]`
+
+const testAccEntityPageDoublePageFilter = `
+  page_filters = [
+    jsonencode(
+      {
+        "identifier" = "fac6b5aa-272c-4a20-9635-add07d097bb9"
+        "title"      = "Entity Creation Date is in the past 30 days"
+        "query" = {
+          "combinator" = "and"
+          "rules" = [
+            {
+              "property" = "$createdAt"
+              "operator" = "between"
+              "value" = {
+                "preset" = "lastMonth"
+              }
+            }
+          ]
+          "blueprint" = "dashboard-filters-meta-blueprint"
+        }
+      }
+    ),
+    jsonencode(
+      {
+        "identifier" = "b2c3d4e5-272c-4a20-9635-add07d097bb9"
+        "title"      = "Entity updated in the past 7 days"
+        "query" = {
+          "combinator" = "and"
+          "rules" = [
+            {
+              "property" = "$updatedAt"
+              "operator" = "between"
+              "value" = {
+                "preset" = "lastWeek"
+              }
+            }
+          ]
+          "blueprint" = "dashboard-filters-meta-blueprint"
+        }
+      }
+    ),
+  ]`
+
+func testAccEntityPageWidgets(widgetTitle string) string {
+	return fmt.Sprintf(`
+  widgets = [
+    jsonencode(
+      {
+        "id"                  = "entityPageGrouper"
+        "type"                = "grouper"
+        "displayMode"         = "tabs"
+        "activeGroupUrlParam" = "activeTab"
+        "groupsOrder" = [
+          "Overview",
+          "Related Entities",
+          "Runs",
+          "Audit Log",
+        ]
+        "groups" = [
+          {
+            "title" = "Overview"
+            "widgets" = [
+              {
+                "id"   = "overviewDashboard"
+                "type" = "dashboard-widget"
+                "layout" = [
+                  {
+                    "height" = 400
+                    "columns" = [
+                      {
+                        "id"   = "entityDetails"
+                        "size" = 12
+                      }
+                    ]
+                  }
+                ]
+                "widgets" = [
+                  {
+                    "id"          = "entityDetails"
+                    "type"        = "entity-info"
+                    "title"       = "%s"
+                    "blueprint"   = "{{blueprint}}"
+                    "entity"      = "{{url.identifier}}"
+                    "hiddenQuery" = []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title" = "Related Entities"
+            "widgets" = [
+              {
+                "id"          = "relatedEntitiesGrouper"
+                "type"        = "grouper"
+                "title"       = "Related Entities"
+                "displayMode" = "switch"
+                "groups" = [
+                  {
+                    "title" = "Table"
+                    "icon"  = "Table"
+                    "widgets" = [
+                      {
+                        "id"   = "relatedTable"
+                        "type" = "table-entities-explorer-by-direction"
+                      }
+                    ]
+                  },
+                  {
+                    "title" = "Graph"
+                    "icon"  = "Relation"
+                    "widgets" = [
+                      {
+                        "id"               = "relatedGraph"
+                        "type"             = "graph-entities-explorer"
+                        "hiddenBlueprints" = []
+                        "dataset" = {
+                          "combinator" = "or"
+                          "rules" = [
+                            {
+                              "operator"  = "relatedTo"
+                              "value"     = "{{url.identifier}}"
+                              "blueprint" = "{{blueprint}}"
+                            },
+                            {
+                              "combinator" = "and"
+                              "rules" = [
+                                {
+                                  "operator" = "="
+                                  "value"    = "{{url.identifier}}"
+                                  "property" = "$identifier"
+                                },
+                                {
+                                  "operator" = "="
+                                  "value"    = "{{blueprint}}"
+                                  "property" = "$blueprint"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "title" = "Runs"
+            "widgets" = [
+              {
+                "id"    = "runsTable"
+                "type"  = "runs-table"
+                "title" = "Run Log"
+                "query" = {
+                  "entity"    = "{{url.identifier}}"
+                  "blueprint" = "{{blueprint}}"
+                }
+              }
+            ]
+          },
+          {
+            "title" = "Audit Log"
+            "widgets" = [
+              {
+                "id"   = "auditLogTable"
+                "type" = "table-audit-log"
+                "query" = {
+                  "entity"    = "{{url.identifier}}"
+                  "blueprint" = "{{blueprint}}"
+                }
+              }
+            ]
+          }
+        ]
+      }
+    )
+  ]`, widgetTitle)
+}
+
+func testAccEntityPageConfig(identifier string, pageFilters string, widgetTitle string) string {
+	return fmt.Sprintf(`
+resource "port_page" "entity_page" {
+  identifier = "%s"
+  title      = "TF test microservice"
+  icon       = "Terraform"
+  type       = "entity"
+  blueprint  = port_blueprint.microservice.identifier
+
+  depends_on = [port_blueprint.microservice]
+%s
+%s
+}
+`, identifier, pageFilters, testAccEntityPageWidgets(widgetTitle))
+}
+
 func TestAccPortPageResourceBasicBetaEnabled(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	pageIdentifier := utils.GenID()
@@ -464,160 +683,7 @@ func TestAccPortPageResourceEntityPage(t *testing.T) {
 	}
 
 	blueprintConfig := testAccCreateBlueprintConfig(blueprintIdentifier)
-
-	entityPageConfig := fmt.Sprintf(`
-resource "port_page" "entity_page" {
-  identifier = "%s"
-  title      = "TF test microservice"
-  icon       = "Terraform"
-  type       = "entity"
-  blueprint  = port_blueprint.microservice.identifier
-
-  depends_on = [port_blueprint.microservice]
-
-  page_filters = [
-    jsonencode(
-      {
-        "identifier" = "fac6b5aa-272c-4a20-9635-add07d097bb9"
-        "title"      = "Entity Creation Date is in the past 30 days"
-        "query" = {
-          "combinator" = "and"
-          "rules" = [
-            {
-              "property" = "$createdAt"
-              "operator" = "between"
-              "value" = {
-                "preset" = "lastMonth"
-              }
-            }
-          ]
-          "blueprint" = "dashboard-filters-meta-blueprint"
-        }
-      }
-    ),
-  ]
-
-  widgets = [
-    jsonencode(
-      {
-        "id"          = "entityPageGrouper",
-        "type"        = "grouper",
-        "displayMode" = "tabs",
-        "groupsOrder" = ["Overview"],
-        "groups" = [
-          {
-            "title" = "Overview",
-            "widgets" = [
-              {
-                "id"   = "overviewDashboard",
-                "type" = "dashboard-widget",
-                "layout" = [
-                  {
-                    "height" = 400,
-                    "columns" = [
-                      {
-                        "id"   = "entityDetails",
-                        "size" = 12,
-                      },
-                    ],
-                  },
-                ],
-                "widgets" = [
-                  {
-                    "id"          = "entityDetails",
-                    "type"        = "entity-info",
-                    "title"       = "Details",
-                    "blueprint"   = "{{blueprint}}",
-                    "entity"      = "{{url.identifier}}",
-                    "hiddenQuery" = [],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      }
-    ),
-  ]
-}
-`, entityPageIdentifier)
-
-	updatedEntityPageConfig := fmt.Sprintf(`
-resource "port_page" "entity_page" {
-  identifier = "%s"
-  title      = "TF test microservice"
-  icon       = "Terraform"
-  type       = "entity"
-  blueprint  = port_blueprint.microservice.identifier
-
-  depends_on = [port_blueprint.microservice]
-
-  page_filters = [
-    jsonencode(
-      {
-        "identifier" = "fac6b5aa-272c-4a20-9635-add07d097bb9"
-        "title"      = "Entity Creation Date is in the past 30 days"
-        "query" = {
-          "combinator" = "and"
-          "rules" = [
-            {
-              "property" = "$createdAt"
-              "operator" = "between"
-              "value" = {
-                "preset" = "lastMonth"
-              }
-            }
-          ]
-          "blueprint" = "dashboard-filters-meta-blueprint"
-        }
-      }
-    ),
-  ]
-
-  widgets = [
-    jsonencode(
-      {
-        "id"          = "entityPageGrouper",
-        "type"        = "grouper",
-        "displayMode" = "tabs",
-        "groupsOrder" = ["Overview"],
-        "groups" = [
-          {
-            "title" = "Overview",
-            "widgets" = [
-              {
-                "id"   = "overviewDashboard",
-                "type" = "dashboard-widget",
-                "layout" = [
-                  {
-                    "height" = 400,
-                    "columns" = [
-                      {
-                        "id"   = "entityDetails",
-                        "size" = 12,
-                      },
-                    ],
-                  },
-                ],
-                "widgets" = [
-                  {
-                    "id"        = "entityDetails",
-                    "type"        = "entity-info",
-                    "title"       = "Updated Details",
-                    "blueprint"   = "{{blueprint}}",
-                    "entity"      = "{{url.identifier}}",
-                    "hiddenQuery" = [],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      }
-    ),
-  ]
-}
-`, entityPageIdentifier)
+	entityPageConfig := testAccEntityPageConfig(entityPageIdentifier, testAccEntityPageSinglePageFilter, "Details")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
@@ -635,13 +701,39 @@ resource "port_page" "entity_page" {
 					resource.TestCheckResourceAttr("port_page.entity_page", "page_filters.#", "1"),
 				),
 			},
+		},
+	})
+}
+
+func TestAccPortPageResourceEntityPageUpdatePageFilters(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	entityPageIdentifier := blueprintIdentifier + "Entity"
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	blueprintConfig := testAccCreateBlueprintConfig(blueprintIdentifier)
+	entityPageConfig := testAccEntityPageConfig(entityPageIdentifier, testAccEntityPageSinglePageFilter, "Details")
+	updatedPageFiltersConfig := testAccEntityPageConfig(entityPageIdentifier, testAccEntityPageDoublePageFilter, "Details")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
 			{
-				Config: acctest.ProviderConfig + blueprintConfig + updatedEntityPageConfig,
+				Config: acctest.ProviderConfig + blueprintConfig + entityPageConfig,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_page.entity_page", "title", "TF test microservice"),
-					resource.TestCheckResourceAttr("port_page.entity_page", "type", "entity"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "identifier", entityPageIdentifier),
 					resource.TestCheckResourceAttr("port_page.entity_page", "widgets.#", "1"),
 					resource.TestCheckResourceAttr("port_page.entity_page", "page_filters.#", "1"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + blueprintConfig + updatedPageFiltersConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.entity_page", "widgets.#", "1"),
+					resource.TestCheckResourceAttr("port_page.entity_page", "page_filters.#", "2"),
 				),
 			},
 		},
@@ -868,6 +960,7 @@ resource "port_page" "page_with_filters" {
           {
             "id" = "widget1"
             "type" = "table-entities-explorer"
+            "displayMode" = "widget"
             "title" = "Services Table"
             "blueprint" = port_blueprint.service.identifier
             "dataset" = {

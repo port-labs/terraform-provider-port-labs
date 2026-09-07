@@ -87,16 +87,18 @@ var IntegrationResourceMarkdownDescription = `
 
 # Integration resource
 
-**NOTE:** This resource manages existing integration and integration mappings, not for creating new integrations.
+This resource manages the full lifecycle (create/read/update/delete) of a Port integration and its mapping - including creating a brand-new integration, not just adopting one installed by hand.
 
 Docs about integrations can be found [here](https://docs.getport.io/integrations-index/).
 
-Docs about how to import existing integrations and manage their mappings can be found [here](https://docs.getport.io/guides/all/import-and-manage-integration).
+If you have an integration that was installed before you started managing it with Terraform, you can bring it under Terraform management by importing it instead of creating a new one - see [Import and manage an integration](https://docs.getport.io/guides/all/import-and-manage-integration).
 
+## Creating a self-hosted (OnPrem) integration
 
 ` + "```hcl" + `
 resource "port_integration" "my_custom_integration" {
 	installation_id       = "my-custom-integration-id"
+	installation_app_type = "my-custom-kind"
 	title                 = "My Custom Integration"
 	config = jsonencode({
 		createMissingRelatedEntitiesboolean = true
@@ -122,9 +124,25 @@ resource "port_integration" "my_custom_integration" {
 		}]
 	})
 }
-
-
 ` + "```\n" + `
+
+With ` + "`installation_type = \"OnPrem\"`" + ` (the default), Terraform only creates/manages the Port-side registration and mapping - you still need to run the integration's own agent/container (e.g. via Helm or Docker) separately, pointed at the same ` + "`installation_id`" + `.
+
+## Creating a Port-hosted (SaaS) integration
+
+` + "```hcl" + `
+resource "port_integration" "my_hosted_integration" {
+	installation_id       = "my-hosted-integration-id"
+	installation_app_type = "githubOcean"
+	installation_type     = "Saas"
+	title                 = "My Hosted Integration"
+}
+` + "```\n" + `
+
+With ` + "`installation_type = \"Saas\"`" + `, Port provisions and runs the integration for you; ` + "`terraform apply`" + ` waits for provisioning to finish (and ` + "`terraform destroy`" + ` waits for teardown to finish) before returning.
+
+**NOTE:** OAuth-based installation types (e.g. GitHub App installs) require a manual browser consent step and cannot be created through this resource.
+
 ### NOTICE:
 
 The following config properties (` + "`selector.query|entity.mappings.*`" + `) are jq expressions, which means that you need to input either a valid jq expression (E.g ` + "`.title`" + `), or if you want a string value, a qouted escaped string val (E.g ` + "`'my-string'`" + `).

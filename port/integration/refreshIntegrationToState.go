@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
@@ -22,6 +23,7 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 	if a.ChangelogDestination != nil {
 		if a.ChangelogDestination.Type == consts.Kafka {
 			state.KafkaChangelogDestination, _ = types.ObjectValue(nil, nil)
+			state.WebhookChangelogDestination = nil
 		} else {
 			if a.ChangelogDestination.Url != "" {
 				state.WebhookChangelogDestination = &WebhookChangelogDestinationModel{
@@ -30,8 +32,12 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 				if a.ChangelogDestination.Agent != nil {
 					state.WebhookChangelogDestination.Agent = types.BoolValue(*a.ChangelogDestination.Agent)
 				}
+				state.KafkaChangelogDestination = types.ObjectNull(map[string]attr.Type{})
 			}
 		}
+	} else {
+		state.KafkaChangelogDestination = types.ObjectNull(map[string]attr.Type{})
+		state.WebhookChangelogDestination = nil
 	}
 
 	return nil

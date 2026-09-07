@@ -194,8 +194,8 @@ flowchart LR
 | `title` | string, optional | |
 | `config` | string (JSON), optional | Entity mappings (jq) |
 | `version` | string, optional, computed | Omit for SaaS unless intentional |
-| `webhook_changelog_destination` | block, optional | Add/update only; removal unsupported |
-| `kafka_changelog_destination` | object, optional | |
+| `webhook_changelog_destination` | block, optional, computed | Server-owned once set; see update semantics |
+| `kafka_changelog_destination` | object, optional, computed | |
 
 #### SaaS-only
 
@@ -326,7 +326,7 @@ sequenceDiagram
 | `config` (mappings) | In-place PATCH |
 | `integration_spec` / `app_spec` | In-place PATCH → status `Updating` → poll |
 | `installation_id`, `installation_app_type`, `installation_type` | Force replacement |
-| Remove `webhook_changelog_destination` | **Rejected** by provider (API cannot clear) |
+| Remove `webhook_changelog_destination` | No-op; computed attribute keeps the last known value (API cannot clear) |
 | Fix `Error` integration | PATCH allowed (do not force recreate) |
 
 ### Integration catalog reference (Ocean)

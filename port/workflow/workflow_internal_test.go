@@ -995,8 +995,9 @@ func TestSelfServeTriggerPermissionsUsePolicy(t *testing.T) {
 				Identifier: types.StringValue("trigger"),
 				SelfServeTrigger: &SelfServeTriggerModel{
 					Permissions: &PermissionsModel{
-						Roles:  stringList("Member"),
-						Policy: types.StringValue(`{"combinator":"and","rules":[]}`),
+						Roles:        stringList("Member"),
+						Policy:       types.StringValue(`{"combinator":"and","rules":[]}`),
+						ErrorMessage: types.StringValue("Only platform owners can run this workflow"),
 					},
 				},
 			},
@@ -1010,11 +1011,52 @@ func TestSelfServeTriggerPermissionsUsePolicy(t *testing.T) {
 	require.NotNil(t, permissions)
 	assert.NotNil(t, permissions.Policy)
 	assert.Nil(t, permissions.UsersQuery, "permissions must not send usersQuery")
+	assert.Equal(t, "Only platform owners can run this workflow", permissions.ErrorMessage)
 
 	body, err := json.Marshal(permissions)
 	require.NoError(t, err)
 	assert.Contains(t, string(body), `"policy"`)
+	assert.Contains(t, string(body), `"errorMessage"`)
 	assert.NotContains(t, string(body), `"usersQuery"`)
+}
+
+func TestSelfServeTriggerPermissionsErrorMessageOnlyRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	permissions := &cli.WorkflowNodePermissions{
+		ErrorMessage: "Contact your admin to request access",
+	}
+
+	model := permissionsToModel(ctx, permissions, false)
+	require.NotNil(t, model)
+	assert.Equal(t, "Contact your admin to request access", model.ErrorMessage.ValueString())
+
+	body, err := permissionsToPortBody(ctx, model)
+	require.NoError(t, err)
+	assert.Equal(t, "Contact your admin to request access", body.ErrorMessage)
+}
+
+func TestSelfServeTriggerPermissionsEmptyErrorMessageOmitted(t *testing.T) {
+	ctx := context.Background()
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("trigger"),
+				SelfServeTrigger: &SelfServeTriggerModel{
+					Permissions: &PermissionsModel{
+						Roles:        stringList("Member"),
+						ErrorMessage: types.StringValue("   "),
+					},
+				},
+			},
+		},
+	}
+
+	w, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+	assert.Empty(t, w.Nodes[0].Config.Permissions.ErrorMessage)
 }
 
 func TestRespondersRoundTrip(t *testing.T) {

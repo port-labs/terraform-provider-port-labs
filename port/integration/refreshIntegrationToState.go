@@ -14,6 +14,7 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 	state.Title = types.StringPointerValue(a.Title)
 	state.InstallationAppType = types.StringPointerValue(a.InstallationAppType)
 	state.Version = types.StringPointerValue(a.Version)
+	state.OauthBrokerUrl = types.StringPointerValue(a.OauthBrokerUrl)
 
 	if a.Config != nil {
 		config, _ := utils.GoObjectToTerraformStringPreferExisting(state.Config, a.Config, r.portClient.JSONEscapeHTML)

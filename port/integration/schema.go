@@ -38,12 +38,9 @@ func IntegrationSchema() map[string]schema.Attribute {
 			},
 		},
 		"installation_type": schema.StringAttribute{
-			MarkdownDescription: "How the integration is hosted: `OnPrem`, `Saas`, `SaasOAuth2`, `CustomGithubApp`, or `EnterpriseGithubApp`. Defaults to `OnPrem` when omitted on create. Changing this forces replacement.",
+			MarkdownDescription: "How the integration is hosted: `OnPrem`, `Saas`, `SaasOAuth2`, `CustomGithubApp`, or `EnterpriseGithubApp`. Defaults to `OnPrem` when omitted on create.",
 			Optional:            true,
 			Computed:            true,
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.RequiresReplace(),
-			},
 			Validators: []validator.String{
 				stringvalidator.OneOf(
 					"OnPrem",

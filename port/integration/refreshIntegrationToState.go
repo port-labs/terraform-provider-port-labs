@@ -21,8 +21,13 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 		state.Config = config
 	}
 	if a.Spec != nil {
-		spec, _ := utils.GoObjectToTerraformStringPreferExisting(state.Spec, a.Spec, r.portClient.JSONEscapeHTML)
-		state.Spec = spec
+		if state.Spec.IsNull() || state.Spec.IsUnknown() {
+			spec, err := utils.GoObjectToTerraformString(a.Spec, r.portClient.JSONEscapeHTML)
+			if err != nil {
+				return err
+			}
+			state.Spec = spec
+		}
 	}
 	if a.ChangelogDestination != nil {
 		if a.ChangelogDestination.Type == consts.Kafka {

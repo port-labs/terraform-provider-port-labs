@@ -146,8 +146,8 @@ func permissionsBlock(description string) schema.Block {
 		Validators: []validator.String{queryValidator("Invalid permissions policy")},
 	}
 	attributes["error_message"] = schema.StringAttribute{
-		MarkdownDescription: "A custom error message shown when a user is denied by the dynamic `policy`. " +
-			"Ignored when no `policy` is configured.",
+		MarkdownDescription: "A custom error message shown when a dynamic `policy` denies execution (max 100 characters). " +
+			"Ignored when `policy` is not set.",
 		Optional:   true,
 		Validators: []validator.String{stringvalidator.LengthAtMost(maxPermissionsErrorMessage)},
 	}

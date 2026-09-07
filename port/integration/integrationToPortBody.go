@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
@@ -40,18 +41,31 @@ func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
 		}
 		integration.Config = config
 	}
-	if !state.KafkaChangelogDestination.IsNull() {
-		integration.ChangelogDestination = &cli.ChangelogDestination{
-			Type: consts.Kafka,
-		}
-	}
-	if state.WebhookChangelogDestination != nil {
-		integration.ChangelogDestination = &cli.ChangelogDestination{
-			Type:  consts.Webhook,
-			Url:   state.WebhookChangelogDestination.Url.ValueString(),
-			Agent: state.WebhookChangelogDestination.Agent.ValueBoolPointer(),
-		}
+	switch {
+	case isConfigured(state.WebhookChangelogDestination):
+		integration.ChangelogDestination = webhookChangelogDestinationToPortBody(state.WebhookChangelogDestination)
+	case isConfigured(state.KafkaChangelogDestination):
+		integration.ChangelogDestination = &cli.ChangelogDestination{Type: consts.Kafka}
 	}
 
 	return integration, nil
+}
+
+func isConfigured(obj types.Object) bool {
+	return !obj.IsNull() && !obj.IsUnknown()
+}
+
+func webhookChangelogDestinationToPortBody(obj types.Object) *cli.ChangelogDestination {
+	url, ok := obj.Attributes()["url"].(types.String)
+	if !ok || url.IsNull() {
+		return nil
+	}
+	// A missing agent leaves the zero value, which is null.
+	agent, _ := obj.Attributes()["agent"].(types.Bool)
+
+	return &cli.ChangelogDestination{
+		Type:  consts.Webhook,
+		Url:   url.ValueString(),
+		Agent: agent.ValueBoolPointer(),
+	}
 }

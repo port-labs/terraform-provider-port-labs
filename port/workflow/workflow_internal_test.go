@@ -1017,6 +1017,48 @@ func TestSelfServeTriggerPermissionsUsePolicy(t *testing.T) {
 	assert.NotContains(t, string(body), `"usersQuery"`)
 }
 
+func TestSelfServeTriggerPermissionsErrorMessageRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	errorMessage := "Only production deploys from the platform team are allowed"
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("trigger"),
+				SelfServeTrigger: &SelfServeTriggerModel{
+					Permissions: &PermissionsModel{
+						Policy:       types.StringValue(`{"combinator":"and","rules":[]}`),
+						ErrorMessage: types.StringValue(errorMessage),
+					},
+				},
+			},
+		},
+	}
+
+	w, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	permissions := w.Nodes[0].Config.Permissions
+	require.NotNil(t, permissions)
+	require.NotNil(t, permissions.ErrorMessage)
+	assert.Equal(t, errorMessage, *permissions.ErrorMessage)
+
+	body, err := json.Marshal(permissions)
+	require.NoError(t, err)
+	assert.Contains(t, string(body), `"errorMessage"`)
+	assert.Contains(t, string(body), errorMessage)
+
+	model := permissionsToModel(ctx, permissions, false)
+	require.NotNil(t, model)
+	assert.Equal(t, errorMessage, model.ErrorMessage.ValueString())
+
+	roundTripped, err := permissionsToPortBody(ctx, model)
+	require.NoError(t, err)
+	require.NotNil(t, roundTripped.ErrorMessage)
+	assert.Equal(t, errorMessage, *roundTripped.ErrorMessage)
+}
+
 func TestRespondersRoundTrip(t *testing.T) {
 	ctx := context.Background()
 

@@ -835,6 +835,7 @@ Optional:
 
 Optional:
 
+- `error_message` (String) A custom error message shown when a user is denied by the dynamic `policy`. Ignored when no `policy` is configured.
 - `policy` (String) A JSON encoded RBAC query that dynamically resolves who is permitted, of the form `{"combinator":"and","rules":[{"property":{"context":"user","property":"department"},"operator":"=","value":"engineering"}]}`. `context` is one of `user`, `userTeams`, `form`, `workflowRun`.
 - `roles` (List of String) The roles the permission applies to.
 - `teams` (List of String) The identifiers of the teams the permission applies to. They must exist in the organization.

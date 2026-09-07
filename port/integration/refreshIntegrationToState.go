@@ -12,12 +12,17 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 	state.InstallationId = types.StringValue(integrationId)
 
 	state.Title = types.StringPointerValue(a.Title)
+	state.InstallationType = types.StringPointerValue(a.InstallationType)
 	state.InstallationAppType = types.StringPointerValue(a.InstallationAppType)
 	state.Version = types.StringPointerValue(a.Version)
 
 	if a.Config != nil {
 		config, _ := utils.GoObjectToTerraformStringPreferExisting(state.Config, a.Config, r.portClient.JSONEscapeHTML)
 		state.Config = config
+	}
+	if a.Spec != nil {
+		spec, _ := utils.GoObjectToTerraformStringPreferExisting(state.Spec, a.Spec, r.portClient.JSONEscapeHTML)
+		state.Spec = spec
 	}
 	if a.ChangelogDestination != nil {
 		if a.ChangelogDestination.Type == consts.Kafka {

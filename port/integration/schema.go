@@ -3,11 +3,13 @@ package integration
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 )
 
 func IntegrationSchema() map[string]schema.Attribute {
@@ -35,9 +37,31 @@ func IntegrationSchema() map[string]schema.Attribute {
 				stringplanmodifier.RequiresReplace(),
 			},
 		},
+		"installation_type": schema.StringAttribute{
+			MarkdownDescription: "How the integration is hosted: `OnPrem`, `Saas`, `SaasOAuth2`, `CustomGithubApp`, or `EnterpriseGithubApp`. Defaults to `OnPrem` when omitted on create. Changing this forces replacement.",
+			Optional:            true,
+			Computed:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.RequiresReplace(),
+			},
+			Validators: []validator.String{
+				stringvalidator.OneOf(
+					"OnPrem",
+					"Saas",
+					"SaasOAuth2",
+					"CustomGithubApp",
+					"EnterpriseGithubApp",
+				),
+			},
+		},
 		"config": schema.StringAttribute{
 			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`)",
 			Optional:            true,
+		},
+		"spec": schema.StringAttribute{
+			MarkdownDescription: "SaaS integration spec JSON (`integrationSpec` / `appSpec`). Use `jsonencode`. Required for most SaaS integrations.",
+			Optional:            true,
+			Sensitive:           true,
 		},
 		"webhook_changelog_destination": schema.SingleNestedAttribute{
 			MarkdownDescription: "The webhook changelog destination of the integration",
@@ -72,11 +96,11 @@ var IntegrationResourceMarkdownDescription = `
 
 # Integration resource
 
-**NOTE:** This resource manages existing integration and integration mappings, not for creating new integrations.
+This resource can be used to create new custom integrations, as well as to manage the config and mappings of existing integrations (including those installed from Port's catalog of native integrations).
 
 Docs about integrations can be found [here](https://docs.getport.io/integrations-index/).
 
-Docs about how to import existing integrations and manage their mappings can be found [here](https://docs.getport.io/guides/all/import-and-manage-integration).
+Docs about how to use Port's Terraform provider to create and manage integrations can be found [here](https://docs.getport.io/context-lake/ingestion/ingest-data-into-port/other/iac/terraform/terraform).
 
 
 ` + "```hcl" + `

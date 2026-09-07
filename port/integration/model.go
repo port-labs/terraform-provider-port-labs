@@ -13,6 +13,7 @@ type IntegrationModel struct {
 	InstallationAppType         types.String                      `tfsdk:"installation_app_type"`
 	Title                       types.String                      `tfsdk:"title"`
 	Version                     types.String                      `tfsdk:"version"`
+	OauthBrokerUrl              types.String                      `tfsdk:"oauth_broker_url"`
 	Config                      types.String                      `tfsdk:"config"`
 	KafkaChangelogDestination   types.Object                      `tfsdk:"kafka_changelog_destination"`
 	WebhookChangelogDestination *WebhookChangelogDestinationModel `tfsdk:"webhook_changelog_destination"`

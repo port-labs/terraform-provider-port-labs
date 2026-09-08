@@ -106,33 +106,33 @@ Docs about how to import existing integrations and manage their mappings can be 
 
 
 ` + "```hcl" + `
-# Secret naming convention: _{INSTALLATION_ID}_{INTEGRATION_TYPE}_{PROPERTY} in SCREAMING_SNAKE_CASE,
-# Ocean can resolve the secret at runtime.
+# Secret naming convention: _{INSTALLATION_ID}_{INTEGRATION_TYPE}_{PROPERTY} in SCREAMING_SNAKE_CASE.
+# This matches the frontend's generateSecretName() so Ocean can resolve the secret at runtime.
+#
+# Each integration type has its own spec fields — check the integration's .port/spec.json
+# for the list of configurations (name, type, sensitive, dependencies, etc.).
 locals {
-  pagerduty_installation_id = "pagerduty-prod"
-  pagerduty_type            = "pagerduty"
+  github_installation_id = "github-prod"
+  github_type            = "github-ocean"
 }
 
-resource "port_organization_secret" "pagerduty_token" {
-  secret_name  = "_${upper(replace("${local.pagerduty_installation_id}_${local.pagerduty_type}_token", "-", "_"))}"
-  secret_value = var.pagerduty_token
+resource "port_organization_secret" "github_token" {
+  secret_name  = "_${upper(replace("${local.github_installation_id}_${local.github_type}_github_token", "-", "_"))}"
+  secret_value = var.github_token
 }
 
-resource "port_integration" "pagerduty" {
-  depends_on = [port_organization_secret.pagerduty_token]
+resource "port_integration" "github" {
+  depends_on = [port_organization_secret.github_token]
 
-  installation_id       = local.pagerduty_installation_id
-  installation_app_type = local.pagerduty_type
+  installation_id       = local.github_installation_id
+  installation_app_type = local.github_type
   installation_type     = "Saas"
-  version           = "0.1.0"
-  title             = "PagerDuty Production"
+  title                 = "GitHub Production"
 
   spec = jsonencode({
     integrationSpec = {
-      token = port_organization_secret.pagerduty_token.secret_name
-    }
-    appSpec = {
-      scheduledResyncInterval = "12h"
+      authenticationMode = "Personal Access Token"
+      githubToken        = port_organization_secret.github_token.secret_name
     }
   })
 

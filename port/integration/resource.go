@@ -71,7 +71,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		}
 	}
 
-	if err := r.refreshIntegrationState(plan, created, created.InstallationId); err != nil {
+	if err := r.refreshIntegrationState(plan, created, created.InstallationId, false); err != nil {
 		resp.Diagnostics.AddError("failed to refresh state after create", err.Error())
 		return
 	}
@@ -97,7 +97,7 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	if err := r.refreshIntegrationState(state, a, integrationIdentifier); err != nil {
+	if err := r.refreshIntegrationState(state, a, integrationIdentifier, true); err != nil {
 		resp.Diagnostics.AddError("failed to refresh integration state", err.Error())
 		return
 	}
@@ -150,7 +150,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		}
 	}
 
-	if err := r.refreshIntegrationState(plan, updated, integrationIdentifier); err != nil {
+	if err := r.refreshIntegrationState(plan, updated, integrationIdentifier, false); err != nil {
 		resp.Diagnostics.AddError("failed to refresh state after update", err.Error())
 		return
 	}

@@ -10,7 +10,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a *cli.Integration, integrationId string) error {
+func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a *cli.Integration, integrationId string, includeAppSpec bool) error {
 	state.ID = types.StringValue(integrationId)
 	state.InstallationId = types.StringValue(integrationId)
 	state.Title = types.StringPointerValue(a.Title)
@@ -25,7 +25,7 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 	}
 
 	if a.Spec != nil {
-		state.Spec = mergeSpec(state.Spec, a.Spec, r.portClient.JSONEscapeHTML)
+		state.Spec = mergeSpec(state.Spec, a.Spec, r.portClient.JSONEscapeHTML, includeAppSpec)
 	}
 
 	if a.Config != nil {
@@ -62,7 +62,7 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 //
 // systemSpec and privateSpec are always excluded — those are server-managed
 // and already stripped by the CLI layer's toClientSpec().
-func mergeSpec(stateTF types.String, remote *cli.IntegrationClientSpec, jsonEscapeHTML bool) types.String {
+func mergeSpec(stateTF types.String, remote *cli.IntegrationClientSpec, jsonEscapeHTML bool, includeAppSpec bool) types.String {
 	var userSpec map[string]map[string]any
 	if !stateTF.IsNull() && !stateTF.IsUnknown() {
 		_ = json.Unmarshal([]byte(stateTF.ValueString()), &userSpec)
@@ -90,8 +90,8 @@ func mergeSpec(stateTF types.String, remote *cli.IntegrationClientSpec, jsonEsca
 		merged["integrationSpec"] = userIS
 	}
 
-	// appSpec: take server values as-is (no sensitive fields).
-	if remote.AppSpec != nil {
+	// appSpec: only include on Read so Create/Update return a spec matching the plan.
+	if includeAppSpec && remote.AppSpec != nil {
 		merged["appSpec"] = remote.AppSpec
 	}
 

@@ -106,19 +106,26 @@ Docs about how to import existing integrations and manage their mappings can be 
 
 
 ` + "```hcl" + `
+# Secret naming convention: _{INSTALLATION_ID}_{INTEGRATION_TYPE}_{PROPERTY} in SCREAMING_SNAKE_CASE,
+# Ocean can resolve the secret at runtime.
+locals {
+  pagerduty_installation_id = "pagerduty-prod"
+  pagerduty_type            = "pagerduty"
+}
+
 resource "port_organization_secret" "pagerduty_token" {
-  secret_name  = "pagerduty-api-token"
+  secret_name  = "_${upper(replace("${local.pagerduty_installation_id}_${local.pagerduty_type}_token", "-", "_"))}"
   secret_value = var.pagerduty_token
 }
 
 resource "port_integration" "pagerduty" {
   depends_on = [port_organization_secret.pagerduty_token]
 
-  installation_id       = "pagerduty-prod"
-  installation_app_type = "pagerduty"
+  installation_id       = local.pagerduty_installation_id
+  installation_app_type = local.pagerduty_type
   installation_type     = "Saas"
-  version               = "0.1.0"
-  title                 = "PagerDuty Production"
+  version           = "0.1.0"
+  title             = "PagerDuty Production"
 
   spec = jsonencode({
     integrationSpec = {

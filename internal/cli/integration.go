@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"time"
 
@@ -12,8 +13,8 @@ import (
 )
 
 const (
-	provisioningPollInterval = 5 * time.Second
-	provisioningPollJitter   = 2 * time.Second
+	provisioningPollInterval = 10 * time.Second
+	provisioningPollJitter   = 3 * time.Second
 	provisioningMaxAttempts  = 60
 )
 
@@ -104,7 +105,7 @@ func (c *PortClient) DeleteIntegration(ctx context.Context, installationId strin
 }
 
 func (c *PortClient) WaitForIntegrationReady(ctx context.Context, installationId string) (*Integration, error) {
-	return retry.DoWithData(
+	integration, err := retry.DoWithData(
 		func() (*Integration, error) {
 			integration, statusCode, err := c.GetIntegration(ctx, installationId)
 			if err != nil {
@@ -132,10 +133,14 @@ func (c *PortClient) WaitForIntegrationReady(ctx context.Context, installationId
 		retry.Delay(provisioningPollInterval),
 		retry.MaxJitter(provisioningPollJitter),
 	)
+	if err != nil && errors.Is(err, errIntegrationNotReady) {
+		return nil, fmt.Errorf("timed out waiting for integration %q to become ready (still provisioning after %d polling attempts)", installationId, provisioningMaxAttempts)
+	}
+	return integration, err
 }
 
 func (c *PortClient) WaitForIntegrationDeleted(ctx context.Context, installationId string) error {
-	return retry.Do(
+	err := retry.Do(
 		func() error {
 			_, statusCode, err := c.GetIntegration(ctx, installationId)
 			if err != nil && statusCode == 404 {
@@ -153,6 +158,10 @@ func (c *PortClient) WaitForIntegrationDeleted(ctx context.Context, installation
 		retry.Delay(provisioningPollInterval),
 		retry.MaxJitter(provisioningPollJitter),
 	)
+	if err != nil && errors.Is(err, errIntegrationNotDeleted) {
+		return fmt.Errorf("timed out waiting for integration %q to be deleted (still exists after %d polling attempts)", installationId, provisioningMaxAttempts)
+	}
+	return err
 }
 
 func integrationStatus(i *Integration) string {

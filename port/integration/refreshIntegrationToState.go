@@ -21,13 +21,11 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, r
 		state.Status = types.StringNull()
 	}
 
-	if remote.Spec != nil {
-		spec, err := specToState(remote.Spec, state.Spec, r.portClient.JSONEscapeHTML)
-		if err != nil {
-			return err
-		}
-		state.Spec = spec
-	}
+	// Spec is deliberately NOT refreshed from the server response.
+	// The server strips sensitive integrationSpec values (they're org secret
+	// references resolved at runtime) and injects appSpec defaults that the
+	// user never configured. Overwriting would cause permanent drift.
+	// We keep whatever the user configured in their HCL.
 
 	if remote.Config != nil {
 		config, _ := utils.GoObjectToTerraformStringPreferExisting(state.Config, remote.Config, r.portClient.JSONEscapeHTML)

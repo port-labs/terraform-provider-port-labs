@@ -59,10 +59,16 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	if plan.isSaas() {
-		created, err = r.portClient.WaitForIntegrationReady(ctx, created.InstallationId)
-		if err != nil {
-			resp.Diagnostics.AddError("integration provisioning failed", err.Error())
-			return
+		ready, pollErr := r.portClient.WaitForIntegrationReady(ctx, created.InstallationId)
+		if pollErr != nil {
+			// The integration was created in Port but provisioning hasn't finished.
+			// Save it to state so the user can re-apply (to re-poll) or destroy.
+			resp.Diagnostics.AddWarning(
+				"integration created but not yet ready",
+				pollErr.Error()+". The integration has been saved to state. Run 'terraform apply' again to re-check, or 'terraform destroy' to clean up.",
+			)
+		} else {
+			created = ready
 		}
 	}
 
@@ -117,10 +123,14 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	if plan.isSaas() {
-		updated, err = r.portClient.WaitForIntegrationReady(ctx, plan.InstallationId.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError("integration update provisioning failed", err.Error())
-			return
+		ready, pollErr := r.portClient.WaitForIntegrationReady(ctx, plan.InstallationId.ValueString())
+		if pollErr != nil {
+			resp.Diagnostics.AddWarning(
+				"integration updated but not yet ready",
+				pollErr.Error()+". Run 'terraform apply' again to re-check status.",
+			)
+		} else {
+			updated = ready
 		}
 	}
 

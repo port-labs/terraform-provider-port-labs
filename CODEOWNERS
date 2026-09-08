@@ -30,3 +30,35 @@
 /docs/resources/scorecard_group.md @port-labs/spotlight-team
 
 /docs/resources/webhook.md @port-labs/lighthouse-team
+
+/examples/resources/port_action/ @port-labs/workflows-team
+/examples/resources/port_action_permissions/ @port-labs/workflows-team
+/examples/resources/port_workflow/ @port-labs/workflows-team
+
+/examples/resources/port_organization/ @port-labs/buildops
+/examples/resources/port_organization_settings/ @port-labs/buildops
+
+/examples/resources/port_integration/ @port-labs/connect-team
+
+/examples/resources/port_page/ @port-labs/spotlight-team
+/examples/resources/port_page_with_filters/ @port-labs/spotlight-team
+/examples/resources/port_scorecard/ @port-labs/spotlight-team
+/examples/resources/port_scorecard_group/ @port-labs/spotlight-team
+
+/examples/resources/port_webhook/ @port-labs/lighthouse-team
+
+/internal/cli/action.go @port-labs/workflows-team
+/internal/cli/actionPermissions.go @port-labs/workflows-team
+/internal/cli/workflow.go @port-labs/workflows-team
+/internal/cli/workflowModels.go @port-labs/workflows-team
+
+/internal/cli/organization.go @port-labs/buildops
+
+/internal/cli/integration.go @port-labs/connect-team
+
+/internal/cli/page.go @port-labs/spotlight-team
+/internal/cli/pagePermissions.go @port-labs/spotlight-team
+/internal/cli/scorecard.go @port-labs/spotlight-team
+/internal/cli/scorecardGroup.go @port-labs/spotlight-team
+
+/internal/cli/webhook.go @port-labs/lighthouse-team

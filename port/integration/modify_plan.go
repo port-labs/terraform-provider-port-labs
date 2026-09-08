@@ -70,9 +70,9 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
 }
 
-// specPlan keeps the spec recorded in state whenever the configured
-// integrationSpec is unchanged, so Port's appSpec additions do not read as a
-// removal the next time Terraform plans.
+// specPlan keeps the spec recorded in state whenever the user-configured
+// sections (integrationSpec, appSpec) are unchanged, so Port's server-added
+// appSpec fields do not read as a removal the next time Terraform plans.
 func specPlan(state, plan types.String) types.String {
 	if state.IsNull() || plan.IsNull() || plan.IsUnknown() {
 		return plan
@@ -82,7 +82,18 @@ func specPlan(state, plan types.String) types.String {
 	if stateSections == nil || planSections == nil {
 		return plan
 	}
-	if bytes.Equal(stateSections["integrationSpec"], planSections["integrationSpec"]) {
+
+	integrationSpecSame := bytes.Equal(stateSections["integrationSpec"], planSections["integrationSpec"])
+
+	// If the plan doesn't declare appSpec at all, the user isn't managing it
+	// — suppress any diff caused by the server's appSpec.
+	// If the plan does declare appSpec, compare it to detect user changes.
+	appSpecSame := true
+	if _, planHasAppSpec := planSections["appSpec"]; planHasAppSpec {
+		appSpecSame = bytes.Equal(stateSections["appSpec"], planSections["appSpec"])
+	}
+
+	if integrationSpecSame && appSpecSame {
 		return state
 	}
 	return plan

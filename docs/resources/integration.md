@@ -41,6 +41,17 @@ description: |-
         authenticationMode = "Personal Access Token"
         githubToken        = port_organization_secret.github_token.secret_name
       }
+  
+      # appSpec controls feature toggles. If omitted, the server applies its own
+      # defaults which may differ from the Port UI defaults. Declare explicitly
+      # to match the UI behaviour.
+      appSpec = {
+        scheduledResyncInterval  = "12h"
+        sendRawDataExamples      = true
+        liveEventsEnabled        = false
+        actionsProcessingEnabled = false
+        incrementalSyncEnabled   = false
+      }
     })
   
     # Do NOT set config here — provisioning will populate default mappings.
@@ -188,6 +199,17 @@ resource "port_integration" "github" {
       authenticationMode = "Personal Access Token"
       githubToken        = port_organization_secret.github_token.secret_name
     }
+
+    # appSpec controls feature toggles. If omitted, the server applies its own
+    # defaults which may differ from the Port UI defaults. Declare explicitly
+    # to match the UI behaviour.
+    appSpec = {
+      scheduledResyncInterval  = "12h"
+      sendRawDataExamples      = true
+      liveEventsEnabled        = false
+      actionsProcessingEnabled = false
+      incrementalSyncEnabled   = false
+    }
   })
 
   # Do NOT set config here — provisioning will populate default mappings.
@@ -317,7 +339,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 - `installation_app_type` (String) The integrated tool name for catalog integration types (e.g. `github-ocean`, `gitlab`, `pagerduty`). Cannot be changed after creation.
 - `installation_type` (String) The installation type of the integration. Use `Saas` for Ocean SaaS integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
-- `spec` (String) Ocean SaaS integration spec as a JSON string (use `jsonencode`). Required when `installation_type` is `Saas`. Only `integrationSpec` and `appSpec` are supported — `systemSpec` and `privateSpec` are server-managed and always excluded. Sensitive `integrationSpec` values (org secret references) are preserved from your HCL since the server strips them on read.
+- `spec` (String) Ocean SaaS integration spec as a JSON string (use `jsonencode`). Required when `installation_type` is `Saas`. Contains `integrationSpec` (credentials/settings) and optionally `appSpec` (feature toggles like `liveEventsEnabled`, `sendRawDataExamples`, etc.). `systemSpec` and `privateSpec` are server-managed and always excluded. Sensitive `integrationSpec` values (org secret references) are preserved from your HCL since the server strips them on read. If `appSpec` fields are omitted, the server applies its own defaults — which may differ from Port UI defaults. Declare `appSpec` explicitly to match the UI behavior.
 - `title` (String)
 - `version` (String)
 - `webhook_changelog_destination` (Attributes) The webhook changelog destination of the integration (see [below for nested schema](#nestedatt--webhook_changelog_destination))

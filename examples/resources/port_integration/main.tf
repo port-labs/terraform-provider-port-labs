@@ -93,6 +93,17 @@ resource "port_integration" "github" {
       authenticationMode = "Personal Access Token"
       githubToken        = port_organization_secret.github_token.secret_name
     }
+
+    # appSpec controls feature toggles. If omitted, the server applies its own
+    # defaults which may differ from the Port UI defaults. Declare explicitly
+    # to match the UI behaviour.
+    appSpec = {
+      scheduledResyncInterval  = "12h"
+      sendRawDataExamples      = true
+      liveEventsEnabled        = false
+      actionsProcessingEnabled = false
+      incrementalSyncEnabled   = false
+    }
   })
 
   # Do NOT set config here — provisioning will populate default mappings.

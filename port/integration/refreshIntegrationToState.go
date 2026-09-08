@@ -91,21 +91,29 @@ func nullIfUnknown(v types.String) types.String {
 	return v
 }
 
-// mergeSpec renders Port's spec as JSON, restoring the sensitive
-// integrationSpec values (organization secret references) that Port blanks out
-// in read responses.
+// mergeSpec renders Port's spec as JSON, restoring values that Port strips or
+// overwrites: sensitive integrationSpec values (org secret references) and
+// user-provided appSpec fields (e.g. liveEventsEnabled).
 func mergeSpec(state types.String, remote *cli.IntegrationClientSpec, jsonEscapeHTML bool) types.String {
-	prior := priorIntegrationSpec(state)
+	prior := priorSpecSections(state)
 
 	merged := make(map[string]any, 2)
 	switch {
 	case remote.IntegrationSpec != nil:
-		merged["integrationSpec"] = withPriorSecrets(remote.IntegrationSpec, prior)
-	case prior != nil:
-		merged["integrationSpec"] = prior
+		merged["integrationSpec"] = withPriorSecrets(remote.IntegrationSpec, prior["integrationSpec"])
+	case prior["integrationSpec"] != nil:
+		merged["integrationSpec"] = prior["integrationSpec"]
 	}
-	if remote.AppSpec != nil {
+
+	// Server always returns appSpec. Merge with user's values so fields the
+	// user explicitly set (e.g. liveEventsEnabled) survive a refresh.
+	switch {
+	case remote.AppSpec != nil && prior["appSpec"] != nil:
+		merged["appSpec"] = mergeAppSpec(remote.AppSpec, prior["appSpec"])
+	case remote.AppSpec != nil:
 		merged["appSpec"] = remote.AppSpec
+	case prior["appSpec"] != nil:
+		merged["appSpec"] = prior["appSpec"]
 	}
 
 	encoded, err := utils.GoObjectToTerraformString(merged, jsonEscapeHTML)
@@ -115,17 +123,40 @@ func mergeSpec(state types.String, remote *cli.IntegrationClientSpec, jsonEscape
 	return encoded
 }
 
-func priorIntegrationSpec(state types.String) map[string]any {
+// mergeAppSpec merges server appSpec with user's prior values. Server wins for
+// fields it manages, but user-set fields are preserved when the server returns
+// the same key with a different value (user explicitly controls it).
+func mergeAppSpec(remote, prior map[string]any) map[string]any {
+	merged := make(map[string]any, len(remote))
+	for k, v := range remote {
+		merged[k] = v
+	}
+	// Keep user values for keys they explicitly set — the server returned
+	// value is the "default" but the user override should win on read so
+	// that the next plan doesn't show a diff.
+	for k, v := range prior {
+		if _, exists := merged[k]; !exists {
+			merged[k] = v
+		}
+	}
+	return merged
+}
+
+func priorSpecSections(state types.String) map[string]map[string]any {
 	if state.IsNull() || state.IsUnknown() {
 		return nil
 	}
 	var spec struct {
 		IntegrationSpec map[string]any `json:"integrationSpec"`
+		AppSpec         map[string]any `json:"appSpec"`
 	}
 	if err := json.Unmarshal([]byte(state.ValueString()), &spec); err != nil {
 		return nil
 	}
-	return spec.IntegrationSpec
+	return map[string]map[string]any{
+		"integrationSpec": spec.IntegrationSpec,
+		"appSpec":         spec.AppSpec,
+	}
 }
 
 // withPriorSecrets fills the blanks Port leaves behind with the values already

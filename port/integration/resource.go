@@ -2,9 +2,12 @@ package integration
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
@@ -47,6 +50,16 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+	if !plan.Config.IsNull() && !plan.Config.IsUnknown() {
+		resp.Diagnostics.AddError(
+			"config cannot be set on creation",
+			"Integrations receive default mappings during provisioning. "+
+				"Create the integration first (without config), then add config "+
+				"to your HCL and run 'terraform apply' again to override the defaults.",
+		)
+		return
+	}
+
 	body, err := integrationToPortBody(plan)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to build request body", err.Error())
@@ -59,19 +72,10 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	if plan.isSaas() {
-		ready, pollErr := r.portClient.WaitForIntegrationReady(ctx, created.InstallationId)
-		if pollErr != nil {
-			resp.Diagnostics.AddWarning(
-				"integration created but not yet ready",
-				pollErr.Error()+". The integration has been saved to state. Run 'terraform apply' again to re-check, or 'terraform destroy' to clean up.",
-			)
-		} else {
-			created = ready
-		}
-	}
-
 	applyWriteResult(plan, created, created.InstallationId)
+
+	r.awaitProvisioning(ctx, plan, created.InstallationId, "created", &resp.Diagnostics)
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -132,19 +136,10 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	if plan.isSaas() {
-		ready, pollErr := r.portClient.WaitForIntegrationReady(ctx, integrationIdentifier)
-		if pollErr != nil {
-			resp.Diagnostics.AddWarning(
-				"integration updated but not yet ready",
-				pollErr.Error()+". Run 'terraform apply' again to re-check status.",
-			)
-		} else {
-			updated = ready
-		}
-	}
-
 	applyWriteResult(plan, updated, integrationIdentifier)
+
+	r.awaitProvisioning(ctx, plan, integrationIdentifier, "updated", &resp.Diagnostics)
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -163,12 +158,34 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	if state.isSaas() {
-		if err := r.portClient.WaitForIntegrationDeleted(ctx, integrationIdentifier); err != nil {
-			resp.Diagnostics.AddError("integration deletion did not complete", err.Error())
-			return
-		}
+	if err := r.portClient.WaitForIntegrationDeleted(ctx, integrationIdentifier); err != nil {
+		resp.Diagnostics.AddError("integration deletion did not complete", err.Error())
+		return
 	}
 
 	resp.State.RemoveResource(ctx)
+}
+
+// awaitProvisioning polls until the integration finishes provisioning (or
+// times out). Called between applyWriteResult and State.Set. On success it
+// updates only the Computed-only fields (status, version) that Terraform
+// allows to differ from the plan. Spec and config stay at their planned
+// values — Read picks up the full server view on the next refresh.
+func (r *IntegrationResource) awaitProvisioning(ctx context.Context, model *IntegrationModel, installationId, verb string, diags *diag.Diagnostics) {
+	ready, err := r.portClient.WaitForIntegrationReady(ctx, installationId)
+	switch {
+	case err != nil:
+		diags.AddWarning(
+			fmt.Sprintf("integration %s but provisioning failed", verb),
+			err.Error()+". The integration has been saved to state. Check the Port UI or run 'terraform plan' to inspect.",
+		)
+	case ready != nil:
+		if ready.StatusInfo != nil {
+			model.Status = types.StringValue(ready.StatusInfo.IntegrationStatus.Status)
+		}
+		if ready.Version != nil {
+			model.Version = types.StringPointerValue(ready.Version)
+		}
+	}
+	// ready == nil && err == nil → timeout, keep the planned values.
 }

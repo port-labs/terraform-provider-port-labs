@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/avast/retry-go/v4"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
@@ -106,21 +105,23 @@ func (c *PortClient) DeleteIntegration(ctx context.Context, id string) (int, err
 	return resp.StatusCode(), nil
 }
 
-// pollOptions retries only while the poll reports the given sentinel error, so
-// a genuine API failure surfaces immediately instead of after the full wait.
-func pollOptions(ctx context.Context, retryOn error) []retry.Option {
+func provisioningPollOptions(ctx context.Context, retryOn error) []retry.Option {
 	return []retry.Option{
 		retry.Context(ctx),
 		retry.LastErrorOnly(true),
-		retry.Attempts(1),
-		retry.AttemptsForError(provisioningMaxAttempts, retryOn),
+		retry.Attempts(provisioningMaxAttempts),
 		retry.Delay(provisioningPollInterval),
 		retry.DelayType(retry.BackOffDelay),
 		retry.MaxDelay(provisioningMaxDelay),
 		retry.MaxJitter(provisioningPollJitter),
+		retry.RetryIf(func(err error) bool {
+			return errors.Is(err, retryOn)
+		}),
 	}
 }
 
+// WaitForIntegrationReady polls until the integration reaches a terminal state.
+// Returns (nil, nil) on timeout — the caller decides whether that's a warning or error.
 func (c *PortClient) WaitForIntegrationReady(ctx context.Context, installationId string) (*Integration, error) {
 	integration, err := retry.DoWithData(
 		func() (*Integration, error) {
@@ -133,11 +134,6 @@ func (c *PortClient) WaitForIntegrationReady(ctx context.Context, installationId
 			}
 
 			status := integrationStatus(integration)
-			tflog.Debug(ctx, "polled integration provisioning status", map[string]any{
-				"installationId": installationId,
-				"status":         status,
-			})
-
 			switch status {
 			case "", consts.IntegrationStatusRunning:
 				return integration, nil
@@ -148,13 +144,13 @@ func (c *PortClient) WaitForIntegrationReady(ctx context.Context, installationId
 			case consts.IntegrationStatusError, consts.IntegrationStatusUnHealthy:
 				return nil, fmt.Errorf("integration provisioning failed (status: %s%s)", status, statusMessage(integration))
 			default:
-				return nil, fmt.Errorf("integration %q reported an unexpected status: %s%s", installationId, status, statusMessage(integration))
+				return nil, fmt.Errorf("integration %q unexpected status: %s%s", installationId, status, statusMessage(integration))
 			}
 		},
-		pollOptions(ctx, errIntegrationNotReady)...,
+		provisioningPollOptions(ctx, errIntegrationNotReady)...,
 	)
 	if errors.Is(err, errIntegrationNotReady) {
-		return nil, fmt.Errorf("timed out waiting for integration %q to become ready (still provisioning after %d polling attempts)", installationId, provisioningMaxAttempts)
+		return nil, nil
 	}
 	return integration, err
 }
@@ -171,7 +167,7 @@ func (c *PortClient) WaitForIntegrationDeleted(ctx context.Context, installation
 			}
 			return errIntegrationNotDeleted
 		},
-		pollOptions(ctx, errIntegrationNotDeleted)...,
+		provisioningPollOptions(ctx, errIntegrationNotDeleted)...,
 	)
 	if errors.Is(err, errIntegrationNotDeleted) {
 		return fmt.Errorf("timed out waiting for integration %q to be deleted (still exists after %d polling attempts)", installationId, provisioningMaxAttempts)

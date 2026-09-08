@@ -19,14 +19,15 @@ type IntegrationResource struct {
 	portClient *cli.PortClient
 }
 
-func (r *IntegrationResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *IntegrationResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_integration"
 }
 
-func (r *IntegrationResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData != nil {
-		r.portClient = req.ProviderData.(*cli.PortClient)
+func (r *IntegrationResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
 	}
+	r.portClient = req.ProviderData.(*cli.PortClient)
 }
 
 func (r *IntegrationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -35,18 +36,18 @@ func (r *IntegrationResource) ImportState(ctx context.Context, req resource.Impo
 }
 
 func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan IntegrationModel
+	var plan *IntegrationModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if err := validateSaasSpec(&plan); err != nil {
+	if err := validateSaasSpec(plan); err != nil {
 		resp.Diagnostics.AddError("invalid SaaS integration configuration", err.Error())
 		return
 	}
 
-	body, err := integrationToPortBody(&plan)
+	body, err := integrationToPortBody(plan)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to build request body", err.Error())
 		return
@@ -61,8 +62,6 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	if plan.isSaas() {
 		ready, pollErr := r.portClient.WaitForIntegrationReady(ctx, created.InstallationId)
 		if pollErr != nil {
-			// The integration was created in Port but provisioning hasn't finished.
-			// Save it to state so the user can re-apply (to re-poll) or destroy.
 			resp.Diagnostics.AddWarning(
 				"integration created but not yet ready",
 				pollErr.Error()+". The integration has been saved to state. Run 'terraform apply' again to re-check, or 'terraform destroy' to clean up.",
@@ -72,7 +71,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		}
 	}
 
-	if err := r.refreshIntegrationState(&plan, created); err != nil {
+	if err := r.refreshIntegrationState(plan, created, created.InstallationId); err != nil {
 		resp.Diagnostics.AddError("failed to refresh state after create", err.Error())
 		return
 	}
@@ -80,23 +79,25 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 }
 
 func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state IntegrationModel
+	var state *IntegrationModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	integration, statusCode, err := r.portClient.GetIntegration(ctx, state.InstallationId.ValueString())
+	integrationIdentifier := state.InstallationId.ValueString()
+
+	a, statusCode, err := r.portClient.GetIntegration(ctx, integrationIdentifier)
 	if err != nil {
 		if statusCode == 404 {
 			resp.State.RemoveResource(ctx)
 			return
 		}
-		resp.Diagnostics.AddError("failed to read integration", err.Error())
+		resp.Diagnostics.AddError("failed reading integration", err.Error())
 		return
 	}
 
-	if err := r.refreshIntegrationState(&state, integration); err != nil {
+	if err := r.refreshIntegrationState(state, a, integrationIdentifier); err != nil {
 		resp.Diagnostics.AddError("failed to refresh integration state", err.Error())
 		return
 	}
@@ -104,26 +105,41 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 }
 
 func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan IntegrationModel
+	var plan *IntegrationModel
+	var state *IntegrationModel
+
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	body, err := integrationToPortBody(&plan)
+	integrationIdentifier := state.InstallationId.ValueString()
+
+	hadDestination := !state.KafkaChangelogDestination.IsNull() || state.WebhookChangelogDestination != nil
+	lostDestination := plan.KafkaChangelogDestination.IsNull() && plan.WebhookChangelogDestination == nil
+	if hadDestination && lostDestination {
+		resp.Diagnostics.AddError(
+			"cannot remove changelog destination",
+			"The Port API does not support removing a changelog destination from an existing integration. To remove it, delete and recreate the integration (e.g. taint the resource).",
+		)
+		return
+	}
+
+	body, err := integrationToPortBody(plan)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to build request body", err.Error())
 		return
 	}
 
-	updated, err := r.portClient.UpdateIntegration(ctx, plan.InstallationId.ValueString(), body)
+	updated, err := r.portClient.UpdateIntegration(ctx, integrationIdentifier, body)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update integration", err.Error())
 		return
 	}
 
 	if plan.isSaas() {
-		ready, pollErr := r.portClient.WaitForIntegrationReady(ctx, plan.InstallationId.ValueString())
+		ready, pollErr := r.portClient.WaitForIntegrationReady(ctx, integrationIdentifier)
 		if pollErr != nil {
 			resp.Diagnostics.AddWarning(
 				"integration updated but not yet ready",
@@ -134,7 +150,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		}
 	}
 
-	if err := r.refreshIntegrationState(&plan, updated); err != nil {
+	if err := r.refreshIntegrationState(plan, updated, integrationIdentifier); err != nil {
 		resp.Diagnostics.AddError("failed to refresh state after update", err.Error())
 		return
 	}
@@ -142,20 +158,22 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 }
 
 func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state IntegrationModel
+	var state *IntegrationModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	_, err := r.portClient.DeleteIntegration(ctx, state.InstallationId.ValueString())
+	integrationIdentifier := state.InstallationId.ValueString()
+
+	_, err := r.portClient.DeleteIntegration(ctx, integrationIdentifier)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete integration", err.Error())
 		return
 	}
 
 	if state.isSaas() {
-		if err := r.portClient.WaitForIntegrationDeleted(ctx, state.InstallationId.ValueString()); err != nil {
+		if err := r.portClient.WaitForIntegrationDeleted(ctx, integrationIdentifier); err != nil {
 			resp.Diagnostics.AddError("integration deletion did not complete", err.Error())
 			return
 		}

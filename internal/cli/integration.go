@@ -28,13 +28,13 @@ type PortBodyForIntegration struct {
 	Integration Integration `json:"integration"`
 }
 
-func (c *PortClient) GetIntegration(ctx context.Context, installationId string) (*Integration, int, error) {
+func (c *PortClient) GetIntegration(ctx context.Context, id string) (*Integration, int, error) {
 	pb := &PortBodyForIntegration{}
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
 		SetResult(pb).
-		SetPathParam("identifier", installationId).
+		SetPathParam("identifier", id).
 		SetQueryParam("byField", "installationId").
 		Get("v1/integration/{identifier}")
 	if err != nil {
@@ -65,11 +65,11 @@ func (c *PortClient) CreateIntegration(ctx context.Context, integration *Integra
 	return &pb.Integration, nil
 }
 
-func (c *PortClient) UpdateIntegration(ctx context.Context, installationId string, integration *Integration) (*Integration, error) {
+func (c *PortClient) UpdateIntegration(ctx context.Context, id string, integration *Integration) (*Integration, error) {
 	resp, err := c.Client.R().
 		SetBody(integration).
 		SetContext(ctx).
-		SetPathParam("identifier", installationId).
+		SetPathParam("identifier", id).
 		Patch("v1/integration/{identifier}")
 	if err != nil {
 		return nil, err
@@ -85,10 +85,10 @@ func (c *PortClient) UpdateIntegration(ctx context.Context, installationId strin
 	return &pb.Integration, nil
 }
 
-func (c *PortClient) DeleteIntegration(ctx context.Context, installationId string) (int, error) {
+func (c *PortClient) DeleteIntegration(ctx context.Context, id string) (int, error) {
 	resp, err := c.Client.R().
 		SetContext(ctx).
-		SetPathParam("identifier", installationId).
+		SetPathParam("identifier", id).
 		Delete("v1/integration/{identifier}")
 	if err != nil {
 		return resp.StatusCode(), err

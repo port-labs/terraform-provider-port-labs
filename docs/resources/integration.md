@@ -3,55 +3,55 @@
 page_title: "port_integration Resource - port"
 subcategory: ""
 description: |-
-  Integration resource
-  NOTE: This resource manages existing integration and integration mappings, not for creating new integrations.
+  Manages a Port integration, including self-hosted (OnPrem) and Ocean SaaS installations.
+  For SaaS integrations, create organization secrets first with `port_organization_secret`, then reference secret names in `spec.integrationSpec`.
   Docs about integrations can be found here https://docs.getport.io/integrations-index/.
   Docs about how to import existing integrations and manage their mappings can be found here https://docs.getport.io/guides/all/import-and-manage-integration.
-  
-  resource "port_integration" "my_custom_integration" {
-  	installation_id       = "my-custom-integration-id"
-  	title                 = "My Custom Integration"
-  	config = jsonencode({
-  		createMissingRelatedEntitiesboolean = true
-  		deleteDependentEntities = true,
-  		resources = [{
-  			kind = "my-custom-kind"
-  			selector = {
-  				query = ".title"
-  			}
-  			port = {
-  				entity = {
-  					mappings = [{
-  						identifier = "'my-identifier'"
-  						title      = ".title"
-  						blueprint  = "'my-blueprint'"
-  						properties = {
-  							my_property = 123
-  						}
-  						relations  = {}
-  					}]
-  				}
-  			}
-  		}]
-  	})
-  }
-  
-  
-  
-  NOTICE:
-  The following config properties (selector.query|entity.mappings.*) are jq expressions, which means that you need to input either a valid jq expression (E.g .title), or if you want a string value, a qouted escaped string val (E.g 'my-string').
 ---
 
 # port_integration (Resource)
 
-# Integration resource
+Manages a Port integration, including self-hosted (OnPrem) and Ocean SaaS installations.
 
-**NOTE:** This resource manages existing integration and integration mappings, not for creating new integrations.
+For SaaS integrations, create organization secrets first with `port_organization_secret`, then reference secret names in `spec.integrationSpec`.
 
 Docs about integrations can be found [here](https://docs.getport.io/integrations-index/).
 
 Docs about how to import existing integrations and manage their mappings can be found [here](https://docs.getport.io/guides/all/import-and-manage-integration).
 
+## SaaS example
+
+```hcl
+resource "port_organization_secret" "pagerduty_token" {
+  secret_name  = "pagerduty-api-token"
+  secret_value = var.pagerduty_token
+}
+
+resource "port_integration" "pagerduty" {
+  depends_on = [port_organization_secret.pagerduty_token]
+
+  installation_id       = "pagerduty-prod"
+  installation_app_type = "pagerduty"
+  installation_type     = "Saas"
+  version               = "0.1.0"
+  title                 = "PagerDuty Production"
+
+  spec = jsonencode({
+    integrationSpec = {
+      token = port_organization_secret.pagerduty_token.secret_name
+    }
+    appSpec = {
+      scheduledResyncInterval = "12h"
+    }
+  })
+
+  config = jsonencode({
+    resources = []
+  })
+}
+```
+
+## Self-hosted example
 
 ```hcl
 resource "port_integration" "my_custom_integration" {
@@ -102,7 +102,9 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 - `config` (String) Integration Config Raw JSON string (use `jsonencode`)
 - `installation_app_type` (String)
+- `installation_type` (String) The installation type of the integration. Use `Saas` for Ocean SaaS integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
+- `spec` (String) Ocean SaaS integration spec as a JSON string (use `jsonencode`). Required when `installation_type` is `Saas`. Sensitive `integrationSpec` values must be organization secret names (see `port_organization_secret`).
 - `title` (String)
 - `version` (String)
 - `webhook_changelog_destination` (Attributes) The webhook changelog destination of the integration (see [below for nested schema](#nestedatt--webhook_changelog_destination))
@@ -110,6 +112,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+- `status` (String) The provisioning status of the integration. Populated for SaaS installations.
 
 <a id="nestedatt--kafka_changelog_destination"></a>
 ### Nested Schema for `kafka_changelog_destination`

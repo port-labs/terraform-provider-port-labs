@@ -19,136 +19,137 @@ type IntegrationResource struct {
 	portClient *cli.PortClient
 }
 
-func (r *IntegrationResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *IntegrationResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_integration"
 }
 
-func (r *IntegrationResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	if req.ProviderData == nil {
-		return
+func (r *IntegrationResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData != nil {
+		r.portClient = req.ProviderData.(*cli.PortClient)
 	}
-
-	r.portClient = req.ProviderData.(*cli.PortClient)
 }
 
 func (r *IntegrationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resp.Diagnostics.Append(resp.State.SetAttribute(
-		ctx, path.Root("installation_id"), req.ID,
-	)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("installation_id"), req.ID)...)
+	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("id"), req.ID)...)
+}
 
-	resp.Diagnostics.Append(resp.State.SetAttribute(
-		ctx, path.Root("id"), req.ID,
-	)...)
+func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan IntegrationModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if err := validateSaasSpec(&plan); err != nil {
+		resp.Diagnostics.AddError("invalid SaaS integration configuration", err.Error())
+		return
+	}
+
+	body, err := integrationToPortBody(&plan)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to build request body", err.Error())
+		return
+	}
+
+	created, err := r.portClient.CreateIntegration(ctx, body)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to create integration", err.Error())
+		return
+	}
+
+	if plan.isSaas() {
+		created, err = r.portClient.WaitForIntegrationReady(ctx, created.InstallationId)
+		if err != nil {
+			resp.Diagnostics.AddError("integration provisioning failed", err.Error())
+			return
+		}
+	}
+
+	if err := r.refreshIntegrationState(&plan, created); err != nil {
+		resp.Diagnostics.AddError("failed to refresh state after create", err.Error())
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state *IntegrationModel
-
+	var state IntegrationModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	integrationIdentifier := state.InstallationId.ValueString()
-
-	a, err := r.portClient.GetIntegration(ctx, integrationIdentifier)
-
+	integration, statusCode, err := r.portClient.GetIntegration(ctx, state.InstallationId.ValueString())
 	if err != nil {
+		if statusCode == 404 {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError("failed to read integration", err.Error())
 		return
 	}
 
-	err = r.refreshIntegrationState(state, a, integrationIdentifier)
-	if err != nil {
+	if err := r.refreshIntegrationState(&state, integration); err != nil {
 		resp.Diagnostics.AddError("failed to refresh integration state", err.Error())
 		return
 	}
-
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
-
 }
 
 func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var state *IntegrationModel
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
-
+	var plan IntegrationModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	integrationIdentifier := state.InstallationId.ValueString()
-
-	integration, err := integrationToPortBody(state)
+	body, err := integrationToPortBody(&plan)
 	if err != nil {
-		resp.Diagnostics.AddError("failed to convert integration to port body", err.Error())
+		resp.Diagnostics.AddError("failed to build request body", err.Error())
 		return
 	}
 
-	updated, err := r.portClient.UpdateIntegration(ctx, integrationIdentifier, integration)
-
+	updated, err := r.portClient.UpdateIntegration(ctx, plan.InstallationId.ValueString(), body)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update integration", err.Error())
 		return
 	}
 
-	err = r.refreshIntegrationState(state, updated, integrationIdentifier)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to refresh integration state", err.Error())
-		return
+	if plan.isSaas() {
+		updated, err = r.portClient.WaitForIntegrationReady(ctx, plan.InstallationId.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("integration update provisioning failed", err.Error())
+			return
+		}
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	if err := r.refreshIntegrationState(&plan, updated); err != nil {
+		resp.Diagnostics.AddError("failed to refresh state after update", err.Error())
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state *IntegrationModel
-
+	var state IntegrationModel
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	integrationIdentifier := state.InstallationId.ValueString()
-
-	_, err := r.portClient.DeleteIntegration(ctx, integrationIdentifier)
-
+	_, err := r.portClient.DeleteIntegration(ctx, state.InstallationId.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("failed to delete integration", err.Error())
 		return
 	}
 
-	if resp.Diagnostics.HasError() {
-		return
+	if state.isSaas() {
+		if err := r.portClient.WaitForIntegrationDeleted(ctx, state.InstallationId.ValueString()); err != nil {
+			resp.Diagnostics.AddError("integration deletion did not complete", err.Error())
+			return
+		}
 	}
+
 	resp.State.RemoveResource(ctx)
-}
-
-func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var state *IntegrationModel
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	integration, err := integrationToPortBody(state)
-	if err != nil {
-		resp.Diagnostics.AddError("failed to convert integration to port body", err.Error())
-		return
-	}
-
-	created, err := r.portClient.CreateIntegration(ctx, integration)
-
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create integration", err.Error())
-		return
-	}
-
-	err = r.refreshIntegrationState(state, created, created.InstallationId)
-
-	if err != nil {
-		resp.Diagnostics.AddError("failed to create integration", err.Error())
-		return
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

@@ -775,13 +775,65 @@ type PortBodyDelete struct {
 	Ok bool `json:"ok"`
 }
 
+type IntegrationClientSpec struct {
+	IntegrationSpec map[string]any `json:"integrationSpec,omitempty"`
+	AppSpec         map[string]any `json:"appSpec,omitempty"`
+}
+
+type IntegrationStatus struct {
+	Status  string  `json:"status"`
+	Message *string `json:"message,omitempty"`
+}
+
+type IntegrationStatusInfo struct {
+	IntegrationStatus IntegrationStatus `json:"integrationStatus"`
+}
+
 type Integration struct {
 	InstallationId       string                `json:"installationId"`
 	Title                *string               `json:"title"`
 	InstallationAppType  *string               `json:"installationAppType"`
+	InstallationType     *string               `json:"installationType"`
 	Version              *string               `json:"version"`
 	Config               *map[string]any       `json:"config"`
-	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
+	Spec                 *IntegrationClientSpec `json:"spec,omitempty"`
+	StatusInfo           *IntegrationStatusInfo `json:"statusInfo,omitempty"`
+	ChangelogDestination *ChangelogDestination  `json:"changelogDestination,omitempty"`
+}
+
+func (i *Integration) UnmarshalJSON(data []byte) error {
+	type Alias Integration
+	type wire struct {
+		Alias
+		Spec *integrationSpecWire `json:"spec,omitempty"`
+	}
+
+	var w wire
+	if err := json.Unmarshal(data, &w); err != nil {
+		return err
+	}
+
+	*i = Integration(w.Alias)
+	i.Spec = w.Spec.toClientSpec()
+
+	return nil
+}
+
+type integrationSpecWire struct {
+	IntegrationSpec map[string]any `json:"integrationSpec,omitempty"`
+	AppSpec         map[string]any `json:"appSpec,omitempty"`
+	SystemSpec      map[string]any `json:"systemSpec,omitempty"`
+	PrivateSpec     map[string]any `json:"privateSpec,omitempty"`
+}
+
+func (s *integrationSpecWire) toClientSpec() *IntegrationClientSpec {
+	if s == nil || (s.IntegrationSpec == nil && s.AppSpec == nil) {
+		return nil
+	}
+	return &IntegrationClientSpec{
+		IntegrationSpec: s.IntegrationSpec,
+		AppSpec:         s.AppSpec,
+	}
 }
 
 type Organization struct {

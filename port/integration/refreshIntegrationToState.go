@@ -7,28 +7,44 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a *cli.Integration, integrationId string) error {
-	state.ID = types.StringValue(integrationId)
-	state.InstallationId = types.StringValue(integrationId)
+func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, remote *cli.Integration) error {
+	state.ID = types.StringValue(remote.InstallationId)
+	state.InstallationId = types.StringValue(remote.InstallationId)
+	state.Title = types.StringPointerValue(remote.Title)
+	state.InstallationAppType = types.StringPointerValue(remote.InstallationAppType)
+	state.InstallationType = types.StringPointerValue(remote.InstallationType)
+	state.Version = types.StringPointerValue(remote.Version)
 
-	state.Title = types.StringPointerValue(a.Title)
-	state.InstallationAppType = types.StringPointerValue(a.InstallationAppType)
-	state.Version = types.StringPointerValue(a.Version)
+	if remote.StatusInfo != nil {
+		state.Status = types.StringValue(remote.StatusInfo.IntegrationStatus.Status)
+	} else {
+		state.Status = types.StringNull()
+	}
 
-	if a.Config != nil {
-		config, _ := utils.GoObjectToTerraformStringPreferExisting(state.Config, a.Config, r.portClient.JSONEscapeHTML)
+	if remote.Spec != nil {
+		spec, err := specToState(remote.Spec, state.Spec, r.portClient.JSONEscapeHTML)
+		if err != nil {
+			return err
+		}
+		state.Spec = spec
+	}
+
+	if remote.Config != nil {
+		config, _ := utils.GoObjectToTerraformStringPreferExisting(state.Config, remote.Config, r.portClient.JSONEscapeHTML)
 		state.Config = config
 	}
-	if a.ChangelogDestination != nil {
-		if a.ChangelogDestination.Type == consts.Kafka {
+
+	if remote.ChangelogDestination != nil {
+		switch remote.ChangelogDestination.Type {
+		case consts.Kafka:
 			state.KafkaChangelogDestination, _ = types.ObjectValue(nil, nil)
-		} else {
-			if a.ChangelogDestination.Url != "" {
+		case consts.Webhook:
+			if remote.ChangelogDestination.Url != "" {
 				state.WebhookChangelogDestination = &WebhookChangelogDestinationModel{
-					Url: types.StringValue(a.ChangelogDestination.Url),
+					Url: types.StringValue(remote.ChangelogDestination.Url),
 				}
-				if a.ChangelogDestination.Agent != nil {
-					state.WebhookChangelogDestination.Agent = types.BoolValue(*a.ChangelogDestination.Agent)
+				if remote.ChangelogDestination.Agent != nil {
+					state.WebhookChangelogDestination.Agent = types.BoolValue(*remote.ChangelogDestination.Agent)
 				}
 			}
 		}

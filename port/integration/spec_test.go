@@ -1,0 +1,119 @@
+package integration
+
+import (
+	"encoding/json"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestIntegrationToPortBody_Saas(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:      types.StringValue("pagerduty-prod"),
+		InstallationAppType: types.StringValue("pagerduty"),
+		InstallationType:    types.StringValue(consts.InstallationTypeSaas),
+		Version:             types.StringValue("0.1.0"),
+		Spec:                types.StringValue(`{"integrationSpec":{"token":"pagerduty-api-token"},"appSpec":{"scheduledResyncInterval":"12h"}}`),
+		Config:              types.StringValue(`{"resources":[]}`),
+	}
+
+	body, err := integrationToPortBody(state)
+	require.NoError(t, err)
+	assert.Equal(t, "pagerduty-prod", body.InstallationId)
+	require.NotNil(t, body.InstallationType)
+	assert.Equal(t, consts.InstallationTypeSaas, *body.InstallationType)
+	require.NotNil(t, body.Spec)
+	assert.Equal(t, "pagerduty-api-token", body.Spec.IntegrationSpec["token"])
+	assert.Equal(t, "12h", body.Spec.AppSpec["scheduledResyncInterval"])
+}
+
+func TestIntegrationToPortBody_OnPremOmitsSpec(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:      types.StringValue("my-kafka"),
+		InstallationAppType: types.StringValue("kafka"),
+		InstallationType:    types.StringValue(consts.InstallationTypeOnPrem),
+		Spec:                types.StringValue(`{"integrationSpec":{"token":"should-not-send"}}`),
+	}
+
+	body, err := integrationToPortBody(state)
+	require.NoError(t, err)
+	assert.Equal(t, consts.InstallationTypeOnPrem, *body.InstallationType)
+	assert.Nil(t, body.Spec, "OnPrem integrations should not send spec")
+}
+
+func TestValidateSaasSpec_RequiresSpec(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:   types.StringValue("pagerduty-prod"),
+		InstallationType: types.StringValue(consts.InstallationTypeSaas),
+	}
+	assert.ErrorContains(t, validateSaasSpec(state), "spec is required")
+}
+
+func TestValidateSaasSpec_RequiresIntegrationSpec(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:   types.StringValue("pagerduty-prod"),
+		InstallationType: types.StringValue(consts.InstallationTypeSaas),
+		Spec:             types.StringValue(`{"appSpec":{"scheduledResyncInterval":"12h"}}`),
+	}
+	assert.ErrorContains(t, validateSaasSpec(state), "integrationSpec is required")
+}
+
+func TestValidateSaasSpec_OnPremPassesWithoutSpec(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:   types.StringValue("my-kafka"),
+		InstallationType: types.StringValue(consts.InstallationTypeOnPrem),
+	}
+	assert.NoError(t, validateSaasSpec(state))
+}
+
+func TestParseSpecFromConfig_RejectsServerManagedKeys(t *testing.T) {
+	tests := []struct {
+		name string
+		json string
+		want string
+	}{
+		{"systemSpec", `{"integrationSpec":{"token":"x"},"systemSpec":{"size":"M"}}`, "systemSpec is server-managed"},
+		{"privateSpec", `{"integrationSpec":{"token":"x"},"privateSpec":{"applierBackend":"argo"}}`, "privateSpec is server-managed"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := parseSpecFromConfig(types.StringValue(tt.json))
+			assert.ErrorContains(t, err, tt.want)
+		})
+	}
+}
+
+func TestUnmarshalJSON_StripsServerManagedSpec(t *testing.T) {
+	var integration cli.Integration
+	err := json.Unmarshal([]byte(`{
+		"installationId": "pagerduty-prod",
+		"spec": {
+			"integrationSpec": {"token": "my-secret"},
+			"appSpec": {"scheduledResyncInterval": "12h"},
+			"systemSpec": {"size": "M"},
+			"privateSpec": {"applierBackend": "argo"}
+		}
+	}`), &integration)
+	require.NoError(t, err)
+	require.NotNil(t, integration.Spec)
+	assert.Equal(t, "my-secret", integration.Spec.IntegrationSpec["token"])
+	assert.Equal(t, "12h", integration.Spec.AppSpec["scheduledResyncInterval"])
+}
+
+func TestSpecToState_PreservesKeyOrder(t *testing.T) {
+	spec := &cli.IntegrationClientSpec{
+		IntegrationSpec: map[string]any{"token": "my-secret"},
+		AppSpec:         map[string]any{"scheduledResyncInterval": "12h"},
+	}
+
+	stateValue, err := specToState(spec, types.StringNull(), false)
+	require.NoError(t, err)
+	assert.False(t, stateValue.IsNull())
+	assert.NotContains(t, stateValue.ValueString(), "systemSpec")
+	assert.NotContains(t, stateValue.ValueString(), "privateSpec")
+	assert.Contains(t, stateValue.ValueString(), "my-secret")
+}

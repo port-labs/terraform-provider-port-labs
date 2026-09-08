@@ -12,16 +12,13 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func createIntegration(
-	installationId string,
-	installationAppType string,
-) string {
-	return fmt.Sprintf(`
-	resource "port_integration" "kafkush" {
-		installation_id       = "%s"
-		installation_app_type = "%s"
-		title                 = "my-kafka-cluster"
-		version               = "1.33.7"
+const (
+	integrationResourceName = "port_integration.kafkush"
+	defaultTitle            = "my-kafka-cluster"
+	defaultVersion          = "1.33.7"
+)
+
+const integrationMappingConfig = `
 		config = jsonencode({
 			deleteDependentEntities = true,
 			resources = [{
@@ -43,21 +40,9 @@ func createIntegration(
 					}
 				}
 			}]
-		})
-	}
-`, installationId, installationAppType)
-}
+		})`
 
-func createIntegrationNonAlphabeticalKeyOrder(
-	installationId string,
-	installationAppType string,
-) string {
-	return fmt.Sprintf(`
-	resource "port_integration" "kafkush" {
-		installation_id       = "%s"
-		installation_app_type = "%s"
-		title                 = "my-kafka-cluster"
-		version               = "1.33.7"
+const integrationMappingConfigNonAlphabetical = `
 		config = jsonencode({
 			resources = [{
 				kind = "ZOMG"
@@ -80,180 +65,145 @@ func createIntegrationNonAlphabeticalKeyOrder(
 				}
 			}]
 			deleteDependentEntities = true
-		})
+		})`
+
+const integrationWebhook = `
+		webhook_changelog_destination = {
+			type  = "WEBHOOK"
+			url   = "https://google.com"
+			agent = true
+		}`
+
+func integrationHCL(installationID, appType string, blocks ...string) string {
+	extras := strings.Join(blocks, "\n")
+	if extras != "" {
+		extras = "\n" + extras
 	}
-`, installationId, installationAppType)
-}
 
-func TestPortIntegrationConfigKeyOrder(t *testing.T) {
-	integrationIdentifier := utils.GenID()
-	installationAppType := "kafka"
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
-	testConfig := createIntegrationNonAlphabeticalKeyOrder(integrationIdentifier, installationAppType)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testConfig,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "my-kafka-cluster"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
-				),
-			},
-			{
-				Config:   testConfig,
-				PlanOnly: true,
-			},
-		},
-	})
-}
-
-func createIntegrationWithWebHook(
-	installationId string,
-	installationAppType string,
-) string {
 	return fmt.Sprintf(`
 	resource "port_integration" "kafkush" {
 		installation_id       = "%s"
-		title                 = "my-kafka-cluster"
-		version               = "1.33.7"
 		installation_app_type = "%s"
-		config = jsonencode({
-			deleteDependentEntities = true,
-			resources = [{
-				kind = "ZOMG"
-				selector = {
-					query = ".title"
-				}
-				port = {
-					entity = {
-						mappings = [{
-							identifier = "'my-identifier'"
-							title      = ".title"
-							blueprint  = "'my-blueprint'"
-							properties = {
-								bla = 123
-							}
-							relations  = {}
-						}]
-					}
-				}
-			}]
-		})
-		webhook_changelog_destination = {
-			type = "WEBHOOK"
-			url = "https://google.com"
-			agent = true
-		}
-	}`, installationId, installationAppType)
+		title                 = "%s"
+		version               = "%s"%s
+	}
+`, installationID, appType, defaultTitle, defaultVersion, extras)
 }
 
-func TestPortIntegrationBasic(t *testing.T) {
-	integrationIdentifier := utils.GenID()
-	installationAppType := "kafka"
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
+func integrationDefaultChecks(installationID, appType string) resource.TestCheckFunc {
+	return resource.ComposeTestCheckFunc(
+		resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
+		resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", appType),
+		resource.TestCheckResourceAttr(integrationResourceName, "title", defaultTitle),
+		resource.TestCheckResourceAttr(integrationResourceName, "version", defaultVersion),
+		resource.TestCheckResourceAttr(integrationResourceName, "webhook_changelog_destination.%", "0"),
+	)
+}
+
+func integrationCreateThenConfigSteps(installationID, appType, configBlock string, checks ...resource.TestCheckFunc) []resource.TestStep {
+	withConfig := integrationHCL(installationID, appType, configBlock)
+	allChecks := []resource.TestCheckFunc{integrationDefaultChecks(installationID, appType)}
+	allChecks = append(allChecks, checks...)
+
+	return []resource.TestStep{
+		{Config: integrationHCL(installationID, appType)},
+		{Config: withConfig, Check: resource.ComposeTestCheckFunc(allChecks...)},
+	}
+}
+
+func enableIntegrationBetaFeatures(t *testing.T) {
+	if err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true"); err != nil {
 		t.Fatal(err)
 	}
-	var testPortIntegrationResourceBasic = createIntegration(integrationIdentifier, installationAppType)
+}
 
-	var testAccBaseIntegrationUpdate = strings.ReplaceAll(testPortIntegrationResourceBasic, "1.33.7", "1.33.8")
+func TestPortIntegrationConfigKeyOrder(t *testing.T) {
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
+	appType := "kafka"
+	withConfig := integrationHCL(installationID, appType, integrationMappingConfigNonAlphabetical)
+
+	steps := integrationCreateThenConfigSteps(installationID, appType, integrationMappingConfigNonAlphabetical)
+	steps = append(steps, resource.TestStep{Config: withConfig, PlanOnly: true})
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testPortIntegrationResourceBasic,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "my-kafka-cluster"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
-				),
-			},
-			{
-				Config: testAccBaseIntegrationUpdate,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "my-kafka-cluster"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.8"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
-				),
-			},
-		},
+		Steps:                    steps,
+	})
+}
+
+func TestPortIntegrationBasic(t *testing.T) {
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
+	appType := "kafka"
+	withConfig := integrationHCL(installationID, appType, integrationMappingConfig)
+
+	steps := integrationCreateThenConfigSteps(installationID, appType, integrationMappingConfig)
+	steps = append(steps, resource.TestStep{
+		Config: strings.ReplaceAll(withConfig, defaultVersion, "1.33.8"),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
+			resource.TestCheckResourceAttr(integrationResourceName, "title", defaultTitle),
+			resource.TestCheckResourceAttr(integrationResourceName, "version", "1.33.8"),
+			resource.TestCheckResourceAttr(integrationResourceName, "webhook_changelog_destination.%", "0"),
+		),
+	})
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps:                    steps,
 	})
 }
 
 func TestPortIntegrationPatchTitleNull(t *testing.T) {
-	integrationIdentifier := utils.GenID()
-	installationAppType := "kafka"
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var testPortIntegrationResourceBasic = createIntegration(integrationIdentifier, installationAppType)
+	enableIntegrationBetaFeatures(t)
 
-	var testAccBaseIntegrationUpdate = strings.ReplaceAll(testPortIntegrationResourceBasic, "\"my-kafka-cluster\"", "null")
+	installationID := utils.GenID()
+	appType := "kafka"
+	withConfig := integrationHCL(installationID, appType, integrationMappingConfig)
+
+	steps := integrationCreateThenConfigSteps(installationID, appType, integrationMappingConfig)
+	steps = append(steps, resource.TestStep{
+		Config: strings.ReplaceAll(withConfig, fmt.Sprintf(`"%s"`, defaultTitle), "null"),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
+			resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", appType),
+			resource.TestCheckNoResourceAttr(integrationResourceName, "title"),
+			resource.TestCheckResourceAttr(integrationResourceName, "version", defaultVersion),
+			resource.TestCheckResourceAttr(integrationResourceName, "webhook_changelog_destination.%", "0"),
+		),
+	})
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testPortIntegrationResourceBasic,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "my-kafka-cluster"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
-				),
-			},
-			{
-				Config: testAccBaseIntegrationUpdate,
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
-					resource.TestCheckNoResourceAttr("port_integration.kafkush", "title"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "0"),
-				),
-			},
-		},
+		Steps:                    steps,
 	})
 }
 
 func TestPortIntegrationWithWebhook(t *testing.T) {
-	integrationIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var testPortIntegrationResourceBasic = createIntegrationWithWebHook(integrationIdentifier, "kafka")
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testPortIntegrationResourceBasic,
+				Config: integrationHCL(installationID, "kafka", integrationWebhook),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "title", "my-kafka-cluster"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", "kafka"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.%", "2"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.url", "https://google.com"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "webhook_changelog_destination.agent", "true"),
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
+					resource.TestCheckResourceAttr(integrationResourceName, "title", defaultTitle),
+					resource.TestCheckResourceAttr(integrationResourceName, "version", defaultVersion),
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", "kafka"),
+					resource.TestCheckResourceAttr(integrationResourceName, "webhook_changelog_destination.%", "2"),
+					resource.TestCheckResourceAttr(integrationResourceName, "webhook_changelog_destination.url", "https://google.com"),
+					resource.TestCheckResourceAttr(integrationResourceName, "webhook_changelog_destination.agent", "true"),
 				),
 			},
 		},
@@ -261,50 +211,49 @@ func TestPortIntegrationWithWebhook(t *testing.T) {
 }
 
 func TestPortIntegrationImport(t *testing.T) {
-	integrationIdentifier := utils.GenID()
-	var testPortIntegrationResourceBasic = createIntegrationWithWebHook(integrationIdentifier, "kafka")
+	installationID := utils.GenID()
+	config := integrationHCL(installationID, "kafka", integrationWebhook)
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: acctest.ProviderConfig + testPortIntegrationResourceBasic,
+				Config: acctest.ProviderConfig + config,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", "kafka"),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", "kafka"),
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
 				),
 			},
 			{
-				ResourceName:      "port_integration.kafkush",
+				ResourceName:      integrationResourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
-				ImportStateId:     integrationIdentifier,
+				ImportStateId:     installationID,
 			},
 		},
 	})
 }
 
 func TestPortIntegrationImmutableInstallationId(t *testing.T) {
-	integrationIdentifier := utils.GenID()
-	newInstallationId := utils.GenID()
-	installationAppType := "kafka"
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
+	newInstallationID := utils.GenID()
+	appType := "kafka"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: createIntegration(integrationIdentifier, installationAppType),
+				Config: integrationHCL(installationID, appType),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
 				),
 			},
 			{
-				Config:      createIntegration(newInstallationId, installationAppType),
+				Config:      integrationHCL(newInstallationID, appType),
 				ExpectError: regexp.MustCompile(`cannot change installation_id`),
 			},
 		},
@@ -312,25 +261,23 @@ func TestPortIntegrationImmutableInstallationId(t *testing.T) {
 }
 
 func TestPortIntegrationImmutableInstallationAppType(t *testing.T) {
-	integrationIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: createIntegration(integrationIdentifier, "kafka"),
+				Config: integrationHCL(installationID, "kafka"),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
-					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", "kafka"),
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", "kafka"),
 				),
 			},
 			{
-				Config:      createIntegration(integrationIdentifier, "pagerduty"),
+				Config:      integrationHCL(installationID, "pagerduty"),
 				ExpectError: regexp.MustCompile(`cannot change installation_app_type`),
 			},
 		},
@@ -338,49 +285,28 @@ func TestPortIntegrationImmutableInstallationAppType(t *testing.T) {
 }
 
 func TestPortIntegrationInvalidIdentifier(t *testing.T) {
-	installationAppType := "kafka"
+	appType := "kafka"
 
 	testCases := []struct {
 		name         string
 		identifier   string
 		errorPattern string
 	}{
-		{
-			name:         "spaces",
-			identifier:   "my integration with spaces",
-			errorPattern: `installation_id must match the pattern`,
-		},
-		{
-			name:         "uppercase letters",
-			identifier:   "MyIntegration",
-			errorPattern: `installation_id must match the pattern`,
-		},
-		{
-			name:         "special characters underscore",
-			identifier:   "my_integration",
-			errorPattern: `installation_id must match the pattern`,
-		},
-		{
-			name:         "special characters exclamation",
-			identifier:   "my-integration!",
-			errorPattern: `installation_id must match the pattern`,
-		},
-		{
-			name:         "special characters at",
-			identifier:   "my@integration",
-			errorPattern: `installation_id must match the pattern`,
-		},
+		{name: "spaces", identifier: "my integration with spaces", errorPattern: `installation_id must match the pattern`},
+		{name: "uppercase letters", identifier: "MyIntegration", errorPattern: `installation_id must match the pattern`},
+		{name: "special characters underscore", identifier: "my_integration", errorPattern: `installation_id must match the pattern`},
+		{name: "special characters exclamation", identifier: "my-integration!", errorPattern: `installation_id must match the pattern`},
+		{name: "special characters at", identifier: "my@integration", errorPattern: `installation_id must match the pattern`},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			config := createIntegration(tc.identifier, installationAppType)
 			resource.Test(t, resource.TestCase{
 				PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 				ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 				Steps: []resource.TestStep{
 					{
-						Config:      config,
+						Config:      integrationHCL(tc.identifier, appType),
 						ExpectError: regexp.MustCompile(tc.errorPattern),
 					},
 				},
@@ -390,7 +316,7 @@ func TestPortIntegrationInvalidIdentifier(t *testing.T) {
 }
 
 func TestPortIntegrationValidIdentifier(t *testing.T) {
-	installationAppType := "kafka"
+	appType := "kafka"
 
 	testCases := []struct {
 		name    string
@@ -409,16 +335,16 @@ func TestPortIntegrationValidIdentifier(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			installationID := tc.buildID(utils.GenID())
-			config := createIntegration(installationID, installationAppType)
+
 			resource.Test(t, resource.TestCase{
 				PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 				ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 				Steps: []resource.TestStep{
 					{
-						Config: config,
+						Config: integrationHCL(installationID, appType),
 						Check: resource.ComposeTestCheckFunc(
-							resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", installationID),
-							resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", installationAppType),
+							resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
+							resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", appType),
 						),
 					},
 				},

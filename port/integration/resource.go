@@ -45,8 +45,8 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	if err := validateSaasSpec(plan); err != nil {
-		resp.Diagnostics.AddError("invalid SaaS integration configuration", err.Error())
+	if err := validateIntegrationModel(plan); err != nil {
+		resp.Diagnostics.AddError("invalid integration configuration", err.Error())
 		return
 	}
 
@@ -123,6 +123,11 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 			"cannot remove changelog destination",
 			"The Port API does not support removing a changelog destination from an existing integration. To remove it, delete and recreate the integration (e.g. taint the resource).",
 		)
+		return
+	}
+
+	if err := validateIntegrationModel(plan); err != nil {
+		resp.Diagnostics.AddError("invalid integration configuration", err.Error())
 		return
 	}
 

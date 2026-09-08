@@ -68,6 +68,24 @@ func TestValidateSaasSpec_OnPremPassesWithoutSpec(t *testing.T) {
 	assert.NoError(t, validateSaasSpec(state))
 }
 
+func TestValidateIntegrationModel_OnPremRejectsSpec(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:   types.StringValue("my-kafka"),
+		InstallationType: types.StringValue(consts.InstallationTypeOnPrem),
+		Spec:             types.StringValue(`{"integrationSpec":{"token":"x"}}`),
+	}
+	assert.ErrorContains(t, validateIntegrationModel(state), "spec is only supported")
+}
+
+func TestValidateIntegrationModel_OnPremAllowsEmptySpec(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:   types.StringValue("my-kafka"),
+		InstallationType: types.StringValue(consts.InstallationTypeOnPrem),
+		Spec:             types.StringNull(),
+	}
+	assert.NoError(t, validateIntegrationModel(state))
+}
+
 func TestParseSpecFromConfig_RejectsServerManagedKeys(t *testing.T) {
 	tests := []struct {
 		name string

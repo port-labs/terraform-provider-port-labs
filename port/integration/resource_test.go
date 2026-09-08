@@ -75,9 +75,18 @@ const integrationWebhook = `
 		}`
 
 func integrationHCL(installationID, appType string, blocks ...string) string {
+	return integrationHCLWithInstallationType(installationID, appType, "", blocks...)
+}
+
+func integrationHCLWithInstallationType(installationID, appType, installationType string, blocks ...string) string {
 	extras := strings.Join(blocks, "\n")
 	if extras != "" {
 		extras = "\n" + extras
+	}
+
+	installationTypeLine := ""
+	if installationType != "" {
+		installationTypeLine = fmt.Sprintf("\n\t\tinstallation_type     = \"%s\"", installationType)
 	}
 
 	return fmt.Sprintf(`
@@ -85,9 +94,9 @@ func integrationHCL(installationID, appType string, blocks ...string) string {
 		installation_id       = "%s"
 		installation_app_type = "%s"
 		title                 = "%s"
-		version               = "%s"%s
+		version               = "%s"%s%s
 	}
-`, installationID, appType, defaultTitle, defaultVersion, extras)
+`, installationID, appType, defaultTitle, defaultVersion, installationTypeLine, extras)
 }
 
 func integrationDefaultChecks(installationID, appType string) resource.TestCheckFunc {
@@ -279,6 +288,58 @@ func TestPortIntegrationImmutableInstallationAppType(t *testing.T) {
 			{
 				Config:      integrationHCL(installationID, "pagerduty"),
 				ExpectError: regexp.MustCompile(`cannot change installation_app_type`),
+			},
+		},
+	})
+}
+
+func TestPortIntegrationImmutableInstallationType(t *testing.T) {
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
+	appType := "kafka"
+	saasSpec := `
+		spec = jsonencode({
+			integrationSpec = { token = "my-token" }
+		})`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: integrationHCLWithInstallationType(installationID, appType, "OnPrem"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_type", "OnPrem"),
+				),
+			},
+			{
+				Config: integrationHCLWithInstallationType(installationID, appType, "Saas", saasSpec),
+				ExpectError: regexp.MustCompile(`cannot change installation_type`),
+			},
+		},
+	})
+}
+
+func TestPortIntegrationOnPremRejectsSpec(t *testing.T) {
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
+	config := integrationHCLWithInstallationType(
+		installationID,
+		"kafka",
+		"OnPrem",
+		`spec = jsonencode({ integrationSpec = { token = "my-token" } })`,
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      config,
+				ExpectError: regexp.MustCompile(`spec is only supported when installation_type is`),
 			},
 		},
 	})

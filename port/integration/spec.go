@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 )
 
 // serverManagedSpecKeys are spec sub-objects that Port sets internally
@@ -41,6 +42,25 @@ func parseSpecFromConfig(raw types.String) (*cli.IntegrationClientSpec, error) {
 		return nil, nil
 	}
 	return &spec, nil
+}
+
+func validateIntegrationModel(m *IntegrationModel) error {
+	if err := validateSaasSpec(m); err != nil {
+		return err
+	}
+
+	if !m.isSaas() && specIsConfigured(m.Spec) {
+		return fmt.Errorf(
+			"spec is only supported when installation_type is %q",
+			consts.InstallationTypeSaas,
+		)
+	}
+	
+	return nil
+}
+
+func specIsConfigured(spec types.String) bool {
+	return !spec.IsNull() && !spec.IsUnknown() && spec.ValueString() != ""
 }
 
 // validateSaasSpec checks that a Saas integration has the required spec fields.

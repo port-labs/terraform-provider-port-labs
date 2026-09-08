@@ -44,7 +44,7 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Optional:            true,
 		},
 		"installation_type": schema.StringAttribute{
-			MarkdownDescription: "The installation type of the integration. Use `Saas` for Ocean SaaS integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource.",
+			MarkdownDescription: "The installation type of the integration. Use `Saas` for Ocean SaaS integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource. Cannot be changed after creation.",
 			Optional:            true,
 			Computed:            true,
 			Default:             stringdefault.StaticString(consts.InstallationTypeOnPrem),
@@ -59,7 +59,7 @@ func IntegrationSchema() map[string]schema.Attribute {
 			},
 		},
 		"spec": schema.StringAttribute{
-			MarkdownDescription: "Ocean SaaS integration spec as a JSON string (use `jsonencode`). Required when `installation_type` is `Saas`. Contains `integrationSpec` (credentials/settings) and optionally `appSpec` (feature toggles like `liveEventsEnabled`, `sendRawDataExamples`, etc.). `systemSpec` and `privateSpec` are server-managed and always excluded. Sensitive `integrationSpec` values (org secret references) are preserved from your HCL since the server strips them on read. If `appSpec` fields are omitted, the server applies its own defaults — which may differ from Port UI defaults. Declare `appSpec` explicitly to match the UI behavior.",
+			MarkdownDescription: "Ocean SaaS integration spec as a JSON string (use `jsonencode`). **Only supported when `installation_type` is `Saas`** — must not be set for OnPrem integrations. Required for SaaS. Contains `integrationSpec` (credentials/settings) and optionally `appSpec` (feature toggles like `liveEventsEnabled`, `sendRawDataExamples`, etc.). `systemSpec` and `privateSpec` are server-managed and always excluded. Sensitive `integrationSpec` values (org secret references) are preserved from your HCL since the server strips them on read. If `appSpec` fields are omitted, the server applies its own defaults — which may differ from Port UI defaults. Declare `appSpec` explicitly to match the UI behavior.",
 			Optional:            true,
 			Computed:            true,
 			PlanModifiers: []planmodifier.String{
@@ -282,7 +282,8 @@ The following config properties (` + "`selector.query|entity.mappings.*`" + `) a
 
 - ` + "`config`" + ` **cannot be set on creation**. Integrations receive default mappings during provisioning. Create first, then add ` + "`config`" + ` on a subsequent apply.
 - ` + "`status`" + ` reflects async Ocean provisioning (` + "`Creating`" + ` → ` + "`Running`" + `) for SaaS integrations only.
-- ` + "`installation_id`" + ` and ` + "`installation_app_type`" + ` cannot be changed after creation.
+- ` + "`installation_id`" + `, ` + "`installation_app_type`" + `, and ` + "`installation_type`" + ` cannot be changed after creation.
+- ` + "`spec`" + ` is only supported for SaaS integrations (` + "`installation_type = \"Saas\"`" + `). Do not set it on OnPrem integrations.
 - A changelog destination (` + "`webhook_changelog_destination`" + ` / ` + "`kafka_changelog_destination`" + `) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).
 - Existing integrations can be brought under Terraform management with ` + "`terraform import port_integration.my_integration <installation_id>`" + `.
 - ` + "`terraform destroy`" + ` deletes the real integration in Port, not just removes it from state. Use ` + "`terraform state rm`" + ` if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.

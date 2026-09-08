@@ -109,6 +109,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 ### Read-Only
 
+- `github_external_properties_namespace_claims` (Map of Boolean) GitHub organizations for which this integration has claimed external properties namespace access. Keys are organization names and values are always `true`. This field is set by Port for GitHub Ocean integrations.
 - `id` (String) The ID of this resource.
 
 <a id="nestedatt--kafka_changelog_destination"></a>

@@ -473,14 +473,14 @@ type (
 
 	ScorecardGroup struct {
 		Meta
-		Identifier string                            `json:"identifier,omitempty"`
-		Title      string                            `json:"title,omitempty"`
-		Levels     []Level                           `json:"levels,omitempty"`
-		Properties map[string]any                    `json:"properties,omitempty"`
+		Identifier string                              `json:"identifier,omitempty"`
+		Title      string                              `json:"title,omitempty"`
+		Levels     []Level                             `json:"levels,omitempty"`
+		Properties map[string]any                      `json:"properties,omitempty"`
 		Scorecards map[string]ScorecardGroupMemberSpec `json:"scorecards,omitempty"`
-		Blueprints []string                          `json:"blueprints,omitempty"`
-		Rules      []Rule                            `json:"rules,omitempty"`
-		Filters    map[string]*Query                 `json:"filters,omitempty"`
+		Blueprints []string                            `json:"blueprints,omitempty"`
+		Rules      []Rule                              `json:"rules,omitempty"`
+		Filters    map[string]*Query                   `json:"filters,omitempty"`
 	}
 
 	Rule struct {
@@ -776,12 +776,13 @@ type PortBodyDelete struct {
 }
 
 type Integration struct {
-	InstallationId       string                `json:"installationId"`
-	Title                *string               `json:"title"`
-	InstallationAppType  *string               `json:"installationAppType"`
-	Version              *string               `json:"version"`
-	Config               *map[string]any       `json:"config"`
-	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
+	InstallationId                          string                `json:"installationId"`
+	Title                                   *string               `json:"title"`
+	InstallationAppType                     *string               `json:"installationAppType"`
+	Version                                 *string               `json:"version"`
+	Config                                  *map[string]any       `json:"config"`
+	ChangelogDestination                    *ChangelogDestination `json:"changelogDestination,omitempty"`
+	GithubExternalPropertiesNamespaceClaims map[string]bool       `json:"githubExternalPropertiesNamespaceClaims,omitempty"`
 }
 
 type Organization struct {

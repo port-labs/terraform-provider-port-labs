@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 func IntegrationSchema() map[string]schema.Attribute {
@@ -49,6 +50,11 @@ func IntegrationSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The changelog destination of the blueprint (just an empty `{}`)",
 			Optional:            true,
 			AttributeTypes:      map[string]attr.Type{},
+		},
+		"github_external_properties_namespace_claims": schema.MapAttribute{
+			MarkdownDescription: "GitHub organizations for which this integration has claimed external properties namespace access. Keys are organization names and values are always `true`. This field is set by Port for GitHub Ocean integrations.",
+			Computed:            true,
+			ElementType:         types.BoolType,
 		},
 	}
 }

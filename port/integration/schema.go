@@ -67,14 +67,14 @@ func IntegrationSchema() map[string]schema.Attribute {
 			},
 		},
 		"status": schema.StringAttribute{
-			MarkdownDescription: "The provisioning status of the integration. Populated for SaaS installations.",
+			MarkdownDescription: "The provisioning status of the integration (e.g. `Creating`, `Running`, `Updating`, `Error`).",
 			Computed:            true,
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
 		"config": schema.StringAttribute{
-			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`)",
+			MarkdownDescription: "Integration mapping and configuration as a JSON string (use `jsonencode`). **Cannot be set on creation** — integrations receive default mappings during provisioning. Add `config` after the initial `terraform apply` to override the defaults.",
 			Optional:            true,
 			Computed:            true,
 			PlanModifiers: []planmodifier.String{
@@ -122,7 +122,14 @@ Docs about integrations can be found [here](https://docs.getport.io/integrations
 
 Docs about how to use Port's Terraform provider to create and manage integrations can be found [here](https://docs.getport.io/context-lake/ingestion/ingest-data-into-port/other/iac/terraform/terraform).
 
-## SaaS example
+## Two-step workflow
+
+Integrations receive default mappings during provisioning (from provision-service or the Ocean integration itself). Because of this, ` + "`config`" + ` **cannot be set when creating** an integration — it would be overwritten. Instead:
+
+1. **First apply** — create the integration without ` + "`config`" + `. Provisioning sets up default blueprints and mappings.
+2. **Second apply** — add a ` + "`config`" + ` block to your HCL to override the default mappings.
+
+## SaaS example — Step 1: Create the integration
 
 ` + "```hcl" + `
 # Secret naming convention: _{INSTALLATION_ID}_{INTEGRATION_TYPE}_{PROPERTY} in SCREAMING_SNAKE_CASE.
@@ -155,43 +162,100 @@ resource "port_integration" "github" {
     }
   })
 
+  # Do NOT set config here — provisioning will populate default mappings.
+  # Add config on a subsequent apply to override them.
+}
+` + "```" + `
+
+## SaaS example — Step 2: Override mappings
+
+After the first apply completes and provisioning finishes, add ` + "`config`" + ` to the same resource:
+
+` + "```hcl" + `
+resource "port_integration" "github" {
+  depends_on = [port_organization_secret.github_token]
+
+  installation_id       = local.github_installation_id
+  installation_app_type = local.github_type
+  installation_type     = "Saas"
+  title                 = "GitHub Production"
+
+  spec = jsonencode({
+    integrationSpec = {
+      authenticationMode = "Personal Access Token"
+      githubToken        = port_organization_secret.github_token.secret_name
+    }
+  })
+
   config = jsonencode({
-    resources = []
+    resources = [
+      {
+        kind = "repository"
+        selector = {
+          query = "true"
+        }
+        port = {
+          entity = {
+            mappings = {
+              identifier = ".name"
+              blueprint  = "\"githubRepository\""
+              title      = ".name"
+              properties = {
+                url           = ".html_url"
+                defaultBranch = ".default_branch"
+              }
+            }
+          }
+        }
+      }
+    ]
   })
 }
 ` + "```" + `
 
-## Self-hosted (OnPrem) example
+## Self-hosted (OnPrem) example — Step 1: Create
 
 Self-hosted integrations run on your own infrastructure (e.g. an Ocean exporter container) and pull their mapping from Port.
 
 ` + "```hcl" + `
 resource "port_integration" "my_custom_integration" {
-	installation_id       = "my-custom-integration-id"
-	title                 = "My Custom Integration"
-	config = jsonencode({
-		createMissingRelatedEntitiesboolean = true
-		deleteDependentEntities = true,
-		resources = [{
-			kind = "my-custom-kind"
-			selector = {
-				query = ".title"
-			}
-			port = {
-				entity = {
-					mappings = [{
-						identifier = "'my-identifier'"
-						title      = ".title"
-						blueprint  = "'my-blueprint'"
-						properties = {
-							my_property = 123
-						}
-						relations  = {}
-					}]
-				}
-			}
-		}]
-	})
+  installation_id = "my-custom-integration-id"
+  title           = "My Custom Integration"
+
+  # config is set on the next apply, after provisioning creates default mappings.
+}
+` + "```" + `
+
+## Self-hosted (OnPrem) example — Step 2: Override mappings
+
+` + "```hcl" + `
+resource "port_integration" "my_custom_integration" {
+  installation_id = "my-custom-integration-id"
+  title           = "My Custom Integration"
+
+  config = jsonencode({
+    createMissingRelatedEntities = true
+    deleteDependentEntities      = true
+    resources = [{
+      kind = "my-custom-kind"
+      selector = {
+        query = ".title"
+      }
+      port = {
+        entity = {
+          mappings = [{
+            identifier = "'my-identifier'"
+            title      = ".title"
+            blueprint  = "'my-blueprint'"
+            properties = {
+              my_property = 123
+            }
+            relations = {}
+          }]
+        }
+      }
+    }]
+  })
 }
 ` + "```\n" + `
 
@@ -199,12 +263,13 @@ For catalog integration types, set ` + "`installation_app_type`" + ` to the inte
 
 ### NOTICE:
 
-The following config properties (` + "`selector.query|entity.mappings.*`" + `) are jq expressions, which means that you need to input either a valid jq expression (E.g ` + "`.title`" + `), or if you want a string value, a qouted escaped string val (E.g ` + "`'my-string'`" + `).
+The following config properties (` + "`selector.query|entity.mappings.*`" + `) are jq expressions, which means that you need to input either a valid jq expression (E.g ` + "`.title`" + `), or if you want a string value, a quoted escaped string val (E.g ` + "`'my-string'`" + `).
 
 ### NOTES:
 
+- ` + "`config`" + ` **cannot be set on creation**. Integrations receive default mappings during provisioning. Create first, then add ` + "`config`" + ` on a subsequent apply.
 - ` + "`installation_id`" + ` and ` + "`installation_app_type`" + ` cannot be changed after creation.
-- A changelog destination (` + "`webhook_changelog_destination`" + ` / ` + "`kafka_changelog_destination`" + `) can be added or updated, but not removed - the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).
+- A changelog destination (` + "`webhook_changelog_destination`" + ` / ` + "`kafka_changelog_destination`" + `) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).
 - Existing integrations can be brought under Terraform management with ` + "`terraform import port_integration.my_integration <installation_id>`" + `.
 - ` + "`terraform destroy`" + ` deletes the real integration in Port, not just removes it from state. Use ` + "`terraform state rm`" + ` if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
 `

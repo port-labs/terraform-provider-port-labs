@@ -61,8 +61,9 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Computed:            true,
 		},
 		"config": schema.StringAttribute{
-			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`)",
+			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`). If omitted, the integration's config/mappings are not managed by Terraform and can be freely edited in the Port UI.",
 			Optional:            true,
+			Computed:            true,
 		},
 		"webhook_changelog_destination": schema.SingleNestedAttribute{
 			MarkdownDescription: "The webhook changelog destination of the integration",

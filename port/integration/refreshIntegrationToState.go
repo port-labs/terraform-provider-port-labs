@@ -27,7 +27,11 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, r
 		state.Spec = mergeSpec(state.Spec, remote.Spec, r.portClient.JSONEscapeHTML)
 	}
 
-	if remote.Config != nil {
+	// Only refresh config from the server when the user declared it in HCL.
+	// If omitted (null/unknown), the server-provisioned mappings are left unmanaged.
+	if state.Config.IsNull() || state.Config.IsUnknown() {
+		state.Config = types.StringNull()
+	} else if remote.Config != nil {
 		config, _ := utils.GoObjectToTerraformStringPreferExisting(state.Config, remote.Config, r.portClient.JSONEscapeHTML)
 		state.Config = config
 	}

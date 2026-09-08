@@ -27,11 +27,7 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, r
 		state.Spec = mergeSpec(state.Spec, remote.Spec, r.portClient.JSONEscapeHTML)
 	}
 
-	// Only refresh config from the server when the user declared it in HCL.
-	// If omitted (null/unknown), the server-provisioned mappings are left unmanaged.
-	if state.Config.IsNull() || state.Config.IsUnknown() {
-		state.Config = types.StringNull()
-	} else if remote.Config != nil {
+	if remote.Config != nil {
 		config, _ := utils.GoObjectToTerraformStringPreferExisting(state.Config, remote.Config, r.portClient.JSONEscapeHTML)
 		state.Config = config
 	}
@@ -59,7 +55,8 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, r
 // user-configured values for sensitive integrationSpec fields that the server
 // strips (org secret references resolved at runtime).
 //
-// systemSpec and privateSpec are always excluded — those are server-managed.
+// systemSpec and privateSpec are always excluded — those are server-managed
+// and already stripped by the CLI layer's toClientSpec().
 func mergeSpec(stateTF types.String, remote *cli.IntegrationClientSpec, jsonEscapeHTML bool) types.String {
 	// Parse user's current spec from state so we can preserve secret refs.
 	var userSpec map[string]map[string]any
@@ -76,7 +73,6 @@ func mergeSpec(stateTF types.String, remote *cli.IntegrationClientSpec, jsonEsca
 		for k, v := range remote.IntegrationSpec {
 			is[k] = v
 		}
-		// Restore secret references the server stripped.
 		if userIS := userSpec["integrationSpec"]; userIS != nil {
 			for k, userVal := range userIS {
 				serverVal, exists := is[k]
@@ -87,16 +83,12 @@ func mergeSpec(stateTF types.String, remote *cli.IntegrationClientSpec, jsonEsca
 		}
 		merged["integrationSpec"] = is
 	} else if userIS := userSpec["integrationSpec"]; userIS != nil {
-		// Server returned nil integrationSpec — keep user's entirely.
 		merged["integrationSpec"] = userIS
 	}
 
-	// appSpec: take server values only if the user declared appSpec in their HCL.
-	// If the user omitted it, don't pull in server defaults (avoids unexpected drift).
-	if remote.AppSpec != nil && userSpec["appSpec"] != nil {
+	// appSpec: take server values as-is (no sensitive fields).
+	if remote.AppSpec != nil {
 		merged["appSpec"] = remote.AppSpec
-	} else if userSpec["appSpec"] != nil {
-		merged["appSpec"] = userSpec["appSpec"]
 	}
 
 	encoded, err := utils.GoObjectToTerraformString(merged, jsonEscapeHTML)

@@ -52,18 +52,16 @@ func IntegrationSchema() map[string]schema.Attribute {
 			},
 		},
 		"spec": schema.StringAttribute{
-			MarkdownDescription: "Ocean SaaS integration spec as a JSON string (use `jsonencode`). Required when `installation_type` is `Saas`. Only `integrationSpec` and `appSpec` are supported — `systemSpec` and `privateSpec` are server-managed and always excluded. Changes made in the Port UI to `integrationSpec` or `appSpec` are reflected on the next `terraform plan`. Sensitive fields (org secret references) are preserved from your HCL since the server strips them on read.",
+			MarkdownDescription: "Ocean SaaS integration spec as a JSON string (use `jsonencode`). Required when `installation_type` is `Saas`. Only `integrationSpec` and `appSpec` are supported — `systemSpec` and `privateSpec` are server-managed and always excluded. Sensitive `integrationSpec` values (org secret references) are preserved from your HCL since the server strips them on read.",
 			Optional:            true,
-			Computed:            true,
 		},
 		"status": schema.StringAttribute{
 			MarkdownDescription: "The provisioning status of the integration. Populated for SaaS installations.",
 			Computed:            true,
 		},
 		"config": schema.StringAttribute{
-			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`). If omitted, the integration's config/mappings are not managed by Terraform and can be freely edited in the Port UI.",
+			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`)",
 			Optional:            true,
-			Computed:            true,
 		},
 		"webhook_changelog_destination": schema.SingleNestedAttribute{
 			MarkdownDescription: "The webhook changelog destination of the integration",
@@ -142,8 +140,6 @@ resource "port_integration" "github" {
     resources = []
   })
 }
-
-
 ` + "```" + `
 
 ` + "```hcl" + `

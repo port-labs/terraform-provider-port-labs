@@ -67,14 +67,21 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 }
 
 // applyWriteResult syncs the server response after Create or Update while
-// holding spec and config at their planned values, which Terraform compares
-// against. A Computed attribute the user left out of the config arrives here
-// unknown, and every attribute must be known once apply returns.
+// keeping every Computed attribute at its planned value. Port changes status
+// and version during writes, and fills spec/config with server defaults — none
+// of that may differ from what Terraform planned. Read picks it all up next.
 func applyWriteResult(plan *IntegrationModel, a *cli.Integration, integrationId string) {
+	savedSpec := plan.Spec
+	savedConfig := plan.Config
+	savedStatus := plan.Status
+	savedVersion := plan.Version
+
 	applyServerFields(plan, a, integrationId)
 
-	plan.Spec = nullIfUnknown(plan.Spec)
-	plan.Config = nullIfUnknown(plan.Config)
+	plan.Spec = nullIfUnknown(savedSpec)
+	plan.Config = nullIfUnknown(savedConfig)
+	plan.Status = nullIfUnknown(savedStatus)
+	plan.Version = nullIfUnknown(savedVersion)
 }
 
 func nullIfUnknown(v types.String) types.String {

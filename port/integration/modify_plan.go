@@ -44,9 +44,9 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 	for _, f := range immutableFields {
 		if f.changed(&state, &plan) {
 			resp.Diagnostics.AddError(
-				fmt.Sprintf("%s cannot be changed", f.name),
+				fmt.Sprintf("cannot change %s", f.name),
 				fmt.Sprintf(
-					"%s is immutable. Destroy this resource and create a new one, or remove the integration from Port first.",
+					"The Port API does not support changing `%s` on an existing integration. To use a different value, destroy this resource (which deletes the integration from Port) and create a new `port_integration`.",
 					f.name,
 				),
 			)

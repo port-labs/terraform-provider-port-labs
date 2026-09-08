@@ -32,6 +32,9 @@ func IntegrationSchema() map[string]schema.Attribute {
 		"version": schema.StringAttribute{
 			Optional: true,
 			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"title": schema.StringAttribute{
 			Optional: true,
@@ -66,10 +69,17 @@ func IntegrationSchema() map[string]schema.Attribute {
 		"status": schema.StringAttribute{
 			MarkdownDescription: "The provisioning status of the integration. Populated for SaaS installations.",
 			Computed:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"config": schema.StringAttribute{
 			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`)",
 			Optional:            true,
+			Computed:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"webhook_changelog_destination": schema.SingleNestedAttribute{
 			MarkdownDescription: "The webhook changelog destination of the integration",

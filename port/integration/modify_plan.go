@@ -2,9 +2,11 @@ package integration
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var _ resource.ResourceWithModifyPlan = &IntegrationResource{}
@@ -52,4 +54,40 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 			)
 		}
 	}
+
+	// Suppress spec diffs caused only by server-managed fields (appSpec).
+	// If the user's integrationSpec hasn't changed, keep the state value.
+	plan.Spec = suppressServerOnlySpecDiff(state.Spec, plan.Spec)
+
+	// Suppress config diffs when user didn't declare config (null in HCL).
+	if plan.Config.IsNull() || plan.Config.IsUnknown() {
+		plan.Config = state.Config
+	}
+
+	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
+}
+
+// suppressServerOnlySpecDiff keeps the state spec when the user's integrationSpec
+// hasn't changed — preventing diffs caused by server-added appSpec.
+func suppressServerOnlySpecDiff(stateSpec, planSpec types.String) types.String {
+	if stateSpec.IsNull() || planSpec.IsNull() || planSpec.IsUnknown() {
+		return planSpec
+	}
+
+	var stateMap, planMap map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(stateSpec.ValueString()), &stateMap); err != nil {
+		return planSpec
+	}
+	if err := json.Unmarshal([]byte(planSpec.ValueString()), &planMap); err != nil {
+		return planSpec
+	}
+
+	// Compare only integrationSpec — if it matches, the diff is server-only.
+	stateIS, _ := json.Marshal(stateMap["integrationSpec"])
+	planIS, _ := json.Marshal(planMap["integrationSpec"])
+	if string(stateIS) == string(planIS) {
+		return stateSpec
+	}
+
+	return planSpec
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/avast/retry-go/v4"
@@ -13,9 +14,10 @@ import (
 )
 
 const (
-	provisioningPollInterval = 10 * time.Second
-	provisioningPollJitter   = 3 * time.Second
-	provisioningMaxAttempts  = 60
+	provisioningPollInterval = 5 * time.Second
+	provisioningPollJitter   = 2 * time.Second
+	provisioningMaxAttempts  = 30
+	provisioningMaxDelay     = 15 * time.Second
 )
 
 var (
@@ -105,8 +107,10 @@ func (c *PortClient) DeleteIntegration(ctx context.Context, id string) (int, err
 }
 
 func (c *PortClient) WaitForIntegrationReady(ctx context.Context, installationId string) (*Integration, error) {
+	attempt := 0
 	integration, err := retry.DoWithData(
 		func() (*Integration, error) {
+			attempt++
 			integration, statusCode, err := c.GetIntegration(ctx, installationId)
 			if err != nil {
 				if statusCode == 404 {
@@ -115,7 +119,10 @@ func (c *PortClient) WaitForIntegrationReady(ctx context.Context, installationId
 				return nil, err
 			}
 
-			switch status := integrationStatus(integration); status {
+			status := integrationStatus(integration)
+			log.Printf("[DEBUG] integration %q poll #%d: status=%q", installationId, attempt, status)
+
+			switch status {
 			case "", consts.IntegrationStatusRunning:
 				return integration, nil
 			case consts.IntegrationStatusCreating, consts.IntegrationStatusUpdating:
@@ -131,6 +138,8 @@ func (c *PortClient) WaitForIntegrationReady(ctx context.Context, installationId
 		retry.Attempts(1),
 		retry.AttemptsForError(provisioningMaxAttempts, errIntegrationNotReady),
 		retry.Delay(provisioningPollInterval),
+		retry.DelayType(retry.BackOffDelay),
+		retry.MaxDelay(provisioningMaxDelay),
 		retry.MaxJitter(provisioningPollJitter),
 	)
 	if err != nil && errors.Is(err, errIntegrationNotReady) {
@@ -156,6 +165,8 @@ func (c *PortClient) WaitForIntegrationDeleted(ctx context.Context, installation
 		retry.Attempts(1),
 		retry.AttemptsForError(provisioningMaxAttempts, errIntegrationNotDeleted),
 		retry.Delay(provisioningPollInterval),
+		retry.DelayType(retry.BackOffDelay),
+		retry.MaxDelay(provisioningMaxDelay),
 		retry.MaxJitter(provisioningPollJitter),
 	)
 	if err != nil && errors.Is(err, errIntegrationNotDeleted) {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
@@ -71,10 +72,28 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		}
 	}
 
-	if err := r.refreshIntegrationState(plan, created, created.InstallationId, false); err != nil {
+	// Save planned spec/config before refresh — Create/Update must return
+	// values matching the plan exactly (see refreshIntegrationToState.go).
+	plannedSpec := plan.Spec
+	plannedConfig := plan.Config
+
+	if err := r.refreshIntegrationState(plan, created, created.InstallationId); err != nil {
 		resp.Diagnostics.AddError("failed to refresh state after create", err.Error())
 		return
 	}
+
+	// Restore planned values so Terraform doesn't see a diff from server-added fields.
+	// On Create, Computed+Optional attrs with no user value start as unknown —
+	// resolve to null since Terraform forbids unknowns after apply.
+	plan.Spec = plannedSpec
+	plan.Config = plannedConfig
+	if plan.Spec.IsUnknown() {
+		plan.Spec = types.StringNull()
+	}
+	if plan.Config.IsUnknown() {
+		plan.Config = types.StringNull()
+	}
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
@@ -97,7 +116,7 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 		return
 	}
 
-	if err := r.refreshIntegrationState(state, a, integrationIdentifier, true); err != nil {
+	if err := r.refreshIntegrationState(state, a, integrationIdentifier); err != nil {
 		resp.Diagnostics.AddError("failed to refresh integration state", err.Error())
 		return
 	}
@@ -150,10 +169,17 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		}
 	}
 
-	if err := r.refreshIntegrationState(plan, updated, integrationIdentifier, false); err != nil {
+	plannedSpec := plan.Spec
+	plannedConfig := plan.Config
+
+	if err := r.refreshIntegrationState(plan, updated, integrationIdentifier); err != nil {
 		resp.Diagnostics.AddError("failed to refresh state after update", err.Error())
 		return
 	}
+
+	plan.Spec = plannedSpec
+	plan.Config = plannedConfig
+
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 

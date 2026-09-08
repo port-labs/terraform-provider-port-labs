@@ -58,6 +58,7 @@ func (c *PortClient) CreateIntegration(ctx context.Context, integration *Integra
 	resp, err := c.Client.R().
 		SetBody(integration).
 		SetContext(ctx).
+		SetQueryParam("upsert", "true").
 		Post(url)
 	if err != nil {
 		return nil, err

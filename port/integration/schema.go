@@ -27,6 +27,10 @@ func IntegrationSchema() map[string]schema.Attribute {
 		"installation_app_type": schema.StringAttribute{
 			Optional: true,
 		},
+		"are_port_resources_initialized": schema.BoolAttribute{
+			MarkdownDescription: "Whether Port resources (blueprints, actions, etc.) are already initialized for this integration. Set to `true` when providing a mapping via `config` before the Ocean runtime starts.",
+			Optional:            true,
+		},
 		"config": schema.StringAttribute{
 			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`)",
 			Optional:            true,
@@ -64,7 +68,7 @@ var IntegrationResourceMarkdownDescription = `
 
 # Integration resource
 
-**NOTE:** This resource manages existing integration and integration mappings, not for creating new integrations.
+Creates and manages integrations in Port, for example before deploying the Ocean runtime (via Terraform or Helm).
 
 Docs about integrations can be found [here](https://docs.getport.io/integrations-index/).
 
@@ -73,8 +77,11 @@ Docs about how to import existing integrations and manage their mappings can be 
 
 ` + "```hcl" + `
 resource "port_integration" "my_custom_integration" {
-	installation_id       = "my-custom-integration-id"
-	title                 = "My Custom Integration"
+	installation_id                = "my-custom-integration-id"
+	installation_app_type          = "my-app-type"
+	version                        = "1.0.0"
+	title                          = "My Custom Integration"
+	are_port_resources_initialized = true
 	config = jsonencode({
 		createMissingRelatedEntitiesboolean = true
 		deleteDependentEntities = true,

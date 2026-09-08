@@ -776,12 +776,13 @@ type PortBodyDelete struct {
 }
 
 type Integration struct {
-	InstallationId       string                `json:"installationId"`
-	Title                *string               `json:"title"`
-	InstallationAppType  *string               `json:"installationAppType"`
-	Version              *string               `json:"version"`
-	Config               *map[string]any       `json:"config"`
-	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
+	InstallationId              string                `json:"installationId"`
+	Title                       *string               `json:"title"`
+	InstallationAppType         *string               `json:"installationAppType"`
+	Version                     *string               `json:"version"`
+	ArePortResourcesInitialized *bool                 `json:"arePortResourcesInitialized,omitempty"`
+	Config                      *map[string]any       `json:"config"`
+	ChangelogDestination        *ChangelogDestination `json:"changelogDestination,omitempty"`
 }
 
 type Organization struct {

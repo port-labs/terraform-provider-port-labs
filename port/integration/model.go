@@ -13,6 +13,7 @@ type IntegrationModel struct {
 	InstallationAppType         types.String                      `tfsdk:"installation_app_type"`
 	Title                       types.String                      `tfsdk:"title"`
 	Version                     types.String                      `tfsdk:"version"`
+	ArePortResourcesInitialized types.Bool                        `tfsdk:"are_port_resources_initialized"`
 	Config                      types.String                      `tfsdk:"config"`
 	KafkaChangelogDestination   types.Object                      `tfsdk:"kafka_changelog_destination"`
 	WebhookChangelogDestination *WebhookChangelogDestinationModel `tfsdk:"webhook_changelog_destination"`

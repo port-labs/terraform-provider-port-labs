@@ -473,14 +473,14 @@ type (
 
 	ScorecardGroup struct {
 		Meta
-		Identifier string                            `json:"identifier,omitempty"`
-		Title      string                            `json:"title,omitempty"`
-		Levels     []Level                           `json:"levels,omitempty"`
-		Properties map[string]any                    `json:"properties,omitempty"`
+		Identifier string                              `json:"identifier,omitempty"`
+		Title      string                              `json:"title,omitempty"`
+		Levels     []Level                             `json:"levels,omitempty"`
+		Properties map[string]any                      `json:"properties,omitempty"`
 		Scorecards map[string]ScorecardGroupMemberSpec `json:"scorecards,omitempty"`
-		Blueprints []string                          `json:"blueprints,omitempty"`
-		Rules      []Rule                            `json:"rules,omitempty"`
-		Filters    map[string]*Query                 `json:"filters,omitempty"`
+		Blueprints []string                            `json:"blueprints,omitempty"`
+		Rules      []Rule                              `json:"rules,omitempty"`
+		Filters    map[string]*Query                   `json:"filters,omitempty"`
 	}
 
 	Rule struct {
@@ -775,9 +775,18 @@ type PortBodyDelete struct {
 	Ok bool `json:"ok"`
 }
 
+// IntegrationClientSpec is the user-manageable part of an integration spec.
+// Port also returns systemSpec and privateSpec; omitting them here drops them
+// on unmarshal and keeps them out of every request body.
 type IntegrationClientSpec struct {
 	IntegrationSpec map[string]any `json:"integrationSpec,omitempty"`
 	AppSpec         map[string]any `json:"appSpec,omitempty"`
+}
+
+// IsEmpty reports whether the spec carries nothing Terraform can manage, which
+// is the case when Port returns only server-managed sections.
+func (s *IntegrationClientSpec) IsEmpty() bool {
+	return s == nil || (s.IntegrationSpec == nil && s.AppSpec == nil)
 }
 
 type IntegrationStatus struct {
@@ -790,50 +799,15 @@ type IntegrationStatusInfo struct {
 }
 
 type Integration struct {
-	InstallationId       string                `json:"installationId"`
-	Title                *string               `json:"title"`
-	InstallationAppType  *string               `json:"installationAppType"`
-	InstallationType     *string               `json:"installationType"`
-	Version              *string               `json:"version"`
-	Config               *map[string]any       `json:"config,omitempty"`
+	InstallationId       string                 `json:"installationId"`
+	Title                *string                `json:"title"`
+	InstallationAppType  *string                `json:"installationAppType"`
+	InstallationType     *string                `json:"installationType"`
+	Version              *string                `json:"version"`
+	Config               *map[string]any        `json:"config,omitempty"`
 	Spec                 *IntegrationClientSpec `json:"spec,omitempty"`
 	StatusInfo           *IntegrationStatusInfo `json:"statusInfo,omitempty"`
 	ChangelogDestination *ChangelogDestination  `json:"changelogDestination,omitempty"`
-}
-
-func (i *Integration) UnmarshalJSON(data []byte) error {
-	type Alias Integration
-	type wire struct {
-		Alias
-		Spec *integrationSpecWire `json:"spec,omitempty"`
-	}
-
-	var w wire
-	if err := json.Unmarshal(data, &w); err != nil {
-		return err
-	}
-
-	*i = Integration(w.Alias)
-	i.Spec = w.Spec.toClientSpec()
-
-	return nil
-}
-
-type integrationSpecWire struct {
-	IntegrationSpec map[string]any `json:"integrationSpec,omitempty"`
-	AppSpec         map[string]any `json:"appSpec,omitempty"`
-	SystemSpec      map[string]any `json:"systemSpec,omitempty"`
-	PrivateSpec     map[string]any `json:"privateSpec,omitempty"`
-}
-
-func (s *integrationSpecWire) toClientSpec() *IntegrationClientSpec {
-	if s == nil || (s.IntegrationSpec == nil && s.AppSpec == nil) {
-		return nil
-	}
-	return &IntegrationClientSpec{
-		IntegrationSpec: s.IntegrationSpec,
-		AppSpec:         s.AppSpec,
-	}
 }
 
 type Organization struct {

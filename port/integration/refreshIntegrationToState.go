@@ -10,155 +10,132 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-// ──────────────────────────────────────────────────────────────────────────────
-// WHY THIS IS COMPLICATED — the "spec / config" consistency problem
-// ──────────────────────────────────────────────────────────────────────────────
-//
-// Terraform enforces a strict contract: the value a provider returns after
-// Create/Update MUST exactly match the planned value for every attribute that
-// was known in the plan. If it doesn't → "Provider produced inconsistent result
-// after apply".
-//
-// The Port API adds server-managed fields after create/update:
-//   - spec: server adds "appSpec" (liveEvents config, etc.)
-//   - config: server populates default resource mappings
-//
-// These fields aren't in the user's HCL, so they aren't in the plan.
-// If we naively return them from Create/Update, Terraform errors.
-//
-// The solution uses two mechanisms:
-//
-// 1. refreshIntegrationState (this file):
-//    Called from Create/Update/Read. Takes a `planSpec` parameter:
-//      - planSpec != nil (Create/Update): only include appSpec if it was
-//        already in the plan (e.g. from a previous Read → ModifyPlan cycle).
-//      - planSpec == nil (Read): always include appSpec from server.
-//    This ensures Create/Update return values matching the plan exactly.
-//
-// 2. ModifyPlan (modify_plan.go):
-//    Runs before every plan. On updates (when state exists):
-//      - spec: if user's integrationSpec hasn't changed, keeps the state
-//        value (which includes appSpec from last Read). This prevents a
-//        phantom diff where Terraform wants to remove appSpec.
-//      - config: if user didn't declare config, keeps state value.
-//
-// The full lifecycle for a SaaS integration:
-//
-//   terraform apply (Create):
-//     Plan:   spec = {"integrationSpec": {...}}           ← from HCL
-//     Apply:  server adds appSpec, but we exclude it      ← planSpec match
-//     State:  spec = {"integrationSpec": {...}}           ✓ matches plan
-//
-//   terraform plan (Read + ModifyPlan):
-//     Read:   spec = {"appSpec": {...}, "integrationSpec": {...}}  ← full server
-//     State updated with appSpec
-//     ModifyPlan: integrationSpec unchanged → keep state  ← suppress diff
-//     Plan output: "No changes"                           ✓ no phantom diff
-//
-//   terraform apply (Update, user changes integrationSpec):
-//     Plan:   spec = {"appSpec": {...}, "integrationSpec": {NEW}}  ← from ModifyPlan
-//     Apply:  planSpec has appSpec → we include it         ← planSpec match
-//     State:  spec = {"appSpec": {...}, "integrationSpec": {NEW}} ✓ matches plan
-// ──────────────────────────────────────────────────────────────────────────────
+// Port enriches an integration after every write: it adds spec.appSpec and
+// fills config with the integration's default mappings. Terraform requires
+// Create and Update to return exactly the planned value, so those two
+// attributes are refreshed from Port on Read only, and ModifyPlan keeps the
+// resulting server-owned additions out of the next diff.
 
-// refreshIntegrationState updates Terraform state from the server response.
-// Always merges all server fields (including appSpec and config).
-// On Create/Update, the caller (resource.go) restores planned spec/config
-// values afterward to satisfy Terraform's consistency contract.
-func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a *cli.Integration, integrationId string) error {
-	state.ID = types.StringValue(integrationId)
-	state.InstallationId = types.StringValue(integrationId)
-	state.Title = types.StringPointerValue(a.Title)
-	state.InstallationAppType = types.StringPointerValue(a.InstallationAppType)
-	state.InstallationType = types.StringPointerValue(a.InstallationType)
-	state.Version = types.StringPointerValue(a.Version)
+// applyServerFields copies the attributes Port owns onto the model, leaving
+// spec and config untouched.
+func applyServerFields(m *IntegrationModel, a *cli.Integration, integrationId string) {
+	m.ID = types.StringValue(integrationId)
+	m.InstallationId = types.StringValue(integrationId)
+	m.Title = types.StringPointerValue(a.Title)
+	m.InstallationAppType = types.StringPointerValue(a.InstallationAppType)
+	m.InstallationType = types.StringPointerValue(a.InstallationType)
+	m.Version = types.StringPointerValue(a.Version)
 
 	if a.StatusInfo != nil {
-		state.Status = types.StringValue(a.StatusInfo.IntegrationStatus.Status)
+		m.Status = types.StringValue(a.StatusInfo.IntegrationStatus.Status)
 	} else {
-		state.Status = types.StringNull()
-	}
-
-	if a.Spec != nil {
-		state.Spec = mergeSpec(state.Spec, a.Spec, r.portClient.JSONEscapeHTML)
-	}
-
-	if a.Config != nil {
-		config, _ := utils.GoObjectToTerraformStringPreferExisting(state.Config, a.Config, r.portClient.JSONEscapeHTML)
-		state.Config = config
-	}
-
-	// Terraform requires all values to be known after apply. Computed+Optional
-	// attributes start as "unknown" on Create when the user didn't set them.
-	// Resolve to null so Terraform doesn't error with "still indicated an
-	// unknown value".
-	if state.Spec.IsUnknown() {
-		state.Spec = types.StringNull()
-	}
-	if state.Config.IsUnknown() {
-		state.Config = types.StringNull()
+		m.Status = types.StringNull()
 	}
 
 	if a.ChangelogDestination != nil {
 		if a.ChangelogDestination.Type == consts.Kafka {
-			state.KafkaChangelogDestination, _ = types.ObjectValue(nil, nil)
-			state.WebhookChangelogDestination = nil
+			m.KafkaChangelogDestination, _ = types.ObjectValue(nil, nil)
+			m.WebhookChangelogDestination = nil
 		} else {
 			if a.ChangelogDestination.Url != "" {
-				state.WebhookChangelogDestination = &WebhookChangelogDestinationModel{
+				m.WebhookChangelogDestination = &WebhookChangelogDestinationModel{
 					Url: types.StringValue(a.ChangelogDestination.Url),
 				}
 				if a.ChangelogDestination.Agent != nil {
-					state.WebhookChangelogDestination.Agent = types.BoolValue(*a.ChangelogDestination.Agent)
+					m.WebhookChangelogDestination.Agent = types.BoolValue(*a.ChangelogDestination.Agent)
 				}
-				state.KafkaChangelogDestination = types.ObjectNull(map[string]attr.Type{})
+				m.KafkaChangelogDestination = types.ObjectNull(map[string]attr.Type{})
 			}
 		}
 	} else {
-		state.KafkaChangelogDestination = types.ObjectNull(map[string]attr.Type{})
-		state.WebhookChangelogDestination = nil
+		m.KafkaChangelogDestination = types.ObjectNull(map[string]attr.Type{})
+		m.WebhookChangelogDestination = nil
 	}
-
-	return nil
 }
 
-// mergeSpec builds the refreshed spec JSON from the server response.
-// Always includes all server fields (integrationSpec, appSpec).
-// systemSpec / privateSpec are excluded (stripped by CLI layer).
-// Preserves user-set secrets that the server strips (org secret references).
-func mergeSpec(stateTF types.String, remote *cli.IntegrationClientSpec, jsonEscapeHTML bool) types.String {
-	var userSpec map[string]map[string]any
-	if !stateTF.IsNull() && !stateTF.IsUnknown() {
-		_ = json.Unmarshal([]byte(stateTF.ValueString()), &userSpec)
+// refreshIntegrationState syncs the full server view onto state. Used by Read,
+// where picking up Port's own additions is what surfaces drift.
+func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a *cli.Integration, integrationId string) {
+	applyServerFields(state, a, integrationId)
+
+	if !a.Spec.IsEmpty() {
+		state.Spec = mergeSpec(state.Spec, a.Spec, r.portClient.JSONEscapeHTML)
 	}
-
-	merged := make(map[string]map[string]any)
-
-	if remote.IntegrationSpec != nil {
-		is := make(map[string]any, len(remote.IntegrationSpec))
-		for k, v := range remote.IntegrationSpec {
-			is[k] = v
-		}
-		if userIS := userSpec["integrationSpec"]; userIS != nil {
-			for k, userVal := range userIS {
-				serverVal, exists := is[k]
-				if (!exists || serverVal == nil || serverVal == "") && userVal != nil && userVal != "" {
-					is[k] = userVal
-				}
-			}
-		}
-		merged["integrationSpec"] = is
-	} else if userIS := userSpec["integrationSpec"]; userIS != nil {
-		merged["integrationSpec"] = userIS
+	if a.Config != nil {
+		state.Config, _ = utils.GoObjectToTerraformStringPreferExisting(state.Config, a.Config, r.portClient.JSONEscapeHTML)
 	}
+}
 
+// applyWriteResult syncs the server response after Create or Update while
+// holding spec and config at their planned values, which Terraform compares
+// against. A Computed attribute the user left out of the config arrives here
+// unknown, and every attribute must be known once apply returns.
+func applyWriteResult(plan *IntegrationModel, a *cli.Integration, integrationId string) {
+	applyServerFields(plan, a, integrationId)
+
+	plan.Spec = nullIfUnknown(plan.Spec)
+	plan.Config = nullIfUnknown(plan.Config)
+}
+
+func nullIfUnknown(v types.String) types.String {
+	if v.IsUnknown() {
+		return types.StringNull()
+	}
+	return v
+}
+
+// mergeSpec renders Port's spec as JSON, restoring the sensitive
+// integrationSpec values (organization secret references) that Port blanks out
+// in read responses.
+func mergeSpec(state types.String, remote *cli.IntegrationClientSpec, jsonEscapeHTML bool) types.String {
+	prior := priorIntegrationSpec(state)
+
+	merged := make(map[string]any, 2)
+	switch {
+	case remote.IntegrationSpec != nil:
+		merged["integrationSpec"] = withPriorSecrets(remote.IntegrationSpec, prior)
+	case prior != nil:
+		merged["integrationSpec"] = prior
+	}
 	if remote.AppSpec != nil {
 		merged["appSpec"] = remote.AppSpec
 	}
 
 	encoded, err := utils.GoObjectToTerraformString(merged, jsonEscapeHTML)
 	if err != nil {
-		return stateTF
+		return state
 	}
 	return encoded
+}
+
+func priorIntegrationSpec(state types.String) map[string]any {
+	if state.IsNull() || state.IsUnknown() {
+		return nil
+	}
+	var spec struct {
+		IntegrationSpec map[string]any `json:"integrationSpec"`
+	}
+	if err := json.Unmarshal([]byte(state.ValueString()), &spec); err != nil {
+		return nil
+	}
+	return spec.IntegrationSpec
+}
+
+// withPriorSecrets fills the blanks Port leaves behind with the values already
+// held in state, so secret references configured in HCL survive a refresh.
+func withPriorSecrets(remote, prior map[string]any) map[string]any {
+	merged := make(map[string]any, len(remote))
+	for k, v := range remote {
+		merged[k] = v
+	}
+	for k, v := range prior {
+		if isBlank(merged[k]) && !isBlank(v) {
+			merged[k] = v
+		}
+	}
+	return merged
+}
+
+func isBlank(v any) bool {
+	return v == nil || v == ""
 }

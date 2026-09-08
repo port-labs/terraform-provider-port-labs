@@ -1,11 +1,9 @@
 package integration
 
 import (
-	"encoding/json"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -85,35 +83,4 @@ func TestParseSpecFromConfig_RejectsServerManagedKeys(t *testing.T) {
 			assert.ErrorContains(t, err, tt.want)
 		})
 	}
-}
-
-func TestUnmarshalJSON_StripsServerManagedSpec(t *testing.T) {
-	var integration cli.Integration
-	err := json.Unmarshal([]byte(`{
-		"installationId": "pagerduty-prod",
-		"spec": {
-			"integrationSpec": {"token": "my-secret"},
-			"appSpec": {"scheduledResyncInterval": "12h"},
-			"systemSpec": {"size": "M"},
-			"privateSpec": {"applierBackend": "argo"}
-		}
-	}`), &integration)
-	require.NoError(t, err)
-	require.NotNil(t, integration.Spec)
-	assert.Equal(t, "my-secret", integration.Spec.IntegrationSpec["token"])
-	assert.Equal(t, "12h", integration.Spec.AppSpec["scheduledResyncInterval"])
-}
-
-func TestSpecToState_PreservesKeyOrder(t *testing.T) {
-	spec := &cli.IntegrationClientSpec{
-		IntegrationSpec: map[string]any{"token": "my-secret"},
-		AppSpec:         map[string]any{"scheduledResyncInterval": "12h"},
-	}
-
-	stateValue, err := specToState(spec, types.StringNull(), false)
-	require.NoError(t, err)
-	assert.False(t, stateValue.IsNull())
-	assert.NotContains(t, stateValue.ValueString(), "systemSpec")
-	assert.NotContains(t, stateValue.ValueString(), "privateSpec")
-	assert.Contains(t, stateValue.ValueString(), "my-secret")
 }

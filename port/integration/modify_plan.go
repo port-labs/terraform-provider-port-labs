@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -54,12 +55,14 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 			)
 		}
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	// Suppress spec diffs caused only by server-managed fields (appSpec).
-	// If the user's integrationSpec hasn't changed, keep the state value.
-	plan.Spec = suppressServerOnlySpecDiff(state.Spec, plan.Spec)
-
-	// Suppress config diffs when user didn't declare config (null in HCL).
+	// Read pulls Port's own additions into state (spec.appSpec, default config
+	// mappings). Neither belongs in a diff unless the configuration itself
+	// changed, so fall back to state when only Port moved.
+	plan.Spec = specPlan(state.Spec, plan.Spec)
 	if plan.Config.IsNull() || plan.Config.IsUnknown() {
 		plan.Config = state.Config
 	}
@@ -67,27 +70,28 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
 }
 
-// suppressServerOnlySpecDiff keeps the state spec when the user's integrationSpec
-// hasn't changed — preventing diffs caused by server-added appSpec.
-func suppressServerOnlySpecDiff(stateSpec, planSpec types.String) types.String {
-	if stateSpec.IsNull() || planSpec.IsNull() || planSpec.IsUnknown() {
-		return planSpec
+// specPlan keeps the spec recorded in state whenever the configured
+// integrationSpec is unchanged, so Port's appSpec additions do not read as a
+// removal the next time Terraform plans.
+func specPlan(state, plan types.String) types.String {
+	if state.IsNull() || plan.IsNull() || plan.IsUnknown() {
+		return plan
 	}
 
-	var stateMap, planMap map[string]json.RawMessage
-	if err := json.Unmarshal([]byte(stateSpec.ValueString()), &stateMap); err != nil {
-		return planSpec
+	stateSections, planSections := specSections(state), specSections(plan)
+	if stateSections == nil || planSections == nil {
+		return plan
 	}
-	if err := json.Unmarshal([]byte(planSpec.ValueString()), &planMap); err != nil {
-		return planSpec
+	if bytes.Equal(stateSections["integrationSpec"], planSections["integrationSpec"]) {
+		return state
 	}
+	return plan
+}
 
-	// Compare only integrationSpec — if it matches, the diff is server-only.
-	stateIS, _ := json.Marshal(stateMap["integrationSpec"])
-	planIS, _ := json.Marshal(planMap["integrationSpec"])
-	if string(stateIS) == string(planIS) {
-		return stateSpec
+func specSections(v types.String) map[string]json.RawMessage {
+	var sections map[string]json.RawMessage
+	if err := json.Unmarshal([]byte(v.ValueString()), &sections); err != nil {
+		return nil
 	}
-
-	return planSpec
+	return sections
 }

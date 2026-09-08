@@ -6,13 +6,12 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
-	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 // serverManagedSpecKeys are spec sub-objects that Port sets internally
-// (e.g. sizing, applier backend). They must never appear in user config
-// and are stripped on read via Integration.UnmarshalJSON.
-var serverManagedSpecKeys = [...]string{"systemSpec", "privateSpec"}
+// (e.g. sizing, applier backend). They must never appear in user config, and
+// IntegrationClientSpec drops them from responses.
+var serverManagedSpecKeys = []string{"systemSpec", "privateSpec"}
 
 // parseSpecFromConfig parses the user-provided spec JSON string into
 // an IntegrationClientSpec, rejecting any server-managed keys.
@@ -20,14 +19,14 @@ func parseSpecFromConfig(raw types.String) (*cli.IntegrationClientSpec, error) {
 	if raw.IsNull() || raw.IsUnknown() || raw.ValueString() == "" {
 		return nil, nil
 	}
+	data := []byte(raw.ValueString())
 
-	var parsed map[string]any
-	if err := json.Unmarshal([]byte(raw.ValueString()), &parsed); err != nil {
+	var sections map[string]json.RawMessage
+	if err := json.Unmarshal(data, &sections); err != nil {
 		return nil, fmt.Errorf("invalid spec JSON: %w", err)
 	}
-
 	for _, key := range serverManagedSpecKeys {
-		if _, ok := parsed[key]; ok {
+		if _, ok := sections[key]; ok {
 			return nil, fmt.Errorf(
 				"spec.%s is server-managed by Port and cannot be set in Terraform; only integrationSpec and appSpec are supported", key,
 			)
@@ -35,27 +34,13 @@ func parseSpecFromConfig(raw types.String) (*cli.IntegrationClientSpec, error) {
 	}
 
 	var spec cli.IntegrationClientSpec
-	raw2, _ := json.Marshal(parsed)
-	if err := json.Unmarshal(raw2, &spec); err != nil {
+	if err := json.Unmarshal(data, &spec); err != nil {
 		return nil, fmt.Errorf("invalid spec structure: %w", err)
 	}
-
-	if spec.IntegrationSpec == nil && spec.AppSpec == nil {
+	if spec.IsEmpty() {
 		return nil, nil
 	}
 	return &spec, nil
-}
-
-// specToState serializes an IntegrationClientSpec back to a Terraform string,
-// preserving key order from the existing state when semantically equal.
-func specToState(spec *cli.IntegrationClientSpec, existing types.String, escapeHTML bool) (types.String, error) {
-	if spec == nil || (spec.IntegrationSpec == nil && spec.AppSpec == nil) {
-		if existing.IsNull() {
-			return types.StringNull(), nil
-		}
-		return existing, nil
-	}
-	return utils.GoObjectToTerraformStringPreferExisting(existing, spec, escapeHTML)
 }
 
 // validateSaasSpec checks that a Saas integration has the required spec fields.

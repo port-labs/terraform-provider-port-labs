@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestIntegrationUnmarshalJSON_StripsServerManagedSpec(t *testing.T) {
+func TestIntegrationSpec_DropsServerManagedSections(t *testing.T) {
 	raw := `{
 		"installationId": "pagerduty-prod",
 		"installationType": "Saas",
@@ -33,23 +33,21 @@ func TestIntegrationUnmarshalJSON_StripsServerManagedSpec(t *testing.T) {
 	assert.NotContains(t, string(marshaled), "privateSpec")
 }
 
-func TestIntegrationUnmarshalJSON_NilSpec(t *testing.T) {
-	raw := `{"installationId": "my-kafka"}`
-
-	var got Integration
-	require.NoError(t, json.Unmarshal([]byte(raw), &got))
-	assert.Nil(t, got.Spec)
-}
-
-func TestIntegrationUnmarshalJSON_OnlyServerManagedSpec(t *testing.T) {
-	raw := `{
-		"installationId": "pagerduty-prod",
-		"spec": {
-			"systemSpec": {"size": "M"}
-		}
-	}`
-
-	var got Integration
-	require.NoError(t, json.Unmarshal([]byte(raw), &got))
-	assert.Nil(t, got.Spec, "spec with only server-managed fields should be nil")
+func TestIntegrationSpec_IsEmpty(t *testing.T) {
+	tests := []struct {
+		name string
+		raw  string
+		want bool
+	}{
+		{"absent spec", `{"installationId": "my-kafka"}`, true},
+		{"only server-managed sections", `{"spec": {"systemSpec": {"size": "M"}}}`, true},
+		{"manageable section present", `{"spec": {"integrationSpec": {"token": "x"}}}`, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got Integration
+			require.NoError(t, json.Unmarshal([]byte(tt.raw), &got))
+			assert.Equal(t, tt.want, got.Spec.IsEmpty())
+		})
+	}
 }

@@ -58,6 +58,10 @@ func IntegrationSchema() map[string]schema.Attribute {
 		"spec": schema.StringAttribute{
 			MarkdownDescription: "Ocean SaaS integration spec as a JSON string (use `jsonencode`). Required when `installation_type` is `Saas`. Only `integrationSpec` and `appSpec` are supported — `systemSpec` and `privateSpec` are server-managed and always excluded. Sensitive `integrationSpec` values (org secret references) are preserved from your HCL since the server strips them on read.",
 			Optional:            true,
+			Computed:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"status": schema.StringAttribute{
 			MarkdownDescription: "The provisioning status of the integration. Populated for SaaS installations.",

@@ -111,7 +111,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 - `installation_app_type` (String)
 - `installation_type` (String) The installation type of the integration. Use `Saas` for Ocean SaaS integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
-- `spec` (String) Ocean SaaS integration spec as a JSON string (use `jsonencode`). Required when `installation_type` is `Saas`. Sensitive `integrationSpec` values must be organization secret names (see `port_organization_secret`).
+- `spec` (String) Ocean SaaS integration spec as a JSON string (use `jsonencode`). Required when `installation_type` is `Saas`. Only `integrationSpec` and `appSpec` are supported — `systemSpec` and `privateSpec` are server-managed and always excluded. Changes made in the Port UI to `integrationSpec` or `appSpec` are reflected on the next `terraform plan`. Sensitive fields (org secret references) are preserved from your HCL since the server strips them on read.
 - `title` (String)
 - `version` (String)
 - `webhook_changelog_destination` (Attributes) The webhook changelog destination of the integration (see [below for nested schema](#nestedatt--webhook_changelog_destination))

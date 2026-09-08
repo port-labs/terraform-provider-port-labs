@@ -52,7 +52,7 @@ func IntegrationSchema() map[string]schema.Attribute {
 			},
 		},
 		"spec": schema.StringAttribute{
-			MarkdownDescription: "Ocean SaaS integration spec as a JSON string (use `jsonencode`). Required when `installation_type` is `Saas`. Only `integrationSpec` and `appSpec` are supported. `systemSpec` and `privateSpec` are server-managed by Port (e.g. sizing, applier backend) and are ignored on read — changes made internally by Port will not cause Terraform drift.",
+			MarkdownDescription: "Ocean SaaS integration spec as a JSON string (use `jsonencode`). Required when `installation_type` is `Saas`. Only `integrationSpec` and `appSpec` are supported — `systemSpec` and `privateSpec` are server-managed and always excluded. Changes made in the Port UI to `integrationSpec` or `appSpec` are reflected on the next `terraform plan`. Sensitive fields (org secret references) are preserved from your HCL since the server strips them on read.",
 			Optional:            true,
 		},
 		"status": schema.StringAttribute{

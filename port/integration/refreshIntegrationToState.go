@@ -1,6 +1,8 @@
 package integration
 
 import (
+	"encoding/json"
+
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
@@ -21,11 +23,9 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, r
 		state.Status = types.StringNull()
 	}
 
-	// Spec is deliberately NOT refreshed from the server response.
-	// The server strips sensitive integrationSpec values (they're org secret
-	// references resolved at runtime) and injects appSpec defaults that the
-	// user never configured. Overwriting would cause permanent drift.
-	// We keep whatever the user configured in their HCL.
+	if remote.Spec != nil {
+		state.Spec = mergeSpec(state.Spec, remote.Spec, r.portClient.JSONEscapeHTML)
+	}
 
 	if remote.Config != nil {
 		config, _ := utils.GoObjectToTerraformStringPreferExisting(state.Config, remote.Config, r.portClient.JSONEscapeHTML)
@@ -49,4 +49,52 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, r
 	}
 
 	return nil
+}
+
+// mergeSpec builds the refreshed spec from the server response while preserving
+// user-configured values for sensitive integrationSpec fields that the server
+// strips (org secret references resolved at runtime).
+//
+// systemSpec and privateSpec are always excluded — those are server-managed.
+func mergeSpec(stateTF types.String, remote *cli.IntegrationClientSpec, jsonEscapeHTML bool) types.String {
+	// Parse user's current spec from state so we can preserve secret refs.
+	var userSpec map[string]map[string]any
+	if !stateTF.IsNull() && !stateTF.IsUnknown() {
+		_ = json.Unmarshal([]byte(stateTF.ValueString()), &userSpec)
+	}
+
+	merged := make(map[string]map[string]any)
+
+	// integrationSpec: take server values, but keep user values for any key
+	// the server returns as nil/empty (stripped secrets).
+	if remote.IntegrationSpec != nil {
+		is := make(map[string]any, len(remote.IntegrationSpec))
+		for k, v := range remote.IntegrationSpec {
+			is[k] = v
+		}
+		// Restore secret references the server stripped.
+		if userIS := userSpec["integrationSpec"]; userIS != nil {
+			for k, userVal := range userIS {
+				serverVal, exists := is[k]
+				if (!exists || serverVal == nil || serverVal == "") && userVal != nil && userVal != "" {
+					is[k] = userVal
+				}
+			}
+		}
+		merged["integrationSpec"] = is
+	} else if userIS := userSpec["integrationSpec"]; userIS != nil {
+		// Server returned nil integrationSpec — keep user's entirely.
+		merged["integrationSpec"] = userIS
+	}
+
+	// appSpec: take server values as-is (no sensitive fields).
+	if remote.AppSpec != nil {
+		merged["appSpec"] = remote.AppSpec
+	}
+
+	encoded, err := utils.GoObjectToTerraformString(merged, jsonEscapeHTML)
+	if err != nil {
+		return stateTF
+	}
+	return encoded
 }

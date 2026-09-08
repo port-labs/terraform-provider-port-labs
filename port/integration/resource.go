@@ -10,6 +10,7 @@ import (
 
 var _ resource.Resource = &IntegrationResource{}
 var _ resource.ResourceWithImportState = &IntegrationResource{}
+var _ resource.ResourceWithModifyPlan = &IntegrationResource{}
 
 func NewIntegrationResource() resource.Resource {
 	return &IntegrationResource{}
@@ -29,6 +30,35 @@ func (r *IntegrationResource) Configure(ctx context.Context, req resource.Config
 	}
 
 	r.portClient = req.ProviderData.(*cli.PortClient)
+}
+
+func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+
+	var plan, state IntegrationModel
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if !plan.InstallationId.Equal(state.InstallationId) {
+		resp.Diagnostics.AddError(
+			"cannot change installation_id",
+			"The Port API does not support changing `installation_id` on an existing integration. To use a different ID, destroy this resource (which deletes the integration from Port) and create a new `port_integration`.",
+		)
+	}
+
+	if !plan.InstallationAppType.Equal(state.InstallationAppType) {
+		resp.Diagnostics.AddError(
+			"cannot change installation_app_type",
+			"The Port API does not support changing `installation_app_type` on an existing integration. To use a different app type, destroy this resource (which deletes the integration from Port) and create a new `port_integration`.",
+		)
+	}
 }
 
 func (r *IntegrationResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
@@ -52,9 +82,14 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 
 	integrationIdentifier := state.InstallationId.ValueString()
 
-	a, err := r.portClient.GetIntegration(ctx, integrationIdentifier)
+	a, statusCode, err := r.portClient.GetIntegration(ctx, integrationIdentifier)
 
 	if err != nil {
+		if statusCode == 404 {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError("failed reading integration", err.Error())
 		return
 	}
 
@@ -69,9 +104,11 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 }
 
 func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var plan *IntegrationModel
 	var state *IntegrationModel
 
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -79,7 +116,17 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	integrationIdentifier := state.InstallationId.ValueString()
 
-	integration, err := integrationToPortBody(state)
+	hadDestination := !state.KafkaChangelogDestination.IsNull() || state.WebhookChangelogDestination != nil
+	lostDestination := plan.KafkaChangelogDestination.IsNull() && plan.WebhookChangelogDestination == nil
+	if hadDestination && lostDestination {
+		resp.Diagnostics.AddError(
+			"cannot remove changelog destination",
+			"The Port API does not support removing a changelog destination from an existing integration. To remove it, delete and recreate the integration (e.g. taint the resource).",
+		)
+		return
+	}
+
+	integration, err := integrationToPortBody(plan)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to convert integration to port body", err.Error())
 		return
@@ -92,13 +139,13 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	err = r.refreshIntegrationState(state, updated, integrationIdentifier)
+	err = r.refreshIntegrationState(plan, updated, integrationIdentifier)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to refresh integration state", err.Error())
 		return
 	}
 
-	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
 
 func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

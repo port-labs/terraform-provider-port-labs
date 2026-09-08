@@ -87,9 +87,12 @@ func mergeSpec(stateTF types.String, remote *cli.IntegrationClientSpec, jsonEsca
 		merged["integrationSpec"] = userIS
 	}
 
-	// appSpec: take server values as-is (no sensitive fields).
-	if remote.AppSpec != nil {
+	// appSpec: take server values only if the user declared appSpec in their HCL.
+	// If the user omitted it, don't pull in server defaults (avoids unexpected drift).
+	if remote.AppSpec != nil && userSpec["appSpec"] != nil {
 		merged["appSpec"] = remote.AppSpec
+	} else if userSpec["appSpec"] != nil {
+		merged["appSpec"] = userSpec["appSpec"]
 	}
 
 	encoded, err := utils.GoObjectToTerraformString(merged, jsonEscapeHTML)

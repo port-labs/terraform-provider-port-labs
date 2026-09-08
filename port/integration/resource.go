@@ -74,7 +74,9 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 
 	applyWriteResult(plan, created, created.InstallationId)
 
-	r.awaitProvisioning(ctx, plan, created.InstallationId, "created", &resp.Diagnostics)
+	if plan.isSaas() {
+		r.awaitProvisioning(ctx, plan, created.InstallationId, "created", &resp.Diagnostics)
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -138,7 +140,9 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	applyWriteResult(plan, updated, integrationIdentifier)
 
-	r.awaitProvisioning(ctx, plan, integrationIdentifier, "updated", &resp.Diagnostics)
+	if plan.isSaas() {
+		r.awaitProvisioning(ctx, plan, integrationIdentifier, "updated", &resp.Diagnostics)
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
 }
@@ -158,9 +162,11 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	if err := r.portClient.WaitForIntegrationDeleted(ctx, integrationIdentifier); err != nil {
-		resp.Diagnostics.AddError("integration deletion did not complete", err.Error())
-		return
+	if state.isSaas() {
+		if err := r.portClient.WaitForIntegrationDeleted(ctx, integrationIdentifier); err != nil {
+			resp.Diagnostics.AddError("integration deletion did not complete", err.Error())
+			return
+		}
 	}
 
 	resp.State.RemoveResource(ctx)

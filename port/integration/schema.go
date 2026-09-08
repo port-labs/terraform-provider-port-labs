@@ -67,7 +67,7 @@ func IntegrationSchema() map[string]schema.Attribute {
 			},
 		},
 		"status": schema.StringAttribute{
-			MarkdownDescription: "The provisioning status of the integration (e.g. `Creating`, `Running`, `Updating`, `Error`).",
+			MarkdownDescription: "The provisioning status of the integration (e.g. `Creating`, `Running`, `Updating`, `Error`). Relevant for SaaS integrations that provision asynchronously via Ocean.",
 			Computed:            true,
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
@@ -128,6 +128,8 @@ Integrations receive default mappings during provisioning (from provision-servic
 
 1. **First apply** — create the integration without ` + "`config`" + `. Provisioning sets up default blueprints and mappings.
 2. **Second apply** — add a ` + "`config`" + ` block to your HCL to override the default mappings.
+
+SaaS integrations additionally provision asynchronously (` + "`Creating`" + ` → ` + "`Running`" + `) via Ocean/Kafka. OnPrem create/update/delete are synchronous.
 
 ## SaaS example — Step 1: Create the integration
 
@@ -279,6 +281,7 @@ The following config properties (` + "`selector.query|entity.mappings.*`" + `) a
 ### NOTES:
 
 - ` + "`config`" + ` **cannot be set on creation**. Integrations receive default mappings during provisioning. Create first, then add ` + "`config`" + ` on a subsequent apply.
+- ` + "`status`" + ` reflects async Ocean provisioning (` + "`Creating`" + ` → ` + "`Running`" + `) for SaaS integrations only.
 - ` + "`installation_id`" + ` and ` + "`installation_app_type`" + ` cannot be changed after creation.
 - A changelog destination (` + "`webhook_changelog_destination`" + ` / ` + "`kafka_changelog_destination`" + `) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).
 - Existing integrations can be brought under Terraform management with ` + "`terraform import port_integration.my_integration <installation_id>`" + `.

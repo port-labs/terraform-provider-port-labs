@@ -6,6 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 )
@@ -58,6 +59,15 @@ func BlueprintRelationSchema() map[string]schema.Attribute {
 			Optional:            true,
 			Computed:            true,
 			Default:             booldefault.StaticBool(false),
+		},
+		"union": schema.BoolAttribute{
+			MarkdownDescription: "Whether multiple sources can add to this relation without overwriting each other. Only applies when `many` is true. This setting cannot be changed after the relation is created.",
+			Optional:            true,
+			Computed:            true,
+			Default:             booldefault.StaticBool(false),
+			PlanModifiers: []planmodifier.Bool{
+				boolplanmodifier.RequiresReplace(),
+			},
 		},
 	}
 }
@@ -116,6 +126,7 @@ resource "port_blueprint_relation" "entra_id_user_to_group" {
   target     = port_blueprint.entra_id_group.identifier
   title      = "Groups"
   many       = true
+  union      = true
 }
 
 resource "port_blueprint_relation" "entra_id_group_to_user" {

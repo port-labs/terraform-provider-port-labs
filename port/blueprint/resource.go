@@ -119,7 +119,7 @@ func (r *BlueprintResource) refreshBlueprintState(ctx context.Context, bm *Bluep
 		if b.Ownership.Title != nil {
 			bm.Ownership.Title = types.StringValue(*b.Ownership.Title)
 		}
-		bm.Ownership.Union = flex.GoBoolToFramework(b.Ownership.Union)
+		bm.Ownership.Union = flex.GoBoolToFrameworkDefaultFalse(b.Ownership.Union)
 	}
 	if b.Ownership == nil && bm.Ownership != nil {
 		bm.Ownership = nil

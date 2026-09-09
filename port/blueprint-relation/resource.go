@@ -77,16 +77,13 @@ func refreshRelationState(state *BlueprintRelationModel, relation *cli.Relation)
 	state.Description = flex.GoStringToFramework(relation.Description)
 	state.Many = flex.GoBoolToFramework(relation.Many)
 	state.Required = flex.GoBoolToFramework(relation.Required)
-	state.Union = flex.GoBoolToFramework(relation.Union)
+	state.Union = flex.GoBoolToFrameworkDefaultFalse(relation.Union)
 
 	if state.Many.IsNull() {
 		state.Many = types.BoolValue(false)
 	}
 	if state.Required.IsNull() {
 		state.Required = types.BoolValue(false)
-	}
-	if state.Union.IsNull() {
-		state.Union = types.BoolValue(false)
 	}
 }
 

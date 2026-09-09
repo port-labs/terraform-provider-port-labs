@@ -150,6 +150,7 @@ func addRelationsToState(b *cli.Blueprint, systemBp *cli.Blueprint, bm *SystemBl
 			Description: flex.GoStringToFramework(v.Description),
 			Many:        flex.GoBoolToFramework(v.Many),
 			Required:    flex.GoBoolToFramework(v.Required),
+			Union:       flex.GoBoolToFramework(v.Union),
 		}
 
 		bm.Relations[k] = *relationModel

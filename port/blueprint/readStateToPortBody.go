@@ -69,6 +69,11 @@ func RelationsResourceToBody(state map[string]RelationModel) map[string]cli.Rela
 			relationProp.Description = &description
 		}
 
+		if !prop.Union.IsNull() {
+			union := prop.Union.ValueBool()
+			relationProp.Union = &union
+		}
+
 		relations[identifier] = relationProp
 	}
 

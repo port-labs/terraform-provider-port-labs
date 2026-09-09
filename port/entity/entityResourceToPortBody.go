@@ -102,6 +102,13 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 		}
 	}
 
+	if state.MappingWarnings != nil {
+		e.MappingWarnings = make([]string, len(state.MappingWarnings))
+		for i, warning := range state.MappingWarnings {
+			e.MappingWarnings[i] = warning.ValueString()
+		}
+	}
+
 	properties := make(map[string]interface{})
 	if state.Properties != nil {
 		if state.Properties.StringProps != nil {

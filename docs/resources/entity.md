@@ -25,6 +25,7 @@ Entity resource
 - `create_missing_related_entities` (Boolean) Whether to create missing related entities
 - `icon` (String) The icon of the entity
 - `identifier` (String) The identifier of the entity
+- `mapping_warnings` (List of String) Entity mapping fields that had warnings during ingest (for example, `properties` or `team`)
 - `properties` (Attributes) The properties of the entity (see [below for nested schema](#nestedatt--properties))
 - `relations` (Attributes) The relations of the entity (see [below for nested schema](#nestedatt--relations))
 - `run_id` (String) The runID of the action run that created the entity

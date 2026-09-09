@@ -16,6 +16,9 @@ func TestRefreshEntityStateClearsStaleCollectionsOnEmptyAPIResponse(t *testing.T
 		Blueprint:  types.StringValue("old-blueprint"),
 		Title:      types.StringValue("old-title"),
 		Teams:      []types.String{types.StringValue("old-team")},
+		MappingWarnings: []types.String{
+			types.StringValue("properties"),
+		},
 		Properties: &EntityPropertiesModel{
 			StringProps: map[string]types.String{
 				"name": types.StringValue("old-value"),
@@ -53,6 +56,10 @@ func TestRefreshEntityStateClearsStaleCollectionsOnEmptyAPIResponse(t *testing.T
 
 	if state.Teams != nil {
 		t.Fatalf("expected teams to be nil when API returns empty, got: %#v", state.Teams)
+	}
+
+	if state.MappingWarnings != nil {
+		t.Fatalf("expected mapping_warnings to be nil when API returns empty, got: %#v", state.MappingWarnings)
 	}
 
 	if state.Properties != nil {

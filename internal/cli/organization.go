@@ -29,7 +29,7 @@ func (c *PortClient) ReadOrganization(ctx context.Context) (*Organization, int, 
 
 func (c *PortClient) UpdateOrganization(ctx context.Context, org *OrganizationUpdate) (*Organization, int, error) {
 	resp, err := c.Client.R().
-		SetBody(org).
+		SetBody(org.ToPatchBody()).
 		SetContext(ctx).
 		Patch(orgUrl)
 	if err != nil {

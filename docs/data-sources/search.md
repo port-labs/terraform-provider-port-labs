@@ -172,6 +172,7 @@ Optional:
 
 - `icon` (String) The icon of the entity
 - `properties` (Attributes) The properties of the entity (see [below for nested schema](#nestedatt--entities--properties))
+- `property_sources` (Map of String) Per-source contributions for union array properties. Each map value is a JSON object mapping source identifiers to their contributed values.
 - `relations` (Attributes) The relations of the entity (see [below for nested schema](#nestedatt--entities--relations))
 - `run_id` (String) The runID of the action run that created the entity
 - `scorecards` (Map of Object) The scorecards of the entity (see [below for nested schema](#nestedatt--entities--scorecards))

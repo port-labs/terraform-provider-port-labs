@@ -187,6 +187,7 @@ func stringPropToState(ctx context.Context, property cli.WorkflowInputProperty, 
 
 	prop.Dataset = datasetToState(property.Dataset, jsonEscapeHTML)
 	prop.Sort = sortToState(property.Sort)
+	prop.Encryption, prop.ClientSideEncryption = encryptionToState(property.Encryption)
 
 	return prop, nil
 }
@@ -249,6 +250,8 @@ func objectPropToState(property cli.WorkflowInputProperty, jsonEscapeHTML bool) 
 		}
 		prop.Default = defaultValue
 	}
+
+	prop.Encryption, prop.ClientSideEncryption = encryptionToState(property.Encryption)
 
 	return prop, nil
 }
@@ -320,6 +323,20 @@ func arrayPropToState(ctx context.Context, property cli.WorkflowInputProperty, j
 
 		if colors, ok := property.Items["enumColors"].(map[string]any); ok {
 			items.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, toStringMap(colors))
+		}
+
+		if value, ok := property.Items["pattern"].(string); ok && value != "" {
+			items.Pattern = types.StringValue(value)
+		}
+		if value, ok := property.Items["minLength"].(float64); ok {
+			items.MinLength = types.Int64Value(int64(value))
+		} else if value, ok := property.Items["minLength"].(int); ok {
+			items.MinLength = types.Int64Value(int64(value))
+		}
+		if value, ok := property.Items["maxLength"].(float64); ok {
+			items.MaxLength = types.Int64Value(int64(value))
+		} else if value, ok := property.Items["maxLength"].(int); ok {
+			items.MaxLength = types.Int64Value(int64(value))
 		}
 
 		if defaults != nil {

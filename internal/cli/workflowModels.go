@@ -151,6 +151,7 @@ type WorkflowInputProperty struct {
 	Pattern          any                `json:"pattern,omitempty"`
 	MinLength        *int               `json:"minLength,omitempty"`
 	MaxLength        *int               `json:"maxLength,omitempty"`
+	Encryption       any                `json:"encryption,omitempty"`
 	Minimum          *float64           `json:"minimum,omitempty"`
 	Maximum          *float64           `json:"maximum,omitempty"`
 	ExclusiveMinimum *float64           `json:"exclusiveMinimum,omitempty"`

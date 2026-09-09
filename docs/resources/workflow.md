@@ -399,6 +399,9 @@ Optional:
 - `enum_colors` (Map of String) The colors of the enum values.
 - `enum_jq_query` (String) A jq query resolving the values the user can pick from.
 - `format` (String) The format of each item.
+- `max_length` (Number) The max length of each item.
+- `min_length` (Number) The min length of each item.
+- `pattern` (String) The regex pattern each item has to match.
 
 
 
@@ -453,13 +456,15 @@ Optional:
 
 Optional:
 
+- `client_side_encryption` (Attributes) Client-side encryption configuration for the property. The value will be encrypted on the client side before being sent to Port. Cannot be used with `encryption`. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--object_props--client_side_encryption))
 - `default` (String) The default of the object input, as a JSON encoded string.
 - `default_jq_query` (String) The default jq query of the object input.
 - `depends_on` (List of String) The inputs this input depends on.
 - `description` (String) The description of the object input.
 - `disabled` (Boolean) Greys out the object input. A disabled input is excluded from the submitted data and from `required` validation, which makes it a way to drop an input from the form based on the other answers. Use `read_only` to keep the value in the submission.
 - `disabled_jq_query` (String) The disabled condition jq query of the object input.
-- `format` (String) The format of the object input. `labeled-url` renders a url with a display text. Leave it out for a free form object.
+- `encryption` (String) The algorithm to encrypt the property with for server-side encryption. Accepted value: `aes256-gcm`. Cannot be used with `client_side_encryption`.
+- `format` (String) The format of the object input. `labeled-url` renders a url with a display text. `multi-line` renders a multi-line text input for secrets. Leave it out for a free form object.
 - `icon` (String) The icon of the object input.
 - `read_only` (Boolean) Shows the value of the object input without letting the user change it. The value is still submitted with the form, unlike `disabled`.
 - `read_only_jq_query` (String) The read only condition jq query of the object input.
@@ -468,6 +473,15 @@ Optional:
 - `visible` (Boolean) The visibility of the object input.
 - `visible_jq_query` (String) The visibility condition jq query of the object input.
 
+<a id="nestedatt--node--input--user_inputs--user_properties--object_props--client_side_encryption"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.object_props.client_side_encryption`
+
+Required:
+
+- `algorithm` (String) The encryption algorithm. Accepted value: `client-side`
+- `key` (String) The public key (PEM format) to use for encryption
+
+
 
 <a id="nestedatt--node--input--user_inputs--user_properties--string_props"></a>
 ### Nested Schema for `node.input.user_inputs.user_properties.string_props`
@@ -475,6 +489,7 @@ Optional:
 Optional:
 
 - `blueprint` (String) The blueprint the entities are taken from. Required when `format` is `entity`.
+- `client_side_encryption` (Attributes) Client-side encryption configuration for the property. The value will be encrypted on the client side before being sent to Port. Cannot be used with `encryption`. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--client_side_encryption))
 - `dataset` (Attributes) The dataset filtering the entities the user can pick from. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset))
 - `default` (String) The default of the string input.
 - `default_jq_query` (String) The default jq query of the string input.
@@ -482,6 +497,7 @@ Optional:
 - `description` (String) The description of the string input.
 - `disabled` (Boolean) Greys out the string input. A disabled input is excluded from the submitted data and from `required` validation, which makes it a way to drop an input from the form based on the other answers. Use `read_only` to keep the value in the submission.
 - `disabled_jq_query` (String) The disabled condition jq query of the string input.
+- `encryption` (String) The algorithm to encrypt the property with for server-side encryption. Accepted value: `aes256-gcm`. Cannot be used with `client_side_encryption`.
 - `enum` (List of String) The values the user can pick from.
 - `enum_colors` (Map of String) The colors of the enum values.
 - `enum_jq_query` (String) A jq query resolving the values the user can pick from.
@@ -498,6 +514,15 @@ Optional:
 - `title` (String) The title of the string input.
 - `visible` (Boolean) The visibility of the string input.
 - `visible_jq_query` (String) The visibility condition jq query of the string input.
+
+<a id="nestedatt--node--input--user_inputs--user_properties--string_props--client_side_encryption"></a>
+### Nested Schema for `node.input.user_inputs.user_properties.string_props.client_side_encryption`
+
+Required:
+
+- `algorithm` (String) The encryption algorithm. Accepted value: `client-side`
+- `key` (String) The public key (PEM format) to use for encryption
+
 
 <a id="nestedatt--node--input--user_inputs--user_properties--string_props--dataset"></a>
 ### Nested Schema for `node.input.user_inputs.user_properties.string_props.dataset`
@@ -973,6 +998,9 @@ Optional:
 - `enum_colors` (Map of String) The colors of the enum values.
 - `enum_jq_query` (String) A jq query resolving the values the user can pick from.
 - `format` (String) The format of each item.
+- `max_length` (Number) The max length of each item.
+- `min_length` (Number) The min length of each item.
+- `pattern` (String) The regex pattern each item has to match.
 
 
 
@@ -1027,13 +1055,15 @@ Optional:
 
 Optional:
 
+- `client_side_encryption` (Attributes) Client-side encryption configuration for the property. The value will be encrypted on the client side before being sent to Port. Cannot be used with `encryption`. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--object_props--client_side_encryption))
 - `default` (String) The default of the object input, as a JSON encoded string.
 - `default_jq_query` (String) The default jq query of the object input.
 - `depends_on` (List of String) The inputs this input depends on.
 - `description` (String) The description of the object input.
 - `disabled` (Boolean) Greys out the object input. A disabled input is excluded from the submitted data and from `required` validation, which makes it a way to drop an input from the form based on the other answers. Use `read_only` to keep the value in the submission.
 - `disabled_jq_query` (String) The disabled condition jq query of the object input.
-- `format` (String) The format of the object input. `labeled-url` renders a url with a display text. Leave it out for a free form object.
+- `encryption` (String) The algorithm to encrypt the property with for server-side encryption. Accepted value: `aes256-gcm`. Cannot be used with `client_side_encryption`.
+- `format` (String) The format of the object input. `labeled-url` renders a url with a display text. `multi-line` renders a multi-line text input for secrets. Leave it out for a free form object.
 - `icon` (String) The icon of the object input.
 - `read_only` (Boolean) Shows the value of the object input without letting the user change it. The value is still submitted with the form, unlike `disabled`.
 - `read_only_jq_query` (String) The read only condition jq query of the object input.
@@ -1042,6 +1072,15 @@ Optional:
 - `visible` (Boolean) The visibility of the object input.
 - `visible_jq_query` (String) The visibility condition jq query of the object input.
 
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--object_props--client_side_encryption"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.object_props.client_side_encryption`
+
+Required:
+
+- `algorithm` (String) The encryption algorithm. Accepted value: `client-side`
+- `key` (String) The public key (PEM format) to use for encryption
+
+
 
 <a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props"></a>
 ### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props`
@@ -1049,6 +1088,7 @@ Optional:
 Optional:
 
 - `blueprint` (String) The blueprint the entities are taken from. Required when `format` is `entity`.
+- `client_side_encryption` (Attributes) Client-side encryption configuration for the property. The value will be encrypted on the client side before being sent to Port. Cannot be used with `encryption`. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--client_side_encryption))
 - `dataset` (Attributes) The dataset filtering the entities the user can pick from. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset))
 - `default` (String) The default of the string input.
 - `default_jq_query` (String) The default jq query of the string input.
@@ -1056,6 +1096,7 @@ Optional:
 - `description` (String) The description of the string input.
 - `disabled` (Boolean) Greys out the string input. A disabled input is excluded from the submitted data and from `required` validation, which makes it a way to drop an input from the form based on the other answers. Use `read_only` to keep the value in the submission.
 - `disabled_jq_query` (String) The disabled condition jq query of the string input.
+- `encryption` (String) The algorithm to encrypt the property with for server-side encryption. Accepted value: `aes256-gcm`. Cannot be used with `client_side_encryption`.
 - `enum` (List of String) The values the user can pick from.
 - `enum_colors` (Map of String) The colors of the enum values.
 - `enum_jq_query` (String) A jq query resolving the values the user can pick from.
@@ -1072,6 +1113,15 @@ Optional:
 - `title` (String) The title of the string input.
 - `visible` (Boolean) The visibility of the string input.
 - `visible_jq_query` (String) The visibility condition jq query of the string input.
+
+<a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--client_side_encryption"></a>
+### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.client_side_encryption`
+
+Required:
+
+- `algorithm` (String) The encryption algorithm. Accepted value: `client-side`
+- `key` (String) The public key (PEM format) to use for encryption
+
 
 <a id="nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset"></a>
 ### Nested Schema for `node.self_serve_trigger.user_inputs.user_properties.string_props.dataset`

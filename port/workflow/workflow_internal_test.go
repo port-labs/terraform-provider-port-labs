@@ -434,6 +434,50 @@ func TestSelfServeTriggerUserInputsRoundTrip(t *testing.T) {
 	assert.Equal(t, []string{"service"}, userInputs.Required)
 }
 
+func TestUserInputEncryptionAndStringArrayItemsRoundTrip(t *testing.T) {
+	minLength := 2
+	maxLength := 10
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"api_key": {
+				Type:       "string",
+				Title:      strPtr("API key"),
+				Encryption: "aes256-gcm",
+			},
+			"client_secret": {
+				Type:       "object",
+				Title:      strPtr("Client secret"),
+				Format:     strPtr("multi-line"),
+				Encryption: map[string]string{"algorithm": "client-side", "key": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA\n-----END PUBLIC KEY-----"},
+			},
+			"tags": {
+				Type: "array",
+				Items: map[string]any{
+					"type":      "string",
+					"pattern":   "^[a-z]+$",
+					"minLength": minLength,
+					"maxLength": maxLength,
+				},
+			},
+		},
+	})
+
+	apiKey := result.Properties["api_key"]
+	assert.Equal(t, "aes256-gcm", apiKey.Encryption)
+
+	clientSecret := result.Properties["client_secret"]
+	require.IsType(t, map[string]string{}, clientSecret.Encryption)
+	enc := clientSecret.Encryption.(map[string]string)
+	assert.Equal(t, "client-side", enc["algorithm"])
+	assert.Contains(t, enc["key"], "BEGIN PUBLIC KEY")
+
+	tags := result.Properties["tags"]
+	require.NotNil(t, tags.Items)
+	assert.Equal(t, "^[a-z]+$", tags.Items["pattern"])
+	assert.Equal(t, minLength, tags.Items["minLength"])
+	assert.Equal(t, maxLength, tags.Items["maxLength"])
+}
+
 func selfServeTriggerRoundTrip(t *testing.T, userInputs *cli.WorkflowUserInputs) *cli.WorkflowUserInputs {
 	t.Helper()
 

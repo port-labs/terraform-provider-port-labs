@@ -34,6 +34,26 @@ description: |-
   
   
   
+  Search with a date preset filter
+  Date/time filters support relative date presets via the between operator. For example, last3Days matches entities created in the last 3 days:
+  
+  
+  data "port_search" "recent_services" {
+    query = jsonencode({
+      "combinator" : "and",
+      "rules" : [
+        { "operator" : "=", "property" : "$blueprint", "value" : "Service" },
+        {
+          "operator" : "between",
+          "property" : "$createdAt",
+          "value" : { "preset" : "last3Days" }
+        }
+      ]
+    })
+  }
+  
+  
+  
   Scorecards automation example
   In this example we are creating a jira task for each service that its Ownership Scorecard hasn't reached Gold level :
   
@@ -108,6 +128,29 @@ data "port_search" "ads_service" {
 
 ```
 
+### Search with a date preset filter
+
+Date/time filters support relative date presets via the `between` operator. For example, `last3Days` matches entities created in the last 3 days:
+
+```hcl
+
+data "port_search" "recent_services" {
+  query = jsonencode({
+    "combinator" : "and",
+    "rules" : [
+      { "operator" : "=", "property" : "$blueprint", "value" : "Service" },
+      {
+        "operator" : "between",
+        "property" : "$createdAt",
+        "value" : { "preset" : "last3Days" }
+      }
+    ]
+  })
+}
+
+
+```
+
 ### Scorecards automation example
 In this example we are creating a jira task for each service that its Ownership Scorecard hasn't reached Gold level : 
 
@@ -150,7 +193,7 @@ resource "jira_issue" "microservice_ownership_without_gold_level" {
 
 ### Required
 
-- `query` (String) The search query
+- `query` (String) The search query. Date/time filters using the `between` operator may set `value.preset` to a date preset such as `today`, `yesterday`, `lastDay`, `last3Days`, `lastWeek`, `last2Weeks`, `lastMonth`, `last3Months`, `last6Months`, `last12Months`, `last2Years`, `last3Years`, or `tomorrow`.
 
 ### Optional
 

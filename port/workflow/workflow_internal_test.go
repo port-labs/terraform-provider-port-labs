@@ -392,6 +392,46 @@ func TestRefreshWorkflowStateSelfServeTriggerUserInputs(t *testing.T) {
 	assert.Equal(t, []any{"Member"}, roles)
 }
 
+func TestRefreshWorkflowStateSelfServeTriggerContexts(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes:      []WorkflowNodeModel{{Identifier: types.StringValue("trigger")}},
+	}
+
+	apiWorkflow := &cli.Workflow{
+		Identifier: "wf",
+		Nodes: []cli.WorkflowNode{
+			{
+				Identifier: "trigger",
+				Config: cli.WorkflowNodeConfig{
+					Type:      consts.SelfServeTrigger,
+					Published: boolPtr(true),
+					Contexts: []cli.WorkflowTriggerContext{
+						{On: consts.CreateEntityContext, BlueprintIdentifier: strPtr("service")},
+						{On: consts.EntityContext, UserInput: strPtr("service")},
+					},
+				},
+			},
+		},
+	}
+
+	err := r.refreshWorkflowState(ctx, state, apiWorkflow)
+	require.NoError(t, err)
+
+	trigger := state.Nodes[0].SelfServeTrigger
+	require.NotNil(t, trigger)
+	require.Len(t, trigger.Contexts, 2)
+
+	assert.Equal(t, consts.CreateEntityContext, trigger.Contexts[0].On.ValueString())
+	assert.Equal(t, "service", trigger.Contexts[0].BlueprintIdentifier.ValueString())
+
+	assert.Equal(t, consts.EntityContext, trigger.Contexts[1].On.ValueString())
+	assert.Equal(t, "service", trigger.Contexts[1].UserInput.ValueString())
+}
+
 func TestSelfServeTriggerUserInputsRoundTrip(t *testing.T) {
 	ctx := context.Background()
 	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}

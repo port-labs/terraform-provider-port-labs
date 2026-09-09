@@ -168,7 +168,7 @@ A scorecard group can be configured in one of two modes:
 - **Shared rules mode** — set ` + "`blueprints`" + `, ` + "`rules`" + `, and optionally ` + "`filters`" + ` to apply the same rules to multiple blueprints.
 - **Per-blueprint mode** — set ` + "`scorecards`" + ` to define different filter/rules per blueprint.
 
-See the [Port documentation](https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/) for more information about scorecards.
+See the [Port documentation](https://docs.getport.io/governance/standards-and-compliance/manage-scorecard-groups/) for more information about scorecard groups.
 
 ` + "`properties`" + ` sets ` + "`_scorecard`" + ` blueprint property values on every member scorecard in the group. Define the property schema on the ` + "`_scorecard`" + ` system blueprint first (for example with ` + "`port_system_blueprint`" + `), then reference those keys in ` + "`jsonencode({...})`" + `. Use ` + "`depends_on`" + ` so the scorecard group is created only after the blueprint properties exist.
 

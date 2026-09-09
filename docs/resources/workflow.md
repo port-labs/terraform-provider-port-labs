@@ -784,6 +784,7 @@ Optional:
 - `integration_invocation_type` (String) The invocation type of the integration action.
 - `integration_provider` (String) The provider of the integration action.
 - `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
+- `on_timeout` (String) Behavior when the integration action exceeds its timeout. One of `fail`, `continue`.
 
 
 <a id="nestedblock--node--kafka"></a>

@@ -9,34 +9,17 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 )
 
-// serverManagedSpecKeys are spec sub-objects that Port sets internally
-// (e.g. sizing, applier backend). They must never appear in user config, and
-// IntegrationClientSpec drops them from responses.
-var serverManagedSpecKeys = []string{"systemSpec", "privateSpec"}
-
 // parseSpecFromConfig parses the user-provided spec JSON string into
-// an IntegrationClientSpec, rejecting any server-managed keys.
+// an IntegrationClientSpec. Only integrationSpec and appSpec are read; any
+// other top-level keys in the JSON are ignored.
 func parseSpecFromConfig(raw types.String) (*cli.IntegrationClientSpec, error) {
 	if raw.IsNull() || raw.IsUnknown() || raw.ValueString() == "" {
 		return nil, nil
 	}
-	data := []byte(raw.ValueString())
-
-	var sections map[string]json.RawMessage
-	if err := json.Unmarshal(data, &sections); err != nil {
-		return nil, fmt.Errorf("invalid spec JSON: %w", err)
-	}
-	for _, key := range serverManagedSpecKeys {
-		if _, ok := sections[key]; ok {
-			return nil, fmt.Errorf(
-				"spec.%s is server-managed by Port and cannot be set in Terraform; only integrationSpec and appSpec are supported", key,
-			)
-		}
-	}
 
 	var spec cli.IntegrationClientSpec
-	if err := json.Unmarshal(data, &spec); err != nil {
-		return nil, fmt.Errorf("invalid spec structure: %w", err)
+	if err := json.Unmarshal([]byte(raw.ValueString()), &spec); err != nil {
+		return nil, fmt.Errorf("invalid spec JSON: %w", err)
 	}
 	if spec.IsEmpty() {
 		return nil, nil

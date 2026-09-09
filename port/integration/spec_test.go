@@ -86,19 +86,12 @@ func TestValidateIntegrationModel_OnPremAllowsEmptySpec(t *testing.T) {
 	assert.NoError(t, validateIntegrationModel(state))
 }
 
-func TestParseSpecFromConfig_RejectsServerManagedKeys(t *testing.T) {
-	tests := []struct {
-		name string
-		json string
-		want string
-	}{
-		{"systemSpec", `{"integrationSpec":{"token":"x"},"systemSpec":{"size":"M"}}`, "systemSpec is server-managed"},
-		{"privateSpec", `{"integrationSpec":{"token":"x"},"privateSpec":{"applierBackend":"argo"}}`, "privateSpec is server-managed"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, err := parseSpecFromConfig(types.StringValue(tt.json))
-			assert.ErrorContains(t, err, tt.want)
-		})
-	}
+func TestParseSpecFromConfig_OmitsUnknownSpecSections(t *testing.T) {
+	spec, err := parseSpecFromConfig(types.StringValue(
+		`{"integrationSpec":{"token":"x"},"appSpec":{"liveEventsEnabled":true},"systemSpec":{"size":"M"}}`,
+	))
+	require.NoError(t, err)
+	require.NotNil(t, spec)
+	assert.Equal(t, "x", spec.IntegrationSpec["token"])
+	assert.Equal(t, true, spec.AppSpec["liveEventsEnabled"])
 }

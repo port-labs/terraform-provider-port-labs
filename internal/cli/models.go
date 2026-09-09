@@ -776,15 +776,14 @@ type PortBodyDelete struct {
 }
 
 // IntegrationClientSpec is the user-manageable part of an integration spec.
-// Port also returns systemSpec and privateSpec; omitting them here drops them
-// on unmarshal and keeps them out of every request body.
+// Only client-managed spec sections are modeled; other API fields are omitted
+// on unmarshal and kept out of every request body.
 type IntegrationClientSpec struct {
 	IntegrationSpec map[string]any `json:"integrationSpec,omitempty"`
 	AppSpec         map[string]any `json:"appSpec,omitempty"`
 }
 
-// IsEmpty reports whether the spec carries nothing Terraform can manage, which
-// is the case when Port returns only server-managed sections.
+// IsEmpty reports whether the spec carries nothing Terraform can manage.
 func (s *IntegrationClientSpec) IsEmpty() bool {
 	return s == nil || (s.IntegrationSpec == nil && s.AppSpec == nil)
 }

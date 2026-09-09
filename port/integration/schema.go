@@ -59,7 +59,7 @@ func IntegrationSchema() map[string]schema.Attribute {
 			},
 		},
 		"spec": schema.StringAttribute{
-			MarkdownDescription: "Ocean SaaS integration spec as a JSON string (use `jsonencode`). **Only supported when `installation_type` is `Saas`** — must not be set for OnPrem integrations. Required for SaaS. Contains `integrationSpec` (credentials/settings) and optionally `appSpec` (feature toggles like `liveEventsEnabled`, `sendRawDataExamples`, etc.). `systemSpec` and `privateSpec` are server-managed and always excluded. Sensitive `integrationSpec` values (org secret references) are preserved from your HCL since the server strips them on read. If `appSpec` fields are omitted, the server applies its own defaults — which may differ from Port UI defaults. Declare `appSpec` explicitly to match the UI behavior.",
+			MarkdownDescription: "Ocean SaaS integration spec as a JSON string (use `jsonencode`). **Only supported when `installation_type` is `Saas`** — must not be set for OnPrem integrations. Required for SaaS. Contains `integrationSpec` (credentials/settings) and optionally `appSpec` (feature toggles like `liveEventsEnabled`, `sendRawDataExamples`, etc.). Sensitive `integrationSpec` values (org secret references) are preserved from your HCL since the server strips them on read. If `appSpec` fields are omitted, the server applies its own defaults — which may differ from Port UI defaults. Declare `appSpec` explicitly to match the UI behavior.",
 			Optional:            true,
 			Computed:            true,
 			PlanModifiers: []planmodifier.String{

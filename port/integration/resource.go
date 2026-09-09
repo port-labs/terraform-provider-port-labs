@@ -116,8 +116,8 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	integrationIdentifier := state.InstallationId.ValueString()
 
-	hadDestination := !state.KafkaChangelogDestination.IsNull() || state.WebhookChangelogDestination != nil
-	lostDestination := plan.KafkaChangelogDestination.IsNull() && plan.WebhookChangelogDestination == nil
+	hadDestination := isConfigured(state.KafkaChangelogDestination) || isConfigured(state.WebhookChangelogDestination)
+	lostDestination := !isConfigured(plan.KafkaChangelogDestination) && !isConfigured(plan.WebhookChangelogDestination)
 	if hadDestination && lostDestination {
 		resp.Diagnostics.AddError(
 			"cannot remove changelog destination",

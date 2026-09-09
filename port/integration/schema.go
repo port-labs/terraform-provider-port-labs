@@ -84,6 +84,7 @@ func IntegrationSchema() map[string]schema.Attribute {
 		"webhook_changelog_destination": schema.SingleNestedAttribute{
 			MarkdownDescription: "The webhook changelog destination of the integration",
 			Optional:            true,
+			Computed:            true,
 			Attributes: map[string]schema.Attribute{
 				"url": schema.StringAttribute{
 					MarkdownDescription: "The url of the webhook changelog destination",
@@ -98,6 +99,7 @@ func IntegrationSchema() map[string]schema.Attribute {
 		"kafka_changelog_destination": schema.ObjectAttribute{
 			MarkdownDescription: "The changelog destination of the blueprint (just an empty `{}`)",
 			Optional:            true,
+			Computed:            true,
 			AttributeTypes:      map[string]attr.Type{},
 		},
 	}

@@ -205,3 +205,33 @@ resource "port_workflow" "audit_service_changes" {
     fallback          = true
   }
 }
+
+# A timer-driven workflow that resets the timer property after each expiration.
+resource "port_workflow" "renew_service_ttl" {
+  identifier = "renew-service-ttl"
+  title      = "Renew service TTL"
+
+  node {
+    identifier = "trigger"
+
+    event_trigger {
+      type                 = "TIMER_EXPIRED"
+      blueprint_identifier = "service"
+      property_identifier  = "ttl"
+      next_expire_at       = "now + 86400 | todateiso8601"
+    }
+  }
+
+  node {
+    identifier = "notify"
+
+    webhook {
+      url = "https://alerts.example.com/service-ttl-renewed"
+    }
+  }
+
+  connections {
+    source_identifier = "trigger"
+    target_identifier = "notify"
+  }
+}

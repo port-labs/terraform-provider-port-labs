@@ -361,6 +361,12 @@ func eventTriggerBlock() schema.Block {
 				MarkdownDescription: "The property identifier the timer event relates to. Required for the `TIMER_EXPIRED` event type.",
 				Optional:            true,
 			},
+			"next_expire_at": schema.StringAttribute{
+				MarkdownDescription: "A JQ expression returning the next expiration time as an ISO date. " +
+					"The timer property is set to it after the trigger fires, so the timer keeps running. " +
+					"Only valid for the `TIMER_EXPIRED` event type.",
+				Optional: true,
+			},
 			"published": publishedAttribute(),
 		},
 		Blocks: map[string]schema.Block{

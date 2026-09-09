@@ -1208,6 +1208,7 @@ func TestEveryEventTriggerTypeSerializes(t *testing.T) {
 			}
 			if eventType == consts.WorkflowTimerExpired {
 				trigger.PropertyIdentifier = types.StringValue("expires_at")
+				trigger.NextExpireAt = types.StringValue("now + 86400 | todateiso8601")
 			}
 
 			node := WorkflowNodeModel{Identifier: types.StringValue("trigger"), EventTrigger: trigger}
@@ -1222,6 +1223,12 @@ func TestEveryEventTriggerTypeSerializes(t *testing.T) {
 			require.NotNil(t, event)
 			assert.Equal(t, eventType, event.Type)
 			assert.Equal(t, "service", event.BlueprintIdentifier)
+			if eventType == consts.WorkflowTimerExpired {
+				require.NotNil(t, event.PropertyIdentifier)
+				assert.Equal(t, "expires_at", *event.PropertyIdentifier)
+				require.NotNil(t, event.NextExpireAt)
+				assert.Equal(t, "now + 86400 | todateiso8601", *event.NextExpireAt)
+			}
 
 			assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)))
 		})
@@ -1359,6 +1366,67 @@ func TestEventTriggerConditionRoundTrip(t *testing.T) {
 	require.NotNil(t, got, "the event trigger condition must survive a refresh")
 	assert.Equal(t, "or", got.Combinator.ValueString())
 	assert.False(t, got.Expressions.IsNull())
+}
+
+func TestEventTriggerNextExpireAtRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("trigger"),
+				EventTrigger: &EventTriggerModel{
+					Type:                types.StringValue(consts.WorkflowTimerExpired),
+					BlueprintIdentifier: types.StringValue("service"),
+					PropertyIdentifier:  types.StringValue("ttl"),
+					NextExpireAt:        types.StringValue("now + 86400 | todateiso8601"),
+				},
+			},
+		},
+	}
+
+	w, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	event := w.Nodes[0].Config.Event
+	require.NotNil(t, event)
+	require.NotNil(t, event.NextExpireAt)
+	assert.Equal(t, "now + 86400 | todateiso8601", *event.NextExpireAt)
+
+	refreshed := &WorkflowModel{Identifier: types.StringValue("wf")}
+	require.NoError(t, r.refreshWorkflowState(ctx, refreshed, w))
+
+	got := refreshed.Nodes[0].EventTrigger
+	require.NotNil(t, got)
+	assert.Equal(t, "now + 86400 | todateiso8601", got.NextExpireAt.ValueString())
+}
+
+func TestEventTriggerNextExpireAtOmitsBlankValue(t *testing.T) {
+	ctx := context.Background()
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("trigger"),
+				EventTrigger: &EventTriggerModel{
+					Type:                types.StringValue(consts.WorkflowTimerExpired),
+					BlueprintIdentifier: types.StringValue("service"),
+					PropertyIdentifier:  types.StringValue("ttl"),
+					NextExpireAt:        types.StringValue("   "),
+				},
+			},
+		},
+	}
+
+	w, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	event := w.Nodes[0].Config.Event
+	require.NotNil(t, event)
+	assert.Nil(t, event.NextExpireAt)
 }
 
 // Walks the real schema so that exposing a condition on a second node type fails.

@@ -88,6 +88,7 @@ type EventTriggerModel struct {
 	Type                types.String        `tfsdk:"type"`
 	BlueprintIdentifier types.String        `tfsdk:"blueprint_identifier"`
 	PropertyIdentifier  types.String        `tfsdk:"property_identifier"`
+	NextExpireAt        types.String        `tfsdk:"next_expire_at"`
 	Published           types.Bool          `tfsdk:"published"`
 	Condition           *NodeConditionModel `tfsdk:"condition"`
 }

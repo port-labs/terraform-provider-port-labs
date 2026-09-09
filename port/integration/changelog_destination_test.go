@@ -31,6 +31,24 @@ func TestChangelogDestinationSchema(t *testing.T) {
 	}
 }
 
+func TestIntegrationToPortBodySkipsUnknownChangelogDestination(t *testing.T) {
+	plan := &IntegrationModel{
+		InstallationId:              types.StringValue("my-kafka"),
+		InstallationAppType:         types.StringValue("kafka"),
+		Version:                     types.StringValue("1.0.0"),
+		WebhookChangelogDestination: types.ObjectUnknown(webhookChangelogDestinationType),
+		KafkaChangelogDestination:   types.ObjectUnknown(kafkaChangelogDestinationType),
+	}
+
+	body, err := integrationToPortBody(plan)
+	if err != nil {
+		t.Fatalf("integrationToPortBody: %v", err)
+	}
+	if body.ChangelogDestination != nil {
+		t.Fatalf("changelog destination = %+v, want nil", body.ChangelogDestination)
+	}
+}
+
 func TestChangelogDestinationRoundTrip(t *testing.T) {
 	const portManagedURL = "https://internal.port.io/webhooks/changelog"
 	agent := true

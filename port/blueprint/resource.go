@@ -119,6 +119,7 @@ func (r *BlueprintResource) refreshBlueprintState(ctx context.Context, bm *Bluep
 		if b.Ownership.Title != nil {
 			bm.Ownership.Title = types.StringValue(*b.Ownership.Title)
 		}
+		bm.Ownership.Union = flex.GoBoolToFramework(b.Ownership.Union)
 	}
 	if b.Ownership == nil && bm.Ownership != nil {
 		bm.Ownership = nil
@@ -420,6 +421,10 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 		if !state.Ownership.Title.IsNull() {
 			title := state.Ownership.Title.ValueString()
 			ownership.Title = &title
+		}
+		if !state.Ownership.Union.IsNull() {
+			union := state.Ownership.Union.ValueBool()
+			ownership.Union = &union
 		}
 		b.Ownership = ownership
 	}

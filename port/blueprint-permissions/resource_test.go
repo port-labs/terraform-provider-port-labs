@@ -521,6 +521,99 @@ func TestAccPortBlueprintPermissionsWithInvalidProperties(t *testing.T) {
 	})
 }
 
+func TestAccPortBlueprintPermissionsWithInvalidReadProperties(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testAccPortBlueprintResourceBasic = createBlueprintWithProperties(blueprintIdentifier)
+
+	teamName := utils.GenID()
+	var testAccBaseBlueprintPermissionsConfigUpdate = fmt.Sprintf(`
+
+	resource "port_team" "team" {
+		name = "%s"
+		description = "Test description"
+		users = []
+	}
+
+	resource "port_blueprint_permissions" "microservice_permissions" {
+		blueprint_identifier = port_blueprint.microservice.identifier
+		entities = {
+			"register" = {
+				"roles": [
+					"Member",
+				],
+				"users": [],
+				"teams": []
+			},
+			"unregister" = {
+				"roles": [
+					"Member",
+				],
+				"users": [],
+				"teams": []
+			},
+			"update" = {
+				"roles": [
+					"Member",
+				],
+				"users": [],
+				"teams": []
+			},
+			"read_properties" = {
+				"$identifier" = {
+					"teams" = [],
+					"users" = [],
+					"roles" = ["Member"]
+				}
+			},
+			"update_metadata_properties" = {
+				"icon" = {
+					"roles": [
+						"Member",
+					],
+					"users": [],
+					"teams": []
+				},
+				"identifier" = {
+					"roles": [
+						"Member",
+					],
+					"users": [],
+					"teams": []
+				},
+				"team" = {
+					"roles": [
+						"Member",
+					],
+					"users": [],
+					"teams": []
+				},
+				"title" = {
+					"roles": [
+						"Member",
+					],
+					"users": [],
+					"teams": []
+				},
+			}
+		}
+	}`, teamName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccPortBlueprintResourceBasic + testAccBaseBlueprintPermissionsConfigUpdate,
+				ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+			},
+		},
+	})
+}
+
 func TestAccPortBlueprintPermissionsWithPolicy(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")

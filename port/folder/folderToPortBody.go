@@ -11,5 +11,10 @@ func FolderToPortRequest(fm *FolderModel) (*cli.Folder, error) {
 		After:      fm.After.ValueString(),
 		Parent:     fm.Parent.ValueString(),
 	}
+
+	if !fm.Icon.IsNull() {
+		fb.Icon = fm.Icon.ValueString()
+	}
+
 	return fb, nil
 }

@@ -118,7 +118,7 @@ func UpdateRelationsToState(b *cli.Blueprint, state map[string]blueprint.Relatio
 			Description: flex.GoStringToFramework(v.Description),
 			Many:        flex.GoBoolToFramework(v.Many),
 			Required:    flex.GoBoolToFramework(v.Required),
-			Union:       flex.GoBoolToFramework(v.Union),
+			Union:       flex.GoBoolToFrameworkDefaultFalse(v.Union),
 		}
 
 		bm.Relations[k] = *relationModel

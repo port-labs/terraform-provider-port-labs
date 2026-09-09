@@ -1017,6 +1017,78 @@ func TestSelfServeTriggerPermissionsUsePolicy(t *testing.T) {
 	assert.NotContains(t, string(body), `"usersQuery"`)
 }
 
+func TestSelfServeTriggerPermissionsRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	policy := map[string]any{
+		"combinator": "and",
+		"rules": []any{
+			map[string]any{
+				"property": map[string]any{
+					"context":  "user",
+					"property": "department",
+				},
+				"operator": "=",
+				"value":    "engineering",
+			},
+		},
+	}
+
+	apiWorkflow := &cli.Workflow{
+		Identifier: "wf",
+		Nodes: []cli.WorkflowNode{
+			{
+				Identifier: "trigger",
+				Config: cli.WorkflowNodeConfig{
+					Type: consts.SelfServeTrigger,
+					Permissions: &cli.WorkflowNodePermissions{
+						Roles:  []string{"Member", "Admin"},
+						Users:  []string{"dev@example.com"},
+						Teams:  []string{"platform"},
+						Policy: policy,
+					},
+				},
+			},
+		},
+	}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes:      []WorkflowNodeModel{{Identifier: types.StringValue("trigger")}},
+	}
+
+	require.NoError(t, r.refreshWorkflowState(ctx, state, apiWorkflow))
+
+	trigger := state.Nodes[0].SelfServeTrigger
+	require.NotNil(t, trigger)
+	require.NotNil(t, trigger.Permissions)
+
+	roles, err := utils.TerraformListToGoArray(ctx, trigger.Permissions.Roles, "string")
+	require.NoError(t, err)
+	assert.Equal(t, []any{"Member", "Admin"}, roles)
+
+	users, err := utils.TerraformListToGoArray(ctx, trigger.Permissions.Users, "string")
+	require.NoError(t, err)
+	assert.Equal(t, []any{"dev@example.com"}, users)
+
+	teams, err := utils.TerraformListToGoArray(ctx, trigger.Permissions.Teams, "string")
+	require.NoError(t, err)
+	assert.Equal(t, []any{"platform"}, teams)
+	assert.Contains(t, trigger.Permissions.Policy.ValueString(), `"department"`)
+
+	body, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	permissions := body.Nodes[0].Config.Permissions
+	require.NotNil(t, permissions)
+	assert.Equal(t, []string{"Member", "Admin"}, permissions.Roles)
+	assert.Equal(t, []string{"dev@example.com"}, permissions.Users)
+	assert.Equal(t, []string{"platform"}, permissions.Teams)
+	assert.NotNil(t, permissions.Policy)
+	assert.Nil(t, permissions.UsersQuery)
+}
+
 func TestRespondersRoundTrip(t *testing.T) {
 	ctx := context.Background()
 

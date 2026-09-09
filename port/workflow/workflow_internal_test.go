@@ -1017,6 +1017,44 @@ func TestSelfServeTriggerPermissionsUsePolicy(t *testing.T) {
 	assert.NotContains(t, string(body), `"usersQuery"`)
 }
 
+func TestSelfServeTriggerPermissionsErrorMessageRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	permissions := &cli.WorkflowNodePermissions{
+		Roles:        []string{"Member"},
+		Policy:       map[string]any{"combinator": "and", "rules": []any{}},
+		ErrorMessage: strPtr("Only production deploys from the platform team are allowed"),
+	}
+
+	model := permissionsToModel(ctx, permissions, false)
+	require.NotNil(t, model)
+	assert.Equal(t, "Only production deploys from the platform team are allowed", model.ErrorMessage.ValueString())
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("trigger"),
+				SelfServeTrigger: &SelfServeTriggerModel{
+					Permissions: model,
+				},
+			},
+		},
+	}
+
+	w, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	portPermissions := w.Nodes[0].Config.Permissions
+	require.NotNil(t, portPermissions)
+	require.NotNil(t, portPermissions.ErrorMessage)
+	assert.Equal(t, "Only production deploys from the platform team are allowed", *portPermissions.ErrorMessage)
+
+	body, err := json.Marshal(portPermissions)
+	require.NoError(t, err)
+	assert.Contains(t, string(body), `"errorMessage":"Only production deploys from the platform team are allowed"`)
+}
+
 func TestRespondersRoundTrip(t *testing.T) {
 	ctx := context.Background()
 

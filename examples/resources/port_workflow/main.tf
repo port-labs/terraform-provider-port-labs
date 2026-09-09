@@ -44,6 +44,19 @@ resource "port_workflow" "deploy_service" {
 
       permissions {
         roles = ["Member"]
+        users = ["dev@example.com"]
+        teams = ["platform"]
+        policy = jsonencode({
+          combinator = "and"
+          rules = [{
+            property = {
+              context  = "user"
+              property = "department"
+            }
+            operator = "="
+            value    = "engineering"
+          }]
+        })
       }
     }
   }

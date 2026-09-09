@@ -38,7 +38,7 @@ func validateIntegrationModel(m *IntegrationModel) error {
 			consts.InstallationTypeSaas,
 		)
 	}
-	
+
 	return nil
 }
 

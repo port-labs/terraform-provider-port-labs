@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -62,7 +63,7 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 	// Read pulls Port's own additions into state (spec.appSpec, default config
 	// mappings). Neither belongs in a diff unless the configuration itself
 	// changed, so fall back to state when only Port moved.
-	plan.Spec = specPlan(state.Spec, plan.Spec)
+	plan.Spec = planSpec(plan.Spec, state.Spec)
 	if plan.Config.IsNull() || plan.Config.IsUnknown() {
 		plan.Config = state.Config
 	}
@@ -70,38 +71,35 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
 }
 
-// specPlan keeps the spec recorded in state whenever the user-configured
-// sections (integrationSpec, appSpec) are unchanged, so Port's server-added
-// appSpec fields do not read as a removal the next time Terraform plans.
-func specPlan(state, plan types.String) types.String {
-	if state.IsNull() || plan.IsNull() || plan.IsUnknown() {
-		return plan
+// planSpec overlays the spec sections the configuration declares onto the ones
+// recorded in state. Sections the configuration leaves out — appSpec, which
+// Port fills in during provisioning — are inherited, so editing integrationSpec
+// alone neither shows up as clearing them nor sends a spec that drops them.
+func planSpec(config, state types.String) types.String {
+	configSections, stateSections := specSections(config), specSections(state)
+	if configSections == nil || stateSections == nil {
+		return config
 	}
 
-	stateSections, planSections := specSections(state), specSections(plan)
-	if stateSections == nil || planSections == nil {
-		return plan
-	}
-
-	integrationSpecSame := bytes.Equal(stateSections["integrationSpec"], planSections["integrationSpec"])
-
-	// If the plan doesn't declare appSpec at all, the user isn't managing it
-	// — suppress any diff caused by the server's appSpec.
-	// If the plan does declare appSpec, compare it to detect user changes.
-	appSpecSame := true
-	if _, planHasAppSpec := planSections["appSpec"]; planHasAppSpec {
-		appSpecSame = bytes.Equal(stateSections["appSpec"], planSections["appSpec"])
-	}
-
-	if integrationSpecSame && appSpecSame {
+	planned := maps.Clone(stateSections)
+	maps.Copy(planned, configSections)
+	if maps.EqualFunc(planned, stateSections, func(a, b json.RawMessage) bool { return bytes.Equal(a, b) }) {
 		return state
 	}
-	return plan
+
+	encoded, err := json.Marshal(planned)
+	if err != nil {
+		return config
+	}
+	return types.StringValue(string(encoded))
 }
 
-func specSections(v types.String) map[string]json.RawMessage {
+func specSections(spec types.String) map[string]json.RawMessage {
+	if spec.IsNull() || spec.IsUnknown() {
+		return nil
+	}
 	var sections map[string]json.RawMessage
-	if err := json.Unmarshal([]byte(v.ValueString()), &sections); err != nil {
+	if err := json.Unmarshal([]byte(spec.ValueString()), &sections); err != nil {
 		return nil
 	}
 	return sections

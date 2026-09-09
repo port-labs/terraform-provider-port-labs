@@ -34,6 +34,26 @@ description: |-
   
   
   
+  Search with a date preset filter
+  Date/time filters support relative date presets via the between operator. For example, last3Days matches entities created in the last 3 days:
+  
+  
+  data "port_search" "recent_services" {
+    query = jsonencode({
+      "combinator" : "and",
+      "rules" : [
+        { "operator" : "=", "property" : "$blueprint", "value" : "Service" },
+        {
+          "operator" : "between",
+          "property" : "$createdAt",
+          "value" : { "preset" : "last3Days" }
+        }
+      ]
+    })
+  }
+  
+  
+  
   Scorecards automation example
   In this example we are creating a jira task for each service that its Ownership Scorecard hasn't reached Gold level :
   
@@ -101,6 +121,29 @@ data "port_search" "ads_service" {
     "combinator" : "and", "rules" : [
       { "operator" : "=", "property" : "$blueprint", "value" : "Service" },
       { "operator" : "=", "property" : "$identifier", "value" : "Ads" },
+    ]
+  })
+}
+
+
+```
+
+### Search with a date preset filter
+
+Date/time filters support relative date presets via the `between` operator. For example, `last3Days` matches entities created in the last 3 days:
+
+```hcl
+
+data "port_search" "recent_services" {
+  query = jsonencode({
+    "combinator" : "and",
+    "rules" : [
+      { "operator" : "=", "property" : "$blueprint", "value" : "Service" },
+      {
+        "operator" : "between",
+        "property" : "$createdAt",
+        "value" : { "preset" : "last3Days" }
+      }
     ]
   })
 }

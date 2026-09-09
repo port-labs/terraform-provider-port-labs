@@ -385,6 +385,39 @@ description: |-
   }
   
   
+  Page filter with date preset
+  Date/time filters in page_filters and widget datasets support relative date presets via the between operator. For example, last3Days filters entities created or updated in the last 3 days:
+  
+  
+  resource "port_page" "recent_entities_page" {
+    identifier = "recent_entities_page"
+    title      = "Recent entities"
+    type       = "blueprint-entities"
+    blueprint  = port_blueprint.base_blueprint.identifier
+    page_filters = [
+      jsonencode(
+        {
+          "identifier" : "recent-entities-filter",
+          "title" : "Created in the last 3 days",
+          "query" : {
+            "combinator" : "and",
+            "rules" : [
+              {
+                "property" : "$createdAt",
+                "operator" : "between",
+                "value" : {
+                  "preset" : "last3Days"
+                }
+              }
+            ],
+            "blueprint" : port_blueprint.base_blueprint.identifier
+          }
+        }
+      )
+    ]
+  }
+  
+  
   The home page is a special page, which is created by default when you create a new organization.
   When deleting the home page resource using terraform, the home page will not be deleted from Port as it isn't deletable page, instead, the home page will be removed from the terraform state.Due to only having one home page you'll have to import the state of the home page manually.
   
@@ -791,6 +824,42 @@ resource "port_page" "home_page" {
             "urlType" : "public"
           }
         ]
+      }
+    )
+  ]
+}
+
+```
+
+### Page filter with date preset
+
+Date/time filters in `page_filters` and widget datasets support relative date presets via the `between` operator. For example, `last3Days` filters entities created or updated in the last 3 days:
+
+```hcl
+
+resource "port_page" "recent_entities_page" {
+  identifier = "recent_entities_page"
+  title      = "Recent entities"
+  type       = "blueprint-entities"
+  blueprint  = port_blueprint.base_blueprint.identifier
+  page_filters = [
+    jsonencode(
+      {
+        "identifier" : "recent-entities-filter",
+        "title" : "Created in the last 3 days",
+        "query" : {
+          "combinator" : "and",
+          "rules" : [
+            {
+              "property" : "$createdAt",
+              "operator" : "between",
+              "value" : {
+                "preset" : "last3Days"
+              }
+            }
+          ],
+          "blueprint" : port_blueprint.base_blueprint.identifier
+        }
       }
     )
   ]

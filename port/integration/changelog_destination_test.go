@@ -108,10 +108,7 @@ func TestChangelogDestinationRoundTrip(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			state := &IntegrationModel{InstallationId: types.StringValue("my-gitlab")}
 
-			err := (&IntegrationResource{}).refreshIntegrationState(state, &cli.Integration{ChangelogDestination: tt.dest}, "my-gitlab")
-			if err != nil {
-				t.Fatalf("refreshIntegrationState: %v", err)
-			}
+			(&IntegrationResource{}).refreshIntegrationState(state, &cli.Integration{ChangelogDestination: tt.dest}, "my-gitlab")
 
 			if !state.KafkaChangelogDestination.Equal(tt.wantKafka) {
 				t.Errorf("kafka_changelog_destination = %s, want %s", state.KafkaChangelogDestination, tt.wantKafka)

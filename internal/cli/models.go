@@ -473,14 +473,14 @@ type (
 
 	ScorecardGroup struct {
 		Meta
-		Identifier string                            `json:"identifier,omitempty"`
-		Title      string                            `json:"title,omitempty"`
-		Levels     []Level                           `json:"levels,omitempty"`
-		Properties map[string]any                    `json:"properties,omitempty"`
+		Identifier string                              `json:"identifier,omitempty"`
+		Title      string                              `json:"title,omitempty"`
+		Levels     []Level                             `json:"levels,omitempty"`
+		Properties map[string]any                      `json:"properties,omitempty"`
 		Scorecards map[string]ScorecardGroupMemberSpec `json:"scorecards,omitempty"`
-		Blueprints []string                          `json:"blueprints,omitempty"`
-		Rules      []Rule                            `json:"rules,omitempty"`
-		Filters    map[string]*Query                 `json:"filters,omitempty"`
+		Blueprints []string                            `json:"blueprints,omitempty"`
+		Rules      []Rule                              `json:"rules,omitempty"`
+		Filters    map[string]*Query                   `json:"filters,omitempty"`
 	}
 
 	Rule struct {
@@ -775,13 +775,38 @@ type PortBodyDelete struct {
 	Ok bool `json:"ok"`
 }
 
+// IntegrationClientSpec is the user-manageable part of an integration spec.
+// Only client-managed spec sections are modeled; other API fields are omitted
+// on unmarshal and kept out of every request body.
+type IntegrationClientSpec struct {
+	IntegrationSpec map[string]any `json:"integrationSpec,omitempty"`
+	AppSpec         map[string]any `json:"appSpec,omitempty"`
+}
+
+// IsEmpty reports whether the spec carries nothing Terraform can manage.
+func (s *IntegrationClientSpec) IsEmpty() bool {
+	return s == nil || (s.IntegrationSpec == nil && s.AppSpec == nil)
+}
+
+type IntegrationStatus struct {
+	Status  string  `json:"status"`
+	Message *string `json:"message,omitempty"`
+}
+
+type IntegrationStatusInfo struct {
+	IntegrationStatus IntegrationStatus `json:"integrationStatus"`
+}
+
 type Integration struct {
-	InstallationId       string                `json:"installationId"`
-	Title                *string               `json:"title"`
-	InstallationAppType  *string               `json:"installationAppType"`
-	Version              *string               `json:"version"`
-	Config               *map[string]any       `json:"config"`
-	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
+	InstallationId       string                 `json:"installationId"`
+	Title                *string                `json:"title"`
+	InstallationAppType  *string                `json:"installationAppType"`
+	InstallationType     *string                `json:"installationType"`
+	Version              *string                `json:"version"`
+	Config               *map[string]any        `json:"config,omitempty"`
+	Spec                 *IntegrationClientSpec `json:"spec,omitempty"`
+	StatusInfo           *IntegrationStatusInfo `json:"statusInfo,omitempty"`
+	ChangelogDestination *ChangelogDestination  `json:"changelogDestination,omitempty"`
 }
 
 type Organization struct {

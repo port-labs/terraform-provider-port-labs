@@ -149,11 +149,12 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 		}
 
 		state.ID = types.StringValue(p.Identifier)
-		state.CreatedAt = types.StringValue(updatedPage.CreatedAt.String())
-		state.CreatedBy = types.StringValue(updatedPage.CreatedBy)
-		state.UpdatedAt = types.StringValue(updatedPage.UpdatedAt.String())
-		state.UpdatedBy = types.StringValue(updatedPage.UpdatedBy)
-		state.Description = types.StringPointerValue(updatedPage.Description)
+
+		err = r.refreshPageToState(state, updatedPage)
+		if err != nil {
+			resp.Diagnostics.AddError("failed to write updated page fields to resource", err.Error())
+			return
+		}
 
 		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 		return
@@ -226,12 +227,12 @@ func (r *PageResource) Update(ctx context.Context, req resource.UpdateRequest, r
 	}
 
 	state.ID = types.StringValue(p.Identifier)
-	state.CreatedAt = types.StringValue(updatedPage.CreatedAt.String())
-	state.CreatedBy = types.StringValue(updatedPage.CreatedBy)
-	state.UpdatedAt = types.StringValue(updatedPage.UpdatedAt.String())
-	state.UpdatedBy = types.StringValue(updatedPage.UpdatedBy)
-	state.Description = types.StringPointerValue(updatedPage.Description)
+
+	err = r.refreshPageToState(state, updatedPage)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to write updated page fields to resource", err.Error())
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
-
 }

@@ -193,7 +193,7 @@ resource "jira_issue" "microservice_ownership_without_gold_level" {
 
 ### Required
 
-- `query` (String) The search query
+- `query` (String) The search query. Date/time filters using the `between` operator may set `value.preset` to a date preset such as `today`, `yesterday`, `lastDay`, `last3Days`, `lastWeek`, `last2Weeks`, `lastMonth`, `last3Months`, `last6Months`, `last12Months`, `last2Years`, `last3Years`, or `tomorrow`.
 
 ### Optional
 

@@ -161,7 +161,7 @@ func Schema() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"query": schema.StringAttribute{
-			MarkdownDescription: "The search query",
+			MarkdownDescription: "The search query. Date/time filters using the `between` operator may set `value.preset` to a date preset such as `today`, `yesterday`, `lastDay`, `last3Days`, `lastWeek`, `last2Weeks`, `lastMonth`, `last3Months`, `last6Months`, `last12Months`, `last2Years`, `last3Years`, or `tomorrow`.",
 			Required:            true,
 		},
 		"exclude_calculated_properties": schema.BoolAttribute{

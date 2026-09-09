@@ -643,6 +643,32 @@ func TestUserInputRequiredJqQueryRoundTrip(t *testing.T) {
 	assert.Equal(t, map[string]string{"jqQuery": ".form.tier == \"production\""}, result.Required)
 }
 
+func TestStringArrayItemsPatternAndLengthRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"regions": {
+				Type: "array",
+				Items: map[string]any{
+					"type":      "string",
+					"enum":      []any{"us-east-1", "us-west-2"},
+					"pattern":   "^[a-z]{2}-[a-z]+-[0-9]$",
+					"minLength": 9,
+					"maxLength": 14,
+				},
+			},
+		},
+	})
+
+	regions := result.Properties["regions"]
+	require.Equal(t, "array", regions.Type)
+	require.NotNil(t, regions.Items)
+	assert.Equal(t, "string", regions.Items["type"])
+	assert.Equal(t, "^[a-z]{2}-[a-z]+-[0-9]$", regions.Items["pattern"])
+	assert.Equal(t, 9, regions.Items["minLength"])
+	assert.Equal(t, 14, regions.Items["maxLength"])
+	assert.Equal(t, []any{"us-east-1", "us-west-2"}, regions.Items["enum"])
+}
+
 func validateNodes(nodes []WorkflowNodeModel, connections []ConnectionModel) diag.Diagnostics {
 	resp := &resource.ValidateConfigResponse{}
 

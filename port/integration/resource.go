@@ -75,7 +75,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	applyWriteResult(plan, created, created.InstallationId)
 
 	if plan.isSaas() {
-		r.awaitProvisioning(ctx, plan, created.InstallationId, "created", &resp.Diagnostics)
+		r.awaitInfra(ctx, plan, created.InstallationId, "created", &resp.Diagnostics)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -146,7 +146,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	applyWriteResult(plan, updated, integrationIdentifier)
 
 	if plan.isSaas() {
-		r.awaitProvisioning(ctx, plan, integrationIdentifier, "updated", &resp.Diagnostics)
+		r.awaitInfra(ctx, plan, integrationIdentifier, "updated", &resp.Diagnostics)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -177,12 +177,8 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 	resp.State.RemoveResource(ctx)
 }
 
-// awaitProvisioning polls until the integration finishes provisioning (or
-// times out). Called between applyWriteResult and State.Set. On success it
-// updates only the Computed-only fields (status, version) that Terraform
-// allows to differ from the plan. Spec and config stay at their planned
-// values — Read picks up the full server view on the next refresh.
-func (r *IntegrationResource) awaitProvisioning(ctx context.Context, model *IntegrationModel, installationId, verb string, diags *diag.Diagnostics) {
+// awaitInfra waits for SaaS provisioning to finish, then syncs status and version into state.
+func (r *IntegrationResource) awaitInfra(ctx context.Context, model *IntegrationModel, installationId, verb string, diags *diag.Diagnostics) {
 	ready, err := r.portClient.WaitForIntegrationReady(ctx, installationId)
 	switch {
 	case err != nil:

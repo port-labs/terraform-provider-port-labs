@@ -92,6 +92,11 @@ func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action,
 			Type: "email",
 		}
 	}
+	if !data.ApprovalNoneNotification.IsNull() {
+		action.ApprovalNotification = &cli.ApprovalNotification{
+			Type: "none",
+		}
+	}
 	if data.ApprovalWebhookNotification != nil {
 		action.ApprovalNotification = &cli.ApprovalNotification{
 			Type:   "webhook",

@@ -64,9 +64,9 @@ func PageSchema() map[string]schema.Attribute {
 			ElementType: types.StringType,
 		},
 		"page_filters": schema.ListAttribute{
-			Description: "The page filters. Each filter is a JSON object with 'identifier' (string), 'title' (string), and 'query' (object with 'combinator' and 'rules' array). The rules array can contain any filter type.",
-			Optional:    true,
-			ElementType: types.StringType,
+			MarkdownDescription: "The page filters. Each filter is a JSON object with 'identifier' (string), 'title' (string), and 'query' (object with 'combinator' and 'rules' array). The rules array can contain any filter type. Date/time filters using the `between` operator may set `value.preset` to a date preset such as `today`, `yesterday`, `lastDay`, `last3Days`, `lastWeek`, `last2Weeks`, `lastMonth`, `last3Months`, `last6Months`, `last12Months`, `last2Years`, `last3Years`, or `tomorrow`.",
+			Optional:            true,
+			ElementType:         types.StringType,
 		},
 		"created_at": schema.StringAttribute{
 			MarkdownDescription: "The creation date of the page",

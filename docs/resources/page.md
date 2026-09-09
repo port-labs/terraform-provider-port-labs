@@ -824,7 +824,7 @@ terraform import port_page.home_page "\$home"
 - `description` (String) The page description
 - `icon` (String) The icon of the page
 - `locked` (Boolean) Whether the page is locked, if true, viewers will not be able to edit the page widgets and filters
-- `page_filters` (List of String) The page filters. Each filter is a JSON object with 'identifier' (string), 'title' (string), and 'query' (object with 'combinator' and 'rules' array). The rules array can contain any filter type.
+- `page_filters` (List of String) The page filters. Each filter is a JSON object with 'identifier' (string), 'title' (string), and 'query' (object with 'combinator' and 'rules' array). The rules array can contain any filter type. Date/time filters using the `between` operator may set `value.preset` to a date preset such as `today`, `yesterday`, `lastDay`, `last3Days`, `lastWeek`, `last2Weeks`, `lastMonth`, `last3Months`, `last6Months`, `last12Months`, `last2Years`, `last3Years`, or `tomorrow`.
 - `parent` (String) The identifier of the folder in which the page is in, default is the root of the sidebar
 - `title` (String) The title of the page
 - `widgets` (List of String) The widgets of the page

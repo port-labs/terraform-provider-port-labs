@@ -36,6 +36,7 @@ func (c *PortClient) GetFolder(ctx context.Context, id string) (*Folder, int, er
 				Identifier: item.Identifier,
 				Sidebar:    sidebarId,
 				Title:      item.Title,
+				Icon:       item.Icon,
 				After:      item.After,
 				Parent:     item.Parent,
 			}

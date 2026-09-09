@@ -1,6 +1,7 @@
 resource "port_folder" "example_folder" {
   identifier = "example_folder"
   title      = "Example Folder"
+  icon       = "AWS"
 }
 
 resource "port_folder" "child_folder" {

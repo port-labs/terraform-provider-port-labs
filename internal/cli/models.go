@@ -577,6 +577,7 @@ type (
 		Identifier string `json:"identifier,omitempty"`
 		Sidebar    string `json:"sidebar,omitempty"`
 		Title      string `json:"title,omitempty"`
+		Icon       string `json:"icon,omitempty"`
 		After      string `json:"after,omitempty"`
 		Parent     string `json:"parent,omitempty"`
 	}
@@ -596,6 +597,7 @@ type (
 	SidebarItemDTO struct {
 		Identifier  string `json:"identifier"`
 		Title       string `json:"title"`
+		Icon        string `json:"icon,omitempty"`
 		Sidebar     string `json:"sidebar"`
 		After       string `json:"after,omitempty"`
 		Parent      string `json:"parent,omitempty"`

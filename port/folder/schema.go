@@ -22,6 +22,10 @@ func FolderSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The title of the folder",
 			Optional:            true,
 		},
+		"icon": schema.StringAttribute{
+			MarkdownDescription: "The icon of the folder",
+			Optional:            true,
+		},
 		"after": schema.StringAttribute{
 			MarkdownDescription: "The identifier of the folder after which the folder should be placed",
 			Optional:            true,
@@ -104,6 +108,20 @@ resource "port_folder" "another_folder" {
   identifier = "another_folder"
   after      = port_folder.example_folder.identifier
   title      = "Another Folder"
+}
+
+` + "```" + `
+
+### Folder with Icon
+
+Create a folder with a custom sidebar icon.
+
+` + "```hcl" + `
+
+resource "port_folder" "engineering_folder" {
+  identifier = "engineering_folder"
+  title      = "Engineering"
+  icon       = "AWS"
 }
 
 ` + "```" + `

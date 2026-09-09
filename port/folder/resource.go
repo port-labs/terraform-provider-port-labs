@@ -129,12 +129,18 @@ func (r *FolderResource) ImportState(ctx context.Context, req resource.ImportSta
 }
 
 func FolderModelToCLI(state *FolderModel) *cli.Folder {
-	return &cli.Folder{
+	folder := &cli.Folder{
 		Identifier: state.Identifier.ValueString(),
 		Title:      state.Title.ValueString(),
 		After:      state.After.ValueString(),
 		Parent:     state.Parent.ValueString(),
 	}
+
+	if !state.Icon.IsNull() {
+		folder.Icon = state.Icon.ValueString()
+	}
+
+	return folder
 }
 
 func writeFolderComputedFieldsToState(state *FolderModel, fr *cli.Folder) {
@@ -153,5 +159,11 @@ func writeFolderComputedFieldsToState(state *FolderModel, fr *cli.Folder) {
 
 	if fr.Title != "" {
 		state.Title = types.StringValue(fr.Title)
+	}
+
+	if fr.Icon != "" {
+		state.Icon = types.StringValue(fr.Icon)
+	} else if !state.Icon.IsNull() {
+		state.Icon = types.StringNull()
 	}
 }

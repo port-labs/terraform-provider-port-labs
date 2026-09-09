@@ -5,10 +5,6 @@ subcategory: ""
 description: |-
   Folder resource
   For more information about folders, see the Port documentation https://docs.port.io/customize-pages-dashboards-and-plugins/page/folders#folder-identifiers.
-  ~> WARNING
-  The folder resource is currently in beta and is subject to change in future versions.
-  Use it by setting the Environment Variable PORT_BETA_FEATURES_ENABLED=true.
-  If this Environment Variable isn't specified, you won't be able to use the resource.
   Example Usage
   Basic Folder
   
@@ -46,11 +42,6 @@ description: |-
 # Folder resource
 
 For more information about folders, see the [Port documentation](https://docs.port.io/customize-pages-dashboards-and-plugins/page/folders#folder-identifiers).
-
-~> **WARNING**
-The folder resource is currently in beta and is subject to change in future versions.
-Use it by setting the Environment Variable `PORT_BETA_FEATURES_ENABLED=true`.
-If this Environment Variable isn't specified, you won't be able to use the resource.
 
 ## Example Usage
 
@@ -100,14 +91,19 @@ resource "port_folder" "another_folder" {
 
 ### Required
 
-- `identifier` (String) The identifier of the folder
+- `identifier` (String) The unique identifier of the folder.
 
 ### Optional
 
-- `after` (String) The identifier of the folder after which the folder should be placed
-- `parent` (String) The identifier of the parent folder
-- `title` (String) The title of the folder
+- `after` (String) The identifier of the sibling item after which this folder appears. Omitted when the folder is the first item in its parent.
+- `parent` (String) The identifier of the parent folder. Omitted when the folder is at the root level of the sidebar.
+- `title` (String) The display title of the folder.
 
 ### Read-Only
 
+- `created_at` (String) The creation date of the folder
+- `created_by` (String) The creator of the folder
 - `id` (String) Folder state identifier
+- `sidebar` (String) The identifier of the sidebar that contains the folder. Currently only `catalog` is supported.
+- `updated_at` (String) The last update date of the folder
+- `updated_by` (String) The last updater of the folder

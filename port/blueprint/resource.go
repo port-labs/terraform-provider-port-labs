@@ -422,10 +422,7 @@ func blueprintResourceToPortRequest(ctx context.Context, state *BlueprintModel) 
 			title := state.Ownership.Title.ValueString()
 			ownership.Title = &title
 		}
-		if !state.Ownership.Union.IsNull() {
-			union := state.Ownership.Union.ValueBool()
-			ownership.Union = &union
-		}
+		ownership.Union = flex.FrameworkBoolToTruePointer(state.Ownership.Union)
 		b.Ownership = ownership
 	}
 

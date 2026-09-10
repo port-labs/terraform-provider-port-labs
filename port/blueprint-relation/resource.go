@@ -45,7 +45,7 @@ func relationToPortBody(state *BlueprintRelationModel) *cli.Relation {
 		Target:   &target,
 		Many:     state.Many.ValueBoolPointer(),
 		Required: state.Required.ValueBoolPointer(),
-		Union:    state.Union.ValueBoolPointer(),
+		Union:    flex.FrameworkBoolToTruePointer(state.Union),
 	}
 
 	if !state.Title.IsNull() {

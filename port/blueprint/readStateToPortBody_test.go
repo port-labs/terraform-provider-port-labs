@@ -38,3 +38,17 @@ func TestRelationsResourceToBodyOmitsUnionWhenUnset(t *testing.T) {
 	require.True(t, ok)
 	assert.Nil(t, relation.Union)
 }
+
+func TestRelationsResourceToBodyOmitsUnionWhenFalse(t *testing.T) {
+	relations := RelationsResourceToBody(map[string]RelationModel{
+		"members": {
+			Target: types.StringValue("user"),
+			Many:   types.BoolValue(true),
+			Union:  types.BoolValue(false),
+		},
+	})
+
+	relation, ok := relations["members"]
+	require.True(t, ok)
+	assert.Nil(t, relation.Union)
+}

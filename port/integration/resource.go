@@ -53,7 +53,7 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 		)
 	}
 
-	if !plan.InstallationAppType.Equal(state.InstallationAppType) {
+	if !plan.InstallationAppType.IsNull() && !plan.InstallationAppType.Equal(state.InstallationAppType) {
 		resp.Diagnostics.AddError(
 			"cannot change installation_app_type",
 			"The Port API does not support changing `installation_app_type` on an existing integration. To use a different app type, destroy this resource (which deletes the integration from Port) and create a new `port_integration`.",

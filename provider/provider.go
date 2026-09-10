@@ -19,6 +19,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/entity"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/folder"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/integration"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/llm_provider"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/organization"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/page"
 	page_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
@@ -165,6 +166,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		aggregation_properties.NewAggregationPropertiesResource,
 		entity.NewEntityResource,
 		integration.NewIntegrationResource,
+		llm_provider.NewLLMProviderResource,
 		action.NewActionResource,
 		action_permissions.NewActionPermissionsResource,
 		webhook.NewWebhookResource,

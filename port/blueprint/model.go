@@ -16,6 +16,7 @@ type OwnershipModel struct {
 	Type  types.String `tfsdk:"type"`
 	Path  types.String `tfsdk:"path"`
 	Title types.String `tfsdk:"title"`
+	Union types.Bool   `tfsdk:"union"`
 }
 
 type SpecAuthenticationModel struct {
@@ -119,6 +120,7 @@ type RelationModel struct {
 	Description types.String `tfsdk:"description"`
 	Required    types.Bool   `tfsdk:"required"`
 	Many        types.Bool   `tfsdk:"many"`
+	Union       types.Bool   `tfsdk:"union"`
 }
 
 type MirrorPropertyModel struct {

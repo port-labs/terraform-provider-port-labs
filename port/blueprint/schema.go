@@ -301,6 +301,12 @@ func OwnershipSchema() schema.Attribute {
 				MarkdownDescription: "Optional title for the owning teams property.",
 				Optional:            true,
 			},
+			"union": schema.BoolAttribute{
+				MarkdownDescription: "Whether multiple sources can add to the owning teams without overwriting each other. Only applies when type is 'Direct'. This setting cannot be changed after ownership is created.",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(false),
+			},
 		},
 	}
 }
@@ -449,6 +455,12 @@ func BlueprintSchema() map[string]schema.Attribute {
 					},
 					"required": schema.BoolAttribute{
 						MarkdownDescription: "The required of the relation",
+						Optional:            true,
+						Computed:            true,
+						Default:             booldefault.StaticBool(false),
+					},
+					"union": schema.BoolAttribute{
+						MarkdownDescription: "Whether multiple sources can add to this relation without overwriting each other. Only applies when many is true. This setting cannot be changed after the relation is created.",
 						Optional:            true,
 						Computed:            true,
 						Default:             booldefault.StaticBool(false),

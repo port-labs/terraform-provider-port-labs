@@ -306,6 +306,7 @@ type (
 		Type  string  `json:"type"`
 		Path  *string `json:"path,omitempty"`
 		Title *string `json:"title,omitempty"`
+		Union *bool   `json:"union,omitempty"`
 	}
 
 	Step = struct {
@@ -453,6 +454,7 @@ type (
 		Target      *string `json:"target,omitempty"`
 		Required    *bool   `json:"required,omitempty"`
 		Many        *bool   `json:"many,omitempty"`
+		Union       *bool   `json:"union,omitempty"`
 		Type        *string `json:"type,omitempty"`
 	}
 

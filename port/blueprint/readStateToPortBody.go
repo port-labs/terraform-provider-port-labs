@@ -5,6 +5,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
 )
 
 func PropsResourceToBody(ctx context.Context, state *PropertiesModel) (map[string]cli.BlueprintProperty, []string, error) {
@@ -69,10 +70,7 @@ func RelationsResourceToBody(state map[string]RelationModel) map[string]cli.Rela
 			relationProp.Description = &description
 		}
 
-		if !prop.Union.IsNull() {
-			union := prop.Union.ValueBool()
-			relationProp.Union = &union
-		}
+		relationProp.Union = flex.FrameworkBoolToTruePointer(prop.Union)
 
 		relations[identifier] = relationProp
 	}

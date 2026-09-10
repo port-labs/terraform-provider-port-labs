@@ -35,8 +35,9 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Optional: true,
 		},
 		"installation_app_type": schema.StringAttribute{
-			MarkdownDescription: "Deprecated. The integrated tool name for catalog integration types (e.g. `GitHub`, `GitLab`, `K8S EXPORTER`). Custom integrations can omit this field. Cannot be changed after creation.",
+			MarkdownDescription: "Deprecated. The integrated tool name for catalog integration types (e.g. `GitHub`, `GitLab`, `K8S EXPORTER`). Custom integrations can omit this field. Cannot be changed after creation. When omitted from configuration, the value from Port is used and is not sent as `null` on updates.",
 			Optional:            true,
+			Computed:            true,
 		},
 		"config": schema.StringAttribute{
 			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`)",

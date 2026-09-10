@@ -778,7 +778,7 @@ type PortBodyDelete struct {
 type Integration struct {
 	InstallationId       string                `json:"installationId"`
 	Title                *string               `json:"title"`
-	InstallationAppType  *string               `json:"installationAppType"`
+	InstallationAppType  *string               `json:"installationAppType,omitempty"`
 	Version              *string               `json:"version"`
 	Config               *map[string]any       `json:"config"`
 	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`

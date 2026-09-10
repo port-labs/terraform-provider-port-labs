@@ -311,6 +311,69 @@ func TestPortIntegrationImmutableInstallationId(t *testing.T) {
 	})
 }
 
+func createIntegrationWithoutAppType(installationId string, version string) string {
+	return fmt.Sprintf(`
+	resource "port_integration" "kafkush" {
+		installation_id = "%s"
+		title           = "my-kafka-cluster"
+		version         = "%s"
+		config = jsonencode({
+			deleteDependentEntities = true,
+			resources = [{
+				kind = "ZOMG"
+				selector = {
+					query = ".title"
+				}
+				port = {
+					entity = {
+						mappings = [{
+							identifier = "'my-identifier'"
+							title      = ".title"
+							blueprint  = "'my-blueprint'"
+							properties = {
+								bla = 123
+							}
+							relations  = {}
+						}]
+					}
+				}
+			}]
+		})
+	}
+`, installationId, version)
+}
+
+func TestPortIntegrationUpdateWithoutInstallationAppType(t *testing.T) {
+	integrationIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: createIntegration(integrationIdentifier, "kafka"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", "kafka"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.7"),
+				),
+			},
+			{
+				Config: createIntegrationWithoutAppType(integrationIdentifier, "1.33.8"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_id", integrationIdentifier),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "installation_app_type", "kafka"),
+					resource.TestCheckResourceAttr("port_integration.kafkush", "version", "1.33.8"),
+				),
+			},
+		},
+	})
+}
+
 func TestPortIntegrationImmutableInstallationAppType(t *testing.T) {
 	integrationIdentifier := utils.GenID()
 	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")

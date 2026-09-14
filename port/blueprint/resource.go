@@ -57,6 +57,11 @@ func (r *BlueprintResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
+	resp.Diagnostics.Append(retainManagedRelations(ctx, req.Private, resp.Private, b, stateRelationIdentifiers(state.Relations))...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	err = r.refreshBlueprintState(ctx, state, b)
 	if err != nil {
 		resp.Diagnostics.AddError("failed writing blueprint fields to resource", err.Error())
@@ -168,6 +173,7 @@ func (r *BlueprintResource) Create(ctx context.Context, req resource.CreateReque
 
 	writeBlueprintComputedFieldsToState(state, bp)
 
+	resp.Diagnostics.Append(setManagedRelationsFromState(ctx, resp.Private, state)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -230,6 +236,10 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 		b.AggregationProperties = existingBp.AggregationProperties
 		prevB.AggregationProperties = existingBp.AggregationProperties
 
+		mergedRelations := mergeUnmanagedRelations(b.Relations, prevB.Relations, existingBp.Relations)
+		prevB.Relations = mergeUnmanagedRelations(prevB.Relations, prevB.Relations, existingBp.Relations)
+		b.Relations = mergedRelations
+
 		propsWithChangedTypes := make(map[string]string, 0)
 		for propKey, prop := range b.Schema.Properties {
 			if prevProp, prevHasProp := prevB.Schema.Properties[propKey]; prevHasProp && prop.Type != prevProp.Type {
@@ -269,6 +279,7 @@ func (r *BlueprintResource) Update(ctx context.Context, req resource.UpdateReque
 
 	writeBlueprintComputedFieldsToState(state, bp)
 
+	resp.Diagnostics.Append(setManagedRelationsFromState(ctx, resp.Private, state)...)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 
 }

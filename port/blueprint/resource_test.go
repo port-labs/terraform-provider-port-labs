@@ -397,6 +397,45 @@ func TestAccPortBlueprintObjectProperty(t *testing.T) {
 	})
 }
 
+func TestAccPortBlueprintObjectDefaultKeyOrder(t *testing.T) {
+	identifier := utils.GenID()
+	testConfig := fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF Provider Test"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			object_props = {
+				myObjectIdentifier = {
+					title = "object"
+					default = jsonencode({
+						zebra = 123
+						alpha = 456
+					})
+				}
+			}
+		}
+	}`, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "properties.object_props.myObjectIdentifier.title", "object"),
+				),
+			},
+			{
+				Config:   acctest.ProviderConfig + testConfig,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func TestAccPortBlueprintChangePropertyType(t *testing.T) {
 	type data struct{ Identifier, PropType string }
 	identifier := utils.GenID()
@@ -843,6 +882,15 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 					"test4" = "yellow"
 				}
 			}
+			"links-for-microservice1" = {
+				title = "Links for microservice1"
+				calculation = "[.properties.text]"
+				type = "array"
+				items = {
+					type = "string"
+					format = "url"
+				}
+			}
 		}
 	}`, identifier1)
 
@@ -857,6 +905,9 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.calculation", "test-rel.$identifier"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.icon", "Terraform"),
 					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.calculation-for-microservice1.colors.test2", "blue"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.links-for-microservice1.type", "array"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.links-for-microservice1.items.type", "string"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice1", "calculation_properties.links-for-microservice1.items.format", "url"),
 				),
 			},
 		},

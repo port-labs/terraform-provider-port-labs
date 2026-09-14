@@ -12,6 +12,7 @@ import (
 
 func (r *Resource) updatePropertiesToState(ctx context.Context, b *cli.Blueprint, systemBp *cli.Blueprint, bm *SystemBlueprintModel) error {
 	properties := &blueprint.PropertiesModel{}
+	oldProperties := bm.Properties
 
 	for k, v := range b.Schema.Properties {
 		// Skip if the property exists in systemBp
@@ -60,7 +61,13 @@ func (r *Resource) updatePropertiesToState(ctx context.Context, b *cli.Blueprint
 				properties.ArrayProps = make(map[string]blueprint.ArrayPropModel)
 			}
 
-			arrayProp := blueprint.AddArrayPropertiesToState(ctx, &v, r.client.JSONEscapeHTML)
+			var oldArrayProp *blueprint.ArrayPropModel
+			if oldProperties != nil && oldProperties.ArrayProps != nil {
+				if old, ok := oldProperties.ArrayProps[k]; ok {
+					oldArrayProp = &old
+				}
+			}
+			arrayProp := blueprint.AddArrayPropertiesToState(ctx, &v, r.client.JSONEscapeHTML, oldArrayProp)
 
 			if lo.Contains(b.Schema.Required, k) {
 				arrayProp.Required = types.BoolValue(true)
@@ -102,7 +109,15 @@ func (r *Resource) updatePropertiesToState(ctx context.Context, b *cli.Blueprint
 				objectProp.Required = types.BoolValue(false)
 			}
 
+			var oldObjectDefault types.String
+			if oldProperties != nil && oldProperties.ObjectProps != nil {
+				if old, ok := oldProperties.ObjectProps[k]; ok {
+					oldObjectDefault = old.Default
+				}
+			}
+
 			blueprint.SetCommonProperties(v, objectProp, r.client.JSONEscapeHTML)
+			blueprint.SetObjectDefault(objectProp, v.Default, r.client.JSONEscapeHTML, oldObjectDefault)
 
 			properties.ObjectProps[k] = *objectProp
 		}

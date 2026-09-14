@@ -100,7 +100,7 @@ GitHub Ocean can ingest open pull requests via the GitHub GraphQL API. In additi
 - `selector.enrichWithFirstCommit` — when `true`, fetches the first commit on the PR branch (used for coding-time metrics).
 - `selector.excludeGraphqlFields` — list of GraphQL fields to omit from the query (for example `additions`, `deletions`, `changedFiles`).
 
-GraphQL mappings use camelCase fields (for example `.createdAt`, `.mergedAt`, `.url`). Entity identifiers are commonly `.head.repo.name + (.fullDatabaseId|tostring)`.
+GraphQL mappings use camelCase fields (for example `.createdAt`, `.mergedAt`, `.url`). Open pull-request entity identifiers use `.fullDatabaseId|tostring`.
 
 Property jq mappings can populate review and DORA-style metrics on the `githubPullRequest` blueprint, including `isDraft`, `reviewDecision`, `firstCommitAt`, `firstReviewAt`, `approvedAt`, `readyForReviewAt`, `codingTimeHours`, `timeToFirstReview`, and `timeFromApprovalToMerge`.
 

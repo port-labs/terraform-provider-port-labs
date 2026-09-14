@@ -23,7 +23,7 @@ resource "port_integration" "github_ocean" {
         port = {
           entity = {
             mappings = [{
-              identifier = ".head.repo.name + (.fullDatabaseId|tostring)"
+              identifier = ".fullDatabaseId|tostring"
               title      = ".title"
               blueprint  = "'githubPullRequest'"
               properties = {
@@ -62,7 +62,7 @@ resource "port_integration" "github_ocean" {
         port = {
           entity = {
             mappings = [{
-              identifier = ".head.repo.name + (.id|tostring)"
+              identifier = ".id|tostring"
               blueprint  = "'githubPullRequest'"
               properties = {}
               relations = {

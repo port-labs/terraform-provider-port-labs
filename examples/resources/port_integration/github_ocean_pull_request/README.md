@@ -11,10 +11,10 @@ No Terraform provider schema changes are required. The `port_integration` resour
 | Area | Change |
 | --- | --- |
 | Open `pull-request` selector | Uses GraphQL (`api: graphql`), enables `enrichWithFirstCommit`, and excludes heavy GraphQL fields via `excludeGraphqlFields` |
-| Open PR identifier | `.head.repo.name + (.fullDatabaseId\|tostring)` (GraphQL global ID) |
+| Open PR identifier | `.fullDatabaseId\|tostring` (GraphQL database ID) |
 | Timestamp / link fields | REST snake_case fields (`created_at`, `html_url`, …) replaced with GraphQL camelCase (`createdAt`, `url`, …) |
 | DORA / review metrics | Maps `isDraft`, `reviewDecision`, review timestamps, and derived hour metrics (`codingTimeHours`, `timeToFirstReview`, `timeFromApprovalToMerge`) |
-| Closed `pull-request` identifier | `.head.repo.name + (.id\|tostring)` for the closed-PR sync resource |
+| Closed `pull-request` identifier | `.id\|tostring` for the closed-PR sync resource (unchanged in Port #18572) |
 
 ## System blueprint changes
 

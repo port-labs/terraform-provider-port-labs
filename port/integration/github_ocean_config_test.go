@@ -22,7 +22,7 @@ func TestIntegrationToPortBody_githubOceanPullRequestGraphQLSelector(t *testing.
 			"port": {
 				"entity": {
 					"mappings": [{
-						"identifier": ".head.repo.name + (.fullDatabaseId|tostring)",
+						"identifier": ".fullDatabaseId|tostring",
 						"blueprint": "'githubPullRequest'",
 						"properties": {
 							"isDraft": ".isDraft",

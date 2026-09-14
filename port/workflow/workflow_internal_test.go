@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
@@ -1376,6 +1379,59 @@ func TestConditionIsExposedOnlyOnEventTrigger(t *testing.T) {
 	}
 
 	assert.Equal(t, []string{"event_trigger"}, blocksWithCondition)
+}
+
+func TestNodeTypeByBlockCoversEveryNodeType(t *testing.T) {
+	blocks := make([]string, 0, len(nodeTypeByBlock))
+	for block := range nodeTypeByBlock {
+		blocks = append(blocks, block)
+	}
+
+	assert.ElementsMatch(t, nodeTypeBlockNames, blocks,
+		"every node type block must map to a config type")
+}
+
+// A node holding values that are only known after apply cannot be read into
+// WorkflowNodeModel, so ValidateConfig takes the node type off the config
+// object instead. Walks the real schema so a renamed block fails here.
+func TestNodeTypeOfReadsTypeFromConfigObject(t *testing.T) {
+	ctx := context.Background()
+	nodeType := WorkflowBlocks()["node"].(schema.ListNestedBlock).NestedObject.Type().(basetypes.ObjectType)
+
+	for _, block := range nodeTypeBlockNames {
+		t.Run(block, func(t *testing.T) {
+			assert.Equal(t, nodeTypeByBlock[block], nodeTypeOf(nodeObjectWithBlock(ctx, t, nodeType, block)))
+		})
+	}
+
+	t.Run("no config block", func(t *testing.T) {
+		assert.Empty(t, nodeTypeOf(nodeObjectWithBlock(ctx, t, nodeType, "")))
+	})
+}
+
+// Builds a node config object where every attribute is null except for block,
+// which is left unknown the way Terraform reports a value it cannot resolve
+// until apply.
+func nodeObjectWithBlock(ctx context.Context, t *testing.T, nodeType basetypes.ObjectType, block string) types.Object {
+	t.Helper()
+
+	attributeTypes := nodeType.AttributeTypes()
+	attributes := make(map[string]attr.Value, len(attributeTypes))
+	for name, attributeType := range attributeTypes {
+		raw := tftypes.NewValue(attributeType.TerraformType(ctx), nil)
+		if name == block {
+			raw = tftypes.NewValue(attributeType.TerraformType(ctx), tftypes.UnknownValue)
+		}
+
+		value, err := attributeType.ValueFromTerraform(ctx, raw)
+		require.NoError(t, err)
+		attributes[name] = value
+	}
+
+	object, diags := types.ObjectValue(attributeTypes, attributes)
+	require.False(t, diags.HasError(), diags.Errors())
+
+	return object
 }
 
 func validateWorkflow(nodes []WorkflowNodeModel, connections []ConnectionModel) diag.Diagnostics {

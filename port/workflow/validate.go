@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 )
 
@@ -17,19 +18,27 @@ var _ resource.ResourceWithValidateConfig = &WorkflowResource{}
 // enforces required attributes of a SingleNestedBlock even when the block itself
 // is absent, which would make every node config block mandatory.
 func (r *WorkflowResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var data WorkflowModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
+	var nodeList types.List
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("node"), &nodeList)...)
+	if resp.Diagnostics.HasError() || nodeList.IsNull() || nodeList.IsUnknown() {
 		return
 	}
 
-	nodeTypes := make(map[string]string, len(data.Nodes))
-	outlets := make(map[string]map[string]bool, len(data.Nodes))
-	for i, node := range data.Nodes {
+	elements := nodeList.Elements()
+	nodeTypes := make(map[string]string, len(elements))
+	outlets := make(map[string]map[string]bool, len(elements))
+	for i, element := range elements {
 		nodePath := path.Root("node").AtListIndex(i)
-		identifier := node.Identifier.ValueString()
 
-		if _, duplicate := nodeTypes[identifier]; duplicate && !node.Identifier.IsUnknown() {
+		object, isObject := element.(types.Object)
+		if !isObject || object.IsNull() || object.IsUnknown() {
+			continue
+		}
+
+		identifierValue, _ := object.Attributes()["identifier"].(types.String)
+		identifier := identifierValue.ValueString()
+
+		if _, duplicate := nodeTypes[identifier]; duplicate && !identifierValue.IsUnknown() {
 			resp.Diagnostics.AddAttributeError(
 				nodePath.AtName("identifier"),
 				"Duplicate node identifier",
@@ -37,12 +46,55 @@ func (r *WorkflowResource) ValidateConfig(ctx context.Context, req resource.Vali
 			)
 		}
 
+		var node WorkflowNodeModel
+		if object.As(ctx, &node, basetypes.ObjectAsOptions{}).HasError() {
+			// Part of the node is only known after apply, for example user
+			// properties generated from an input variable, and the node model
+			// cannot hold unknown values in those positions. The node type is
+			// still readable, so only this node's own checks are given up.
+			nodeTypes[identifier] = nodeTypeOf(object)
+			continue
+		}
+
 		nodeTypes[identifier] = validateNode(resp, nodePath, node)
 		outlets[identifier] = nodeOutlets(node)
 	}
 
 	validateTriggerPresence(resp, nodeTypes)
-	validateConnections(resp, data.Connections, nodeTypes, outlets)
+
+	var connections []ConnectionModel
+	if req.Config.GetAttribute(ctx, path.Root("connections"), &connections).HasError() {
+		return
+	}
+	validateConnections(resp, connections, nodeTypes, outlets)
+}
+
+var nodeTypeByBlock = map[string]string{
+	"self_serve_trigger": consts.SelfServeTrigger,
+	"event_trigger":      consts.EventTrigger,
+	"schedule_trigger":   consts.ScheduleTrigger,
+	"kafka":              consts.Kafka,
+	"webhook":            consts.Webhook,
+	"integration_action": consts.IntegrationAction,
+	"upsert_entity":      consts.UpsertEntity,
+	"ai":                 consts.AI,
+	"ai_agent":           consts.AIAgent,
+	"condition":          consts.ConditionNode,
+	"input":              consts.InputNode,
+}
+
+// Reads the node type straight off the config object, for nodes that cannot be
+// read into WorkflowNodeModel. nodeTypeBlockNames is ordered like the switch in
+// validateNode, so both resolve a node the same way.
+func nodeTypeOf(object types.Object) string {
+	attributes := object.Attributes()
+	for _, name := range nodeTypeBlockNames {
+		if block, declared := attributes[name]; declared && !block.IsNull() {
+			return nodeTypeByBlock[name]
+		}
+	}
+
+	return ""
 }
 
 var triggerTypes = map[string]bool{

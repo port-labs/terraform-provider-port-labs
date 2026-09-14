@@ -48,10 +48,6 @@ func (r *WorkflowResource) ValidateConfig(ctx context.Context, req resource.Vali
 
 		var node WorkflowNodeModel
 		if object.As(ctx, &node, basetypes.ObjectAsOptions{}).HasError() {
-			// Part of the node is only known after apply, for example user
-			// properties generated from an input variable, and the node model
-			// cannot hold unknown values in those positions. The node type is
-			// still readable, so only this node's own checks are given up.
 			nodeTypes[identifier] = nodeTypeOf(object)
 			continue
 		}
@@ -83,9 +79,6 @@ var nodeTypeByBlock = map[string]string{
 	"input":              consts.InputNode,
 }
 
-// Reads the node type straight off the config object, for nodes that cannot be
-// read into WorkflowNodeModel. nodeTypeBlockNames is ordered like the switch in
-// validateNode, so both resolve a node the same way.
 func nodeTypeOf(object types.Object) string {
 	attributes := object.Attributes()
 	for _, name := range nodeTypeBlockNames {

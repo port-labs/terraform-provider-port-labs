@@ -1391,9 +1391,6 @@ func TestNodeTypeByBlockCoversEveryNodeType(t *testing.T) {
 		"every node type block must map to a config type")
 }
 
-// A node holding values that are only known after apply cannot be read into
-// WorkflowNodeModel, so ValidateConfig takes the node type off the config
-// object instead. Walks the real schema so a renamed block fails here.
 func TestNodeTypeOfReadsTypeFromConfigObject(t *testing.T) {
 	ctx := context.Background()
 	nodeType := WorkflowBlocks()["node"].(schema.ListNestedBlock).NestedObject.Type().(basetypes.ObjectType)
@@ -1409,9 +1406,6 @@ func TestNodeTypeOfReadsTypeFromConfigObject(t *testing.T) {
 	})
 }
 
-// Builds a node config object where every attribute is null except for block,
-// which is left unknown the way Terraform reports a value it cannot resolve
-// until apply.
 func nodeObjectWithBlock(ctx context.Context, t *testing.T, nodeType basetypes.ObjectType, block string) types.Object {
 	t.Helper()
 

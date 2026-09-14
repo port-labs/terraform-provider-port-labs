@@ -251,7 +251,7 @@ func arrayPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, pr
 	return nil
 }
 
-func (r *ActionResource) addArrayPropertiesToResource(v *cli.ActionProperty) (*ArrayPropModel, error) {
+func (r *ActionResource) addArrayPropertiesToResource(v *cli.ActionProperty, oldArrayProp *ArrayPropModel) (*ArrayPropModel, error) {
 	arrayProp := &ArrayPropModel{}
 
 	// Handle MinItems - can be int or JQ query
@@ -326,7 +326,11 @@ func (r *ActionResource) addArrayPropertiesToResource(v *cli.ActionProperty) (*A
 					arrayProp.StringItems.Blueprint = types.StringValue(v.Items["blueprint"].(string))
 				}
 				if value, ok := v.Items["dataset"]; ok && value != nil {
-					ds, err := utils.GoObjectToTerraformString(v.Items["dataset"], r.portClient.JSONEscapeHTML)
+					var oldDataset types.String
+					if oldArrayProp != nil && oldArrayProp.StringItems != nil {
+						oldDataset = oldArrayProp.StringItems.Dataset
+					}
+					ds, err := utils.GoObjectToTerraformStringPreferExisting(oldDataset, v.Items["dataset"], r.portClient.JSONEscapeHTML)
 					if err != nil {
 						return nil, err
 					}

@@ -15,6 +15,7 @@ import (
 	aggregation_properties "github.com/port-labs/terraform-provider-port-labs/v2/port/aggregation-properties"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint"
 	blueprint_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-permissions"
+	blueprint_relation "github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-relation"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/entity"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/folder"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/integration"
@@ -22,6 +23,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/page"
 	page_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
+	scorecard_group "github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard_group"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/search"
 	system_blueprint "github.com/port-labs/terraform-provider-port-labs/v2/port/system_blueprint"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/team"
@@ -158,6 +160,7 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		blueprint.NewBlueprintResource,
+		blueprint_relation.NewBlueprintRelationResource,
 		blueprint_permissions.NewBlueprintPermissionsResource,
 		aggregation_properties.NewAggregationPropertiesResource,
 		entity.NewEntityResource,
@@ -166,6 +169,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		action_permissions.NewActionPermissionsResource,
 		webhook.NewWebhookResource,
 		scorecard.NewScorecardResource,
+		scorecard_group.NewScorecardGroupResource,
 		team.NewTeamResource,
 		page.NewPageResource,
 		page_permissions.NewPagePermissionsResource,

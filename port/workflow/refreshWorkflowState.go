@@ -9,7 +9,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
-	"github.com/port-labs/terraform-provider-port-labs/v2/port/action"
 )
 
 func (r *WorkflowResource) refreshWorkflowState(ctx context.Context, state *WorkflowModel, w *cli.Workflow) error {
@@ -83,7 +82,9 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 		}
 
 		if config.UserInputs != nil {
-			configured := prior.SelfServeTrigger != nil && prior.SelfServeTrigger.UserInputs != nil
+			configured := prior.SelfServeTrigger != nil &&
+				prior.SelfServeTrigger.UserInputs != nil &&
+				prior.SelfServeTrigger.UserInputs.UserProperties != nil
 			userInputs, err := r.userInputsToModel(ctx, config.UserInputs, configured)
 			if err != nil {
 				return node, err
@@ -94,6 +95,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 				RequiredJqQuery: userInputs.RequiredJqQuery,
 				OrderProperties: userInputs.OrderProperties,
 				Steps:           userInputs.Steps,
+				Validations:     userInputs.Validations,
 			}
 		}
 
@@ -242,7 +244,9 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 		}
 
 		if config.UserInputs != nil {
-			configured := prior.Input != nil && prior.Input.UserInputs != nil
+			configured := prior.Input != nil &&
+				prior.Input.UserInputs != nil &&
+				prior.Input.UserInputs.UserProperties != nil
 			userInputs, err := r.userInputsToModel(ctx, config.UserInputs, configured)
 			if err != nil {
 				return node, err
@@ -253,6 +257,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 				RequiredJqQuery: userInputs.RequiredJqQuery,
 				OrderProperties: userInputs.OrderProperties,
 				Steps:           userInputs.Steps,
+				Validations:     userInputs.Validations,
 			}
 			for _, b := range derefSlice(config.UserInputs.Buttons) {
 				input.UserInputs.Buttons = append(input.UserInputs.Buttons, InputButtonModel{
@@ -296,41 +301,106 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 }
 
 type userInputsModel struct {
-	UserProperties  *action.UserPropertiesModel
-	Titles          map[string]action.ActionTitle
+	UserProperties  *UserPropertiesModel
+	Titles          map[string]UserInputText
 	RequiredJqQuery types.String
 	OrderProperties types.List
-	Steps           []action.Step
+	Steps           []UserInputsStepModel
+	Validations     []InputValidationModel
 }
 
 func (r *WorkflowResource) userInputsToModel(ctx context.Context, userInputs *cli.WorkflowUserInputs, configured bool) (*userInputsModel, error) {
-	apiUserInputs := &cli.ActionUserInputs{
-		Properties: userInputs.Properties,
-		Required:   userInputs.Required,
-		Order:      userInputs.Order,
-		Steps:      userInputs.Steps,
-		Titles:     userInputs.Titles,
-	}
-
-	mapper := action.NewUserInputsMapper(r.portClient)
-
-	userProperties, err := mapper.UserPropertiesToState(ctx, apiUserInputs, configured)
+	userProperties, err := r.userPropertiesToState(ctx, userInputs, configured)
 	if err != nil {
 		return nil, err
 	}
 
-	titles, err := mapper.UserInputTitlesToState(apiUserInputs)
-	if err != nil {
-		return nil, err
+	requiredJqQuery, _ := requiredToState(userInputs.Required)
+
+	orderProperties := types.ListNull(types.StringType)
+	if len(userInputs.Order) > 0 {
+		orderProperties = flex.GoArrayStringToTerraformList(ctx, userInputs.Order)
 	}
 
 	return &userInputsModel{
 		UserProperties:  userProperties,
-		Titles:          titles,
-		RequiredJqQuery: action.UserInputsRequiredToState(apiUserInputs),
-		OrderProperties: action.UserInputsOrderToState(ctx, apiUserInputs.Order),
-		Steps:           action.UserInputStepsToState(apiUserInputs.Steps),
+		Titles:          userInputTitlesToModel(userInputs.Titles),
+		RequiredJqQuery: requiredJqQuery,
+		OrderProperties: orderProperties,
+		Steps:           userInputStepsToModel(userInputs.Steps),
+		Validations:     validationsToModel(userInputs.Validations),
 	}, nil
+}
+
+func userInputTitlesToModel(titles map[string]cli.ActionTitle) map[string]UserInputText {
+	if titles == nil {
+		return nil
+	}
+
+	result := make(map[string]UserInputText, len(titles))
+	for identifier, title := range titles {
+		converted := UserInputText{
+			Title:       types.StringValue(title.Title),
+			Description: flex.GoStringToFramework(title.Description),
+		}
+		converted.Visible, converted.VisibleJqQuery = boolOrJqToState(title.Visible)
+		result[identifier] = converted
+	}
+
+	return result
+}
+
+func userInputStepsToModel(steps []cli.WorkflowUserInputsStep) []UserInputsStepModel {
+	if len(steps) == 0 {
+		return nil
+	}
+
+	result := make([]UserInputsStepModel, 0, len(steps))
+	for _, step := range steps {
+		order := make([]types.String, 0, len(step.Order))
+		for _, p := range step.Order {
+			order = append(order, types.StringValue(p))
+		}
+
+		s := UserInputsStepModel{
+			Title:       types.StringValue(step.Title),
+			Order:       order,
+			Validations: validationsToModel(step.Validations),
+		}
+
+		switch visible := step.Visible.(type) {
+		case bool:
+			s.Visible = types.BoolValue(visible)
+		case map[string]any:
+			if jqQuery, ok := visible["jqQuery"].(string); ok {
+				s.VisibleJqQuery = types.StringValue(jqQuery)
+			}
+		case map[string]string:
+			if jqQuery, ok := visible["jqQuery"]; ok {
+				s.VisibleJqQuery = types.StringValue(jqQuery)
+			}
+		}
+
+		result = append(result, s)
+	}
+
+	return result
+}
+
+func validationsToModel(validations []cli.WorkflowInputValidation) []InputValidationModel {
+	if len(validations) == 0 {
+		return nil
+	}
+
+	result := make([]InputValidationModel, 0, len(validations))
+	for _, v := range validations {
+		result = append(result, InputValidationModel{
+			Constraint: types.StringValue(v.Constraint),
+			Message:    types.StringValue(v.Message),
+		})
+	}
+
+	return result
 }
 
 func upsertMappingToModel(ctx context.Context, mapping *cli.WorkflowUpsertMapping, jsonEscapeHTML bool) (*UpsertMappingModel, error) {

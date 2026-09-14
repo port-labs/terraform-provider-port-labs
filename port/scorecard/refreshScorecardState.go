@@ -65,6 +65,8 @@ func DefaultCliLevels() []cli.Level {
 }
 
 func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string) {
+	oldFilter := state.Filter
+
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintIdentifier, s.Identifier))
 	state.Identifier = types.StringValue(s.Identifier)
 	state.Blueprint = types.StringValue(blueprintIdentifier)
@@ -79,8 +81,13 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 			Combinator: types.StringValue(s.Filter.Combinator),
 		}
 		stateFilter.Conditions = make([]types.String, len(s.Filter.Conditions))
+		var oldConditions []types.String
+		if oldFilter != nil {
+			oldConditions = oldFilter.Conditions
+		}
 		for i, u := range s.Filter.Conditions {
-			cond, _ := utils.GoObjectToTerraformString(u, r.portClient.JSONEscapeHTML)
+			cond, _ := utils.GoObjectToTerraformStringPreferExisting(
+				utils.TerraformStringAt(oldConditions, i), u, r.portClient.JSONEscapeHTML)
 			stateFilter.Conditions[i] = cond
 		}
 		state.Filter = stateFilter
@@ -152,8 +159,13 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 					Combinator: types.StringValue(apiRule.Query.Combinator),
 				}
 				stateQuery.Conditions = make([]types.String, len(apiRule.Query.Conditions))
+				var oldConditions []types.String
+				if existingRule.Query != nil {
+					oldConditions = existingRule.Query.Conditions
+				}
 				for i, u := range apiRule.Query.Conditions {
-					cond, _ := utils.GoObjectToTerraformString(u, r.portClient.JSONEscapeHTML)
+					cond, _ := utils.GoObjectToTerraformStringPreferExisting(
+						utils.TerraformStringAt(oldConditions, i), u, r.portClient.JSONEscapeHTML)
 					stateQuery.Conditions[i] = cond
 				}
 				updatedRule.Query = stateQuery

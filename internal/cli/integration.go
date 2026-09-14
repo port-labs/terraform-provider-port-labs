@@ -11,7 +11,7 @@ type PortBodyForIntegration struct {
 	Integration Integration `json:"integration"`
 }
 
-func (c *PortClient) GetIntegration(ctx context.Context, id string) (*Integration, error) {
+func (c *PortClient) GetIntegration(ctx context.Context, id string) (*Integration, int, error) {
 	pb := &PortBodyForIntegration{}
 	url := "v1/integration/{identifier}"
 	resp, err := c.Client.R().
@@ -22,12 +22,12 @@ func (c *PortClient) GetIntegration(ctx context.Context, id string) (*Integratio
 		SetQueryParam("byField", "installationId").
 		Get(url)
 	if err != nil {
-		return nil, err
+		return nil, resp.StatusCode(), err
 	}
 	if !pb.OK {
-		return nil, fmt.Errorf("failed to read migration, got: %s", resp.Body())
+		return nil, resp.StatusCode(), fmt.Errorf("failed to read integration, got: %s", resp.Body())
 	}
-	return &pb.Integration, nil
+	return &pb.Integration, resp.StatusCode(), nil
 }
 
 func (c *PortClient) UpdateIntegration(ctx context.Context, id string, integration *Integration) (*Integration, error) {

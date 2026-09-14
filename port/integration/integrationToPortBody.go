@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
@@ -40,18 +41,25 @@ func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
 		}
 		integration.Config = config
 	}
-	if !state.KafkaChangelogDestination.IsNull() {
-		integration.ChangelogDestination = &cli.ChangelogDestination{
-			Type: consts.Kafka,
-		}
-	}
-	if state.WebhookChangelogDestination != nil {
+	switch {
+	case isConfigured(state.WebhookChangelogDestination):
+		attrs := state.WebhookChangelogDestination.Attributes()
+		url, _ := attrs["url"].(types.String)
+		agent, _ := attrs["agent"].(types.Bool)
 		integration.ChangelogDestination = &cli.ChangelogDestination{
 			Type:  consts.Webhook,
-			Url:   state.WebhookChangelogDestination.Url.ValueString(),
-			Agent: state.WebhookChangelogDestination.Agent.ValueBoolPointer(),
+			Url:   url.ValueString(),
+			Agent: agent.ValueBoolPointer(),
 		}
+	case isConfigured(state.KafkaChangelogDestination):
+		integration.ChangelogDestination = &cli.ChangelogDestination{Type: consts.Kafka}
 	}
 
 	return integration, nil
+}
+
+// isConfigured reports whether a computed attribute holds a value to send to
+// Port. Unknown means Port owns it and will return it on the next refresh.
+func isConfigured(obj types.Object) bool {
+	return !obj.IsNull() && !obj.IsUnknown()
 }

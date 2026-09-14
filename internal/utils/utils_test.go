@@ -1,9 +1,11 @@
 package utils
 
 import (
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestGoObjectToTerraformString(t *testing.T) {
@@ -111,4 +113,167 @@ func TestGoObjectToTerraformString(t *testing.T) {
 			assert.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func TestJSONStringsSemanticallyEqual(t *testing.T) {
+	t.Run("identical strings", func(t *testing.T) {
+		s := `{"a":1,"b":2}`
+		equal, err := JSONStringsSemanticallyEqual(s, s, false)
+		assert.NoError(t, err)
+		assert.True(t, equal)
+	})
+
+	t.Run("different key order", func(t *testing.T) {
+		a := `{"resources":[],"deleteDependentEntities":true}`
+		b := `{"deleteDependentEntities":true,"resources":[]}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, false)
+		assert.NoError(t, err)
+		assert.True(t, equal)
+	})
+
+	t.Run("nested key reordering", func(t *testing.T) {
+		a := `{"outer":{"zebra":1,"alpha":2}}`
+		b := `{"outer":{"alpha":2,"zebra":1}}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, false)
+		assert.NoError(t, err)
+		assert.True(t, equal)
+	})
+
+	t.Run("deep nested key reordering", func(t *testing.T) {
+		a := `{"z1":{"z2":{"z3":{"z4":{"zebra":1,"alpha":2}}}}}`
+		b := `{"z1":{"z2":{"z3":{"z4":{"alpha":2,"zebra":1}}}}}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, false)
+		assert.NoError(t, err)
+		assert.True(t, equal)
+	})
+
+	t.Run("different array order", func(t *testing.T) {
+		a := `{"resources":[1,2,3]}`
+		b := `{"resources":[2,3,1]}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, false)
+		assert.NoError(t, err)
+		assert.False(t, equal)
+	})
+
+	t.Run("html escape equivalence", func(t *testing.T) {
+		a := `{"operator":">","property":"sum","value":2}`
+		b := `{"operator":"\u003e","property":"sum","value":2}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, true)
+		assert.NoError(t, err)
+		assert.True(t, equal)
+	})
+
+	t.Run("semantically different", func(t *testing.T) {
+		a := `{"a":1}`
+		b := `{"a":2}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, false)
+		assert.NoError(t, err)
+		assert.False(t, equal)
+	})
+
+	t.Run("semantically different deep", func(t *testing.T) {
+		a := `{"z1":{"z2":{"z3":{"z4":{"zebra":1,"alpha":2}}}}}`
+		b := `{"z1":{"z2":{"z3":{"z4":{"alpha":1,"zebra":2}}}}}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, false)
+		assert.NoError(t, err)
+		assert.False(t, equal)
+	})
+
+	t.Run("invalid json", func(t *testing.T) {
+		_, err := JSONStringsSemanticallyEqual(`{invalid`, `{"a":1}`, false)
+		assert.Error(t, err)
+	})
+}
+
+func TestGoObjectToTerraformStringPreferExisting(t *testing.T) {
+	v := map[string]any{
+		"deleteDependentEntities": true,
+		"resources":                 []any{},
+	}
+
+	t.Run("returns preferred when semantically equal", func(t *testing.T) {
+		preferred := types.StringValue(`{"resources":[],"deleteDependentEntities":true}`)
+		got, err := GoObjectToTerraformStringPreferExisting(preferred, v, false)
+		assert.NoError(t, err)
+		assert.Equal(t, preferred, got)
+	})
+
+	t.Run("returns encoded when preferred is null", func(t *testing.T) {
+		got, err := GoObjectToTerraformStringPreferExisting(types.StringNull(), v, false)
+		assert.NoError(t, err)
+		want, _ := GoObjectToTerraformString(v, false)
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("returns encoded when preferred is unknown", func(t *testing.T) {
+		got, err := GoObjectToTerraformStringPreferExisting(types.StringUnknown(), v, false)
+		assert.NoError(t, err)
+		want, _ := GoObjectToTerraformString(v, false)
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("returns encoded when semantically different", func(t *testing.T) {
+		preferred := types.StringValue(`{"deleteDependentEntities":false,"resources":[]}`)
+		got, err := GoObjectToTerraformStringPreferExisting(preferred, v, false)
+		assert.NoError(t, err)
+		want, _ := GoObjectToTerraformString(v, false)
+		assert.Equal(t, want, got)
+	})
+
+	t.Run("falls back to encoded when preferred is invalid json", func(t *testing.T) {
+		preferred := types.StringValue(`{invalid`)
+		got, err := GoObjectToTerraformStringPreferExisting(preferred, v, false)
+		assert.NoError(t, err)
+		want, _ := GoObjectToTerraformString(v, false)
+		assert.Equal(t, want, got)
+	})
+}
+
+func TestTerraformStringAt(t *testing.T) {
+	elements := []attr.Value{types.StringValue("a"), types.StringValue("b")}
+
+	assert.Equal(t, types.StringValue("a"), TerraformStringAt(elements, 0))
+	assert.Equal(t, types.StringValue("b"), TerraformStringAt(elements, 1))
+	assert.True(t, TerraformStringAt(elements, 2).IsNull())
+	assert.True(t, TerraformStringAt(elements, -1).IsNull())
+	assert.True(t, TerraformStringAt([]attr.Value(nil), 0).IsNull())
+	assert.True(t, TerraformStringAt([]attr.Value{types.BoolValue(true)}, 0).IsNull())
+
+	stringElements := []types.String{types.StringValue("x")}
+	assert.Equal(t, types.StringValue("x"), TerraformStringAt(stringElements, 0))
+	assert.True(t, TerraformStringAt(stringElements, 1).IsNull())
+}
+
+func TestTerraformStringAtList(t *testing.T) {
+	list, diags := types.ListValue(types.StringType, []attr.Value{types.StringValue("a"), types.StringValue("b")})
+	assert.False(t, diags.HasError())
+
+	assert.Equal(t, types.StringValue("a"), TerraformStringAtList(list, 0))
+	assert.Equal(t, types.StringValue("b"), TerraformStringAtList(list, 1))
+	assert.True(t, TerraformStringAtList(list, 2).IsNull())
+	assert.True(t, TerraformStringAtList(list, -1).IsNull())
+	assert.True(t, TerraformStringAtList(types.ListNull(types.StringType), 0).IsNull())
+	assert.True(t, TerraformStringAtList(types.ListUnknown(types.StringType), 0).IsNull())
+	assert.True(t, TerraformStringAtList(types.List{}, 0).IsNull())
+}
+
+func TestGoObjectToTerraformStringPreferExistingAtListIndex(t *testing.T) {
+	object0 := map[string]any{"alpha": 456, "zebra": 123}
+	object1 := map[string]any{"changed": true}
+
+	oldList, diags := types.ListValue(types.StringType, []attr.Value{
+		types.StringValue(`{"zebra":123,"alpha":456}`),
+		types.StringValue(`{"changed":false}`),
+	})
+	assert.False(t, diags.HasError())
+
+	got0, err := GoObjectToTerraformStringPreferExisting(TerraformStringAtList(oldList, 0), object0, false)
+	assert.NoError(t, err)
+	assert.Equal(t, types.StringValue(`{"zebra":123,"alpha":456}`), got0)
+
+	got1, err := GoObjectToTerraformStringPreferExisting(TerraformStringAtList(oldList, 1), object1, false)
+	assert.NoError(t, err)
+	want1, _ := GoObjectToTerraformString(object1, false)
+	assert.Equal(t, want1, got1)
+	assert.NotEqual(t, TerraformStringAtList(oldList, 1), got1)
 }

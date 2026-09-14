@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
@@ -16,22 +17,22 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 	state.Version = types.StringPointerValue(a.Version)
 
 	if a.Config != nil {
-		config, _ := utils.GoObjectToTerraformString(a.Config, r.portClient.JSONEscapeHTML)
+		config, _ := utils.GoObjectToTerraformStringPreferExisting(state.Config, a.Config, r.portClient.JSONEscapeHTML)
 		state.Config = config
 	}
-	if a.ChangelogDestination != nil {
-		if a.ChangelogDestination.Type == consts.Kafka {
-			state.KafkaChangelogDestination, _ = types.ObjectValue(nil, nil)
-		} else {
-			if a.ChangelogDestination.Url != "" {
-				state.WebhookChangelogDestination = &WebhookChangelogDestinationModel{
-					Url: types.StringValue(a.ChangelogDestination.Url),
-				}
-				if a.ChangelogDestination.Agent != nil {
-					state.WebhookChangelogDestination.Agent = types.BoolValue(*a.ChangelogDestination.Agent)
-				}
-			}
-		}
+
+	state.KafkaChangelogDestination = types.ObjectNull(kafkaChangelogDestinationType)
+	state.WebhookChangelogDestination = types.ObjectNull(webhookChangelogDestinationType)
+
+	switch dest := a.ChangelogDestination; {
+	case dest == nil:
+	case dest.Type == consts.Kafka:
+		state.KafkaChangelogDestination = types.ObjectValueMust(kafkaChangelogDestinationType, map[string]attr.Value{})
+	case dest.Type == consts.Webhook && dest.Url != "":
+		state.WebhookChangelogDestination = types.ObjectValueMust(webhookChangelogDestinationType, map[string]attr.Value{
+			"url":   types.StringValue(dest.Url),
+			"agent": types.BoolPointerValue(dest.Agent),
+		})
 	}
 
 	return nil

@@ -21,12 +21,25 @@ resource "port_workflow" "deploy_service" {
             }
           }
           number_props = {
-            "replicas" = {
-              title   = "Replicas"
+            "min_replicas" = {
+              title   = "Minimum replicas"
               default = 1
+            }
+            "max_replicas" = {
+              title   = "Maximum replicas"
+              default = 3
             }
           }
         }
+
+        # Checked when the form is submitted. Move the rules into the individual
+        # steps when the form is split with `steps`.
+        validations = [
+          {
+            constraint = ".form.max_replicas >= .form.min_replicas"
+            message    = "Maximum replicas must be greater than or equal to minimum replicas"
+          },
+        ]
       }
 
       permissions {
@@ -83,8 +96,9 @@ resource "port_workflow" "deploy_service" {
       url    = "https://ci.example.com/deploy"
       method = "POST"
       body = jsonencode({
-        service  = "{{ .outputs.trigger.inputs.service }}"
-        replicas = "{{ .outputs.trigger.inputs.replicas }}"
+        service      = "{{ .outputs.trigger.inputs.service }}"
+        min_replicas = "{{ .outputs.trigger.inputs.min_replicas }}"
+        max_replicas = "{{ .outputs.trigger.inputs.max_replicas }}"
       })
     }
   }

@@ -569,6 +569,50 @@ func TestUserInputDatasetRoundTrip(t *testing.T) {
 	assert.Equal(t, false, dataset.Rules[1].Value)
 }
 
+func TestUserInputDatasetRelationRuleRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"service": {
+				Type:      "string",
+				Format:    strPtr("entity"),
+				Blueprint: strPtr("githubRepository"),
+				Dataset: &cli.WorkflowDataset{
+					Combinator: "and",
+					Rules: []cli.WorkflowDatasetRule{
+						{Property: strPtr("language"), Operator: "isNotEmpty"},
+						{Relation: strPtr("service"), Operator: "isNotEmpty"},
+						{
+							Combinator: strPtr("or"),
+							Rules: []cli.WorkflowDatasetRule{
+								{Relation: strPtr("team"), Operator: "isNotEmpty"},
+								{Property: strPtr("archived"), Operator: "=", Value: false},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	dataset := result.Properties["service"].Dataset
+	require.NotNil(t, dataset)
+	require.Len(t, dataset.Rules, 3)
+
+	assert.Equal(t, strPtr("language"), dataset.Rules[0].Property)
+	assert.Nil(t, dataset.Rules[0].Relation)
+
+	assert.Equal(t, strPtr("service"), dataset.Rules[1].Relation)
+	assert.Nil(t, dataset.Rules[1].Property)
+	assert.Equal(t, "isNotEmpty", dataset.Rules[1].Operator)
+
+	require.Len(t, dataset.Rules[2].Rules, 2)
+	assert.Equal(t, strPtr("team"), dataset.Rules[2].Rules[0].Relation)
+
+	encoded, err := json.Marshal(dataset.Rules[1])
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"relation":"service","operator":"isNotEmpty"}`, string(encoded))
+}
+
 func TestUserInputNumberBoundsAndUniqueItemsRoundTrip(t *testing.T) {
 	minimum, maximum := 1.0, 10.0
 	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{

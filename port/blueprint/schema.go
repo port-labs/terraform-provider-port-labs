@@ -611,6 +611,12 @@ resource "port_blueprint" "environment" {
 
 ` + "```" + `
 
+## GitHub Ocean ` + "`githubPullRequest`" + ` metrics
+
+GitHub Ocean catalog blueprints expose review and lead-time metrics on pull requests. When managing the blueprint in Terraform, define properties such as ` + "`isDraft`" + ` (boolean), ` + "`reviewDecision`" + ` (enum), date-time fields (` + "`firstCommitAt`" + `, ` + "`firstReviewAt`" + `, ` + "`approvedAt`" + `, ` + "`readyForReviewAt`" + `), and number fields (` + "`codingTimeHours`" + `, ` + "`timeToFirstReview`" + `, ` + "`timeFromApprovalToMerge`" + `).
+
+See ` + "`examples/resources/port_blueprint/github_ocean_pull_request`" + ` for a reference configuration.
+
 ## Example Usage with Relations
 
 ` + "```hcl" + `

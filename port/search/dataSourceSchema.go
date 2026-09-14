@@ -161,8 +161,23 @@ func Schema() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"query": schema.StringAttribute{
-			MarkdownDescription: "The search query",
+			MarkdownDescription: "The search query as a JSON-encoded Port entities query (combinator and rules). Supports all standard operators, including `allPropertiesSearch` rules that search across entity properties (`operator`, `value`, and optional `properties`).",
 			Required:            true,
+		},
+		"full_text_search": schema.SingleNestedAttribute{
+			MarkdownDescription: "Optional full-text search parameters sent alongside the query. When set, the request body includes a `fullTextSearch` object with `term` and optional `targetFields`.",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"term": schema.StringAttribute{
+					MarkdownDescription: "The full-text search term.",
+					Required:            true,
+				},
+				"target_fields": schema.ListAttribute{
+					MarkdownDescription: "Property or relation identifiers to search. When omitted, Port searches all relevant properties.",
+					Optional:            true,
+					ElementType:         types.StringType,
+				},
+			},
 		},
 		"exclude_calculated_properties": schema.BoolAttribute{
 			MarkdownDescription: "Exclude calculated properties",
@@ -238,6 +253,22 @@ data "port_search" "ads_service" {
     "combinator" : "and", "rules" : [
       { "operator" : "=", "property" : "$blueprint", "value" : "Service" },
       { "operator" : "=", "property" : "$identifier", "value" : "Ads" },
+    ]
+  })
+}
+
+` + "\n```" + `
+
+### Search with an all-properties rule:
+
+` + "```hcl" + `
+
+data "port_search" "services_by_text" {
+  query = jsonencode({
+    "combinator" : "and",
+    "rules" : [
+      { "operator" : "=", "property" : "$blueprint", "value" : "microservice" },
+      { "operator" : "allPropertiesSearch", "value" : "payments" },
     ]
   })
 }

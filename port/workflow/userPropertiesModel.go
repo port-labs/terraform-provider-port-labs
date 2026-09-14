@@ -159,6 +159,7 @@ type DatasetRuleModel struct {
 	Operator   types.String       `tfsdk:"operator"`
 	Value      *ValueModel        `tfsdk:"value"`
 	ValueJson  types.String       `tfsdk:"value_json"`
+	Properties []types.String     `tfsdk:"properties"`
 	Combinator types.String       `tfsdk:"combinator"`
 	Rules      []DatasetRuleModel `tfsdk:"rules"`
 }

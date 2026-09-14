@@ -10,9 +10,11 @@ import (
 func (c *PortClient) Search(ctx context.Context, searchRequest *SearchRequestQuery) (*SearchResult, error) {
 	url := "v1/entities/search"
 
+	body := searchRequestBody(searchRequest)
+
 	req := c.Client.R().
 		SetContext(ctx).
-		SetBody(*searchRequest.Query).
+		SetBody(body).
 		SetHeader("Accept", "application/json")
 
 	if searchRequest.ExcludeCalculatedProperties != nil {
@@ -45,4 +47,25 @@ func (c *PortClient) Search(ctx context.Context, searchRequest *SearchRequestQue
 		return nil, fmt.Errorf("failed to search, got: %s", resp.Body())
 	}
 	return &searchResult, nil
+}
+
+func searchRequestBody(searchRequest *SearchRequestQuery) map[string]any {
+	if searchRequest.Query == nil {
+		return map[string]any{}
+	}
+
+	if searchRequest.FullTextSearch == nil {
+		return *searchRequest.Query
+	}
+
+	body := map[string]any{
+		"query": *searchRequest.Query,
+		"fullTextSearch": map[string]any{
+			"term": searchRequest.FullTextSearch.Term,
+		},
+	}
+	if len(searchRequest.FullTextSearch.TargetFields) > 0 {
+		body["fullTextSearch"].(map[string]any)["targetFields"] = searchRequest.FullTextSearch.TargetFields
+	}
+	return body
 }

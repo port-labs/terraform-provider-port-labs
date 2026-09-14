@@ -174,6 +174,7 @@ type WorkflowDatasetRule struct {
 	Property   *string               `json:"property,omitempty"`
 	Operator   string                `json:"operator,omitempty"`
 	Value      any                   `json:"value,omitempty"`
+	Properties []string              `json:"properties,omitempty"`
 	Combinator *string               `json:"combinator,omitempty"`
 	Rules      []WorkflowDatasetRule `json:"rules,omitempty"`
 }

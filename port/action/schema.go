@@ -50,6 +50,11 @@ func datasetRuleSchema(depth int) map[string]schema.Attribute {
 				"jq_query": types.StringType,
 			},
 		},
+		"properties": schema.ListAttribute{
+			MarkdownDescription: "Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.",
+			Optional:            true,
+			ElementType:         types.StringType,
+		},
 		// Group rule fields
 		"combinator": schema.StringAttribute{
 			MarkdownDescription: "The combinator for a group rule (and/or). Used with nested rules instead of operator.",

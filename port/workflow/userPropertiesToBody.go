@@ -8,6 +8,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/flex"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
@@ -450,6 +451,10 @@ func datasetRuleToBody(model DatasetRuleModel) (cli.WorkflowDatasetRule, error) 
 			return rule, fmt.Errorf("`dataset` rule `value_json` must be valid JSON: %w", err)
 		}
 		rule.Value = value
+	}
+
+	if len(model.Properties) > 0 {
+		rule.Properties = flex.TerraformStringListToGoArray(model.Properties)
 	}
 
 	return rule, nil

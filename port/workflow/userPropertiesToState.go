@@ -501,5 +501,12 @@ func datasetRuleToState(rule cli.WorkflowDatasetRule, jsonEscapeHTML bool) Datas
 		}
 	}
 
+	if len(rule.Properties) > 0 {
+		model.Properties = make([]types.String, len(rule.Properties))
+		for i, property := range rule.Properties {
+			model.Properties[i] = types.StringValue(property)
+		}
+	}
+
 	return model
 }

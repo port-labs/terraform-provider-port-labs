@@ -491,6 +491,7 @@ func datasetRuleToState(rule cli.WorkflowDatasetRule, jsonEscapeHTML bool) Datas
 
 	model.Blueprint = flex.GoStringToFramework(rule.Blueprint)
 	model.Property = flex.GoStringToFramework(rule.Property)
+	model.Relation = flex.GoStringToFramework(rule.Relation)
 	model.Operator = flex.GoStringToFramework(&rule.Operator)
 
 	if jqQuery, ok := jqQueryToState(rule.Value); ok {

@@ -80,6 +80,17 @@ make acctest
 TEST_FILTER=.*MyCustomResource.* make acctest
 ```
 
+## Validating examples against your local provider build
+
+`make install` installs the provider binary and writes `~/.terraform.d/port-labs-dev.rc` with dev overrides. Examples pin `port-labs/port-labs ~> 2` from the registry, so the CLI and editor need that file to use your local schema:
+
+```sh
+make install
+export TF_CLI_CONFIG_FILE=~/.terraform.d/port-labs-dev.rc
+```
+
+For VS Code / Cursor, copy `.vscode/settings.json.example` to `.vscode/settings.json`.
+
 ## Running your code as the actual terraform provider
 
 ```sh

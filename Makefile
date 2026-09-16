@@ -30,9 +30,22 @@ release:
 clean:
 	rm -rf examples/.terraform examples/.terraform.lock.hcl examples/terraform*
 
+DEV_RC := $(HOME)/.terraform.d/port-labs-dev.rc
+PLUGIN_DIR := $(HOME)/.terraform.d/plugins/$(HOSTNAME)/$(NAMESPACE)/$(NAME)/$(VERSION)/$(OS_ARCH)
+
 install: build
-	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
-	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
+	mkdir -p $(PLUGIN_DIR)
+	mv ${BINARY} $(PLUGIN_DIR)
+	@printf '%s\n' \
+		'provider_installation {' \
+		'  dev_overrides {' \
+		'    "registry.terraform.io/port-labs/port-labs" = "$(PLUGIN_DIR)"' \
+		'  }' \
+		'  direct {}' \
+		'}' > $(DEV_RC)
+	@echo "Installed provider to $(PLUGIN_DIR)"
+	@echo "Dev overrides written to $(DEV_RC)"
+	@echo "Set TF_CLI_CONFIG_FILE=$(DEV_RC) for terraform CLI and your editor (see .vscode/settings.json.example)"
 
 setup:
 	cd tools && go install github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs@latest

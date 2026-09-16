@@ -43,6 +43,15 @@ func TestIntegrationToPortBody_OnPremOmitsSpec(t *testing.T) {
 	assert.Nil(t, body.Spec, "OnPrem integrations should not send spec")
 }
 
+func TestValidateSaasSpec_AllowsUnknownSpec(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:   types.StringValue("pagerduty-prod"),
+		InstallationType: types.StringValue(consts.InstallationTypeSaas),
+		Spec:             types.StringUnknown(),
+	}
+	assert.NoError(t, validateSaasSpec(state))
+}
+
 func TestValidateSaasSpec_RequiresSpec(t *testing.T) {
 	state := &IntegrationModel{
 		InstallationId:   types.StringValue("pagerduty-prod"),

@@ -52,8 +52,11 @@ func validateSaasSpec(m *IntegrationModel) error {
 		return nil
 	}
 
-	if m.Spec.IsNull() || m.Spec.ValueString() == "" {
+	if m.Spec.IsNull() || (!m.Spec.IsUnknown() && m.Spec.ValueString() == "") {
 		return fmt.Errorf("spec is required when installation_type is %q", m.installationType())
+	}
+	if m.Spec.IsUnknown() {
+		return nil
 	}
 
 	spec, err := parseSpecFromConfig(m.Spec)

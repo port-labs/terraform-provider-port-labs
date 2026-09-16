@@ -41,7 +41,9 @@ description: |-
   For catalog integration types, set installation_app_type to the integrated tool name (e.g. GitHub, GitLab, K8S EXPORTER) and version if you want to pin a specific integration version. Custom integrations can omit installation_app_type.
   Per-resource enableDelete
   Each item in resources may include optional enableDelete (boolean, sibling of kind / selector / port):
-  Omitted or true — reconciliation may delete stale entities for that resource (default).false — skip reconciliation deletes for entities whose blueprint matches that resource's static blueprint mapping literal. Upserts still run.
+  
+  Omitted or true — reconciliation may delete stale entities for that resource (default).
+  false — skip reconciliation deletes for entities whose blueprint matches that resource's static blueprint mapping literal. Upserts still run.
   enableDelete: true does not re-enable deletes when entityDeletionThreshold is off (0). Live webhook deletes are not affected in v1.
   See examples/resources/port_integration/per_resource_enable_delete for an example.
   NOTICE:
@@ -102,6 +104,7 @@ For catalog integration types, set `installation_app_type` to the integrated too
 Each item in `resources` may include optional `enableDelete` (boolean, sibling of `kind` / `selector` / `port`):
 
 - Omitted or `true` — reconciliation may delete stale entities for that resource (default).
+
 - `false` — skip reconciliation deletes for entities whose blueprint matches that resource's static `blueprint` mapping literal. Upserts still run.
 
 `enableDelete: true` does not re-enable deletes when `entityDeletionThreshold` is off (`0`). Live webhook deletes are not affected in v1.

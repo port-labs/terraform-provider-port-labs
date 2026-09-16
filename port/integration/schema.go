@@ -124,6 +124,7 @@ For catalog integration types, set ` + "`installation_app_type`" + ` to the inte
 Each item in ` + "`resources`" + ` may include optional ` + "`enableDelete`" + ` (boolean, sibling of ` + "`kind`" + ` / ` + "`selector`" + ` / ` + "`port`" + `):
 
 - Omitted or ` + "`true`" + ` — reconciliation may delete stale entities for that resource (default).
+
 - ` + "`false`" + ` — skip reconciliation deletes for entities whose blueprint matches that resource's static ` + "`blueprint`" + ` mapping literal. Upserts still run.
 
 ` + "`enableDelete: true`" + ` does not re-enable deletes when ` + "`entityDeletionThreshold`" + ` is off (` + "`0`" + `). Live webhook deletes are not affected in v1.

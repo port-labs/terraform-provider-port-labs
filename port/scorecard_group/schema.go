@@ -180,6 +180,18 @@ See the [Port documentation](https://docs.getport.io/governance/standards-and-co
 
 ` + "```hcl" + `
 
+resource "port_system_blueprint" "scorecard_group" {
+  identifier = "_scorecard_group"
+  properties = {
+    string_props = {
+      category = {
+        type  = "string"
+        title = "Category"
+      }
+    }
+  }
+}
+
 resource "port_system_blueprint" "scorecard" {
   identifier = "_scorecard"
   properties = {
@@ -205,6 +217,9 @@ resource "port_scorecard_group" "readiness" {
     port_blueprint.microservice.identifier,
     port_blueprint.database.identifier,
   ]
+  group_properties = jsonencode({
+    category = "production"
+  })
   scorecard_properties = jsonencode({
     owner    = "platform-team"
     priority = 1
@@ -239,7 +254,10 @@ resource "port_scorecard_group" "readiness" {
       })]
     }
   }
-  depends_on = [port_system_blueprint.scorecard]
+  depends_on = [
+    port_system_blueprint.scorecard_group,
+    port_system_blueprint.scorecard,
+  ]
 }
 
 ` + "```" + `

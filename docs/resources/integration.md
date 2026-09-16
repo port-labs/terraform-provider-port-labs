@@ -99,6 +99,57 @@ description: |-
     })
   }
   
+  Port Hosted examples — Azure DevOps, Jira, Linear, GitLab v2
+  See examples/resources/port_integration/ for full examples per integration type. Common patterns:
+  
+  # Azure DevOps — single account (PAT)
+  installation_app_type = "azure-devops"
+  spec = jsonencode({
+    integrationSpec = {
+      accountMode         = "Single Account"
+      organizationUrl     = "https://dev.azure.com/my-organization"
+      personalAccessToken = port_organization_secret.ado_pat.secret_name
+    }
+  })
+  
+  # Azure DevOps — multiple accounts (service principal)
+  spec = jsonencode({
+    integrationSpec = {
+      accountMode      = "Multiple Accounts"
+      clientId         = "00000000-0000-0000-0000-000000000000"
+      clientSecret     = port_organization_secret.ado_client_secret.secret_name
+      tenantId         = "00000000-0000-0000-0000-000000000000"
+      organizationUrls = ["https://dev.azure.com/org-one"]
+    }
+  })
+  
+  # Jira
+  installation_app_type = "jira"
+  spec = jsonencode({
+    integrationSpec = {
+      jiraHost           = "https://example.atlassian.net"
+      atlassianUserEmail = port_organization_secret.jira_email.secret_name
+      atlassianUserToken = port_organization_secret.jira_token.secret_name
+    }
+  })
+  
+  # Linear
+  installation_app_type = "linear"
+  spec = jsonencode({
+    integrationSpec = {
+      linearApiKey = port_organization_secret.linear_api_key.secret_name
+    }
+  })
+  
+  # GitLab v2
+  installation_app_type = "gitlab-v2"
+  spec = jsonencode({
+    integrationSpec = {
+      gitlabToken = port_organization_secret.gitlab_token.secret_name
+      gitlabHost  = "https://gitlab.com"
+    }
+  })
+  
   Self-hosted example — Step 1: Create
   Self-hosted integrations run on your own infrastructure and pull their mapping from Port.
   
@@ -144,7 +195,7 @@ description: |-
   NOTICE:
   The following config properties (selector.query|entity.mappings.*) are jq expressions, which means that you need to input either a valid jq expression (E.g .title), or if you want a string value, a quoted escaped string val (E.g 'my-string').
   NOTES:
-  config cannot be set on creation. Integrations receive default mappings during provisioning. Create first, then add config on a subsequent apply.status reflects async provisioning (Creating → Running) for Port Hosted integrations only.installation_id, installation_app_type, and installation_type cannot be changed after creation.spec is only supported for Port Hosted integrations (installation_type = "Saas"). Do not set it on self-hosted integrations.A changelog destination (webhook_changelog_destination / kafka_changelog_destination) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).Existing integrations can be brought under Terraform management with terraform import port_integration.my_integration <installation_id>.terraform destroy deletes the real integration in Port, not just removes it from state. Use terraform state rm if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
+  config cannot be set on creation. Integrations receive default mappings during provisioning. Create first, then add config on a subsequent apply.create_port_resources_origin can only be set on creation. Use Empty to skip default resource creation, or Port to create default resources via Port. If omitted, default resources are created.Port Hosted spec is validated at plan time against the integration type definition in Port.status reflects async provisioning (Creating → Running) for Port Hosted integrations only.installation_id, installation_app_type, and installation_type cannot be changed after creation.spec is only supported for Port Hosted integrations (installation_type = "Saas"). Do not set it on self-hosted integrations.A changelog destination (webhook_changelog_destination / kafka_changelog_destination) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).Existing integrations can be brought under Terraform management with terraform import port_integration.my_integration <installation_id>.terraform destroy deletes the real integration in Port, not just removes it from state. Use terraform state rm if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
 ---
 
 # port_integration (Resource)
@@ -260,6 +311,60 @@ resource "port_integration" "github" {
 }
 ```
 
+## Port Hosted examples — Azure DevOps, Jira, Linear, GitLab v2
+
+See `examples/resources/port_integration/` for full examples per integration type. Common patterns:
+
+```hcl
+# Azure DevOps — single account (PAT)
+installation_app_type = "azure-devops"
+spec = jsonencode({
+  integrationSpec = {
+    accountMode         = "Single Account"
+    organizationUrl     = "https://dev.azure.com/my-organization"
+    personalAccessToken = port_organization_secret.ado_pat.secret_name
+  }
+})
+
+# Azure DevOps — multiple accounts (service principal)
+spec = jsonencode({
+  integrationSpec = {
+    accountMode      = "Multiple Accounts"
+    clientId         = "00000000-0000-0000-0000-000000000000"
+    clientSecret     = port_organization_secret.ado_client_secret.secret_name
+    tenantId         = "00000000-0000-0000-0000-000000000000"
+    organizationUrls = ["https://dev.azure.com/org-one"]
+  }
+})
+
+# Jira
+installation_app_type = "jira"
+spec = jsonencode({
+  integrationSpec = {
+    jiraHost           = "https://example.atlassian.net"
+    atlassianUserEmail = port_organization_secret.jira_email.secret_name
+    atlassianUserToken = port_organization_secret.jira_token.secret_name
+  }
+})
+
+# Linear
+installation_app_type = "linear"
+spec = jsonencode({
+  integrationSpec = {
+    linearApiKey = port_organization_secret.linear_api_key.secret_name
+  }
+})
+
+# GitLab v2
+installation_app_type = "gitlab-v2"
+spec = jsonencode({
+  integrationSpec = {
+    gitlabToken = port_organization_secret.gitlab_token.secret_name
+    gitlabHost  = "https://gitlab.com"
+  }
+})
+```
+
 ## Self-hosted example — Step 1: Create
 
 Self-hosted integrations run on your own infrastructure and pull their mapping from Port.
@@ -317,6 +422,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 - `config` **cannot be set on creation**. Integrations receive default mappings during provisioning. Create first, then add `config` on a subsequent apply.
 - `create_port_resources_origin` can only be set on creation. Use `Empty` to skip default resource creation, or `Port` to create default resources via Port. If omitted, default resources are created.
+- Port Hosted `spec` is validated at plan time against the integration type definition in Port.
 - `status` reflects async provisioning (`Creating` → `Running`) for Port Hosted integrations only.
 - `installation_id`, `installation_app_type`, and `installation_type` cannot be changed after creation.
 - `spec` is only supported for Port Hosted integrations (`installation_type = "Saas"`). Do not set it on self-hosted integrations.

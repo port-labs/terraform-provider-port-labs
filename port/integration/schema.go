@@ -228,6 +228,52 @@ resource "port_integration" "github" {
 }
 ` + "```" + `
 
+## SaaS examples — Azure DevOps, Jira, GitLab v2
+
+See ` + "`examples/resources/port_integration/`" + ` for full examples per integration type. Common patterns:
+
+` + "```hcl" + `
+# Azure DevOps — single account (PAT)
+installation_app_type = "azure-devops"
+spec = jsonencode({
+  integrationSpec = {
+    accountMode         = "Single Account"
+    organizationUrl     = "https://dev.azure.com/my-organization"
+    personalAccessToken = port_organization_secret.ado_pat.secret_name
+  }
+})
+
+# Azure DevOps — multiple accounts (service principal)
+spec = jsonencode({
+  integrationSpec = {
+    accountMode      = "Multiple Accounts"
+    clientId         = "00000000-0000-0000-0000-000000000000"
+    clientSecret     = port_organization_secret.ado_client_secret.secret_name
+    tenantId         = "00000000-0000-0000-0000-000000000000"
+    organizationUrls = ["https://dev.azure.com/org-one"]
+  }
+})
+
+# Jira
+installation_app_type = "jira"
+spec = jsonencode({
+  integrationSpec = {
+    jiraHost           = "https://example.atlassian.net"
+    atlassianUserEmail = port_organization_secret.jira_email.secret_name
+    atlassianUserToken = port_organization_secret.jira_token.secret_name
+  }
+})
+
+# GitLab v2
+installation_app_type = "gitlab-v2"
+spec = jsonencode({
+  integrationSpec = {
+    gitlabToken = port_organization_secret.gitlab_token.secret_name
+    gitlabHost  = "https://gitlab.com"
+  }
+})
+` + "```" + `
+
 ## Self-hosted (OnPrem) example — Step 1: Create
 
 Self-hosted integrations run on your own infrastructure (e.g. an Ocean exporter container) and pull their mapping from Port.
@@ -283,6 +329,7 @@ The following config properties (` + "`selector.query|entity.mappings.*`" + `) a
 ### NOTES:
 
 - ` + "`config`" + ` **cannot be set on creation**. Integrations receive default mappings during provisioning. Create first, then add ` + "`config`" + ` on a subsequent apply.
+- SaaS ` + "`spec`" + ` is validated at plan time against the integration type definition in Port.
 - ` + "`status`" + ` reflects async Ocean provisioning (` + "`Creating`" + ` → ` + "`Running`" + `) for SaaS integrations only.
 - ` + "`installation_id`" + `, ` + "`installation_app_type`" + `, and ` + "`installation_type`" + ` cannot be changed after creation.
 - ` + "`spec`" + ` is only supported for SaaS integrations (` + "`installation_type = \"Saas\"`" + `). Do not set it on OnPrem integrations.

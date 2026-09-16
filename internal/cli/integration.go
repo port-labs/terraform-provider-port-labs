@@ -13,15 +13,16 @@ import (
 )
 
 const (
-	provisioningPollInterval = 5 * time.Second
-	provisioningPollJitter   = 2 * time.Second
-	provisioningMaxAttempts  = 30
-	provisioningMaxDelay     = 15 * time.Second
+	integrationPollInterval = 5 * time.Second
+	integrationPollJitter   = 2 * time.Second
+	integrationMaxAttempts  = 30
+	integrationMaxDelay     = 15 * time.Second
 )
 
 var (
-	errIntegrationNotReady   = utils.StringErr("integration is not ready yet")
-	errIntegrationNotDeleted = utils.StringErr("integration is not deleted yet")
+	errIntegrationOperationPending = utils.StringErr("integration operation is not finished yet")
+	errIntegrationNotProvisioned   = utils.StringErr("integration resources are not provisioned yet")
+	errIntegrationNotDeleted       = utils.StringErr("integration is not deleted yet")
 )
 
 type PortBodyForIntegration struct {
@@ -86,6 +87,38 @@ func (c *PortClient) UpdateIntegration(ctx context.Context, id string, integrati
 	return &pb.Integration, nil
 }
 
+func (c *PortClient) ValidateIntegrationSpec(ctx context.Context, integrationType string, body ValidateIntegrationSpecBody) error {
+	resp, err := c.Client.R().
+		SetBody(body).
+		SetContext(ctx).
+		SetPathParam("integration_type", integrationType).
+		Post("v1/integration/{integration_type}/spec/validate")
+	if err != nil {
+		return err
+	}
+
+	var result struct {
+		OK      bool   `json:"ok"`
+		Message string `json:"message"`
+	}
+	if err := json.Unmarshal(resp.Body(), &result); err != nil {
+		return fmt.Errorf("failed to validate integration spec, got: %s", resp.Body())
+	}
+	if resp.IsError() {
+		if result.Message != "" {
+			return fmt.Errorf("%s", result.Message)
+		}
+		return fmt.Errorf("failed to validate integration spec (HTTP %d): %s", resp.StatusCode(), resp.Body())
+	}
+	if !result.OK {
+		if result.Message != "" {
+			return fmt.Errorf("%s", result.Message)
+		}
+		return fmt.Errorf("failed to validate integration spec, got: %s", resp.Body())
+	}
+	return nil
+}
+
 func (c *PortClient) DeleteIntegration(ctx context.Context, id string) (int, error) {
 	resp, err := c.Client.R().
 		SetContext(ctx).
@@ -105,30 +138,31 @@ func (c *PortClient) DeleteIntegration(ctx context.Context, id string) (int, err
 	return resp.StatusCode(), nil
 }
 
-func provisioningPollOptions(ctx context.Context, retryOn error) []retry.Option {
+func integrationPollOptions(ctx context.Context, retryOn error) []retry.Option {
 	return []retry.Option{
 		retry.Context(ctx),
 		retry.LastErrorOnly(true),
-		retry.Attempts(provisioningMaxAttempts),
-		retry.Delay(provisioningPollInterval),
+		retry.Attempts(integrationMaxAttempts),
+		retry.Delay(integrationPollInterval),
 		retry.DelayType(retry.BackOffDelay),
-		retry.MaxDelay(provisioningMaxDelay),
-		retry.MaxJitter(provisioningPollJitter),
+		retry.MaxDelay(integrationMaxDelay),
+		retry.MaxJitter(integrationPollJitter),
 		retry.RetryIf(func(err error) bool {
 			return errors.Is(err, retryOn)
 		}),
 	}
 }
 
-// WaitForIntegrationReady polls until the integration reaches a terminal state.
-// Returns (nil, nil) on timeout — the caller decides whether that's a warning or error.
+// WaitForIntegrationReady polls until the integration operation finishes (e.g. Ocean
+// deployment reaches Running). Returns (nil, nil) on timeout — the caller decides
+// whether that's a warning or error.
 func (c *PortClient) WaitForIntegrationReady(ctx context.Context, installationId string) (*Integration, error) {
 	integration, err := retry.DoWithData(
 		func() (*Integration, error) {
 			integration, statusCode, err := c.GetIntegration(ctx, installationId)
 			if err != nil {
 				if statusCode == 404 {
-					return nil, fmt.Errorf("integration %q disappeared during provisioning", installationId)
+					return nil, fmt.Errorf("integration %q disappeared while waiting for operation", installationId)
 				}
 				return nil, err
 			}
@@ -138,21 +172,50 @@ func (c *PortClient) WaitForIntegrationReady(ctx context.Context, installationId
 			case "", consts.IntegrationStatusRunning:
 				return integration, nil
 			case consts.IntegrationStatusCreating, consts.IntegrationStatusUpdating:
-				return nil, errIntegrationNotReady
+				return nil, errIntegrationOperationPending
 			case consts.IntegrationStatusDeleting:
 				return nil, fmt.Errorf("integration %q is being deleted", installationId)
 			case consts.IntegrationStatusError, consts.IntegrationStatusUnHealthy:
-				return nil, fmt.Errorf("integration provisioning failed (status: %s%s)", status, statusMessage(integration))
+				return nil, fmt.Errorf("integration operation failed (status: %s%s)", status, statusMessage(integration))
 			default:
 				return nil, fmt.Errorf("integration %q unexpected status: %s%s", installationId, status, statusMessage(integration))
 			}
 		},
-		provisioningPollOptions(ctx, errIntegrationNotReady)...,
+		integrationPollOptions(ctx, errIntegrationOperationPending)...,
 	)
-	if errors.Is(err, errIntegrationNotReady) {
+	if errors.Is(err, errIntegrationOperationPending) {
 		return nil, nil
 	}
 	return integration, err
+}
+
+// WaitForIntegrationProvisioned polls until default blueprints and mappings are
+// provisioned (config is no longer {}). Returns (nil, nil) on timeout.
+func (c *PortClient) WaitForIntegrationProvisioned(ctx context.Context, installationId string) (*Integration, error) {
+	integration, err := retry.DoWithData(
+		func() (*Integration, error) {
+			integration, statusCode, err := c.GetIntegration(ctx, installationId)
+			if err != nil {
+				if statusCode == 404 {
+					return nil, fmt.Errorf("integration %q disappeared while waiting for provisioning", installationId)
+				}
+				return nil, err
+			}
+			if isIntegrationConfigProvisioned(integration.Config) {
+				return integration, nil
+			}
+			return nil, errIntegrationNotProvisioned
+		},
+		integrationPollOptions(ctx, errIntegrationNotProvisioned)...,
+	)
+	if errors.Is(err, errIntegrationNotProvisioned) {
+		return nil, nil
+	}
+	return integration, err
+}
+
+func isIntegrationConfigProvisioned(config *map[string]any) bool {
+	return config != nil && len(*config) > 0
 }
 
 func (c *PortClient) WaitForIntegrationDeleted(ctx context.Context, installationId string) error {
@@ -167,10 +230,10 @@ func (c *PortClient) WaitForIntegrationDeleted(ctx context.Context, installation
 			}
 			return errIntegrationNotDeleted
 		},
-		provisioningPollOptions(ctx, errIntegrationNotDeleted)...,
+		integrationPollOptions(ctx, errIntegrationNotDeleted)...,
 	)
 	if errors.Is(err, errIntegrationNotDeleted) {
-		return fmt.Errorf("timed out waiting for integration %q to be deleted (still exists after %d polling attempts)", installationId, provisioningMaxAttempts)
+		return fmt.Errorf("timed out waiting for integration %q to be deleted (still exists after %d polling attempts)", installationId, integrationMaxAttempts)
 	}
 	return err
 }

@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -45,11 +46,6 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	if err := validateIntegrationModel(plan); err != nil {
-		resp.Diagnostics.AddError("invalid integration configuration", err.Error())
-		return
-	}
-
 	if !plan.Config.IsNull() && !plan.Config.IsUnknown() {
 		resp.Diagnostics.AddError(
 			"config cannot be set on creation",
@@ -57,6 +53,11 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 				"Create the integration first (without config), then add config "+
 				"to your HCL and run 'terraform apply' again to override the defaults.",
 		)
+		return
+	}
+
+	if err := validateIntegrationModel(plan); err != nil {
+		resp.Diagnostics.AddError("invalid integration configuration", err.Error())
 		return
 	}
 
@@ -75,7 +76,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	applyWriteResult(plan, created, created.InstallationId)
 
 	if plan.isSaas() {
-		r.awaitInfra(ctx, plan, created.InstallationId, "created", &resp.Diagnostics)
+		r.awaitInfra(ctx, plan, created.InstallationId, "created", true, &resp.Diagnostics)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -116,16 +117,6 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	integrationIdentifier := state.InstallationId.ValueString()
 
-	hadDestination := isConfigured(state.KafkaChangelogDestination) || isConfigured(state.WebhookChangelogDestination)
-	lostDestination := !isConfigured(plan.KafkaChangelogDestination) && !isConfigured(plan.WebhookChangelogDestination)
-	if hadDestination && lostDestination {
-		resp.Diagnostics.AddError(
-			"cannot remove changelog destination",
-			"The Port API does not support removing a changelog destination from an existing integration. To remove it, delete and recreate the integration (e.g. taint the resource).",
-		)
-		return
-	}
-
 	if err := validateIntegrationModel(plan); err != nil {
 		resp.Diagnostics.AddError("invalid integration configuration", err.Error())
 		return
@@ -146,7 +137,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	applyWriteResult(plan, updated, integrationIdentifier)
 
 	if plan.isSaas() {
-		r.awaitInfra(ctx, plan, integrationIdentifier, "updated", &resp.Diagnostics)
+		r.awaitInfra(ctx, plan, integrationIdentifier, "updated", false, &resp.Diagnostics)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -177,14 +168,34 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 	resp.State.RemoveResource(ctx)
 }
 
-// awaitInfra waits for SaaS provisioning to finish, then syncs status and version into state.
-func (r *IntegrationResource) awaitInfra(ctx context.Context, model *IntegrationModel, installationId, verb string, diags *diag.Diagnostics) {
-	ready, err := r.portClient.WaitForIntegrationReady(ctx, installationId)
+// awaitInfra waits for SaaS integration operation (and resource provisioning on
+// create) to finish, then syncs status and version into state.
+func (r *IntegrationResource) awaitInfra(ctx context.Context, model *IntegrationModel, installationId, verb string, waitForProvisioning bool, diags *diag.Diagnostics) {
+	var ready *cli.Integration
+	var readyErr error
+	var provisionedErr error
+
+	if waitForProvisioning {
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() {
+			ready, readyErr = r.portClient.WaitForIntegrationReady(ctx, installationId)
+			wg.Done()
+		}()
+		go func() {
+			_, provisionedErr = r.portClient.WaitForIntegrationProvisioned(ctx, installationId)
+			wg.Done()
+		}()
+		wg.Wait()
+	} else {
+		ready, readyErr = r.portClient.WaitForIntegrationReady(ctx, installationId)
+	}
+
 	switch {
-	case err != nil:
+	case readyErr != nil:
 		diags.AddWarning(
-			fmt.Sprintf("integration %s but provisioning failed", verb),
-			err.Error()+". The integration has been saved to state. Check the Port UI or run 'terraform plan' to inspect.",
+			fmt.Sprintf("integration %s but operation did not complete", verb),
+			readyErr.Error()+". The integration has been saved to state. Check the Port UI or run 'terraform plan' to inspect.",
 		)
 	case ready != nil:
 		if ready.StatusInfo != nil {
@@ -194,5 +205,12 @@ func (r *IntegrationResource) awaitInfra(ctx context.Context, model *Integration
 			model.Version = types.StringPointerValue(ready.Version)
 		}
 	}
-	// ready == nil && err == nil → timeout, keep the planned values.
+
+	if waitForProvisioning && provisionedErr != nil {
+		diags.AddWarning(
+			fmt.Sprintf("integration %s but resource provisioning did not complete", verb),
+			provisionedErr.Error()+". Default mappings may not be available yet. Run 'terraform apply' again or check the Port UI.",
+		)
+	}
+	// ready == nil && readyErr == nil → operation timeout, keep the planned values.
 }

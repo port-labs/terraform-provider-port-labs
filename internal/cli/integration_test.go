@@ -33,6 +33,23 @@ func TestIntegrationSpec_DropsServerManagedSections(t *testing.T) {
 	assert.NotContains(t, string(marshaled), "privateSpec")
 }
 
+func TestIsIntegrationConfigProvisioned(t *testing.T) {
+	tests := []struct {
+		name   string
+		config *map[string]any
+		want   bool
+	}{
+		{"nil config", nil, false},
+		{"empty config", &map[string]any{}, false},
+		{"provisioned config", &map[string]any{"resources": []any{}}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, isIntegrationConfigProvisioned(tt.config))
+		})
+	}
+}
+
 func TestIntegrationSpec_IsEmpty(t *testing.T) {
 	tests := []struct {
 		name string

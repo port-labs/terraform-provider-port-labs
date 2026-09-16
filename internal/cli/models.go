@@ -797,6 +797,18 @@ type IntegrationStatusInfo struct {
 	IntegrationStatus IntegrationStatus `json:"integrationStatus"`
 }
 
+type ValidateIntegrationSpecOptions struct {
+	SkipSecretExistenceCheck bool `json:"skipSecretExistenceCheck,omitempty"`
+}
+
+type ValidateIntegrationSpecBody struct {
+	ValidationMode   string                          `json:"validationMode"`
+	InstallationId   string                          `json:"installationId"`
+	InstallationType string                          `json:"installationType"`
+	Spec             *IntegrationClientSpec          `json:"spec,omitempty"`
+	Options          *ValidateIntegrationSpecOptions `json:"options,omitempty"`
+}
+
 type Integration struct {
 	InstallationId       string                 `json:"installationId"`
 	Title                *string                `json:"title"`

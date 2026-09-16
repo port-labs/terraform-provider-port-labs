@@ -34,13 +34,29 @@ var immutableFields = []immutableField{
 }
 
 func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
-	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+	if req.Plan.Raw.IsNull() {
 		return
 	}
 
-	var state, plan IntegrationModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	var plan IntegrationModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	isCreate := req.State.Raw.IsNull()
+
+	if isCreate {
+		validatePlanRules(&plan, nil, true, &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		r.validateSpecAtPlan(ctx, &plan, &resp.Diagnostics)
+		return
+	}
+
+	var state IntegrationModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -56,6 +72,16 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 			)
 		}
 	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	validatePlanRules(&plan, &state, false, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	r.validateSpecAtPlan(ctx, &plan, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

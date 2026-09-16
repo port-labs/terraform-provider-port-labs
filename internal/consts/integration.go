@@ -14,6 +14,11 @@ const (
 	IntegrationStatusDeleting  = "Deleting"
 )
 
+const (
+	ValidateIntegrationSpecModeFull    = "full"
+	ValidateIntegrationSpecModeAppSpec = "appSpec"
+)
+
 func IsSaas(installationType string) bool {
 	return installationType == InstallationTypeSaas
 }

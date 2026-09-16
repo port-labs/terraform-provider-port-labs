@@ -92,6 +92,52 @@ resource "port_integration" "my_custom_integration" {
 
 For catalog integration types, set `installation_app_type` to the integrated tool name (e.g. `GitHub`, `GitLab`, `K8S EXPORTER`) and `version` if you want to pin a specific integration version. Custom integrations can omit `installation_app_type`.
 
+## Per-resource `enableDelete`
+
+Optional boolean on each `resources[]` mapping item (sibling of `kind`, `selector`, and `port`):
+
+- Omitted or `true`: reconciliation may delete stale entities for that resource (default).
+- `false`: skip reconciliation deletes for entities whose blueprint matches that resource's static `"blueprint"` JQ literal. Upserts still run.
+
+Reconciliation deletes also require `entityDeletionThreshold` to be enabled (non-zero). Setting `enableDelete` to `true` does not re-enable deletes when the global threshold is off.
+
+```hcl
+config = jsonencode({
+  entityDeletionThreshold = 1
+  resources = [
+    {
+      kind          = "namespace"
+      enableDelete  = false
+      selector      = { query = "true" }
+      port = {
+        entity = {
+          mappings = [{
+            identifier = ".metadata.uid"
+            title      = ".metadata.name"
+            blueprint  = "'namespace'"
+          }]
+        }
+      }
+    },
+    {
+      kind     = "application"
+      selector = { query = "true" }
+      port = {
+        entity = {
+          mappings = [{
+            identifier = ".metadata.uid"
+            title      = ".metadata.name"
+            blueprint  = "'argocdApplication'"
+          }]
+        }
+      }
+    },
+  ]
+})
+```
+
+See `examples/resources/port_integration/enable_delete` for a full example.
+
 ### NOTICE:
 
 The following config properties (`selector.query|entity.mappings.*`) are jq expressions, which means that you need to input either a valid jq expression (E.g `.title`), or if you want a string value, a qouted escaped string val (E.g `'my-string'`).
@@ -113,7 +159,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 ### Optional
 
-- `config` (String) Integration Config Raw JSON string (use `jsonencode`)
+- `config` (String) Integration mapping and behavior config as a raw JSON string (use `jsonencode`). Supports Port integration config fields such as `entityDeletionThreshold`, per-resource `enableDelete`, and mapping `resources[]` entries.
 - `installation_app_type` (String) Deprecated. The integrated tool name for catalog integration types (e.g. `GitHub`, `GitLab`, `K8S EXPORTER`). Custom integrations can omit this field. Cannot be changed after creation.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `title` (String)

@@ -23,6 +23,7 @@ type IntegrationModel struct {
 	Version                     types.String `tfsdk:"version"`
 	Config                      types.String `tfsdk:"config"`
 	Spec                        types.String `tfsdk:"spec"`
+	CreatePortResourcesOrigin   types.String `tfsdk:"create_port_resources_origin"`
 	Status                      types.String `tfsdk:"status"`
 	KafkaChangelogDestination   types.Object `tfsdk:"kafka_changelog_destination"`
 	WebhookChangelogDestination types.Object `tfsdk:"webhook_changelog_destination"`

@@ -816,8 +816,9 @@ type Integration struct {
 	InstallationType     *string                `json:"installationType"`
 	Version              *string                `json:"version"`
 	Config               *map[string]any        `json:"config,omitempty"`
-	Spec                 *IntegrationClientSpec `json:"spec,omitempty"`
-	StatusInfo           *IntegrationStatusInfo `json:"statusInfo,omitempty"`
+	Spec                      *IntegrationClientSpec `json:"spec,omitempty"`
+	CreatePortResourcesOrigin *string                `json:"createPortResourcesOrigin,omitempty"`
+	StatusInfo                *IntegrationStatusInfo `json:"statusInfo,omitempty"`
 	ChangelogDestination *ChangelogDestination  `json:"changelogDestination,omitempty"`
 }
 

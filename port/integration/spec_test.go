@@ -19,7 +19,7 @@ func TestIntegrationToPortBody_Saas(t *testing.T) {
 		Config:              types.StringValue(`{"resources":[]}`),
 	}
 
-	body, err := integrationToPortBody(state)
+	body, err := integrationToPortBody(state, true)
 	require.NoError(t, err)
 	assert.Equal(t, "pagerduty-prod", body.InstallationId)
 	require.NotNil(t, body.InstallationType)
@@ -37,7 +37,7 @@ func TestIntegrationToPortBody_OnPremOmitsSpec(t *testing.T) {
 		Spec:                types.StringValue(`{"integrationSpec":{"token":"should-not-send"}}`),
 	}
 
-	body, err := integrationToPortBody(state)
+	body, err := integrationToPortBody(state, true)
 	require.NoError(t, err)
 	assert.Equal(t, consts.InstallationTypeOnPrem, *body.InstallationType)
 	assert.Nil(t, body.Spec, "OnPrem integrations should not send spec")

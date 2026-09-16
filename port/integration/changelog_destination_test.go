@@ -40,7 +40,7 @@ func TestIntegrationToPortBodySkipsUnknownChangelogDestination(t *testing.T) {
 		KafkaChangelogDestination:   types.ObjectUnknown(kafkaChangelogDestinationType),
 	}
 
-	body, err := integrationToPortBody(plan)
+	body, err := integrationToPortBody(plan, false)
 	if err != nil {
 		t.Fatalf("integrationToPortBody: %v", err)
 	}
@@ -117,7 +117,7 @@ func TestChangelogDestinationRoundTrip(t *testing.T) {
 				t.Errorf("webhook_changelog_destination = %s, want %s", state.WebhookChangelogDestination, tt.wantWebhook)
 			}
 
-			body, err := integrationToPortBody(state)
+			body, err := integrationToPortBody(state, false)
 			if err != nil {
 				t.Fatalf("integrationToPortBody: %v", err)
 			}

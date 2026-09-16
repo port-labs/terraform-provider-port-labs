@@ -72,6 +72,12 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 			)
 		}
 	}
+	if !plan.CreatePortResourcesOrigin.Equal(state.CreatePortResourcesOrigin) {
+		resp.Diagnostics.AddError(
+			"cannot change create_port_resources_origin",
+			"`create_port_resources_origin` can only be set when creating an integration. To use a different value, destroy this resource and create a new `port_integration`.",
+		)
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}

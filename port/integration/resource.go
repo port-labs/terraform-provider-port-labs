@@ -61,7 +61,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	body, err := integrationToPortBody(plan)
+	body, err := integrationToPortBody(plan, true)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to build request body", err.Error())
 		return
@@ -122,7 +122,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
-	body, err := integrationToPortBody(plan)
+	body, err := integrationToPortBody(plan, false)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to build request body", err.Error())
 		return

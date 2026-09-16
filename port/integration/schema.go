@@ -58,6 +58,16 @@ func IntegrationSchema() map[string]schema.Attribute {
 				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
+		"create_port_resources_origin": schema.StringAttribute{
+			MarkdownDescription: "Controls whether Port creates default blueprints and mappings when the integration is created. Use `Empty` to skip default resource creation. Use `Port` to create default resources via Port. If omitted, default resources are created. Can only be set on creation.",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.OneOf(
+					consts.CreatePortResourcesOriginEmpty,
+					consts.CreatePortResourcesOriginPort,
+				),
+			},
+		},
 		"spec": schema.StringAttribute{
 			MarkdownDescription: "Port Hosted integration spec as a JSON string (use `jsonencode`). **Only supported when `installation_type` is `Saas`** — must not be set for OnPrem integrations. Required for Port Hosted integrations. Contains `integrationSpec` (credentials/settings) and optionally `appSpec` (feature toggles like `liveEventsEnabled`, `sendRawDataExamples`, etc.). Sensitive `integrationSpec` values (org secret references) are preserved from your HCL on read. If `appSpec` fields are omitted, Port applies its own defaults — which may differ from Port UI defaults. Declare `appSpec` explicitly to match the UI behavior.",
 			Optional:            true,
@@ -326,6 +336,7 @@ The following config properties (` + "`selector.query|entity.mappings.*`" + `) a
 ### NOTES:
 
 - ` + "`config`" + ` **cannot be set on creation**. Integrations receive default mappings during provisioning. Create first, then add ` + "`config`" + ` on a subsequent apply.
+- ` + "`create_port_resources_origin`" + ` can only be set on creation. Use ` + "`Empty`" + ` to skip default resource creation, or ` + "`Port`" + ` to create default resources via Port. If omitted, default resources are created.
 - Port Hosted ` + "`spec`" + ` is validated at plan time against the integration type definition in Port.
 - ` + "`status`" + ` reflects async provisioning (` + "`Creating`" + ` → ` + "`Running`" + `) for Port Hosted integrations only.
 - ` + "`installation_id`" + `, ` + "`installation_app_type`" + `, and ` + "`installation_type`" + ` cannot be changed after creation.

@@ -19,6 +19,11 @@ const (
 	ValidateIntegrationSpecModeAppSpec = "appSpec"
 )
 
+const (
+	CreatePortResourcesOriginEmpty = "Empty"
+	CreatePortResourcesOriginPort  = "Port"
+)
+
 func IsSaas(installationType string) bool {
 	return installationType == InstallationTypeSaas
 }

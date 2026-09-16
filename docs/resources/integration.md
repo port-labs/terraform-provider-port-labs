@@ -316,6 +316,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 ### NOTES:
 
 - `config` **cannot be set on creation**. Integrations receive default mappings during provisioning. Create first, then add `config` on a subsequent apply.
+- `create_port_resources_origin` can only be set on creation. Use `Empty` to skip default resource creation, or `Port` to create default resources via Port. If omitted, default resources are created.
 - `status` reflects async provisioning (`Creating` → `Running`) for Port Hosted integrations only.
 - `installation_id`, `installation_app_type`, and `installation_type` cannot be changed after creation.
 - `spec` is only supported for Port Hosted integrations (`installation_type = "Saas"`). Do not set it on OnPrem integrations.
@@ -335,6 +336,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 ### Optional
 
 - `config` (String) Integration mapping and configuration as a JSON string (use `jsonencode`). **Cannot be set on creation** — integrations receive default mappings during provisioning. Add `config` after the initial `terraform apply` to override the defaults.
+- `create_port_resources_origin` (String) Controls whether Port creates default blueprints and mappings when the integration is created. Use `Empty` to skip default resource creation. Use `Port` to create default resources via Port. If omitted, default resources are created. Can only be set on creation.
 - `installation_app_type` (String) The integrated tool name for catalog integration types (e.g. `github-ocean`, `gitlab`, `pagerduty`). Cannot be changed after creation.
 - `installation_type` (String) The installation type of the integration. Use `Saas` for Port Hosted integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource. Cannot be changed after creation.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))

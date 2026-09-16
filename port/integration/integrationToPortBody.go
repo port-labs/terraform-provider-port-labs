@@ -14,7 +14,7 @@ const installationIdPattern = `^[a-z0-9-]+$`
 
 var installationIdRegex = regexp.MustCompile(installationIdPattern)
 
-func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
+func integrationToPortBody(state *IntegrationModel, forCreate bool) (*cli.Integration, error) {
 	if state == nil {
 		return nil, nil
 	}
@@ -34,6 +34,11 @@ func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
 		Version:             state.Version.ValueStringPointer(),
 		InstallationAppType: state.InstallationAppType.ValueStringPointer(),
 		InstallationType:    &installationType,
+	}
+
+	if forCreate && !state.CreatePortResourcesOrigin.IsNull() && !state.CreatePortResourcesOrigin.IsUnknown() {
+		origin := state.CreatePortResourcesOrigin.ValueString()
+		integration.CreatePortResourcesOrigin = &origin
 	}
 
 	if state.isSaas() {

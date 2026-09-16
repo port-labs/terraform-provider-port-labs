@@ -168,7 +168,7 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 	resp.State.RemoveResource(ctx)
 }
 
-// awaitInfra waits for SaaS integration operation (and resource provisioning on
+// awaitInfra waits for Port Hosted integration operation (and resource provisioning on
 // create) to finish, then syncs status and version into state.
 func (r *IntegrationResource) awaitInfra(ctx context.Context, model *IntegrationModel, installationId, verb string, waitForProvisioning bool, diags *diag.Diagnostics) {
 	var ready *cli.Integration

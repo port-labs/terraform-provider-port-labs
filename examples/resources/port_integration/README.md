@@ -13,4 +13,4 @@ Each integration type has its own directory. Subdirectories represent supported 
 | Jira | API token | [`jira/api-token/`](./jira/api-token/) |
 | GitLab v2 | Personal access token | [`gitlab-v2/personal-access-token/`](./gitlab-v2/personal-access-token/) |
 
-SaaS integrations: create without `config` first, then add `config` on a subsequent apply to override default mappings.
+Port Hosted integrations: create without `config` first, then add `config` on a subsequent apply to override default mappings.

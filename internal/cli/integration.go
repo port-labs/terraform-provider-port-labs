@@ -201,7 +201,7 @@ func (c *PortClient) WaitForIntegrationProvisioned(ctx context.Context, installa
 				}
 				return nil, err
 			}
-			if isIntegrationConfigProvisioned(integration.Config) {
+			if IsIntegrationConfigProvisioned(integration.Config) {
 				return integration, nil
 			}
 			return nil, errIntegrationNotProvisioned
@@ -214,7 +214,7 @@ func (c *PortClient) WaitForIntegrationProvisioned(ctx context.Context, installa
 	return integration, err
 }
 
-func isIntegrationConfigProvisioned(config *map[string]any) bool {
+func IsIntegrationConfigProvisioned(config *map[string]any) bool {
 	return config != nil && len(*config) > 0
 }
 

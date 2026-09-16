@@ -55,9 +55,6 @@
 /internal/cli/organization.go @port-labs/buildops
 
 /internal/cli/integration.go @port-labs/connect-team
-/internal/cli/integration_test.go @port-labs/connect-team
-/internal/cli/integration_create_test.go @port-labs/connect-team
-/internal/cli/models.go @port-labs/connect-team
 
 /internal/consts/integration.go @port-labs/connect-team
 

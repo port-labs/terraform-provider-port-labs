@@ -1,9 +1,10 @@
-package cli
+package integration_test
 
 import (
 	"encoding/json"
 	"testing"
 
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,7 +21,7 @@ func TestIntegrationSpec_DropsServerManagedSections(t *testing.T) {
 		}
 	}`
 
-	var got Integration
+	var got cli.Integration
 	require.NoError(t, json.Unmarshal([]byte(raw), &got))
 
 	require.NotNil(t, got.Spec)
@@ -45,7 +46,7 @@ func TestIsIntegrationConfigProvisioned(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.want, isIntegrationConfigProvisioned(tt.config))
+			assert.Equal(t, tt.want, cli.IsIntegrationConfigProvisioned(tt.config))
 		})
 	}
 }
@@ -62,9 +63,31 @@ func TestIntegrationSpec_IsEmpty(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var got Integration
+			var got cli.Integration
 			require.NoError(t, json.Unmarshal([]byte(tt.raw), &got))
 			assert.Equal(t, tt.want, got.Spec.IsEmpty())
 		})
 	}
+}
+
+func TestIntegration_CreatePortResourcesOriginJSON(t *testing.T) {
+	origin := "Empty"
+	body := cli.Integration{
+		InstallationId:            "github-prod",
+		CreatePortResourcesOrigin: &origin,
+	}
+
+	encoded, err := json.Marshal(body)
+	require.NoError(t, err)
+	assert.Contains(t, string(encoded), `"createPortResourcesOrigin":"Empty"`)
+}
+
+func TestIntegration_CreatePortResourcesOriginOmittedFromJSON(t *testing.T) {
+	body := cli.Integration{
+		InstallationId: "github-prod",
+	}
+
+	encoded, err := json.Marshal(body)
+	require.NoError(t, err)
+	assert.NotContains(t, string(encoded), "createPortResourcesOrigin")
 }

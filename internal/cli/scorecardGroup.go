@@ -8,6 +8,23 @@ import (
 
 const FeatureFlagScorecardGroups = "SCORECARD_GROUPS"
 
+func (c *PortClient) ListScorecardGroups(ctx context.Context) ([]ScorecardGroup, error) {
+	pb := &PortBody{}
+	url := "v1/scorecard-groups"
+	resp, err := c.Client.R().
+		SetContext(ctx).
+		SetHeader("Accept", "application/json").
+		SetResult(pb).
+		Get(url)
+	if err != nil {
+		return nil, err
+	}
+	if !pb.OK {
+		return nil, fmt.Errorf("failed to list scorecard groups, got: %s", resp.Body())
+	}
+	return pb.ScorecardGroups, nil
+}
+
 func (c *PortClient) ReadScorecardGroup(ctx context.Context, identifier string) (*ScorecardGroup, int, error) {
 	pb := &PortBody{}
 	url := "v1/scorecard-groups/{scorecard_group_identifier}"

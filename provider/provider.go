@@ -184,5 +184,6 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 func (p *PortLabsProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		search.NewSearchDataSource,
+		scorecard_group.NewScorecardGroupsDataSource,
 	}
 }

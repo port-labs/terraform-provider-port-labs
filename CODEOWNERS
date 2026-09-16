@@ -28,6 +28,7 @@
 /docs/resources/page_permissions.md @port-labs/spotlight-team
 /docs/resources/scorecard.md @port-labs/spotlight-team
 /docs/resources/scorecard_group.md @port-labs/spotlight-team
+/docs/data-sources/scorecard_groups.md @port-labs/spotlight-team
 
 /docs/resources/webhook.md @port-labs/lighthouse-team
 
@@ -44,6 +45,7 @@
 /examples/resources/port_page_with_filters/ @port-labs/spotlight-team
 /examples/resources/port_scorecard/ @port-labs/spotlight-team
 /examples/resources/port_scorecard_group/ @port-labs/spotlight-team
+/examples/data-sources/port_scorecard_groups/ @port-labs/spotlight-team
 
 /examples/resources/port_webhook/ @port-labs/lighthouse-team
 

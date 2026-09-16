@@ -5,12 +5,16 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
@@ -565,6 +569,50 @@ func TestUserInputDatasetRoundTrip(t *testing.T) {
 	assert.Equal(t, false, dataset.Rules[1].Value)
 }
 
+func TestUserInputDatasetRelationRuleRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"service": {
+				Type:      "string",
+				Format:    strPtr("entity"),
+				Blueprint: strPtr("githubRepository"),
+				Dataset: &cli.WorkflowDataset{
+					Combinator: "and",
+					Rules: []cli.WorkflowDatasetRule{
+						{Property: strPtr("language"), Operator: "isNotEmpty"},
+						{Relation: strPtr("service"), Operator: "isNotEmpty"},
+						{
+							Combinator: strPtr("or"),
+							Rules: []cli.WorkflowDatasetRule{
+								{Relation: strPtr("team"), Operator: "isNotEmpty"},
+								{Property: strPtr("archived"), Operator: "=", Value: false},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	dataset := result.Properties["service"].Dataset
+	require.NotNil(t, dataset)
+	require.Len(t, dataset.Rules, 3)
+
+	assert.Equal(t, strPtr("language"), dataset.Rules[0].Property)
+	assert.Nil(t, dataset.Rules[0].Relation)
+
+	assert.Equal(t, strPtr("service"), dataset.Rules[1].Relation)
+	assert.Nil(t, dataset.Rules[1].Property)
+	assert.Equal(t, "isNotEmpty", dataset.Rules[1].Operator)
+
+	require.Len(t, dataset.Rules[2].Rules, 2)
+	assert.Equal(t, strPtr("team"), dataset.Rules[2].Rules[0].Relation)
+
+	encoded, err := json.Marshal(dataset.Rules[1])
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"relation":"service","operator":"isNotEmpty"}`, string(encoded))
+}
+
 func TestUserInputNumberBoundsAndUniqueItemsRoundTrip(t *testing.T) {
 	minimum, maximum := 1.0, 10.0
 	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
@@ -654,10 +702,10 @@ func validateNodes(nodes []WorkflowNodeModel, connections []ConnectionModel) dia
 		if _, duplicate := nodeTypes[identifier]; duplicate {
 			resp.Diagnostics.AddAttributeError(nodePath.AtName("identifier"), "Duplicate node identifier", identifier)
 		}
-		nodeTypes[identifier] = validateNode(resp, nodePath, node)
+		nodeTypes[identifier] = validateNode(resp, nodePath, node, false)
 		outlets[identifier] = nodeOutlets(node)
 	}
-	validateConnections(resp, connections, nodeTypes, outlets)
+	validateConnections(resp, connections, nodeTypes, outlets, true)
 
 	return resp.Diagnostics
 }
@@ -1181,6 +1229,12 @@ func TestEveryNodeTypeSerializesItsConfigType(t *testing.T) {
 			require.NoError(t, err)
 			require.Len(t, w.Nodes, 1)
 			assert.Equal(t, test.configType, w.Nodes[0].Config.Type)
+
+			assert.Equal(t, test.configType,
+				validateNode(&resource.ValidateConfigResponse{}, path.Root("node").AtListIndex(0), test.node, false),
+				"validateNode must report the node type the mapper sends")
+			assert.Equal(t, test.configType, nodeTypeByBlock[test.block],
+				"nodeTypeByBlock must hold the node type the mapper sends")
 		})
 		covered = append(covered, test.block)
 	}
@@ -1378,19 +1432,226 @@ func TestConditionIsExposedOnlyOnEventTrigger(t *testing.T) {
 	assert.Equal(t, []string{"event_trigger"}, blocksWithCondition)
 }
 
+func TestNodeTypeByBlockCoversEveryNodeType(t *testing.T) {
+	blocks := make([]string, 0, len(nodeTypeByBlock))
+	for block := range nodeTypeByBlock {
+		blocks = append(blocks, block)
+	}
+
+	assert.ElementsMatch(t, nodeTypeBlockNames, blocks,
+		"every node type block must map to a config type")
+}
+
+func TestNodeTypeFromConfigObjectReadsTypeOfUnknownBlock(t *testing.T) {
+	ctx := context.Background()
+	nodeType := WorkflowBlocks()["node"].(schema.ListNestedBlock).NestedObject.Type().(basetypes.ObjectType)
+
+	for _, block := range nodeTypeBlockNames {
+		t.Run(block, func(t *testing.T) {
+			assert.Equal(t, nodeTypeByBlock[block], nodeTypeFromConfigObject(nodeObjectWithBlock(ctx, t, nodeType, block)))
+		})
+	}
+
+	t.Run("no config block", func(t *testing.T) {
+		assert.Empty(t, nodeTypeFromConfigObject(nodeObjectWithBlock(ctx, t, nodeType, "")))
+	})
+}
+
+func nodeObjectWithBlock(ctx context.Context, t *testing.T, nodeType basetypes.ObjectType, block string) types.Object {
+	t.Helper()
+
+	attributeTypes := nodeType.AttributeTypes()
+	attributes := make(map[string]attr.Value, len(attributeTypes))
+	for name, attributeType := range attributeTypes {
+		raw := tftypes.NewValue(attributeType.TerraformType(ctx), nil)
+		if name == block {
+			raw = tftypes.NewValue(attributeType.TerraformType(ctx), tftypes.UnknownValue)
+		}
+
+		value, err := attributeType.ValueFromTerraform(ctx, raw)
+		require.NoError(t, err)
+		attributes[name] = value
+	}
+
+	object, diags := types.ObjectValue(attributeTypes, attributes)
+	require.False(t, diags.HasError(), diags.Errors())
+
+	return object
+}
+
+func TestValidateConfigIsUnaffectedByUnknownValues(t *testing.T) {
+	ctx := context.Background()
+
+	config := configObject{
+		"identifier": "wf",
+		"node": configList{
+			configObject{
+				"identifier": "trigger",
+				"self_serve_trigger": configObject{
+					"action_card_button_text": "Run",
+					"contexts":                configList{configObject{"on": consts.EntityContext}},
+					"user_inputs": configObject{
+						"user_properties": configObject{
+							"string_props": configObject{
+								"service": configObject{"title": "Service", "required": true},
+							},
+						},
+					},
+				},
+			},
+			configObject{
+				"identifier": "apply",
+				"webhook":    configObject{"url": "https://ci.example.com/hook", "method": "POST"},
+			},
+		},
+		"connections": configList{
+			configObject{"source_identifier": "trigger", "target_identifier": "apply"},
+		},
+	}
+
+	known := validateWorkflowConfig(ctx, t, config, nil)
+	require.Len(t, known.Errors(), 1, known.Errors())
+	assert.Contains(t, known.Errors()[0].Detail(), "`user_input` is required")
+
+	trigger := tftypes.NewAttributePath().WithAttributeName("node").WithElementKeyInt(0)
+
+	unchanged := map[string]*tftypes.AttributePath{
+		"user properties": trigger.WithAttributeName("self_serve_trigger").
+			WithAttributeName("user_inputs").WithAttributeName("user_properties").
+			WithAttributeName("string_props"),
+		"node identifier": trigger.WithAttributeName("identifier"),
+	}
+	for name, unknownAt := range unchanged {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, known, validateWorkflowConfig(ctx, t, config, unknownAt))
+		})
+	}
+
+	t.Run("whole node", func(t *testing.T) {
+		diags := validateWorkflowConfig(ctx, t, config, trigger)
+		assert.Empty(t, diags.Errors())
+	})
+}
+
+func TestValidateConfigReportsNodeWithoutConfigBlock(t *testing.T) {
+	ctx := context.Background()
+
+	diags := validateWorkflowConfig(ctx, t, configObject{
+		"identifier": "wf",
+		"node":       configList{configObject{"identifier": "trigger"}},
+	}, nil)
+
+	require.Len(t, diags.Errors(), 1, diags.Errors())
+	assert.Equal(t, "Missing trigger node", diags.Errors()[0].Summary())
+}
+
+type (
+	configObject = map[string]any
+	configList   = []any
+)
+
+func validateWorkflowConfig(ctx context.Context, t *testing.T, config configObject, unknownAt *tftypes.AttributePath) diag.Diagnostics {
+	t.Helper()
+
+	schemaResp := &resource.SchemaResponse{}
+	(&WorkflowResource{}).Schema(ctx, resource.SchemaRequest{}, schemaResp)
+	require.False(t, schemaResp.Diagnostics.HasError(), schemaResp.Diagnostics.Errors())
+
+	raw := configValue(t, schemaResp.Schema.Type().TerraformType(ctx), config)
+
+	if unknownAt != nil {
+		replaced := false
+		transformed, err := tftypes.Transform(raw, func(valuePath *tftypes.AttributePath, value tftypes.Value) (tftypes.Value, error) {
+			if !valuePath.Equal(unknownAt) {
+				return value, nil
+			}
+			replaced = true
+			return tftypes.NewValue(value.Type(), tftypes.UnknownValue), nil
+		})
+		require.NoError(t, err)
+		require.True(t, replaced, "no value at %s to make unknown", unknownAt)
+		raw = transformed
+	}
+
+	resp := &resource.ValidateConfigResponse{}
+	(&WorkflowResource{}).ValidateConfig(ctx, resource.ValidateConfigRequest{
+		Config: tfsdk.Config{Raw: raw, Schema: schemaResp.Schema},
+	}, resp)
+
+	return resp.Diagnostics
+}
+
+func configValue(t *testing.T, valueType tftypes.Type, data any) tftypes.Value {
+	t.Helper()
+
+	if data == nil {
+		return tftypes.NewValue(valueType, nil)
+	}
+
+	switch valueType := valueType.(type) {
+	case tftypes.Object:
+		attributes, ok := data.(configObject)
+		require.True(t, ok, "%s needs a configObject, got %T", valueType, data)
+
+		for name := range attributes {
+			require.Contains(t, valueType.AttributeTypes, name, "no such attribute")
+		}
+
+		values := make(map[string]tftypes.Value, len(valueType.AttributeTypes))
+		for name, attributeType := range valueType.AttributeTypes {
+			values[name] = configValue(t, attributeType, attributes[name])
+		}
+		return tftypes.NewValue(valueType, values)
+
+	case tftypes.List:
+		return tftypes.NewValue(valueType, configValues(t, valueType.ElementType, data))
+
+	case tftypes.Set:
+		return tftypes.NewValue(valueType, configValues(t, valueType.ElementType, data))
+
+	case tftypes.Map:
+		entries, ok := data.(configObject)
+		require.True(t, ok, "%s needs a configObject, got %T", valueType, data)
+
+		values := make(map[string]tftypes.Value, len(entries))
+		for key, entry := range entries {
+			values[key] = configValue(t, valueType.ElementType, entry)
+		}
+		return tftypes.NewValue(valueType, values)
+	}
+
+	return tftypes.NewValue(valueType, data)
+}
+
+func configValues(t *testing.T, elementType tftypes.Type, data any) []tftypes.Value {
+	t.Helper()
+
+	items, ok := data.(configList)
+	require.True(t, ok, "needs a configList, got %T", data)
+
+	values := make([]tftypes.Value, 0, len(items))
+	for _, item := range items {
+		values = append(values, configValue(t, elementType, item))
+	}
+	return values
+}
+
 func validateWorkflow(nodes []WorkflowNodeModel, connections []ConnectionModel) diag.Diagnostics {
 	resp := &resource.ValidateConfigResponse{}
 
 	nodeTypes := make(map[string]string, len(nodes))
+	declaredTypes := make([]string, 0, len(nodes))
 	outlets := make(map[string]map[string]bool, len(nodes))
 	for i, node := range nodes {
 		nodePath := path.Root("node").AtListIndex(i)
-		nodeTypes[node.Identifier.ValueString()] = validateNode(resp, nodePath, node)
+		nodeType := validateNode(resp, nodePath, node, false)
+		nodeTypes[node.Identifier.ValueString()] = nodeType
+		declaredTypes = append(declaredTypes, nodeType)
 		outlets[node.Identifier.ValueString()] = nodeOutlets(node)
 	}
 
-	validateTriggerPresence(resp, nodeTypes)
-	validateConnections(resp, connections, nodeTypes, outlets)
+	validateTriggerPresence(resp, declaredTypes)
+	validateConnections(resp, connections, nodeTypes, outlets, true)
 
 	return resp.Diagnostics
 }

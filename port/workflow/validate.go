@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 )
 
@@ -17,19 +19,50 @@ var _ resource.ResourceWithValidateConfig = &WorkflowResource{}
 // enforces required attributes of a SingleNestedBlock even when the block itself
 // is absent, which would make every node config block mandatory.
 func (r *WorkflowResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var data WorkflowModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
+	var nodeList types.List
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("node"), &nodeList)...)
+	if resp.Diagnostics.HasError() || nodeList.IsNull() || nodeList.IsUnknown() {
 		return
 	}
 
-	nodeTypes := make(map[string]string, len(data.Nodes))
-	outlets := make(map[string]map[string]bool, len(data.Nodes))
-	for i, node := range data.Nodes {
-		nodePath := path.Root("node").AtListIndex(i)
-		identifier := node.Identifier.ValueString()
+	elements := nodeList.Elements()
+	nodeTypes := make(map[string]string, len(elements))
+	outlets := make(map[string]map[string]bool, len(elements))
+	declaredTypes := make([]string, 0, len(elements))
+	typesKnown := true
+	identifiersKnown := true
 
-		if _, duplicate := nodeTypes[identifier]; duplicate && !node.Identifier.IsUnknown() {
+	for i, element := range elements {
+		nodePath := path.Root("node").AtListIndex(i)
+
+		object, isObject := element.(types.Object)
+		if !isObject || object.IsNull() || object.IsUnknown() {
+			typesKnown = false
+			identifiersKnown = false
+			continue
+		}
+
+		var node WorkflowNodeModel
+		resp.Diagnostics.Append(object.As(ctx, &node, basetypes.ObjectAsOptions{UnhandledUnknownAsEmpty: true})...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		hasUnknownValues := containsUnknown(object)
+
+		nodeType := validateNode(resp, nodePath, node, hasUnknownValues)
+		if nodeType == "" && hasUnknownValues {
+			nodeType = nodeTypeFromConfigObject(object)
+			typesKnown = typesKnown && nodeType != ""
+		}
+		declaredTypes = append(declaredTypes, nodeType)
+
+		if node.Identifier.IsUnknown() {
+			identifiersKnown = false
+			continue
+		}
+
+		identifier := node.Identifier.ValueString()
+		if _, duplicate := nodeTypes[identifier]; duplicate {
 			resp.Diagnostics.AddAttributeError(
 				nodePath.AtName("identifier"),
 				"Duplicate node identifier",
@@ -37,12 +70,84 @@ func (r *WorkflowResource) ValidateConfig(ctx context.Context, req resource.Vali
 			)
 		}
 
-		nodeTypes[identifier] = validateNode(resp, nodePath, node)
+		nodeTypes[identifier] = nodeType
 		outlets[identifier] = nodeOutlets(node)
 	}
 
-	validateTriggerPresence(resp, nodeTypes)
-	validateConnections(resp, data.Connections, nodeTypes, outlets)
+	if typesKnown {
+		validateTriggerPresence(resp, declaredTypes)
+	}
+
+	var connectionList types.List
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("connections"), &connectionList)...)
+	if resp.Diagnostics.HasError() || connectionList.IsNull() || connectionList.IsUnknown() {
+		return
+	}
+
+	var connections []ConnectionModel
+	resp.Diagnostics.Append(connectionList.ElementsAs(ctx, &connections, true)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	validateConnections(resp, connections, nodeTypes, outlets, identifiersKnown)
+}
+
+func containsUnknown(value attr.Value) bool {
+	if value == nil {
+		return false
+	}
+	if value.IsUnknown() {
+		return true
+	}
+
+	switch typed := value.(type) {
+	case interface{ Attributes() map[string]attr.Value }:
+		for _, attribute := range typed.Attributes() {
+			if containsUnknown(attribute) {
+				return true
+			}
+		}
+	case interface{ Elements() []attr.Value }:
+		for _, element := range typed.Elements() {
+			if containsUnknown(element) {
+				return true
+			}
+		}
+	case interface{ Elements() map[string]attr.Value }:
+		for _, element := range typed.Elements() {
+			if containsUnknown(element) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+var nodeTypeByBlock = map[string]string{
+	"self_serve_trigger": consts.SelfServeTrigger,
+	"event_trigger":      consts.EventTrigger,
+	"schedule_trigger":   consts.ScheduleTrigger,
+	"kafka":              consts.Kafka,
+	"webhook":            consts.Webhook,
+	"integration_action": consts.IntegrationAction,
+	"upsert_entity":      consts.UpsertEntity,
+	"ai":                 consts.AI,
+	"ai_agent":           consts.AIAgent,
+	"condition":          consts.ConditionNode,
+	"input":              consts.InputNode,
+}
+
+func nodeTypeFromConfigObject(object types.Object) string {
+	attributes := object.Attributes()
+	for _, name := range nodeTypeBlockNames {
+		if block, declared := attributes[name]; declared && !block.IsNull() {
+			return nodeTypeByBlock[name]
+		}
+	}
+
+	return ""
 }
 
 var triggerTypes = map[string]bool{
@@ -51,7 +156,7 @@ var triggerTypes = map[string]bool{
 	consts.ScheduleTrigger:  true,
 }
 
-func validateTriggerPresence(resp *resource.ValidateConfigResponse, nodeTypes map[string]string) {
+func validateTriggerPresence(resp *resource.ValidateConfigResponse, nodeTypes []string) {
 	for _, nodeType := range nodeTypes {
 		if triggerTypes[nodeType] {
 			return
@@ -80,7 +185,7 @@ func nodeOutlets(node WorkflowNodeModel) map[string]bool {
 	return identifiers
 }
 
-func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, node WorkflowNodeModel) string {
+func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, node WorkflowNodeModel, hasUnknownValues bool) string {
 	switch {
 	case node.SelfServeTrigger != nil:
 		blockPath := nodePath.AtName("self_serve_trigger")
@@ -184,11 +289,13 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 		buttonsDeclared := node.Input.UserInputs != nil
 		buttons := map[string]bool{}
 		if !buttonsDeclared {
-			resp.Diagnostics.AddAttributeError(
-				blockPath.AtName("user_inputs"),
-				"Missing required block",
-				"An `input` node must define a `user_inputs` block.",
-			)
+			if !hasUnknownValues {
+				resp.Diagnostics.AddAttributeError(
+					blockPath.AtName("user_inputs"),
+					"Missing required block",
+					"An `input` node must define a `user_inputs` block.",
+				)
+			}
 		} else {
 			seenButtons := map[string]bool{}
 			for i, button := range node.Input.UserInputs.Buttons {
@@ -203,7 +310,7 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 			outletPath := blockPath.AtName("outlets").AtListIndex(i)
 			identifier := outlet.Identifier.ValueString()
 			requireUnique(resp, outletPath.AtName("identifier"), outlet.Identifier, seenOutlets, "outlet")
-			if buttonsDeclared && !outlet.Identifier.IsUnknown() && !buttons[identifier] {
+			if buttonsDeclared && !hasUnknownValues && !outlet.Identifier.IsUnknown() && !buttons[identifier] {
 				resp.Diagnostics.AddAttributeError(
 					outletPath.AtName("identifier"),
 					"Unknown button identifier",
@@ -220,7 +327,7 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 				requireSet(resp, notificationPath.AtName("url"), notification.Url,
 					"`url` is required when `target` is `webhook`.")
 			case "email":
-				if len(notification.Fields) == 0 {
+				if len(notification.Fields) == 0 && !hasUnknownValues {
 					resp.Diagnostics.AddAttributeError(
 						notificationPath.AtName("fields"),
 						"Missing required block",
@@ -245,7 +352,7 @@ func validateStatusLabels(resp *resource.ValidateConfigResponse, outletPath path
 	}
 }
 
-func validateConnections(resp *resource.ValidateConfigResponse, connections []ConnectionModel, nodeTypes map[string]string, outlets map[string]map[string]bool) {
+func validateConnections(resp *resource.ValidateConfigResponse, connections []ConnectionModel, nodeTypes map[string]string, outlets map[string]map[string]bool, identifiersKnown bool) {
 	multipleOutletTypes := map[string]bool{
 		consts.ConditionNode: true,
 		consts.InputNode:     true,
@@ -269,8 +376,10 @@ func validateConnections(resp *resource.ValidateConfigResponse, connections []Co
 			)
 		}
 
-		validateEndpoint(resp, connectionPath, "source_identifier", connection.SourceIdentifier, nodeTypes)
-		validateEndpoint(resp, connectionPath, "target_identifier", connection.TargetIdentifier, nodeTypes)
+		if identifiersKnown {
+			validateEndpoint(resp, connectionPath, "source_identifier", connection.SourceIdentifier, nodeTypes)
+			validateEndpoint(resp, connectionPath, "target_identifier", connection.TargetIdentifier, nodeTypes)
+		}
 
 		if targetType, known := nodeTypes[target]; known && triggerTypes[targetType] {
 			resp.Diagnostics.AddAttributeError(
@@ -409,8 +518,12 @@ func validateNoCycles(resp *resource.ValidateConfigResponse, connections []Conne
 
 // The service falls back to defaults for both or neither, so a lone value is rejected.
 func requirePaired(resp *resource.ValidateConfigResponse, blockPath path.Path, blockName string, provider, model types.String) {
-	providerSet := !provider.IsNull() && !provider.IsUnknown()
-	modelSet := !model.IsNull() && !model.IsUnknown()
+	if provider.IsUnknown() || model.IsUnknown() {
+		return
+	}
+
+	providerSet := !provider.IsNull()
+	modelSet := !model.IsNull()
 	if providerSet == modelSet {
 		return
 	}

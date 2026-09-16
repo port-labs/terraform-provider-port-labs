@@ -440,6 +440,7 @@ func datasetRuleToBody(model DatasetRuleModel) (cli.WorkflowDatasetRule, error) 
 	rule.Operator = model.Operator.ValueString()
 	rule.Blueprint = model.Blueprint.ValueStringPointer()
 	rule.Property = model.Property.ValueStringPointer()
+	rule.Relation = model.Relation.ValueStringPointer()
 
 	switch {
 	case model.Value != nil && !model.Value.JqQuery.IsNull():

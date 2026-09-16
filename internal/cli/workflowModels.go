@@ -172,6 +172,7 @@ type WorkflowDataset struct {
 type WorkflowDatasetRule struct {
 	Blueprint  *string               `json:"blueprint,omitempty"`
 	Property   *string               `json:"property,omitempty"`
+	Relation   *string               `json:"relation,omitempty"`
 	Operator   string                `json:"operator,omitempty"`
 	Value      any                   `json:"value,omitempty"`
 	Combinator *string               `json:"combinator,omitempty"`

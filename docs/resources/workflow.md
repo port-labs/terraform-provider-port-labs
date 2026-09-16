@@ -516,6 +516,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -529,6 +530,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -542,6 +544,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -555,6 +558,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -568,6 +572,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -581,6 +586,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -594,6 +600,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -607,6 +614,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -620,6 +628,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -633,6 +642,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -646,6 +656,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
 
@@ -1090,6 +1101,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -1103,6 +1115,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -1116,6 +1129,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -1129,6 +1143,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -1142,6 +1157,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -1155,6 +1171,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -1168,6 +1185,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -1181,6 +1199,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -1194,6 +1213,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -1207,6 +1227,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
@@ -1220,6 +1241,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
 - `value_json` (String) A fixed value, as a JSON encoded string. Use `value` for a value resolved by a jq query.
 

@@ -439,6 +439,66 @@ func TestPortIntegrationInvalidIdentifier(t *testing.T) {
 	}
 }
 
+func saasLinearIntegrationHCL(installationID, secretName, title string) string {
+	return fmt.Sprintf(`
+%s
+resource "port_organization_secret" "linear_api_key" {
+	secret_name  = "%s"
+	secret_value = "lin_api_acctest_dummy"
+}
+
+resource "port_integration" "linear" {
+	depends_on = [port_organization_secret.linear_api_key]
+
+	installation_id       = "%s"
+	installation_app_type = "linear"
+	installation_type     = "Saas"
+	title                 = "%s"
+
+	spec = jsonencode({
+		integrationSpec = {
+			linearApiKey = port_organization_secret.linear_api_key.secret_name
+		}
+		appSpec = {
+			liveEventsEnabled       = false
+			scheduledResyncInterval = "12h"
+		}
+	})
+}`, acctest.ProviderConfig, secretName, installationID, title)
+}
+
+func TestPortIntegrationSaasLinear(t *testing.T) {
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
+	secretName := utils.GenID()
+	title := "Linear acctest"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: saasLinearIntegrationHCL(installationID, secretName, title),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_integration.linear", "installation_id", installationID),
+					resource.TestCheckResourceAttr("port_integration.linear", "installation_app_type", "linear"),
+					resource.TestCheckResourceAttr("port_integration.linear", "installation_type", "Saas"),
+					resource.TestCheckResourceAttr("port_integration.linear", "title", title),
+					resource.TestCheckResourceAttrSet("port_integration.linear", "spec"),
+				),
+			},
+			{
+				Config: saasLinearIntegrationHCL(installationID, secretName, title+" updated"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_integration.linear", "installation_id", installationID),
+					resource.TestCheckResourceAttr("port_integration.linear", "title", title+" updated"),
+				),
+			},
+		},
+	})
+}
+
 func TestPortIntegrationValidIdentifier(t *testing.T) {
 	appType := "kafka"
 

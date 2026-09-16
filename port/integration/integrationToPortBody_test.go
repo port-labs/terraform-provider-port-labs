@@ -60,6 +60,18 @@ func TestIntegrationToPortBody_CreatePortResourcesOrigin(t *testing.T) {
 	assert.Nil(t, updateBody.CreatePortResourcesOrigin)
 }
 
+func TestIntegrationToPortBody_CreatePortResourcesOriginPort(t *testing.T) {
+	model := &IntegrationModel{
+		InstallationId:            types.StringValue("github-prod"),
+		CreatePortResourcesOrigin: types.StringValue(consts.CreatePortResourcesOriginPort),
+	}
+
+	body, err := integrationToPortBody(model, true)
+	require.NoError(t, err)
+	require.NotNil(t, body.CreatePortResourcesOrigin)
+	assert.Equal(t, consts.CreatePortResourcesOriginPort, *body.CreatePortResourcesOrigin)
+}
+
 func TestIntegrationToPortBody_CreatePortResourcesOriginOmitted(t *testing.T) {
 	model := &IntegrationModel{
 		InstallationId:   types.StringValue("github-prod"),

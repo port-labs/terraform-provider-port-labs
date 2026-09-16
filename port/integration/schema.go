@@ -69,7 +69,7 @@ func IntegrationSchema() map[string]schema.Attribute {
 			},
 		},
 		"spec": schema.StringAttribute{
-			MarkdownDescription: "Port Hosted integration spec as a JSON string (use `jsonencode`). **Only supported when `installation_type` is `Saas`** — must not be set for OnPrem integrations. Required for Port Hosted integrations. Contains `integrationSpec` (credentials/settings) and optionally `appSpec` (feature toggles like `liveEventsEnabled`, `sendRawDataExamples`, etc.). Sensitive `integrationSpec` values (org secret references) are preserved from your HCL on read. If `appSpec` fields are omitted, Port applies its own defaults — which may differ from Port UI defaults. Declare `appSpec` explicitly to match the UI behavior.",
+			MarkdownDescription: "Port Hosted integration spec as a JSON string (use `jsonencode`). **Only supported when `installation_type` is `Saas`** — must not be set for self-hosted integrations. Required for Port Hosted integrations. Contains `integrationSpec` (credentials/settings) and optionally `appSpec` (feature toggles like `liveEventsEnabled`, `sendRawDataExamples`, etc.). Sensitive `integrationSpec` values (org secret references) are preserved from your HCL on read. If `appSpec` fields are omitted, Port applies its own defaults — which may differ from Port UI defaults. Declare `appSpec` explicitly to match the UI behavior.",
 			Optional:            true,
 			Computed:            true,
 			PlanModifiers: []planmodifier.String{
@@ -126,7 +126,7 @@ var IntegrationResourceMarkdownDescription = `
 
 # Integration resource
 
-Manages a Port integration, including self-hosted (OnPrem) and Port Hosted installations.
+Manages a Port integration, including self-hosted and Port Hosted installations.
 
 For Port Hosted integrations, create organization secrets first with ` + "`port_organization_secret`" + `, then reference secret names in ` + "`spec.integrationSpec`" + `.
 
@@ -141,7 +141,7 @@ Integrations receive default mappings during provisioning. Because of this, ` + 
 1. **First apply** — create the integration without ` + "`config`" + `. Provisioning sets up default blueprints and mappings.
 2. **Second apply** — add a ` + "`config`" + ` block to your HCL to override the default mappings.
 
-Port Hosted integrations provision asynchronously (` + "`Creating`" + ` → ` + "`Running`" + `). The provider waits for provisioning to complete before continuing. OnPrem create/update/delete are synchronous.
+Port Hosted integrations provision asynchronously (` + "`Creating`" + ` → ` + "`Running`" + `). The provider waits for provisioning to complete before continuing. Self-hosted create/update/delete are synchronous.
 
 ## Port Hosted example — Step 1: Create the integration
 
@@ -281,7 +281,7 @@ spec = jsonencode({
 })
 ` + "```" + `
 
-## Self-hosted (OnPrem) example — Step 1: Create
+## Self-hosted example — Step 1: Create
 
 Self-hosted integrations run on your own infrastructure and pull their mapping from Port.
 
@@ -294,7 +294,7 @@ resource "port_integration" "my_custom_integration" {
 }
 ` + "```" + `
 
-## Self-hosted (OnPrem) example — Step 2: Override mappings
+## Self-hosted example — Step 2: Override mappings
 
 ` + "```hcl" + `
 resource "port_integration" "my_custom_integration" {
@@ -340,7 +340,7 @@ The following config properties (` + "`selector.query|entity.mappings.*`" + `) a
 - Port Hosted ` + "`spec`" + ` is validated at plan time against the integration type definition in Port.
 - ` + "`status`" + ` reflects async provisioning (` + "`Creating`" + ` → ` + "`Running`" + `) for Port Hosted integrations only.
 - ` + "`installation_id`" + `, ` + "`installation_app_type`" + `, and ` + "`installation_type`" + ` cannot be changed after creation.
-- ` + "`spec`" + ` is only supported for Port Hosted integrations (` + "`installation_type = \"Saas\"`" + `). Do not set it on OnPrem integrations.
+- ` + "`spec`" + ` is only supported for Port Hosted integrations (` + "`installation_type = \"Saas\"`" + `). Do not set it on self-hosted integrations.
 - A changelog destination (` + "`webhook_changelog_destination`" + ` / ` + "`kafka_changelog_destination`" + `) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).
 - Existing integrations can be brought under Terraform management with ` + "`terraform import port_integration.my_integration <installation_id>`" + `.
 - ` + "`terraform destroy`" + ` deletes the real integration in Port, not just removes it from state. Use ` + "`terraform state rm`" + ` if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.

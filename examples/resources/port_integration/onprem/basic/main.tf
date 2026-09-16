@@ -1,4 +1,4 @@
-# Self-hosted (OnPrem) — Step 1: Create without config.
+# Self-hosted — Step 1: Create without config.
 # After the first apply, add config and run 'terraform apply' again to override default mappings.
 
 resource "port_integration" "my_custom_integration" {

@@ -18,6 +18,13 @@ func validatePlanRules(plan, state *IntegrationModel, isCreate bool, diags *diag
 		)
 	}
 
+	if !isCreate && !plan.CreatePortResourcesOrigin.Equal(state.CreatePortResourcesOrigin) {
+		diags.AddError(
+			"cannot change create_port_resources_origin",
+			"`create_port_resources_origin` can only be set when creating an integration. To use a different value, destroy this resource and create a new `port_integration`.",
+		)
+	}
+
 	if !isCreate {
 		hadDestination := isConfigured(state.KafkaChangelogDestination) || isConfigured(state.WebhookChangelogDestination)
 		lostDestination := !isConfigured(plan.KafkaChangelogDestination) && !isConfigured(plan.WebhookChangelogDestination)

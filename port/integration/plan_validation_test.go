@@ -21,6 +21,32 @@ func TestValidatePlanRules_ConfigOnCreate(t *testing.T) {
 	assert.True(t, diags.HasError())
 }
 
+func TestValidatePlanRules_CreatePortResourcesOriginImmutable(t *testing.T) {
+	state := &IntegrationModel{
+		CreatePortResourcesOrigin: types.StringValue(consts.CreatePortResourcesOriginEmpty),
+	}
+	plan := &IntegrationModel{
+		CreatePortResourcesOrigin: types.StringValue(consts.CreatePortResourcesOriginPort),
+	}
+
+	diags := diag.Diagnostics{}
+	validatePlanRules(plan, state, false, &diags)
+	assert.True(t, diags.HasError())
+}
+
+func TestValidatePlanRules_CreatePortResourcesOriginUnchanged(t *testing.T) {
+	state := &IntegrationModel{
+		CreatePortResourcesOrigin: types.StringValue(consts.CreatePortResourcesOriginEmpty),
+	}
+	plan := &IntegrationModel{
+		CreatePortResourcesOrigin: types.StringValue(consts.CreatePortResourcesOriginEmpty),
+	}
+
+	diags := diag.Diagnostics{}
+	validatePlanRules(plan, state, false, &diags)
+	assert.False(t, diags.HasError())
+}
+
 func TestValidatePlanRules_ChangelogDestinationRemoval(t *testing.T) {
 	state := &IntegrationModel{
 		WebhookChangelogDestination: types.ObjectValueMust(webhookChangelogDestinationType, map[string]attr.Value{

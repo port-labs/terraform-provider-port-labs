@@ -293,6 +293,69 @@ func TestPortIntegrationImmutableInstallationAppType(t *testing.T) {
 	})
 }
 
+func TestPortIntegrationCreatePortResourcesOriginEmpty(t *testing.T) {
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
+	appType := "kafka"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: integrationHCL(installationID, appType, `create_port_resources_origin = "Empty"`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
+					resource.TestCheckResourceAttr(integrationResourceName, "create_port_resources_origin", "Empty"),
+				),
+			},
+		},
+	})
+}
+
+func TestPortIntegrationImmutableCreatePortResourcesOrigin(t *testing.T) {
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
+	appType := "kafka"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: integrationHCL(installationID, appType, `create_port_resources_origin = "Empty"`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(integrationResourceName, "create_port_resources_origin", "Empty"),
+				),
+			},
+			{
+				Config:      integrationHCL(installationID, appType, `create_port_resources_origin = "Port"`),
+				ExpectError: regexp.MustCompile(`cannot change create_port_resources_origin`),
+			},
+		},
+	})
+}
+
+func TestPortIntegrationInvalidCreatePortResourcesOrigin(t *testing.T) {
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
+	appType := "kafka"
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      integrationHCL(installationID, appType, `create_port_resources_origin = "Ocean"`),
+				ExpectError: regexp.MustCompile(`create_port_resources_origin`),
+			},
+		},
+	})
+}
+
 func TestPortIntegrationImmutableInstallationType(t *testing.T) {
 	enableIntegrationBetaFeatures(t)
 

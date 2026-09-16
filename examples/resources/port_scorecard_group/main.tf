@@ -69,6 +69,7 @@ resource "port_entity" "db_primary" {
   }
 }
 
+# Optional: extend `_scorecard_group` / `_scorecard` blueprints, then set group_properties / scorecard_properties.
 resource "port_scorecard_group" "production_readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"

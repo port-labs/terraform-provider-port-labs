@@ -235,7 +235,7 @@ resource "port_integration" "github" {
 }
 ` + "```" + `
 
-## Port Hosted examples — Azure DevOps, Jira, GitLab v2
+## Port Hosted examples — Azure DevOps, Jira, Linear, GitLab v2
 
 See ` + "`examples/resources/port_integration/`" + ` for full examples per integration type. Common patterns:
 
@@ -268,6 +268,14 @@ spec = jsonencode({
     jiraHost           = "https://example.atlassian.net"
     atlassianUserEmail = port_organization_secret.jira_email.secret_name
     atlassianUserToken = port_organization_secret.jira_token.secret_name
+  }
+})
+
+# Linear
+installation_app_type = "linear"
+spec = jsonencode({
+  integrationSpec = {
+    linearApiKey = port_organization_secret.linear_api_key.secret_name
   }
 })
 

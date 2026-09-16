@@ -77,11 +77,6 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 		return
 	}
 
-	r.validateSpecAtPlan(ctx, &plan, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Read pulls Port's own additions into state (spec.appSpec, default config
 	// mappings). Neither belongs in a diff unless the configuration itself
 	// changed, so fall back to state when only Port moved.
@@ -90,6 +85,10 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 		plan.Config = state.Config
 	}
 
+	// Validate the normalized plan (including inherited appSpec), then always
+	// persist it. Skipping Plan.Set on validation failure leaves Terraform with
+	// an inconsistent planned spec and surfaces a spurious provider bug.
+	r.validateSpecAtPlan(ctx, &plan, &resp.Diagnostics)
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
 }
 

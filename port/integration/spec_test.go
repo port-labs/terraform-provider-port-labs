@@ -95,6 +95,23 @@ func TestValidateIntegrationModel_OnPremAllowsEmptySpec(t *testing.T) {
 	assert.NoError(t, validateIntegrationModel(state))
 }
 
+func TestValidateIntegrationConfig_SaasAllowsMissingSpec(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:   types.StringValue("pagerduty-prod"),
+		InstallationType: types.StringValue(consts.InstallationTypeSaas),
+	}
+	assert.NoError(t, validateIntegrationConfig(state))
+}
+
+func TestValidateIntegrationConfig_RejectsInvalidSpecJSON(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:   types.StringValue("pagerduty-prod"),
+		InstallationType: types.StringValue(consts.InstallationTypeSaas),
+		Spec:             types.StringValue(`{not-json`),
+	}
+	assert.ErrorContains(t, validateIntegrationConfig(state), "invalid spec JSON")
+}
+
 func TestParseSpecFromConfig_OmitsUnknownSpecSections(t *testing.T) {
 	spec, err := parseSpecFromConfig(types.StringValue(
 		`{"integrationSpec":{"token":"x"},"appSpec":{"liveEventsEnabled":true},"systemSpec":{"size":"M"}}`,

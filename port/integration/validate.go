@@ -15,7 +15,7 @@ func (r *IntegrationResource) ValidateConfig(ctx context.Context, req resource.V
 		return
 	}
 
-	if err := validateIntegrationModel(&model); err != nil {
+	if err := validateIntegrationConfig(&model); err != nil {
 		resp.Diagnostics.AddError("invalid integration configuration", err.Error())
 	}
 }

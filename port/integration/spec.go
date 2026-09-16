@@ -27,11 +27,10 @@ func parseSpecFromConfig(raw types.String) (*cli.IntegrationClientSpec, error) {
 	return &spec, nil
 }
 
-func validateIntegrationModel(m *IntegrationModel) error {
-	if err := validateSaasSpec(m); err != nil {
-		return err
-	}
-
+// validateIntegrationConfig checks static configuration rules that apply even
+// when the resource is being destroyed. Keep this limited to issues that are
+// always invalid in HCL; defer SaaS spec requirements to ModifyPlan/CRUD.
+func validateIntegrationConfig(m *IntegrationModel) error {
 	if !m.isSaas() && specIsConfigured(m.Spec) {
 		return fmt.Errorf(
 			"spec is only supported when installation_type is %q",
@@ -39,6 +38,22 @@ func validateIntegrationModel(m *IntegrationModel) error {
 		)
 	}
 
+	if specIsConfigured(m.Spec) {
+		if _, err := parseSpecFromConfig(m.Spec); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func validateIntegrationModel(m *IntegrationModel) error {
+	if err := validateIntegrationConfig(m); err != nil {
+		return err
+	}
+	if err := validateSaasSpec(m); err != nil {
+		return err
+	}
 	return nil
 }
 

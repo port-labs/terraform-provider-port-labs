@@ -15,8 +15,7 @@ const (
 )
 
 const (
-	ValidateIntegrationSpecModeFull    = "full"
-	ValidateIntegrationSpecModeAppSpec = "appSpec"
+	ValidateIntegrationSpecModeFull = "full"
 )
 
 const (

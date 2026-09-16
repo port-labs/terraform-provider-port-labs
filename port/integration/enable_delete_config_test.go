@@ -1,9 +1,11 @@
 package integration
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -67,4 +69,37 @@ func TestIntegrationToPortBody_enableDeleteOnResource(t *testing.T) {
 	assert.Equal(t, "application", applicationResource["kind"])
 	_, hasEnableDelete := applicationResource["enableDelete"]
 	assert.False(t, hasEnableDelete)
+}
+
+func TestRefreshIntegrationConfig_preservesEnableDelete(t *testing.T) {
+	preferredConfig := `{
+		"entityDeletionThreshold": 1,
+		"resources": [
+			{
+				"kind": "namespace",
+				"enableDelete": false,
+				"selector": {"query": "true"},
+				"port": {
+					"entity": {
+						"mappings": [{
+							"identifier": ".metadata.uid",
+							"title": ".metadata.name",
+							"blueprint": "'namespace'"
+						}]
+					}
+				}
+			}
+		]
+	}`
+
+	var apiConfig map[string]interface{}
+	require.NoError(t, json.Unmarshal([]byte(preferredConfig), &apiConfig))
+
+	got, err := utils.GoObjectToTerraformStringPreferExisting(
+		types.StringValue(preferredConfig),
+		apiConfig,
+		false,
+	)
+	require.NoError(t, err)
+	assert.Equal(t, types.StringValue(preferredConfig), got)
 }

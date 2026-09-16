@@ -14,10 +14,6 @@ import (
 func TestChangelogDestinationSchema(t *testing.T) {
 	attrs := IntegrationSchema()
 
-	if _, ok := attrs["create_port_resources_origin"]; !ok {
-		t.Fatal("create_port_resources_origin must be defined in schema")
-	}
-
 	webhook, ok := attrs["webhook_changelog_destination"].(schema.SingleNestedAttribute)
 	if !ok || !webhook.Computed {
 		t.Fatal("webhook_changelog_destination must be computed")

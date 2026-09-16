@@ -1,5 +1,0 @@
-{
-  "terraform.languageServer.env": {
-    "TF_CLI_CONFIG_FILE": "${env:HOME}/.terraform.d/port-labs-dev.rc"
-  }
-}

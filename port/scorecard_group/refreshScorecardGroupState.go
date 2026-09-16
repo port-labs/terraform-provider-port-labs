@@ -60,19 +60,19 @@ func propertiesFromAPIForRead(stateProperties types.String, apiProperties map[st
 	return properties
 }
 
-func syncPropertiesState(state *ScorecardGroupModel, apiProperties map[string]any, jsonEscapeHTML bool, syncFromAPI bool) error {
-	if state.Properties.IsNull() || state.Properties.IsUnknown() {
+func syncOptionalJSONProperty(stateProperty *types.String, apiProperties map[string]any, jsonEscapeHTML bool, syncFromAPI bool, fieldName string) error {
+	if stateProperty.IsNull() || stateProperty.IsUnknown() {
 		return nil
 	}
 
-	apiState := propertiesFromAPIForRead(state.Properties, apiProperties, jsonEscapeHTML)
+	apiState := propertiesFromAPIForRead(*stateProperty, apiProperties, jsonEscapeHTML)
 	if syncFromAPI {
-		state.Properties = apiState
+		*stateProperty = apiState
 		return nil
 	}
 
 	equal, err := utils.JSONStringsSemanticallyEqual(
-		state.Properties.ValueString(),
+		stateProperty.ValueString(),
 		apiState.ValueString(),
 		jsonEscapeHTML,
 	)
@@ -83,10 +83,11 @@ func syncPropertiesState(state *ScorecardGroupModel, apiProperties map[string]an
 		return nil
 	}
 
-	configured := state.Properties.ValueString()
-	state.Properties = apiState
+	configured := stateProperty.ValueString()
+	*stateProperty = apiState
 	return fmt.Errorf(
-		"properties were not applied by the API: configured %s, API returned %s",
+		"%s were not applied by the API: configured %s, API returned %s",
+		fieldName,
 		configured,
 		apiState.ValueString(),
 	)
@@ -306,7 +307,10 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	}
 
 	jsonEscapeHTML := r.jsonEscapeHTML()
-	if err := syncPropertiesState(state, group.Properties, jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+	if err := syncOptionalJSONProperty(&state.GroupProperties, group.GroupProperties, jsonEscapeHTML, syncPropertiesFromAPI, "group_properties"); err != nil {
+		return err
+	}
+	if err := syncOptionalJSONProperty(&state.ScorecardProperties, group.ScorecardProperties, jsonEscapeHTML, syncPropertiesFromAPI, "scorecard_properties"); err != nil {
 		return err
 	}
 	switch {

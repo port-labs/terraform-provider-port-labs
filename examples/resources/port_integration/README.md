@@ -13,6 +13,4 @@ Each integration type has its own directory. Subdirectories represent supported 
 | Jira | API token | [`jira/api-token/`](./jira/api-token/) |
 | GitLab v2 | Personal access token | [`gitlab-v2/personal-access-token/`](./gitlab-v2/personal-access-token/) |
 
-Secret naming convention (SaaS): `_{INSTALLATION_ID}_{INTEGRATION_TYPE}_{PROPERTY}` in `SCREAMING_SNAKE_CASE` — matches the Port UI `generateSecretName()`.
-
 SaaS integrations: create without `config` first, then add `config` on a subsequent apply to override default mappings.

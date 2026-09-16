@@ -14,12 +14,12 @@ locals {
 }
 
 resource "port_organization_secret" "jira_token" {
-  secret_name  = "_${upper(replace("${local.installation_id}_${local.integration_type}_atlassian_user_token", "-", "_"))}"
+  secret_name  = "jira_token"
   secret_value = var.jira_token
 }
 
 resource "port_organization_secret" "jira_email" {
-  secret_name  = "_${upper(replace("${local.installation_id}_${local.integration_type}_atlassian_user_email", "-", "_"))}"
+  secret_name  = "jira_email"
   secret_value = var.jira_email
 }
 

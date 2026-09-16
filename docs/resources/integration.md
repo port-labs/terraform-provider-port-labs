@@ -14,9 +14,6 @@ description: |-
   SaaS integrations additionally provision asynchronously (Creating → Running) via Ocean/Kafka. OnPrem create/update/delete are synchronous.
   SaaS example — Step 1: Create the integration
   
-  # Secret naming convention: _{INSTALLATION_ID}_{INTEGRATION_TYPE}_{PROPERTY} in SCREAMING_SNAKE_CASE.
-  # This matches the frontend's generateSecretName() so Ocean can resolve the secret at runtime.
-  #
   # Each integration type has its own spec fields — check the integration's .port/spec.json
   # for the list of configurations (name, type, sensitive, dependencies, etc.).
   locals {
@@ -25,7 +22,7 @@ description: |-
   }
   
   resource "port_organization_secret" "github_token" {
-    secret_name  = "_${upper(replace("${local.github_installation_id}_${local.github_type}_github_token", "-", "_"))}"
+    secret_name  = "github_token"
     secret_value = var.github_token
   }
   
@@ -174,9 +171,6 @@ SaaS integrations additionally provision asynchronously (`Creating` → `Running
 ## SaaS example — Step 1: Create the integration
 
 ```hcl
-# Secret naming convention: _{INSTALLATION_ID}_{INTEGRATION_TYPE}_{PROPERTY} in SCREAMING_SNAKE_CASE.
-# This matches the frontend's generateSecretName() so Ocean can resolve the secret at runtime.
-#
 # Each integration type has its own spec fields — check the integration's .port/spec.json
 # for the list of configurations (name, type, sensitive, dependencies, etc.).
 locals {
@@ -185,7 +179,7 @@ locals {
 }
 
 resource "port_organization_secret" "github_token" {
-  secret_name  = "_${upper(replace("${local.github_installation_id}_${local.github_type}_github_token", "-", "_"))}"
+  secret_name  = "github_token"
   secret_value = var.github_token
 }
 

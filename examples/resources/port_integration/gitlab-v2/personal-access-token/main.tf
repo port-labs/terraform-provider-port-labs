@@ -9,7 +9,7 @@ locals {
 }
 
 resource "port_organization_secret" "gitlab_token" {
-  secret_name  = "_${upper(replace("${local.installation_id}_${local.integration_type}_gitlab_token", "-", "_"))}"
+  secret_name  = "gitlab_token"
   secret_value = var.gitlab_token
 }
 

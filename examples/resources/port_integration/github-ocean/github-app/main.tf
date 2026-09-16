@@ -10,7 +10,7 @@ locals {
 }
 
 resource "port_organization_secret" "github_app_private_key" {
-  secret_name  = "_${upper(replace("${local.installation_id}_${local.integration_type}_github_app_private_key", "-", "_"))}"
+  secret_name  = "github_app_private_key"
   secret_value = var.github_app_private_key
 }
 

@@ -9,7 +9,7 @@ locals {
 }
 
 resource "port_organization_secret" "ado_pat" {
-  secret_name  = "_${upper(replace("${local.installation_id}_${local.integration_type}_personal_access_token", "-", "_"))}"
+  secret_name  = "ado_pat"
   secret_value = var.ado_pat
 }
 

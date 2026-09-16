@@ -9,7 +9,7 @@ locals {
 }
 
 resource "port_organization_secret" "ado_client_secret" {
-  secret_name  = "_${upper(replace("${local.installation_id}_${local.integration_type}_client_secret", "-", "_"))}"
+  secret_name  = "ado_client_secret"
   secret_value = var.ado_client_secret
 }
 

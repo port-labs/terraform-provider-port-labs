@@ -61,6 +61,19 @@ func propertiesFromAPIForRead(stateProperties types.String, apiProperties map[st
 }
 
 func syncPropertiesState(state *ScorecardGroupModel, apiProperties map[string]any, jsonEscapeHTML bool, syncFromAPI bool) error {
+	if syncFromAPI && (state.Properties.IsNull() || state.Properties.IsUnknown()) {
+		if len(apiProperties) == 0 {
+			state.Properties = types.StringNull()
+			return nil
+		}
+		properties, err := utils.GoObjectToTerraformString(apiProperties, jsonEscapeHTML)
+		if err != nil {
+			return err
+		}
+		state.Properties = properties
+		return nil
+	}
+
 	if state.Properties.IsNull() || state.Properties.IsUnknown() {
 		return nil
 	}
@@ -272,7 +285,7 @@ func refreshSharedRulesState(state *ScorecardGroupModel, group *cli.ScorecardGro
 	}
 }
 
-func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context, state *ScorecardGroupModel, group *cli.ScorecardGroup, syncPropertiesFromAPI bool) error {
+func refreshScorecardGroupModel(state *ScorecardGroupModel, group *cli.ScorecardGroup, jsonEscapeHTML bool, syncPropertiesFromAPI bool) error {
 	state.ID = types.StringValue(group.Identifier)
 	state.Identifier = types.StringValue(group.Identifier)
 	state.Title = types.StringValue(group.Title)
@@ -305,7 +318,6 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 		}
 	}
 
-	jsonEscapeHTML := r.jsonEscapeHTML()
 	if err := syncPropertiesState(state, group.Properties, jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
 		return err
 	}
@@ -321,4 +333,8 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 		refreshSharedRulesState(state, group, jsonEscapeHTML)
 	}
 	return nil
+}
+
+func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context, state *ScorecardGroupModel, group *cli.ScorecardGroup, syncPropertiesFromAPI bool) error {
+	return refreshScorecardGroupModel(state, group, r.jsonEscapeHTML(), syncPropertiesFromAPI)
 }

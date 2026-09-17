@@ -88,11 +88,11 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 				Optional:            true,
 			},
 			"group_relations": schema.StringAttribute{
-				MarkdownDescription: "Additional `_scorecard_group` blueprint relations applied to the scorecard group entity, as a JSON encoded string. Relation keys must match custom relations you added to the `_scorecard_group` blueprint. Values are related entity identifiers (string for single-relations, array for many-relations).",
+				MarkdownDescription: "Additional `_scorecard_group` blueprint relations applied to the scorecard group entity, as a JSON encoded string. Relation keys must match custom relations you added to the `_scorecard_group` blueprint. Values are related entity identifiers (string for single-relations, array for many-relations). Use JSON `null` for a key to clear that relation on update.",
 				Optional:            true,
 			},
 			"scorecard_relations": schema.StringAttribute{
-				MarkdownDescription: "Additional `_scorecard` blueprint relations applied to every member scorecard in the group, as a JSON encoded string. Relation keys must match custom relations you added to the `_scorecard` blueprint. Values are related entity identifiers (string for single-relations, array for many-relations). The orchestration-managed `group` relation is set automatically and cannot be overridden here.",
+				MarkdownDescription: "Additional `_scorecard` blueprint relations applied to every member scorecard in the group, as a JSON encoded string. Relation keys must match custom relations you added to the `_scorecard` blueprint. Values are related entity identifiers (string for single-relations, array for many-relations). The orchestration-managed `group` relation is set automatically and cannot be overridden here. Use JSON `null` for a key to clear that relation on update.",
 				Optional:            true,
 			},
 			"blueprints": schema.SetAttribute{

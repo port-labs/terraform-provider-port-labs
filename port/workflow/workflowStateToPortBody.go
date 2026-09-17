@@ -3,6 +3,7 @@ package workflow
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -107,6 +108,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 			Type:                t.Type.ValueString(),
 			BlueprintIdentifier: t.BlueprintIdentifier.ValueString(),
 			PropertyIdentifier:  t.PropertyIdentifier.ValueStringPointer(),
+			NextExpireAt:        optionalTrimmedStringPointer(t.NextExpireAt),
 		}
 
 		if t.Condition != nil {
@@ -570,6 +572,19 @@ func connectionsToPortBody(connections []ConnectionModel) []cli.WorkflowConnecti
 		})
 	}
 	return result
+}
+
+func optionalTrimmedStringPointer(value types.String) *string {
+	if value.IsNull() {
+		return nil
+	}
+
+	trimmed := strings.TrimSpace(value.ValueString())
+	if trimmed == "" {
+		return nil
+	}
+
+	return &trimmed
 }
 
 func jsonStringToAny(value types.String) (any, error) {

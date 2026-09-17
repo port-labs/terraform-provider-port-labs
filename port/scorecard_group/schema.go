@@ -79,7 +79,11 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 					Attributes: scorecard.LevelSchema(),
 				},
 			},
-			"properties": schema.StringAttribute{
+			"group_properties": schema.StringAttribute{
+				MarkdownDescription: "Additional `_scorecard_group` blueprint properties applied to the scorecard group entity, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard_group` blueprint.",
+				Optional:            true,
+			},
+			"scorecard_properties": schema.StringAttribute{
 				MarkdownDescription: "Additional `_scorecard` blueprint properties applied to every member scorecard in the group, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint.",
 				Optional:            true,
 			},
@@ -170,11 +174,23 @@ A scorecard group can be configured in one of two modes:
 
 See the [Port documentation](https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/) for more information about scorecards.
 
-` + "`properties`" + ` sets ` + "`_scorecard`" + ` blueprint property values on every member scorecard in the group. Define the property schema on the ` + "`_scorecard`" + ` system blueprint first (for example with ` + "`port_system_blueprint`" + `), then reference those keys in ` + "`jsonencode({...})`" + `. Use ` + "`depends_on`" + ` so the scorecard group is created only after the blueprint properties exist.
+` + "`group_properties`" + ` sets ` + "`_scorecard_group`" + ` blueprint property values on the scorecard group entity. ` + "`scorecard_properties`" + ` sets ` + "`_scorecard`" + ` blueprint property values on every member scorecard in the group. Define the property schema on the corresponding system blueprint first (for example with ` + "`port_system_blueprint`" + `), then reference those keys in ` + "`jsonencode({...})`" + `. Use ` + "`depends_on`" + ` so the scorecard group is created only after the blueprint properties exist.
 
 ## Example Usage (shared rules)
 
 ` + "```hcl" + `
+
+resource "port_system_blueprint" "scorecard_group" {
+  identifier = "_scorecard_group"
+  properties = {
+    string_props = {
+      category = {
+        type  = "string"
+        title = "Category"
+      }
+    }
+  }
+}
 
 resource "port_system_blueprint" "scorecard" {
   identifier = "_scorecard"
@@ -201,7 +217,10 @@ resource "port_scorecard_group" "readiness" {
     port_blueprint.microservice.identifier,
     port_blueprint.database.identifier,
   ]
-  properties = jsonencode({
+  group_properties = jsonencode({
+    category = "production"
+  })
+  scorecard_properties = jsonencode({
     owner    = "platform-team"
     priority = 1
   })
@@ -235,7 +254,10 @@ resource "port_scorecard_group" "readiness" {
       })]
     }
   }
-  depends_on = [port_system_blueprint.scorecard]
+  depends_on = [
+    port_system_blueprint.scorecard_group,
+    port_system_blueprint.scorecard,
+  ]
 }
 
 ` + "```" + `
@@ -259,7 +281,7 @@ resource "port_system_blueprint" "scorecard" {
 resource "port_scorecard_group" "readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
-  properties = jsonencode({
+  scorecard_properties = jsonencode({
     owner = "platform-team"
   })
   scorecards = {

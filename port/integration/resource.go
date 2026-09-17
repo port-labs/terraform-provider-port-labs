@@ -75,8 +75,9 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 
 	applyWriteResult(plan, created, created.InstallationId)
 
-	if plan.isSaas() {
-		r.awaitInfra(ctx, plan, created.InstallationId, "created", true, &resp.Diagnostics)
+	waitReady, waitProvisioned := createAwaitParams(plan)
+	if waitReady || waitProvisioned {
+		r.awaitInfra(ctx, plan, created.InstallationId, "created", waitReady, waitProvisioned, &resp.Diagnostics)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -137,7 +138,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	applyWriteResult(plan, updated, integrationIdentifier)
 
 	if plan.isSaas() {
-		r.awaitInfra(ctx, plan, integrationIdentifier, "updated", false, &resp.Diagnostics)
+		r.awaitInfra(ctx, plan, integrationIdentifier, "updated", true, false, &resp.Diagnostics)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -168,45 +169,48 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 	resp.State.RemoveResource(ctx)
 }
 
-// awaitInfra waits for Port Hosted integration operation (and resource provisioning on
-// create) to finish, then syncs status and version into state.
-func (r *IntegrationResource) awaitInfra(ctx context.Context, model *IntegrationModel, installationId, verb string, waitForProvisioning bool, diags *diag.Diagnostics) {
+func createAwaitParams(plan *IntegrationModel) (waitReady, waitProvisioned bool) {
+	return plan.isSaas(), true
+}
+
+// awaitInfra waits for integration operation and/or default resource provisioning to
+// finish, then syncs status and version into state when ready polling succeeds.
+func (r *IntegrationResource) awaitInfra(ctx context.Context, model *IntegrationModel, installationId, verb string, waitReady, waitProvisioned bool, diags *diag.Diagnostics) {
 	var ready *cli.Integration
 	var readyErr error
 	var provisionedErr error
 
-	if waitForProvisioning {
-		var wg sync.WaitGroup
-		wg.Add(2)
-		go func() {
+	var wg sync.WaitGroup
+	if waitReady {
+		wg.Go(func() {
 			ready, readyErr = r.portClient.WaitForIntegrationReady(ctx, installationId)
-			wg.Done()
-		}()
-		go func() {
+		})
+	}
+	if waitProvisioned {
+		wg.Go(func() {
 			_, provisionedErr = r.portClient.WaitForIntegrationProvisioned(ctx, installationId)
-			wg.Done()
-		}()
-		wg.Wait()
-	} else {
-		ready, readyErr = r.portClient.WaitForIntegrationReady(ctx, installationId)
+		})
+	}
+	wg.Wait()
+
+	if waitReady {
+		switch {
+		case readyErr != nil:
+			diags.AddWarning(
+				fmt.Sprintf("integration %s but operation did not complete", verb),
+				readyErr.Error()+". The integration has been saved to state. Check the Port UI or run 'terraform plan' to inspect.",
+			)
+		case ready != nil:
+			if ready.StatusInfo != nil {
+				model.Status = types.StringValue(ready.StatusInfo.IntegrationStatus.Status)
+			}
+			if ready.Version != nil {
+				model.Version = types.StringPointerValue(ready.Version)
+			}
+		}
 	}
 
-	switch {
-	case readyErr != nil:
-		diags.AddWarning(
-			fmt.Sprintf("integration %s but operation did not complete", verb),
-			readyErr.Error()+". The integration has been saved to state. Check the Port UI or run 'terraform plan' to inspect.",
-		)
-	case ready != nil:
-		if ready.StatusInfo != nil {
-			model.Status = types.StringValue(ready.StatusInfo.IntegrationStatus.Status)
-		}
-		if ready.Version != nil {
-			model.Version = types.StringPointerValue(ready.Version)
-		}
-	}
-
-	if waitForProvisioning && provisionedErr != nil {
+	if waitProvisioned && provisionedErr != nil {
 		diags.AddWarning(
 			fmt.Sprintf("integration %s but resource provisioning did not complete", verb),
 			provisionedErr.Error()+". Default mappings may not be available yet. Run 'terraform apply' again or check the Port UI.",

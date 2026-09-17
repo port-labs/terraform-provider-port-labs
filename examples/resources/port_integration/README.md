@@ -15,4 +15,8 @@ Each integration type has its own directory. Subdirectories represent supported 
 | Linear | API key | [`linear/api-key/`](./linear/api-key/) |
 | GitLab v2 | Personal access token | [`gitlab-v2/personal-access-token/`](./gitlab-v2/personal-access-token/) |
 
+### Port Hosted `appSpec` and create options
+
+See [`app-spec/`](./app-spec/) for `liveEventsEnabled`, `actionsProcessingEnabled`, `incrementalSyncEnabled`, `incrementalSyncInterval`, `scheduledResyncInterval`, and `create_port_resources_origin` examples.
+
 Port Hosted integrations: create without `config` first, then add `config` on a subsequent apply to override default mappings.

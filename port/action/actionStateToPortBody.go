@@ -57,6 +57,14 @@ func convertRuleToCliRule(rule Rule) cli.DatasetRule {
 			prop := rule.Property.ValueString()
 			cliRule.Property = &prop
 		}
+		if !rule.Relation.IsNull() {
+			relation := rule.Relation.ValueString()
+			cliRule.Relation = &relation
+		}
+		if !rule.Direction.IsNull() {
+			direction := rule.Direction.ValueString()
+			cliRule.Direction = &direction
+		}
 	}
 
 	return cliRule

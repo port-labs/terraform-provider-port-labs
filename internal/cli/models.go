@@ -126,6 +126,8 @@ type (
 		// Leaf rule fields (property filters)
 		Blueprint *string       `json:"blueprint,omitempty"`
 		Property  *string       `json:"property,omitempty"`
+		Relation  *string       `json:"relation,omitempty"`
+		Direction *string       `json:"direction,omitempty"`
 		Operator  string        `json:"operator,omitempty"`
 		Value     *DatasetValue `json:"value,omitempty"`
 		// Group rule fields (logical combinators) - for nested rules

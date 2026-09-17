@@ -580,7 +580,7 @@ func TestUserInputDatasetRelationRuleRoundTrip(t *testing.T) {
 					Combinator: "and",
 					Rules: []cli.WorkflowDatasetRule{
 						{Property: strPtr("language"), Operator: "isNotEmpty"},
-						{Relation: strPtr("service"), Operator: "isNotEmpty"},
+						{Relation: strPtr("service"), Direction: strPtr("upstream"), Operator: "isNotEmpty"},
 						{
 							Combinator: strPtr("or"),
 							Rules: []cli.WorkflowDatasetRule{
@@ -602,15 +602,17 @@ func TestUserInputDatasetRelationRuleRoundTrip(t *testing.T) {
 	assert.Nil(t, dataset.Rules[0].Relation)
 
 	assert.Equal(t, strPtr("service"), dataset.Rules[1].Relation)
+	assert.Equal(t, strPtr("upstream"), dataset.Rules[1].Direction)
 	assert.Nil(t, dataset.Rules[1].Property)
 	assert.Equal(t, "isNotEmpty", dataset.Rules[1].Operator)
 
 	require.Len(t, dataset.Rules[2].Rules, 2)
 	assert.Equal(t, strPtr("team"), dataset.Rules[2].Rules[0].Relation)
+	assert.Nil(t, dataset.Rules[2].Rules[0].Direction)
 
 	encoded, err := json.Marshal(dataset.Rules[1])
 	require.NoError(t, err)
-	assert.JSONEq(t, `{"relation":"service","operator":"isNotEmpty"}`, string(encoded))
+	assert.JSONEq(t, `{"relation":"service","direction":"upstream","operator":"isNotEmpty"}`, string(encoded))
 }
 
 func TestUserInputNumberBoundsAndUniqueItemsRoundTrip(t *testing.T) {

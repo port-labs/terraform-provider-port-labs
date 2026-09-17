@@ -2,12 +2,25 @@ package search
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
+
+func isUnionArrayProperty(prop cli.BlueprintProperty) bool {
+	if prop.Union != nil {
+		return *prop.Union
+	}
+
+	if value, ok := prop.UnknownFields["union"].(bool); ok {
+		return value
+	}
+
+	return false
+}
 
 func (d *SearchDataSource) refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayProperties map[string][]interface{}, blueprint *cli.Blueprint) {
 	mapStringItems := make(map[string][]*string)
@@ -24,6 +37,10 @@ func (d *SearchDataSource) refreshArrayEntityState(ctx context.Context, state *E
 		}
 	}
 	for k, t := range arrayProperties {
+		prop, ok := blueprint.Schema.Properties[k]
+		if ok && isUnionArrayProperty(prop) {
+			continue
+		}
 
 		switch blueprint.Schema.Properties[k].Items["type"] {
 		case "string":
@@ -225,5 +242,33 @@ func (d *SearchDataSource) refreshEntityState(ctx context.Context, e *cli.Entity
 		refreshScorecardsEntityState(state, e)
 	}
 
+	if err := refreshPropertySourcesEntityState(ctx, state, e); err != nil {
+		state.PropertySources = types.MapNull(types.StringType)
+	}
+
 	return state
+}
+
+func refreshPropertySourcesEntityState(ctx context.Context, state *EntityModel, e *cli.Entity) error {
+	if len(e.PropertySources) == 0 {
+		state.PropertySources = types.MapNull(types.StringType)
+		return nil
+	}
+
+	propertySources := make(map[string]string, len(e.PropertySources))
+	for propertyIdentifier, sources := range e.PropertySources {
+		encodedSources, err := json.Marshal(sources)
+		if err != nil {
+			return fmt.Errorf("failed to encode property sources for %q: %w", propertyIdentifier, err)
+		}
+		propertySources[propertyIdentifier] = string(encodedSources)
+	}
+
+	propertySourcesState, diags := types.MapValueFrom(ctx, types.StringType, propertySources)
+	if diags.HasError() {
+		return fmt.Errorf("failed to convert property sources to state: %s", diags.Errors()[0].Summary())
+	}
+
+	state.PropertySources = propertySourcesState
+	return nil
 }

@@ -131,6 +131,14 @@ func TestJSONStringsSemanticallyEqual(t *testing.T) {
 		assert.True(t, equal)
 	})
 
+	t.Run("enableMergeEntity key order", func(t *testing.T) {
+		a := `{"enableMergeEntity":true,"resources":[]}`
+		b := `{"resources":[],"enableMergeEntity":true}`
+		equal, err := JSONStringsSemanticallyEqual(a, b, false)
+		assert.NoError(t, err)
+		assert.True(t, equal)
+	})
+
 	t.Run("nested key reordering", func(t *testing.T) {
 		a := `{"outer":{"zebra":1,"alpha":2}}`
 		b := `{"outer":{"alpha":2,"zebra":1}}`

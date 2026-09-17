@@ -1,6 +1,10 @@
 package integration
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-framework/types"
+)
 
 func TestInstallationIdPattern(t *testing.T) {
 	valid := []string{
@@ -33,5 +37,23 @@ func TestInstallationIdPattern(t *testing.T) {
 		if installationIdRegex.MatchString(id) {
 			t.Errorf("expected %q not to match installation ID pattern", id)
 		}
+	}
+}
+
+func TestIntegrationToPortBodyPassesEnableMergeEntityInConfig(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId: types.StringValue("my-integration"),
+		Config:         types.StringValue(`{"enableMergeEntity":false,"resources":[]}`),
+	}
+
+	body, err := integrationToPortBody(state)
+	if err != nil {
+		t.Fatalf("integrationToPortBody: %v", err)
+	}
+	if body.Config == nil {
+		t.Fatal("expected config to be set")
+	}
+	if (*body.Config)["enableMergeEntity"] != false {
+		t.Fatalf("enableMergeEntity = %v, want false", (*body.Config)["enableMergeEntity"])
 	}
 }

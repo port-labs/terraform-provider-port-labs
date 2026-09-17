@@ -15,7 +15,8 @@ description: |-
   	title                 = "My Custom Integration"
   	config = jsonencode({
   		createMissingRelatedEntitiesboolean = true
-  		deleteDependentEntities = true,
+  		deleteDependentEntities = true
+  		enableMergeEntity = true
   		resources = [{
   			kind = "my-custom-kind"
   			selector = {
@@ -65,7 +66,8 @@ resource "port_integration" "my_custom_integration" {
 	title                 = "My Custom Integration"
 	config = jsonencode({
 		createMissingRelatedEntitiesboolean = true
-		deleteDependentEntities = true,
+		deleteDependentEntities = true
+		enableMergeEntity = true
 		resources = [{
 			kind = "my-custom-kind"
 			selector = {
@@ -113,7 +115,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 ### Optional
 
-- `config` (String) Integration Config Raw JSON string (use `jsonencode`)
+- `config` (String) Integration config as a raw JSON string (use `jsonencode`). Advanced toggles include `createMissingRelatedEntities`, `deleteDependentEntities`, and `enableMergeEntity` (defaults to `true` when omitted, matching Ocean). When merge is enabled, mapped properties or relations that resolve to null are omitted from upserts so existing catalog values are preserved.
 - `installation_app_type` (String) Deprecated. The integrated tool name for catalog integration types (e.g. `GitHub`, `GitLab`, `K8S EXPORTER`). Custom integrations can omit this field. Cannot be changed after creation.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `title` (String)

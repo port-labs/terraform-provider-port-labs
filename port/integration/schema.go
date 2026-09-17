@@ -39,7 +39,7 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Optional:            true,
 		},
 		"config": schema.StringAttribute{
-			MarkdownDescription: "Integration Config Raw JSON string (use `jsonencode`)",
+			MarkdownDescription: "Integration config as a raw JSON string (use `jsonencode`). Advanced toggles include `createMissingRelatedEntities`, `deleteDependentEntities`, and `enableMergeEntity` (defaults to `true` when omitted, matching Ocean). When merge is enabled, mapped properties or relations that resolve to null are omitted from upserts so existing catalog values are preserved.",
 			Optional:            true,
 		},
 		"webhook_changelog_destination": schema.SingleNestedAttribute{
@@ -93,7 +93,8 @@ resource "port_integration" "my_custom_integration" {
 	title                 = "My Custom Integration"
 	config = jsonencode({
 		createMissingRelatedEntitiesboolean = true
-		deleteDependentEntities = true,
+		deleteDependentEntities = true
+		enableMergeEntity = true
 		resources = [{
 			kind = "my-custom-kind"
 			selector = {

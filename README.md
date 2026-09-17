@@ -13,7 +13,7 @@ Port is the Developer Platform meant to supercharge your DevOps and Developers, 
 
 > **⚠️ Deprecation Notice**  
 > Version 1.x of the Port Terraform Provider is now deprecated.  
-> Please upgrade to version 2.x for continued support, new features, and improvements.  
+> Please upgrade to version 2.x for continued support, new features, and more improvements.  
 > Refer to the [upgrade instructions](https://github.com/port-labs/terraform-provider-port-labs/releases/tag/v2.0.0) to upgrade to version 2.x.
 
 ## Documentation

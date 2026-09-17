@@ -39,17 +39,6 @@ func datasetRuleSchema(depth int) map[string]schema.Attribute {
 			MarkdownDescription: "The property identifier of the rule",
 			Optional:            true,
 		},
-		"relation": schema.StringAttribute{
-			MarkdownDescription: "The relation identifier of the rule. Use instead of `property` to filter on a relation.",
-			Optional:            true,
-			Validators: []validator.String{
-				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("property")),
-			},
-		},
-		"direction": schema.StringAttribute{
-			MarkdownDescription: "The direction of the relation the rule filters on. Set alongside `relation`.",
-			Optional:            true,
-		},
 		"operator": schema.StringAttribute{
 			MarkdownDescription: "The operator of the rule. Required for leaf rules, should not be set for group rules.",
 			Optional:            true, // Changed from Required - group rules don't have operator

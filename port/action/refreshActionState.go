@@ -226,18 +226,14 @@ func convertCliRuleToRule(v cli.DatasetRule) Rule {
 				rule.Rules = append(rule.Rules, convertCliRuleToRule(nestedRule))
 			}
 		}
-		// Group rules don't have operator/property/relation/direction/blueprint/value
+		// Group rules don't have operator/property/blueprint/value
 		rule.Operator = types.StringNull()
 		rule.Blueprint = types.StringNull()
 		rule.Property = types.StringNull()
-		rule.Relation = types.StringNull()
-		rule.Direction = types.StringNull()
 	} else {
 		// Leaf rule - has operator
 		rule.Blueprint = flex.GoStringToFramework(v.Blueprint)
 		rule.Property = flex.GoStringToFramework(v.Property)
-		rule.Relation = flex.GoStringToFramework(v.Relation)
-		rule.Direction = flex.GoStringToFramework(v.Direction)
 		rule.Operator = flex.GoStringToFramework(&v.Operator)
 		rule.Combinator = types.StringNull()
 

@@ -157,6 +157,7 @@ type DatasetRuleModel struct {
 	Blueprint  types.String       `tfsdk:"blueprint"`
 	Property   types.String       `tfsdk:"property"`
 	Relation   types.String       `tfsdk:"relation"`
+	Direction  types.String       `tfsdk:"direction"`
 	Operator   types.String       `tfsdk:"operator"`
 	Value      *ValueModel        `tfsdk:"value"`
 	ValueJson  types.String       `tfsdk:"value_json"`

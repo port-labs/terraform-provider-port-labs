@@ -514,6 +514,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -528,6 +529,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -542,6 +544,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -556,6 +559,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -570,6 +574,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -584,6 +589,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -598,6 +604,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -612,6 +619,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -626,6 +634,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -640,6 +649,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -654,6 +664,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -1099,6 +1110,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -1113,6 +1125,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -1127,6 +1140,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -1141,6 +1155,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -1155,6 +1170,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -1169,6 +1185,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -1183,6 +1200,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -1197,6 +1215,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -1211,6 +1230,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -1225,6 +1245,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
@@ -1239,6 +1260,7 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule.
 - `combinator` (String) How the nested rules of a group rule are combined.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.

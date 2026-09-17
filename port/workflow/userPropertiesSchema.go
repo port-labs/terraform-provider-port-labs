@@ -516,6 +516,10 @@ func datasetRuleSchema(depth int) map[string]schema.Attribute {
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("property")),
 			},
 		},
+		"direction": schema.StringAttribute{
+			MarkdownDescription: "The direction of the relation the rule filters on. Set alongside `relation`.",
+			Optional:            true,
+		},
 		"operator": schema.StringAttribute{
 			MarkdownDescription: "The operator of the rule. Set on filtering rules and left out on group rules.",
 			Optional:            true,

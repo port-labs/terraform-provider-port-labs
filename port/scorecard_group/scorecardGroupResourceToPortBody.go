@@ -4,10 +4,25 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
 )
+
+func assignOptionalJsonMap(field types.String, assign func(map[string]any)) error {
+	if field.IsNull() || field.IsUnknown() {
+		return nil
+	}
+	obj, err := utils.TerraformJsonStringToGoObject(field.ValueStringPointer())
+	if err != nil {
+		return err
+	}
+	if obj != nil {
+		assign(*obj)
+	}
+	return nil
+}
 
 func queryToCLI(q *scorecard.Query) (*cli.Query, error) {
 	if q == nil {
@@ -91,14 +106,17 @@ func scorecardGroupResourceToPortBody(ctx context.Context, state *ScorecardGroup
 		group.Levels = levelsToCLI(state.Levels)
 	}
 
-	if !state.Properties.IsNull() && !state.Properties.IsUnknown() {
-		properties, err := utils.TerraformJsonStringToGoObject(state.Properties.ValueStringPointer())
-		if err != nil {
-			return nil, err
-		}
-		if properties != nil {
-			group.Properties = *properties
-		}
+	if err := assignOptionalJsonMap(state.GroupProperties, func(m map[string]any) { group.GroupProperties = m }); err != nil {
+		return nil, err
+	}
+	if err := assignOptionalJsonMap(state.ScorecardProperties, func(m map[string]any) { group.ScorecardProperties = m }); err != nil {
+		return nil, err
+	}
+	if err := assignOptionalJsonMap(state.GroupRelations, func(m map[string]any) { group.GroupRelations = m }); err != nil {
+		return nil, err
+	}
+	if err := assignOptionalJsonMap(state.ScorecardRelations, func(m map[string]any) { group.ScorecardRelations = m }); err != nil {
+		return nil, err
 	}
 
 	if len(state.Scorecards) > 0 {

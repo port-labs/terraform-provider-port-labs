@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 var _ resource.Resource = &ScorecardGroupResource{}
@@ -29,6 +30,24 @@ func (r *ScorecardGroupResource) Configure(ctx context.Context, req resource.Con
 		return
 	}
 	r.portClient = req.ProviderData.(*cli.PortClient)
+}
+
+func validateScorecardRelations(state *ScorecardGroupModel) error {
+	if state.ScorecardRelations.IsNull() || state.ScorecardRelations.IsUnknown() {
+		return nil
+	}
+
+	relations, err := utils.TerraformJsonStringToGoObject(state.ScorecardRelations.ValueStringPointer())
+	if err != nil {
+		return fmt.Errorf("invalid scorecard_relations JSON: %w", err)
+	}
+	if relations == nil {
+		return nil
+	}
+	if _, ok := (*relations)["group"]; ok {
+		return fmt.Errorf("scorecard_relations cannot include the reserved \"group\" relation; it is managed by Port")
+	}
+	return nil
 }
 
 func validateScorecardGroupConfiguration(state *ScorecardGroupModel) error {
@@ -54,6 +73,10 @@ func validateScorecardGroupConfiguration(state *ScorecardGroupModel) error {
 				return fmt.Errorf("filters key %q must be one of the configured blueprints", blueprintID)
 			}
 		}
+	}
+
+	if err := validateScorecardRelations(state); err != nil {
+		return err
 	}
 
 	return nil
@@ -84,7 +107,7 @@ func (r *ScorecardGroupResource) Create(ctx context.Context, req resource.Create
 	}
 
 	if err := r.refreshScorecardGroupState(ctx, state, createdGroup, false); err != nil {
-		resp.Diagnostics.AddError("scorecard group properties were not applied", err.Error())
+		resp.Diagnostics.AddError("scorecard group extended fields were not applied", err.Error())
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -146,7 +169,7 @@ func (r *ScorecardGroupResource) Update(ctx context.Context, req resource.Update
 	}
 
 	if err := r.refreshScorecardGroupState(ctx, state, updatedGroup, false); err != nil {
-		resp.Diagnostics.AddError("scorecard group properties were not applied", err.Error())
+		resp.Diagnostics.AddError("scorecard group extended fields were not applied", err.Error())
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)

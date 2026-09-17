@@ -15,7 +15,10 @@ type ScorecardGroupModel struct {
 	Identifier types.String              `tfsdk:"identifier"`
 	Title      types.String              `tfsdk:"title"`
 	Levels     []scorecard.Level         `tfsdk:"levels"`
-	Properties types.String              `tfsdk:"properties"`
+	GroupProperties     types.String `tfsdk:"group_properties"`
+	ScorecardProperties types.String `tfsdk:"scorecard_properties"`
+	GroupRelations      types.String `tfsdk:"group_relations"`
+	ScorecardRelations  types.String `tfsdk:"scorecard_relations"`
 	Blueprints []types.String             `tfsdk:"blueprints"`
 	Rules      []scorecard.Rule           `tfsdk:"rules"`
 	Filters    map[string]*scorecard.Query `tfsdk:"filters"`

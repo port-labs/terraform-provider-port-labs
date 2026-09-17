@@ -8,6 +8,23 @@ import (
 
 const FeatureFlagScorecardGroups = "SCORECARD_GROUPS"
 
+func (c *PortClient) ListScorecardGroups(ctx context.Context) ([]ScorecardGroup, error) {
+	pb := &PortBody{}
+	url := "v1/scorecard-groups"
+	resp, err := c.Client.R().
+		SetContext(ctx).
+		SetHeader("Accept", "application/json").
+		SetResult(pb).
+		Get(url)
+	if err != nil {
+		return nil, err
+	}
+	if !pb.OK {
+		return nil, fmt.Errorf("failed to list scorecard groups, got: %s", resp.Body())
+	}
+	return pb.ScorecardGroups, nil
+}
+
 func (c *PortClient) ReadScorecardGroup(ctx context.Context, identifier string) (*ScorecardGroup, int, error) {
 	pb := &PortBody{}
 	url := "v1/scorecard-groups/{scorecard_group_identifier}"
@@ -96,6 +113,50 @@ func (c *PortClient) EnableScorecardGroups(ctx context.Context) error {
 		return fmt.Errorf("failed to enable scorecard groups, got: %s", resp.Body())
 	}
 	c.featureFlags = nil
+	return nil
+}
+
+func (c *PortClient) AddScorecardToGroup(ctx context.Context, groupIdentifier, scorecardIdentifier string, overrideGroup bool) (*ScorecardGroup, error) {
+	url := "v1/scorecard-groups/{scorecard_group_identifier}/scorecards/{scorecard_identifier}"
+	req := c.Client.R().
+		SetContext(ctx).
+		SetPathParam("scorecard_group_identifier", groupIdentifier).
+		SetPathParam("scorecard_identifier", scorecardIdentifier)
+	if overrideGroup {
+		req.SetQueryParam("overrideGroup", "true")
+	}
+	resp, err := req.Post(url)
+	if err != nil {
+		return nil, err
+	}
+	var pb PortBody
+	if err := json.Unmarshal(resp.Body(), &pb); err != nil {
+		return nil, err
+	}
+	if !pb.OK {
+		return nil, fmt.Errorf("failed to add scorecard to group, got: %s", resp.Body())
+	}
+	return &pb.ScorecardGroup, nil
+}
+
+func (c *PortClient) RemoveScorecardFromGroup(ctx context.Context, groupIdentifier, scorecardIdentifier string) error {
+	url := "v1/scorecard-groups/{scorecard_group_identifier}/scorecards/{scorecard_identifier}"
+	resp, err := c.Client.R().
+		SetContext(ctx).
+		SetBody(map[string]any{}).
+		SetPathParam("scorecard_group_identifier", groupIdentifier).
+		SetPathParam("scorecard_identifier", scorecardIdentifier).
+		Delete(url)
+	if err != nil {
+		return err
+	}
+	var pb PortBodyDelete
+	if err := json.Unmarshal(resp.Body(), &pb); err != nil {
+		return err
+	}
+	if !pb.Ok {
+		return fmt.Errorf("failed to remove scorecard from group, got: %s", string(resp.Body()))
+	}
 	return nil
 }
 

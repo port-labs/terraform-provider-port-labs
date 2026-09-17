@@ -708,7 +708,8 @@ type PortBody struct {
 	ActionPermissions    ActionPermissions `json:"permissions"`
 	Webhook              Webhook           `json:"integration"`
 	Scorecard            Scorecard         `json:"Scorecard"`
-	ScorecardGroup       ScorecardGroup    `json:"scorecardGroup"`
+	ScorecardGroup       ScorecardGroup      `json:"scorecardGroup"`
+	ScorecardGroups      []ScorecardGroup    `json:"scorecardGroups"`
 	Team                 PortTeam          `json:"team"`
 	Page                 Page              `json:"page"`
 	MigrationId          string            `json:"migrationId"`

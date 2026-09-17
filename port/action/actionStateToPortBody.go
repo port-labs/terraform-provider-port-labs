@@ -57,6 +57,9 @@ func convertRuleToCliRule(rule Rule) cli.DatasetRule {
 			prop := rule.Property.ValueString()
 			cliRule.Property = &prop
 		}
+		if len(rule.Properties) > 0 {
+			cliRule.Properties = flex.TerraformStringListToGoArray(rule.Properties)
+		}
 	}
 
 	return cliRule

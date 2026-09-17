@@ -62,6 +62,12 @@ resource "port_blueprint" "microservice" {
           }
         }
       }
+      tags = {
+        title              = "Tags"
+        union              = true
+        include_duplicates = true
+        string_items       = {}
+      }
     }
     string_props = {
       name = {

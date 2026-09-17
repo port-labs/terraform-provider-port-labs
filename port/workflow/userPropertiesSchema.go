@@ -19,9 +19,39 @@ var (
 		"multi-line", "date-time", "email", "entity", "team", "user", "url", "markdown", "yaml", "proto",
 	}
 	stringItemFormats = []string{"entity", "team", "user", "date-time", "email", "url", "yaml"}
-	objectFormats     = []string{"labeled-url"}
+	objectFormats     = []string{"labeled-url", "multi-line"}
 	objectItemFormats = []string{"labeled-url"}
 )
+
+func encryptionSchemaAttributes() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"encryption": schema.StringAttribute{
+			MarkdownDescription: "The algorithm to encrypt the property with for server-side encryption. Accepted value: `aes256-gcm`. Cannot be used with `client_side_encryption`.",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.OneOf("aes256-gcm"),
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("client_side_encryption")),
+			},
+		},
+		"client_side_encryption": schema.SingleNestedAttribute{
+			MarkdownDescription: "Client-side encryption configuration for the property. The value will be encrypted on the client side before being sent to Port. Cannot be used with `encryption`.",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"algorithm": schema.StringAttribute{
+					MarkdownDescription: "The encryption algorithm. Accepted value: `client-side`",
+					Required:            true,
+					Validators: []validator.String{
+						stringvalidator.OneOf("client-side"),
+					},
+				},
+				"key": schema.StringAttribute{
+					MarkdownDescription: "The public key (PEM format) to use for encryption",
+					Required:            true,
+				},
+			},
+		},
+	}
+}
 
 func userPropertiesSchema() schema.Attribute {
 	return schema.SingleNestedAttribute{
@@ -186,6 +216,7 @@ func stringPropertySchema() schema.Attribute {
 		},
 	}
 
+	utils.CopyMaps(properties, encryptionSchemaAttributes())
 	utils.CopyMaps(properties, propertyMetadataSchema("string"))
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The string inputs of the form.",
@@ -287,7 +318,7 @@ func objectPropertySchema() schema.Attribute {
 		},
 		"format": schema.StringAttribute{
 			MarkdownDescription: "The format of the object input. `labeled-url` renders a url with a display text. " +
-				"Leave it out for a free form object.",
+				"`multi-line` renders a multi-line text input for secrets. Leave it out for a free form object.",
 			Optional: true,
 			Validators: []validator.String{
 				stringvalidator.OneOf(objectFormats...),
@@ -295,6 +326,7 @@ func objectPropertySchema() schema.Attribute {
 		},
 	}
 
+	utils.CopyMaps(properties, encryptionSchemaAttributes())
 	utils.CopyMaps(properties, propertyMetadataSchema("object"))
 	return schema.MapNestedAttribute{
 		MarkdownDescription: "The object inputs of the form.",
@@ -390,6 +422,24 @@ func arrayPropertySchema() schema.Attribute {
 				"dataset": schema.StringAttribute{
 					MarkdownDescription: "The dataset filtering the entities of the items, as a JSON encoded string.",
 					Optional:            true,
+				},
+				"pattern": schema.StringAttribute{
+					MarkdownDescription: "The regex pattern each item has to match.",
+					Optional:            true,
+				},
+				"min_length": schema.Int64Attribute{
+					MarkdownDescription: "The min length of each item.",
+					Optional:            true,
+					Validators: []validator.Int64{
+						int64validator.AtLeast(1),
+					},
+				},
+				"max_length": schema.Int64Attribute{
+					MarkdownDescription: "The max length of each item.",
+					Optional:            true,
+					Validators: []validator.Int64{
+						int64validator.AtLeast(1),
+					},
 				},
 			},
 		},

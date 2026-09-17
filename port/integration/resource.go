@@ -75,9 +75,11 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 
 	applyWriteResult(plan, created, created.InstallationId)
 
-	waitReady, waitProvisioned := createAwaitParams(plan)
-	if waitReady || waitProvisioned {
-		r.awaitInfra(ctx, plan, created.InstallationId, "created", waitReady, waitProvisioned, &resp.Diagnostics)
+	if plan.isSaas() {
+		// Port Hosted integrations provision asynchronously. This provider does not
+		// deploy Ocean for self-hosted installs, so only SaaS can wait for default
+		// mappings and deployment to finish here.
+		r.awaitInfra(ctx, plan, created.InstallationId, "created", true, true, &resp.Diagnostics)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
@@ -167,10 +169,6 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 	}
 
 	resp.State.RemoveResource(ctx)
-}
-
-func createAwaitParams(plan *IntegrationModel) (waitReady, waitProvisioned bool) {
-	return plan.isSaas(), true
 }
 
 // awaitInfra waits for integration operation and/or default resource provisioning to

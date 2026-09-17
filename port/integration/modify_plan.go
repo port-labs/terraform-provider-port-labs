@@ -9,6 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 )
 
 var _ resource.ResourceWithModifyPlan = &IntegrationResource{}
@@ -93,9 +94,8 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 }
 
 // planSpec overlays the spec sections the configuration declares onto the ones
-// recorded in state. Sections the configuration leaves out — appSpec, which
-// Port fills in during provisioning — are inherited, so editing integrationSpec
-// alone neither shows up as clearing them nor sends a spec that drops them.
+// recorded in state. Sections the configuration leaves out inherit Port defaults
+// from state so partial edits do not clear undeclared keys on apply.
 func planSpec(config, state types.String) types.String {
 	configSections, stateSections := specSections(config), specSections(state)
 	if configSections == nil || stateSections == nil {
@@ -104,6 +104,20 @@ func planSpec(config, state types.String) types.String {
 
 	planned := maps.Clone(stateSections)
 	maps.Copy(planned, configSections)
+
+	if _, configDeclaresIntegrationSpec := configSections["integrationSpec"]; configDeclaresIntegrationSpec {
+		planned["integrationSpec"] = configSections["integrationSpec"]
+	}
+	if _, configDeclaresAppSpec := configSections["appSpec"]; configDeclaresAppSpec {
+		planned["appSpec"] = configSections["appSpec"]
+	} else if inherited, ok := planned["appSpec"]; ok {
+		if filtered := filterServerManagedAppSpecJSON(inherited); len(filtered) > 0 {
+			planned["appSpec"] = filtered
+		} else {
+			delete(planned, "appSpec")
+		}
+	}
+
 	if maps.EqualFunc(planned, stateSections, func(a, b json.RawMessage) bool { return bytes.Equal(a, b) }) {
 		return state
 	}
@@ -113,6 +127,22 @@ func planSpec(config, state types.String) types.String {
 		return config
 	}
 	return types.StringValue(string(encoded))
+}
+
+func filterServerManagedAppSpecJSON(raw json.RawMessage) json.RawMessage {
+	var appSpec map[string]any
+	if err := json.Unmarshal(raw, &appSpec); err != nil {
+		return raw
+	}
+	filtered := mergeSpecSectionImplicit(appSpec, consts.IsServerManagedAppSpecKey)
+	if len(filtered) == 0 {
+		return nil
+	}
+	out, err := json.Marshal(filtered)
+	if err != nil {
+		return raw
+	}
+	return out
 }
 
 func specSections(spec types.String) map[string]json.RawMessage {

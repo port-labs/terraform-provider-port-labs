@@ -2,7 +2,6 @@ package integration
 
 import (
 	"encoding/json"
-	"maps"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -87,29 +86,14 @@ func nullIfUnknown(v types.String) types.String {
 }
 
 // mergeSpec renders Port's spec as JSON, restoring values that Port strips or
-// overwrites: sensitive integrationSpec values (org secret references) and
-// user-provided appSpec fields (e.g. liveEventsEnabled).
+// overwrites. Explicit spec sections keep only keys declared in HCL; omitted
+// sections inherit Port defaults on Read.
 func mergeSpec(state types.String, remote *cli.IntegrationClientSpec, jsonEscapeHTML bool) types.String {
 	prior := priorSpecSections(state)
 
 	merged := make(map[string]any, 2)
-	switch {
-	case remote.IntegrationSpec != nil:
-		merged["integrationSpec"] = withPriorSecrets(remote.IntegrationSpec, prior["integrationSpec"])
-	case prior["integrationSpec"] != nil:
-		merged["integrationSpec"] = prior["integrationSpec"]
-	}
-
-	// Server always returns appSpec. Merge with user's values so fields the
-	// user explicitly set (e.g. liveEventsEnabled) survive a refresh.
-	switch {
-	case remote.AppSpec != nil && prior["appSpec"] != nil:
-		merged["appSpec"] = mergeAppSpec(remote.AppSpec, prior["appSpec"])
-	case remote.AppSpec != nil:
-		merged["appSpec"] = remote.AppSpec
-	case prior["appSpec"] != nil:
-		merged["appSpec"] = prior["appSpec"]
-	}
+	mergeSpecSectionInto(merged, "integrationSpec", remote.IntegrationSpec, prior["integrationSpec"], nil)
+	mergeSpecSectionInto(merged, "appSpec", remote.AppSpec, prior["appSpec"], consts.IsServerManagedAppSpecKey)
 
 	encoded, err := utils.GoObjectToTerraformString(merged, jsonEscapeHTML)
 	if err != nil {
@@ -118,16 +102,44 @@ func mergeSpec(state types.String, remote *cli.IntegrationClientSpec, jsonEscape
 	return encoded
 }
 
-// mergeAppSpec merges server appSpec with values already in state. Keys the
-// user configured win on read; Port fills in defaults only for keys absent
-// from state so the next plan does not show a spurious diff.
-func mergeAppSpec(remote, prior map[string]any) map[string]any {
-	merged := make(map[string]any, len(remote)+len(prior))
-	maps.Copy(merged, prior)
-	for k, v := range remote {
-		if _, exists := merged[k]; !exists {
-			merged[k] = v
+// mergeSpecSectionInto merges one spec section on Read. Explicit sections keep
+// only keys declared in HCL; omitted sections inherit Port defaults. skipKey
+// drops server-managed fields (appSpec only today).
+func mergeSpecSectionInto(merged map[string]any, key string, remote, prior map[string]any, skipKey func(string) bool) {
+	switch {
+	case remote != nil && len(prior) > 0:
+		merged[key] = mergeSpecSectionExplicit(remote, prior, skipKey)
+	case remote != nil:
+		merged[key] = mergeSpecSectionImplicit(remote, skipKey)
+	case len(prior) > 0:
+		merged[key] = prior
+	}
+}
+
+func mergeSpecSectionExplicit(_remote, prior map[string]any, skipKey func(string) bool) map[string]any {
+	if len(prior) == 0 {
+		return nil
+	}
+	merged := make(map[string]any, len(prior))
+	for k, v := range prior {
+		if skipKey != nil && skipKey(k) {
+			continue
 		}
+		merged[k] = v
+	}
+	return merged
+}
+
+func mergeSpecSectionImplicit(remote map[string]any, skipKey func(string) bool) map[string]any {
+	if len(remote) == 0 {
+		return nil
+	}
+	merged := make(map[string]any, len(remote))
+	for k, v := range remote {
+		if skipKey != nil && skipKey(k) {
+			continue
+		}
+		merged[k] = v
 	}
 	return merged
 }
@@ -147,23 +159,4 @@ func priorSpecSections(state types.String) map[string]map[string]any {
 		"integrationSpec": spec.IntegrationSpec,
 		"appSpec":         spec.AppSpec,
 	}
-}
-
-// withPriorSecrets fills the blanks Port leaves behind with the values already
-// held in state, so secret references configured in HCL survive a refresh.
-func withPriorSecrets(remote, prior map[string]any) map[string]any {
-	merged := make(map[string]any, len(remote))
-	for k, v := range remote {
-		merged[k] = v
-	}
-	for k, v := range prior {
-		if isBlank(merged[k]) && !isBlank(v) {
-			merged[k] = v
-		}
-	}
-	return merged
-}
-
-func isBlank(v any) bool {
-	return v == nil || v == ""
 }

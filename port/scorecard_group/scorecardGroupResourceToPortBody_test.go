@@ -3,6 +3,7 @@ package scorecard_group
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -48,32 +49,10 @@ func TestScorecardGroupResourceToPortBodyProperties(t *testing.T) {
 		t.Fatalf("marshal error: %v", err)
 	}
 	payload := string(raw)
-	if !containsAll(payload, `"groupProperties"`, `"scorecardProperties"`) {
+	if !strings.Contains(payload, `"groupProperties"`) || !strings.Contains(payload, `"scorecardProperties"`) {
 		t.Fatalf("unexpected JSON payload: %s", payload)
 	}
-	if contains(payload, `"properties"`) {
+	if strings.Contains(payload, `"properties"`) {
 		t.Fatalf("legacy properties field should not be present: %s", payload)
 	}
-}
-
-func containsAll(s string, parts ...string) bool {
-	for _, part := range parts {
-		if !contains(s, part) {
-			return false
-		}
-	}
-	return true
-}
-
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || indexOf(s, substr) >= 0)
-}
-
-func indexOf(s, substr string) int {
-	for i := 0; i+len(substr) <= len(s); i++ {
-		if s[i:i+len(substr)] == substr {
-			return i
-		}
-	}
-	return -1
 }

@@ -14,24 +14,40 @@ const installationIdPattern = `^[a-z0-9-]+$`
 
 var installationIdRegex = regexp.MustCompile(installationIdPattern)
 
-func integrationToPortBody(state *IntegrationModel) (*cli.Integration, error) {
+func integrationToPortBody(state *IntegrationModel, forCreate bool) (*cli.Integration, error) {
 	if state == nil {
 		return nil, nil
 	}
 
 	installationId := state.InstallationId.ValueString()
-
 	if !installationIdRegex.MatchString(installationId) {
-		return nil, fmt.Errorf("installation_id must match the pattern %s: must contain only lowercase letters, numbers, and dashes. Got: %q", installationIdPattern, installationId)
+		return nil, fmt.Errorf(
+			"installation_id must match the pattern %s: got %q",
+			installationIdPattern, installationId,
+		)
 	}
 
+	installationType := state.installationType()
 	integration := &cli.Integration{
-		InstallationId: installationId,
+		InstallationId:      installationId,
+		Title:               state.Title.ValueStringPointer(),
+		Version:             state.Version.ValueStringPointer(),
+		InstallationAppType: state.InstallationAppType.ValueStringPointer(),
+		InstallationType:    &installationType,
 	}
 
-	integration.Title = state.Title.ValueStringPointer()
-	integration.Version = state.Version.ValueStringPointer()
-	integration.InstallationAppType = state.InstallationAppType.ValueStringPointer()
+	if forCreate && !state.CreatePortResourcesOrigin.IsNull() && !state.CreatePortResourcesOrigin.IsUnknown() {
+		origin := state.CreatePortResourcesOrigin.ValueString()
+		integration.CreatePortResourcesOrigin = &origin
+	}
+
+	if state.isSaas() {
+		spec, err := parseSpecFromConfig(state.Spec)
+		if err != nil {
+			return nil, err
+		}
+		integration.Spec = spec
+	}
 
 	if !state.Config.IsNull() {
 		configStr := state.Config.ValueString()

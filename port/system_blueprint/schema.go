@@ -27,6 +27,7 @@ func (r *Resource) Configure(_ context.Context, req resource.ConfigureRequest, _
 	r.client = req.ProviderData.(*cli.PortClient)
 }
 
+
 func (r *Resource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	blueprintSchemas := blueprint.BlueprintSchema()
 

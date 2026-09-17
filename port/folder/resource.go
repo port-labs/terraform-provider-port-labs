@@ -5,7 +5,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
@@ -44,8 +43,19 @@ func (r *FolderResource) Create(ctx context.Context, req resource.CreateRequest,
 		resp.Diagnostics.AddError("failed to create folder", err.Error())
 		return
 	}
+	if createdFolder == nil {
+		createdFolder, _, err = r.portClient.GetFolder(ctx, state.Identifier.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("failed to get folder", err.Error())
+			return
+		}
+	}
 
-	writeFolderComputedFieldsToState(state, createdFolder)
+	err = refreshFolderToState(state, createdFolder)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to write folder fields to resource", err.Error())
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -90,7 +100,11 @@ func (r *FolderResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 
-	writeFolderComputedFieldsToState(state, updatedFolder)
+	err = refreshFolderToState(state, updatedFolder)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to write folder fields to resource", err.Error())
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -134,24 +148,5 @@ func FolderModelToCLI(state *FolderModel) *cli.Folder {
 		Title:      state.Title.ValueString(),
 		After:      state.After.ValueString(),
 		Parent:     state.Parent.ValueString(),
-	}
-}
-
-func writeFolderComputedFieldsToState(state *FolderModel, fr *cli.Folder) {
-	state.ID = types.StringValue(fr.Identifier)
-	state.Identifier = types.StringValue(fr.Identifier)
-
-	if fr.Parent != "" {
-		state.Parent = types.StringValue(fr.Parent)
-	}
-
-	if fr.After != "" {
-		state.After = types.StringValue(fr.After)
-	} else if !state.After.IsNull() {
-		state.After = types.StringNull()
-	}
-
-	if fr.Title != "" {
-		state.Title = types.StringValue(fr.Title)
 	}
 }

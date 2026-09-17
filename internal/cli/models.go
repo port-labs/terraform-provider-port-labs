@@ -574,6 +574,7 @@ type (
 	}
 
 	Folder struct {
+		Meta
 		Identifier string `json:"identifier,omitempty"`
 		Sidebar    string `json:"sidebar,omitempty"`
 		Title      string `json:"title,omitempty"`
@@ -594,6 +595,7 @@ type (
 	}
 
 	SidebarItemDTO struct {
+		Meta
 		Identifier  string `json:"identifier"`
 		Title       string `json:"title"`
 		Sidebar     string `json:"sidebar"`

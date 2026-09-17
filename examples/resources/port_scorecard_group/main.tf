@@ -69,6 +69,45 @@ resource "port_entity" "db_primary" {
   }
 }
 
+# Optional: extend `_scorecard_group` / `_scorecard` blueprints, then set extended properties and relations.
+resource "port_system_blueprint" "scorecard_group" {
+  identifier = "_scorecard_group"
+  properties = {
+    string_props = {
+      category = {
+        type  = "string"
+        title = "Category"
+      }
+    }
+  }
+  relations = {
+    primary_service = {
+      title  = "Primary Service"
+      target = port_blueprint.microservice.identifier
+      many   = false
+    }
+  }
+}
+
+resource "port_system_blueprint" "scorecard" {
+  identifier = "_scorecard"
+  properties = {
+    string_props = {
+      owner = {
+        type  = "string"
+        title = "Owner"
+      }
+    }
+  }
+  relations = {
+    sponsors = {
+      title  = "Sponsors"
+      target = port_blueprint.microservice.identifier
+      many   = true
+    }
+  }
+}
+
 resource "port_scorecard_group" "production_readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
@@ -76,6 +115,18 @@ resource "port_scorecard_group" "production_readiness" {
     port_blueprint.microservice.identifier,
     port_blueprint.database.identifier,
   ]
+  group_properties = jsonencode({
+    category = "production"
+  })
+  scorecard_properties = jsonencode({
+    owner = "platform-team"
+  })
+  group_relations = jsonencode({
+    primary_service = port_entity.vm_alpha.identifier
+  })
+  scorecard_relations = jsonencode({
+    sponsors = [port_entity.vm_alpha.identifier]
+  })
   rules = [
     {
       identifier = "zebra-production-environment"
@@ -139,6 +190,8 @@ resource "port_scorecard_group" "production_readiness" {
     port_entity.vm_alpha,
     port_entity.vm_unowned,
     port_entity.db_primary,
+    port_system_blueprint.scorecard_group,
+    port_system_blueprint.scorecard,
   ]
 }
 

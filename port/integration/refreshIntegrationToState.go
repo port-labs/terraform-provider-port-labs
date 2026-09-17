@@ -2,6 +2,7 @@ package integration
 
 import (
 	"encoding/json"
+	"maps"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -117,18 +118,13 @@ func mergeSpec(state types.String, remote *cli.IntegrationClientSpec, jsonEscape
 	return encoded
 }
 
-// mergeAppSpec merges server appSpec with user's prior values. Server wins for
-// fields it manages, but user-set fields are preserved when the server returns
-// the same key with a different value (user explicitly controls it).
+// mergeAppSpec merges server appSpec with values already in state. Keys the
+// user configured win on read; Port fills in defaults only for keys absent
+// from state so the next plan does not show a spurious diff.
 func mergeAppSpec(remote, prior map[string]any) map[string]any {
-	merged := make(map[string]any, len(remote))
+	merged := make(map[string]any, len(remote)+len(prior))
+	maps.Copy(merged, prior)
 	for k, v := range remote {
-		merged[k] = v
-	}
-	// Keep user values for keys they explicitly set — the server returned
-	// value is the "default" but the user override should win on read so
-	// that the next plan doesn't show a diff.
-	for k, v := range prior {
 		if _, exists := merged[k]; !exists {
 			merged[k] = v
 		}

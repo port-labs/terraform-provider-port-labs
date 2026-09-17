@@ -29,50 +29,50 @@ func configuredPropertyKeys(stateProperties types.String) map[string]struct{} {
 	return keys
 }
 
-func propertiesFromAPIForRead(stateProperties types.String, apiProperties map[string]any, jsonEscapeHTML bool) types.String {
-	if stateProperties.IsNull() || stateProperties.IsUnknown() {
+func jsonMapFromAPIForRead(stateValue types.String, apiMap map[string]any, jsonEscapeHTML bool) types.String {
+	if stateValue.IsNull() || stateValue.IsUnknown() {
 		return types.StringNull()
 	}
 
-	configuredKeys := configuredPropertyKeys(stateProperties)
+	configuredKeys := configuredPropertyKeys(stateValue)
 	if len(configuredKeys) == 0 {
 		return types.StringNull()
 	}
 
 	var stateMap map[string]any
-	if err := json.Unmarshal([]byte(stateProperties.ValueString()), &stateMap); err != nil {
-		return stateProperties
+	if err := json.Unmarshal([]byte(stateValue.ValueString()), &stateMap); err != nil {
+		return stateValue
 	}
 
 	merged := make(map[string]any, len(stateMap))
 	for key := range stateMap {
-		if apiValue, ok := apiProperties[key]; ok {
+		if apiValue, ok := apiMap[key]; ok {
 			merged[key] = apiValue
 		} else {
 			merged[key] = nil
 		}
 	}
 
-	properties, err := utils.GoObjectToTerraformString(merged, jsonEscapeHTML)
+	encoded, err := utils.GoObjectToTerraformString(merged, jsonEscapeHTML)
 	if err != nil {
-		return stateProperties
+		return stateValue
 	}
-	return properties
+	return encoded
 }
 
-func syncPropertiesState(state *ScorecardGroupModel, apiProperties map[string]any, jsonEscapeHTML bool, syncFromAPI bool) error {
-	if state.Properties.IsNull() || state.Properties.IsUnknown() {
+func syncJsonMapState(stateField *types.String, apiMap map[string]any, jsonEscapeHTML bool, syncFromAPI bool, fieldName string) error {
+	if stateField.IsNull() || stateField.IsUnknown() {
 		return nil
 	}
 
-	apiState := propertiesFromAPIForRead(state.Properties, apiProperties, jsonEscapeHTML)
+	apiState := jsonMapFromAPIForRead(*stateField, apiMap, jsonEscapeHTML)
 	if syncFromAPI {
-		state.Properties = apiState
+		*stateField = apiState
 		return nil
 	}
 
 	equal, err := utils.JSONStringsSemanticallyEqual(
-		state.Properties.ValueString(),
+		stateField.ValueString(),
 		apiState.ValueString(),
 		jsonEscapeHTML,
 	)
@@ -83,13 +83,30 @@ func syncPropertiesState(state *ScorecardGroupModel, apiProperties map[string]an
 		return nil
 	}
 
-	configured := state.Properties.ValueString()
-	state.Properties = apiState
+	configured := stateField.ValueString()
+	*stateField = apiState
 	return fmt.Errorf(
-		"properties were not applied by the API: configured %s, API returned %s",
+		"%s were not applied by the API: configured %s, API returned %s",
+		fieldName,
 		configured,
 		apiState.ValueString(),
 	)
+}
+
+func syncExtendedFieldsState(state *ScorecardGroupModel, group *cli.ScorecardGroup, jsonEscapeHTML bool, syncFromAPI bool) error {
+	if err := syncJsonMapState(&state.GroupProperties, group.GroupProperties, jsonEscapeHTML, syncFromAPI, "group_properties"); err != nil {
+		return err
+	}
+	if err := syncJsonMapState(&state.ScorecardProperties, group.ScorecardProperties, jsonEscapeHTML, syncFromAPI, "scorecard_properties"); err != nil {
+		return err
+	}
+	if err := syncJsonMapState(&state.GroupRelations, group.GroupRelations, jsonEscapeHTML, syncFromAPI, "group_relations"); err != nil {
+		return err
+	}
+	if err := syncJsonMapState(&state.ScorecardRelations, group.ScorecardRelations, jsonEscapeHTML, syncFromAPI, "scorecard_relations"); err != nil {
+		return err
+	}
+	return nil
 }
 
 func shouldRefreshGroupLevels(stateLevels []scorecard.Level, cliLevels []cli.Level) bool {
@@ -306,7 +323,7 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	}
 
 	jsonEscapeHTML := r.jsonEscapeHTML()
-	if err := syncPropertiesState(state, group.Properties, jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+	if err := syncExtendedFieldsState(state, group, jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
 		return err
 	}
 	switch {

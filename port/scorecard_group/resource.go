@@ -84,7 +84,7 @@ func (r *ScorecardGroupResource) Create(ctx context.Context, req resource.Create
 	}
 
 	if err := r.refreshScorecardGroupState(ctx, state, createdGroup, false); err != nil {
-		resp.Diagnostics.AddError("scorecard group properties were not applied", err.Error())
+		resp.Diagnostics.AddError("scorecard group extended fields were not applied", err.Error())
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -146,7 +146,7 @@ func (r *ScorecardGroupResource) Update(ctx context.Context, req resource.Update
 	}
 
 	if err := r.refreshScorecardGroupState(ctx, state, updatedGroup, false); err != nil {
-		resp.Diagnostics.AddError("scorecard group properties were not applied", err.Error())
+		resp.Diagnostics.AddError("scorecard group extended fields were not applied", err.Error())
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)

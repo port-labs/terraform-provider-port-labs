@@ -9,9 +9,21 @@ description: |-
   A scorecard group can be configured in one of two modes:
   Shared rules mode — set blueprints, rules, and optionally filters to apply the same rules to multiple blueprints.Per-blueprint mode — set scorecards to define different filter/rules per blueprint.
   See the Port documentation https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/ for more information about scorecards.
-  properties sets _scorecard blueprint property values on every member scorecard in the group. Define the property schema on the _scorecard system blueprint first (for example with port_system_blueprint), then reference those keys in jsonencode({...}). Use depends_on so the scorecard group is created only after the blueprint properties exist.
+  group_properties sets _scorecard_group blueprint property values on the scorecard group entity. scorecard_properties sets _scorecard blueprint property values on every member scorecard in the group. Define the property schema on the corresponding system blueprint first (for example with port_system_blueprint), then reference those keys in jsonencode({...}). Use depends_on so the scorecard group is created only after the blueprint properties exist.
   Example Usage (shared rules)
   
+  
+  resource "port_system_blueprint" "scorecard_group" {
+    identifier = "_scorecard_group"
+    properties = {
+      string_props = {
+        category = {
+          type  = "string"
+          title = "Category"
+        }
+      }
+    }
+  }
   
   resource "port_system_blueprint" "scorecard" {
     identifier = "_scorecard"
@@ -38,7 +50,10 @@ description: |-
       port_blueprint.microservice.identifier,
       port_blueprint.database.identifier,
     ]
-    properties = jsonencode({
+    group_properties = jsonencode({
+      category = "production"
+    })
+    scorecard_properties = jsonencode({
       owner    = "platform-team"
       priority = 1
     })
@@ -72,7 +87,10 @@ description: |-
         })]
       }
     }
-    depends_on = [port_system_blueprint.scorecard]
+    depends_on = [
+      port_system_blueprint.scorecard_group,
+      port_system_blueprint.scorecard,
+    ]
   }
   
   
@@ -94,7 +112,7 @@ description: |-
   resource "port_scorecard_group" "readiness" {
     identifier = "production-readiness"
     title      = "Production Readiness"
-    properties = jsonencode({
+    scorecard_properties = jsonencode({
       owner = "platform-team"
     })
     scorecards = {
@@ -165,11 +183,23 @@ A scorecard group can be configured in one of two modes:
 
 See the [Port documentation](https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/) for more information about scorecards.
 
-`properties` sets `_scorecard` blueprint property values on every member scorecard in the group. Define the property schema on the `_scorecard` system blueprint first (for example with `port_system_blueprint`), then reference those keys in `jsonencode({...})`. Use `depends_on` so the scorecard group is created only after the blueprint properties exist.
+`group_properties` sets `_scorecard_group` blueprint property values on the scorecard group entity. `scorecard_properties` sets `_scorecard` blueprint property values on every member scorecard in the group. Define the property schema on the corresponding system blueprint first (for example with `port_system_blueprint`), then reference those keys in `jsonencode({...})`. Use `depends_on` so the scorecard group is created only after the blueprint properties exist.
 
 ## Example Usage (shared rules)
 
 ```hcl
+
+resource "port_system_blueprint" "scorecard_group" {
+  identifier = "_scorecard_group"
+  properties = {
+    string_props = {
+      category = {
+        type  = "string"
+        title = "Category"
+      }
+    }
+  }
+}
 
 resource "port_system_blueprint" "scorecard" {
   identifier = "_scorecard"
@@ -196,7 +226,10 @@ resource "port_scorecard_group" "readiness" {
     port_blueprint.microservice.identifier,
     port_blueprint.database.identifier,
   ]
-  properties = jsonencode({
+  group_properties = jsonencode({
+    category = "production"
+  })
+  scorecard_properties = jsonencode({
     owner    = "platform-team"
     priority = 1
   })
@@ -230,7 +263,10 @@ resource "port_scorecard_group" "readiness" {
       })]
     }
   }
-  depends_on = [port_system_blueprint.scorecard]
+  depends_on = [
+    port_system_blueprint.scorecard_group,
+    port_system_blueprint.scorecard,
+  ]
 }
 
 ```
@@ -254,7 +290,7 @@ resource "port_system_blueprint" "scorecard" {
 resource "port_scorecard_group" "readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
-  properties = jsonencode({
+  scorecard_properties = jsonencode({
     owner = "platform-team"
   })
   scorecards = {
@@ -324,9 +360,10 @@ resource "port_scorecard_group" "readiness" {
 
 - `blueprints` (Set of String) Blueprint identifiers that share the same rules (and optional filters). Use this for shared-rules mode. Conflicts with `scorecards`.
 - `filters` (Attributes Map) Optional filters per blueprint in shared-rules mode, keyed by blueprint identifier. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--filters))
+- `group_properties` (String) Additional `_scorecard_group` blueprint properties applied to the scorecard group entity, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard_group` blueprint.
 - `levels` (Attributes List) The available levels of the scorecard group, shared by all members. (see [below for nested schema](#nestedatt--levels))
-- `properties` (String) Additional `_scorecard` blueprint properties applied to every member scorecard in the group, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint.
 - `rules` (Attributes List) The rules applied to every blueprint in shared-rules mode. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--rules))
+- `scorecard_properties` (String) Additional `_scorecard` blueprint properties applied to every member scorecard in the group, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint.
 - `scorecards` (Attributes Map) Map of blueprint identifier to member scorecard filter/rules. Use this for per-blueprint mode. Conflicts with `blueprints`, `rules`, and `filters`. (see [below for nested schema](#nestedatt--scorecards))
 
 ### Read-Only

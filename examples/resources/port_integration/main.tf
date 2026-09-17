@@ -4,6 +4,7 @@ resource "port_integration" "my_custom_integration" {
   config = jsonencode({
     createMissingRelatedEntitiesboolean = true
     deleteDependentEntities             = true
+    enableMergeEntity                     = true
     resources = [{
       kind = "my-custom-kind"
       selector = {
@@ -36,6 +37,7 @@ resource "port_integration" "my_k8s_exporter" {
   config = jsonencode({
     createMissingRelatedEntitiesboolean = true
     deleteDependentEntities             = true
+    enableMergeEntity                     = true
     resources = [{
       kind = "apps/v1/replicasets"
       selector = {

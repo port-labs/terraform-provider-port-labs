@@ -114,7 +114,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 ### Optional
 
 - `config` (String) Integration Config Raw JSON string (use `jsonencode`)
-- `installation_app_type` (String) Deprecated. The integrated tool name for catalog integration types (e.g. `GitHub`, `GitLab`, `K8S EXPORTER`). Custom integrations can omit this field. Cannot be changed after creation.
+- `installation_app_type` (String) Deprecated. The integrated tool name for catalog integration types (e.g. `GitHub`, `GitLab`, `K8S EXPORTER`). Custom integrations can omit this field. Cannot be changed after creation. When omitted from configuration, the value from Port is used and is not sent as `null` on updates.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `title` (String)
 - `version` (String)

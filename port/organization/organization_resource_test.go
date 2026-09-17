@@ -30,6 +30,27 @@ func TestAccPortOrganization(t *testing.T) {
 	})
 }
 
+func TestAccPortOrganizationInactivityTimeout(t *testing.T) {
+	inactivityTimeout := 30
+	var testAccOrganizationConfig = fmt.Sprintf(`
+	resource "port_organization" "test" {
+		inactivity_timeout = %d
+	}`, inactivityTimeout)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccOrganizationConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_organization.test", "inactivity_timeout", fmt.Sprintf("%d", inactivityTimeout)),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortOrganizationUpdate(t *testing.T) {
 	orgName := utils.GenID()
 	updatedName := utils.GenID()

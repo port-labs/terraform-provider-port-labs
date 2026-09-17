@@ -91,13 +91,47 @@ func scorecardGroupResourceToPortBody(ctx context.Context, state *ScorecardGroup
 		group.Levels = levelsToCLI(state.Levels)
 	}
 
-	if !state.Properties.IsNull() && !state.Properties.IsUnknown() {
-		properties, err := utils.TerraformJsonStringToGoObject(state.Properties.ValueStringPointer())
+	scorecardProperties := state.ScorecardProperties
+	if scorecardProperties.IsNull() || scorecardProperties.IsUnknown() {
+		scorecardProperties = state.Properties
+	}
+	if !scorecardProperties.IsNull() && !scorecardProperties.IsUnknown() {
+		properties, err := utils.TerraformJsonStringToGoObject(scorecardProperties.ValueStringPointer())
 		if err != nil {
 			return nil, err
 		}
 		if properties != nil {
-			group.Properties = *properties
+			group.ScorecardProperties = *properties
+		}
+	}
+
+	if !state.GroupProperties.IsNull() && !state.GroupProperties.IsUnknown() {
+		properties, err := utils.TerraformJsonStringToGoObject(state.GroupProperties.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if properties != nil {
+			group.GroupProperties = *properties
+		}
+	}
+
+	if !state.GroupRelations.IsNull() && !state.GroupRelations.IsUnknown() {
+		relations, err := utils.TerraformJsonStringToGoObject(state.GroupRelations.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if relations != nil {
+			group.GroupRelations = *relations
+		}
+	}
+
+	if !state.ScorecardRelations.IsNull() && !state.ScorecardRelations.IsUnknown() {
+		relations, err := utils.TerraformJsonStringToGoObject(state.ScorecardRelations.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if relations != nil {
+			group.ScorecardRelations = *relations
 		}
 	}
 

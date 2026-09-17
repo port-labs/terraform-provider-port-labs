@@ -488,6 +488,15 @@ func integrationActionBlock() schema.Block {
 				MarkdownDescription: "The integration action execution properties as a JSON encoded string.",
 				Optional:            true,
 			},
+			"on_timeout": schema.StringAttribute{
+				MarkdownDescription: "Behavior when the integration action exceeds its timeout. One of `fail`, `continue`.",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString("fail"),
+				Validators: []validator.String{
+					stringvalidator.OneOf("fail", "continue"),
+				},
+			},
 			"on_failure": onFailureAttribute(),
 		},
 		Validators: nodeTypeValidators(),

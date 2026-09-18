@@ -81,6 +81,24 @@ func memberSpecToCLI(spec MemberSpecModel) (cli.ScorecardGroupMemberSpec, error)
 	}, nil
 }
 
+func memberSpecToPatchCLI(spec MemberSpecModel) (cli.PatchScorecardGroupMemberSpec, error) {
+	filter, err := queryToCLI(spec.Filter)
+	if err != nil {
+		return cli.PatchScorecardGroupMemberSpec{}, err
+	}
+	patchSpec := cli.PatchScorecardGroupMemberSpec{
+		Filter: filter,
+	}
+	if len(spec.Rules) > 0 {
+		rules, err := rulesToCLI(spec.Rules)
+		if err != nil {
+			return cli.PatchScorecardGroupMemberSpec{}, err
+		}
+		patchSpec.Rules = rules
+	}
+	return patchSpec, nil
+}
+
 func scorecardGroupResourceToPortBody(ctx context.Context, state *ScorecardGroupModel) (*cli.ScorecardGroup, error) {
 	group := &cli.ScorecardGroup{
 		Identifier: state.Identifier.ValueString(),
@@ -141,4 +159,57 @@ func scorecardGroupResourceToPortBody(ctx context.Context, state *ScorecardGroup
 	}
 
 	return group, nil
+}
+
+func scorecardGroupResourceToPatchBody(ctx context.Context, state *ScorecardGroupModel) (*cli.PatchScorecardGroup, error) {
+	patch := &cli.PatchScorecardGroup{
+		Title: state.Title.ValueString(),
+	}
+
+	if len(state.Levels) > 0 {
+		patch.Levels = levelsToCLI(state.Levels)
+	}
+
+	if !state.Properties.IsNull() && !state.Properties.IsUnknown() {
+		properties, err := utils.TerraformJsonStringToGoObject(state.Properties.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if properties != nil {
+			patch.Properties = *properties
+		}
+	}
+
+	if len(state.Scorecards) > 0 {
+		scorecards := make(map[string]cli.PatchScorecardGroupMemberSpec, len(state.Scorecards))
+		for blueprintID, memberSpec := range state.Scorecards {
+			spec, err := memberSpecToPatchCLI(memberSpec)
+			if err != nil {
+				return nil, err
+			}
+			scorecards[blueprintID] = spec
+		}
+		patch.Scorecards = scorecards
+		return patch, nil
+	}
+
+	rules, err := rulesToCLI(state.Rules)
+	if err != nil {
+		return nil, err
+	}
+	patch.Rules = rules
+
+	if len(state.Filters) > 0 {
+		filters := make(map[string]*cli.Query, len(state.Filters))
+		for blueprintID, filter := range state.Filters {
+			query, err := queryToCLI(filter)
+			if err != nil {
+				return nil, err
+			}
+			filters[blueprintID] = query
+		}
+		patch.Filters = filters
+	}
+
+	return patch, nil
 }

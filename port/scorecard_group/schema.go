@@ -2,6 +2,7 @@ package scorecard_group
 
 import (
 	"context"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
@@ -178,10 +179,30 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 	}
 }
 
+func (r *ScorecardGroupResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var state ScorecardGroupModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	betaFeaturesEnabledEnv := os.Getenv("PORT_BETA_FEATURES_ENABLED")
+	if betaFeaturesEnabledEnv != "true" {
+		resp.Diagnostics.AddError("Beta features are not enabled", "Scorecard group resource is currently in beta and is subject to change in future versions. Use it by setting the Environment Variable PORT_BETA_FEATURES_ENABLED=true.")
+		return
+	}
+}
+
 var resourceMarkdownDescription = `
 # Scorecard Group
 
 This resource allows you to manage a scorecard group that creates scorecards across multiple blueprints.
+
+~> **WARNING**
+The scorecard group resource is currently in beta and is subject to change in future versions.
+Use it by setting the Environment Variable ` + "`PORT_BETA_FEATURES_ENABLED=true`" + `.
+If this Environment Variable isn't specified, you won't be able to use the resource.
 
 ~> **Note:** Scorecard groups are currently protected by the ` + "`SCORECARD_GROUPS`" + ` organization feature flag and are not available in all Port organizations. If you need access, contact your Port account team.
 

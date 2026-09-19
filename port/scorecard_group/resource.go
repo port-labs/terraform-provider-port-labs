@@ -11,6 +11,7 @@ import (
 
 var _ resource.Resource = &ScorecardGroupResource{}
 var _ resource.ResourceWithImportState = &ScorecardGroupResource{}
+var _ resource.ResourceWithValidateConfig = &ScorecardGroupResource{}
 
 func NewScorecardGroupResource() resource.Resource {
 	return &ScorecardGroupResource{}

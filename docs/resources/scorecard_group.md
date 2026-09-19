@@ -5,6 +5,10 @@ subcategory: ""
 description: |-
   Scorecard Group
   This resource allows you to manage a scorecard group that creates scorecards across multiple blueprints.
+  ~> WARNING
+  The scorecard group resource is currently in beta and is subject to change in future versions.
+  Use it by setting the Environment Variable PORT_BETA_FEATURES_ENABLED=true.
+  If this Environment Variable isn't specified, you won't be able to use the resource.
   ~> Note: Scorecard groups are currently protected by the SCORECARD_GROUPS organization feature flag and are not available in all Port organizations. If you need access, contact your Port account team.
   A scorecard group can be configured in one of two modes:
   Shared rules mode — set blueprints, rules, and optionally filters to apply the same rules to multiple blueprints.Per-blueprint mode — set scorecards to define different filter/rules per blueprint.
@@ -226,6 +230,11 @@ description: |-
 # Scorecard Group
 
 This resource allows you to manage a scorecard group that creates scorecards across multiple blueprints.
+
+~> **WARNING**
+The scorecard group resource is currently in beta and is subject to change in future versions.
+Use it by setting the Environment Variable `PORT_BETA_FEATURES_ENABLED=true`.
+If this Environment Variable isn't specified, you won't be able to use the resource.
 
 ~> **Note:** Scorecard groups are currently protected by the `SCORECARD_GROUPS` organization feature flag and are not available in all Port organizations. If you need access, contact your Port account team.
 

@@ -2,12 +2,21 @@ package scorecard_group_test
 
 import (
 	"fmt"
+	"os"
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
+
+func enableScorecardGroupBeta(t *testing.T) {
+	t.Helper()
+	if err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true"); err != nil {
+		t.Fatal(err)
+	}
+}
 
 func testAccCreateBlueprintConfig(resourceName, identifier string) string {
 	return fmt.Sprintf(`
@@ -42,6 +51,7 @@ func testAccHasAuthorRuleHCL() string {
 }
 
 func TestAccPortScorecardGroupSharedRules(t *testing.T) {
+	enableScorecardGroupBeta(t)
 	blueprintIdentifier := utils.GenID()
 	groupIdentifier := utils.GenID()
 	config := testAccCreateBlueprintConfig("microservice", blueprintIdentifier) + fmt.Sprintf(`
@@ -83,6 +93,7 @@ func TestAccPortScorecardGroupSharedRules(t *testing.T) {
 }
 
 func TestAccPortScorecardGroupSharedRulesMultipleBlueprints(t *testing.T) {
+	enableScorecardGroupBeta(t)
 	svcIdentifier := utils.GenID()
 	dbIdentifier := utils.GenID()
 	groupIdentifier := utils.GenID()
@@ -142,6 +153,7 @@ func TestAccPortScorecardGroupSharedRulesMultipleBlueprints(t *testing.T) {
 }
 
 func TestAccPortScorecardGroupPerBlueprint(t *testing.T) {
+	enableScorecardGroupBeta(t)
 	blueprintIdentifier := utils.GenID()
 	groupIdentifier := utils.GenID()
 	config := testAccCreateBlueprintConfig("microservice", blueprintIdentifier) + fmt.Sprintf(`
@@ -177,6 +189,7 @@ func TestAccPortScorecardGroupPerBlueprint(t *testing.T) {
 }
 
 func TestAccPortScorecardGroupPerBlueprintMultiple(t *testing.T) {
+	enableScorecardGroupBeta(t)
 	svcIdentifier := utils.GenID()
 	dbIdentifier := utils.GenID()
 	groupIdentifier := utils.GenID()
@@ -247,6 +260,45 @@ func TestAccPortScorecardGroupPerBlueprintMultiple(t *testing.T) {
 					resource.TestCheckNoResourceAttr("port_scorecard_group.test", "blueprints"),
 					resource.TestCheckNoResourceAttr("port_scorecard_group.test", "rules"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccPortScorecardGroupBetaDisabled(t *testing.T) {
+	if err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "false"); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		_ = os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	})
+
+	config := `
+	resource "port_scorecard_group" "test" {
+		identifier = "beta-disabled"
+		title      = "Beta Disabled"
+		blueprints = ["service"]
+		rules = [{
+			identifier = "has-author"
+			title      = "Has Author"
+			level      = "Gold"
+			query = {
+				combinator = "and"
+				conditions = [jsonencode({
+					property = "author"
+					operator = "isNotEmpty"
+				})]
+			}
+		}]
+	}`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + config,
+				ExpectError: regexp.MustCompile("Beta features are not enabled"),
 			},
 		},
 	})

@@ -69,6 +69,60 @@ resource "port_entity" "db_primary" {
   }
 }
 
+resource "port_blueprint" "team" {
+  title      = "Team"
+  icon       = "Team"
+  identifier = "examples-scorecard-group-team"
+}
+
+resource "port_entity" "platform_team" {
+  identifier = "platform-team"
+  title      = "Platform Team"
+  blueprint  = port_blueprint.team.identifier
+}
+
+resource "port_system_blueprint" "scorecard_group" {
+  identifier = "_scorecard_group"
+  properties = {
+    string_props = {
+      category = {
+        type  = "string"
+        title = "Category"
+      }
+    }
+  }
+  relations = {
+    owning_team = {
+      title  = "Owning Team"
+      target = port_blueprint.team.identifier
+    }
+  }
+}
+
+resource "port_system_blueprint" "scorecard" {
+  identifier = "_scorecard"
+  properties = {
+    string_props = {
+      owner = {
+        type  = "string"
+        title = "Owner"
+      }
+    }
+    number_props = {
+      priority = {
+        type  = "number"
+        title = "Priority"
+      }
+    }
+  }
+  relations = {
+    owner_team = {
+      title  = "Owner Team"
+      target = port_blueprint.team.identifier
+    }
+  }
+}
+
 resource "port_scorecard_group" "production_readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
@@ -76,6 +130,19 @@ resource "port_scorecard_group" "production_readiness" {
     port_blueprint.microservice.identifier,
     port_blueprint.database.identifier,
   ]
+  group_properties = jsonencode({
+    category = "governance"
+  })
+  group_relations = jsonencode({
+    owning_team = port_entity.platform_team.identifier
+  })
+  scorecard_properties = jsonencode({
+    owner    = "platform-team"
+    priority = 1
+  })
+  scorecard_relations = jsonencode({
+    owner_team = port_entity.platform_team.identifier
+  })
   rules = [
     {
       identifier = "zebra-production-environment"
@@ -139,6 +206,9 @@ resource "port_scorecard_group" "production_readiness" {
     port_entity.vm_alpha,
     port_entity.vm_unowned,
     port_entity.db_primary,
+    port_system_blueprint.scorecard_group,
+    port_system_blueprint.scorecard,
+    port_entity.platform_team,
   ]
 }
 
@@ -146,6 +216,19 @@ resource "port_scorecard_group" "production_readiness" {
 resource "port_scorecard_group" "blueprint_specific_readiness" {
   identifier = "blueprint-specific-readiness"
   title      = "Blueprint-Specific Readiness"
+  group_properties = jsonencode({
+    category = "governance"
+  })
+  group_relations = jsonencode({
+    owning_team = port_entity.platform_team.identifier
+  })
+  scorecard_properties = jsonencode({
+    owner    = "platform-team"
+    priority = 2
+  })
+  scorecard_relations = jsonencode({
+    owner_team = port_entity.platform_team.identifier
+  })
   scorecards = {
     (port_blueprint.microservice.identifier) = {
       filter = {
@@ -229,5 +312,8 @@ resource "port_scorecard_group" "blueprint_specific_readiness" {
     port_entity.vm_alpha,
     port_entity.vm_unowned,
     port_entity.db_primary,
+    port_system_blueprint.scorecard_group,
+    port_system_blueprint.scorecard,
+    port_entity.platform_team,
   ]
 }

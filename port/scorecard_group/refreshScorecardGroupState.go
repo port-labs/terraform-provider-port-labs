@@ -93,13 +93,30 @@ func syncJsonMapState(stateField *types.String, apiMap map[string]any, jsonEscap
 	)
 }
 
+func scorecardPropertiesState(state *ScorecardGroupModel) types.String {
+	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
+		return state.ScorecardProperties
+	}
+	return state.Properties
+}
+
+func setScorecardPropertiesState(state *ScorecardGroupModel, value types.String) {
+	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
+		state.ScorecardProperties = value
+		return
+	}
+	state.Properties = value
+}
+
 func syncExtendedFieldsState(state *ScorecardGroupModel, group *cli.ScorecardGroup, jsonEscapeHTML bool, syncFromAPI bool) error {
 	if err := syncJsonMapState(&state.GroupProperties, group.GroupProperties, jsonEscapeHTML, syncFromAPI, "group_properties"); err != nil {
 		return err
 	}
-	if err := syncJsonMapState(&state.ScorecardProperties, group.ScorecardProperties, jsonEscapeHTML, syncFromAPI, "scorecard_properties"); err != nil {
+	scorecardProperties := scorecardPropertiesState(state)
+	if err := syncJsonMapState(&scorecardProperties, group.ScorecardProperties, jsonEscapeHTML, syncFromAPI, "scorecard_properties"); err != nil {
 		return err
 	}
+	setScorecardPropertiesState(state, scorecardProperties)
 	if err := syncJsonMapState(&state.GroupRelations, group.GroupRelations, jsonEscapeHTML, syncFromAPI, "group_relations"); err != nil {
 		return err
 	}

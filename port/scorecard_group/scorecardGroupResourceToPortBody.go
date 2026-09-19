@@ -109,7 +109,11 @@ func scorecardGroupResourceToPortBody(ctx context.Context, state *ScorecardGroup
 	if err := assignOptionalJsonMap(state.GroupProperties, func(m map[string]any) { group.GroupProperties = m }); err != nil {
 		return nil, err
 	}
-	if err := assignOptionalJsonMap(state.ScorecardProperties, func(m map[string]any) { group.ScorecardProperties = m }); err != nil {
+	scorecardProperties := state.ScorecardProperties
+	if scorecardProperties.IsNull() || scorecardProperties.IsUnknown() {
+		scorecardProperties = state.Properties
+	}
+	if err := assignOptionalJsonMap(scorecardProperties, func(m map[string]any) { group.ScorecardProperties = m }); err != nil {
 		return nil, err
 	}
 	if err := assignOptionalJsonMap(state.GroupRelations, func(m map[string]any) { group.GroupRelations = m }); err != nil {

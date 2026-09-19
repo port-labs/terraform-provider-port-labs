@@ -14,8 +14,9 @@ type ScorecardGroupModel struct {
 	ID         types.String              `tfsdk:"id"`
 	Identifier types.String              `tfsdk:"identifier"`
 	Title      types.String              `tfsdk:"title"`
-	Levels     []scorecard.Level         `tfsdk:"levels"`
-	GroupProperties     types.String `tfsdk:"group_properties"`
+	Levels              []scorecard.Level `tfsdk:"levels"`
+	Properties          types.String      `tfsdk:"properties"`
+	GroupProperties     types.String      `tfsdk:"group_properties"`
 	ScorecardProperties types.String `tfsdk:"scorecard_properties"`
 	GroupRelations      types.String `tfsdk:"group_relations"`
 	ScorecardRelations  types.String `tfsdk:"scorecard_relations"`

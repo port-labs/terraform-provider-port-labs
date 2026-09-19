@@ -79,6 +79,14 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 					Attributes: scorecard.LevelSchema(),
 				},
 			},
+			"properties": schema.StringAttribute{
+				MarkdownDescription: "Additional `_scorecard` blueprint properties applied to every member scorecard in the group, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint. Deprecated: use `scorecard_properties` instead.",
+				Optional:            true,
+				DeprecationMessage:  "Use `scorecard_properties` instead.",
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRoot("scorecard_properties")),
+				},
+			},
 			"group_properties": schema.StringAttribute{
 				MarkdownDescription: "Additional `_scorecard_group` blueprint properties applied to the scorecard group entity, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard_group` blueprint.",
 				Optional:            true,
@@ -86,6 +94,9 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 			"scorecard_properties": schema.StringAttribute{
 				MarkdownDescription: "Additional `_scorecard` blueprint properties applied to every member scorecard in the group, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint.",
 				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRoot("properties")),
+				},
 			},
 			"group_relations": schema.StringAttribute{
 				MarkdownDescription: "Additional `_scorecard_group` blueprint relations applied to the scorecard group entity, as a JSON encoded string. Relation keys must match custom relations you added to the `_scorecard_group` blueprint. Values are related entity identifiers (string for single-relations, array for many-relations).",

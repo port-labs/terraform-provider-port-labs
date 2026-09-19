@@ -476,6 +476,7 @@ type (
 		Identifier          string                              `json:"identifier,omitempty"`
 		Title               string                              `json:"title,omitempty"`
 		Levels              []Level                             `json:"levels,omitempty"`
+		Properties          map[string]any                      `json:"properties,omitempty"`
 		GroupProperties     map[string]any                      `json:"groupProperties,omitempty"`
 		ScorecardProperties map[string]any                      `json:"scorecardProperties,omitempty"`
 		GroupRelations      map[string]any                      `json:"groupRelations,omitempty"`
@@ -778,13 +779,51 @@ type PortBodyDelete struct {
 	Ok bool `json:"ok"`
 }
 
+// IntegrationClientSpec is the user-manageable part of an integration spec.
+// Only client-managed spec sections are modeled; other API fields are omitted
+// on unmarshal and kept out of every request body.
+type IntegrationClientSpec struct {
+	IntegrationSpec map[string]any `json:"integrationSpec,omitempty"`
+	AppSpec         map[string]any `json:"appSpec,omitempty"`
+}
+
+// IsEmpty reports whether the spec carries nothing Terraform can manage.
+func (s *IntegrationClientSpec) IsEmpty() bool {
+	return s == nil || (s.IntegrationSpec == nil && s.AppSpec == nil)
+}
+
+type IntegrationStatus struct {
+	Status  string  `json:"status"`
+	Message *string `json:"message,omitempty"`
+}
+
+type IntegrationStatusInfo struct {
+	IntegrationStatus IntegrationStatus `json:"integrationStatus"`
+}
+
+type ValidateIntegrationSpecOptions struct {
+	SkipSecretExistenceCheck bool `json:"skipSecretExistenceCheck,omitempty"`
+}
+
+type ValidateIntegrationSpecBody struct {
+	ValidationMode   string                          `json:"validationMode"`
+	InstallationId   string                          `json:"installationId"`
+	InstallationType string                          `json:"installationType"`
+	Spec             *IntegrationClientSpec          `json:"spec,omitempty"`
+	Options          *ValidateIntegrationSpecOptions `json:"options,omitempty"`
+}
+
 type Integration struct {
-	InstallationId       string                `json:"installationId"`
-	Title                *string               `json:"title"`
-	InstallationAppType  *string               `json:"installationAppType"`
-	Version              *string               `json:"version"`
-	Config               *map[string]any       `json:"config"`
-	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
+	InstallationId       string                 `json:"installationId"`
+	Title                *string                `json:"title"`
+	InstallationAppType  *string                `json:"installationAppType"`
+	InstallationType     *string                `json:"installationType"`
+	Version              *string                `json:"version"`
+	Config               *map[string]any        `json:"config,omitempty"`
+	Spec                      *IntegrationClientSpec `json:"spec,omitempty"`
+	CreatePortResourcesOrigin *string                `json:"createPortResourcesOrigin,omitempty"`
+	StatusInfo                *IntegrationStatusInfo `json:"statusInfo,omitempty"`
+	ChangelogDestination *ChangelogDestination  `json:"changelogDestination,omitempty"`
 }
 
 type Organization struct {

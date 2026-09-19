@@ -1,0 +1,93 @@
+package integration_test
+
+import (
+	"encoding/json"
+	"testing"
+
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestIntegrationSpec_DropsServerManagedSections(t *testing.T) {
+	raw := `{
+		"installationId": "pagerduty-prod",
+		"installationType": "Saas",
+		"spec": {
+			"integrationSpec": {"token": "my-secret"},
+			"appSpec": {"scheduledResyncInterval": "12h"},
+			"systemSpec": {"size": "L"},
+			"privateSpec": {"applierBackend": "operator"}
+		}
+	}`
+
+	var got cli.Integration
+	require.NoError(t, json.Unmarshal([]byte(raw), &got))
+
+	require.NotNil(t, got.Spec)
+	assert.Equal(t, "my-secret", got.Spec.IntegrationSpec["token"])
+	assert.Equal(t, "12h", got.Spec.AppSpec["scheduledResyncInterval"])
+
+	marshaled, err := json.Marshal(got)
+	require.NoError(t, err)
+	assert.NotContains(t, string(marshaled), "systemSpec")
+	assert.NotContains(t, string(marshaled), "privateSpec")
+}
+
+func TestIsIntegrationConfigProvisioned(t *testing.T) {
+	tests := []struct {
+		name   string
+		config *map[string]any
+		want   bool
+	}{
+		{"nil config", nil, false},
+		{"empty config", &map[string]any{}, false},
+		{"provisioned config", &map[string]any{"resources": []any{}}, true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, cli.IsIntegrationConfigProvisioned(tt.config))
+		})
+	}
+}
+
+func TestIntegrationSpec_IsEmpty(t *testing.T) {
+	tests := []struct {
+		name string
+		raw  string
+		want bool
+	}{
+		{"absent spec", `{"installationId": "my-kafka"}`, true},
+		{"only server-managed sections", `{"spec": {"systemSpec": {"size": "M"}}}`, true},
+		{"manageable section present", `{"spec": {"integrationSpec": {"token": "x"}}}`, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var got cli.Integration
+			require.NoError(t, json.Unmarshal([]byte(tt.raw), &got))
+			assert.Equal(t, tt.want, got.Spec.IsEmpty())
+		})
+	}
+}
+
+func TestIntegration_CreatePortResourcesOriginJSON(t *testing.T) {
+	origin := "Empty"
+	body := cli.Integration{
+		InstallationId:            "github-prod",
+		CreatePortResourcesOrigin: &origin,
+	}
+
+	encoded, err := json.Marshal(body)
+	require.NoError(t, err)
+	assert.Contains(t, string(encoded), `"createPortResourcesOrigin":"Empty"`)
+}
+
+func TestIntegration_CreatePortResourcesOriginOmittedFromJSON(t *testing.T) {
+	body := cli.Integration{
+		InstallationId: "github-prod",
+	}
+
+	encoded, err := json.Marshal(body)
+	require.NoError(t, err)
+	assert.NotContains(t, string(encoded), "createPortResourcesOrigin")
+}

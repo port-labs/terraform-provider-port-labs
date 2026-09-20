@@ -93,21 +93,6 @@ func syncJSONObjectState(stateValue *types.String, apiValues map[string]any, fie
 	)
 }
 
-func scorecardPropertiesState(state *ScorecardGroupModel) types.String {
-	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
-		return state.ScorecardProperties
-	}
-	return state.Properties
-}
-
-func setScorecardPropertiesState(state *ScorecardGroupModel, value types.String) {
-	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
-		state.ScorecardProperties = value
-		return
-	}
-	state.Properties = value
-}
-
 func shouldRefreshGroupLevels(stateLevels []scorecard.Level, cliLevels []cli.Level) bool {
 	if len(stateLevels) == 0 && reflect.DeepEqual(cliLevels, scorecard.DefaultCliLevels()) {
 		return false
@@ -322,11 +307,9 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	}
 
 	jsonEscapeHTML := r.jsonEscapeHTML()
-	scorecardProperties := scorecardPropertiesState(state)
-	if err := syncJSONObjectState(&scorecardProperties, group.ScorecardProperties, "scorecard properties", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+	if err := syncJSONObjectState(&state.ScorecardProperties, group.ScorecardProperties, "scorecard properties", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
 		return err
 	}
-	setScorecardPropertiesState(state, scorecardProperties)
 
 	if err := syncJSONObjectState(&state.GroupProperties, group.GroupProperties, "group properties", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
 		return err

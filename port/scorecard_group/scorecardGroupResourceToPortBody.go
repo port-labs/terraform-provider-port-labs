@@ -91,12 +91,8 @@ func scorecardGroupResourceToPortBody(ctx context.Context, state *ScorecardGroup
 		group.Levels = levelsToCLI(state.Levels)
 	}
 
-	scorecardProperties := state.ScorecardProperties
-	if scorecardProperties.IsNull() || scorecardProperties.IsUnknown() {
-		scorecardProperties = state.Properties
-	}
-	if !scorecardProperties.IsNull() && !scorecardProperties.IsUnknown() {
-		properties, err := utils.TerraformJsonStringToGoObject(scorecardProperties.ValueStringPointer())
+	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
+		properties, err := utils.TerraformJsonStringToGoObject(state.ScorecardProperties.ValueStringPointer())
 		if err != nil {
 			return nil, err
 		}

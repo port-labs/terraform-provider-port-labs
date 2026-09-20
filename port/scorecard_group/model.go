@@ -11,21 +11,20 @@ type MemberSpecModel struct {
 }
 
 type ScorecardGroupModel struct {
-	ID                  types.String               `tfsdk:"id"`
-	Identifier          types.String               `tfsdk:"identifier"`
-	Title               types.String               `tfsdk:"title"`
-	Levels              []scorecard.Level          `tfsdk:"levels"`
-	Properties          types.String               `tfsdk:"properties"`
-	GroupProperties     types.String               `tfsdk:"group_properties"`
-	ScorecardProperties types.String               `tfsdk:"scorecard_properties"`
-	GroupRelations      types.String               `tfsdk:"group_relations"`
-	ScorecardRelations  types.String               `tfsdk:"scorecard_relations"`
-	Blueprints          []types.String             `tfsdk:"blueprints"`
-	Rules               []scorecard.Rule           `tfsdk:"rules"`
+	ID                  types.String                `tfsdk:"id"`
+	Identifier          types.String                `tfsdk:"identifier"`
+	Title               types.String                `tfsdk:"title"`
+	Levels              []scorecard.Level           `tfsdk:"levels"`
+	GroupProperties     types.String                `tfsdk:"group_properties"`
+	ScorecardProperties types.String                `tfsdk:"scorecard_properties"`
+	GroupRelations      types.String                `tfsdk:"group_relations"`
+	ScorecardRelations  types.String                `tfsdk:"scorecard_relations"`
+	Blueprints          []types.String              `tfsdk:"blueprints"`
+	Rules               []scorecard.Rule            `tfsdk:"rules"`
 	Filters             map[string]*scorecard.Query `tfsdk:"filters"`
-	Scorecards          map[string]MemberSpecModel `tfsdk:"scorecards"`
-	CreatedAt           types.String               `tfsdk:"created_at"`
-	CreatedBy           types.String               `tfsdk:"created_by"`
-	UpdatedAt           types.String               `tfsdk:"updated_at"`
-	UpdatedBy           types.String               `tfsdk:"updated_by"`
+	Scorecards          map[string]MemberSpecModel  `tfsdk:"scorecards"`
+	CreatedAt           types.String                `tfsdk:"created_at"`
+	CreatedBy           types.String                `tfsdk:"created_by"`
+	UpdatedAt           types.String                `tfsdk:"updated_at"`
+	UpdatedBy           types.String                `tfsdk:"updated_by"`
 }

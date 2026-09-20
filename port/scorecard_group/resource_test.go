@@ -303,3 +303,125 @@ func TestAccPortScorecardGroupBetaDisabled(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
+	enableScorecardGroupBeta(t)
+
+	blueprintIdentifier := utils.GenID()
+	teamBlueprintIdentifier := utils.GenID()
+	teamEntityIdentifier := utils.GenID()
+	groupIdentifier := utils.GenID()
+	groupPropKey := "tf_group_" + utils.GenID()
+	scorecardPropKey := "tf_scorecard_" + utils.GenID()
+	groupRelationKey := "tf_group_rel_" + utils.GenID()
+	scorecardRelationKey := "tf_scorecard_rel_" + utils.GenID()
+
+	config := testAccCreateBlueprintConfig("microservice", blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_blueprint" "team" {
+		title      = "TF test team"
+		icon       = "Team"
+		identifier = "%s"
+	}
+
+	resource "port_entity" "platform_team" {
+		identifier = "%s"
+		title      = "Platform Team"
+		blueprint  = port_blueprint.team.identifier
+	}
+
+	resource "port_system_blueprint" "scorecard_group" {
+		identifier = "_scorecard_group"
+		properties = {
+			string_props = {
+				"%s" = {
+					title = "TF Group Category"
+				}
+			}
+		}
+		relations = {
+			"%s" = {
+				title  = "TF Owning Team"
+				target = port_blueprint.team.identifier
+			}
+		}
+	}
+
+	resource "port_system_blueprint" "scorecard" {
+		identifier = "_scorecard"
+		properties = {
+			string_props = {
+				"%s" = {
+					title = "TF Scorecard Owner"
+				}
+			}
+		}
+		relations = {
+			"%s" = {
+				title  = "TF Owner Team"
+				target = port_blueprint.team.identifier
+			}
+		}
+	}
+
+	resource "port_scorecard_group" "test" {
+		identifier = "%s"
+		title      = "Scorecard Group Props Relations"
+		blueprints = [port_blueprint.microservice.identifier]
+		group_properties = jsonencode({
+			%s = "governance"
+		})
+		group_relations = jsonencode({
+			%s = port_entity.platform_team.identifier
+		})
+		scorecard_properties = jsonencode({
+			%s = "platform-team"
+		})
+		scorecard_relations = jsonencode({
+			%s = port_entity.platform_team.identifier
+		})
+		rules = %s
+		depends_on = [
+			port_blueprint.microservice,
+			port_system_blueprint.scorecard_group,
+			port_system_blueprint.scorecard,
+			port_entity.platform_team,
+		]
+	}`,
+		teamBlueprintIdentifier,
+		teamEntityIdentifier,
+		groupPropKey,
+		groupRelationKey,
+		scorecardPropKey,
+		scorecardRelationKey,
+		groupIdentifier,
+		groupPropKey,
+		groupRelationKey,
+		scorecardPropKey,
+		scorecardRelationKey,
+		testAccHasAuthorRuleHCL(),
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheckScorecardGroups(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + config,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "identifier", groupIdentifier),
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "title", "Scorecard Group Props Relations"),
+					resource.TestMatchResourceAttr("port_scorecard_group.test", "group_properties", regexp.MustCompile(regexp.QuoteMeta(groupPropKey))),
+					resource.TestMatchResourceAttr("port_scorecard_group.test", "group_properties", regexp.MustCompile(`"governance"`)),
+					resource.TestMatchResourceAttr("port_scorecard_group.test", "scorecard_properties", regexp.MustCompile(regexp.QuoteMeta(scorecardPropKey))),
+					resource.TestMatchResourceAttr("port_scorecard_group.test", "scorecard_properties", regexp.MustCompile(`"platform-team"`)),
+					resource.TestMatchResourceAttr("port_scorecard_group.test", "group_relations", regexp.MustCompile(regexp.QuoteMeta(groupRelationKey))),
+					resource.TestMatchResourceAttr("port_scorecard_group.test", "group_relations", regexp.MustCompile(regexp.QuoteMeta(teamEntityIdentifier))),
+					resource.TestMatchResourceAttr("port_scorecard_group.test", "scorecard_relations", regexp.MustCompile(regexp.QuoteMeta(scorecardRelationKey))),
+					resource.TestMatchResourceAttr("port_scorecard_group.test", "scorecard_relations", regexp.MustCompile(regexp.QuoteMeta(teamEntityIdentifier))),
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "blueprints.#", "1"),
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "rules.#", "1"),
+				),
+			},
+		},
+	})
+}

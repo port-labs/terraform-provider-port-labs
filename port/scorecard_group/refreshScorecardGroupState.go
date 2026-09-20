@@ -44,20 +44,20 @@ func jsonObjectFromAPIForRead(stateValue types.String, apiValues map[string]any,
 		return stateValue
 	}
 
-	merged := make(map[string]any, len(stateMap))
+	valuesForState := make(map[string]any, len(stateMap))
 	for key := range stateMap {
 		if apiValue, ok := apiValues[key]; ok {
-			merged[key] = apiValue
+			valuesForState[key] = apiValue
 		} else {
-			merged[key] = nil
+			valuesForState[key] = nil
 		}
 	}
 
-	mergedJSON, err := utils.GoObjectToTerraformString(merged, jsonEscapeHTML)
+	stateJSON, err := utils.GoObjectToTerraformString(valuesForState, jsonEscapeHTML)
 	if err != nil {
 		return stateValue
 	}
-	return mergedJSON
+	return stateJSON
 }
 
 func syncJSONObjectState(stateValue *types.String, apiValues map[string]any, fieldName string, jsonEscapeHTML bool, syncFromAPI bool) error {

@@ -53,11 +53,11 @@ func jsonObjectFromAPIForRead(stateValue types.String, apiValues map[string]any,
 		}
 	}
 
-	encoded, err := utils.GoObjectToTerraformString(merged, jsonEscapeHTML)
+	mergedJSON, err := utils.GoObjectToTerraformString(merged, jsonEscapeHTML)
 	if err != nil {
 		return stateValue
 	}
-	return encoded
+	return mergedJSON
 }
 
 func syncJSONObjectState(stateValue *types.String, apiValues map[string]any, fieldName string, jsonEscapeHTML bool, syncFromAPI bool) error {

@@ -476,7 +476,6 @@ type (
 		Identifier          string                              `json:"identifier,omitempty"`
 		Title               string                              `json:"title,omitempty"`
 		Levels              []Level                             `json:"levels,omitempty"`
-		Properties          map[string]any                      `json:"properties,omitempty"`
 		GroupProperties     map[string]any                      `json:"groupProperties,omitempty"`
 		ScorecardProperties map[string]any                      `json:"scorecardProperties,omitempty"`
 		GroupRelations      map[string]any                      `json:"groupRelations,omitempty"`

@@ -169,13 +169,6 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 }
 
 func (r *ScorecardGroupResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var state ScorecardGroupModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	betaFeaturesEnabledEnv := os.Getenv("PORT_BETA_FEATURES_ENABLED")
 	if betaFeaturesEnabledEnv != "true" {
 		resp.Diagnostics.AddError("Beta features are not enabled", "Scorecard group resource is currently in beta and is subject to change in future versions. Use it by setting the Environment Variable PORT_BETA_FEATURES_ENABLED=true.")

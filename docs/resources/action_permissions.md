@@ -265,7 +265,7 @@ Optional:
 
 Optional:
 
-- `owned_by_team` (Boolean) When `true`, execute permission is limited to members of the entity's owning team (in addition to any explicitly granted roles, users, or teams). Cannot be combined with the `Member` role in `roles`, because org-wide Member execute access would override team ownership. Port's API rejects that combination; Terraform validates it at plan time.
+- `owned_by_team` (Boolean) When `true`, execute permission is limited to members of the entity's owning team (in addition to any explicitly granted roles, users, or teams). Cannot be combined with the `Member` role in `roles`, because org-wide Member execute access would override team ownership. The Port API revokes org-wide Member execute scopes when both are sent; Terraform validates the combination at plan time so configurations stay explicit.
 - `policy` (String) The policy to use for execution. Policies are evaluated in addition to RBAC scopes (they do not replace team-ownership checks when `owned_by_team` is enabled).
 - `roles` (Set of String) The roles with execution permission
 - `teams` (Set of String) The teams with execution permission

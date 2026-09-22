@@ -58,7 +58,7 @@ func ActionPermissionsSchema() map[string]schema.Attribute {
 							ElementType:         types.StringType,
 						},
 						"owned_by_team": schema.BoolAttribute{
-							MarkdownDescription: "When `true`, execute permission is limited to members of the entity's owning team (in addition to any explicitly granted roles, users, or teams). Cannot be combined with the `Member` role in `roles`, because org-wide Member execute access would override team ownership. Port's API rejects that combination; Terraform validates it at plan time.",
+							MarkdownDescription: "When `true`, execute permission is limited to members of the entity's owning team (in addition to any explicitly granted roles, users, or teams). Cannot be combined with the `Member` role in `roles`, because org-wide Member execute access would override team ownership. The Port API revokes org-wide Member execute scopes when both are sent; Terraform validates the combination at plan time so configurations stay explicit.",
 							Optional:            true,
 							Computed:            true,
 							Default:             booldefault.StaticBool(true),

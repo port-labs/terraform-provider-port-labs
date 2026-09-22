@@ -2,6 +2,7 @@ package scorecard_group_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"regexp"
@@ -395,28 +396,20 @@ func testAccExtendScorecardSystemBlueprints(t *testing.T, groupPropKey, scorecar
 
 	addExtensions := func(blueprintID, propKey, relationKey string) {
 		t.Helper()
-		bp, statusCode, err := client.ReadBlueprint(ctx, blueprintID)
-		if err != nil {
-			t.Fatalf("failed to read %s blueprint: %v (status %d)", blueprintID, err, statusCode)
-		}
-		if bp.Schema.Properties == nil {
-			bp.Schema.Properties = map[string]cli.BlueprintProperty{}
-		}
-		bp.Schema.Properties[propKey] = cli.BlueprintProperty{
-			Type:  "string",
-			Title: &title,
-		}
-		if bp.Relations == nil {
-			bp.Relations = map[string]cli.Relation{}
-		}
-		bp.Relations[relationKey] = cli.Relation{
+
+		// PATCH only the new fields. A full PUT round-trip of `_scorecard_group` fails with
+		// protected_blueprint_violation on system properties like group_rules_pass_rate.
+		if _, err := client.PatchBlueprintRelation(ctx, blueprintID, relationKey, &cli.Relation{
 			Title:    &title,
 			Target:   &teamTarget,
 			Many:     &many,
 			Required: &required,
+		}); err != nil {
+			t.Fatalf("failed to add relation %q on %s: %v", relationKey, blueprintID, err)
 		}
-		if _, err := client.UpdateBlueprint(ctx, bp, blueprintID); err != nil {
-			t.Fatalf("failed to extend %s blueprint: %v", blueprintID, err)
+
+		if err := testAccPatchBlueprintProperty(ctx, client, blueprintID, propKey, title); err != nil {
+			t.Fatalf("failed to add property %q on %s: %v", propKey, blueprintID, err)
 		}
 	}
 
@@ -424,21 +417,74 @@ func testAccExtendScorecardSystemBlueprints(t *testing.T, groupPropKey, scorecar
 	addExtensions("_scorecard", scorecardPropKey, scorecardRelationKey)
 
 	t.Cleanup(func() {
-		removeExtensions := func(blueprintID, propKey, relationKey string) {
-			bp, statusCode, err := client.ReadBlueprint(ctx, blueprintID)
-			if err != nil {
-				t.Logf("cleanup: failed to read %s blueprint: %v (status %d)", blueprintID, err, statusCode)
-				return
-			}
-			delete(bp.Schema.Properties, propKey)
-			delete(bp.Relations, relationKey)
-			if _, err := client.UpdateBlueprint(ctx, bp, blueprintID); err != nil {
-				t.Logf("cleanup: failed to remove extensions from %s: %v", blueprintID, err)
-			}
-		}
-		removeExtensions("_scorecard_group", groupPropKey, groupRelationKey)
-		removeExtensions("_scorecard", scorecardPropKey, scorecardRelationKey)
+		// Best-effort cleanup via PATCH only; unique keys make leftovers safe across runs.
+		_ = testAccPatchBlueprintProperty(ctx, client, "_scorecard_group", groupPropKey, "")
+		_ = testAccPatchBlueprintProperty(ctx, client, "_scorecard", scorecardPropKey, "")
+		_ = testAccPatchBlueprintRelationDelete(ctx, client, "_scorecard_group", groupRelationKey)
+		_ = testAccPatchBlueprintRelationDelete(ctx, client, "_scorecard", scorecardRelationKey)
 	})
+}
+
+func testAccPatchBlueprintProperty(ctx context.Context, client *cli.PortClient, blueprintID, propKey, title string) error {
+	var property any
+	if title == "" {
+		property = nil
+	} else {
+		property = map[string]any{
+			"type":  "string",
+			"title": title,
+		}
+	}
+
+	body := map[string]any{
+		"schema": map[string]any{
+			"properties": map[string]any{
+				propKey: property,
+			},
+		},
+	}
+
+	resp, err := client.Client.R().
+		SetContext(ctx).
+		SetBody(body).
+		SetPathParam("identifier", blueprintID).
+		Patch("v1/blueprints/{identifier}")
+	if err != nil {
+		return err
+	}
+
+	var pb cli.PortBody
+	if err := json.Unmarshal(resp.Body(), &pb); err != nil {
+		return err
+	}
+	if !pb.OK {
+		return fmt.Errorf("failed to patch property %q on blueprint %q, got: %s", propKey, blueprintID, resp.Body())
+	}
+	return nil
+}
+
+func testAccPatchBlueprintRelationDelete(ctx context.Context, client *cli.PortClient, blueprintID, relationKey string) error {
+	body := map[string]any{
+		"relations": map[string]any{
+			relationKey: nil,
+		},
+	}
+	resp, err := client.Client.R().
+		SetContext(ctx).
+		SetBody(body).
+		SetPathParam("identifier", blueprintID).
+		Patch("v1/blueprints/{identifier}")
+	if err != nil {
+		return err
+	}
+	var pb cli.PortBody
+	if err := json.Unmarshal(resp.Body(), &pb); err != nil {
+		return err
+	}
+	if !pb.OK {
+		return fmt.Errorf("failed to delete relation %q on blueprint %q, got: %s", relationKey, blueprintID, resp.Body())
+	}
+	return nil
 }
 
 func testAccPortClient(t *testing.T) (*cli.PortClient, context.Context) {

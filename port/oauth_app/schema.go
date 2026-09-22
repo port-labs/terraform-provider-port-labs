@@ -65,6 +65,10 @@ func OAuthAppSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The last update date of the OAuth app registration",
 			Computed:            true,
 		},
+		"last_login_at": schema.StringAttribute{
+			MarkdownDescription: "The timestamp of the most recent login using this OAuth app registration. Null when the app has not been used to log in yet.",
+			Computed:            true,
+		},
 	}
 }
 

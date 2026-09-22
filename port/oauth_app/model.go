@@ -12,4 +12,5 @@ type OAuthAppModel struct {
 	ClientSecret  types.String `tfsdk:"client_secret"`
 	CreatedAt     types.String `tfsdk:"created_at"`
 	UpdatedAt     types.String `tfsdk:"updated_at"`
+	LastLoginAt   types.String `tfsdk:"last_login_at"`
 }

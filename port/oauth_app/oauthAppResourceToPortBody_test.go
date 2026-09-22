@@ -4,8 +4,10 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
 func TestValidateRedirectURI(t *testing.T) {
@@ -150,4 +152,44 @@ func TestOAuthAppResourceToPortBodyUpdate(t *testing.T) {
 	if len(body.RedirectURIs) != 1 || body.RedirectURIs[0] != "https://example.com/new-callback" {
 		t.Fatalf("expected redirect uris to be set, got %+v", body.RedirectURIs)
 	}
+}
+
+func TestRefreshOAuthAppStateLastLoginAt(t *testing.T) {
+	ctx := context.Background()
+	lastLogin := time.Date(2026, 9, 15, 12, 0, 0, 0, time.UTC)
+
+	t.Run("sets last_login_at when present", func(t *testing.T) {
+		state := &OAuthAppModel{}
+		app := &cli.OAuthApp{
+			ID:           "app-id",
+			Name:         "My App",
+			RedirectURIs: []string{"https://example.com/callback"},
+			ClientID:     "client-id",
+			LastLoginAt:  &lastLogin,
+		}
+
+		if err := refreshOAuthAppState(ctx, state, app); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if state.LastLoginAt.IsNull() || state.LastLoginAt.ValueString() != lastLogin.String() {
+			t.Fatalf("expected last_login_at %q, got %v", lastLogin.String(), state.LastLoginAt)
+		}
+	})
+
+	t.Run("null last_login_at when absent", func(t *testing.T) {
+		state := &OAuthAppModel{}
+		app := &cli.OAuthApp{
+			ID:           "app-id",
+			Name:         "My App",
+			RedirectURIs: []string{"https://example.com/callback"},
+			ClientID:     "client-id",
+		}
+
+		if err := refreshOAuthAppState(ctx, state, app); err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if !state.LastLoginAt.IsNull() {
+			t.Fatalf("expected null last_login_at, got %v", state.LastLoginAt)
+		}
+	})
 }

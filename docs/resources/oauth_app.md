@@ -56,3 +56,4 @@ resource "port_oauth_app" "mcp_connector" {
 - `created_at` (String) The creation date of the OAuth app registration
 - `id` (String) The ID of the OAuth app registration
 - `updated_at` (String) The last update date of the OAuth app registration
+- `last_login_at` (String) The timestamp of the most recent login using this OAuth app registration. Null when the app has not been used to log in yet.

@@ -81,6 +81,12 @@ func refreshOAuthAppState(ctx context.Context, state *OAuthAppModel, app *cli.OA
 		state.UpdatedAt = types.StringValue(app.UpdatedAt.String())
 	}
 
+	if app.LastLoginAt != nil {
+		state.LastLoginAt = types.StringValue(app.LastLoginAt.String())
+	} else {
+		state.LastLoginAt = types.StringNull()
+	}
+
 	if app.ClientSecret != "" {
 		state.ClientSecret = types.StringValue(app.ClientSecret)
 	}

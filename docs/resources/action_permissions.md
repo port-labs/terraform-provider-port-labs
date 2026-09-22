@@ -195,6 +195,8 @@ resource "port_action_permissions" "restart_microservice_permissions" {
 
 - Action permissions are created by default when creating a new action, this means that you should use this resource when you want to change the default permissions of an action.
 - When deleting an action permissions resource using terraform, the action permissions will not be deleted from Port, as they are required for the action to work, instead, the action permissions will be removed from the terraform state.
+- When `permissions.execute.owned_by_team` is `true`, do not include the `Member` role under `permissions.execute.roles`. The Port API revokes org-wide Member execute scopes in that case; the provider fails validation during `terraform plan` so the configuration stays explicit.
+- Execute `policy` is an extra condition on top of RBAC scopes. It does not bypass `owned_by_team` enforcement.
 - All the permission lists (roles, users, teams) are managed by Port in a sorted manner, this means that if your `.tf` has for example roles defined out of order, your state will be invalid
     E.g:
 
@@ -263,8 +265,8 @@ Optional:
 
 Optional:
 
-- `owned_by_team` (Boolean) Give execution permission to the teams who own the entity
-- `policy` (String) The policy to use for execution
+- `owned_by_team` (Boolean) When `true`, execute permission is limited to members of the entity's owning team (in addition to any explicitly granted roles, users, or teams). Cannot be combined with the `Member` role in `roles`, because org-wide Member execute access would override team ownership. Port's API rejects that combination; Terraform validates it at plan time.
+- `policy` (String) The policy to use for execution. Policies are evaluated in addition to RBAC scopes (they do not replace team-ownership checks when `owned_by_team` is enabled).
 - `roles` (Set of String) The roles with execution permission
 - `teams` (Set of String) The teams with execution permission
 - `users` (Set of String) The users with execution permission

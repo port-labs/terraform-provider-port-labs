@@ -59,9 +59,9 @@ func PageSchema() map[string]schema.Attribute {
 			Optional:    true,
 		},
 		"widgets": schema.ListAttribute{
-			Description: "The widgets of the page",
-			Optional:    true,
-			ElementType: types.StringType,
+			MarkdownDescription: "The widgets of the page. Each element is a JSON-encoded widget object. For `iframe-widget` widgets, the `url` field accepts an absolute URL or a root-relative path (for example `/~/apiEntity?identifier=ads-api`); paths must start with a single `/` and must not start with `//`.",
+			Optional:            true,
+			ElementType:         types.StringType,
 		},
 		"page_filters": schema.ListAttribute{
 			Description: "The page filters. Each filter is a JSON object with 'identifier' (string), 'title' (string), and 'query' (object with 'combinator' and 'rules' array). The rules array can contain any filter type.",
@@ -467,6 +467,50 @@ resource "port_page" "microservice_dashboard_page" {
             "id" : "microserviceGuide"
           }
         ],
+      }
+    )
+  ]
+}
+
+` + "```" + `
+
+### IFrame widget with root-relative URL
+
+` + "`iframe-widget`" + ` widgets accept an absolute URL or a root-relative path in the ` + "`url`" + ` field. Root-relative paths are resolved against the Port application origin at runtime (for example ` + "`/~/apiEntity?identifier=ads-api`" + `).
+
+` + "```hcl" + `
+
+resource "port_page" "embedded_port_page" {
+  identifier = "embedded_port_page"
+  title      = "Embedded Port page"
+  icon       = "Docs"
+  type       = "dashboard"
+  widgets = [
+    jsonencode(
+      {
+        "id" = "dashboardWidget",
+        "layout" = [
+          {
+            "height" = 400,
+            "columns" = [
+              {
+                "id"   = "embeddedView",
+                "size" = 12
+              }
+            ]
+          }
+        ],
+        "type" = "dashboard-widget",
+        "widgets" = [
+          {
+            "type"    = "iframe-widget",
+            "id"      = "embeddedView",
+            "title"   = "API entity",
+            "icon"    = "Docs",
+            "url"     = "/~/apiEntity?identifier=ads-api",
+            "urlType" = "public"
+          }
+        ]
       }
     )
   ]

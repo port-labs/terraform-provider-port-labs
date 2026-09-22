@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -311,10 +312,10 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 	teamBlueprintIdentifier := utils.GenID()
 	teamEntityIdentifier := utils.GenID()
 	groupIdentifier := utils.GenID()
-	groupPropKey := "tf_group_" + utils.GenID()
-	scorecardPropKey := "tf_scorecard_" + utils.GenID()
-	groupRelationKey := "tf_group_rel_" + utils.GenID()
-	scorecardRelationKey := "tf_scorecard_rel_" + utils.GenID()
+	groupPropKey := "tf_group_" + strings.ReplaceAll(utils.GenID(), "-", "")
+	scorecardPropKey := "tf_scorecard_" + strings.ReplaceAll(utils.GenID(), "-", "")
+	groupRelationKey := "tf_group_rel_" + strings.ReplaceAll(utils.GenID(), "-", "")
+	scorecardRelationKey := "tf_scorecard_rel_" + strings.ReplaceAll(utils.GenID(), "-", "")
 
 	config := testAccCreateBlueprintConfig("microservice", blueprintIdentifier) + fmt.Sprintf(`
 	resource "port_blueprint" "team" {
@@ -331,6 +332,8 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 
 	resource "port_system_blueprint" "scorecard_group" {
 		identifier = "_scorecard_group"
+		# include_in_global_search must be set so Create applies properties/relations.
+		include_in_global_search = false
 		properties = {
 			string_props = {
 				"%s" = {
@@ -348,6 +351,8 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 
 	resource "port_system_blueprint" "scorecard" {
 		identifier = "_scorecard"
+		# include_in_global_search must be set so Create applies properties/relations.
+		include_in_global_search = false
 		properties = {
 			string_props = {
 				"%s" = {

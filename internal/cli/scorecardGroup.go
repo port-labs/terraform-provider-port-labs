@@ -103,7 +103,14 @@ func (c *PortClient) PatchScorecardGroup(ctx context.Context, identifier string,
 		return nil, resp.StatusCode(), fmt.Errorf("failed to patch scorecard group, got: %s", resp.Body())
 	}
 	if pb.ScorecardGroup.Identifier == "" {
-		return nil, resp.StatusCode(), nil
+		read, statusCode, err := c.ReadScorecardGroup(ctx, identifier)
+		if err != nil {
+			if statusCode == 404 {
+				return nil, statusCode, fmt.Errorf("failed to patch scorecard group: API returned success but scorecard group was not found")
+			}
+			return nil, statusCode, fmt.Errorf("failed to read scorecard group after patch: %w", err)
+		}
+		return read, resp.StatusCode(), nil
 	}
 	return &pb.ScorecardGroup, resp.StatusCode(), nil
 }

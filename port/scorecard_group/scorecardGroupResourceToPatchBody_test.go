@@ -59,7 +59,7 @@ func TestScorecardGroupResourceToPatchBodyPerBlueprint(t *testing.T) {
 	state := &ScorecardGroupModel{
 		Identifier: types.StringValue("group-2"),
 		Title:      types.StringValue("Per Blueprint Group"),
-		Properties: types.StringValue(`{"owner":"platform-team"}`),
+		ScorecardProperties: types.StringValue(`{"owner":"platform-team"}`),
 		Scorecards: map[string]MemberSpecModel{
 			"bp-1": {
 				Rules: []scorecard.Rule{
@@ -84,8 +84,8 @@ func TestScorecardGroupResourceToPatchBodyPerBlueprint(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if patch.Properties["owner"] != "platform-team" {
-		t.Fatalf("expected properties owner=platform-team, got %v", patch.Properties)
+	if patch.ScorecardProperties["owner"] != "platform-team" {
+		t.Fatalf("expected scorecard properties owner=platform-team, got %v", patch.ScorecardProperties)
 	}
 	if len(patch.Scorecards) != 1 {
 		t.Fatalf("expected 1 scorecard member, got %d", len(patch.Scorecards))

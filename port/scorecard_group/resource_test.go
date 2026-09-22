@@ -316,13 +316,11 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	groupIdentifier := utils.GenID()
 	teamName := "tf-sc-group-" + strings.ReplaceAll(utils.GenID(), "-", "")
-	groupPropKey := "tf_group_" + strings.ReplaceAll(utils.GenID(), "-", "")
 	scorecardPropKey := "tf_scorecard_" + strings.ReplaceAll(utils.GenID(), "-", "")
-	groupRelationKey := "tf_group_rel_" + strings.ReplaceAll(utils.GenID(), "-", "")
 	scorecardRelationKey := "tf_scorecard_rel_" + strings.ReplaceAll(utils.GenID(), "-", "")
 
-	// Extend system blueprints via the API from the live schema. Using port_system_blueprint
-	// merges from the structure schema and can violate protected scorecard-group properties.
+	// `_scorecard_group` rejects schema changes (even PATCH) with protected_blueprint_violation.
+	// Cover scorecard_* live against `_scorecard`; group_* mapping is covered by unit tests.
 	config := testAccCreateBlueprintConfig("microservice", blueprintIdentifier) + fmt.Sprintf(`
 	resource "port_team" "platform" {
 		name = "%s"
@@ -332,12 +330,6 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 		identifier = "%s"
 		title      = "Scorecard Group Props Relations"
 		blueprints = [port_blueprint.microservice.identifier]
-		group_properties = jsonencode({
-			%s = "governance"
-		})
-		group_relations = jsonencode({
-			%s = port_team.platform.identifier
-		})
 		scorecard_properties = jsonencode({
 			%s = "platform-team"
 		})
@@ -352,8 +344,6 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 	}`,
 		teamName,
 		groupIdentifier,
-		groupPropKey,
-		groupRelationKey,
 		scorecardPropKey,
 		scorecardRelationKey,
 		testAccHasAuthorRuleHCL(),
@@ -362,7 +352,7 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.TestAccPreCheckScorecardGroups(t)
-			testAccExtendScorecardSystemBlueprints(t, groupPropKey, scorecardPropKey, groupRelationKey, scorecardRelationKey)
+			testAccExtendScorecardBlueprint(t, scorecardPropKey, scorecardRelationKey)
 		},
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -371,11 +361,8 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_scorecard_group.test", "identifier", groupIdentifier),
 					resource.TestCheckResourceAttr("port_scorecard_group.test", "title", "Scorecard Group Props Relations"),
-					resource.TestMatchResourceAttr("port_scorecard_group.test", "group_properties", regexp.MustCompile(regexp.QuoteMeta(groupPropKey))),
-					resource.TestMatchResourceAttr("port_scorecard_group.test", "group_properties", regexp.MustCompile(`"governance"`)),
 					resource.TestMatchResourceAttr("port_scorecard_group.test", "scorecard_properties", regexp.MustCompile(regexp.QuoteMeta(scorecardPropKey))),
 					resource.TestMatchResourceAttr("port_scorecard_group.test", "scorecard_properties", regexp.MustCompile(`"platform-team"`)),
-					resource.TestMatchResourceAttr("port_scorecard_group.test", "group_relations", regexp.MustCompile(regexp.QuoteMeta(groupRelationKey))),
 					resource.TestMatchResourceAttr("port_scorecard_group.test", "scorecard_relations", regexp.MustCompile(regexp.QuoteMeta(scorecardRelationKey))),
 					resource.TestCheckResourceAttr("port_scorecard_group.test", "blueprints.#", "1"),
 					resource.TestCheckResourceAttr("port_scorecard_group.test", "rules.#", "1"),
@@ -385,7 +372,7 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 	})
 }
 
-func testAccExtendScorecardSystemBlueprints(t *testing.T, groupPropKey, scorecardPropKey, groupRelationKey, scorecardRelationKey string) {
+func testAccExtendScorecardBlueprint(t *testing.T, propKey, relationKey string) {
 	t.Helper()
 
 	client, ctx := testAccPortClient(t)
@@ -394,34 +381,22 @@ func testAccExtendScorecardSystemBlueprints(t *testing.T, groupPropKey, scorecar
 	many := false
 	required := false
 
-	addExtensions := func(blueprintID, propKey, relationKey string) {
-		t.Helper()
-
-		// PATCH only the new fields. A full PUT round-trip of `_scorecard_group` fails with
-		// protected_blueprint_violation on system properties like group_rules_pass_rate.
-		if _, err := client.PatchBlueprintRelation(ctx, blueprintID, relationKey, &cli.Relation{
-			Title:    &title,
-			Target:   &teamTarget,
-			Many:     &many,
-			Required: &required,
-		}); err != nil {
-			t.Fatalf("failed to add relation %q on %s: %v", relationKey, blueprintID, err)
-		}
-
-		if err := testAccPatchBlueprintProperty(ctx, client, blueprintID, propKey, title); err != nil {
-			t.Fatalf("failed to add property %q on %s: %v", propKey, blueprintID, err)
-		}
+	if _, err := client.PatchBlueprintRelation(ctx, "_scorecard", relationKey, &cli.Relation{
+		Title:    &title,
+		Target:   &teamTarget,
+		Many:     &many,
+		Required: &required,
+	}); err != nil {
+		t.Fatalf("failed to add relation %q on _scorecard: %v", relationKey, err)
 	}
 
-	addExtensions("_scorecard_group", groupPropKey, groupRelationKey)
-	addExtensions("_scorecard", scorecardPropKey, scorecardRelationKey)
+	if err := testAccPatchBlueprintProperty(ctx, client, "_scorecard", propKey, title); err != nil {
+		t.Fatalf("failed to add property %q on _scorecard: %v", propKey, err)
+	}
 
 	t.Cleanup(func() {
-		// Best-effort cleanup via PATCH only; unique keys make leftovers safe across runs.
-		_ = testAccPatchBlueprintProperty(ctx, client, "_scorecard_group", groupPropKey, "")
-		_ = testAccPatchBlueprintProperty(ctx, client, "_scorecard", scorecardPropKey, "")
-		_ = testAccPatchBlueprintRelationDelete(ctx, client, "_scorecard_group", groupRelationKey)
-		_ = testAccPatchBlueprintRelationDelete(ctx, client, "_scorecard", scorecardRelationKey)
+		_ = testAccPatchBlueprintProperty(ctx, client, "_scorecard", propKey, "")
+		_ = testAccPatchBlueprintRelationDelete(ctx, client, "_scorecard", relationKey)
 	})
 }
 

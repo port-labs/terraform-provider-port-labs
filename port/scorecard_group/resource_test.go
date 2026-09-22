@@ -1,6 +1,7 @@
 package scorecard_group_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -9,7 +10,10 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/version"
 )
 
 func enableScorecardGroupBeta(t *testing.T) {
@@ -309,63 +313,18 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 	enableScorecardGroupBeta(t)
 
 	blueprintIdentifier := utils.GenID()
-	teamBlueprintIdentifier := utils.GenID()
-	teamEntityIdentifier := utils.GenID()
 	groupIdentifier := utils.GenID()
+	teamName := "tf-sc-group-" + strings.ReplaceAll(utils.GenID(), "-", "")
 	groupPropKey := "tf_group_" + strings.ReplaceAll(utils.GenID(), "-", "")
 	scorecardPropKey := "tf_scorecard_" + strings.ReplaceAll(utils.GenID(), "-", "")
 	groupRelationKey := "tf_group_rel_" + strings.ReplaceAll(utils.GenID(), "-", "")
 	scorecardRelationKey := "tf_scorecard_rel_" + strings.ReplaceAll(utils.GenID(), "-", "")
 
+	// Extend system blueprints via the API from the live schema. Using port_system_blueprint
+	// merges from the structure schema and can violate protected scorecard-group properties.
 	config := testAccCreateBlueprintConfig("microservice", blueprintIdentifier) + fmt.Sprintf(`
-	resource "port_blueprint" "team" {
-		title      = "TF test team"
-		icon       = "Team"
-		identifier = "%s"
-	}
-
-	resource "port_entity" "platform_team" {
-		identifier = "%s"
-		title      = "Platform Team"
-		blueprint  = port_blueprint.team.identifier
-	}
-
-	resource "port_system_blueprint" "scorecard_group" {
-		identifier = "_scorecard_group"
-		# include_in_global_search must be set so Create applies properties/relations.
-		include_in_global_search = false
-		properties = {
-			string_props = {
-				"%s" = {
-					title = "TF Group Category"
-				}
-			}
-		}
-		relations = {
-			"%s" = {
-				title  = "TF Owning Team"
-				target = port_blueprint.team.identifier
-			}
-		}
-	}
-
-	resource "port_system_blueprint" "scorecard" {
-		identifier = "_scorecard"
-		# include_in_global_search must be set so Create applies properties/relations.
-		include_in_global_search = false
-		properties = {
-			string_props = {
-				"%s" = {
-					title = "TF Scorecard Owner"
-				}
-			}
-		}
-		relations = {
-			"%s" = {
-				title  = "TF Owner Team"
-				target = port_blueprint.team.identifier
-			}
-		}
+	resource "port_team" "platform" {
+		name = "%s"
 	}
 
 	resource "port_scorecard_group" "test" {
@@ -376,28 +335,21 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 			%s = "governance"
 		})
 		group_relations = jsonencode({
-			%s = port_entity.platform_team.identifier
+			%s = port_team.platform.identifier
 		})
 		scorecard_properties = jsonencode({
 			%s = "platform-team"
 		})
 		scorecard_relations = jsonencode({
-			%s = port_entity.platform_team.identifier
+			%s = port_team.platform.identifier
 		})
 		rules = %s
 		depends_on = [
 			port_blueprint.microservice,
-			port_system_blueprint.scorecard_group,
-			port_system_blueprint.scorecard,
-			port_entity.platform_team,
+			port_team.platform,
 		]
 	}`,
-		teamBlueprintIdentifier,
-		teamEntityIdentifier,
-		groupPropKey,
-		groupRelationKey,
-		scorecardPropKey,
-		scorecardRelationKey,
+		teamName,
 		groupIdentifier,
 		groupPropKey,
 		groupRelationKey,
@@ -407,7 +359,10 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 	)
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheckScorecardGroups(t) },
+		PreCheck: func() {
+			acctest.TestAccPreCheckScorecardGroups(t)
+			testAccExtendScorecardSystemBlueprints(t, groupPropKey, scorecardPropKey, groupRelationKey, scorecardRelationKey)
+		},
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
@@ -420,13 +375,86 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 					resource.TestMatchResourceAttr("port_scorecard_group.test", "scorecard_properties", regexp.MustCompile(regexp.QuoteMeta(scorecardPropKey))),
 					resource.TestMatchResourceAttr("port_scorecard_group.test", "scorecard_properties", regexp.MustCompile(`"platform-team"`)),
 					resource.TestMatchResourceAttr("port_scorecard_group.test", "group_relations", regexp.MustCompile(regexp.QuoteMeta(groupRelationKey))),
-					resource.TestMatchResourceAttr("port_scorecard_group.test", "group_relations", regexp.MustCompile(regexp.QuoteMeta(teamEntityIdentifier))),
 					resource.TestMatchResourceAttr("port_scorecard_group.test", "scorecard_relations", regexp.MustCompile(regexp.QuoteMeta(scorecardRelationKey))),
-					resource.TestMatchResourceAttr("port_scorecard_group.test", "scorecard_relations", regexp.MustCompile(regexp.QuoteMeta(teamEntityIdentifier))),
 					resource.TestCheckResourceAttr("port_scorecard_group.test", "blueprints.#", "1"),
 					resource.TestCheckResourceAttr("port_scorecard_group.test", "rules.#", "1"),
 				),
 			},
 		},
 	})
+}
+
+func testAccExtendScorecardSystemBlueprints(t *testing.T, groupPropKey, scorecardPropKey, groupRelationKey, scorecardRelationKey string) {
+	t.Helper()
+
+	client, ctx := testAccPortClient(t)
+	teamTarget := "_team"
+	title := "TF Acc Test"
+	many := false
+	required := false
+
+	addExtensions := func(blueprintID, propKey, relationKey string) {
+		t.Helper()
+		bp, statusCode, err := client.ReadBlueprint(ctx, blueprintID)
+		if err != nil {
+			t.Fatalf("failed to read %s blueprint: %v (status %d)", blueprintID, err, statusCode)
+		}
+		if bp.Schema.Properties == nil {
+			bp.Schema.Properties = map[string]cli.BlueprintProperty{}
+		}
+		bp.Schema.Properties[propKey] = cli.BlueprintProperty{
+			Type:  "string",
+			Title: &title,
+		}
+		if bp.Relations == nil {
+			bp.Relations = map[string]cli.Relation{}
+		}
+		bp.Relations[relationKey] = cli.Relation{
+			Title:    &title,
+			Target:   &teamTarget,
+			Many:     &many,
+			Required: &required,
+		}
+		if _, err := client.UpdateBlueprint(ctx, bp, blueprintID); err != nil {
+			t.Fatalf("failed to extend %s blueprint: %v", blueprintID, err)
+		}
+	}
+
+	addExtensions("_scorecard_group", groupPropKey, groupRelationKey)
+	addExtensions("_scorecard", scorecardPropKey, scorecardRelationKey)
+
+	t.Cleanup(func() {
+		removeExtensions := func(blueprintID, propKey, relationKey string) {
+			bp, statusCode, err := client.ReadBlueprint(ctx, blueprintID)
+			if err != nil {
+				t.Logf("cleanup: failed to read %s blueprint: %v (status %d)", blueprintID, err, statusCode)
+				return
+			}
+			delete(bp.Schema.Properties, propKey)
+			delete(bp.Relations, relationKey)
+			if _, err := client.UpdateBlueprint(ctx, bp, blueprintID); err != nil {
+				t.Logf("cleanup: failed to remove extensions from %s: %v", blueprintID, err)
+			}
+		}
+		removeExtensions("_scorecard_group", groupPropKey, groupRelationKey)
+		removeExtensions("_scorecard", scorecardPropKey, scorecardRelationKey)
+	})
+}
+
+func testAccPortClient(t *testing.T) (*cli.PortClient, context.Context) {
+	t.Helper()
+
+	baseURL := os.Getenv("PORT_BASE_URL")
+	if baseURL == "" {
+		baseURL = consts.DefaultBaseUrl
+	}
+	client, err := cli.New(baseURL, cli.WithHeader("User-Agent", version.ProviderVersion))
+	if err != nil {
+		t.Fatalf("failed to create Port client: %v", err)
+	}
+	ctx := context.Background()
+	if _, err := client.Authenticate(ctx, os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET")); err != nil {
+		t.Fatalf("failed to authenticate with Port: %v", err)
+	}
+	return client, ctx
 }

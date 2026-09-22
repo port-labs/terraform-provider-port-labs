@@ -196,6 +196,8 @@ A scorecard group can be configured in one of two modes:
 
 See the [Port documentation](https://docs.getport.io/governance/standards-and-compliance/manage-scorecard-groups/) for more information about scorecard groups.
 
+Updates call the Port API ` + "`PATCH /v1/scorecard-groups/{identifier}`" + ` endpoint when blueprint membership is unchanged (for example title, levels, properties, relations, rules, filters, or per-blueprint member specs). Adding or removing blueprints or switching between shared-rules and per-blueprint mode uses ` + "`PUT`" + ` because the patch endpoint does not accept ` + "`blueprints`" + ` or create new members.
+
 ` + "`scorecard_properties`" + ` sets ` + "`_scorecard`" + ` blueprint property values on every member scorecard in the group. ` + "`group_properties`" + ` sets ` + "`_scorecard_group`" + ` blueprint property values on the group entity. ` + "`scorecard_relations`" + ` and ` + "`group_relations`" + ` set relations on member scorecards and the group entity respectively. Define the property and relation schema on the system blueprints first (for example with ` + "`port_system_blueprint`" + `), then reference those keys in ` + "`jsonencode({...})`" + `. Use ` + "`depends_on`" + ` so the scorecard group is created only after the blueprint schema exists.
 
 ## Example Usage (shared rules)

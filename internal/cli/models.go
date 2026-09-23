@@ -36,14 +36,16 @@ type (
 
 	Entity struct {
 		Meta
-		Identifier string                    `json:"identifier,omitempty"`
-		Title      string                    `json:"title"`
-		Icon       string                    `json:"icon,omitempty"`
-		Blueprint  string                    `json:"blueprint"`
-		Team       []string                  `json:"team,omitempty"`
-		Properties map[string]any            `json:"properties"`
-		Relations  map[string]any            `json:"relations"`
-		Scorecards map[string]ScorecardModel `json:"scorecards,omitempty"`
+		Identifier      string                    `json:"identifier,omitempty"`
+		Title           string                    `json:"title"`
+		Icon            string                    `json:"icon,omitempty"`
+		Blueprint       string                    `json:"blueprint"`
+		Team            any                       `json:"team,omitempty"`
+		Properties      map[string]any            `json:"properties"`
+		Relations       map[string]any            `json:"relations"`
+		Scorecards      map[string]ScorecardModel `json:"scorecards,omitempty"`
+		RelationSources map[string]any            `json:"relationSources,omitempty"`
+		TeamSources     map[string]any            `json:"teamSources,omitempty"`
 		// TODO: add the rest of the fields.
 	}
 
@@ -815,16 +817,16 @@ type ValidateIntegrationSpecBody struct {
 }
 
 type Integration struct {
-	InstallationId       string                 `json:"installationId"`
-	Title                *string                `json:"title"`
-	InstallationAppType  *string                `json:"installationAppType"`
-	InstallationType     *string                `json:"installationType"`
-	Version              *string                `json:"version"`
-	Config               *map[string]any        `json:"config,omitempty"`
+	InstallationId            string                 `json:"installationId"`
+	Title                     *string                `json:"title"`
+	InstallationAppType       *string                `json:"installationAppType"`
+	InstallationType          *string                `json:"installationType"`
+	Version                   *string                `json:"version"`
+	Config                    *map[string]any        `json:"config,omitempty"`
 	Spec                      *IntegrationClientSpec `json:"spec,omitempty"`
 	CreatePortResourcesOrigin *string                `json:"createPortResourcesOrigin,omitempty"`
 	StatusInfo                *IntegrationStatusInfo `json:"statusInfo,omitempty"`
-	ChangelogDestination *ChangelogDestination  `json:"changelogDestination,omitempty"`
+	ChangelogDestination      *ChangelogDestination  `json:"changelogDestination,omitempty"`
 }
 
 type Organization struct {

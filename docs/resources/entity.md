@@ -28,13 +28,16 @@ Entity resource
 - `properties` (Attributes) The properties of the entity (see [below for nested schema](#nestedatt--properties))
 - `relations` (Attributes) The relations of the entity (see [below for nested schema](#nestedatt--relations))
 - `run_id` (String) The runID of the action run that created the entity
-- `teams` (Set of String) The teams the entity belongs to
+- `teams` (Set of String) The teams the entity belongs to. Use this when the blueprint does not use union direct ownership.
+- `union_team_slice` (Attributes) Write-only team slice for blueprints with direct union ownership (see [below for nested schema](#nestedatt--union_team_slice))
 
 ### Read-Only
 
 - `created_at` (String) The creation date of the entity
 - `created_by` (String) The creator of the entity
 - `id` (String) The ID of this resource.
+- `relation_sources` (Map of String) Per-source contributions for union many relations. Each map value is a JSON object mapping source identifiers to related entity identifier arrays.
+- `team_sources` (Map of String) Per-source team contributions for union direct ownership. Each map value is a JSON object mapping source identifiers to team identifier arrays.
 - `updated_at` (String) The last update date of the entity
 - `updated_by` (String) The last updater of the entity
 
@@ -66,5 +69,28 @@ Optional:
 
 Optional:
 
-- `many_relations` (Map of List of String) The many relation of the entity
+- `many_relations` (Map of List of String) The many relation of the entity. Use this for relations where the blueprint relation has `union = false`.
 - `single_relations` (Map of String) The single relation of the entity
+- `union_many_relations` (Map of Attributes) Write-only slices for union many relations (see [below for nested schema](#nestedatt--relations--union_many_relations))
+
+<a id="nestedatt--relations--union_many_relations"></a>
+### Nested Schema for `relations.union_many_relations`
+
+Required:
+
+- `source_key` (String) The source identifier whose relation slice should be written
+
+Optional:
+
+- `items` (List of String) Related entity identifiers contributed by the source
+
+<a id="nestedatt--union_team_slice"></a>
+### Nested Schema for `union_team_slice`
+
+Required:
+
+- `source_key` (String) The source identifier whose team slice should be written
+
+Optional:
+
+- `teams` (Set of String) Team identifiers contributed by the source

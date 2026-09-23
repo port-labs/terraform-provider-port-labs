@@ -109,11 +109,53 @@ func EntitySchema() map[string]schema.Attribute {
 					ElementType:         types.StringType,
 				},
 				"many_relations": schema.MapAttribute{
-					MarkdownDescription: "The many relation of the entity",
+					MarkdownDescription: "The many relation of the entity. Use this for relations where the blueprint relation has `union = false`.",
 					Optional:            true,
 					ElementType:         types.ListType{ElemType: types.StringType},
 				},
+				"union_many_relations": schema.MapNestedAttribute{
+					MarkdownDescription: "Write-only slices for union many relations. Each entry names a relation and the source key whose entity identifiers should be written. On read, per-source values are returned in `relation_sources` for union relations only.",
+					Optional:            true,
+					NestedObject: schema.NestedAttributeObject{
+						Attributes: map[string]schema.Attribute{
+							"source_key": schema.StringAttribute{
+								MarkdownDescription: "The source identifier whose relation slice should be written",
+								Required:            true,
+							},
+							"items": schema.ListAttribute{
+								MarkdownDescription: "Related entity identifiers contributed by the source",
+								Optional:            true,
+								ElementType:         types.StringType,
+							},
+						},
+					},
+				},
 			},
+		},
+		"union_team_slice": schema.SingleNestedAttribute{
+			MarkdownDescription: "Write-only team slice for blueprints with direct union ownership. Writes teams for a single source without overwriting other sources.",
+			Optional:            true,
+			Attributes: map[string]schema.Attribute{
+				"source_key": schema.StringAttribute{
+					MarkdownDescription: "The source identifier whose team slice should be written",
+					Required:            true,
+				},
+				"teams": schema.SetAttribute{
+					MarkdownDescription: "Team identifiers contributed by the source",
+					Optional:            true,
+					ElementType:         types.StringType,
+				},
+			},
+		},
+		"team_sources": schema.MapAttribute{
+			MarkdownDescription: "Per-source team contributions for union direct ownership. Each map value is a JSON object mapping source identifiers to team identifier arrays. Read-only.",
+			Computed:            true,
+			ElementType:         types.StringType,
+		},
+		"relation_sources": schema.MapAttribute{
+			MarkdownDescription: "Per-source contributions for union many relations. Each map value is a JSON object mapping source identifiers to related entity identifier arrays. Read-only.",
+			Computed:            true,
+			ElementType:         types.StringType,
 		},
 		"created_at": schema.StringAttribute{
 			MarkdownDescription: "The creation date of the entity",

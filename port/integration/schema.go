@@ -43,6 +43,9 @@ func IntegrationSchema() map[string]schema.Attribute {
 			MarkdownDescription: "The integrated tool name for catalog integration types (e.g. `github-ocean`, `gitlab`, `pagerduty`). Custom integrations can omit this field. Cannot be changed after creation. When omitted from configuration, the value from Port is preserved and is not sent as `null` on updates.",
 			Optional:            true,
 			Computed:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"installation_type": schema.StringAttribute{
 			MarkdownDescription: "The installation type of the integration. Use `Saas` for Port Hosted integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource. Cannot be changed after creation.",

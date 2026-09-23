@@ -12,6 +12,21 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
 )
 
+func scorecardPropertiesState(state *ScorecardGroupModel) types.String {
+	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
+		return state.ScorecardProperties
+	}
+	return state.Properties
+}
+
+func setScorecardPropertiesState(state *ScorecardGroupModel, value types.String) {
+	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
+		state.ScorecardProperties = value
+		return
+	}
+	state.Properties = value
+}
+
 func configuredJSONObjectKeys(stateValue types.String) map[string]struct{} {
 	if stateValue.IsNull() || stateValue.IsUnknown() {
 		return nil

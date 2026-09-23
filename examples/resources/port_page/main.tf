@@ -63,9 +63,9 @@ resource "port_page" "embedded_port_page" {
           {
             "type"    = "iframe-widget",
             "id"      = "embeddedView",
-            "title"   = "API entity",
+            "title"   = "Organization home",
             "icon"    = "Docs",
-            "url"     = "/~/apiEntity?identifier=ads-api",
+            "url"     = "/organization/home",
             "urlType" = "public"
           }
         ],

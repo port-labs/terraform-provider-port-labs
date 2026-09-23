@@ -9,7 +9,7 @@ import (
 )
 
 func TestPageToPortBodyPreservesIframeWidgetRootRelativeURL(t *testing.T) {
-	relativeURL := "/~/apiEntity?identifier=ads-api"
+	relativeURL := "/organization/home"
 	widgetJSON := `{"type":"dashboard-widget","id":"dashboardWidget","widgets":[{"type":"iframe-widget","id":"embeddedView","url":"` + relativeURL + `","urlType":"public"}]}`
 
 	state := &PageModel{

@@ -59,7 +59,7 @@ func PageSchema() map[string]schema.Attribute {
 			Optional:    true,
 		},
 		"widgets": schema.ListAttribute{
-			MarkdownDescription: "The widgets of the page. Each element is a JSON-encoded widget object. For `iframe-widget` widgets, the `url` field accepts an absolute URL or a root-relative path (for example `/~/apiEntity?identifier=ads-api`); paths must start with a single `/` and must not start with `//`.",
+			MarkdownDescription: "The widgets of the page. Each element is a JSON-encoded widget object. For `iframe-widget` widgets, the `url` field accepts an absolute URL or a root-relative path (for example `/organization/home` or `/test`); paths must start with a single `/` and must not start with `//`. Root-relative paths without an organization segment are resolved under the current organization at runtime.",
 			Optional:            true,
 			ElementType:         types.StringType,
 		},
@@ -476,7 +476,7 @@ resource "port_page" "microservice_dashboard_page" {
 
 ### IFrame widget with root-relative URL
 
-` + "`iframe-widget`" + ` widgets accept an absolute URL or a root-relative path in the ` + "`url`" + ` field. Root-relative paths are resolved against the Port application origin at runtime (for example ` + "`/~/apiEntity?identifier=ads-api`" + `).
+` + "`iframe-widget`" + ` widgets accept an absolute URL or a root-relative path in the ` + "`url`" + ` field (for example ` + "`/organization/home`" + `). Root-relative paths are resolved against the Port application origin at runtime; paths without an organization segment are resolved under the current organization.
 
 ` + "```hcl" + `
 
@@ -505,9 +505,9 @@ resource "port_page" "embedded_port_page" {
           {
             "type"    = "iframe-widget",
             "id"      = "embeddedView",
-            "title"   = "API entity",
+            "title"   = "Organization home",
             "icon"    = "Docs",
-            "url"     = "/~/apiEntity?identifier=ads-api",
+            "url"     = "/organization/home",
             "urlType" = "public"
           }
         ]

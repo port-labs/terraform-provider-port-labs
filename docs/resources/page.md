@@ -336,7 +336,7 @@ description: |-
   
   
   IFrame widget with root-relative URL
-  iframe-widget widgets accept an absolute URL or a root-relative path in the url field. Root-relative paths are resolved against the Port application origin at runtime (for example /~/apiEntity?identifier=ads-api).
+  iframe-widget widgets accept an absolute URL or a root-relative path in the url field (for example /organization/home). Root-relative paths are resolved against the Port application origin at runtime; paths without an organization segment are resolved under the current organization.
   
   
   resource "port_page" "embedded_port_page" {
@@ -364,9 +364,9 @@ description: |-
             {
               "type"    = "iframe-widget",
               "id"      = "embeddedView",
-              "title"   = "API entity",
+              "title"   = "Organization home",
               "icon"    = "Docs",
-              "url"     = "/~/apiEntity?identifier=ads-api",
+              "url"     = "/organization/home",
               "urlType" = "public"
             }
           ]
@@ -789,7 +789,7 @@ resource "port_page" "microservice_dashboard_page" {
 
 ### IFrame widget with root-relative URL
 
-`iframe-widget` widgets accept an absolute URL or a root-relative path in the `url` field. Root-relative paths are resolved against the Port application origin at runtime (for example `/~/apiEntity?identifier=ads-api`).
+`iframe-widget` widgets accept an absolute URL or a root-relative path in the `url` field (for example `/organization/home`). Root-relative paths are resolved against the Port application origin at runtime; paths without an organization segment are resolved under the current organization.
 
 ```hcl
 
@@ -818,9 +818,9 @@ resource "port_page" "embedded_port_page" {
           {
             "type"    = "iframe-widget",
             "id"      = "embeddedView",
-            "title"   = "API entity",
+            "title"   = "Organization home",
             "icon"    = "Docs",
-            "url"     = "/~/apiEntity?identifier=ads-api",
+            "url"     = "/organization/home",
             "urlType" = "public"
           }
         ]
@@ -912,7 +912,7 @@ terraform import port_page.home_page "\$home"
 - `page_filters` (List of String) The page filters. Each filter is a JSON object with 'identifier' (string), 'title' (string), and 'query' (object with 'combinator' and 'rules' array). The rules array can contain any filter type.
 - `parent` (String) The identifier of the folder in which the page is in, default is the root of the sidebar
 - `title` (String) The title of the page
-- `widgets` (List of String) The widgets of the page. Each element is a JSON-encoded widget object. For `iframe-widget` widgets, the `url` field accepts an absolute URL or a root-relative path (for example `/~/apiEntity?identifier=ads-api`); paths must start with a single `/` and must not start with `//`.
+- `widgets` (List of String) The widgets of the page. Each element is a JSON-encoded widget object. For `iframe-widget` widgets, the `url` field accepts an absolute URL or a root-relative path (for example `/organization/home` or `/test`); paths must start with a single `/` and must not start with `//`. Root-relative paths without an organization segment are resolved under the current organization at runtime.
 
 ### Read-Only
 

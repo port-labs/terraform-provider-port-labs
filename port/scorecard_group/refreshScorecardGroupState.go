@@ -108,21 +108,6 @@ func syncJSONObjectState(stateValue *types.String, apiValues map[string]any, fie
 	)
 }
 
-func scorecardPropertiesState(state *ScorecardGroupModel) types.String {
-	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
-		return state.ScorecardProperties
-	}
-	return state.Properties
-}
-
-func setScorecardPropertiesState(state *ScorecardGroupModel, value types.String) {
-	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
-		state.ScorecardProperties = value
-		return
-	}
-	state.Properties = value
-}
-
 func shouldRefreshGroupLevels(stateLevels []scorecard.Level, cliLevels []cli.Level) bool {
 	if len(stateLevels) == 0 && reflect.DeepEqual(cliLevels, scorecard.DefaultCliLevels()) {
 		return false

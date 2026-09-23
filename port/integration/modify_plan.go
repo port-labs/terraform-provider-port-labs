@@ -25,8 +25,13 @@ var immutableFields = []immutableField{
 		changed: func(s, p *IntegrationModel) bool { return !p.InstallationId.Equal(s.InstallationId) },
 	},
 	{
-		name:    "installation_app_type",
-		changed: func(s, p *IntegrationModel) bool { return !p.InstallationAppType.Equal(s.InstallationAppType) },
+		name: "installation_app_type",
+		changed: func(s, p *IntegrationModel) bool {
+			if p.InstallationAppType.IsNull() {
+				return false
+			}
+			return !p.InstallationAppType.Equal(s.InstallationAppType)
+		},
 	},
 	{
 		name:    "installation_type",

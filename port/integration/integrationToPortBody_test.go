@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -81,4 +82,27 @@ func TestIntegrationToPortBody_CreatePortResourcesOriginOmitted(t *testing.T) {
 	body, err := integrationToPortBody(model, true)
 	require.NoError(t, err)
 	assert.Nil(t, body.CreatePortResourcesOrigin)
+}
+
+func TestIntegrationToPortBodyOmitsNullInstallationAppType(t *testing.T) {
+	body, err := integrationToPortBody(&IntegrationModel{
+		InstallationId:      types.StringValue("my-integration"),
+		InstallationAppType: types.StringNull(),
+	}, false)
+	require.NoError(t, err)
+	assert.Nil(t, body.InstallationAppType)
+
+	payload, err := json.Marshal(body)
+	require.NoError(t, err)
+	assert.NotContains(t, string(payload), "installationAppType")
+}
+
+func TestIntegrationToPortBodyIncludesInstallationAppTypeWhenSet(t *testing.T) {
+	body, err := integrationToPortBody(&IntegrationModel{
+		InstallationId:      types.StringValue("my-integration"),
+		InstallationAppType: types.StringValue("kafka"),
+	}, true)
+	require.NoError(t, err)
+	require.NotNil(t, body.InstallationAppType)
+	assert.Equal(t, "kafka", *body.InstallationAppType)
 }

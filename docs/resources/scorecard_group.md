@@ -477,7 +477,6 @@ resource "port_scorecard_group" "readiness" {
 
 - `blueprints` (Set of String) Blueprint identifiers that share the same rules (and optional filters). Use this for shared-rules mode. Conflicts with `scorecards`.
 - `filters` (Attributes Map) Optional filters per blueprint in shared-rules mode, keyed by blueprint identifier. Conflicts with `scorecards`. (see [below for nested schema](#nestedatt--filters))
-- `properties` (String, Deprecated) Additional `_scorecard` blueprint properties applied to every member scorecard in the group, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint. Deprecated: use `scorecard_properties` instead.
 - `group_properties` (String) Additional `_scorecard_group` blueprint properties applied to the scorecard group entity, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard_group` blueprint.
 - `group_relations` (String) Additional `_scorecard_group` blueprint relations applied to the scorecard group entity, as a JSON encoded string. Relation values can be a string, an array of strings, or `null` to clear a relation.
 - `levels` (Attributes List) The available levels of the scorecard group, shared by all members. (see [below for nested schema](#nestedatt--levels))

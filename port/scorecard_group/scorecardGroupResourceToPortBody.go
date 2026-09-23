@@ -200,13 +200,17 @@ func scorecardGroupResourceToPatchBody(ctx context.Context, state *ScorecardGrou
 		patch.Levels = levelsToCLI(state.Levels)
 	}
 
+	propertiesPatch := &cli.ScorecardGroupPropertiesPatch{}
+	hasPropertiesPatch := false
+
 	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
 		properties, err := utils.TerraformJsonStringToGoObject(state.ScorecardProperties.ValueStringPointer())
 		if err != nil {
 			return nil, err
 		}
 		if properties != nil {
-			patch.ScorecardProperties = *properties
+			propertiesPatch.ScorecardProperties = *properties
+			hasPropertiesPatch = true
 		}
 	}
 
@@ -216,7 +220,8 @@ func scorecardGroupResourceToPatchBody(ctx context.Context, state *ScorecardGrou
 			return nil, err
 		}
 		if properties != nil {
-			patch.GroupProperties = *properties
+			propertiesPatch.GroupProperties = *properties
+			hasPropertiesPatch = true
 		}
 	}
 
@@ -226,7 +231,8 @@ func scorecardGroupResourceToPatchBody(ctx context.Context, state *ScorecardGrou
 			return nil, err
 		}
 		if relations != nil {
-			patch.GroupRelations = *relations
+			propertiesPatch.GroupRelations = *relations
+			hasPropertiesPatch = true
 		}
 	}
 
@@ -236,8 +242,13 @@ func scorecardGroupResourceToPatchBody(ctx context.Context, state *ScorecardGrou
 			return nil, err
 		}
 		if relations != nil {
-			patch.ScorecardRelations = *relations
+			propertiesPatch.ScorecardRelations = *relations
+			hasPropertiesPatch = true
 		}
+	}
+
+	if hasPropertiesPatch {
+		patch.Properties = propertiesPatch
 	}
 
 	if len(state.Scorecards) > 0 {

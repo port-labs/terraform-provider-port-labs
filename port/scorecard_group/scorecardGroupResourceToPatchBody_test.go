@@ -84,8 +84,8 @@ func TestScorecardGroupResourceToPatchBodyPerBlueprint(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 
-	if patch.ScorecardProperties["owner"] != "platform-team" {
-		t.Fatalf("expected scorecard properties owner=platform-team, got %v", patch.ScorecardProperties)
+	if patch.Properties == nil || patch.Properties.ScorecardProperties["owner"] != "platform-team" {
+		t.Fatalf("expected scorecard properties owner=platform-team, got %v", patch.Properties)
 	}
 	if len(patch.Scorecards) != 1 {
 		t.Fatalf("expected 1 scorecard member, got %d", len(patch.Scorecards))
@@ -95,6 +95,44 @@ func TestScorecardGroupResourceToPatchBodyPerBlueprint(t *testing.T) {
 	}
 	if len(patch.Filters) != 0 {
 		t.Fatalf("expected no filters in per-blueprint patch body")
+	}
+}
+
+func TestScorecardGroupResourceToPatchBodyNestsPropertiesBundle(t *testing.T) {
+	state := &ScorecardGroupModel{
+		Identifier:          types.StringValue("group-1"),
+		Title:               types.StringValue("Group 1"),
+		GroupProperties:     types.StringValue(`{"category":"governance"}`),
+		ScorecardProperties: types.StringValue(`{"owner":"platform-team"}`),
+		Blueprints:          []types.String{types.StringValue("bp-1")},
+		Rules: []scorecard.Rule{
+			{
+				Identifier: types.StringValue("rule-1"),
+				Title:      types.StringValue("Rule 1"),
+				Level:      types.StringValue("Gold"),
+				Query: &scorecard.Query{
+					Combinator: types.StringValue("and"),
+					Conditions: []types.String{
+						types.StringValue(`{"property":"author","operator":"isNotEmpty"}`),
+					},
+				},
+			},
+		},
+	}
+
+	patch, err := scorecardGroupResourceToPatchBody(context.Background(), state)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+
+	if patch.Properties == nil {
+		t.Fatal("expected properties bundle in patch body")
+	}
+	if patch.Properties.GroupProperties["category"] != "governance" {
+		t.Fatalf("expected group property category=governance, got %v", patch.Properties.GroupProperties)
+	}
+	if patch.Properties.ScorecardProperties["owner"] != "platform-team" {
+		t.Fatalf("expected scorecard property owner=platform-team, got %v", patch.Properties.ScorecardProperties)
 	}
 }
 

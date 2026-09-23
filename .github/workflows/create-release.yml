@@ -5,6 +5,8 @@ name: Create provider release
 # workflowInputs and runs the workflow file on that branch.
 # Replace this file by merging the real create-release workflow.
 
+permissions: {}
+
 on:
   workflow_dispatch:
     inputs:

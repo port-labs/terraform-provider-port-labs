@@ -347,7 +347,7 @@ description: |-
     widgets = [
       jsonencode(
         {
-          "id" = "dashboardWidget",
+          "id" = "embeddedDashboardWidget",
           "layout" = [
             {
               "height" = 400,
@@ -801,7 +801,7 @@ resource "port_page" "embedded_port_page" {
   widgets = [
     jsonencode(
       {
-        "id" = "dashboardWidget",
+        "id" = "embeddedDashboardWidget",
         "layout" = [
           {
             "height" = 400,

@@ -1,5 +1,7 @@
-# This GitHub action can publish assets for release when a tag is created.
-# Currently its setup to run on any tag that matches the pattern "v*" (ie. v0.1.0).
+# This GitHub action publishes assets when a GitHub release is published
+# (including converting an unpublished release to published).
+# Tag push no longer triggers this workflow so create-release.yml can create
+# the tag and notes without publishing packages.
 #
 # This uses an action (hashicorp/ghaction-import-gpg) that assumes you set your 
 # private key in the `GPG_PRIVATE_KEY` secret and passphrase in the `PASSPHRASE`
@@ -11,10 +13,8 @@
 #
 name: release
 on:
-  push:
-    tags:
-      - 'v2.*'
-      - 'v1.*'
+  release:
+    types: [published]
 jobs:
   goreleaser:
     runs-on: ubuntu-latest

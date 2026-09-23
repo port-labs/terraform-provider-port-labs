@@ -1,0 +1,111 @@
+name: Create provider release
+
+run-name: Create provider release ${{ inputs.version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Provider version (e.g. v2.26.0)
+        required: true
+        type: string
+      port_run_id:
+        description: Port run ID (optional, set by the SSA)
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: create-release-${{ github.workflow }}-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  create_release:
+    name: Create GitHub release and trigger pulumi-port
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Normalize version
+        id: normalize
+        env:
+          RAW_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          VERSION="${RAW_VERSION#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version must be X.Y.Z or vX.Y.Z, got: ${RAW_VERSION}"
+            exit 1
+          fi
+          VERSION="v${VERSION}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Using version ${VERSION}"
+
+      - name: Fail if tag already exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.normalize.outputs.version }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/${GITHUB_REPOSITORY}/git/refs/tags/${VERSION}" --silent >/dev/null 2>&1; then
+            echo "::error::Tag ${VERSION} already exists in ${GITHUB_REPOSITORY}"
+            exit 1
+          fi
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.normalize.outputs.version }}
+        run: |
+          set -euo pipefail
+          # Keep --draft until this SSA publishes. Drop the flag when flipping to publish.
+          gh release create "$VERSION" \
+            --draft \
+            --generate-notes \
+            --title "$VERSION" \
+            --target "${{ github.event.repository.default_branch }}"
+          echo "Created GitHub release ${VERSION}"
+          gh release view "$VERSION" --json url --jq .url
+
+      - name: Trigger and wait for pulumi-port create-release
+        env:
+          GH_TOKEN: ${{ secrets.PORT_MACHINE_USER_GITHUB_TOKEN }}
+          VERSION: ${{ steps.normalize.outputs.version }}
+          PORT_RUN_ID: ${{ inputs.port_run_id }}
+        run: |
+          set -euo pipefail
+          PULUMI_REPO="port-labs/pulumi-port"
+          PULUMI_REF=$(gh api "repos/${PULUMI_REPO}" --jq .default_branch)
+          TITLE="Create provider release ${VERSION}"
+          SINCE=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          gh workflow run create-release.yaml \
+            --repo "$PULUMI_REPO" \
+            --ref "$PULUMI_REF" \
+            --field version="$VERSION" \
+            --field port_run_id="${PORT_RUN_ID:-}"
+
+          RUN_ID=""
+          for _ in $(seq 1 36); do
+            RUN_ID=$(gh run list \
+              --repo "$PULUMI_REPO" \
+              --workflow create-release.yaml \
+              --event workflow_dispatch \
+              --limit 20 \
+              --json databaseId,displayTitle,createdAt \
+              --jq --arg title "$TITLE" --arg since "$SINCE" \
+              '[.[] | select(.displayTitle == $title and .createdAt >= $since)] | first | .databaseId // empty')
+            if [ -n "$RUN_ID" ]; then
+              break
+            fi
+            sleep 5
+          done
+
+          if [ -z "$RUN_ID" ]; then
+            echo "::error::Timed out waiting for ${PULUMI_REPO} create-release run"
+            exit 1
+          fi
+
+          echo "Watching ${PULUMI_REPO} run ${RUN_ID}"
+          gh run watch "$RUN_ID" --repo "$PULUMI_REPO" --exit-status

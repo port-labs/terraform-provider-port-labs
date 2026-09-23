@@ -22,7 +22,7 @@ jobs:
         uses: golangci/golangci-lint-action@v9
         with:
           version: v2.8.0
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: 1.2.6
           terraform_wrapper: false
@@ -91,7 +91,7 @@ jobs:
     steps:
       - name: Setup short name
         run: echo "SHORT_NAME=$(echo ${{ matrix.package_short }} | rev | cut -d'/' -f1 | rev)" >> $GITHUB_ENV
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_wrapper: false
       - uses: actions/setup-go@v6

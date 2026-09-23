@@ -17,7 +17,7 @@ resource "port_integration" "k8s_with_selective_reconciliation_deletes" {
             mappings = [{
               identifier = ".metadata.uid"
               title      = ".metadata.name"
-              blueprint  = "'namespace'"
+              blueprint  = "\"namespace\""
             }]
           }
         }
@@ -32,7 +32,7 @@ resource "port_integration" "k8s_with_selective_reconciliation_deletes" {
             mappings = [{
               identifier = ".metadata.uid"
               title      = ".metadata.name"
-              blueprint  = "'argocdApplication'"
+              blueprint  = "\"argocdApplication\""
             }]
           }
         }

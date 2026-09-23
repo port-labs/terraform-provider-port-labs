@@ -23,7 +23,7 @@ func TestIntegrationToPortBody_enableDeleteOnResource(t *testing.T) {
 						"mappings": [{
 							"identifier": ".metadata.uid",
 							"title": ".metadata.name",
-							"blueprint": "'namespace'"
+							"blueprint": "\"namespace\""
 						}]
 					}
 				}
@@ -36,7 +36,7 @@ func TestIntegrationToPortBody_enableDeleteOnResource(t *testing.T) {
 						"mappings": [{
 							"identifier": ".metadata.uid",
 							"title": ".metadata.name",
-							"blueprint": "'argocdApplication'"
+							"blueprint": "\"argocdApplication\""
 						}]
 					}
 				}
@@ -84,7 +84,7 @@ func TestRefreshIntegrationConfig_preservesEnableDelete(t *testing.T) {
 						"mappings": [{
 							"identifier": ".metadata.uid",
 							"title": ".metadata.name",
-							"blueprint": "'namespace'"
+							"blueprint": "\"namespace\""
 						}]
 					}
 				}

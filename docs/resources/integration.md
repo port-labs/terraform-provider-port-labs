@@ -194,8 +194,15 @@ description: |-
   For catalog integration types, set installation_app_type to the integrated tool name (e.g. github-ocean, gitlab) and version if you want to pin a specific integration version. Custom integrations can omit installation_app_type.
   Per-resource enableDelete
   Optional boolean on each resources[] mapping item (sibling of kind, selector, and port):
-  Omitted or true: reconciliation may delete stale entities for that resource (default).false: skip reconciliation deletes for entities whose blueprint matches that resource's static "blueprint" JQ literal. Upserts still run.
-  Reconciliation deletes also require entityDeletionThreshold to be enabled (non-zero). Setting enableDelete to true does not re-enable deletes when the global threshold is off.
+  Omitted or true: reconciliation may delete stale entities for that resource (default).false: skip reconciliation deletes for entities whose blueprint matches that resource's static blueprint JSON-string JQ literal (for example "namespace" in HCL: blueprint = "\"namespace\""). Upserts still run.
+  | `entityDeletionThreshold` | `enableDelete` | Reconciliation deletes for resource |
+  | --- | --- | --- |
+  | off (`0`) | any | No |
+  | on (`1`) | `true` / omitted | Yes |
+  | on (`1`) | `false` | No |
+  Setting enableDelete to true does not re-enable deletes when the global threshold has them off.
+  Scope (v1):
+  Reconciliation / resync delete path only — live webhook deletes do not honor enableDelete.Static blueprint literals only — single-quoted JQ (for example 'namespace') and dynamic blueprint expressions are not matched; Port logs a warning when protection cannot engage.Shared-blueprint coupling — if two resources map to the same blueprint and one has enableDelete: false, that blueprint is protected for all reconciliation deletes of that blueprint.
   
   config = jsonencode({
     entityDeletionThreshold = 1
@@ -209,7 +216,7 @@ description: |-
             mappings = [{
               identifier = ".metadata.uid"
               title      = ".metadata.name"
-              blueprint  = "'namespace'"
+              blueprint  = "\"namespace\""
             }]
           }
         }
@@ -222,7 +229,7 @@ description: |-
             mappings = [{
               identifier = ".metadata.uid"
               title      = ".metadata.name"
-              blueprint  = "'argocdApplication'"
+              blueprint  = "\"argocdApplication\""
             }]
           }
         }
@@ -458,9 +465,21 @@ For catalog integration types, set `installation_app_type` to the integrated too
 Optional boolean on each `resources[]` mapping item (sibling of `kind`, `selector`, and `port`):
 
 - Omitted or `true`: reconciliation may delete stale entities for that resource (default).
-- `false`: skip reconciliation deletes for entities whose blueprint matches that resource's static `"blueprint"` JQ literal. Upserts still run.
+- `false`: skip reconciliation deletes for entities whose blueprint matches that resource's static `blueprint` JSON-string JQ literal (for example `"namespace"` in HCL: `blueprint = "\"namespace\""`). Upserts still run.
 
-Reconciliation deletes also require `entityDeletionThreshold` to be enabled (non-zero). Setting `enableDelete` to `true` does not re-enable deletes when the global threshold is off.
+| `entityDeletionThreshold` | `enableDelete` | Reconciliation deletes for resource |
+| --- | --- | --- |
+| off (`0`) | any | No |
+| on (`1`) | `true` / omitted | Yes |
+| on (`1`) | `false` | No |
+
+Setting `enableDelete` to `true` does **not** re-enable deletes when the global threshold has them off.
+
+Scope (v1):
+
+- Reconciliation / resync delete path only — live webhook deletes do not honor `enableDelete`.
+- Static blueprint literals only — single-quoted JQ (for example `'namespace'`) and dynamic blueprint expressions are not matched; Port logs a warning when protection cannot engage.
+- Shared-blueprint coupling — if two resources map to the same blueprint and one has `enableDelete: false`, that blueprint is protected for all reconciliation deletes of that blueprint.
 
 ```hcl
 config = jsonencode({
@@ -475,7 +494,7 @@ config = jsonencode({
           mappings = [{
             identifier = ".metadata.uid"
             title      = ".metadata.name"
-            blueprint  = "'namespace'"
+            blueprint  = "\"namespace\""
           }]
         }
       }
@@ -488,7 +507,7 @@ config = jsonencode({
           mappings = [{
             identifier = ".metadata.uid"
             title      = ".metadata.name"
-            blueprint  = "'argocdApplication'"
+            blueprint  = "\"argocdApplication\""
           }]
         }
       }

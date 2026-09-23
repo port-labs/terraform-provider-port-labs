@@ -1,5 +1,7 @@
 * @port-labs/builder-team
 
+/.github/workflows/create-release.yml @port-labs/platform-team
+
 /port/action/ @port-labs/workflows-team
 /port/action-permissions/ @port-labs/workflows-team
 /port/workflow/ @port-labs/workflows-team

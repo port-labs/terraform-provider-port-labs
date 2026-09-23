@@ -1,0 +1,31 @@
+name: Create provider release
+
+# Stub on the default branch so GitHub will accept workflow_dispatch of
+# create-release.yml from other refs. Port github-ocean pops `ref` from
+# workflowInputs and runs the workflow file on that branch.
+# Replace this file by merging the real create-release workflow.
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Provider version (e.g. v2.26.0)
+        required: true
+        type: string
+      port_run_id:
+        description: Port run ID (optional, set by the SSA)
+        required: false
+        type: string
+
+jobs:
+  refuse:
+    name: Stub only
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Refuse default-branch runs
+        run: |
+          echo "::error::create-release.yml on the default branch is a GitHub dispatch stub. Dispatch task_tdscp0/automate_the_process_of_tf_provider_and_pulumi_releases via Port."
+          exit 1

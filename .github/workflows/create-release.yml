@@ -1,11 +1,11 @@
 name: Create provider release
 
-# Stub on the default branch so GitHub will accept workflow_dispatch of
-# create-release.yml from other refs. Port github-ocean pops `ref` from
-# workflowInputs and runs the workflow file on that branch.
-# Replace this file by merging the real create-release workflow.
+run-name: Create provider release ${{ inputs.version }}
 
-permissions: {}
+# Temporarily pinned to this branch for pre-merge testing. After merge, retarget
+# uses: @ref and gh release --target to the default branch.
+env:
+  RELEASE_REF: task_tdscp0/automate_the_process_of_tf_provider_and_pulumi_releases
 
 on:
   workflow_dispatch:
@@ -19,13 +19,74 @@ on:
         required: false
         type: string
 
+permissions:
+  contents: write
+
+concurrency:
+  group: create-release-${{ github.workflow }}-${{ inputs.version }}
+  cancel-in-progress: false
+
 jobs:
-  refuse:
-    name: Stub only
+  create_release:
+    name: Create GitHub release
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - name: Refuse default-branch runs
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.RELEASE_REF }}
+
+      - name: Normalize version
+        id: normalize
+        env:
+          RAW_VERSION: ${{ inputs.version }}
         run: |
-          echo "::error::create-release.yml on the default branch is a GitHub dispatch stub. Dispatch task_tdscp0/automate_the_process_of_tf_provider_and_pulumi_releases via Port."
-          exit 1
+          set -euo pipefail
+          VERSION="${RAW_VERSION#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version must be X.Y.Z or vX.Y.Z, got: ${RAW_VERSION}"
+            exit 1
+          fi
+          VERSION="v${VERSION}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Using version ${VERSION}"
+
+      - name: Fail if tag already exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.normalize.outputs.version }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/${GITHUB_REPOSITORY}/git/refs/tags/${VERSION}" --silent >/dev/null 2>&1; then
+            echo "::error::Tag ${VERSION} already exists in ${GITHUB_REPOSITORY}"
+            exit 1
+          fi
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.normalize.outputs.version }}
+        run: |
+          set -euo pipefail
+          # Keep --draft until this SSA publishes. Drop the flag when flipping to publish.
+          gh release create "$VERSION" \
+            --draft \
+            --generate-notes \
+            --title "$VERSION" \
+            --target "$RELEASE_REF"
+          echo "Created GitHub release ${VERSION} on ${RELEASE_REF}"
+          gh release view "$VERSION" --json url --jq .url
+
+  pulumi:
+    name: pulumi-port create-release
+    needs: create_release
+    uses: port-labs/pulumi-port/.github/workflows/create-release.yaml@task_tdscp0/automate_the_process_of_tf_provider_and_pulumi_releases
+    with:
+      version: ${{ inputs.version }}
+      port_run_id: ${{ inputs.port_run_id }}
+    secrets:
+      PORT_MACHINE_USER_GITHUB_TOKEN: ${{ secrets.PORT_MACHINE_USER_GITHUB_TOKEN }}
+    permissions:
+      contents: write

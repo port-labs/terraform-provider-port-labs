@@ -538,6 +538,11 @@ func datasetRuleSchema(depth int) map[string]schema.Attribute {
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("value")),
 			},
 		},
+		"properties": schema.ListAttribute{
+			MarkdownDescription: "Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.",
+			Optional:            true,
+			ElementType:         types.StringType,
+		},
 		"combinator": schema.StringAttribute{
 			MarkdownDescription: "How the nested rules of a group rule are combined.",
 			Optional:            true,

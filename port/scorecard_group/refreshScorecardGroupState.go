@@ -12,6 +12,21 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
 )
 
+func scorecardPropertiesState(state *ScorecardGroupModel) types.String {
+	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
+		return state.ScorecardProperties
+	}
+	return state.Properties
+}
+
+func setScorecardPropertiesState(state *ScorecardGroupModel, value types.String) {
+	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
+		state.ScorecardProperties = value
+		return
+	}
+	state.Properties = value
+}
+
 func configuredJSONObjectKeys(stateValue types.String) map[string]struct{} {
 	if stateValue.IsNull() || stateValue.IsUnknown() {
 		return nil
@@ -307,9 +322,11 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	}
 
 	jsonEscapeHTML := r.jsonEscapeHTML()
-	if err := syncJSONObjectState(&state.ScorecardProperties, group.ScorecardProperties, "scorecard properties", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+	scorecardProperties := scorecardPropertiesState(state)
+	if err := syncJSONObjectState(&scorecardProperties, group.ScorecardProperties, "scorecard properties", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
 		return err
 	}
+	setScorecardPropertiesState(state, scorecardProperties)
 
 	if err := syncJSONObjectState(&state.GroupProperties, group.GroupProperties, "group properties", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
 		return err

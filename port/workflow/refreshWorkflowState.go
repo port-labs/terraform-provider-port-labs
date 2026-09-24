@@ -475,7 +475,7 @@ func notificationToModel(ctx context.Context, notification cli.WorkflowInputNoti
 func hasNoPrincipals(permissions *cli.WorkflowNodePermissions) bool {
 	return permissions == nil ||
 		(len(permissions.Users) == 0 && len(permissions.Roles) == 0 && len(permissions.Teams) == 0 &&
-			permissions.Policy == nil && permissions.UsersQuery == nil)
+			permissions.Policy == nil && permissions.UsersQuery == nil && permissions.ErrorMessage == "")
 }
 
 func permissionsToModel(ctx context.Context, permissions *cli.WorkflowNodePermissions, jsonEscapeHTML bool) *PermissionsModel {
@@ -493,6 +493,10 @@ func permissionsToModel(ctx context.Context, permissions *cli.WorkflowNodePermis
 		if policy, err := utils.GoObjectToTerraformString(permissions.Policy, jsonEscapeHTML); err == nil {
 			model.Policy = policy
 		}
+	}
+
+	if permissions.ErrorMessage != "" {
+		model.ErrorMessage = types.StringValue(permissions.ErrorMessage)
 	}
 
 	return model

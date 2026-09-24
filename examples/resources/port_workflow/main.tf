@@ -43,7 +43,8 @@ resource "port_workflow" "deploy_service" {
       }
 
       permissions {
-        roles = ["Member"]
+        roles         = ["Member"]
+        error_message = "Only platform owners can run this workflow"
       }
     }
   }

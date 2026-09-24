@@ -22,8 +22,10 @@ on:
 permissions:
   contents: write
 
+# Distinct from pulumi-port create-release. Nested reusable workflows that
+# share a concurrency group deadlock in the caller repo.
 concurrency:
-  group: create-release-${{ github.workflow }}-${{ inputs.version }}
+  group: terraform-provider-create-release-${{ inputs.version }}
   cancel-in-progress: false
 
 jobs:

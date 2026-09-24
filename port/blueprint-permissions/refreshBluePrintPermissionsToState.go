@@ -182,5 +182,78 @@ func refreshBlueprintPermissionsState(state *BlueprintPermissionsModel, a *cli.B
 		state.Entities.UpdateRelations = nil
 	}
 
+	if oldPermissions.ReadProperties == nil {
+		oldPermissions.ReadProperties = &BlueprintRelationsPermissionsTFBlock{}
+	}
+
+	if oldPermissions.ReadMetadataProperties == nil {
+		oldPermissions.ReadMetadataProperties = &BlueprintReadMetadataPermissionsTFBlock{}
+	}
+
+	state.Entities.ReadProperties = nil
+	var mappedReadProperties BlueprintRelationsPermissionsTFBlock = nil
+	if len(a.Entities.ReadProperties) > 0 {
+		state.Entities.ReadMetadataProperties = &BlueprintReadMetadataPermissionsTFBlock{}
+		mappedReadProperties = make(BlueprintRelationsPermissionsTFBlock)
+		for readPropertyKey, readPropertyValue := range a.Entities.ReadProperties {
+			if readPropertyKey == "$identifier" {
+				continue
+			}
+
+			var oldPropValue *BlueprintPermissionsTFBlock
+			if strings.HasPrefix(readPropertyKey, "$") {
+				switch readPropertyKey {
+				case "$title":
+					oldPropValue = oldPermissions.ReadMetadataProperties.Title
+				case "$icon":
+					oldPropValue = oldPermissions.ReadMetadataProperties.Icon
+				case "$team":
+					oldPropValue = oldPermissions.ReadMetadataProperties.Team
+				}
+			} else if val, ok := (*oldPermissions.ReadProperties)[readPropertyKey]; ok {
+				oldPropValue = &val
+			}
+			var current *BlueprintPermissionsTFBlock
+			if oldPropValue == nil {
+				current = &BlueprintPermissionsTFBlock{
+					Users:       utils.Map(readPropertyValue.Users, types.StringValue),
+					Roles:       utils.Map(readPropertyValue.Roles, types.StringValue),
+					Teams:       utils.Map(readPropertyValue.Teams, types.StringValue),
+					OwnedByTeam: types.BoolValue(*readPropertyValue.OwnedByTeam),
+				}
+			} else {
+				current = &BlueprintPermissionsTFBlock{
+					Users:       utils.Map(utils.SortStringSliceByOther(readPropertyValue.Users, utils.TFStringListToStringArray(oldPropValue.Users)), types.StringValue),
+					Roles:       utils.Map(utils.SortStringSliceByOther(readPropertyValue.Roles, utils.TFStringListToStringArray(oldPropValue.Roles)), types.StringValue),
+					Teams:       utils.Map(utils.SortStringSliceByOther(readPropertyValue.Teams, utils.TFStringListToStringArray(oldPropValue.Teams)), types.StringValue),
+					OwnedByTeam: types.BoolValue(*readPropertyValue.OwnedByTeam),
+				}
+			}
+
+			if strings.HasPrefix(readPropertyKey, "$") {
+				switch readPropertyKey {
+				case "$title":
+					state.Entities.ReadMetadataProperties.Title = current
+				case "$icon":
+					state.Entities.ReadMetadataProperties.Icon = current
+				case "$team":
+					state.Entities.ReadMetadataProperties.Team = current
+				}
+			} else {
+				mappedReadProperties[readPropertyKey] = *current
+			}
+		}
+		if len(mappedReadProperties) > 0 {
+			state.Entities.ReadProperties = &mappedReadProperties
+		}
+		if state.Entities.ReadMetadataProperties.Title == nil &&
+			state.Entities.ReadMetadataProperties.Icon == nil &&
+			state.Entities.ReadMetadataProperties.Team == nil {
+			state.Entities.ReadMetadataProperties = nil
+		}
+	} else {
+		state.Entities.ReadMetadataProperties = nil
+	}
+
 	return nil
 }

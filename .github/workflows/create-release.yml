@@ -2,11 +2,6 @@ name: Create provider release
 
 run-name: Create provider release ${{ inputs.version }}
 
-# Temporarily pinned to this branch for pre-merge testing. After merge, retarget
-# uses: @ref and gh release --target to the default branch.
-env:
-  RELEASE_REF: task_tdscp0/automate_the_process_of_tf_provider_and_pulumi_releases
-
 on:
   workflow_dispatch:
     inputs:
@@ -38,7 +33,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ env.RELEASE_REF }}
 
       - name: Normalize version
         id: normalize
@@ -72,19 +66,16 @@ jobs:
           VERSION: ${{ steps.normalize.outputs.version }}
         run: |
           set -euo pipefail
-          # Keep --draft until this SSA publishes. Drop the flag when flipping to publish.
           gh release create "$VERSION" \
-            --draft \
             --generate-notes \
-            --title "$VERSION" \
-            --target "$RELEASE_REF"
-          echo "Created GitHub release ${VERSION} on ${RELEASE_REF}"
+            --title "$VERSION"
+          echo "Created GitHub release ${VERSION}"
           gh release view "$VERSION" --json url --jq .url
 
   pulumi:
     name: pulumi-port create-release
     needs: create_release
-    uses: port-labs/pulumi-port/.github/workflows/create-release.yaml@task_tdscp0/automate_the_process_of_tf_provider_and_pulumi_releases
+    uses: port-labs/pulumi-port/.github/workflows/create-release.yaml@main
     with:
       version: ${{ inputs.version }}
       port_run_id: ${{ inputs.port_run_id }}

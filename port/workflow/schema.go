@@ -43,11 +43,12 @@ var nodeTypeBlockNames = []string{
 }
 
 const (
-	maxIdentifierLength  = 60
-	maxTitleLength       = 100
-	maxDescriptionLength = 1100
-	maxCategoryLength    = 40
-	maxNodesCount        = 100
+	maxIdentifierLength        = 60
+	maxTitleLength             = 100
+	maxDescriptionLength       = 1100
+	maxCategoryLength          = 40
+	maxNodesCount              = 100
+	maxPermissionsErrorMessage = 100
 )
 
 var identifierPattern = regexp.MustCompile(`^[\p{L}0-9@_:-]+$`)
@@ -143,6 +144,12 @@ func permissionsBlock(description string) schema.Block {
 			"`context` is one of `user`, `userTeams`, `form`, `workflowRun`.",
 		Optional:   true,
 		Validators: []validator.String{queryValidator("Invalid permissions policy")},
+	}
+	attributes["error_message"] = schema.StringAttribute{
+		MarkdownDescription: "A custom error message shown when a dynamic `policy` denies execution (max 100 characters). " +
+			"Ignored when `policy` is not set.",
+		Optional:   true,
+		Validators: []validator.String{stringvalidator.LengthAtMost(maxPermissionsErrorMessage)},
 	}
 
 	return schema.SingleNestedBlock{

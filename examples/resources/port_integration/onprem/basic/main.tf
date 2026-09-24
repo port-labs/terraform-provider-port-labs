@@ -2,15 +2,17 @@
 # After the first apply, add config and run 'terraform apply' again to override default mappings.
 
 resource "port_integration" "my_custom_integration" {
-  installation_id = "my-custom-integration-id"
-  title           = "My Custom Integration"
+  installation_id       = "my-custom-integration-id"
+  installation_app_type = "custom"
+  title                 = "My Custom Integration"
 }
 
 # Step 2 example (uncomment after first apply):
 #
 # resource "port_integration" "my_custom_integration" {
-#   installation_id = "my-custom-integration-id"
-#   title           = "My Custom Integration"
+#   installation_id       = "my-custom-integration-id"
+#   installation_app_type = "custom"
+#   title                 = "My Custom Integration"
 #
 #   config = jsonencode({
 #     createMissingRelatedEntities = true

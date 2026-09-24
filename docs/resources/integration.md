@@ -154,8 +154,9 @@ description: |-
   Self-hosted integrations run on your own infrastructure and pull their mapping from Port.
   
   resource "port_integration" "my_custom_integration" {
-    installation_id = "my-custom-integration-id"
-    title           = "My Custom Integration"
+    installation_id       = "my-custom-integration-id"
+    installation_app_type = "custom"
+    title                 = "My Custom Integration"
   
     # config is set on the next apply, after provisioning creates default mappings.
   }
@@ -163,8 +164,9 @@ description: |-
   Self-hosted example — Step 2: Override mappings
   
   resource "port_integration" "my_custom_integration" {
-    installation_id = "my-custom-integration-id"
-    title           = "My Custom Integration"
+    installation_id       = "my-custom-integration-id"
+    installation_app_type = "custom"
+    title                 = "My Custom Integration"
   
     config = jsonencode({
       createMissingRelatedEntities = true
@@ -191,7 +193,7 @@ description: |-
     })
   }
   
-  For catalog integration types, set installation_app_type to the integrated tool name (e.g. github-ocean, gitlab) and version if you want to pin a specific integration version. Custom integrations can omit installation_app_type.
+  Set installation_app_type to the Ocean integration type (for example github-ocean, gitlab, pagerduty, or custom). The Port API rejects a create request when this field is null or missing. Set version if you want to pin a specific integration version.
   NOTICE:
   The following config properties (selector.query|entity.mappings.*) are jq expressions, which means that you need to input either a valid jq expression (E.g .title), or if you want a string value, a quoted escaped string val (E.g 'my-string').
   NOTES:
@@ -371,8 +373,9 @@ Self-hosted integrations run on your own infrastructure and pull their mapping f
 
 ```hcl
 resource "port_integration" "my_custom_integration" {
-  installation_id = "my-custom-integration-id"
-  title           = "My Custom Integration"
+  installation_id       = "my-custom-integration-id"
+  installation_app_type = "custom"
+  title                 = "My Custom Integration"
 
   # config is set on the next apply, after provisioning creates default mappings.
 }
@@ -382,8 +385,9 @@ resource "port_integration" "my_custom_integration" {
 
 ```hcl
 resource "port_integration" "my_custom_integration" {
-  installation_id = "my-custom-integration-id"
-  title           = "My Custom Integration"
+  installation_id       = "my-custom-integration-id"
+  installation_app_type = "custom"
+  title                 = "My Custom Integration"
 
   config = jsonencode({
     createMissingRelatedEntities = true
@@ -412,7 +416,7 @@ resource "port_integration" "my_custom_integration" {
 ```
 
 
-For catalog integration types, set `installation_app_type` to the integrated tool name (e.g. `github-ocean`, `gitlab`) and `version` if you want to pin a specific integration version. Custom integrations can omit `installation_app_type`.
+Set `installation_app_type` to the Ocean integration type (for example `github-ocean`, `gitlab`, `pagerduty`, or `custom`). The Port API rejects a create request when this field is null or missing. Set `version` if you want to pin a specific integration version.
 
 ### NOTICE:
 
@@ -437,13 +441,13 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 ### Required
 
+- `installation_app_type` (String) The Ocean integration type (for example `github-ocean`, `gitlab`, `pagerduty`, or `custom`). The Port API rejects create when this is null or missing. Cannot be changed after creation.
 - `installation_id` (String) The installation ID of the integration. Must contain only lowercase letters, numbers, and dashes (pattern: `^[a-z0-9-]+$`). Cannot be changed after creation.
 
 ### Optional
 
 - `config` (String) Integration mapping and configuration as a JSON string (use `jsonencode`). **Cannot be set on creation** — integrations receive default mappings during provisioning. Add `config` after the initial `terraform apply` to override the defaults.
 - `create_port_resources_origin` (String) Controls whether Port creates default blueprints and mappings when the integration is created. Use `Empty` to skip default resource creation. Use `Port` to create default resources via Port. If omitted, default resources are created. Can only be set on creation.
-- `installation_app_type` (String) The integrated tool name for catalog integration types (e.g. `github-ocean`, `gitlab`, `pagerduty`). Cannot be changed after creation.
 - `installation_type` (String) The installation type of the integration. Use `Saas` for Port Hosted integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource. Cannot be changed after creation.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `spec` (String) Port Hosted integration spec as a JSON string (use `jsonencode`). **Only supported when `installation_type` is `Saas`** — must not be set for self-hosted integrations. Required for Port Hosted integrations. Contains `integrationSpec` (credentials/settings) and optionally `appSpec` (feature toggles like `liveEventsEnabled`, `sendRawDataExamples`, etc.). Sensitive `integrationSpec` values (org secret references) are preserved from your HCL on read. If `appSpec` fields are omitted, Port applies its own defaults — which may differ from Port UI defaults. Declare `appSpec` explicitly to match the UI behavior.

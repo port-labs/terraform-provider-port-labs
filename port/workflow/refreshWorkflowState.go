@@ -117,6 +117,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 			trigger.Type = types.StringValue(config.Event.Type)
 			trigger.BlueprintIdentifier = types.StringValue(config.Event.BlueprintIdentifier)
 			trigger.PropertyIdentifier = flex.GoStringToFramework(config.Event.PropertyIdentifier)
+			trigger.NextExpireAt = flex.GoStringToFramework(config.Event.NextExpireAt)
 		}
 		if config.Condition != nil {
 			trigger.Condition = &NodeConditionModel{

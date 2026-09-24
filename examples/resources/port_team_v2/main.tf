@@ -13,7 +13,8 @@ resource "port_blueprint" "some-blueprint" {
   identifier = "some-blueprint"
   title      = "Some Blueprint"
   ownership = {
-    type = "Direct"
+    type  = "Direct"
+    union = true
   }
 }
 

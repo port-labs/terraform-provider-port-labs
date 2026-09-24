@@ -44,6 +44,11 @@ resource "port_workflow" "deploy_service" {
 
       permissions {
         roles = ["Member"]
+        policy = jsonencode({
+          combinator = "and"
+          rules      = []
+        })
+        error_message = "Only production deploys from the platform team are allowed"
       }
     }
   }

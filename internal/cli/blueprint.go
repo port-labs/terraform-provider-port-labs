@@ -137,6 +137,8 @@ func (c *PortClient) DeleteBlueprintRelation(ctx context.Context, blueprintID st
 }
 
 func (c *PortClient) DeleteBlueprint(ctx context.Context, id string) error {
+	defer c.LockBlueprint(id)()
+
 	const url = "v1/blueprints/{identifier}"
 	resp, err := c.Client.R().
 		SetContext(ctx).

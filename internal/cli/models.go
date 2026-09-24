@@ -815,7 +815,7 @@ type ValidateIntegrationSpecBody struct {
 type Integration struct {
 	InstallationId       string                 `json:"installationId"`
 	Title                *string                `json:"title"`
-	InstallationAppType  *string                `json:"installationAppType"`
+	InstallationAppType  *string                `json:"installationAppType,omitempty"`
 	InstallationType     *string                `json:"installationType"`
 	Version              *string                `json:"version"`
 	Config               *map[string]any        `json:"config,omitempty"`

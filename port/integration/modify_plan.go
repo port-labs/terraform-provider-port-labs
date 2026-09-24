@@ -25,8 +25,13 @@ var immutableFields = []immutableField{
 		changed: func(s, p *IntegrationModel) bool { return !p.InstallationId.Equal(s.InstallationId) },
 	},
 	{
-		name:    "installation_app_type",
-		changed: func(s, p *IntegrationModel) bool { return !p.InstallationAppType.Equal(s.InstallationAppType) },
+		name: "installation_app_type",
+		changed: func(s, p *IntegrationModel) bool {
+			if p.InstallationAppType.IsNull() || p.InstallationAppType.IsUnknown() {
+				return false
+			}
+			return !p.InstallationAppType.Equal(s.InstallationAppType)
+		},
 	},
 	{
 		name:    "installation_type",
@@ -60,6 +65,10 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if plan.InstallationAppType.IsNull() || plan.InstallationAppType.IsUnknown() {
+		plan.InstallationAppType = state.InstallationAppType
 	}
 
 	for _, f := range immutableFields {

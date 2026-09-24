@@ -43,6 +43,11 @@ func arrayPropResourceToBody(ctx context.Context, state *PropertiesModel, props 
 				property.MaxItems = &maxItems
 			}
 
+			if !prop.Union.IsNull() {
+				union := prop.Union.ValueBool()
+				property.Union = &union
+			}
+
 			if prop.StringItems != nil {
 				items := map[string]interface{}{}
 				items["type"] = "string"
@@ -140,6 +145,7 @@ func AddArrayPropertiesToState(ctx context.Context, v *cli.BlueprintProperty, js
 	arrayProp := &ArrayPropModel{
 		MinItems: flex.GoInt64ToFramework(v.MinItems),
 		MaxItems: flex.GoInt64ToFramework(v.MaxItems),
+		Union:    flex.GoBoolToFramework(v.Union),
 	}
 
 	if v.Items != nil {

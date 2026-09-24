@@ -40,7 +40,7 @@ func TestIntegrationToPortBodySkipsUnknownChangelogDestination(t *testing.T) {
 		KafkaChangelogDestination:   types.ObjectUnknown(kafkaChangelogDestinationType),
 	}
 
-	body, err := integrationToPortBody(plan)
+	body, err := integrationToPortBody(plan, false)
 	if err != nil {
 		t.Fatalf("integrationToPortBody: %v", err)
 	}
@@ -108,10 +108,7 @@ func TestChangelogDestinationRoundTrip(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			state := &IntegrationModel{InstallationId: types.StringValue("my-gitlab")}
 
-			err := (&IntegrationResource{}).refreshIntegrationState(state, &cli.Integration{ChangelogDestination: tt.dest}, "my-gitlab")
-			if err != nil {
-				t.Fatalf("refreshIntegrationState: %v", err)
-			}
+			(&IntegrationResource{}).refreshIntegrationState(state, &cli.Integration{ChangelogDestination: tt.dest}, "my-gitlab")
 
 			if !state.KafkaChangelogDestination.Equal(tt.wantKafka) {
 				t.Errorf("kafka_changelog_destination = %s, want %s", state.KafkaChangelogDestination, tt.wantKafka)
@@ -120,7 +117,7 @@ func TestChangelogDestinationRoundTrip(t *testing.T) {
 				t.Errorf("webhook_changelog_destination = %s, want %s", state.WebhookChangelogDestination, tt.wantWebhook)
 			}
 
-			body, err := integrationToPortBody(state)
+			body, err := integrationToPortBody(state, false)
 			if err != nil {
 				t.Fatalf("integrationToPortBody: %v", err)
 			}

@@ -1,5 +1,7 @@
 * @port-labs/builder-team
 
+/.github/workflows/create-release.yml @port-labs/platform-team
+
 /port/action/ @port-labs/workflows-team
 /port/action-permissions/ @port-labs/workflows-team
 /port/workflow/ @port-labs/workflows-team
@@ -55,6 +57,8 @@
 /internal/cli/organization.go @port-labs/buildops
 
 /internal/cli/integration.go @port-labs/connect-team
+
+/internal/consts/integration.go @port-labs/connect-team
 
 /internal/cli/page.go @port-labs/spotlight-team
 /internal/cli/pagePermissions.go @port-labs/spotlight-team

@@ -1,0 +1,85 @@
+name: Create provider release
+
+run-name: Create provider release ${{ inputs.version }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Provider version (e.g. v2.26.0)
+        required: true
+        type: string
+      port_run_id:
+        description: Port run ID (optional, set by the SSA)
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+# Distinct from pulumi-port create-release. Nested reusable workflows that
+# share a concurrency group deadlock in the caller repo.
+concurrency:
+  group: terraform-provider-create-release-${{ inputs.version }}
+  cancel-in-progress: false
+
+jobs:
+  create_release:
+    name: Create GitHub release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Normalize version
+        id: normalize
+        env:
+          RAW_VERSION: ${{ inputs.version }}
+        run: |
+          set -euo pipefail
+          VERSION="${RAW_VERSION#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version must be X.Y.Z or vX.Y.Z, got: ${RAW_VERSION}"
+            exit 1
+          fi
+          VERSION="v${VERSION}"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Using version ${VERSION}"
+
+      - name: Fail if tag already exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.normalize.outputs.version }}
+        run: |
+          set -euo pipefail
+          if gh api "repos/${GITHUB_REPOSITORY}/git/refs/tags/${VERSION}" --silent >/dev/null 2>&1; then
+            echo "::error::Tag ${VERSION} already exists in ${GITHUB_REPOSITORY}"
+            exit 1
+          fi
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.normalize.outputs.version }}
+        run: |
+          set -euo pipefail
+          gh release create "$VERSION" \
+            --generate-notes \
+            --title "$VERSION"
+          echo "Created GitHub release ${VERSION}"
+          gh release view "$VERSION" --json url --jq .url
+
+  pulumi:
+    name: pulumi-port create-release
+    needs: create_release
+    uses: port-labs/pulumi-port/.github/workflows/create-release.yaml@main
+    with:
+      version: ${{ inputs.version }}
+      port_run_id: ${{ inputs.port_run_id }}
+    secrets:
+      PORT_MACHINE_USER_GITHUB_TOKEN: ${{ secrets.PORT_MACHINE_USER_GITHUB_TOKEN }}
+    permissions:
+      contents: write

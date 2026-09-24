@@ -10,6 +10,11 @@ type UserPropertiesModel struct {
 	ObjectProps  map[string]ObjectPropModel  `tfsdk:"object_props"`
 }
 
+type ClientSideEncryptionModel struct {
+	Algorithm types.String `tfsdk:"algorithm"`
+	Key       types.String `tfsdk:"key"`
+}
+
 type StringPropModel struct {
 	Title           types.String `tfsdk:"title"`
 	Icon            types.String `tfsdk:"icon"`
@@ -33,9 +38,11 @@ type StringPropModel struct {
 	MaxLength      types.Int64        `tfsdk:"max_length"`
 	Pattern        types.String       `tfsdk:"pattern"`
 	PatternJqQuery types.String       `tfsdk:"pattern_jq_query"`
-	Enum           types.List         `tfsdk:"enum"`
-	EnumColors     types.Map          `tfsdk:"enum_colors"`
-	EnumJqQuery    types.String       `tfsdk:"enum_jq_query"`
+	Enum                 types.List                  `tfsdk:"enum"`
+	EnumColors           types.Map                   `tfsdk:"enum_colors"`
+	EnumJqQuery          types.String                `tfsdk:"enum_jq_query"`
+	Encryption           types.String                `tfsdk:"encryption"`
+	ClientSideEncryption *ClientSideEncryptionModel  `tfsdk:"client_side_encryption"`
 }
 
 type NumberPropModel struct {
@@ -91,9 +98,11 @@ type ObjectPropModel struct {
 	Disabled        types.Bool   `tfsdk:"disabled"`
 	DisabledJqQuery types.String `tfsdk:"disabled_jq_query"`
 
-	Default        types.String `tfsdk:"default"`
-	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
-	Format         types.String `tfsdk:"format"`
+	Default              types.String               `tfsdk:"default"`
+	DefaultJqQuery       types.String               `tfsdk:"default_jq_query"`
+	Format               types.String               `tfsdk:"format"`
+	Encryption           types.String               `tfsdk:"encryption"`
+	ClientSideEncryption *ClientSideEncryptionModel `tfsdk:"client_side_encryption"`
 }
 
 type ArrayPropModel struct {
@@ -129,6 +138,9 @@ type StringItemsModel struct {
 	EnumJqQuery types.String `tfsdk:"enum_jq_query"`
 	EnumColors  types.Map    `tfsdk:"enum_colors"`
 	Dataset     types.String `tfsdk:"dataset"`
+	Pattern     types.String `tfsdk:"pattern"`
+	MinLength   types.Int64  `tfsdk:"min_length"`
+	MaxLength   types.Int64  `tfsdk:"max_length"`
 }
 
 type NumberItemsModel struct {

@@ -10,6 +10,7 @@ import (
 
 var _ resource.Resource = &BlueprintPermissionsResource{}
 var _ resource.ResourceWithImportState = &BlueprintPermissionsResource{}
+var _ resource.ResourceWithValidateConfig = &BlueprintPermissionsResource{}
 
 func NewBlueprintPermissionsResource() resource.Resource {
 	return &BlueprintPermissionsResource{}
@@ -21,6 +22,14 @@ type BlueprintPermissionsResource struct {
 
 func (r *BlueprintPermissionsResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_blueprint_permissions"
+}
+
+func (r *BlueprintPermissionsResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	if r.portClient == nil {
+		return
+	}
+
+	r.validateReadPropertiesConfig(ctx, req, resp)
 }
 
 func (r *BlueprintPermissionsResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
@@ -63,7 +72,17 @@ func (r *BlueprintPermissionsResource) Read(ctx context.Context, req resource.Re
 		return
 	}
 
-	err = refreshBlueprintPermissionsState(state, a, blueprintIdentifier, r.portClient.JSONEscapeHTML)
+	blueprint, statusCode, err := r.portClient.ReadBlueprint(ctx, blueprintIdentifier)
+	if err != nil {
+		if statusCode == 404 {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError("failed to read blueprint", err.Error())
+		return
+	}
+
+	err = refreshBlueprintPermissionsState(state, a, blueprintIdentifier, r.portClient.JSONEscapeHTML, mirrorPropertyKeysFromBlueprint(blueprint))
 	if err != nil {
 		resp.Diagnostics.AddError("failed to refresh blueprint permissions state", err.Error())
 		return

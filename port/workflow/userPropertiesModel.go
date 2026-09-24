@@ -129,6 +129,9 @@ type StringItemsModel struct {
 	EnumJqQuery types.String `tfsdk:"enum_jq_query"`
 	EnumColors  types.Map    `tfsdk:"enum_colors"`
 	Dataset     types.String `tfsdk:"dataset"`
+	Pattern     types.String `tfsdk:"pattern"`
+	MinLength   types.Int64  `tfsdk:"min_length"`
+	MaxLength   types.Int64  `tfsdk:"max_length"`
 }
 
 type NumberItemsModel struct {

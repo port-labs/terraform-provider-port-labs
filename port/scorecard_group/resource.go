@@ -11,6 +11,7 @@ import (
 
 var _ resource.Resource = &ScorecardGroupResource{}
 var _ resource.ResourceWithImportState = &ScorecardGroupResource{}
+var _ resource.ResourceWithValidateConfig = &ScorecardGroupResource{}
 
 func NewScorecardGroupResource() resource.Resource {
 	return &ScorecardGroupResource{}
@@ -84,7 +85,7 @@ func (r *ScorecardGroupResource) Create(ctx context.Context, req resource.Create
 	}
 
 	if err := r.refreshScorecardGroupState(ctx, state, createdGroup, false); err != nil {
-		resp.Diagnostics.AddError("scorecard group properties were not applied", err.Error())
+		resp.Diagnostics.AddError("scorecard group state was not applied by the API", err.Error())
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
@@ -146,7 +147,7 @@ func (r *ScorecardGroupResource) Update(ctx context.Context, req resource.Update
 	}
 
 	if err := r.refreshScorecardGroupState(ctx, state, updatedGroup, false); err != nil {
-		resp.Diagnostics.AddError("scorecard group properties were not applied", err.Error())
+		resp.Diagnostics.AddError("scorecard group state was not applied by the API", err.Error())
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)

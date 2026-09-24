@@ -2,6 +2,7 @@ package scorecard_group
 
 import (
 	"context"
+	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
@@ -79,8 +80,20 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 					Attributes: scorecard.LevelSchema(),
 				},
 			},
-			"properties": schema.StringAttribute{
+			"group_properties": schema.StringAttribute{
+				MarkdownDescription: "Additional `_scorecard_group` blueprint properties applied to the scorecard group entity, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard_group` blueprint.",
+				Optional:            true,
+			},
+			"scorecard_properties": schema.StringAttribute{
 				MarkdownDescription: "Additional `_scorecard` blueprint properties applied to every member scorecard in the group, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint.",
+				Optional:            true,
+			},
+			"group_relations": schema.StringAttribute{
+				MarkdownDescription: "Additional `_scorecard_group` blueprint relations applied to the scorecard group entity, as a JSON encoded string. Relation values can be a string, an array of strings, or `null` to clear a relation.",
+				Optional:            true,
+			},
+			"scorecard_relations": schema.StringAttribute{
+				MarkdownDescription: "Additional `_scorecard` blueprint relations applied to every member scorecard in the group, as a JSON encoded string. Relation values can be a string, an array of strings, or `null` to clear a relation. The `group` relation is managed by Port and cannot be set here.",
 				Optional:            true,
 			},
 			"blueprints": schema.SetAttribute{
@@ -155,10 +168,23 @@ func (r *ScorecardGroupResource) Schema(ctx context.Context, req resource.Schema
 	}
 }
 
+func (r *ScorecardGroupResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	betaFeaturesEnabledEnv := os.Getenv("PORT_BETA_FEATURES_ENABLED")
+	if betaFeaturesEnabledEnv != "true" {
+		resp.Diagnostics.AddError("Beta features are not enabled", "Scorecard group resource is currently in beta and is subject to change in future versions. Use it by setting the Environment Variable PORT_BETA_FEATURES_ENABLED=true.")
+		return
+	}
+}
+
 var resourceMarkdownDescription = `
 # Scorecard Group
 
 This resource allows you to manage a scorecard group that creates scorecards across multiple blueprints.
+
+~> **WARNING**
+The scorecard group resource is currently in beta and is subject to change in future versions.
+Use it by setting the Environment Variable ` + "`PORT_BETA_FEATURES_ENABLED=true`" + `.
+If this Environment Variable isn't specified, you won't be able to use the resource.
 
 ~> **Note:** Scorecard groups are currently protected by the ` + "`SCORECARD_GROUPS`" + ` organization feature flag and are not available in all Port organizations. If you need access, contact your Port account team.
 
@@ -170,11 +196,29 @@ A scorecard group can be configured in one of two modes:
 
 See the [Port documentation](https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/) for more information about scorecards.
 
-` + "`properties`" + ` sets ` + "`_scorecard`" + ` blueprint property values on every member scorecard in the group. Define the property schema on the ` + "`_scorecard`" + ` system blueprint first (for example with ` + "`port_system_blueprint`" + `), then reference those keys in ` + "`jsonencode({...})`" + `. Use ` + "`depends_on`" + ` so the scorecard group is created only after the blueprint properties exist.
+` + "`scorecard_properties`" + ` sets ` + "`_scorecard`" + ` blueprint property values on every member scorecard in the group. ` + "`group_properties`" + ` sets ` + "`_scorecard_group`" + ` blueprint property values on the group entity. ` + "`scorecard_relations`" + ` and ` + "`group_relations`" + ` set relations on member scorecards and the group entity respectively. Define the property and relation schema on the system blueprints first (for example with ` + "`port_system_blueprint`" + `), then reference those keys in ` + "`jsonencode({...})`" + `. Use ` + "`depends_on`" + ` so the scorecard group is created only after the blueprint schema exists.
 
 ## Example Usage (shared rules)
 
 ` + "```hcl" + `
+
+resource "port_system_blueprint" "scorecard_group" {
+  identifier = "_scorecard_group"
+  properties = {
+    string_props = {
+      category = {
+        type  = "string"
+        title = "Category"
+      }
+    }
+  }
+  relations = {
+    owning_team = {
+      title  = "Owning Team"
+      target = "_team"
+    }
+  }
+}
 
 resource "port_system_blueprint" "scorecard" {
   identifier = "_scorecard"
@@ -192,6 +236,12 @@ resource "port_system_blueprint" "scorecard" {
       }
     }
   }
+  relations = {
+    owner_team = {
+      title  = "Owner Team"
+      target = "_team"
+    }
+  }
 }
 
 resource "port_scorecard_group" "readiness" {
@@ -201,9 +251,18 @@ resource "port_scorecard_group" "readiness" {
     port_blueprint.microservice.identifier,
     port_blueprint.database.identifier,
   ]
-  properties = jsonencode({
+  group_properties = jsonencode({
+    category = "governance"
+  })
+  group_relations = jsonencode({
+    owning_team = "platform-team"
+  })
+  scorecard_properties = jsonencode({
     owner    = "platform-team"
     priority = 1
+  })
+  scorecard_relations = jsonencode({
+    owner_team = "platform-team"
   })
   rules = [{
     identifier = "has-owner"
@@ -235,7 +294,10 @@ resource "port_scorecard_group" "readiness" {
       })]
     }
   }
-  depends_on = [port_system_blueprint.scorecard]
+  depends_on = [
+    port_system_blueprint.scorecard_group,
+    port_system_blueprint.scorecard,
+  ]
 }
 
 ` + "```" + `
@@ -243,6 +305,24 @@ resource "port_scorecard_group" "readiness" {
 ## Example Usage (per blueprint)
 
 ` + "```hcl" + `
+
+resource "port_system_blueprint" "scorecard_group" {
+  identifier = "_scorecard_group"
+  properties = {
+    string_props = {
+      category = {
+        type  = "string"
+        title = "Category"
+      }
+    }
+  }
+  relations = {
+    owning_team = {
+      title  = "Owning Team"
+      target = "_team"
+    }
+  }
+}
 
 resource "port_system_blueprint" "scorecard" {
   identifier = "_scorecard"
@@ -254,13 +334,28 @@ resource "port_system_blueprint" "scorecard" {
       }
     }
   }
+  relations = {
+    owner_team = {
+      title  = "Owner Team"
+      target = "_team"
+    }
+  }
 }
 
 resource "port_scorecard_group" "readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
-  properties = jsonencode({
+  group_properties = jsonencode({
+    category = "governance"
+  })
+  group_relations = jsonencode({
+    owning_team = "platform-team"
+  })
+  scorecard_properties = jsonencode({
     owner = "platform-team"
+  })
+  scorecard_relations = jsonencode({
+    owner_team = "platform-team"
   })
   scorecards = {
     (port_blueprint.microservice.identifier) = {
@@ -310,7 +405,10 @@ resource "port_scorecard_group" "readiness" {
       }]
     }
   }
-  depends_on = [port_system_blueprint.scorecard]
+  depends_on = [
+    port_system_blueprint.scorecard_group,
+    port_system_blueprint.scorecard,
+  ]
 }
 
 ` + "```"

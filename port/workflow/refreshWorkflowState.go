@@ -479,8 +479,7 @@ func notificationToModel(ctx context.Context, notification cli.WorkflowInputNoti
 	return model, nil
 }
 
-// An empty permissions object is equivalent to an omitted block, unless the
-// block was declared, in which case it has to survive the refresh as declared.
+// An empty permissions object is equivalent to an omitted block.
 func hasNoPrincipals(permissions *cli.WorkflowNodePermissions) bool {
 	return permissions == nil ||
 		(len(permissions.Users) == 0 && len(permissions.Roles) == 0 && len(permissions.Teams) == 0 &&

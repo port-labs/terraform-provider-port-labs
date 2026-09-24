@@ -1089,8 +1089,6 @@ func TestRespondersRoundTrip(t *testing.T) {
 func TestPermissionsRefreshKeepsDeclaredEmptyPrincipals(t *testing.T) {
 	ctx := context.Background()
 
-	// The API answers with empty collections for the principals the
-	// configuration declared as empty lists.
 	permissions := &cli.WorkflowNodePermissions{
 		Users: []string{"admin@example.com"},
 		Roles: []string{},
@@ -1169,8 +1167,6 @@ func TestSelfServeTriggerRefreshKeepsDeclaredEmptyPrincipals(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, node.SelfServeTrigger)
 	require.NotNil(t, node.SelfServeTrigger.Permissions)
-	// Terraform compares the refreshed value to the planned one, so an empty
-	// list has to come back as exactly that.
 	assert.Equal(t, prior.SelfServeTrigger.Permissions.Roles, node.SelfServeTrigger.Permissions.Roles,
 		"roles declared as an empty list must not refresh as null")
 	assert.Equal(t, prior.SelfServeTrigger.Permissions.Teams, node.SelfServeTrigger.Permissions.Teams)

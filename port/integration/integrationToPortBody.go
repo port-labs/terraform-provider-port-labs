@@ -27,12 +27,17 @@ func integrationToPortBody(state *IntegrationModel, forCreate bool) (*cli.Integr
 		)
 	}
 
+	installationAppType := state.InstallationAppType.ValueString()
+	if state.InstallationAppType.IsNull() || state.InstallationAppType.IsUnknown() || installationAppType == "" {
+		return nil, fmt.Errorf("installation_app_type is required")
+	}
+
 	installationType := state.installationType()
 	integration := &cli.Integration{
 		InstallationId:      installationId,
 		Title:               state.Title.ValueStringPointer(),
 		Version:             state.Version.ValueStringPointer(),
-		InstallationAppType: state.InstallationAppType.ValueStringPointer(),
+		InstallationAppType: &installationAppType,
 		InstallationType:    &installationType,
 	}
 

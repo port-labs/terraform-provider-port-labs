@@ -40,8 +40,11 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Optional: true,
 		},
 		"installation_app_type": schema.StringAttribute{
-			MarkdownDescription: "The integrated tool name for catalog integration types (e.g. `github-ocean`, `gitlab`, `pagerduty`). Cannot be changed after creation.",
-			Optional:            true,
+			MarkdownDescription: "The Ocean integration type (for example `github-ocean`, `gitlab`, `pagerduty`, or `custom`). The Port API rejects create when this is null or missing. Cannot be changed after creation.",
+			Required:            true,
+			Validators: []validator.String{
+				stringvalidator.LengthAtLeast(1),
+			},
 		},
 		"installation_type": schema.StringAttribute{
 			MarkdownDescription: "The installation type of the integration. Use `Saas` for Port Hosted integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource. Cannot be changed after creation.",
@@ -295,8 +298,9 @@ Self-hosted integrations run on your own infrastructure and pull their mapping f
 
 ` + "```hcl" + `
 resource "port_integration" "my_custom_integration" {
-  installation_id = "my-custom-integration-id"
-  title           = "My Custom Integration"
+  installation_id       = "my-custom-integration-id"
+  installation_app_type = "custom"
+  title                 = "My Custom Integration"
 
   # config is set on the next apply, after provisioning creates default mappings.
 }
@@ -306,8 +310,9 @@ resource "port_integration" "my_custom_integration" {
 
 ` + "```hcl" + `
 resource "port_integration" "my_custom_integration" {
-  installation_id = "my-custom-integration-id"
-  title           = "My Custom Integration"
+  installation_id       = "my-custom-integration-id"
+  installation_app_type = "custom"
+  title                 = "My Custom Integration"
 
   config = jsonencode({
     createMissingRelatedEntities = true
@@ -335,7 +340,7 @@ resource "port_integration" "my_custom_integration" {
 }
 ` + "```\n" + `
 
-For catalog integration types, set ` + "`installation_app_type`" + ` to the integrated tool name (e.g. ` + "`github-ocean`" + `, ` + "`gitlab`" + `) and ` + "`version`" + ` if you want to pin a specific integration version. Custom integrations can omit ` + "`installation_app_type`" + `.
+Set ` + "`installation_app_type`" + ` to the Ocean integration type (for example ` + "`github-ocean`" + `, ` + "`gitlab`" + `, ` + "`pagerduty`" + `, or ` + "`custom`" + `). The Port API rejects a create request when this field is null or missing. Set ` + "`version`" + ` if you want to pin a specific integration version.
 
 ### NOTICE:
 

@@ -192,6 +192,52 @@ description: |-
   }
   
   For catalog integration types, set installation_app_type to the integrated tool name (e.g. github-ocean, gitlab) and version if you want to pin a specific integration version. Custom integrations can omit installation_app_type.
+  Per-resource enableDelete
+  Optional boolean on each resources[] mapping item (sibling of kind, selector, and port):
+  Omitted or true: reconciliation may delete stale entities for that resource (default).false: skip reconciliation deletes for entities whose blueprint matches that resource's static blueprint JSON-string JQ literal (for example "namespace" in HCL: blueprint = "\"namespace\""). Upserts still run.
+  | `entityDeletionThreshold` | `enableDelete` | Reconciliation deletes for resource |
+  | --- | --- | --- |
+  | off (`0`) | any | No |
+  | on (`1`) | `true` / omitted | Yes |
+  | on (`1`) | `false` | No |
+  Setting enableDelete to true does not re-enable deletes when the global threshold has them off.
+  Scope (v1):
+  Reconciliation / resync delete path only — live webhook deletes do not honor enableDelete.Static blueprint literals only — single-quoted JQ (for example 'namespace') and dynamic blueprint expressions are not matched; Port logs a warning when protection cannot engage.Shared-blueprint coupling — if two resources map to the same blueprint and one has enableDelete: false, that blueprint is protected for all reconciliation deletes of that blueprint.
+  
+  config = jsonencode({
+    entityDeletionThreshold = 1
+    resources = [
+      {
+        kind          = "namespace"
+        enableDelete  = false
+        selector      = { query = "true" }
+        port = {
+          entity = {
+            mappings = [{
+              identifier = ".metadata.uid"
+              title      = ".metadata.name"
+              blueprint  = "\"namespace\""
+            }]
+          }
+        }
+      },
+      {
+        kind     = "application"
+        selector = { query = "true" }
+        port = {
+          entity = {
+            mappings = [{
+              identifier = ".metadata.uid"
+              title      = ".metadata.name"
+              blueprint  = "\"argocdApplication\""
+            }]
+          }
+        }
+      },
+    ]
+  })
+  
+  See examples/resources/port_integration/enable_delete for a full example.
   NOTICE:
   The following config properties (selector.query|entity.mappings.*) are jq expressions, which means that you need to input either a valid jq expression (E.g .title), or if you want a string value, a quoted escaped string val (E.g 'my-string').
   NOTES:
@@ -414,6 +460,64 @@ resource "port_integration" "my_custom_integration" {
 
 For catalog integration types, set `installation_app_type` to the integrated tool name (e.g. `github-ocean`, `gitlab`) and `version` if you want to pin a specific integration version. Custom integrations can omit `installation_app_type`.
 
+## Per-resource `enableDelete`
+
+Optional boolean on each `resources[]` mapping item (sibling of `kind`, `selector`, and `port`):
+
+- Omitted or `true`: reconciliation may delete stale entities for that resource (default).
+- `false`: skip reconciliation deletes for entities whose blueprint matches that resource's static `blueprint` JSON-string JQ literal (for example `"namespace"` in HCL: `blueprint = "\"namespace\""`). Upserts still run.
+
+| `entityDeletionThreshold` | `enableDelete` | Reconciliation deletes for resource |
+| --- | --- | --- |
+| off (`0`) | any | No |
+| on (`1`) | `true` / omitted | Yes |
+| on (`1`) | `false` | No |
+
+Setting `enableDelete` to `true` does **not** re-enable deletes when the global threshold has them off.
+
+Scope (v1):
+
+- Reconciliation / resync delete path only — live webhook deletes do not honor `enableDelete`.
+- Static blueprint literals only — single-quoted JQ (for example `'namespace'`) and dynamic blueprint expressions are not matched; Port logs a warning when protection cannot engage.
+- Shared-blueprint coupling — if two resources map to the same blueprint and one has `enableDelete: false`, that blueprint is protected for all reconciliation deletes of that blueprint.
+
+```hcl
+config = jsonencode({
+  entityDeletionThreshold = 1
+  resources = [
+    {
+      kind          = "namespace"
+      enableDelete  = false
+      selector      = { query = "true" }
+      port = {
+        entity = {
+          mappings = [{
+            identifier = ".metadata.uid"
+            title      = ".metadata.name"
+            blueprint  = "\"namespace\""
+          }]
+        }
+      }
+    },
+    {
+      kind     = "application"
+      selector = { query = "true" }
+      port = {
+        entity = {
+          mappings = [{
+            identifier = ".metadata.uid"
+            title      = ".metadata.name"
+            blueprint  = "\"argocdApplication\""
+          }]
+        }
+      }
+    },
+  ]
+})
+```
+
+See `examples/resources/port_integration/enable_delete` for a full example.
+
 ### NOTICE:
 
 The following config properties (`selector.query|entity.mappings.*`) are jq expressions, which means that you need to input either a valid jq expression (E.g `.title`), or if you want a string value, a quoted escaped string val (E.g `'my-string'`).
@@ -441,7 +545,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 ### Optional
 
-- `config` (String) Integration mapping and configuration as a JSON string (use `jsonencode`). **Cannot be set on creation** — integrations receive default mappings during provisioning. Add `config` after the initial `terraform apply` to override the defaults.
+- `config` (String) Integration mapping and configuration as a JSON string (use `jsonencode`). **Cannot be set on creation** — integrations receive default mappings during provisioning. Add `config` after the initial `terraform apply` to override the defaults. Supports Port integration config fields such as `entityDeletionThreshold`, per-resource `enableDelete`, and mapping `resources[]` entries.
 - `create_port_resources_origin` (String) Controls whether Port creates default blueprints and mappings when the integration is created. Use `Empty` to skip default resource creation. Use `Port` to create default resources via Port. If omitted, default resources are created. Can only be set on creation.
 - `installation_app_type` (String) The integrated tool name for catalog integration types (e.g. `github-ocean`, `gitlab`, `pagerduty`). Cannot be changed after creation.
 - `installation_type` (String) The installation type of the integration. Use `Saas` for Port Hosted integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource. Cannot be changed after creation.

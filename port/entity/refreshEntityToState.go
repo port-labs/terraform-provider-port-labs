@@ -158,13 +158,20 @@ func (r *EntityResource) refreshPropertiesEntityState(ctx context.Context, state
 	}
 }
 
-func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli.Entity) {
+func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) {
+	unionManyRelations := preserveUnionManyRelationSlices(state)
+
 	state.Relations = &RelationModel{
-		SingleRelation: make(map[string]*string),
-		ManyRelations:  make(map[string][]string),
+		SingleRelation:     make(map[string]*string),
+		ManyRelations:      make(map[string][]string),
+		UnionManyRelations: unionManyRelations,
 	}
 
 	for identifier, r := range e.Relations {
+		if blueprintRelationIsUnion(blueprint, identifier) {
+			continue
+		}
+
 		switch v := r.(type) {
 		case []any:
 			values := make([]string, 0, len(v))
@@ -190,9 +197,14 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 	if len(state.Relations.ManyRelations) == 0 {
 		state.Relations.ManyRelations = nil
 	}
+	if len(state.Relations.UnionManyRelations) == 0 {
+		state.Relations.UnionManyRelations = nil
+	}
 }
 
 func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) error {
+	unionTeamSlice := preserveUnionTeamSlice(state)
+
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprint.Identifier, e.Identifier))
 	state.Identifier = types.StringValue(e.Identifier)
 	state.Blueprint = types.StringValue(blueprint.Identifier)
@@ -209,14 +221,7 @@ func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityMo
 	state.UpdatedAt = types.StringValue(e.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(e.UpdatedBy)
 
-	if len(e.Team) == 0 {
-		state.Teams = nil
-	} else {
-		state.Teams = make([]types.String, len(e.Team))
-		for i, t := range e.Team {
-			state.Teams[i] = types.StringValue(t)
-		}
-	}
+	refreshTeamsEntityState(state, e, blueprint)
 
 	if len(e.Properties) == 0 {
 		state.Properties = nil
@@ -227,8 +232,17 @@ func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityMo
 	if len(e.Relations) == 0 {
 		state.Relations = nil
 	} else {
-		refreshRelationsEntityState(ctx, state, e)
+		refreshRelationsEntityState(ctx, state, e, blueprint)
 	}
+
+	if err := refreshRelationSourcesEntityState(ctx, state, e); err != nil {
+		return err
+	}
+	if err := refreshTeamSourcesEntityState(ctx, state, e); err != nil {
+		return err
+	}
+
+	restoreUnionTeamSlice(state, unionTeamSlice)
 
 	return nil
 }

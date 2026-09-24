@@ -19,9 +19,20 @@ type EntityPropertiesModel struct {
 	ArrayProps   *ArrayPropsModel         `tfsdk:"array_props"`
 }
 
+type UnionManyRelationSliceModel struct {
+	SourceKey types.String `tfsdk:"source_key"`
+	Items     types.List   `tfsdk:"items"`
+}
+
+type UnionTeamSliceModel struct {
+	SourceKey types.String `tfsdk:"source_key"`
+	Teams     types.Set    `tfsdk:"teams"`
+}
+
 type RelationModel struct {
-	SingleRelation map[string]*string  `tfsdk:"single_relations"`
-	ManyRelations  map[string][]string `tfsdk:"many_relations"`
+	SingleRelation     map[string]*string                     `tfsdk:"single_relations"`
+	ManyRelations      map[string][]string                    `tfsdk:"many_relations"`
+	UnionManyRelations map[string]UnionManyRelationSliceModel `tfsdk:"union_many_relations"`
 }
 
 type EntityModel struct {
@@ -37,6 +48,9 @@ type EntityModel struct {
 	UpdatedBy                    types.String           `tfsdk:"updated_by"`
 	Properties                   *EntityPropertiesModel `tfsdk:"properties"`
 	Teams                        []types.String         `tfsdk:"teams"`
+	UnionTeamSlice               *UnionTeamSliceModel   `tfsdk:"union_team_slice"`
+	TeamSources                  types.Map              `tfsdk:"team_sources"`
 	Relations                    *RelationModel         `tfsdk:"relations"`
+	RelationSources              types.Map              `tfsdk:"relation_sources"`
 	CreateMissingRelatedEntities types.Bool             `tfsdk:"create_missing_related_entities"`
 }

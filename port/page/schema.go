@@ -59,9 +59,9 @@ func PageSchema() map[string]schema.Attribute {
 			Optional:    true,
 		},
 		"widgets": schema.ListAttribute{
-			Description: "The widgets of the page",
-			Optional:    true,
-			ElementType: types.StringType,
+			MarkdownDescription: "The widgets of the page. Each element is a JSON-encoded widget object. For `iframe-widget` widgets, the `url` field accepts an absolute URL or a root-relative path (for example `/organization/home` or `/test`); paths must start with a single `/` and must not start with `//`. Root-relative paths without an organization segment are resolved under the current organization at runtime.",
+			Optional:            true,
+			ElementType:         types.StringType,
 		},
 		"page_filters": schema.ListAttribute{
 			Description: "The page filters. Each filter is a JSON object with 'identifier' (string), 'title' (string), and 'query' (object with 'combinator' and 'rules' array). The rules array can contain any filter type.",
@@ -467,6 +467,50 @@ resource "port_page" "microservice_dashboard_page" {
             "id" : "microserviceGuide"
           }
         ],
+      }
+    )
+  ]
+}
+
+` + "```" + `
+
+### IFrame widget with root-relative URL
+
+` + "`iframe-widget`" + ` widgets accept an absolute URL or a root-relative path in the ` + "`url`" + ` field (for example ` + "`/organization/home`" + `). Root-relative paths are resolved against the Port application origin at runtime; paths without an organization segment are resolved under the current organization.
+
+` + "```hcl" + `
+
+resource "port_page" "embedded_port_page" {
+  identifier = "embedded_port_page"
+  title      = "Embedded Port page"
+  icon       = "Docs"
+  type       = "dashboard"
+  widgets = [
+    jsonencode(
+      {
+        "id" = "embeddedDashboardWidget",
+        "layout" = [
+          {
+            "height" = 400,
+            "columns" = [
+              {
+                "id"   = "embeddedView",
+                "size" = 12
+              }
+            ]
+          }
+        ],
+        "type" = "dashboard-widget",
+        "widgets" = [
+          {
+            "type"    = "iframe-widget",
+            "id"      = "embeddedView",
+            "title"   = "Organization home",
+            "icon"    = "Docs",
+            "url"     = "/organization/home",
+            "urlType" = "public"
+          }
+        ]
       }
     )
   ]

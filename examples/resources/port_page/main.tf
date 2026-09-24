@@ -38,6 +38,42 @@ resource "port_entity" "example_microservice" {
   }
 }
 
+resource "port_page" "embedded_port_page" {
+  identifier = "embedded_port_page"
+  title      = "Embedded Port page"
+  icon       = "Docs"
+  type       = "dashboard"
+  widgets = [
+    jsonencode(
+      {
+        "id" = "embeddedDashboardWidget",
+        "layout" = [
+          {
+            "height" = 400,
+            "columns" = [
+              {
+                "id"   = "embeddedView",
+                "size" = 12
+              }
+            ]
+          }
+        ],
+        "type" = "dashboard-widget",
+        "widgets" = [
+          {
+            "type"    = "iframe-widget",
+            "id"      = "embeddedView",
+            "title"   = "Organization home",
+            "icon"    = "Docs",
+            "url"     = "/organization/home",
+            "urlType" = "public"
+          }
+        ],
+      }
+    )
+  ]
+}
+
 resource "port_page" "microservice_dashboard_page" {
   identifier = "microservice_dashboard_page"
   title      = "Microservices"

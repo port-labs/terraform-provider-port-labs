@@ -73,12 +73,16 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 	config := apiNode.Config
 	switch config.Type {
 	case consts.SelfServeTrigger:
+		var priorPermissions *PermissionsModel
+		if prior.SelfServeTrigger != nil {
+			priorPermissions = prior.SelfServeTrigger.Permissions
+		}
 		trigger := &SelfServeTriggerModel{
 			ActionCardButtonText:    flex.GoStringToFramework(config.ActionCardButtonText),
 			ExecuteActionButtonText: flex.GoStringToFramework(config.ExecuteActionButtonText),
 			Variant:                 flex.GoStringToFramework(config.Variant),
 			Published:               flex.GoBoolToFramework(config.Published),
-			Permissions:             permissionsToModel(ctx, config.Permissions, r.portClient.JSONEscapeHTML),
+			Permissions:             permissionsToModel(ctx, config.Permissions, priorPermissions, r.portClient.JSONEscapeHTML),
 		}
 
 		if config.UserInputs != nil {
@@ -238,9 +242,13 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 		node.Condition = condition
 
 	case consts.InputNode:
+		var priorResponders *RespondersModel
+		if prior.Input != nil {
+			priorResponders = prior.Input.Responders
+		}
 		input := &InputModel{
 			Description: flex.GoStringToFramework(config.Description),
-			Responders:  respondersToModel(ctx, config.Responders, r.portClient.JSONEscapeHTML),
+			Responders:  respondersToModel(ctx, config.Responders, priorResponders, r.portClient.JSONEscapeHTML),
 		}
 
 		if config.UserInputs != nil {
@@ -478,15 +486,23 @@ func hasNoPrincipals(permissions *cli.WorkflowNodePermissions) bool {
 			permissions.Policy == nil && permissions.UsersQuery == nil)
 }
 
-func permissionsToModel(ctx context.Context, permissions *cli.WorkflowNodePermissions, jsonEscapeHTML bool) *PermissionsModel {
-	if hasNoPrincipals(permissions) {
+func permissionsToModel(ctx context.Context, permissions *cli.WorkflowNodePermissions, prior *PermissionsModel, jsonEscapeHTML bool) *PermissionsModel {
+	if hasNoPrincipals(permissions) && prior == nil {
 		return nil
 	}
 
+	var priorUsers, priorRoles, priorTeams types.List
+	if prior != nil {
+		priorUsers, priorRoles, priorTeams = prior.Users, prior.Roles, prior.Teams
+	}
+	if permissions == nil {
+		permissions = &cli.WorkflowNodePermissions{}
+	}
+
 	model := &PermissionsModel{
-		Users: stringsToList(ctx, permissions.Users, types.ListNull(types.StringType)),
-		Roles: stringsToList(ctx, permissions.Roles, types.ListNull(types.StringType)),
-		Teams: stringsToList(ctx, permissions.Teams, types.ListNull(types.StringType)),
+		Users: stringsToList(ctx, permissions.Users, priorUsers),
+		Roles: stringsToList(ctx, permissions.Roles, priorRoles),
+		Teams: stringsToList(ctx, permissions.Teams, priorTeams),
 	}
 
 	if permissions.Policy != nil {
@@ -498,15 +514,23 @@ func permissionsToModel(ctx context.Context, permissions *cli.WorkflowNodePermis
 	return model
 }
 
-func respondersToModel(ctx context.Context, responders *cli.WorkflowNodePermissions, jsonEscapeHTML bool) *RespondersModel {
-	if hasNoPrincipals(responders) {
+func respondersToModel(ctx context.Context, responders *cli.WorkflowNodePermissions, prior *RespondersModel, jsonEscapeHTML bool) *RespondersModel {
+	if hasNoPrincipals(responders) && prior == nil {
 		return nil
 	}
 
+	var priorUsers, priorRoles, priorTeams types.List
+	if prior != nil {
+		priorUsers, priorRoles, priorTeams = prior.Users, prior.Roles, prior.Teams
+	}
+	if responders == nil {
+		responders = &cli.WorkflowNodePermissions{}
+	}
+
 	model := &RespondersModel{
-		Users: stringsToList(ctx, responders.Users, types.ListNull(types.StringType)),
-		Roles: stringsToList(ctx, responders.Roles, types.ListNull(types.StringType)),
-		Teams: stringsToList(ctx, responders.Teams, types.ListNull(types.StringType)),
+		Users: stringsToList(ctx, responders.Users, priorUsers),
+		Roles: stringsToList(ctx, responders.Roles, priorRoles),
+		Teams: stringsToList(ctx, responders.Teams, priorTeams),
 	}
 
 	if responders.UsersQuery != nil {

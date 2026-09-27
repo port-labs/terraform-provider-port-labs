@@ -63,6 +63,21 @@ func TestAlignIntegrationTypeDefersUnknownConfig(t *testing.T) {
 	assert.True(t, plan.IntegrationType.IsUnknown())
 }
 
+func TestAlignIntegrationTypePlansUnsetInstallationAppTypeAsNull(t *testing.T) {
+	config := &IntegrationModel{
+		IntegrationType:     types.StringValue("github-ocean"),
+		InstallationAppType: types.StringNull(),
+	}
+	plan := &IntegrationModel{
+		IntegrationType:     types.StringValue("github-ocean"),
+		InstallationAppType: types.StringUnknown(),
+	}
+
+	err := alignIntegrationType(config, plan)
+	require.NoError(t, err)
+	assert.True(t, plan.InstallationAppType.IsNull())
+}
+
 func TestApplyIntegrationTypePrefersServerIntegrationType(t *testing.T) {
 	integrationType := "github-ocean"
 	installationAppType := "gitlab"

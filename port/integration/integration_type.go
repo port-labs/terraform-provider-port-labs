@@ -33,8 +33,12 @@ func integrationTypeValue(models ...*IntegrationModel) (string, error) {
 // alignIntegrationType runs during ModifyPlan before validation. It resolves the
 // type from config (and plan when needed), copies it onto plan.integration_type,
 // and errors if neither attribute is set. This keeps legacy configs working without
-// exposing the migration in docs.
+// exposing the migration in docs. An unset installation_app_type is planned as
+// null because Read never populates it, so leaving it unknown fails the apply.
 func alignIntegrationType(config, plan *IntegrationModel) error {
+	if config != nil && config.InstallationAppType.IsNull() && plan.InstallationAppType.IsUnknown() {
+		plan.InstallationAppType = types.StringNull()
+	}
 	if config != nil && (config.IntegrationType.IsUnknown() || config.InstallationAppType.IsUnknown()) {
 		return nil
 	}

@@ -46,7 +46,8 @@ func (r *IntegrationResource) validateSpecAtPlan(ctx context.Context, plan *Inte
 	if r.portClient == nil || !plan.isSaas() {
 		return
 	}
-	if plan.InstallationAppType.IsNull() || plan.InstallationAppType.IsUnknown() {
+	integrationType, err := integrationTypeValue(plan)
+	if err != nil || integrationType == "" {
 		return
 	}
 	if plan.InstallationId.IsNull() || plan.InstallationId.IsUnknown() {
@@ -75,7 +76,7 @@ func (r *IntegrationResource) validateSpecAtPlan(ctx context.Context, plan *Inte
 		},
 	}
 
-	if err := r.portClient.ValidateIntegrationSpec(ctx, plan.InstallationAppType.ValueString(), body); err != nil {
+	if err := r.portClient.ValidateIntegrationSpec(ctx, integrationType, body); err != nil {
 		diags.AddError("invalid integration spec", err.Error())
 	}
 }

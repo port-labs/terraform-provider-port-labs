@@ -92,7 +92,7 @@ func integrationHCLWithInstallationType(installationID, appType, installationTyp
 	return fmt.Sprintf(`
 	resource "port_integration" "kafkush" {
 		installation_id       = "%s"
-		installation_app_type = "%s"
+		integration_type      = "%s"
 		title                 = "%s"
 		version               = "%s"%s%s
 	}
@@ -102,7 +102,7 @@ func integrationHCLWithInstallationType(installationID, appType, installationTyp
 func integrationDefaultChecks(installationID, appType string) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
-		resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", appType),
+		resource.TestCheckResourceAttr(integrationResourceName, "integration_type", appType),
 		resource.TestCheckResourceAttr(integrationResourceName, "title", defaultTitle),
 		resource.TestCheckResourceAttr(integrationResourceName, "version", defaultVersion),
 		resource.TestCheckResourceAttr(integrationResourceName, "webhook_changelog_destination.%", "0"),
@@ -180,7 +180,7 @@ func TestPortIntegrationPatchTitleNull(t *testing.T) {
 		Config: strings.ReplaceAll(withConfig, fmt.Sprintf(`"%s"`, defaultTitle), "null"),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
-			resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", appType),
+			resource.TestCheckResourceAttr(integrationResourceName, "integration_type", appType),
 			resource.TestCheckNoResourceAttr(integrationResourceName, "title"),
 			resource.TestCheckResourceAttr(integrationResourceName, "version", defaultVersion),
 			resource.TestCheckResourceAttr(integrationResourceName, "webhook_changelog_destination.%", "0"),
@@ -209,7 +209,7 @@ func TestPortIntegrationWithWebhook(t *testing.T) {
 					resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
 					resource.TestCheckResourceAttr(integrationResourceName, "title", defaultTitle),
 					resource.TestCheckResourceAttr(integrationResourceName, "version", defaultVersion),
-					resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", "kafka"),
+					resource.TestCheckResourceAttr(integrationResourceName, "integration_type", "kafka"),
 					resource.TestCheckResourceAttr(integrationResourceName, "webhook_changelog_destination.%", "2"),
 					resource.TestCheckResourceAttr(integrationResourceName, "webhook_changelog_destination.url", "https://google.com"),
 					resource.TestCheckResourceAttr(integrationResourceName, "webhook_changelog_destination.agent", "true"),
@@ -230,7 +230,7 @@ func TestPortIntegrationImport(t *testing.T) {
 			{
 				Config: acctest.ProviderConfig + config,
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", "kafka"),
+					resource.TestCheckResourceAttr(integrationResourceName, "integration_type", "kafka"),
 					resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
 				),
 			},
@@ -269,7 +269,7 @@ func TestPortIntegrationImmutableInstallationId(t *testing.T) {
 	})
 }
 
-func TestPortIntegrationImmutableInstallationAppType(t *testing.T) {
+func TestPortIntegrationImmutableIntegrationType(t *testing.T) {
 	enableIntegrationBetaFeatures(t)
 
 	installationID := utils.GenID()
@@ -282,12 +282,12 @@ func TestPortIntegrationImmutableInstallationAppType(t *testing.T) {
 				Config: integrationHCL(installationID, "kafka"),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
-					resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", "kafka"),
+					resource.TestCheckResourceAttr(integrationResourceName, "integration_type", "kafka"),
 				),
 			},
 			{
 				Config:      integrationHCL(installationID, "pagerduty"),
-				ExpectError: regexp.MustCompile(`cannot change installation_app_type`),
+				ExpectError: regexp.MustCompile(`cannot change integration_type`),
 			},
 		},
 	})
@@ -378,7 +378,7 @@ func TestPortIntegrationImmutableInstallationType(t *testing.T) {
 				),
 			},
 			{
-				Config: integrationHCLWithInstallationType(installationID, appType, "Saas", saasSpec),
+				Config:      integrationHCLWithInstallationType(installationID, appType, "Saas", saasSpec),
 				ExpectError: regexp.MustCompile(`cannot change installation_type`),
 			},
 		},
@@ -451,7 +451,7 @@ resource "port_integration" "linear" {
 	depends_on = [port_organization_secret.linear_api_key]
 
 	installation_id       = "%s"
-	installation_app_type = "linear"
+	integration_type = "linear"
 	installation_type     = "Saas"
 	title                 = "%s"
 
@@ -482,7 +482,7 @@ func TestPortIntegrationSaasLinear(t *testing.T) {
 				Config: saasLinearIntegrationHCL(installationID, secretName, title),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_integration.linear", "installation_id", installationID),
-					resource.TestCheckResourceAttr("port_integration.linear", "installation_app_type", "linear"),
+					resource.TestCheckResourceAttr("port_integration.linear", "integration_type", "linear"),
 					resource.TestCheckResourceAttr("port_integration.linear", "installation_type", "Saas"),
 					resource.TestCheckResourceAttr("port_integration.linear", "title", title),
 					resource.TestCheckResourceAttrSet("port_integration.linear", "spec"),
@@ -528,7 +528,7 @@ func TestPortIntegrationValidIdentifier(t *testing.T) {
 						Config: integrationHCL(installationID, appType),
 						Check: resource.ComposeTestCheckFunc(
 							resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
-							resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", appType),
+							resource.TestCheckResourceAttr(integrationResourceName, "integration_type", appType),
 						),
 					},
 				},

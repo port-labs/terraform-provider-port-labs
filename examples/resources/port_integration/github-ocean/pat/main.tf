@@ -4,7 +4,7 @@ variable "github_token" {
 }
 
 locals {
-  installation_id = "github-prod"
+  installation_id  = "github-prod"
   integration_type = "github-ocean"
 }
 
@@ -16,10 +16,10 @@ resource "port_organization_secret" "github_token" {
 resource "port_integration" "github" {
   depends_on = [port_organization_secret.github_token]
 
-  installation_id       = local.installation_id
-  installation_app_type = local.integration_type
-  installation_type     = "Saas"
-  title                 = "GitHub Production (PAT)"
+  installation_id   = local.installation_id
+  integration_type  = local.integration_type
+  installation_type = "Saas"
+  title             = "GitHub Production (PAT)"
 
   spec = jsonencode({
     integrationSpec = {

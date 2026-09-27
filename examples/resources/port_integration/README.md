@@ -20,3 +20,5 @@ Each integration type has its own directory. Subdirectories represent supported 
 See [`app-spec/`](./app-spec/) for `liveEventsEnabled`, `actionsProcessingEnabled`, `incrementalSyncEnabled`, `incrementalSyncInterval`, `scheduledResyncInterval`, and `create_port_resources_origin` examples.
 
 Port Hosted integrations: create without `config` first, then add `config` on a subsequent apply to override default mappings.
+
+Use `integration_type` (required) to set the Ocean integration type. `installation_app_type` is deprecated; existing configs that only set it are copied to `integration_type` at plan time.

@@ -25,8 +25,15 @@ var immutableFields = []immutableField{
 		changed: func(s, p *IntegrationModel) bool { return !p.InstallationId.Equal(s.InstallationId) },
 	},
 	{
-		name:    "installation_app_type",
-		changed: func(s, p *IntegrationModel) bool { return !p.InstallationAppType.Equal(s.InstallationAppType) },
+		name: "integration_type",
+		changed: func(s, p *IntegrationModel) bool {
+			stateType, stateErr := integrationTypeValue(s)
+			planType, planErr := integrationTypeValue(p)
+			if stateErr != nil || planErr != nil {
+				return false
+			}
+			return stateType != planType
+		},
 	},
 	{
 		name:    "installation_type",
@@ -47,12 +54,23 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 
 	isCreate := req.State.Raw.IsNull()
 
-	if isCreate {
-		validatePlanRules(&plan, nil, true, &resp.Diagnostics)
+	var config IntegrationModel
+	if !req.Config.Raw.IsNull() {
+		resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
+	}
+
+	if err := alignIntegrationType(&config, &plan); err != nil {
+		resp.Diagnostics.AddError("Invalid integration_type", err.Error())
+		return
+	}
+
+	if isCreate {
+		validatePlanRules(&plan, nil, true, &resp.Diagnostics)
 		r.validateSpecAtPlan(ctx, &plan, &resp.Diagnostics)
+		resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
 		return
 	}
 

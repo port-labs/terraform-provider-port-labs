@@ -16,10 +16,10 @@ resource "port_organization_secret" "ado_pat" {
 resource "port_integration" "ado" {
   depends_on = [port_organization_secret.ado_pat]
 
-  installation_id       = local.installation_id
-  installation_app_type = local.integration_type
-  installation_type     = "Saas"
-  title                 = "Azure DevOps (single account)"
+  installation_id   = local.installation_id
+  integration_type  = local.integration_type
+  installation_type = "Saas"
+  title             = "Azure DevOps (single account)"
 
   spec = jsonencode({
     integrationSpec = {

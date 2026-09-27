@@ -86,7 +86,7 @@ func TestIntegrationToPortBody_CreatePortResourcesOriginOmitted(t *testing.T) {
 	assert.Nil(t, body.CreatePortResourcesOrigin)
 }
 
-func TestIntegrationToPortBodyRequiresInstallationAppType(t *testing.T) {
+func TestIntegrationToPortBodyRequiresIntegrationType(t *testing.T) {
 	cases := []struct {
 		name  string
 		value types.String
@@ -98,20 +98,43 @@ func TestIntegrationToPortBodyRequiresInstallationAppType(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			_, err := integrationToPortBody(&IntegrationModel{
-				InstallationId:      types.StringValue("my-integration"),
-				InstallationAppType: tc.value,
+				InstallationId:  types.StringValue("my-integration"),
+				IntegrationType: tc.value,
 			}, true)
 			require.Error(t, err)
+			assert.ErrorContains(t, err, "integration_type is required")
 		})
 	}
 }
 
-func TestIntegrationToPortBodySetsInstallationAppType(t *testing.T) {
+func TestIntegrationToPortBodyCopiesDeprecatedInstallationAppType(t *testing.T) {
 	body, err := integrationToPortBody(&IntegrationModel{
 		InstallationId:      types.StringValue("my-integration"),
-		InstallationAppType: types.StringValue("github"),
+		InstallationAppType: types.StringValue("github-ocean"),
 	}, true)
 	require.NoError(t, err)
 	require.NotNil(t, body.InstallationAppType)
-	assert.Equal(t, "github", *body.InstallationAppType)
+	assert.Equal(t, "github-ocean", *body.InstallationAppType)
+	assert.Nil(t, body.IntegrationType)
+}
+
+func TestIntegrationToPortBodySendsIntegrationTypeAsInstallationAppType(t *testing.T) {
+	body, err := integrationToPortBody(&IntegrationModel{
+		InstallationId:  types.StringValue("my-integration"),
+		IntegrationType: types.StringValue("github-ocean"),
+	}, true)
+	require.NoError(t, err)
+	require.NotNil(t, body.InstallationAppType)
+	assert.Equal(t, "github-ocean", *body.InstallationAppType)
+	assert.Nil(t, body.IntegrationType)
+}
+
+func TestIntegrationToPortBodyRejectsMismatchedTypes(t *testing.T) {
+	_, err := integrationToPortBody(&IntegrationModel{
+		InstallationId:      types.StringValue("my-integration"),
+		IntegrationType:     types.StringValue("github-ocean"),
+		InstallationAppType: types.StringValue("gitlab"),
+	}, true)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "must match integration_type")
 }

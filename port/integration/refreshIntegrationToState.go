@@ -22,7 +22,7 @@ func applyServerFields(m *IntegrationModel, a *cli.Integration, integrationId st
 	m.ID = types.StringValue(integrationId)
 	m.InstallationId = types.StringValue(integrationId)
 	m.Title = types.StringPointerValue(a.Title)
-	m.InstallationAppType = types.StringPointerValue(a.InstallationAppType)
+	applyIntegrationType(m, a)
 	m.InstallationType = types.StringPointerValue(a.InstallationType)
 	m.Version = types.StringPointerValue(a.Version)
 

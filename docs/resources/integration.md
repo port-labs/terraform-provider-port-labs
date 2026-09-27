@@ -18,7 +18,7 @@ description: |-
   # for the list of configurations (name, type, sensitive, dependencies, etc.).
   locals {
     github_installation_id = "github-prod"
-    github_type            = "github-ocean"
+    integration_type       = "github-ocean"
   }
   
   resource "port_organization_secret" "github_token" {
@@ -29,10 +29,10 @@ description: |-
   resource "port_integration" "github" {
     depends_on = [port_organization_secret.github_token]
   
-    installation_id       = local.github_installation_id
-    installation_app_type = local.github_type
-    installation_type     = "Saas"
-    title                 = "GitHub Production"
+    installation_id   = local.github_installation_id
+    integration_type  = local.integration_type
+    installation_type = "Saas"
+    title             = "GitHub Production"
   
     spec = jsonencode({
       integrationSpec = {
@@ -62,10 +62,10 @@ description: |-
   resource "port_integration" "github" {
     depends_on = [port_organization_secret.github_token]
   
-    installation_id       = local.github_installation_id
-    installation_app_type = local.github_type
-    installation_type     = "Saas"
-    title                 = "GitHub Production"
+    installation_id   = local.github_installation_id
+    integration_type  = local.integration_type
+    installation_type = "Saas"
+    title             = "GitHub Production"
   
     spec = jsonencode({
       integrationSpec = {
@@ -103,7 +103,7 @@ description: |-
   See examples/resources/port_integration/ for full examples per integration type. Common patterns:
   
   # Azure DevOps — single account (PAT)
-  installation_app_type = "azure-devops"
+  integration_type = "azure-devops"
   spec = jsonencode({
     integrationSpec = {
       accountMode         = "Single Account"
@@ -124,7 +124,7 @@ description: |-
   })
   
   # Jira
-  installation_app_type = "jira"
+  integration_type = "jira"
   spec = jsonencode({
     integrationSpec = {
       jiraHost           = "https://example.atlassian.net"
@@ -134,7 +134,7 @@ description: |-
   })
   
   # Linear
-  installation_app_type = "linear"
+  integration_type = "linear"
   spec = jsonencode({
     integrationSpec = {
       linearApiKey = port_organization_secret.linear_api_key.secret_name
@@ -142,7 +142,7 @@ description: |-
   })
   
   # GitLab v2
-  installation_app_type = "gitlab-v2"
+  integration_type = "gitlab-v2"
   spec = jsonencode({
     integrationSpec = {
       gitlabToken = port_organization_secret.gitlab_token.secret_name
@@ -154,9 +154,9 @@ description: |-
   Self-hosted integrations run on your own infrastructure and pull their mapping from Port.
   
   resource "port_integration" "my_custom_integration" {
-    installation_id       = "my-custom-integration-id"
-    installation_app_type = "custom"
-    title                 = "My Custom Integration"
+    installation_id  = "my-custom-integration-id"
+    integration_type = "custom"
+    title            = "My Custom Integration"
   
     # config is set on the next apply, after provisioning creates default mappings.
   }
@@ -164,9 +164,9 @@ description: |-
   Self-hosted example — Step 2: Override mappings
   
   resource "port_integration" "my_custom_integration" {
-    installation_id       = "my-custom-integration-id"
-    installation_app_type = "custom"
-    title                 = "My Custom Integration"
+    installation_id  = "my-custom-integration-id"
+    integration_type = "custom"
+    title            = "My Custom Integration"
   
     config = jsonencode({
       createMissingRelatedEntities = true
@@ -193,11 +193,22 @@ description: |-
     })
   }
   
-  Set installation_app_type to the Ocean integration type (for example github-ocean, gitlab, pagerduty, or custom). The Port API rejects a create request when this field is null or missing. Set version if you want to pin a specific integration version.
+  Migrating from installation_app_type
+  integration_type is required. Port stores it as integrationType and copies it onto installationAppType.
+  Rename the attribute in your Terraform configuration:
+  
+  # before
+  installation_app_type = "github-ocean"
+  
+  # after
+  integration_type = "github-ocean"
+  
+  Configs that still set only installation_app_type continue to work — the provider copies that value onto integration_type at plan time. If both are set, they must match.
+  Set integration_type to the Ocean integration type (for example github-ocean, gitlab, pagerduty, or custom). Set version if you want to pin a specific integration version.
   NOTICE:
   The following config properties (selector.query|entity.mappings.*) are jq expressions, which means that you need to input either a valid jq expression (E.g .title), or if you want a string value, a quoted escaped string val (E.g 'my-string').
   NOTES:
-  config cannot be set on creation. Integrations receive default mappings during provisioning. Create first, then add config on a subsequent apply.create_port_resources_origin can only be set on creation. Use Empty to skip default resource creation, or Port to create default resources via Port. If omitted, default resources are created.Port Hosted spec is validated at plan time against the integration type definition in Port.status reflects async provisioning (Creating → Running) for Port Hosted integrations only.installation_id, installation_app_type, and installation_type cannot be changed after creation.spec is only supported for Port Hosted integrations (installation_type = "Saas"). Do not set it on self-hosted integrations.A changelog destination (webhook_changelog_destination / kafka_changelog_destination) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).Existing integrations can be brought under Terraform management with terraform import port_integration.my_integration <installation_id>.terraform destroy deletes the real integration in Port, not just removes it from state. Use terraform state rm if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
+  config cannot be set on creation. Integrations receive default mappings during provisioning. Create first, then add config on a subsequent apply.create_port_resources_origin can only be set on creation. Use Empty to skip default resource creation, or Port to create default resources via Port. If omitted, default resources are created.Port Hosted spec is validated at plan time against the integration type definition in Port.status reflects async provisioning (Creating → Running) for Port Hosted integrations only.installation_id, integration_type, and installation_type cannot be changed after creation.spec is only supported for Port Hosted integrations (installation_type = "Saas"). Do not set it on self-hosted integrations.A changelog destination (webhook_changelog_destination / kafka_changelog_destination) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).Existing integrations can be brought under Terraform management with terraform import port_integration.my_integration <installation_id>.terraform destroy deletes the real integration in Port, not just removes it from state. Use terraform state rm if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
 ---
 
 # port_integration (Resource)
@@ -228,7 +239,7 @@ Port Hosted integrations provision asynchronously (`Creating` → `Running`). Th
 # for the list of configurations (name, type, sensitive, dependencies, etc.).
 locals {
   github_installation_id = "github-prod"
-  github_type            = "github-ocean"
+  integration_type       = "github-ocean"
 }
 
 resource "port_organization_secret" "github_token" {
@@ -239,10 +250,10 @@ resource "port_organization_secret" "github_token" {
 resource "port_integration" "github" {
   depends_on = [port_organization_secret.github_token]
 
-  installation_id       = local.github_installation_id
-  installation_app_type = local.github_type
-  installation_type     = "Saas"
-  title                 = "GitHub Production"
+  installation_id   = local.github_installation_id
+  integration_type  = local.integration_type
+  installation_type = "Saas"
+  title             = "GitHub Production"
 
   spec = jsonencode({
     integrationSpec = {
@@ -275,10 +286,10 @@ After the first apply completes and provisioning finishes, add `config` to the s
 resource "port_integration" "github" {
   depends_on = [port_organization_secret.github_token]
 
-  installation_id       = local.github_installation_id
-  installation_app_type = local.github_type
-  installation_type     = "Saas"
-  title                 = "GitHub Production"
+  installation_id   = local.github_installation_id
+  integration_type  = local.integration_type
+  installation_type = "Saas"
+  title             = "GitHub Production"
 
   spec = jsonencode({
     integrationSpec = {
@@ -319,7 +330,7 @@ See `examples/resources/port_integration/` for full examples per integration typ
 
 ```hcl
 # Azure DevOps — single account (PAT)
-installation_app_type = "azure-devops"
+integration_type = "azure-devops"
 spec = jsonencode({
   integrationSpec = {
     accountMode         = "Single Account"
@@ -340,7 +351,7 @@ spec = jsonencode({
 })
 
 # Jira
-installation_app_type = "jira"
+integration_type = "jira"
 spec = jsonencode({
   integrationSpec = {
     jiraHost           = "https://example.atlassian.net"
@@ -350,7 +361,7 @@ spec = jsonencode({
 })
 
 # Linear
-installation_app_type = "linear"
+integration_type = "linear"
 spec = jsonencode({
   integrationSpec = {
     linearApiKey = port_organization_secret.linear_api_key.secret_name
@@ -358,7 +369,7 @@ spec = jsonencode({
 })
 
 # GitLab v2
-installation_app_type = "gitlab-v2"
+integration_type = "gitlab-v2"
 spec = jsonencode({
   integrationSpec = {
     gitlabToken = port_organization_secret.gitlab_token.secret_name
@@ -373,9 +384,9 @@ Self-hosted integrations run on your own infrastructure and pull their mapping f
 
 ```hcl
 resource "port_integration" "my_custom_integration" {
-  installation_id       = "my-custom-integration-id"
-  installation_app_type = "custom"
-  title                 = "My Custom Integration"
+  installation_id  = "my-custom-integration-id"
+  integration_type = "custom"
+  title            = "My Custom Integration"
 
   # config is set on the next apply, after provisioning creates default mappings.
 }
@@ -385,9 +396,9 @@ resource "port_integration" "my_custom_integration" {
 
 ```hcl
 resource "port_integration" "my_custom_integration" {
-  installation_id       = "my-custom-integration-id"
-  installation_app_type = "custom"
-  title                 = "My Custom Integration"
+  installation_id  = "my-custom-integration-id"
+  integration_type = "custom"
+  title            = "My Custom Integration"
 
   config = jsonencode({
     createMissingRelatedEntities = true
@@ -416,7 +427,23 @@ resource "port_integration" "my_custom_integration" {
 ```
 
 
-Set `installation_app_type` to the Ocean integration type (for example `github-ocean`, `gitlab`, `pagerduty`, or `custom`). The Port API rejects a create request when this field is null or missing. Set `version` if you want to pin a specific integration version.
+## Migrating from `installation_app_type`
+
+`integration_type` is required. Port stores it as `integrationType` and copies it onto `installationAppType`.
+
+Rename the attribute in your Terraform configuration:
+
+```hcl
+# before
+installation_app_type = "github-ocean"
+
+# after
+integration_type = "github-ocean"
+```
+
+Configs that still set only `installation_app_type` continue to work — the provider copies that value onto `integration_type` at plan time. If both are set, they must match.
+
+Set `integration_type` to the Ocean integration type (for example `github-ocean`, `gitlab`, `pagerduty`, or `custom`). Set `version` if you want to pin a specific integration version.
 
 ### NOTICE:
 
@@ -428,7 +455,7 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 - `create_port_resources_origin` can only be set on creation. Use `Empty` to skip default resource creation, or `Port` to create default resources via Port. If omitted, default resources are created.
 - Port Hosted `spec` is validated at plan time against the integration type definition in Port.
 - `status` reflects async provisioning (`Creating` → `Running`) for Port Hosted integrations only.
-- `installation_id`, `installation_app_type`, and `installation_type` cannot be changed after creation.
+- `installation_id`, `integration_type`, and `installation_type` cannot be changed after creation.
 - `spec` is only supported for Port Hosted integrations (`installation_type = "Saas"`). Do not set it on self-hosted integrations.
 - A changelog destination (`webhook_changelog_destination` / `kafka_changelog_destination`) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).
 - Existing integrations can be brought under Terraform management with `terraform import port_integration.my_integration <installation_id>`.
@@ -441,14 +468,15 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 ### Required
 
-- `installation_app_type` (String) The Ocean integration type (for example `github-ocean`, `gitlab`, `pagerduty`, or `custom`). The Port API rejects create when this is null or missing. Cannot be changed after creation.
 - `installation_id` (String) The installation ID of the integration. Must contain only lowercase letters, numbers, and dashes (pattern: `^[a-z0-9-]+$`). Cannot be changed after creation.
 
 ### Optional
 
 - `config` (String) Integration mapping and configuration as a JSON string (use `jsonencode`). **Cannot be set on creation** — integrations receive default mappings during provisioning. Add `config` after the initial `terraform apply` to override the defaults.
 - `create_port_resources_origin` (String) Controls whether Port creates default blueprints and mappings when the integration is created. Use `Empty` to skip default resource creation. Use `Port` to create default resources via Port. If omitted, default resources are created. Can only be set on creation.
+- `installation_app_type` (String, Deprecated) Deprecated. Use `integration_type`. When this is set and `integration_type` is omitted, the value is copied to `integration_type`.
 - `installation_type` (String) The installation type of the integration. Use `Saas` for Port Hosted integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource. Cannot be changed after creation.
+- `integration_type` (String) The Ocean integration type (for example `github-ocean`, `gitlab`, `pagerduty`, or `custom`). Required. Port stores this as `integrationType` and copies it onto `installationAppType`. Cannot be changed after creation.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `spec` (String) Port Hosted integration spec as a JSON string (use `jsonencode`). **Only supported when `installation_type` is `Saas`** — must not be set for self-hosted integrations. Required for Port Hosted integrations. Contains `integrationSpec` (credentials/settings) and optionally `appSpec` (feature toggles like `liveEventsEnabled`, `sendRawDataExamples`, etc.). Sensitive `integrationSpec` values (org secret references) are preserved from your HCL on read. If `appSpec` fields are omitted, Port applies its own defaults — which may differ from Port UI defaults. Declare `appSpec` explicitly to match the UI behavior.
 - `title` (String)

@@ -17,7 +17,7 @@ resource "port_integration" "github" {
   depends_on = [port_organization_secret.github_token]
 
   installation_id              = local.installation_id
-  installation_app_type        = local.integration_type
+  integration_type             = local.integration_type
   installation_type            = "Saas"
   create_port_resources_origin = "Empty"
   title                        = "GitHub Production (PAT, no default resources)"

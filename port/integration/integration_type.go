@@ -7,22 +7,22 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
-func integrationTypeFromModel(m *IntegrationModel) string {
-	if m == nil {
-		return ""
-	}
-	if s := configuredString(m.IntegrationType); s != "" {
-		return s
-	}
-	return configuredString(m.InstallationAppType)
-}
-
 // integrationTypeValue resolves the Ocean integration type from one or more models.
 // integration_type wins when both it and installation_app_type are set.
 func integrationTypeValue(models ...*IntegrationModel) (string, error) {
 	for _, m := range models {
-		if s := integrationTypeFromModel(m); s != "" {
-			return s, nil
+		if m == nil {
+			continue
+		}
+		if !m.IntegrationType.IsNull() && !m.IntegrationType.IsUnknown() {
+			if s := m.IntegrationType.ValueString(); s != "" {
+				return s, nil
+			}
+		}
+		if !m.InstallationAppType.IsNull() && !m.InstallationAppType.IsUnknown() {
+			if s := m.InstallationAppType.ValueString(); s != "" {
+				return s, nil
+			}
 		}
 	}
 	return "", fmt.Errorf("integration_type is required")
@@ -41,30 +41,13 @@ func alignIntegrationType(config, plan *IntegrationModel) error {
 }
 
 func applyIntegrationType(m *IntegrationModel, integration *cli.Integration) {
-	resolved := integrationTypeFromAPI(integration)
-	if resolved == "" {
-		m.IntegrationType = types.StringNull()
+	if integration != nil && integration.IntegrationType != nil && *integration.IntegrationType != "" {
+		m.IntegrationType = types.StringValue(*integration.IntegrationType)
 		return
 	}
-	m.IntegrationType = types.StringValue(resolved)
-}
-
-func integrationTypeFromAPI(integration *cli.Integration) string {
-	if integration == nil {
-		return ""
+	if integration != nil && integration.InstallationAppType != nil && *integration.InstallationAppType != "" {
+		m.IntegrationType = types.StringValue(*integration.InstallationAppType)
+		return
 	}
-	if integration.IntegrationType != nil && *integration.IntegrationType != "" {
-		return *integration.IntegrationType
-	}
-	if integration.InstallationAppType != nil {
-		return *integration.InstallationAppType
-	}
-	return ""
-}
-
-func configuredString(value types.String) string {
-	if value.IsNull() || value.IsUnknown() {
-		return ""
-	}
-	return value.ValueString()
+	m.IntegrationType = types.StringNull()
 }

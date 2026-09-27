@@ -1075,7 +1075,7 @@ func TestRespondersRoundTrip(t *testing.T) {
 		UsersQuery: map[string]any{"combinator": "and", "rules": []any{}},
 	}
 
-	model := respondersToModel(ctx, responders, false)
+	model := respondersToModel(ctx, responders, nil, false)
 	require.NotNil(t, model)
 	assert.False(t, model.UsersQuery.IsNull())
 
@@ -1084,6 +1084,93 @@ func TestRespondersRoundTrip(t *testing.T) {
 	assert.Equal(t, []string{"platform"}, body.Teams)
 	assert.NotNil(t, body.UsersQuery)
 	assert.Nil(t, body.Policy)
+}
+
+func TestPermissionsRefreshKeepsDeclaredEmptyPrincipals(t *testing.T) {
+	ctx := context.Background()
+
+	permissions := &cli.WorkflowNodePermissions{
+		Users: []string{"admin@example.com"},
+		Roles: []string{},
+		Teams: []string{},
+	}
+	prior := &PermissionsModel{
+		Users: stringList("admin@example.com"),
+		Roles: stringList(),
+		Teams: stringList(),
+	}
+
+	model := permissionsToModel(ctx, permissions, prior, false)
+	require.NotNil(t, model)
+	assert.Equal(t, prior.Roles, model.Roles)
+	assert.Equal(t, prior.Teams, model.Teams)
+}
+
+func TestPermissionsRefreshKeepsDeclaredEmptyBlock(t *testing.T) {
+	ctx := context.Background()
+
+	prior := &PermissionsModel{Roles: stringList()}
+
+	model := permissionsToModel(ctx, nil, prior, false)
+	require.NotNil(t, model, "a declared block must not collapse to null")
+	assert.Equal(t, prior.Roles, model.Roles)
+	assert.True(t, model.Users.IsNull())
+}
+
+func TestPermissionsRefreshOmitsUndeclaredBlock(t *testing.T) {
+	ctx := context.Background()
+
+	assert.Nil(t, permissionsToModel(ctx, nil, nil, false))
+	assert.Nil(t, permissionsToModel(ctx, &cli.WorkflowNodePermissions{Roles: []string{}}, nil, false))
+}
+
+func TestRespondersRefreshKeepsDeclaredEmptyPrincipals(t *testing.T) {
+	ctx := context.Background()
+
+	responders := &cli.WorkflowNodePermissions{
+		Teams: []string{"platform"},
+		Roles: []string{},
+	}
+	prior := &RespondersModel{Teams: stringList("platform"), Roles: stringList()}
+
+	model := respondersToModel(ctx, responders, prior, false)
+	require.NotNil(t, model)
+	assert.Equal(t, prior.Roles, model.Roles)
+
+	require.NotNil(t, respondersToModel(ctx, nil, &RespondersModel{Users: stringList()}, false))
+	assert.Nil(t, respondersToModel(ctx, nil, nil, false))
+}
+
+func TestSelfServeTriggerRefreshKeepsDeclaredEmptyPrincipals(t *testing.T) {
+	ctx := context.Background()
+
+	r := &WorkflowResource{portClient: &cli.PortClient{}}
+	apiNode := cli.WorkflowNode{
+		Identifier: "trigger",
+		Config: cli.WorkflowNodeConfig{
+			Type:        consts.SelfServeTrigger,
+			Permissions: &cli.WorkflowNodePermissions{Users: []string{"admin@example.com"}},
+		},
+	}
+	prior := WorkflowNodeModel{
+		Identifier: types.StringValue("trigger"),
+		SelfServeTrigger: &SelfServeTriggerModel{
+			Permissions: &PermissionsModel{
+				Users: stringList("admin@example.com"),
+				Roles: stringList(),
+				Teams: stringList(),
+			},
+		},
+	}
+
+	node, err := r.nodeToModel(ctx, apiNode, prior)
+	require.NoError(t, err)
+	require.NotNil(t, node.SelfServeTrigger)
+	require.NotNil(t, node.SelfServeTrigger.Permissions)
+	assert.Equal(t, prior.SelfServeTrigger.Permissions.Roles, node.SelfServeTrigger.Permissions.Roles,
+		"roles declared as an empty list must not refresh as null")
+	assert.Equal(t, prior.SelfServeTrigger.Permissions.Teams, node.SelfServeTrigger.Permissions.Teams)
+	assert.Equal(t, prior.SelfServeTrigger.Permissions.Users, node.SelfServeTrigger.Permissions.Users)
 }
 
 func webhookNode(identifier string) WorkflowNodeModel {

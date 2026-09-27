@@ -561,10 +561,8 @@ func BlueprintSchema() map[string]schema.Attribute {
 			Default:             booldefault.StaticBool(false),
 		},
 		"create_catalog_page": schema.BoolAttribute{
-			MarkdownDescription: "This flag is only relevant for blueprint creation, by default if not set, a catalog page will be created for the blueprint",
+			MarkdownDescription: "This flag is only relevant for blueprint creation. If not set, the parameter is omitted and Port's API default applies",
 			Optional:            true,
-			Computed:            true,
-			Default:             booldefault.StaticBool(true),
 		},
 		"ownership": OwnershipSchema(),
 		"include_in_global_search": schema.BoolAttribute{

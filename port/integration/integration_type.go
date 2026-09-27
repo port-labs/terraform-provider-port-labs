@@ -7,8 +7,10 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
-// integrationTypeValue resolves the Ocean integration type from one or more models.
-// integration_type wins when both it and installation_app_type are set.
+// integrationTypeValue resolves the Ocean integration type from Terraform models.
+// integration_type wins when both attributes are set; installation_app_type is a
+// silent legacy fallback. Used when we need the type string without mutating the
+// model: API body construction, SaaS spec validation, and immutability checks.
 func integrationTypeValue(models ...*IntegrationModel) (string, error) {
 	for _, m := range models {
 		if m == nil {
@@ -28,6 +30,10 @@ func integrationTypeValue(models ...*IntegrationModel) (string, error) {
 	return "", fmt.Errorf("integration_type is required")
 }
 
+// alignIntegrationType runs during ModifyPlan before validation. It resolves the
+// type from config (and plan when needed), copies it onto plan.integration_type,
+// and errors if neither attribute is set. This keeps legacy configs working without
+// exposing the migration in docs.
 func alignIntegrationType(config, plan *IntegrationModel) error {
 	if config != nil && (config.IntegrationType.IsUnknown() || config.InstallationAppType.IsUnknown()) {
 		return nil
@@ -40,6 +46,9 @@ func alignIntegrationType(config, plan *IntegrationModel) error {
 	return nil
 }
 
+// applyIntegrationType runs on read after GET/create/update responses. Port may
+// return integrationType and/or installationAppType; this writes the resolved
+// value into state.integration_type only.
 func applyIntegrationType(m *IntegrationModel, integration *cli.Integration) {
 	if integration != nil && integration.IntegrationType != nil && *integration.IntegrationType != "" {
 		m.IntegrationType = types.StringValue(*integration.IntegrationType)

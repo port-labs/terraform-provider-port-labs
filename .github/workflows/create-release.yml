@@ -51,7 +51,7 @@ jobs:
 
       - name: Fail if tag already exists
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PORT_MACHINE_USER_GITHUB_TOKEN }}
           VERSION: ${{ steps.normalize.outputs.version }}
         run: |
           set -euo pipefail
@@ -62,7 +62,8 @@ jobs:
 
       - name: Create GitHub release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # PAT so the new tag can trigger cd.yml; GITHUB_TOKEN events do not.
+          GH_TOKEN: ${{ secrets.PORT_MACHINE_USER_GITHUB_TOKEN }}
           VERSION: ${{ steps.normalize.outputs.version }}
         run: |
           set -euo pipefail

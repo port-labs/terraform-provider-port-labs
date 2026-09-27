@@ -193,17 +193,6 @@ description: |-
     })
   }
   
-  Migrating from installation_app_type
-  integration_type is required. Port stores it as integrationType and copies it onto installationAppType.
-  Rename the attribute in your Terraform configuration:
-  
-  # before
-  installation_app_type = "github-ocean"
-  
-  # after
-  integration_type = "github-ocean"
-  
-  Configs that still set only installation_app_type continue to work — the provider copies that value onto integration_type at plan time. If both are set, they must match.
   Set integration_type to the Ocean integration type (for example github-ocean, gitlab, pagerduty, or custom). Set version if you want to pin a specific integration version.
   NOTICE:
   The following config properties (selector.query|entity.mappings.*) are jq expressions, which means that you need to input either a valid jq expression (E.g .title), or if you want a string value, a quoted escaped string val (E.g 'my-string').
@@ -427,22 +416,6 @@ resource "port_integration" "my_custom_integration" {
 ```
 
 
-## Migrating from `installation_app_type`
-
-`integration_type` is required. Port stores it as `integrationType` and copies it onto `installationAppType`.
-
-Rename the attribute in your Terraform configuration:
-
-```hcl
-# before
-installation_app_type = "github-ocean"
-
-# after
-integration_type = "github-ocean"
-```
-
-Configs that still set only `installation_app_type` continue to work — the provider copies that value onto `integration_type` at plan time. If both are set, they must match.
-
 Set `integration_type` to the Ocean integration type (for example `github-ocean`, `gitlab`, `pagerduty`, or `custom`). Set `version` if you want to pin a specific integration version.
 
 ### NOTICE:
@@ -474,9 +447,9 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 
 - `config` (String) Integration mapping and configuration as a JSON string (use `jsonencode`). **Cannot be set on creation** — integrations receive default mappings during provisioning. Add `config` after the initial `terraform apply` to override the defaults.
 - `create_port_resources_origin` (String) Controls whether Port creates default blueprints and mappings when the integration is created. Use `Empty` to skip default resource creation. Use `Port` to create default resources via Port. If omitted, default resources are created. Can only be set on creation.
-- `installation_app_type` (String, Deprecated) Deprecated. Use `integration_type`. When this is set and `integration_type` is omitted, the value is copied to `integration_type`.
+- `installation_app_type` (String)
 - `installation_type` (String) The installation type of the integration. Use `Saas` for Port Hosted integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource. Cannot be changed after creation.
-- `integration_type` (String) The Ocean integration type (for example `github-ocean`, `gitlab`, `pagerduty`, or `custom`). Required. Port stores this as `integrationType` and copies it onto `installationAppType`. Cannot be changed after creation.
+- `integration_type` (String) The Ocean integration type (for example `github-ocean`, `gitlab`, `pagerduty`, or `custom`). Cannot be changed after creation.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
 - `spec` (String) Port Hosted integration spec as a JSON string (use `jsonencode`). **Only supported when `installation_type` is `Saas`** — must not be set for self-hosted integrations. Required for Port Hosted integrations. Contains `integrationSpec` (credentials/settings) and optionally `appSpec` (feature toggles like `liveEventsEnabled`, `sendRawDataExamples`, etc.). Sensitive `integrationSpec` values (org secret references) are preserved from your HCL on read. If `appSpec` fields are omitted, Port applies its own defaults — which may differ from Port UI defaults. Declare `appSpec` explicitly to match the UI behavior.
 - `title` (String)

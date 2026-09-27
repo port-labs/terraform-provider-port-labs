@@ -40,9 +40,10 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Optional: true,
 		},
 		"integration_type": schema.StringAttribute{
-			MarkdownDescription: "The Ocean integration type (for example `github-ocean`, `gitlab`, `pagerduty`, or `custom`). Required. Port stores this as `integrationType` and copies it onto `installationAppType`. Cannot be changed after creation.",
-			Optional:            true,
-			Computed:            true,
+			MarkdownDescription: "The Ocean integration type (for example `github-ocean`, `gitlab`, `pagerduty`, or `custom`). Cannot be changed after creation.",
+			// Optional+Computed so legacy configs that only set installation_app_type keep working.
+			Optional: true,
+			Computed: true,
 			Validators: []validator.String{
 				stringvalidator.LengthAtLeast(1),
 			},
@@ -51,10 +52,8 @@ func IntegrationSchema() map[string]schema.Attribute {
 			},
 		},
 		"installation_app_type": schema.StringAttribute{
-			MarkdownDescription: "Deprecated. Use `integration_type`. When this is set and `integration_type` is omitted, the value is copied to `integration_type`.",
-			Optional:            true,
-			Computed:            true,
-			DeprecationMessage:  "Use integration_type. This value is copied to integration_type.",
+			Optional: true,
+			Computed: true,
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			},
@@ -352,22 +351,6 @@ resource "port_integration" "my_custom_integration" {
   })
 }
 ` + "```\n" + `
-
-## Migrating from ` + "`installation_app_type`" + `
-
-` + "`integration_type`" + ` is required. Port stores it as ` + "`integrationType`" + ` and copies it onto ` + "`installationAppType`" + `.
-
-Rename the attribute in your Terraform configuration:
-
-` + "```hcl" + `
-# before
-installation_app_type = "github-ocean"
-
-# after
-integration_type = "github-ocean"
-` + "```" + `
-
-Configs that still set only ` + "`installation_app_type`" + ` continue to work — the provider copies that value onto ` + "`integration_type`" + ` at plan time. If both are set, they must match.
 
 Set ` + "`integration_type`" + ` to the Ocean integration type (for example ` + "`github-ocean`" + `, ` + "`gitlab`" + `, ` + "`pagerduty`" + `, or ` + "`custom`" + `). Set ` + "`version`" + ` if you want to pin a specific integration version.
 

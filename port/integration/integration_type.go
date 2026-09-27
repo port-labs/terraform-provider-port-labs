@@ -8,43 +8,30 @@ import (
 )
 
 // integrationTypeValue resolves the Ocean integration type.
-// integration_type is required. A deprecated installation_app_type is copied
-// into it when integration_type is omitted. integ-service stores that value as
-// integrationType and copies it onto installationAppType.
+// integration_type wins when both it and installation_app_type are set.
 func integrationTypeValue(m *IntegrationModel) (string, error) {
 	if m == nil {
 		return "", fmt.Errorf("integration_type is required")
 	}
 
 	fromType := configuredString(m.IntegrationType)
+	if fromType != "" {
+		return fromType, nil
+	}
 	fromAppType := configuredString(m.InstallationAppType)
-	resolved := fromType
-	if resolved == "" {
-		resolved = fromAppType
+	if fromAppType != "" {
+		return fromAppType, nil
 	}
-	if resolved == "" {
-		return "", fmt.Errorf("integration_type is required")
-	}
-	if fromType != "" && fromAppType != "" && fromType != fromAppType {
-		return "", fmt.Errorf("installation_app_type (%q) must match integration_type (%q)", fromAppType, fromType)
-	}
-	return resolved, nil
+	return "", fmt.Errorf("integration_type is required")
 }
 
-// resolveIntegrationType prefers an explicit integration_type. A deprecated
-// installation_app_type is used only when integration_type is absent from
-// configuration. Values already stored on the plan fill in when the
-// configuration omits both.
 func resolveIntegrationType(config, plan *IntegrationModel) (string, error) {
 	if config != nil {
 		fromType := configuredString(config.IntegrationType)
-		fromAppType := configuredString(config.InstallationAppType)
-		if fromType != "" && fromAppType != "" && fromType != fromAppType {
-			return "", fmt.Errorf("installation_app_type (%q) must match integration_type (%q)", fromAppType, fromType)
-		}
 		if fromType != "" {
 			return fromType, nil
 		}
+		fromAppType := configuredString(config.InstallationAppType)
 		if fromAppType != "" {
 			return fromAppType, nil
 		}
@@ -61,24 +48,19 @@ func alignIntegrationType(config, plan *IntegrationModel) error {
 		return err
 	}
 	plan.IntegrationType = types.StringValue(resolved)
-	plan.InstallationAppType = types.StringValue(resolved)
 	return nil
 }
 
 func applyIntegrationType(m *IntegrationModel, integration *cli.Integration) {
-	resolved := ""
 	if integration != nil && integration.IntegrationType != nil && *integration.IntegrationType != "" {
-		resolved = *integration.IntegrationType
-	} else if integration != nil && integration.InstallationAppType != nil {
-		resolved = *integration.InstallationAppType
-	}
-	if resolved == "" {
-		m.IntegrationType = types.StringNull()
-		m.InstallationAppType = types.StringNull()
+		m.IntegrationType = types.StringValue(*integration.IntegrationType)
 		return
 	}
-	m.IntegrationType = types.StringValue(resolved)
-	m.InstallationAppType = types.StringValue(resolved)
+	if integration != nil && integration.InstallationAppType != nil && *integration.InstallationAppType != "" {
+		m.IntegrationType = types.StringValue(*integration.InstallationAppType)
+		return
+	}
+	m.IntegrationType = types.StringNull()
 }
 
 func configuredString(value types.String) string {

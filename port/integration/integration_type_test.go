@@ -33,15 +33,15 @@ func TestResolveIntegrationTypePrefersConfiguredIntegrationType(t *testing.T) {
 	assert.Equal(t, "github-ocean", resolved)
 }
 
-func TestResolveIntegrationTypeRejectsConfiguredMismatch(t *testing.T) {
+func TestResolveIntegrationTypePrefersIntegrationTypeOnConflict(t *testing.T) {
 	config := &IntegrationModel{
 		IntegrationType:     types.StringValue("github-ocean"),
 		InstallationAppType: types.StringValue("gitlab"),
 	}
 
-	_, err := resolveIntegrationType(config, &IntegrationModel{})
-	require.Error(t, err)
-	assert.ErrorContains(t, err, "must match integration_type")
+	resolved, err := resolveIntegrationType(config, &IntegrationModel{})
+	require.NoError(t, err)
+	assert.Equal(t, "github-ocean", resolved)
 }
 
 func TestResolveIntegrationTypeFallsBackToPlan(t *testing.T) {
@@ -74,7 +74,6 @@ func TestApplyIntegrationTypePrefersServerIntegrationType(t *testing.T) {
 	})
 
 	assert.Equal(t, "github-ocean", model.IntegrationType.ValueString())
-	assert.Equal(t, "github-ocean", model.InstallationAppType.ValueString())
 }
 
 func TestApplyIntegrationTypeFallsBackToInstallationAppType(t *testing.T) {
@@ -86,5 +85,4 @@ func TestApplyIntegrationTypeFallsBackToInstallationAppType(t *testing.T) {
 	})
 
 	assert.Equal(t, "github-ocean", model.IntegrationType.ValueString())
-	assert.Equal(t, "github-ocean", model.InstallationAppType.ValueString())
 }

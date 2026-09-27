@@ -129,12 +129,14 @@ func TestIntegrationToPortBodySendsIntegrationTypeAsInstallationAppType(t *testi
 	assert.Nil(t, body.IntegrationType)
 }
 
-func TestIntegrationToPortBodyRejectsMismatchedTypes(t *testing.T) {
-	_, err := integrationToPortBody(&IntegrationModel{
+func TestIntegrationToPortBodyPrefersIntegrationTypeOnConflict(t *testing.T) {
+	body, err := integrationToPortBody(&IntegrationModel{
 		InstallationId:      types.StringValue("my-integration"),
 		IntegrationType:     types.StringValue("github-ocean"),
 		InstallationAppType: types.StringValue("gitlab"),
 	}, true)
-	require.Error(t, err)
-	assert.ErrorContains(t, err, "must match integration_type")
+	require.NoError(t, err)
+	require.NotNil(t, body.InstallationAppType)
+	assert.Equal(t, "github-ocean", *body.InstallationAppType)
+	assert.Nil(t, body.IntegrationType)
 }

@@ -7,43 +7,32 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
-// integrationTypeValue resolves the Ocean integration type.
-// integration_type wins when both it and installation_app_type are set.
-func integrationTypeValue(m *IntegrationModel) (string, error) {
+func integrationTypeFromModel(m *IntegrationModel) string {
 	if m == nil {
-		return "", fmt.Errorf("integration_type is required")
+		return ""
 	}
-
-	fromType := configuredString(m.IntegrationType)
-	if fromType != "" {
-		return fromType, nil
+	if s := configuredString(m.IntegrationType); s != "" {
+		return s
 	}
-	fromAppType := configuredString(m.InstallationAppType)
-	if fromAppType != "" {
-		return fromAppType, nil
-	}
-	return "", fmt.Errorf("integration_type is required")
+	return configuredString(m.InstallationAppType)
 }
 
-func resolveIntegrationType(config, plan *IntegrationModel) (string, error) {
-	if config != nil {
-		fromType := configuredString(config.IntegrationType)
-		if fromType != "" {
-			return fromType, nil
-		}
-		fromAppType := configuredString(config.InstallationAppType)
-		if fromAppType != "" {
-			return fromAppType, nil
+// integrationTypeValue resolves the Ocean integration type from one or more models.
+// integration_type wins when both it and installation_app_type are set.
+func integrationTypeValue(models ...*IntegrationModel) (string, error) {
+	for _, m := range models {
+		if s := integrationTypeFromModel(m); s != "" {
+			return s, nil
 		}
 	}
-	return integrationTypeValue(plan)
+	return "", fmt.Errorf("integration_type is required")
 }
 
 func alignIntegrationType(config, plan *IntegrationModel) error {
 	if config != nil && (config.IntegrationType.IsUnknown() || config.InstallationAppType.IsUnknown()) {
 		return nil
 	}
-	resolved, err := resolveIntegrationType(config, plan)
+	resolved, err := integrationTypeValue(config, plan)
 	if err != nil {
 		return err
 	}
@@ -52,15 +41,25 @@ func alignIntegrationType(config, plan *IntegrationModel) error {
 }
 
 func applyIntegrationType(m *IntegrationModel, integration *cli.Integration) {
-	if integration != nil && integration.IntegrationType != nil && *integration.IntegrationType != "" {
-		m.IntegrationType = types.StringValue(*integration.IntegrationType)
+	resolved := integrationTypeFromAPI(integration)
+	if resolved == "" {
+		m.IntegrationType = types.StringNull()
 		return
 	}
-	if integration != nil && integration.InstallationAppType != nil && *integration.InstallationAppType != "" {
-		m.IntegrationType = types.StringValue(*integration.InstallationAppType)
-		return
+	m.IntegrationType = types.StringValue(resolved)
+}
+
+func integrationTypeFromAPI(integration *cli.Integration) string {
+	if integration == nil {
+		return ""
 	}
-	m.IntegrationType = types.StringNull()
+	if integration.IntegrationType != nil && *integration.IntegrationType != "" {
+		return *integration.IntegrationType
+	}
+	if integration.InstallationAppType != nil {
+		return *integration.InstallationAppType
+	}
+	return ""
 }
 
 func configuredString(value types.String) string {

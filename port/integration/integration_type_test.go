@@ -15,7 +15,7 @@ func TestResolveIntegrationTypeCopiesDeprecatedValue(t *testing.T) {
 	}
 	plan := &IntegrationModel{}
 
-	resolved, err := resolveIntegrationType(config, plan)
+	resolved, err := integrationTypeValue(config, plan)
 	require.NoError(t, err)
 	assert.Equal(t, "github-ocean", resolved)
 }
@@ -28,7 +28,7 @@ func TestResolveIntegrationTypePrefersConfiguredIntegrationType(t *testing.T) {
 		InstallationAppType: types.StringValue("gitlab"),
 	}
 
-	resolved, err := resolveIntegrationType(config, plan)
+	resolved, err := integrationTypeValue(config, plan)
 	require.NoError(t, err)
 	assert.Equal(t, "github-ocean", resolved)
 }
@@ -39,7 +39,7 @@ func TestResolveIntegrationTypePrefersIntegrationTypeOnConflict(t *testing.T) {
 		InstallationAppType: types.StringValue("gitlab"),
 	}
 
-	resolved, err := resolveIntegrationType(config, &IntegrationModel{})
+	resolved, err := integrationTypeValue(config)
 	require.NoError(t, err)
 	assert.Equal(t, "github-ocean", resolved)
 }
@@ -49,7 +49,7 @@ func TestResolveIntegrationTypeFallsBackToPlan(t *testing.T) {
 		IntegrationType: types.StringValue("pagerduty"),
 	}
 
-	resolved, err := resolveIntegrationType(&IntegrationModel{}, plan)
+	resolved, err := integrationTypeValue(plan)
 	require.NoError(t, err)
 	assert.Equal(t, "pagerduty", resolved)
 }

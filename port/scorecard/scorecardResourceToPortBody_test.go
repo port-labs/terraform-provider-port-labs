@@ -7,11 +7,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func TestScorecardResourceToPortBodyProperties(t *testing.T) {
+func TestScorecardResourceToPortBodyPropertiesAndRelations(t *testing.T) {
 	state := &ScorecardModel{
 		Identifier: types.StringValue("readiness"),
 		Title:      types.StringValue("Readiness"),
 		Properties: types.StringValue(`{"owner":"platform-team","priority":1}`),
+		Relations:  types.StringValue(`{"owner_team":"platform-team"}`),
 		Rules: []Rule{
 			{
 				Identifier: types.StringValue("has-owner"),
@@ -36,6 +37,9 @@ func TestScorecardResourceToPortBodyProperties(t *testing.T) {
 	}
 	if body.Properties["priority"] != float64(1) {
 		t.Fatalf("expected priority property, got %#v", body.Properties["priority"])
+	}
+	if body.Relations["owner_team"] != "platform-team" {
+		t.Fatalf("expected owner_team relation, got %#v", body.Relations["owner_team"])
 	}
 }
 

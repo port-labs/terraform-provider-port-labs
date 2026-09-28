@@ -6,7 +6,7 @@ description: |-
   Scorecard
   This resource allows you to manage a scorecard.
   See the Port documentation https://docs.getport.io/promote-scorecards/ for more information about scorecards.
-  properties sets additional _scorecard blueprint property values on the scorecard entity. Define the property schema on the system blueprint first (for example with port_system_blueprint), then reference those keys in jsonencode({...}). Use depends_on so the scorecard is created only after the blueprint schema exists.
+  properties and relations set additional _scorecard blueprint property and relation values on the scorecard entity. Define the schema on the system blueprint first (for example with port_system_blueprint), then reference those keys in jsonencode({...}). Use depends_on so the scorecard is created only after the blueprint schema exists.
   Example Usage
   This will create a blueprint with a Scorecard measuring the readiness of a microservice.
   
@@ -102,8 +102,8 @@ description: |-
   }
   
   
-  Example Usage with Properties
-  This will set custom _scorecard blueprint properties on the scorecard entity.
+  Example Usage with Properties and Relations
+  This will set custom _scorecard blueprint properties and relations on the scorecard entity.
   
   
   resource "port_system_blueprint" "scorecard" {
@@ -122,6 +122,12 @@ description: |-
         }
       }
     }
+    relations = {
+      owner_team = {
+        title  = "Owner Team"
+        target = "_team"
+      }
+    }
   }
   
   resource "port_scorecard" "readiness" {
@@ -131,6 +137,9 @@ description: |-
     properties = jsonencode({
       owner    = "platform-team"
       priority = 1
+    })
+    relations = jsonencode({
+      owner_team = "platform-team"
     })
     rules = [{
       identifier = "hasOwner"
@@ -278,7 +287,7 @@ This resource allows you to manage a scorecard.
 
 See the [Port documentation](https://docs.getport.io/promote-scorecards/) for more information about scorecards.
 
-`properties` sets additional `_scorecard` blueprint property values on the scorecard entity. Define the property schema on the system blueprint first (for example with `port_system_blueprint`), then reference those keys in `jsonencode({...})`. Use `depends_on` so the scorecard is created only after the blueprint schema exists.
+`properties` and `relations` set additional `_scorecard` blueprint property and relation values on the scorecard entity. Define the schema on the system blueprint first (for example with `port_system_blueprint`), then reference those keys in `jsonencode({...})`. Use `depends_on` so the scorecard is created only after the blueprint schema exists.
 
 ## Example Usage
 
@@ -378,9 +387,9 @@ resource "port_scorecard" "readiness" {
 
 ```
 
-## Example Usage with Properties
+## Example Usage with Properties and Relations
 
-This will set custom `_scorecard` blueprint properties on the scorecard entity.
+This will set custom `_scorecard` blueprint properties and relations on the scorecard entity.
 
 ```hcl
 
@@ -400,6 +409,12 @@ resource "port_system_blueprint" "scorecard" {
       }
     }
   }
+  relations = {
+    owner_team = {
+      title  = "Owner Team"
+      target = "_team"
+    }
+  }
 }
 
 resource "port_scorecard" "readiness" {
@@ -409,6 +424,9 @@ resource "port_scorecard" "readiness" {
   properties = jsonencode({
     owner    = "platform-team"
     priority = 1
+  })
+  relations = jsonencode({
+    owner_team = "platform-team"
   })
   rules = [{
     identifier = "hasOwner"
@@ -570,6 +588,7 @@ resource "port_scorecard" "readiness" {
 - `filter` (Attributes) The filter to apply on the entities before calculating the scorecard (see [below for nested schema](#nestedatt--filter))
 - `levels` (Attributes List) The levels of the scorecard. This overrides the default levels (Basic, Bronze, Silver, Gold) if provided (see [below for nested schema](#nestedatt--levels))
 - `properties` (String) Additional `_scorecard` blueprint properties applied to the scorecard entity, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint.
+- `relations` (String) Additional `_scorecard` blueprint relations applied to the scorecard entity, as a JSON encoded string. Relation values can be a string, an array of strings, or `null` to clear a relation. The `group` relation is managed by Port and cannot be set here.
 
 ### Read-Only
 

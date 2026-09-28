@@ -298,5 +298,8 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 	if err := syncJSONObjectState(&state.Properties, s.Properties, "properties", r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
 		return err
 	}
+	if err := syncJSONObjectState(&state.Relations, s.Relations, "relations", r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
+		return err
+	}
 	return nil
 }

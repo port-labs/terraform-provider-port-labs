@@ -100,5 +100,15 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 		}
 	}
 
+	if !state.Relations.IsNull() && !state.Relations.IsUnknown() {
+		relations, err := utils.TerraformJsonStringToGoObject(state.Relations.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if relations != nil {
+			s.Relations = *relations
+		}
+	}
+
 	return s, nil
 }

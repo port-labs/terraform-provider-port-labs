@@ -17,17 +17,17 @@ resource "port_organization_secret" "github_app_private_key" {
 resource "port_integration" "github" {
   depends_on = [port_organization_secret.github_app_private_key]
 
-  installation_id       = local.installation_id
-  installation_app_type = local.integration_type
-  installation_type     = "Saas"
-  title                 = "GitHub Production (App)"
+  installation_id   = local.installation_id
+  integration_type  = local.integration_type
+  installation_type = "Saas"
+  title             = "GitHub Production (App)"
 
   spec = jsonencode({
     integrationSpec = {
-      authenticationMode    = "Github App"
-      githubAppId           = local.github_app_id
-      githubAppPrivateKey   = port_organization_secret.github_app_private_key.secret_name
-      githubOrganization    = "my-github-org"
+      authenticationMode  = "Github App"
+      githubAppId         = local.github_app_id
+      githubAppPrivateKey = port_organization_secret.github_app_private_key.secret_name
+      githubOrganization  = "my-github-org"
     }
     appSpec = {
       scheduledResyncInterval  = "12h"

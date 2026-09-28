@@ -17,7 +17,7 @@ resource "port_integration" "linear" {
   depends_on = [port_organization_secret.linear_api_key]
 
   installation_id              = local.installation_id
-  installation_app_type        = local.integration_type
+  integration_type             = local.integration_type
   installation_type            = "Saas"
   create_port_resources_origin = "Empty"
   title                        = "Linear (no default resources)"

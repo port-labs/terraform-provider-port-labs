@@ -46,6 +46,7 @@ func TestInstallationIdPattern(t *testing.T) {
 func TestIntegrationToPortBody_CreatePortResourcesOrigin(t *testing.T) {
 	model := &IntegrationModel{
 		InstallationId:            types.StringValue("github-prod"),
+		InstallationAppType:       types.StringValue("github"),
 		InstallationType:          types.StringValue(consts.InstallationTypeSaas),
 		CreatePortResourcesOrigin: types.StringValue(consts.CreatePortResourcesOriginEmpty),
 	}
@@ -63,6 +64,7 @@ func TestIntegrationToPortBody_CreatePortResourcesOrigin(t *testing.T) {
 func TestIntegrationToPortBody_CreatePortResourcesOriginPort(t *testing.T) {
 	model := &IntegrationModel{
 		InstallationId:            types.StringValue("github-prod"),
+		InstallationAppType:       types.StringValue("github"),
 		CreatePortResourcesOrigin: types.StringValue(consts.CreatePortResourcesOriginPort),
 	}
 
@@ -74,11 +76,67 @@ func TestIntegrationToPortBody_CreatePortResourcesOriginPort(t *testing.T) {
 
 func TestIntegrationToPortBody_CreatePortResourcesOriginOmitted(t *testing.T) {
 	model := &IntegrationModel{
-		InstallationId:   types.StringValue("github-prod"),
-		InstallationType: types.StringValue(consts.InstallationTypeSaas),
+		InstallationId:      types.StringValue("github-prod"),
+		InstallationAppType: types.StringValue("github"),
+		InstallationType:    types.StringValue(consts.InstallationTypeSaas),
 	}
 
 	body, err := integrationToPortBody(model, true)
 	require.NoError(t, err)
 	assert.Nil(t, body.CreatePortResourcesOrigin)
+}
+
+func TestIntegrationToPortBodyRequiresIntegrationType(t *testing.T) {
+	cases := []struct {
+		name  string
+		value types.String
+	}{
+		{name: "null", value: types.StringNull()},
+		{name: "empty", value: types.StringValue("")},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			_, err := integrationToPortBody(&IntegrationModel{
+				InstallationId:  types.StringValue("my-integration"),
+				IntegrationType: tc.value,
+			}, true)
+			require.Error(t, err)
+			assert.ErrorContains(t, err, "integration_type is required")
+		})
+	}
+}
+
+func TestIntegrationToPortBodyCopiesDeprecatedInstallationAppType(t *testing.T) {
+	body, err := integrationToPortBody(&IntegrationModel{
+		InstallationId:      types.StringValue("my-integration"),
+		InstallationAppType: types.StringValue("github-ocean"),
+	}, true)
+	require.NoError(t, err)
+	require.NotNil(t, body.InstallationAppType)
+	assert.Equal(t, "github-ocean", *body.InstallationAppType)
+	assert.Nil(t, body.IntegrationType)
+}
+
+func TestIntegrationToPortBodySendsIntegrationTypeAsInstallationAppType(t *testing.T) {
+	body, err := integrationToPortBody(&IntegrationModel{
+		InstallationId:  types.StringValue("my-integration"),
+		IntegrationType: types.StringValue("github-ocean"),
+	}, true)
+	require.NoError(t, err)
+	require.NotNil(t, body.InstallationAppType)
+	assert.Equal(t, "github-ocean", *body.InstallationAppType)
+	assert.Nil(t, body.IntegrationType)
+}
+
+func TestIntegrationToPortBodyPrefersIntegrationTypeOnConflict(t *testing.T) {
+	body, err := integrationToPortBody(&IntegrationModel{
+		InstallationId:      types.StringValue("my-integration"),
+		IntegrationType:     types.StringValue("github-ocean"),
+		InstallationAppType: types.StringValue("gitlab"),
+	}, true)
+	require.NoError(t, err)
+	require.NotNil(t, body.InstallationAppType)
+	assert.Equal(t, "github-ocean", *body.InstallationAppType)
+	assert.Nil(t, body.IntegrationType)
 }

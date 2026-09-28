@@ -39,9 +39,24 @@ func IntegrationSchema() map[string]schema.Attribute {
 		"title": schema.StringAttribute{
 			Optional: true,
 		},
+		"integration_type": schema.StringAttribute{
+			MarkdownDescription: "The Ocean integration type (for example `github-ocean`, `gitlab`, `pagerduty`, or `custom`). Cannot be changed after creation.",
+			// Optional+Computed so legacy configs that only set installation_app_type keep working.
+			Optional: true,
+			Computed: true,
+			Validators: []validator.String{
+				stringvalidator.LengthAtLeast(1),
+			},
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
+		},
 		"installation_app_type": schema.StringAttribute{
-			MarkdownDescription: "The integrated tool name for catalog integration types (e.g. `github-ocean`, `gitlab`, `pagerduty`). Cannot be changed after creation.",
-			Optional:            true,
+			Optional: true,
+			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"installation_type": schema.StringAttribute{
 			MarkdownDescription: "The installation type of the integration. Use `Saas` for Port Hosted integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource. Cannot be changed after creation.",
@@ -150,7 +165,7 @@ Port Hosted integrations provision asynchronously (` + "`Creating`" + ` → ` + 
 # for the list of configurations (name, type, sensitive, dependencies, etc.).
 locals {
   github_installation_id = "github-prod"
-  github_type            = "github-ocean"
+  integration_type       = "github-ocean"
 }
 
 resource "port_organization_secret" "github_token" {
@@ -161,10 +176,10 @@ resource "port_organization_secret" "github_token" {
 resource "port_integration" "github" {
   depends_on = [port_organization_secret.github_token]
 
-  installation_id       = local.github_installation_id
-  installation_app_type = local.github_type
-  installation_type     = "Saas"
-  title                 = "GitHub Production"
+  installation_id   = local.github_installation_id
+  integration_type  = local.integration_type
+  installation_type = "Saas"
+  title             = "GitHub Production"
 
   spec = jsonencode({
     integrationSpec = {
@@ -197,10 +212,10 @@ After the first apply completes and provisioning finishes, add ` + "`config`" + 
 resource "port_integration" "github" {
   depends_on = [port_organization_secret.github_token]
 
-  installation_id       = local.github_installation_id
-  installation_app_type = local.github_type
-  installation_type     = "Saas"
-  title                 = "GitHub Production"
+  installation_id   = local.github_installation_id
+  integration_type  = local.integration_type
+  installation_type = "Saas"
+  title             = "GitHub Production"
 
   spec = jsonencode({
     integrationSpec = {
@@ -241,7 +256,7 @@ See ` + "`examples/resources/port_integration/`" + ` for full examples per integ
 
 ` + "```hcl" + `
 # Azure DevOps — single account (PAT)
-installation_app_type = "azure-devops"
+integration_type = "azure-devops"
 spec = jsonencode({
   integrationSpec = {
     accountMode         = "Single Account"
@@ -262,7 +277,7 @@ spec = jsonencode({
 })
 
 # Jira
-installation_app_type = "jira"
+integration_type = "jira"
 spec = jsonencode({
   integrationSpec = {
     jiraHost           = "https://example.atlassian.net"
@@ -272,7 +287,7 @@ spec = jsonencode({
 })
 
 # Linear
-installation_app_type = "linear"
+integration_type = "linear"
 spec = jsonencode({
   integrationSpec = {
     linearApiKey = port_organization_secret.linear_api_key.secret_name
@@ -280,7 +295,7 @@ spec = jsonencode({
 })
 
 # GitLab v2
-installation_app_type = "gitlab-v2"
+integration_type = "gitlab-v2"
 spec = jsonencode({
   integrationSpec = {
     gitlabToken = port_organization_secret.gitlab_token.secret_name
@@ -295,8 +310,9 @@ Self-hosted integrations run on your own infrastructure and pull their mapping f
 
 ` + "```hcl" + `
 resource "port_integration" "my_custom_integration" {
-  installation_id = "my-custom-integration-id"
-  title           = "My Custom Integration"
+  installation_id  = "my-custom-integration-id"
+  integration_type = "custom"
+  title            = "My Custom Integration"
 
   # config is set on the next apply, after provisioning creates default mappings.
 }
@@ -306,8 +322,9 @@ resource "port_integration" "my_custom_integration" {
 
 ` + "```hcl" + `
 resource "port_integration" "my_custom_integration" {
-  installation_id = "my-custom-integration-id"
-  title           = "My Custom Integration"
+  installation_id  = "my-custom-integration-id"
+  integration_type = "custom"
+  title            = "My Custom Integration"
 
   config = jsonencode({
     createMissingRelatedEntities = true
@@ -335,7 +352,7 @@ resource "port_integration" "my_custom_integration" {
 }
 ` + "```\n" + `
 
-For catalog integration types, set ` + "`installation_app_type`" + ` to the integrated tool name (e.g. ` + "`github-ocean`" + `, ` + "`gitlab`" + `) and ` + "`version`" + ` if you want to pin a specific integration version. Custom integrations can omit ` + "`installation_app_type`" + `.
+Set ` + "`integration_type`" + ` to the Ocean integration type (for example ` + "`github-ocean`" + `, ` + "`gitlab`" + `, ` + "`pagerduty`" + `, or ` + "`custom`" + `). Set ` + "`version`" + ` if you want to pin a specific integration version.
 
 ### NOTICE:
 
@@ -347,7 +364,7 @@ The following config properties (` + "`selector.query|entity.mappings.*`" + `) a
 - ` + "`create_port_resources_origin`" + ` can only be set on creation. Use ` + "`Empty`" + ` to skip default resource creation, or ` + "`Port`" + ` to create default resources via Port. If omitted, default resources are created.
 - Port Hosted ` + "`spec`" + ` is validated at plan time against the integration type definition in Port.
 - ` + "`status`" + ` reflects async provisioning (` + "`Creating`" + ` → ` + "`Running`" + `) for Port Hosted integrations only.
-- ` + "`installation_id`" + `, ` + "`installation_app_type`" + `, and ` + "`installation_type`" + ` cannot be changed after creation.
+- ` + "`installation_id`" + `, ` + "`integration_type`" + `, and ` + "`installation_type`" + ` cannot be changed after creation.
 - ` + "`spec`" + ` is only supported for Port Hosted integrations (` + "`installation_type = \"Saas\"`" + `). Do not set it on self-hosted integrations.
 - A changelog destination (` + "`webhook_changelog_destination`" + ` / ` + "`kafka_changelog_destination`" + `) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).
 - Existing integrations can be brought under Terraform management with ` + "`terraform import port_integration.my_integration <installation_id>`" + `.

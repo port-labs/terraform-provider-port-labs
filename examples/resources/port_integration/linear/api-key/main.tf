@@ -16,10 +16,10 @@ resource "port_organization_secret" "linear_api_key" {
 resource "port_integration" "linear" {
   depends_on = [port_organization_secret.linear_api_key]
 
-  installation_id       = local.installation_id
-  installation_app_type = local.integration_type
-  installation_type     = "Saas"
-  title                 = "Linear Production"
+  installation_id   = local.installation_id
+  integration_type  = local.integration_type
+  installation_type = "Saas"
+  title             = "Linear Production"
 
   spec = jsonencode({
     integrationSpec = {

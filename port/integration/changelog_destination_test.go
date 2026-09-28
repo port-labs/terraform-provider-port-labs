@@ -107,8 +107,12 @@ func TestChangelogDestinationRoundTrip(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			state := &IntegrationModel{InstallationId: types.StringValue("my-gitlab")}
+			appType := "gitlab"
 
-			(&IntegrationResource{}).refreshIntegrationState(state, &cli.Integration{ChangelogDestination: tt.dest}, "my-gitlab")
+			(&IntegrationResource{}).refreshIntegrationState(state, &cli.Integration{
+				InstallationAppType:  &appType,
+				ChangelogDestination: tt.dest,
+			}, "my-gitlab")
 
 			if !state.KafkaChangelogDestination.Equal(tt.wantKafka) {
 				t.Errorf("kafka_changelog_destination = %s, want %s", state.KafkaChangelogDestination, tt.wantKafka)

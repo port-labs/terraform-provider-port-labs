@@ -29,10 +29,10 @@ resource "port_integration" "jira" {
     port_organization_secret.jira_email,
   ]
 
-  installation_id       = local.installation_id
-  installation_app_type = local.integration_type
-  installation_type     = "Saas"
-  title                 = "Jira Production"
+  installation_id   = local.installation_id
+  integration_type  = local.integration_type
+  installation_type = "Saas"
+  title             = "Jira Production"
 
   spec = jsonencode({
     integrationSpec = {

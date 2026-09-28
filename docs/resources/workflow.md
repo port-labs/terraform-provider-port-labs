@@ -516,6 +516,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules))
@@ -531,6 +532,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules))
@@ -546,6 +548,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules))
@@ -561,6 +564,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules))
@@ -576,6 +580,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules))
@@ -591,6 +596,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules))
@@ -606,6 +612,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -621,6 +628,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -636,6 +644,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -651,6 +660,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -666,6 +676,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
@@ -1112,6 +1123,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules))
@@ -1127,6 +1139,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules))
@@ -1142,6 +1155,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules))
@@ -1157,6 +1171,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules))
@@ -1172,6 +1187,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules))
@@ -1187,6 +1203,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules))
@@ -1202,6 +1219,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -1217,6 +1235,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -1232,6 +1251,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -1247,6 +1267,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -1262,6 +1283,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
+- `properties` (List of String) Property identifiers to limit an `allPropertiesSearch` rule. Omit to search all relevant properties.
 - `property` (String) The property identifier of the rule.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))

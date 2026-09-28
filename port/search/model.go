@@ -55,15 +55,21 @@ type EntityModel struct {
 	Relations  *RelationModel             `tfsdk:"relations"`
 }
 
+type FullTextSearchModel struct {
+	Term         types.String   `tfsdk:"term"`
+	TargetFields []types.String `tfsdk:"target_fields"`
+}
+
 type SearchDataModel struct {
-	ID                          types.String   `tfsdk:"id"`
-	Query                       types.String   `tfsdk:"query"`
-	ExcludeCalculatedProperties types.Bool     `tfsdk:"exclude_calculated_properties"`
-	Include                     []types.String `tfsdk:"include"`
-	Exclude                     []types.String `tfsdk:"exclude"`
-	AttachTitleToRelation       types.Bool     `tfsdk:"attach_title_to_relation"`
-	MatchingBlueprints          []types.String `tfsdk:"matching_blueprints"`
-	Entities                    []EntityModel  `tfsdk:"entities"`
+	ID                          types.String         `tfsdk:"id"`
+	Query                       types.String         `tfsdk:"query"`
+	FullTextSearch              *FullTextSearchModel `tfsdk:"full_text_search"`
+	ExcludeCalculatedProperties types.Bool           `tfsdk:"exclude_calculated_properties"`
+	Include                     []types.String       `tfsdk:"include"`
+	Exclude                     []types.String       `tfsdk:"exclude"`
+	AttachTitleToRelation       types.Bool           `tfsdk:"attach_title_to_relation"`
+	MatchingBlueprints          []types.String       `tfsdk:"matching_blueprints"`
+	Entities                    []EntityModel        `tfsdk:"entities"`
 }
 
 func (m *SearchDataModel) GenerateID() string {
@@ -78,6 +84,12 @@ func (m *SearchDataModel) GenerateID() string {
 		sb.WriteString(exclude.ValueString())
 	}
 	sb.WriteString(fmt.Sprintf("%t", m.AttachTitleToRelation.ValueBool()))
+	if m.FullTextSearch != nil {
+		sb.WriteString(m.FullTextSearch.Term.ValueString())
+		for _, field := range m.FullTextSearch.TargetFields {
+			sb.WriteString(field.ValueString())
+		}
+	}
 
 	// Compute the SHA-256 hash of the concatenated string
 	hash := sha256.Sum256([]byte(sb.String()))

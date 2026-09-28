@@ -12,11 +12,20 @@ func searchResourceToPortBody(state *SearchDataModel) (*cli.SearchRequestQuery, 
 		return nil, err
 	}
 
-	return &cli.SearchRequestQuery{
+	searchRequest := &cli.SearchRequestQuery{
 		Query:                       query,
 		ExcludeCalculatedProperties: state.ExcludeCalculatedProperties.ValueBoolPointer(),
 		Include:                     flex.TerraformStringListToGoArray(state.Include),
 		Exclude:                     flex.TerraformStringListToGoArray(state.Exclude),
 		AttachTitleToRelation:       state.AttachTitleToRelation.ValueBoolPointer(),
-	}, nil
+	}
+
+	if state.FullTextSearch != nil && !state.FullTextSearch.Term.IsNull() {
+		searchRequest.FullTextSearch = &cli.FullTextSearch{
+			Term:         state.FullTextSearch.Term.ValueString(),
+			TargetFields: flex.TerraformStringListToGoArray(state.FullTextSearch.TargetFields),
+		}
+	}
+
+	return searchRequest, nil
 }

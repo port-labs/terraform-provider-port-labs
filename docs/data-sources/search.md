@@ -34,6 +34,21 @@ description: |-
   
   
   
+  Search with an all-properties rule:
+  
+  
+  data "port_search" "services_by_text" {
+    query = jsonencode({
+      "combinator" : "and",
+      "rules" : [
+        { "operator" : "=", "property" : "$blueprint", "value" : "microservice" },
+        { "operator" : "allPropertiesSearch", "value" : "payments" },
+      ]
+    })
+  }
+  
+  
+  
   Scorecards automation example
   In this example we are creating a jira task for each service that its Ownership Scorecard hasn't reached Gold level :
   
@@ -108,6 +123,23 @@ data "port_search" "ads_service" {
 
 ```
 
+### Search with an all-properties rule:
+
+```hcl
+
+data "port_search" "services_by_text" {
+  query = jsonencode({
+    "combinator" : "and",
+    "rules" : [
+      { "operator" : "=", "property" : "$blueprint", "value" : "microservice" },
+      { "operator" : "allPropertiesSearch", "value" : "payments" },
+    ]
+  })
+}
+
+
+```
+
 ### Scorecards automation example
 In this example we are creating a jira task for each service that its Ownership Scorecard hasn't reached Gold level : 
 
@@ -150,13 +182,14 @@ resource "jira_issue" "microservice_ownership_without_gold_level" {
 
 ### Required
 
-- `query` (String) The search query
+- `query` (String) The search query as a JSON-encoded Port entities query (combinator and rules). Supports all standard operators, including `allPropertiesSearch` rules that search across entity properties (`operator`, `value`, and optional `properties`).
 
 ### Optional
 
 - `attach_title_to_relation` (Boolean) Attach title to relation
 - `exclude` (List of String) Properties to exclude from the results
 - `exclude_calculated_properties` (Boolean) Exclude calculated properties
+- `full_text_search` (Attributes) Optional full-text search parameters sent alongside the query. When set, the request body includes a `fullTextSearch` object with `term` and optional `targetFields`. (see [below for nested schema](#nestedatt--full_text_search))
 - `include` (List of String) Properties to include in the results
 
 ### Read-Only
@@ -164,6 +197,18 @@ resource "jira_issue" "microservice_ownership_without_gold_level" {
 - `entities` (Attributes List) A list of entities matching the search query (see [below for nested schema](#nestedatt--entities))
 - `id` (String) The ID of this resource.
 - `matching_blueprints` (List of String) The matching blueprints for the search query
+
+<a id="nestedatt--full_text_search"></a>
+### Nested Schema for `full_text_search`
+
+Required:
+
+- `term` (String) The full-text search term.
+
+Optional:
+
+- `target_fields` (List of String) Property or relation identifiers to search. When omitted, Port searches all relevant properties.
+
 
 <a id="nestedatt--entities"></a>
 ### Nested Schema for `entities`

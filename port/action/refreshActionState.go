@@ -242,6 +242,12 @@ func convertCliRuleToRule(v cli.DatasetRule) Rule {
 				JqQuery: flex.GoStringToFramework(&v.Value.JqQuery),
 			}
 		}
+		if len(v.Properties) > 0 {
+			rule.Properties = make([]types.String, len(v.Properties))
+			for i, property := range v.Properties {
+				rule.Properties[i] = types.StringValue(property)
+			}
+		}
 	}
 
 	return rule

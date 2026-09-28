@@ -124,10 +124,11 @@ type (
 	}
 	DatasetRule struct {
 		// Leaf rule fields (property filters)
-		Blueprint *string       `json:"blueprint,omitempty"`
-		Property  *string       `json:"property,omitempty"`
-		Operator  string        `json:"operator,omitempty"`
-		Value     *DatasetValue `json:"value,omitempty"`
+		Blueprint  *string       `json:"blueprint,omitempty"`
+		Property   *string       `json:"property,omitempty"`
+		Operator   string        `json:"operator,omitempty"`
+		Value      *DatasetValue `json:"value,omitempty"`
+		Properties []string      `json:"properties,omitempty"`
 		// Group rule fields (logical combinators) - for nested rules
 		Combinator *string       `json:"combinator,omitempty"`
 		Rules      []DatasetRule `json:"rules,omitempty"`
@@ -568,8 +569,14 @@ type (
 		SuccessCount    int    `json:"successCount,omitempty"`
 	}
 
+	FullTextSearch struct {
+		Term         string   `json:"term"`
+		TargetFields []string `json:"targetFields,omitempty"`
+	}
+
 	SearchRequestQuery struct {
 		Query                       *map[string]any `json:"query"`
+		FullTextSearch              *FullTextSearch `json:"fullTextSearch,omitempty"`
 		ExcludeCalculatedProperties *bool           `json:"exclude_calculated_properties,omitempty"`
 		Include                     []string        `json:"include,omitempty"`
 		Exclude                     []string        `json:"exclude,omitempty"`

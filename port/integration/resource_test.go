@@ -269,6 +269,49 @@ func TestPortIntegrationImmutableInstallationId(t *testing.T) {
 	})
 }
 
+func integrationHCLWithoutAppType(installationID, version string, blocks ...string) string {
+	extras := strings.Join(blocks, "\n")
+	if extras != "" {
+		extras = "\n" + extras
+	}
+	return fmt.Sprintf(`
+	resource "port_integration" "kafkush" {
+		installation_id = "%s"
+		title           = "%s"
+		version         = "%s"%s
+	}
+`, installationID, defaultTitle, version, extras)
+}
+
+func TestPortIntegrationUpdateWithoutInstallationAppType(t *testing.T) {
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: integrationHCL(installationID, "kafka"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", "kafka"),
+					resource.TestCheckResourceAttr(integrationResourceName, "version", defaultVersion),
+				),
+			},
+			{
+				Config: integrationHCLWithoutAppType(installationID, "1.33.8"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_id", installationID),
+					resource.TestCheckResourceAttr(integrationResourceName, "installation_app_type", "kafka"),
+					resource.TestCheckResourceAttr(integrationResourceName, "version", "1.33.8"),
+				),
+			},
+		},
+	})
+}
+
 func TestPortIntegrationImmutableInstallationAppType(t *testing.T) {
 	enableIntegrationBetaFeatures(t)
 

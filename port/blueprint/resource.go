@@ -78,11 +78,6 @@ func (r *BlueprintResource) refreshBlueprintState(ctx context.Context, bm *Bluep
 	bm.UpdatedAt = types.StringValue(b.UpdatedAt.String())
 	bm.UpdatedBy = types.StringValue(b.UpdatedBy)
 
-	if bm.CreateCatalogPage.IsNull() {
-		// backwards compatibility, if the field is not set, we assume that the user wants to create a catalog page
-		bm.CreateCatalogPage = types.BoolValue(true)
-	}
-
 	bm.Title = types.StringValue(b.Title)
 	bm.Icon = flex.GoStringToFramework(b.Icon)
 	bm.Description = flex.GoStringToFramework(b.Description)

@@ -458,12 +458,13 @@ type (
 
 	Scorecard struct {
 		Meta
-		Identifier string  `json:"identifier,omitempty"`
-		Title      string  `json:"title,omitempty"`
-		Blueprint  string  `json:"blueprint,omitempty"`
-		Filter     *Query  `json:"filter,omitempty"`
-		Levels     []Level `json:"levels,omitempty"`
-		Rules      []Rule  `json:"rules,omitempty"`
+		Identifier string         `json:"identifier,omitempty"`
+		Title      string         `json:"title,omitempty"`
+		Blueprint  string         `json:"blueprint,omitempty"`
+		Filter     *Query         `json:"filter,omitempty"`
+		Levels     []Level        `json:"levels,omitempty"`
+		Rules      []Rule         `json:"rules,omitempty"`
+		Properties map[string]any `json:"properties,omitempty"`
 	}
 
 	ScorecardGroupMemberSpec struct {

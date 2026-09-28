@@ -6,6 +6,7 @@ description: |-
   Scorecard
   This resource allows you to manage a scorecard.
   See the Port documentation https://docs.getport.io/promote-scorecards/ for more information about scorecards.
+  properties sets additional _scorecard blueprint property values on the scorecard entity. Define the property schema on the system blueprint first (for example with port_system_blueprint), then reference those keys in jsonencode({...}). Use depends_on so the scorecard is created only after the blueprint schema exists.
   Example Usage
   This will create a blueprint with a Scorecard measuring the readiness of a microservice.
   
@@ -97,6 +98,55 @@ description: |-
     ]
     depends_on = [
       port_blueprint.microservice
+    ]
+  }
+  
+  
+  Example Usage with Properties
+  This will set custom _scorecard blueprint properties on the scorecard entity.
+  
+  
+  resource "port_system_blueprint" "scorecard" {
+    identifier = "_scorecard"
+    properties = {
+      string_props = {
+        owner = {
+          type  = "string"
+          title = "Owner"
+        }
+      }
+      number_props = {
+        priority = {
+          type  = "number"
+          title = "Priority"
+        }
+      }
+    }
+  }
+  
+  resource "port_scorecard" "readiness" {
+    identifier = "Readiness"
+    title      = "Readiness"
+    blueprint  = port_blueprint.microservice.identifier
+    properties = jsonencode({
+      owner    = "platform-team"
+      priority = 1
+    })
+    rules = [{
+      identifier = "hasOwner"
+      title      = "Has Owner"
+      level      = "Gold"
+      query = {
+        combinator = "and"
+        conditions = [jsonencode({
+          property = "$team"
+          operator = "isNotEmpty"
+        })]
+      }
+    }]
+    depends_on = [
+      port_blueprint.microservice,
+      port_system_blueprint.scorecard,
     ]
   }
   
@@ -228,6 +278,8 @@ This resource allows you to manage a scorecard.
 
 See the [Port documentation](https://docs.getport.io/promote-scorecards/) for more information about scorecards.
 
+`properties` sets additional `_scorecard` blueprint property values on the scorecard entity. Define the property schema on the system blueprint first (for example with `port_system_blueprint`), then reference those keys in `jsonencode({...})`. Use `depends_on` so the scorecard is created only after the blueprint schema exists.
+
 ## Example Usage
 
 This will create a blueprint with a Scorecard measuring the readiness of a microservice.
@@ -321,6 +373,58 @@ resource "port_scorecard" "readiness" {
   ]
   depends_on = [
     port_blueprint.microservice
+  ]
+}
+
+```
+
+## Example Usage with Properties
+
+This will set custom `_scorecard` blueprint properties on the scorecard entity.
+
+```hcl
+
+resource "port_system_blueprint" "scorecard" {
+  identifier = "_scorecard"
+  properties = {
+    string_props = {
+      owner = {
+        type  = "string"
+        title = "Owner"
+      }
+    }
+    number_props = {
+      priority = {
+        type  = "number"
+        title = "Priority"
+      }
+    }
+  }
+}
+
+resource "port_scorecard" "readiness" {
+  identifier = "Readiness"
+  title      = "Readiness"
+  blueprint  = port_blueprint.microservice.identifier
+  properties = jsonencode({
+    owner    = "platform-team"
+    priority = 1
+  })
+  rules = [{
+    identifier = "hasOwner"
+    title      = "Has Owner"
+    level      = "Gold"
+    query = {
+      combinator = "and"
+      conditions = [jsonencode({
+        property = "$team"
+        operator = "isNotEmpty"
+      })]
+    }
+  }]
+  depends_on = [
+    port_blueprint.microservice,
+    port_system_blueprint.scorecard,
   ]
 }
 
@@ -465,6 +569,7 @@ resource "port_scorecard" "readiness" {
 
 - `filter` (Attributes) The filter to apply on the entities before calculating the scorecard (see [below for nested schema](#nestedatt--filter))
 - `levels` (Attributes List) The levels of the scorecard. This overrides the default levels (Basic, Bronze, Silver, Gold) if provided (see [below for nested schema](#nestedatt--levels))
+- `properties` (String) Additional `_scorecard` blueprint properties applied to the scorecard entity, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint.
 
 ### Read-Only
 

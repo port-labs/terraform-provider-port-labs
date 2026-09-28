@@ -1,12 +1,20 @@
 package scorecard_test
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/version"
 )
 
 func testAccCreateBlueprintConfig(identifier string) string {
@@ -670,4 +678,126 @@ func TestAccPortScorecardRuleOrderPreservation(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccPortScorecardProperties(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	scorecardIdentifier := utils.GenID()
+	scorecardPropKey := "tf_scorecard_" + strings.ReplaceAll(utils.GenID(), "-", "")
+
+	config := testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_scorecard" "test" {
+		identifier = "%s"
+		title      = "Scorecard Properties"
+		blueprint  = port_blueprint.microservice.identifier
+		properties = jsonencode({
+			%s = "platform-team"
+		})
+		rules = [{
+			identifier = "hasTeam"
+			title      = "Has Team"
+			level      = "Gold"
+			query = {
+				combinator = "and"
+				conditions = [jsonencode({
+					property = "$team"
+					operator = "isNotEmpty"
+				})]
+			}
+		}]
+		depends_on = [
+			port_blueprint.microservice
+		]
+	}`, scorecardIdentifier, scorecardPropKey)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.TestAccPreCheck(t)
+			testAccExtendScorecardBlueprint(t, scorecardPropKey)
+		},
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + config,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "identifier", scorecardIdentifier),
+					resource.TestCheckResourceAttr("port_scorecard.test", "title", "Scorecard Properties"),
+					resource.TestMatchResourceAttr("port_scorecard.test", "properties", regexp.MustCompile(regexp.QuoteMeta(scorecardPropKey))),
+					resource.TestMatchResourceAttr("port_scorecard.test", "properties", regexp.MustCompile(`"platform-team"`)),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func testAccExtendScorecardBlueprint(t *testing.T, propKey string) {
+	t.Helper()
+
+	client, ctx := testAccPortClient(t)
+	title := "TF Acc Test"
+
+	if err := testAccPatchBlueprintProperty(ctx, client, "_scorecard", propKey, title); err != nil {
+		t.Fatalf("failed to add property %q on _scorecard: %v", propKey, err)
+	}
+
+	t.Cleanup(func() {
+		_ = testAccPatchBlueprintProperty(ctx, client, "_scorecard", propKey, "")
+	})
+}
+
+func testAccPatchBlueprintProperty(ctx context.Context, client *cli.PortClient, blueprintID, propKey, title string) error {
+	var property any
+	if title == "" {
+		property = nil
+	} else {
+		property = map[string]any{
+			"type":  "string",
+			"title": title,
+		}
+	}
+
+	body := map[string]any{
+		"schema": map[string]any{
+			"properties": map[string]any{
+				propKey: property,
+			},
+		},
+	}
+
+	resp, err := client.Client.R().
+		SetContext(ctx).
+		SetBody(body).
+		SetPathParam("identifier", blueprintID).
+		Patch("v1/blueprints/{identifier}")
+	if err != nil {
+		return err
+	}
+
+	var pb cli.PortBody
+	if err := json.Unmarshal(resp.Body(), &pb); err != nil {
+		return err
+	}
+	if !pb.OK {
+		return fmt.Errorf("failed to patch property %q on blueprint %q, got: %s", propKey, blueprintID, resp.Body())
+	}
+	return nil
+}
+
+func testAccPortClient(t *testing.T) (*cli.PortClient, context.Context) {
+	t.Helper()
+
+	baseURL := os.Getenv("PORT_BASE_URL")
+	if baseURL == "" {
+		baseURL = consts.DefaultBaseUrl
+	}
+	client, err := cli.New(baseURL, cli.WithHeader("User-Agent", version.ProviderVersion))
+	if err != nil {
+		t.Fatalf("failed to create Port client: %v", err)
+	}
+	ctx := context.Background()
+	if _, err := client.Authenticate(ctx, os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET")); err != nil {
+		t.Fatalf("failed to authenticate with Port: %v", err)
+	}
+	return client, ctx
 }

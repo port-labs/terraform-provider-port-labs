@@ -30,6 +30,7 @@ type ScorecardModel struct {
 	Filter     *Query       `tfsdk:"filter"`
 	Levels     []Level      `tfsdk:"levels"`
 	Rules      []Rule       `tfsdk:"rules"`
+	Properties types.String `tfsdk:"properties"`
 	CreatedAt  types.String `tfsdk:"created_at"`
 	CreatedBy  types.String `tfsdk:"created_by"`
 	UpdatedAt  types.String `tfsdk:"updated_at"`

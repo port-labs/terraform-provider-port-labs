@@ -53,7 +53,10 @@ func (r *ScorecardResource) Read(ctx context.Context, req resource.ReadRequest, 
 		resp.Diagnostics.AddError("failed to read scorecard", err.Error())
 		return
 	}
-	r.refreshScorecardState(ctx, state, s, blueprintIdentifier)
+	if err := r.refreshScorecardState(ctx, state, s, blueprintIdentifier, true); err != nil {
+		resp.Diagnostics.AddError("failed to refresh scorecard state", err.Error())
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -78,7 +81,10 @@ func (r *ScorecardResource) Create(ctx context.Context, req resource.CreateReque
 		return
 	}
 
-	r.refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString())
+	if err := r.refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString(), false); err != nil {
+		resp.Diagnostics.AddError("scorecard state was not applied by the API", err.Error())
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -113,7 +119,10 @@ func (r *ScorecardResource) Update(ctx context.Context, req resource.UpdateReque
 		return
 	}
 
-	r.refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString())
+	if err := r.refreshScorecardState(ctx, state, sp, state.Blueprint.ValueString(), false); err != nil {
+		resp.Diagnostics.AddError("scorecard state was not applied by the API", err.Error())
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

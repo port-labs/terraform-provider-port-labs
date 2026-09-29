@@ -449,7 +449,7 @@ func upsertMappingToModel(ctx context.Context, mapping *cli.WorkflowUpsertMappin
 
 func notificationToModel(ctx context.Context, notification cli.WorkflowInputNotification, prior *NotificationModel, jsonEscapeHTML bool) (*NotificationModel, error) {
 	var priorHeaders types.Map
-	if prior != nil {
+	if prior != nil && prior.Target.ValueString() == notification.Target {
 		priorHeaders = prior.Headers
 	}
 

@@ -751,10 +751,10 @@ func inputBlock() schema.Block {
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"target": schema.StringAttribute{
-							MarkdownDescription: "The notification target. One of `email`, `webhook`.",
+							MarkdownDescription: "The notification target. One of `email`, `webhook`, `slack`. A `slack` notification takes no other attributes: the Port Slack app sends a direct message to each of the node's responders. Slack delivery requires the Port Slack app to be installed in the organization, and responders who have not connected their Slack account are skipped. An input node can have at most one `slack` notification.",
 							Required:            true,
 							Validators: []validator.String{
-								stringvalidator.OneOf("email", "webhook"),
+								stringvalidator.OneOf("email", "webhook", "slack"),
 							},
 						},
 						"url": schema.StringAttribute{

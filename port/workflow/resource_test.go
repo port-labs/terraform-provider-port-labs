@@ -2,6 +2,8 @@ package workflow_test
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -397,6 +399,174 @@ func TestAccPortWorkflowImport(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateId:     workflowIdentifier,
+			},
+		},
+	})
+}
+
+func testAccInputNotificationsWorkflowConfig(blueprintIdentifier, workflowIdentifier, notifications string) string {
+	return testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_workflow" "approval" {
+		identifier = "%s"
+		title      = "Approval"
+
+		node {
+			identifier = "trigger"
+			event_trigger {
+				type                 = "ENTITY_UPDATED"
+				blueprint_identifier = port_blueprint.microservice.identifier
+			}
+		}
+
+		node {
+			identifier = "approval"
+			input {
+				user_inputs {
+					buttons = [
+						{
+							identifier = "approve"
+							label      = "Approve"
+							variant    = "PRIMARY"
+						},
+					]
+				}
+
+				outlets {
+					identifier        = "approve"
+					num_of_responders = 1
+				}
+
+				responders {
+					roles = ["Admin"]
+				}
+				%s
+			}
+		}
+
+		connections {
+			source_identifier = "trigger"
+			target_identifier = "approval"
+		}
+	}`, workflowIdentifier, notifications)
+}
+
+const testAccSlackNotification = `
+				notifications {
+					target = "slack"
+				}`
+
+const testAccEmailNotification = `
+				notifications {
+					target = "email"
+					fields {
+						label = "Service"
+						value = "{{ .outputs.trigger.diff.after.identifier }}"
+					}
+				}`
+
+const testAccWebhookNotification = `
+				notifications {
+					target = "webhook"
+					url    = "https://example.com/notify"
+					method = "POST"
+				}`
+
+func TestAccPortWorkflowSlackNotification(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	workflowIdentifier := utils.GenID()
+	config := func(notifications ...string) string {
+		return acctest.ProviderConfig + testAccInputNotificationsWorkflowConfig(blueprintIdentifier, workflowIdentifier, strings.Join(notifications, "\n"))
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config(testAccSlackNotification),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.#", "1"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.target", "slack"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.url"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.method"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.headers.%"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.body"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.agent"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.fields.#", "0"),
+				),
+			},
+			{
+				Config: config(testAccSlackNotification, testAccEmailNotification, testAccWebhookNotification),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.#", "3"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.target", "slack"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.1.target", "email"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.2.target", "webhook"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.2.url", "https://example.com/notify"),
+				),
+			},
+			{
+				Config: config(testAccWebhookNotification),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.#", "1"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.target", "webhook"),
+				),
+			},
+			{
+				Config: config(testAccSlackNotification),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.#", "1"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.target", "slack"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.url"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.method"),
+				),
+			},
+			{
+				ResourceName:      "port_workflow.approval",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     workflowIdentifier,
+			},
+		},
+	})
+}
+
+func TestAccPortWorkflowSlackNotificationValidation(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	workflowIdentifier := utils.GenID()
+	config := func(notifications string) string {
+		return acctest.ProviderConfig + testAccInputNotificationsWorkflowConfig(blueprintIdentifier, workflowIdentifier, notifications)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config(`
+				notifications {
+					target = "slack"
+					url    = "https://example.com/notify"
+				}`),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("`url`\\s+only\\s+applies\\s+when\\s+`target`\\s+is\\s+`webhook`"),
+			},
+			{
+				Config: config(`
+				notifications {
+					target = "slack"
+					fields {
+						label = "Service"
+						value = "api"
+					}
+				}`),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("`fields`\\s+only\\s+applies\\s+when\\s+`target`\\s+is\\s+`email`"),
+			},
+			{
+				Config:      config(testAccSlackNotification + testAccSlackNotification),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("Duplicate\\s+slack\\s+notification"),
 			},
 		},
 	})

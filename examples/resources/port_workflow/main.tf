@@ -84,6 +84,11 @@ resource "port_workflow" "deploy_service" {
       responders {
         roles = ["Admin"]
       }
+
+      # Sends each responder a direct message through the Port Slack app.
+      notifications {
+        target = "slack"
+      }
     }
   }
 

@@ -2043,3 +2043,144 @@ func TestValidateInputOutletWithoutButtonsIsRejected(t *testing.T) {
 
 	assert.Contains(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)), "Unknown button identifier")
 }
+
+func inputNodeWithNotifications(notifications ...NotificationModel) WorkflowNodeModel {
+	return WorkflowNodeModel{
+		Identifier: types.StringValue("approval"),
+		Input: &InputModel{
+			UserInputs: &InputUserInputsModel{
+				Buttons: []InputButtonModel{{Identifier: types.StringValue("approve"), Label: types.StringValue("Approve")}},
+			},
+			Outlets:       []InputOutletModel{{Identifier: types.StringValue("approve")}},
+			Notifications: notifications,
+		},
+	}
+}
+
+func slackNotification() NotificationModel {
+	return NotificationModel{
+		Target:  types.StringValue("slack"),
+		Url:     types.StringNull(),
+		Method:  types.StringNull(),
+		Headers: types.MapNull(types.StringType),
+		Body:    types.StringNull(),
+		Agent:   types.BoolNull(),
+	}
+}
+
+func TestValidateSlackNotification(t *testing.T) {
+	emailNotification := NotificationModel{
+		Target: types.StringValue("email"),
+		Fields: []NotificationFieldModel{{Label: types.StringValue("Service"), Value: types.StringValue("api")}},
+	}
+	webhookNotification := NotificationModel{
+		Target: types.StringValue("webhook"),
+		Url:    types.StringValue("https://example.com"),
+	}
+	assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{inputNodeWithNotifications(slackNotification())}, nil)))
+	assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{
+		inputNodeWithNotifications(slackNotification(), emailNotification, webhookNotification),
+	}, nil)))
+
+	withAttribute := func(set func(*NotificationModel)) NotificationModel {
+		n := slackNotification()
+		set(&n)
+		return n
+	}
+	invalid := map[string]NotificationModel{
+		"url":     withAttribute(func(n *NotificationModel) { n.Url = types.StringValue("https://example.com") }),
+		"method":  withAttribute(func(n *NotificationModel) { n.Method = types.StringValue("POST") }),
+		"headers": withAttribute(func(n *NotificationModel) { n.Headers = types.MapValueMust(types.StringType, map[string]attr.Value{}) }),
+		"body":    withAttribute(func(n *NotificationModel) { n.Body = types.StringValue(`{}`) }),
+		"agent":   withAttribute(func(n *NotificationModel) { n.Agent = types.BoolValue(false) }),
+		"fields": withAttribute(func(n *NotificationModel) {
+			n.Fields = []NotificationFieldModel{{Label: types.StringValue("Service"), Value: types.StringValue("api")}}
+		}),
+	}
+	for attribute, notification := range invalid {
+		t.Run(attribute, func(t *testing.T) {
+			diags := validateNodes([]WorkflowNodeModel{inputNodeWithNotifications(notification)}, nil)
+			require.Len(t, diags.Errors(), 1)
+			assert.Equal(t, "Invalid attribute combination", diags.Errors()[0].Summary())
+			assert.Contains(t, diags.Errors()[0].Detail(), "`"+attribute+"`")
+		})
+	}
+
+	unknownURL := withAttribute(func(n *NotificationModel) { n.Url = types.StringUnknown() })
+	assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{inputNodeWithNotifications(unknownURL)}, nil)))
+}
+
+func TestValidateRejectsDuplicateSlackNotifications(t *testing.T) {
+	node := inputNodeWithNotifications(slackNotification(), slackNotification())
+	assert.Equal(t, []string{"Duplicate slack notification"}, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)))
+}
+
+func TestSlackNotificationIsSentWithOnlyTarget(t *testing.T) {
+	w, err := workflowStateToPortBody(context.Background(), &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes:      []WorkflowNodeModel{inputNodeWithNotifications(slackNotification())},
+	})
+	require.NoError(t, err)
+
+	body, err := json.Marshal(w.Nodes[0].Config.Notifications)
+	require.NoError(t, err)
+	assert.JSONEq(t, `[{"target":"slack"}]`, string(body))
+}
+
+func TestSlackNotificationRefreshSetsOnlyTarget(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	prior := inputNodeWithNotifications(NotificationModel{
+		Target:  types.StringValue("webhook"),
+		Url:     types.StringValue("https://example.com"),
+		Headers: types.MapValueMust(types.StringType, map[string]attr.Value{}),
+	})
+	state := &WorkflowModel{Identifier: types.StringValue("wf"), Nodes: []WorkflowNodeModel{prior}}
+	apiWorkflow := &cli.Workflow{
+		Identifier: "wf",
+		Nodes: []cli.WorkflowNode{{
+			Identifier: "approval",
+			Config: cli.WorkflowNodeConfig{
+				Type: consts.InputNode,
+				UserInputs: &cli.WorkflowUserInputs{
+					Buttons: &[]cli.WorkflowInputButton{{Identifier: "approve", Label: "Approve"}},
+				},
+				Notifications: []cli.WorkflowInputNotification{{Target: "slack"}},
+			},
+		}},
+	}
+
+	require.NoError(t, r.refreshWorkflowState(ctx, state, apiWorkflow))
+
+	require.Len(t, state.Nodes[0].Input.Notifications, 1)
+	assert.Equal(t, slackNotification(), state.Nodes[0].Input.Notifications[0])
+}
+
+func TestMixedNotificationsRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	notifications := []cli.WorkflowInputNotification{
+		{Target: "slack"},
+		{Target: "email", Fields: []cli.WorkflowInputNotificationField{{Label: "Service", Value: "api"}}},
+		{Target: "slack"},
+		{
+			Target:  "webhook",
+			Url:     strPtr("https://example.com"),
+			Method:  strPtr("POST"),
+			Headers: map[string]string{"X-Token": "abc"},
+			Body:    map[string]any{"message": "hello"},
+			Agent:   boolPtr(true),
+		},
+	}
+
+	var result []cli.WorkflowInputNotification
+	for _, n := range notifications {
+		model, err := notificationToModel(ctx, n, nil, false)
+		require.NoError(t, err)
+		body, err := notificationToPortBody(ctx, *model)
+		require.NoError(t, err)
+		result = append(result, *body)
+	}
+
+	assert.Equal(t, notifications, result)
+}

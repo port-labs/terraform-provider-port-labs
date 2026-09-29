@@ -574,7 +574,7 @@ func TestAccPortWorkflowSlackNotificationValidation(t *testing.T) {
 			{
 				Config:      config(testAccSlackNotification + testAccSlackNotification),
 				PlanOnly:    true,
-				ExpectError: regexp.MustCompile("Duplicate\\s+slack\\s+notification"),
+				ExpectError: regexp.MustCompile(`Duplicate\s+slack\s+notification`),
 			},
 		},
 	})

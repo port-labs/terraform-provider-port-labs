@@ -513,6 +513,14 @@ func TestAccPortWorkflowSlackNotification(t *testing.T) {
 				),
 			},
 			{
+				Config: config(testAccEmailNotification),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.#", "1"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.target", "email"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.fields.#", "1"),
+				),
+			},
+			{
 				Config: config(testAccSlackNotification),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.#", "1"),

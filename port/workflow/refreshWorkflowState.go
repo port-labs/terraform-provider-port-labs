@@ -449,6 +449,8 @@ func upsertMappingToModel(ctx context.Context, mapping *cli.WorkflowUpsertMappin
 
 func notificationToModel(ctx context.Context, notification cli.WorkflowInputNotification, prior *NotificationModel, jsonEscapeHTML bool) (*NotificationModel, error) {
 	var priorHeaders types.Map
+	// Declared-empty headers only carry over from an entry of the same target;
+	// otherwise a webhook replaced by a slack entry would leave `headers = {}` behind.
 	if prior != nil && prior.Target.ValueString() == notification.Target {
 		priorHeaders = prior.Headers
 	}

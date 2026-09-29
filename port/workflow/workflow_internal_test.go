@@ -2162,7 +2162,6 @@ func TestMixedNotificationsRoundTrip(t *testing.T) {
 	notifications := []cli.WorkflowInputNotification{
 		{Target: "slack"},
 		{Target: "email", Fields: []cli.WorkflowInputNotificationField{{Label: "Service", Value: "api"}}},
-		{Target: "slack"},
 		{
 			Target:  "webhook",
 			Url:     strPtr("https://example.com"),

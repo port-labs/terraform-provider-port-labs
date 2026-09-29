@@ -324,7 +324,7 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 		for i, notification := range node.Input.Notifications {
 			notificationPath := blockPath.AtName("notifications").AtListIndex(i)
 			switch notification.Target.ValueString() {
-			case "slack":
+			case consts.SlackNotification:
 				validateSlackNotification(resp, notificationPath, notification)
 				if slackDeclared {
 					resp.Diagnostics.AddAttributeError(
@@ -334,10 +334,10 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 					)
 				}
 				slackDeclared = true
-			case "webhook":
+			case consts.WebhookNotification:
 				requireSet(resp, notificationPath.AtName("url"), notification.Url,
 					"`url` is required when `target` is `webhook`.")
-			case "email":
+			case consts.EmailNotification:
 				if len(notification.Fields) == 0 && !hasUnknownValues {
 					resp.Diagnostics.AddAttributeError(
 						notificationPath.AtName("fields"),
@@ -365,13 +365,8 @@ func validateSlackNotification(resp *resource.ValidateConfigResponse, notificati
 		{"agent", notification.Agent},
 	}
 	for _, attribute := range webhookAttributes {
-		if !attribute.value.IsNull() && !attribute.value.IsUnknown() {
-			resp.Diagnostics.AddAttributeError(
-				notificationPath.AtName(attribute.name),
-				"Invalid attribute combination",
-				fmt.Sprintf("`%s` only applies when `target` is `webhook` and cannot be set when `target` is `slack`.", attribute.name),
-			)
-		}
+		rejectSet(resp, notificationPath.AtName(attribute.name), attribute.value,
+			fmt.Sprintf("`%s` only applies when `target` is `webhook` and cannot be set when `target` is `slack`.", attribute.name))
 	}
 
 	if len(notification.Fields) > 0 {
@@ -613,8 +608,8 @@ func requireUnique(resp *resource.ValidateConfigResponse, attributePath path.Pat
 	seen[identifier] = true
 }
 
-func rejectSet(resp *resource.ValidateConfigResponse, attributePath path.Path, value types.String, detail string) {
-	if !value.IsNull() {
+func rejectSet(resp *resource.ValidateConfigResponse, attributePath path.Path, value attr.Value, detail string) {
+	if !value.IsNull() && !value.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(attributePath, "Invalid attribute combination", detail)
 	}
 }

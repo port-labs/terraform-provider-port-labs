@@ -894,6 +894,31 @@ func TestValidateSelfServeTriggerContexts(t *testing.T) {
 	}
 }
 
+func TestValidateSelfServeTriggerContextsSkipUnknownRejectedValues(t *testing.T) {
+	contexts := map[string]TriggerContextModel{
+		"create_entity with unknown user_input": {
+			On:                  types.StringValue(consts.CreateEntityContext),
+			BlueprintIdentifier: types.StringValue("service"),
+			UserInput:           types.StringUnknown(),
+		},
+		"entity with unknown blueprint": {
+			On:                  types.StringValue(consts.EntityContext),
+			UserInput:           types.StringValue("service"),
+			BlueprintIdentifier: types.StringUnknown(),
+		},
+	}
+
+	for name, context := range contexts {
+		t.Run(name, func(t *testing.T) {
+			node := WorkflowNodeModel{
+				Identifier:       types.StringValue("trigger"),
+				SelfServeTrigger: &SelfServeTriggerModel{Contexts: []TriggerContextModel{context}},
+			}
+			assert.NotContains(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)), "Invalid attribute combination")
+		})
+	}
+}
+
 func TestValidateConnections(t *testing.T) {
 	nodes := []WorkflowNodeModel{
 		eventTriggerNode("trigger"),

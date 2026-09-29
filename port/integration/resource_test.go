@@ -378,7 +378,7 @@ func TestPortIntegrationImmutableInstallationType(t *testing.T) {
 				),
 			},
 			{
-				Config: integrationHCLWithInstallationType(installationID, appType, "Saas", saasSpec),
+				Config:      integrationHCLWithInstallationType(installationID, appType, "Saas", saasSpec),
 				ExpectError: regexp.MustCompile(`cannot change installation_type`),
 			},
 		},

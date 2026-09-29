@@ -194,6 +194,90 @@ func TerraformJsonStringToGoObject(v *string) (*map[string]any, error) {
 	return &vMap, nil
 }
 
+func configuredJSONObjectKeys(stateValue types.String) map[string]struct{} {
+	if stateValue.IsNull() || stateValue.IsUnknown() {
+		return nil
+	}
+
+	var values map[string]any
+	if err := json.Unmarshal([]byte(stateValue.ValueString()), &values); err != nil || len(values) == 0 {
+		return nil
+	}
+
+	keys := make(map[string]struct{}, len(values))
+	for key := range values {
+		keys[key] = struct{}{}
+	}
+	return keys
+}
+
+func jsonObjectFromAPIForRead(stateValue types.String, apiValues map[string]any, jsonEscapeHTML bool) types.String {
+	if stateValue.IsNull() || stateValue.IsUnknown() {
+		return types.StringNull()
+	}
+
+	configuredKeys := configuredJSONObjectKeys(stateValue)
+	if len(configuredKeys) == 0 {
+		return types.StringNull()
+	}
+
+	var stateMap map[string]any
+	if err := json.Unmarshal([]byte(stateValue.ValueString()), &stateMap); err != nil {
+		return stateValue
+	}
+
+	valuesForState := make(map[string]any, len(stateMap))
+	for key := range stateMap {
+		if apiValue, ok := apiValues[key]; ok {
+			valuesForState[key] = apiValue
+		} else {
+			valuesForState[key] = nil
+		}
+	}
+
+	stateJSON, err := GoObjectToTerraformString(valuesForState, jsonEscapeHTML)
+	if err != nil {
+		return stateValue
+	}
+	return stateJSON
+}
+
+// SyncJSONObjectState keeps a Terraform JSON-object string attribute aligned with API values.
+// When syncFromAPI is true, state is updated from the API for configured keys.
+// When false, it errors if the API did not apply the configured values.
+func SyncJSONObjectState(stateValue *types.String, apiValues map[string]any, fieldName string, jsonEscapeHTML bool, syncFromAPI bool) error {
+	if stateValue.IsNull() || stateValue.IsUnknown() {
+		return nil
+	}
+
+	apiState := jsonObjectFromAPIForRead(*stateValue, apiValues, jsonEscapeHTML)
+	if syncFromAPI {
+		*stateValue = apiState
+		return nil
+	}
+
+	equal, err := JSONStringsSemanticallyEqual(
+		stateValue.ValueString(),
+		apiState.ValueString(),
+		jsonEscapeHTML,
+	)
+	if err != nil {
+		return err
+	}
+	if equal {
+		return nil
+	}
+
+	configured := stateValue.ValueString()
+	*stateValue = apiState
+	return fmt.Errorf(
+		"%s were not applied by the API: configured %s, API returned %s",
+		fieldName,
+		configured,
+		apiState.ValueString(),
+	)
+}
+
 func InterfaceToStringArray(o interface{}) []string {
 	items := o.([]interface{})
 	res := make([]string, len(items))

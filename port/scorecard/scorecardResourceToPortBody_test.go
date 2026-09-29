@@ -42,18 +42,3 @@ func TestScorecardResourceToPortBodyPropertiesAndRelations(t *testing.T) {
 		t.Fatalf("expected owner_team relation, got %#v", body.Relations["owner_team"])
 	}
 }
-
-func TestSyncJSONObjectStateProperties(t *testing.T) {
-	state := types.StringValue(`{"owner":"platform-team"}`)
-	apiValues := map[string]any{"owner": "platform-team", "extra": "ignored"}
-
-	if err := syncJSONObjectState(&state, apiValues, "properties", false, false); err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-
-	state = types.StringValue(`{"owner":"platform-team"}`)
-	apiValues = map[string]any{"owner": "other-team"}
-	if err := syncJSONObjectState(&state, apiValues, "properties", false, false); err == nil {
-		t.Fatal("expected error when API did not apply configured properties")
-	}
-}

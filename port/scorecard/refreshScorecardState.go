@@ -2,7 +2,6 @@ package scorecard
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -63,87 +62,6 @@ func DefaultCliLevels() []cli.Level {
 			Title: "Gold",
 		},
 	}
-}
-
-func configuredJSONObjectKeys(stateValue types.String) map[string]struct{} {
-	if stateValue.IsNull() || stateValue.IsUnknown() {
-		return nil
-	}
-
-	var values map[string]any
-	if err := json.Unmarshal([]byte(stateValue.ValueString()), &values); err != nil || len(values) == 0 {
-		return nil
-	}
-
-	keys := make(map[string]struct{}, len(values))
-	for key := range values {
-		keys[key] = struct{}{}
-	}
-	return keys
-}
-
-func jsonObjectFromAPIForRead(stateValue types.String, apiValues map[string]any, jsonEscapeHTML bool) types.String {
-	if stateValue.IsNull() || stateValue.IsUnknown() {
-		return types.StringNull()
-	}
-
-	configuredKeys := configuredJSONObjectKeys(stateValue)
-	if len(configuredKeys) == 0 {
-		return types.StringNull()
-	}
-
-	var stateMap map[string]any
-	if err := json.Unmarshal([]byte(stateValue.ValueString()), &stateMap); err != nil {
-		return stateValue
-	}
-
-	valuesForState := make(map[string]any, len(stateMap))
-	for key := range stateMap {
-		if apiValue, ok := apiValues[key]; ok {
-			valuesForState[key] = apiValue
-		} else {
-			valuesForState[key] = nil
-		}
-	}
-
-	stateJSON, err := utils.GoObjectToTerraformString(valuesForState, jsonEscapeHTML)
-	if err != nil {
-		return stateValue
-	}
-	return stateJSON
-}
-
-func syncJSONObjectState(stateValue *types.String, apiValues map[string]any, fieldName string, jsonEscapeHTML bool, syncFromAPI bool) error {
-	if stateValue.IsNull() || stateValue.IsUnknown() {
-		return nil
-	}
-
-	apiState := jsonObjectFromAPIForRead(*stateValue, apiValues, jsonEscapeHTML)
-	if syncFromAPI {
-		*stateValue = apiState
-		return nil
-	}
-
-	equal, err := utils.JSONStringsSemanticallyEqual(
-		stateValue.ValueString(),
-		apiState.ValueString(),
-		jsonEscapeHTML,
-	)
-	if err != nil {
-		return err
-	}
-	if equal {
-		return nil
-	}
-
-	configured := stateValue.ValueString()
-	*stateValue = apiState
-	return fmt.Errorf(
-		"%s were not applied by the API: configured %s, API returned %s",
-		fieldName,
-		configured,
-		apiState.ValueString(),
-	)
 }
 
 func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string, syncPropertiesFromAPI bool) error {
@@ -295,10 +213,10 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 		state.Levels = fromCliLevelsToTerraformLevels(s.Levels)
 	}
 
-	if err := syncJSONObjectState(&state.Properties, s.Properties, "properties", r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
+	if err := utils.SyncJSONObjectState(&state.Properties, s.Properties, "properties", r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
 		return err
 	}
-	if err := syncJSONObjectState(&state.Relations, s.Relations, "relations", r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
+	if err := utils.SyncJSONObjectState(&state.Relations, s.Relations, "relations", r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
 		return err
 	}
 	return nil

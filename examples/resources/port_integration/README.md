@@ -6,6 +6,7 @@ Each integration type has its own directory. Subdirectories represent supported 
 |-------------|------|------|
 | Self-hosted (custom) | Basic create (step 1 — no config) | [`onprem/basic/`](./onprem/basic/) |
 | K8s exporter | Version pinning | [`k8s-exporter/version-pinning/`](./k8s-exporter/version-pinning/) |
+| K8s exporter | Per-resource `enableDelete` | [`enable_delete/`](./enable_delete/) |
 | GitHub Ocean | Personal Access Token | [`github-ocean/pat/`](./github-ocean/pat/) |
 | GitHub Ocean | Personal Access Token (skip default resources) | [`github-ocean/pat-skip-default-resources/`](./github-ocean/pat-skip-default-resources/) |
 | GitHub Ocean | GitHub App | [`github-ocean/github-app/`](./github-ocean/github-app/) |

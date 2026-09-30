@@ -81,6 +81,24 @@ func memberSpecToCLI(spec MemberSpecModel) (cli.ScorecardGroupMemberSpec, error)
 	}, nil
 }
 
+func memberSpecToPatchCLI(spec MemberSpecModel) (cli.PatchScorecardGroupMemberSpec, error) {
+	filter, err := queryToCLI(spec.Filter)
+	if err != nil {
+		return cli.PatchScorecardGroupMemberSpec{}, err
+	}
+	patchSpec := cli.PatchScorecardGroupMemberSpec{
+		Filter: filter,
+	}
+	if len(spec.Rules) > 0 {
+		rules, err := rulesToCLI(spec.Rules)
+		if err != nil {
+			return cli.PatchScorecardGroupMemberSpec{}, err
+		}
+		patchSpec.Rules = rules
+	}
+	return patchSpec, nil
+}
+
 func scorecardGroupResourceToPortBody(ctx context.Context, state *ScorecardGroupModel) (*cli.ScorecardGroup, error) {
 	group := &cli.ScorecardGroup{
 		Identifier: state.Identifier.ValueString(),
@@ -171,4 +189,98 @@ func scorecardGroupResourceToPortBody(ctx context.Context, state *ScorecardGroup
 	}
 
 	return group, nil
+}
+
+func scorecardGroupResourceToPatchBody(ctx context.Context, state *ScorecardGroupModel) (*cli.PatchScorecardGroup, error) {
+	patch := &cli.PatchScorecardGroup{
+		Title: state.Title.ValueString(),
+	}
+
+	if len(state.Levels) > 0 {
+		patch.Levels = levelsToCLI(state.Levels)
+	}
+
+	propertiesPatch := &cli.ScorecardGroupPropertiesPatch{}
+	hasPropertiesPatch := false
+
+	if !state.ScorecardProperties.IsNull() && !state.ScorecardProperties.IsUnknown() {
+		properties, err := utils.TerraformJsonStringToGoObject(state.ScorecardProperties.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if properties != nil {
+			propertiesPatch.ScorecardProperties = *properties
+			hasPropertiesPatch = true
+		}
+	}
+
+	if !state.GroupProperties.IsNull() && !state.GroupProperties.IsUnknown() {
+		properties, err := utils.TerraformJsonStringToGoObject(state.GroupProperties.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if properties != nil {
+			propertiesPatch.GroupProperties = *properties
+			hasPropertiesPatch = true
+		}
+	}
+
+	if !state.GroupRelations.IsNull() && !state.GroupRelations.IsUnknown() {
+		relations, err := utils.TerraformJsonStringToGoObject(state.GroupRelations.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if relations != nil {
+			propertiesPatch.GroupRelations = *relations
+			hasPropertiesPatch = true
+		}
+	}
+
+	if !state.ScorecardRelations.IsNull() && !state.ScorecardRelations.IsUnknown() {
+		relations, err := utils.TerraformJsonStringToGoObject(state.ScorecardRelations.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if relations != nil {
+			propertiesPatch.ScorecardRelations = *relations
+			hasPropertiesPatch = true
+		}
+	}
+
+	if hasPropertiesPatch {
+		patch.Properties = propertiesPatch
+	}
+
+	if len(state.Scorecards) > 0 {
+		scorecards := make(map[string]cli.PatchScorecardGroupMemberSpec, len(state.Scorecards))
+		for blueprintID, memberSpec := range state.Scorecards {
+			spec, err := memberSpecToPatchCLI(memberSpec)
+			if err != nil {
+				return nil, err
+			}
+			scorecards[blueprintID] = spec
+		}
+		patch.Scorecards = scorecards
+		return patch, nil
+	}
+
+	rules, err := rulesToCLI(state.Rules)
+	if err != nil {
+		return nil, err
+	}
+	patch.Rules = rules
+
+	if len(state.Filters) > 0 {
+		filters := make(map[string]*cli.Query, len(state.Filters))
+		for blueprintID, filter := range state.Filters {
+			query, err := queryToCLI(filter)
+			if err != nil {
+				return nil, err
+			}
+			filters[blueprintID] = query
+		}
+		patch.Filters = filters
+	}
+
+	return patch, nil
 }

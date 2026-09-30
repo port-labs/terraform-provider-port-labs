@@ -471,6 +471,18 @@ type (
 		Rules  []Rule `json:"rules"`
 	}
 
+	PatchScorecardGroupMemberSpec struct {
+		Filter *Query `json:"filter,omitempty"`
+		Rules  []Rule `json:"rules,omitempty"`
+	}
+
+	ScorecardGroupPropertiesPatch struct {
+		GroupProperties     map[string]any `json:"groupProperties,omitempty"`
+		ScorecardProperties map[string]any `json:"scorecardProperties,omitempty"`
+		GroupRelations      map[string]any `json:"groupRelations,omitempty"`
+		ScorecardRelations  map[string]any `json:"scorecardRelations,omitempty"`
+	}
+
 	ScorecardGroup struct {
 		Meta
 		Identifier          string                              `json:"identifier,omitempty"`
@@ -484,6 +496,15 @@ type (
 		Blueprints          []string                            `json:"blueprints,omitempty"`
 		Rules               []Rule                              `json:"rules,omitempty"`
 		Filters             map[string]*Query                   `json:"filters,omitempty"`
+	}
+
+	PatchScorecardGroup struct {
+		Title      string                                   `json:"title,omitempty"`
+		Levels     []Level                                  `json:"levels,omitempty"`
+		Properties *ScorecardGroupPropertiesPatch             `json:"properties,omitempty"`
+		Scorecards map[string]PatchScorecardGroupMemberSpec `json:"scorecards,omitempty"`
+		Rules      []Rule                                   `json:"rules,omitempty"`
+		Filters    map[string]*Query                        `json:"filters,omitempty"`
 	}
 
 	Rule struct {

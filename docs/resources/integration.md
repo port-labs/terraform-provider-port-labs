@@ -414,6 +414,20 @@ resource "port_integration" "my_custom_integration" {
 
 For catalog integration types, set `installation_app_type` to the integrated tool name (e.g. `github-ocean`, `gitlab`) and `version` if you want to pin a specific integration version. Custom integrations can omit `installation_app_type`.
 
+## GitHub Ocean pull requests (GraphQL)
+
+GitHub Ocean can ingest open pull requests via the GitHub GraphQL API. In addition to `selector.query` and `selector.states`, the pull-request resource supports:
+
+- `selector.api` — set to `graphql` to use the GraphQL exporter path.
+- `selector.enrichWithFirstCommit` — when `true`, fetches the first commit on the PR branch (used for coding-time metrics).
+- `selector.excludeGraphqlFields` — list of GraphQL fields to omit from the query (for example `additions`, `deletions`, `changedFiles`).
+
+GraphQL mappings use camelCase fields (for example `.createdAt`, `.mergedAt`, `.url`). Open pull-request entity identifiers use `.fullDatabaseId|tostring`.
+
+Property jq mappings can populate review and DORA-style metrics on the `githubPullRequest` blueprint, including `isDraft`, `reviewDecision`, `firstCommitAt`, `firstReviewAt`, `approvedAt`, `readyForReviewAt`, `codingTimeHours`, `timeToFirstReview`, and `timeFromApprovalToMerge`.
+
+See `examples/resources/port_integration/github_ocean_pull_request` for a full example.
+
 ### NOTICE:
 
 The following config properties (`selector.query|entity.mappings.*`) are jq expressions, which means that you need to input either a valid jq expression (E.g `.title`), or if you want a string value, a quoted escaped string val (E.g `'my-string'`).

@@ -485,7 +485,7 @@ func notificationToModel(ctx context.Context, notification cli.WorkflowInputNoti
 func hasNoPrincipals(permissions *cli.WorkflowNodePermissions) bool {
 	return permissions == nil ||
 		(len(permissions.Users) == 0 && len(permissions.Roles) == 0 && len(permissions.Teams) == 0 &&
-			permissions.Policy == nil && permissions.UsersQuery == nil)
+			permissions.Policy == nil && permissions.ErrorMessage == nil && permissions.UsersQuery == nil)
 }
 
 func permissionsToModel(ctx context.Context, permissions *cli.WorkflowNodePermissions, prior *PermissionsModel, jsonEscapeHTML bool) *PermissionsModel {
@@ -512,6 +512,8 @@ func permissionsToModel(ctx context.Context, permissions *cli.WorkflowNodePermis
 			model.Policy = policy
 		}
 	}
+
+	model.ErrorMessage = flex.GoStringToFramework(permissions.ErrorMessage)
 
 	return model
 }

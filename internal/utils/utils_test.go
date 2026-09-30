@@ -188,7 +188,7 @@ func TestJSONStringsSemanticallyEqual(t *testing.T) {
 func TestGoObjectToTerraformStringPreferExisting(t *testing.T) {
 	v := map[string]any{
 		"deleteDependentEntities": true,
-		"resources":                 []any{},
+		"resources":               []any{},
 	}
 
 	t.Run("returns preferred when semantically equal", func(t *testing.T) {

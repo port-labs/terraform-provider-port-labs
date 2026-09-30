@@ -815,16 +815,16 @@ type ValidateIntegrationSpecBody struct {
 }
 
 type Integration struct {
-	InstallationId       string                 `json:"installationId"`
-	Title                *string                `json:"title"`
-	InstallationAppType  *string                `json:"installationAppType"`
-	InstallationType     *string                `json:"installationType"`
-	Version              *string                `json:"version"`
-	Config               *map[string]any        `json:"config,omitempty"`
+	InstallationId            string                 `json:"installationId"`
+	Title                     *string                `json:"title"`
+	InstallationAppType       *string                `json:"installationAppType"`
+	InstallationType          *string                `json:"installationType"`
+	Version                   *string                `json:"version"`
+	Config                    *map[string]any        `json:"config,omitempty"`
 	Spec                      *IntegrationClientSpec `json:"spec,omitempty"`
 	CreatePortResourcesOrigin *string                `json:"createPortResourcesOrigin,omitempty"`
 	StatusInfo                *IntegrationStatusInfo `json:"statusInfo,omitempty"`
-	ChangelogDestination *ChangelogDestination  `json:"changelogDestination,omitempty"`
+	ChangelogDestination      *ChangelogDestination  `json:"changelogDestination,omitempty"`
 }
 
 type Organization struct {

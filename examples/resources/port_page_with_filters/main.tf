@@ -148,6 +148,25 @@ resource "port_page" "page_with_filters" {
           "blueprint" = "Cluster"
         }
       }
+    ),
+    jsonencode(
+      {
+        "identifier" = "c4d5e6f7-272c-4a20-9635-add07d097bb9"
+        "title"      = "Microservice: created in the last 3 days"
+        "query" = {
+          "combinator" = "and"
+          "rules" = [
+            {
+              "property" = "$createdAt"
+              "operator" = "between"
+              "value" = {
+                "preset" = "last3Days"
+              }
+            }
+          ]
+          "blueprint" = "Microservice"
+        }
+      }
     )
   ]
 

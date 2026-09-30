@@ -458,12 +458,14 @@ type (
 
 	Scorecard struct {
 		Meta
-		Identifier string  `json:"identifier,omitempty"`
-		Title      string  `json:"title,omitempty"`
-		Blueprint  string  `json:"blueprint,omitempty"`
-		Filter     *Query  `json:"filter,omitempty"`
-		Levels     []Level `json:"levels,omitempty"`
-		Rules      []Rule  `json:"rules,omitempty"`
+		Identifier string         `json:"identifier,omitempty"`
+		Title      string         `json:"title,omitempty"`
+		Blueprint  string         `json:"blueprint,omitempty"`
+		Filter     *Query         `json:"filter,omitempty"`
+		Levels     []Level        `json:"levels,omitempty"`
+		Rules      []Rule         `json:"rules,omitempty"`
+		Properties map[string]any `json:"properties,omitempty"`
+		Relations  map[string]any `json:"relations,omitempty"`
 	}
 
 	ScorecardGroupMemberSpec struct {
@@ -710,7 +712,7 @@ type PortBody struct {
 	Action               Action            `json:"action"`
 	ActionPermissions    ActionPermissions `json:"permissions"`
 	Webhook              Webhook           `json:"integration"`
-	Scorecard            Scorecard         `json:"Scorecard"`
+	Scorecard            Scorecard         `json:"scorecard"`
 	ScorecardGroup       ScorecardGroup    `json:"scorecardGroup"`
 	Team                 PortTeam          `json:"team"`
 	Page                 Page              `json:"page"`

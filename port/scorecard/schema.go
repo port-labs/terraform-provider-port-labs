@@ -126,6 +126,14 @@ func ScorecardSchema() map[string]schema.Attribute {
 				Attributes: RuleSchema(),
 			},
 		},
+		"properties": schema.StringAttribute{
+			MarkdownDescription: "Additional `_scorecard` blueprint properties applied to the scorecard entity, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint.",
+			Optional:            true,
+		},
+		"relations": schema.StringAttribute{
+			MarkdownDescription: "Additional `_scorecard` blueprint relations applied to the scorecard entity, as a JSON encoded string. Relation values can be a string, an array of strings, or `null` to clear a relation. The `group` relation is managed by Port and cannot be set here.",
+			Optional:            true,
+		},
 		"created_at": schema.StringAttribute{
 			MarkdownDescription: "The creation date of the scorecard",
 			Computed:            true,
@@ -165,6 +173,8 @@ var ResourceMarkdownDescription = `
 This resource allows you to manage a scorecard.
 
 See the [Port documentation](https://docs.getport.io/promote-scorecards/) for more information about scorecards.
+
+` + "`properties`" + ` and ` + "`relations`" + ` set additional ` + "`_scorecard`" + ` blueprint property and relation values on the scorecard entity. Define the schema on the system blueprint first (for example with ` + "`port_system_blueprint`" + `), then reference those keys in ` + "`jsonencode({...})`" + `. Use ` + "`depends_on`" + ` so the scorecard is created only after the blueprint schema exists.
 
 ## Example Usage
 
@@ -259,6 +269,67 @@ resource "port_scorecard" "readiness" {
   ]
   depends_on = [
     port_blueprint.microservice
+  ]
+}
+
+` + "```" + `
+
+## Example Usage with Properties and Relations
+
+This will set custom ` + "`_scorecard`" + ` blueprint properties and relations on the scorecard entity.
+
+` + "```hcl" + `
+
+resource "port_system_blueprint" "scorecard" {
+  identifier = "_scorecard"
+  properties = {
+    string_props = {
+      owner = {
+        type  = "string"
+        title = "Owner"
+      }
+    }
+    number_props = {
+      priority = {
+        type  = "number"
+        title = "Priority"
+      }
+    }
+  }
+  relations = {
+    owner_team = {
+      title  = "Owner Team"
+      target = "_team"
+    }
+  }
+}
+
+resource "port_scorecard" "readiness" {
+  identifier = "Readiness"
+  title      = "Readiness"
+  blueprint  = port_blueprint.microservice.identifier
+  properties = jsonencode({
+    owner    = "platform-team"
+    priority = 1
+  })
+  relations = jsonencode({
+    owner_team = "platform-team"
+  })
+  rules = [{
+    identifier = "hasOwner"
+    title      = "Has Owner"
+    level      = "Gold"
+    query = {
+      combinator = "and"
+      conditions = [jsonencode({
+        property = "$team"
+        operator = "isNotEmpty"
+      })]
+    }
+  }]
+  depends_on = [
+    port_blueprint.microservice,
+    port_system_blueprint.scorecard,
   ]
 }
 

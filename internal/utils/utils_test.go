@@ -277,3 +277,21 @@ func TestGoObjectToTerraformStringPreferExistingAtListIndex(t *testing.T) {
 	assert.Equal(t, want1, got1)
 	assert.NotEqual(t, TerraformStringAtList(oldList, 1), got1)
 }
+
+func TestSyncJSONObjectState(t *testing.T) {
+	state := types.StringValue(`{"owner":"platform-team"}`)
+	apiValues := map[string]any{"owner": "platform-team", "extra": "ignored"}
+
+	err := SyncJSONObjectState(&state, apiValues, "properties", false, false)
+	assert.NoError(t, err)
+
+	state = types.StringValue(`{"owner":"platform-team"}`)
+	apiValues = map[string]any{"owner": "other-team"}
+	err = SyncJSONObjectState(&state, apiValues, "properties", false, false)
+	assert.Error(t, err)
+
+	state = types.StringValue(`{"owner":"platform-team"}`)
+	err = SyncJSONObjectState(&state, apiValues, "properties", false, true)
+	assert.NoError(t, err)
+	assert.Equal(t, types.StringValue(`{"owner":"other-team"}`), state)
+}

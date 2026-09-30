@@ -49,10 +49,41 @@ resource "port_blueprint" "microservice" {
   }
 }
 
+resource "port_system_blueprint" "scorecard" {
+  identifier = "_scorecard"
+  properties = {
+    string_props = {
+      owner = {
+        type  = "string"
+        title = "Owner"
+      }
+    }
+    number_props = {
+      priority = {
+        type  = "number"
+        title = "Priority"
+      }
+    }
+  }
+  relations = {
+    owner_team = {
+      title  = "Owner Team"
+      target = "_team"
+    }
+  }
+}
+
 resource "port_scorecard" "production_readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
   blueprint  = port_blueprint.microservice.identifier
+  properties = jsonencode({
+    owner    = "platform-team"
+    priority = 1
+  })
+  relations = jsonencode({
+    owner_team = "platform-team"
+  })
   rules = [{
     identifier = "high-avalability"
     title      = "High Availability"
@@ -66,4 +97,7 @@ resource "port_scorecard" "production_readiness" {
       })]
     }
   }]
+  depends_on = [
+    port_system_blueprint.scorecard,
+  ]
 }

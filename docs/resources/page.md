@@ -335,6 +335,47 @@ description: |-
   }
   
   
+  IFrame widget with root-relative URL
+  iframe-widget widgets accept an absolute URL or a root-relative path in the url field (for example /organization/home). Root-relative paths are resolved against the Port application origin at runtime; paths without an organization segment are resolved under the current organization.
+  
+  
+  resource "port_page" "embedded_port_page" {
+    identifier = "embedded_port_page"
+    title      = "Embedded Port page"
+    icon       = "Docs"
+    type       = "dashboard"
+    widgets = [
+      jsonencode(
+        {
+          "id" = "embeddedDashboardWidget",
+          "layout" = [
+            {
+              "height" = 400,
+              "columns" = [
+                {
+                  "id"   = "embeddedView",
+                  "size" = 12
+                }
+              ]
+            }
+          ],
+          "type" = "dashboard-widget",
+          "widgets" = [
+            {
+              "type"    = "iframe-widget",
+              "id"      = "embeddedView",
+              "title"   = "Organization home",
+              "icon"    = "Docs",
+              "url"     = "/organization/home",
+              "urlType" = "public"
+            }
+          ]
+        }
+      )
+    ]
+  }
+  
+  
   Home Page
   
   
@@ -746,6 +787,50 @@ resource "port_page" "microservice_dashboard_page" {
 
 ```
 
+### IFrame widget with root-relative URL
+
+`iframe-widget` widgets accept an absolute URL or a root-relative path in the `url` field (for example `/organization/home`). Root-relative paths are resolved against the Port application origin at runtime; paths without an organization segment are resolved under the current organization.
+
+```hcl
+
+resource "port_page" "embedded_port_page" {
+  identifier = "embedded_port_page"
+  title      = "Embedded Port page"
+  icon       = "Docs"
+  type       = "dashboard"
+  widgets = [
+    jsonencode(
+      {
+        "id" = "embeddedDashboardWidget",
+        "layout" = [
+          {
+            "height" = 400,
+            "columns" = [
+              {
+                "id"   = "embeddedView",
+                "size" = 12
+              }
+            ]
+          }
+        ],
+        "type" = "dashboard-widget",
+        "widgets" = [
+          {
+            "type"    = "iframe-widget",
+            "id"      = "embeddedView",
+            "title"   = "Organization home",
+            "icon"    = "Docs",
+            "url"     = "/organization/home",
+            "urlType" = "public"
+          }
+        ]
+      }
+    )
+  ]
+}
+
+```
+
 ### Home Page
 
 ```hcl
@@ -827,7 +912,7 @@ terraform import port_page.home_page "\$home"
 - `page_filters` (List of String) The page filters. Each filter is a JSON object with 'identifier' (string), 'title' (string), and 'query' (object with 'combinator' and 'rules' array). The rules array can contain any filter type.
 - `parent` (String) The identifier of the folder in which the page is in, default is the root of the sidebar
 - `title` (String) The title of the page
-- `widgets` (List of String) The widgets of the page
+- `widgets` (List of String) The widgets of the page. Each element is a JSON-encoded widget object. For `iframe-widget` widgets, the `url` field accepts an absolute URL or a root-relative path (for example `/organization/home` or `/test`); paths must start with a single `/` and must not start with `//`. Root-relative paths without an organization segment are resolved under the current organization at runtime.
 
 ### Read-Only
 

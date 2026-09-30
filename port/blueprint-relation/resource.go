@@ -45,6 +45,7 @@ func relationToPortBody(state *BlueprintRelationModel) *cli.Relation {
 		Target:   &target,
 		Many:     state.Many.ValueBoolPointer(),
 		Required: state.Required.ValueBoolPointer(),
+		Union:    flex.FrameworkBoolToTruePointer(state.Union),
 	}
 
 	if !state.Title.IsNull() {
@@ -76,6 +77,7 @@ func refreshRelationState(state *BlueprintRelationModel, relation *cli.Relation)
 	state.Description = flex.GoStringToFramework(relation.Description)
 	state.Many = flex.GoBoolToFramework(relation.Many)
 	state.Required = flex.GoBoolToFramework(relation.Required)
+	state.Union = flex.GoBoolToFrameworkDefaultFalse(relation.Union)
 
 	if state.Many.IsNull() {
 		state.Many = types.BoolValue(false)

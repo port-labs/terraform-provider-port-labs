@@ -38,6 +38,7 @@ resource "port_blueprint_relation" "user_groups" {
   target     = port_blueprint.entra_id_group.identifier
   title      = "Groups"
   many       = true
+  union      = true
 }
 
 resource "port_blueprint_relation" "group_members" {

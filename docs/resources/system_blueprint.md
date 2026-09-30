@@ -236,3 +236,4 @@ Optional:
 - `many` (Boolean) The many of the relation
 - `required` (Boolean) The required of the relation
 - `title` (String) The title of the relation
+- `union` (Boolean) Whether multiple sources can add to this relation without overwriting each other. Only applies when many is true. This setting cannot be changed after the relation is created.

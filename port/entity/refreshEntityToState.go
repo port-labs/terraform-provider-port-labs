@@ -218,6 +218,15 @@ func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityMo
 		}
 	}
 
+	if len(e.MappingWarnings) == 0 {
+		state.MappingWarnings = nil
+	} else {
+		state.MappingWarnings = make([]types.String, len(e.MappingWarnings))
+		for i, warning := range e.MappingWarnings {
+			state.MappingWarnings[i] = types.StringValue(warning)
+		}
+	}
+
 	if len(e.Properties) == 0 {
 		state.Properties = nil
 	} else {

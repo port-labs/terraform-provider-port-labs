@@ -42,6 +42,28 @@ func (r *WorkflowResource) ValidateConfig(ctx context.Context, req resource.Vali
 			continue
 		}
 
+		// Check the already decoded subtype objects once per node. Generic
+		// sibling-path validators repeatedly traverse the entire nested schema.
+		configuredTypes := 0
+		unknownType := false
+		attributes := object.Attributes()
+		for _, name := range nodeTypeBlockNames {
+			value := attributes[name]
+			if value.IsUnknown() {
+				unknownType = true
+			} else if !value.IsNull() {
+				configuredTypes++
+			}
+		}
+		if unknownType {
+			// Defer exclusivity and trigger-presence checks until all types are known.
+			typesKnown = false
+		} else if configuredTypes != 1 {
+			resp.Diagnostics.AddAttributeError(nodePath, "Invalid node type combination", "Exactly one node config block must be set.")
+			typesKnown = false
+			continue
+		}
+
 		var node WorkflowNodeModel
 		resp.Diagnostics.Append(object.As(ctx, &node, basetypes.ObjectAsOptions{UnhandledUnknownAsEmpty: true})...)
 		if resp.Diagnostics.HasError() {

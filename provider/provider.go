@@ -19,6 +19,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/entity"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/folder"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/integration"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/oauth_app"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/organization"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/page"
 	page_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/page-permissions"
@@ -177,6 +178,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		folder.NewFolderResource,
 		organization.NewOrganizationSecretResource,
 		organization.NewOrganizationResource,
+		oauth_app.NewOAuthAppResource,
 		workflow.NewWorkflowResource,
 	}
 }

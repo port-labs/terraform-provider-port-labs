@@ -163,6 +163,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 		config.InstallationId = i.InstallationId.ValueStringPointer()
 		config.IntegrationProvider = i.IntegrationProvider.ValueStringPointer()
 		config.IntegrationInvocationType = i.IntegrationInvocationType.ValueStringPointer()
+		config.OnTimeout = i.OnTimeout.ValueStringPointer()
 		config.OnFailure = i.OnFailure.ValueStringPointer()
 
 		executionProperties, err := jsonStringToAny(i.ExecutionProperties)

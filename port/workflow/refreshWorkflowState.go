@@ -176,6 +176,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 			IntegrationProvider:       flex.GoStringToFramework(config.IntegrationProvider),
 			IntegrationInvocationType: flex.GoStringToFramework(config.IntegrationInvocationType),
 			ExecutionProperties:       executionProperties,
+			OnTimeout:                 flex.GoStringToFramework(config.OnTimeout),
 			OnFailure:                 flex.GoStringToFramework(config.OnFailure),
 		}
 

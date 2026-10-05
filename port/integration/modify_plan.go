@@ -164,12 +164,16 @@ func specSections(spec types.String) map[string]json.RawMessage {
 }
 
 func extractAppSpec(spec types.String) types.String {
-	if app := priorSpecSections(spec)["appSpec"]; app != nil {
-		out, _ := json.Marshal(map[string]any{"appSpec": app})
-		return types.StringValue(string(out))
-	}
 	if spec.IsUnknown() {
 		return spec
 	}
-	return types.StringNull()
+	app := priorSpecSections(spec)["appSpec"]
+	if app == nil {
+		return types.StringNull()
+	}
+	out, err := json.Marshal(map[string]any{"appSpec": app})
+	if err != nil {
+		return types.StringNull()
+	}
+	return types.StringValue(string(out))
 }

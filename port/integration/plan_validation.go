@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 )
@@ -54,65 +55,42 @@ func (r *IntegrationResource) validateSpecAtPlan(ctx context.Context, plan *Inte
 	if r.portClient == nil || !plan.isHosted() {
 		return
 	}
-	if plan.InstallationAppType.IsNull() || plan.InstallationAppType.IsUnknown() {
-		return
-	}
-	if plan.InstallationId.IsNull() || plan.InstallationId.IsUnknown() {
-		return
-	}
-
-	if plan.isSaasOAuth2() {
-		if !specConfiguredInHCL {
-			return
-		}
-		rawSpec := extractAppSpec(plan.Spec)
-		if rawSpec.IsNull() || rawSpec.IsUnknown() || rawSpec.ValueString() == "" {
-			return
-		}
-		spec, err := parseSpecFromConfig(rawSpec)
-		if err != nil {
-			diags.AddError("invalid spec", err.Error())
-			return
-		}
-		if spec == nil || spec.AppSpec == nil {
-			return
-		}
-		body := cli.ValidateIntegrationSpecBody{
-			ValidationMode:   consts.ValidateSaasOAuth2Spec,
-			InstallationId:   plan.InstallationId.ValueString(),
-			InstallationType: plan.installationType(),
-			Spec:             spec,
-		}
-		if err := r.portClient.ValidateIntegrationSpec(ctx, plan.InstallationAppType.ValueString(), body); err != nil {
-			diags.AddError("invalid integration spec", err.Error())
-		}
-		return
-	}
-
-	if plan.Spec.IsNull() || plan.Spec.IsUnknown() || plan.Spec.ValueString() == "" {
-		return
-	}
-
-	spec, err := parseSpecFromConfig(plan.Spec)
-	if err != nil {
-		diags.AddError("invalid spec", err.Error())
-		return
-	}
-	if spec == nil || spec.IntegrationSpec == nil {
+	if !isKnown(plan.InstallationAppType) || !isKnown(plan.InstallationId) {
 		return
 	}
 
 	body := cli.ValidateIntegrationSpecBody{
-		ValidationMode:   consts.ValidateSaasSpec,
 		InstallationId:   plan.InstallationId.ValueString(),
 		InstallationType: plan.installationType(),
-		Spec:             spec,
-		Options: &cli.ValidateIntegrationSpecOptions{
-			SkipSecretExistenceCheck: true,
-		},
 	}
+
+	rawSpec := plan.Spec
+	if plan.isSaasOAuth2() {
+		if !specConfiguredInHCL {
+			return
+		}
+		rawSpec = extractAppSpec(rawSpec)
+		body.ValidationMode = consts.ValidateSaasOAuth2Spec
+	} else {
+		body.ValidationMode = consts.ValidateSaasSpec
+		body.Options = &cli.ValidateIntegrationSpecOptions{SkipSecretExistenceCheck: true}
+	}
+
+	spec, err := parseSpecFromConfig(rawSpec)
+	if err != nil {
+		diags.AddError("invalid spec", err.Error())
+		return
+	}
+	if spec == nil || (plan.isSaas() && spec.IntegrationSpec == nil) {
+		return
+	}
+	body.Spec = spec
 
 	if err := r.portClient.ValidateIntegrationSpec(ctx, plan.InstallationAppType.ValueString(), body); err != nil {
 		diags.AddError("invalid integration spec", err.Error())
 	}
+}
+
+func isKnown(v types.String) bool {
+	return !v.IsNull() && !v.IsUnknown()
 }

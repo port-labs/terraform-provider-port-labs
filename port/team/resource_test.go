@@ -20,7 +20,7 @@ func TestAccPortTeam(t *testing.T) {
 		users = []
 	}`, teamName)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -53,7 +53,7 @@ func TestAccPortTeamUpdate(t *testing.T) {
 		users = ["%s"]
 	}`, teamName, userName)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -92,7 +92,7 @@ func TestAccPortTeamEmptyDescription(t *testing.T) {
 		name = "%s"
 		users = []
 	}`, teamName)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -133,7 +133,7 @@ func TestAccPortTeamNameUpdate(t *testing.T) {
 		users = []
 	}`, updatedTeamName)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -167,7 +167,7 @@ func TestAccPortTeamImport(t *testing.T) {
 		users = ["%s"]
 	}`, teamName, userName)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

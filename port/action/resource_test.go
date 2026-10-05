@@ -42,7 +42,7 @@ func TestAccPortActionBasic(t *testing.T) {
 		}
 		kafka_method = {}
 	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -126,7 +126,7 @@ func TestAccPortAction(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -183,7 +183,7 @@ func TestAccPortActionKafkaInvocation(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -224,7 +224,7 @@ func TestAccPortActionWebhookInvocation(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -269,7 +269,7 @@ func TestAccPortActionWebhookSyncInvocation(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -314,7 +314,7 @@ func TestAccPortActionGithubInvocation(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -357,7 +357,7 @@ func TestAccPortActionGitlabInvocation(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -397,7 +397,7 @@ func TestAccPortActionAzureInvocation(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -443,7 +443,7 @@ func TestAccPortActionUpsertEntityInvocation(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -493,7 +493,7 @@ func TestAccPortActionUpsertEntityInvocationWithJqTeams(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -543,7 +543,7 @@ func TestAccPortActionImport(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -597,7 +597,7 @@ func TestPortActionFalseRequiredPropShouldNotWork(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -656,7 +656,7 @@ func TestAccPortActionUpdate(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -719,7 +719,7 @@ func TestAccPortActionArrayPropsWithMaxItemsJqQuery(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -763,7 +763,7 @@ func TestAccPortActionArrayPropsWithMinItemsJqQuery(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -815,7 +815,7 @@ func TestAccPortActionArrayPropsWithBothJqQueries(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -861,7 +861,7 @@ func TestAccPortActionArrayPropsWithStaticMaxMinItems(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -908,7 +908,7 @@ func TestAccPortActionArrayPropsConflictMaxItemsAndJqQuery(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -947,7 +947,7 @@ func TestAccPortActionArrayPropsConflictMinItemsAndJqQuery(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -1012,7 +1012,7 @@ func TestAccPortActionArrayPropsUpdateFromStaticToJqQuery(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -1106,7 +1106,7 @@ func TestAccPortActionAdvancedFormConfigurations(t *testing.T) {
 		}
 	  }`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -1198,7 +1198,7 @@ func TestAccPortActionNestedDatasetRules(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -1276,7 +1276,7 @@ func TestAccPortActionJqDefault(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -1349,7 +1349,7 @@ func TestAccPortActionEnumJqQuery(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -1412,7 +1412,7 @@ func TestAccPortActionEnum(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -1520,7 +1520,7 @@ func TestAccPortActionImportNonJqFields(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -1635,7 +1635,7 @@ func TestAccPortActionPatternJqQuery(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -1677,7 +1677,7 @@ func TestAccPortActionPattern(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -1722,7 +1722,7 @@ func TestAccPortActionPatternConflict(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -1759,7 +1759,7 @@ func TestAccPortActionEmptyPatternJqQuery(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -1798,7 +1798,7 @@ func TestAccPortActionPatternJqQueryComplex(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -1838,7 +1838,7 @@ func TestAccPortActionPatternJqQueryAllowedValues(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -1879,7 +1879,7 @@ func TestAccPortActionPatternJqQueryDirectArray(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -1925,7 +1925,7 @@ func TestAccPortActionOrderProperties(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -1979,7 +1979,7 @@ func TestAccPortActionEncryption(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -2047,7 +2047,7 @@ MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA0Z3VS5JJcds3xfn/ygWyf8sK8pPgbJPbL3pv
 		}
 	}`, actionIdentifier, testPublicKey, testPublicKey)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -2121,7 +2121,7 @@ func TestAccPortActionUpdateIdentifier(t *testing.T) {
 		}
 	}`, actionUpdatedIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -2260,7 +2260,7 @@ func TestAccPortActionVisibility(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -2400,7 +2400,7 @@ func TestAccPortActionDisabled(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -2518,7 +2518,7 @@ func TestAccPortActionRequiredConflictsWithRequiredJQ(t *testing.T) {
 	}`, actionIdentifier)
 
 	// expect a failure when applying the update
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                  func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories:  acctest.TestAccProtoV6ProviderFactories,
 		PreventPostDestroyRefresh: true,
@@ -2591,7 +2591,7 @@ func TestAccPortActionRequiredFalseAndNull(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                  func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories:  acctest.TestAccProtoV6ProviderFactories,
 		PreventPostDestroyRefresh: true,
@@ -2631,7 +2631,7 @@ func TestAccPortAutomationEntityCreated(t *testing.T) {
 		}
 		kafka_method = {}
 	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -2663,7 +2663,7 @@ func TestAccPortAutomationEntityUpdated(t *testing.T) {
 		}
 		kafka_method = {}
 	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -2695,7 +2695,7 @@ func TestAccPortAutomationEntityDeleted(t *testing.T) {
 		}
 		kafka_method = {}
 	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -2727,7 +2727,7 @@ func TestAccPortAutomationAnyEntityChange(t *testing.T) {
 		}
 		kafka_method = {}
 	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -2760,7 +2760,7 @@ func TestAccPortAutomationTimerPropertyExpired(t *testing.T) {
 		}
 		kafka_method = {}
 	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -2807,7 +2807,7 @@ func TestAccPortAutomationRunCreated(t *testing.T) {
 	kafka_method = {}
 	depends_on   = [port_action.self_serve_action]
 	}`, relatedActionIdentifier, mainActionIdentifier, relatedActionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -2859,7 +2859,7 @@ func TestAccPortAutomationRunUpdated(t *testing.T) {
 	kafka_method = {}
 	depends_on   = [port_action.self_serve_action]
 	}`, relatedActionIdentifier, mainActionIdentifier, relatedActionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -2911,7 +2911,7 @@ func TestAccPortAutomationAnyRunChange(t *testing.T) {
 	kafka_method = {}
 	depends_on   = [port_action.self_serve_action]
 	}`, relatedActionIdentifier, mainActionIdentifier, relatedActionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -2953,7 +2953,7 @@ func TestAccPortWebhookApproval(t *testing.T) {
 			format = "json"
 		}
 	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -2990,7 +2990,7 @@ func TestAccPortEmailApproval(t *testing.T) {
 		required_approval = true
 		approval_email_notification = {}
 	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -3028,7 +3028,7 @@ func TestAccPortActionStringGitlabMethodSetConditionally(t *testing.T) {
 	  } : null
 	}`, actionIdentifier, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -3068,7 +3068,7 @@ func TestAccPortActionStringUserPropertiesConditional(t *testing.T) {
 	  kafka_method = {}
 	}`, actionIdentifier, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -3108,7 +3108,7 @@ func TestAccPortActionNumberUserPropertiesConditional(t *testing.T) {
 	  kafka_method = {}
 	}`, actionIdentifier, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -3148,7 +3148,7 @@ func TestAccPortActionBoolUserPropertiesConditional(t *testing.T) {
 	  kafka_method = {}
 	}`, actionIdentifier, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -3188,7 +3188,7 @@ func TestAccPortActionObjectUserPropertiesConditional(t *testing.T) {
 	  kafka_method = {}
 	}`, actionIdentifier, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -3228,7 +3228,7 @@ func TestAccPortActionArrayUserPropertiesConditional(t *testing.T) {
 	  kafka_method = {}
 	}`, actionIdentifier, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -3292,7 +3292,7 @@ func TestAccPortActionNoUserPropertiesConditional(t *testing.T) {
 	  kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -3362,7 +3362,7 @@ func TestAccPortActionConditionalTrigger(t *testing.T) {
 		}
 		kafka_method = {}
 	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -3413,7 +3413,7 @@ func TestAccPortActionUpsertEntityWithoutMappingIdentifier(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -3454,7 +3454,7 @@ func TestRequiredApprovalAny(t *testing.T) {
 			format = "json"
 		}
 	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -3494,7 +3494,7 @@ func TestRequiredApprovalAll(t *testing.T) {
 			format = "json"
 		}
 	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -3556,7 +3556,7 @@ func TestAccPortActionSort(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -3618,7 +3618,7 @@ func TestAccPortActionSteps(t *testing.T) {
 	  kafka_method = {}
 	}`, actionIdentifier, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -3676,7 +3676,7 @@ func TestAccPortActionStepsConflictWithOrder(t *testing.T) {
 	  kafka_method = {}
 	}`, actionIdentifier, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -3712,7 +3712,7 @@ func TestAccPortActionActionTitles(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -3757,7 +3757,7 @@ func TestAccPortActionActionTitlesWithVisible(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -3803,7 +3803,7 @@ func TestAccPortActionActionTitlesWithVisibleJqQuery(t *testing.T) {
 		kafka_method = {}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -3860,7 +3860,7 @@ func TestAccPortActionStepsWithVisible(t *testing.T) {
 	  kafka_method = {}
 	}`, actionIdentifier, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -3919,7 +3919,7 @@ func TestAccPortActionStepsVisibleJqQuery(t *testing.T) {
 	  kafka_method = {}
 	}`, actionIdentifier, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -3965,7 +3965,7 @@ func TestAccPortActionAllowAnyoneToViewRuns(t *testing.T) {
 	}`, actionIdentifier, params.allowAnyoneToViewRuns)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -4016,7 +4016,7 @@ func TestAccPortActionButtonTexts(t *testing.T) {
 	}`, actionIdentifier, params.actionCardButtonText, params.executeActionButtonText)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -4088,7 +4088,7 @@ func TestAccPortActionArrayObjectItemsDefault(t *testing.T) {
 		}
 	}`, actionIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -4136,7 +4136,7 @@ func TestAccPortAutomationWithEmptyJqConditionExpressions(t *testing.T) {
 		}
 		kafka_method = {}
 	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -4181,7 +4181,7 @@ func TestAccPortAutomationWithJqConditionExpressions(t *testing.T) {
 		}
 		kafka_method = {}
 	}`, actionIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

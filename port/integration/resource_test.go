@@ -136,7 +136,7 @@ func TestPortIntegrationConfigKeyOrder(t *testing.T) {
 	steps := integrationCreateThenConfigSteps(installationID, appType, integrationMappingConfigNonAlphabetical)
 	steps = append(steps, resource.TestStep{Config: withConfig, PlanOnly: true})
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps:                    steps,
@@ -161,7 +161,7 @@ func TestPortIntegrationBasic(t *testing.T) {
 		),
 	})
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps:                    steps,
@@ -187,7 +187,7 @@ func TestPortIntegrationPatchTitleNull(t *testing.T) {
 		),
 	})
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps:                    steps,
@@ -199,7 +199,7 @@ func TestPortIntegrationWithWebhook(t *testing.T) {
 
 	installationID := utils.GenID()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -223,7 +223,7 @@ func TestPortIntegrationImport(t *testing.T) {
 	installationID := utils.GenID()
 	config := integrationHCL(installationID, "kafka", integrationWebhook)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -251,7 +251,7 @@ func TestPortIntegrationImmutableInstallationId(t *testing.T) {
 	newInstallationID := utils.GenID()
 	appType := "kafka"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -274,7 +274,7 @@ func TestPortIntegrationImmutableInstallationAppType(t *testing.T) {
 
 	installationID := utils.GenID()
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -299,7 +299,7 @@ func TestPortIntegrationCreatePortResourcesOriginEmpty(t *testing.T) {
 	installationID := utils.GenID()
 	appType := "kafka"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -320,7 +320,7 @@ func TestPortIntegrationImmutableCreatePortResourcesOrigin(t *testing.T) {
 	installationID := utils.GenID()
 	appType := "kafka"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -344,7 +344,7 @@ func TestPortIntegrationInvalidCreatePortResourcesOrigin(t *testing.T) {
 	installationID := utils.GenID()
 	appType := "kafka"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -366,7 +366,7 @@ func TestPortIntegrationImmutableInstallationType(t *testing.T) {
 			integrationSpec = { token = "my-token" }
 		})`
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -396,7 +396,7 @@ func TestPortIntegrationOnPremRejectsSpec(t *testing.T) {
 		`spec = jsonencode({ integrationSpec = { token = "my-token" } })`,
 	)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -425,7 +425,7 @@ func TestPortIntegrationInvalidIdentifier(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			resource.Test(t, resource.TestCase{
+			resource.ParallelTest(t, resource.TestCase{
 				PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 				ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 				Steps: []resource.TestStep{
@@ -474,7 +474,7 @@ func TestPortIntegrationSaasLinear(t *testing.T) {
 	secretName := utils.GenID()
 	title := "Linear acctest"
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -520,7 +520,7 @@ func TestPortIntegrationValidIdentifier(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			installationID := tc.buildID(utils.GenID())
 
-			resource.Test(t, resource.TestCase{
+			resource.ParallelTest(t, resource.TestCase{
 				PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 				ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 				Steps: []resource.TestStep{

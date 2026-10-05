@@ -34,7 +34,7 @@ func TestAccPortBlueprintBasic(t *testing.T) {
 		description = ""
 	}
 `, identifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -79,7 +79,7 @@ func TestAccPortBlueprintIncludeInGlobalSearch(t *testing.T) {
 		description = ""
 	}
 `, identifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -134,7 +134,7 @@ func TestAccPortBlueprintStringProperty(t *testing.T) {
 		}
 	}
 `, identifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -191,7 +191,7 @@ func TestAccPortBlueprintNumberProperty(t *testing.T) {
 		}
 	}`, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -240,7 +240,7 @@ func TestAccPortBlueprintBooleanProperty(t *testing.T) {
 		}
 	}`, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -317,7 +317,7 @@ func TestAccPortBlueprintArrayProperty(t *testing.T) {
 		}
 	}`, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -376,7 +376,7 @@ func TestAccPortBlueprintObjectProperty(t *testing.T) {
 		}
 	}`, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -417,7 +417,7 @@ func TestAccPortBlueprintObjectDefaultKeyOrder(t *testing.T) {
 		}
 	}`, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -475,7 +475,7 @@ func TestAccPortBlueprintChangePropertyType(t *testing.T) {
 		}
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps:                    steps,
@@ -505,7 +505,7 @@ func TestAccPortBlueprintChangePropertyTypeProtection(t *testing.T) {
 	require.NoError(t, tmpl.Execute(&step1Text, data{Identifier: identifier, PropType: "string"}))
 	require.NoError(t, tmpl.Execute(&step2Text, data{Identifier: identifier, PropType: "number"}))
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -547,7 +547,7 @@ func TestAccPortBlueprintWithChangelogDestination(t *testing.T) {
 	}
 	`, identifier, identifier2)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -605,7 +605,7 @@ func TestAccPortBlueprintWithRelation(t *testing.T) {
 	}
 `, identifier1, identifier2)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -644,7 +644,7 @@ func TestAccPortBlueprintImport(t *testing.T) {
 		}
 	}`, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -689,7 +689,7 @@ func TestAccPortBlueprintWithSpecification(t *testing.T) {
 		}
 	}
 `, identifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -773,7 +773,7 @@ func TestAccPortBlueprintUpdateRelation(t *testing.T) {
 		}
 	}
 `, envID, vmID)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -837,7 +837,7 @@ func TestAccPortBlueprintWithMirrorProperty(t *testing.T) {
 		}
 	}
 `, identifier1, identifier2)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -894,7 +894,7 @@ func TestAccPortBlueprintWithCalculationProperty(t *testing.T) {
 		}
 	}`, identifier1)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -935,7 +935,7 @@ func TestAccPortUpdateBlueprintIdentifier(t *testing.T) {
 	}
 `, updatedIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -1019,7 +1019,7 @@ func TestAccPortDestroyDeleteAllEntities(t *testing.T) {
 		return
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -1119,7 +1119,7 @@ func TestAccPortBlueprintOwnership(t *testing.T) {
 	}
 `, parentIdentifier, childIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -1216,7 +1216,7 @@ func TestAccPortBlueprintCatalogPageCreation(t *testing.T) {
 				}
 			}
 
-			resource.Test(t, resource.TestCase{
+			resource.ParallelTest(t, resource.TestCase{
 				PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 				ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 				Steps: []resource.TestStep{

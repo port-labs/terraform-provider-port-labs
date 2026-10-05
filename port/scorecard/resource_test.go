@@ -72,7 +72,7 @@ func TestAccPortScorecardBasic(t *testing.T) {
 		port_blueprint.microservice
 		]
 	  }`, scorecardIdentifier, blueprintIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -203,7 +203,7 @@ func TestAccPortScorecard(t *testing.T) {
 		  port_blueprint.microservice
 		]
 	  }`, scorecardIdentifier, blueprintIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -234,7 +234,7 @@ func TestAccPortScorecard(t *testing.T) {
 			},
 		},
 	})
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -342,7 +342,7 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 		]
 	 }`, scorecardIdentifier, blueprintIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -414,7 +414,7 @@ func TestAccPortScorecardImport(t *testing.T) {
 		]
 	  }`, scorecardIdentifier, blueprintIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -493,7 +493,7 @@ func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
 		]
 	 }`, scorecardIdentifierUpdated, blueprintIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -636,7 +636,7 @@ func TestAccPortScorecardRuleOrderPreservation(t *testing.T) {
 		]
 	}`, scorecardIdentifier, blueprintIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -720,7 +720,7 @@ func TestAccPortScorecardPropertiesAndRelations(t *testing.T) {
 		]
 	}`, teamName, scorecardIdentifier, scorecardPropKey, scorecardRelationKey)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.TestAccPreCheck(t)
 			testAccExtendScorecardBlueprint(t, scorecardPropKey, scorecardRelationKey)

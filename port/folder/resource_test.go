@@ -24,7 +24,7 @@ func TestAccPortFolderResourceBasicBetaEnabled(t *testing.T) {
     }
     `, folderIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -51,7 +51,7 @@ func TestAccPortFolderResourceBasicBetaDisabled(t *testing.T) {
     }
     `, folderIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -85,7 +85,7 @@ func TestAccPortFolderResourceCreateFolderWithParent(t *testing.T) {
     }
     `, childFolderIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -124,7 +124,7 @@ func TestAccPortFolderResourceUpdateFolder(t *testing.T) {
     }
     `, folderIdentifier, updatedTitle)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -159,7 +159,7 @@ func TestAccPortFolderResourceAfterNoDrift(t *testing.T) {
     }
     `, folderIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -210,7 +210,7 @@ func TestAccPortFolderResourceAfterExplicitValue(t *testing.T) {
     }
     `, folderAIdentifier, folderBIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -244,7 +244,7 @@ func TestAccPortFolderResourceImport(t *testing.T) {
     }
     `, folderIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -78,7 +78,7 @@ func TestAccPortWorkflowBasic(t *testing.T) {
 		}
 	}`, workflowIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -181,7 +181,7 @@ func TestAccPortWorkflowUpdate(t *testing.T) {
 		}
 	}`, workflowIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -262,7 +262,7 @@ func TestAccPortWorkflowSelfServeTrigger(t *testing.T) {
 		}
 	}`, workflowIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -344,7 +344,7 @@ func TestAccPortWorkflowConditionOutlets(t *testing.T) {
 		}
 	}`, workflowIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -382,7 +382,7 @@ func TestAccPortWorkflowImport(t *testing.T) {
 		}
 	}`, workflowIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -478,7 +478,7 @@ func TestAccPortWorkflowSlackNotification(t *testing.T) {
 		return acctest.ProviderConfig + testAccInputNotificationsWorkflowConfig(blueprintIdentifier, workflowIdentifier, strings.Join(notifications, "\n"))
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -546,7 +546,7 @@ func TestAccPortWorkflowSlackNotificationValidation(t *testing.T) {
 		return acctest.ProviderConfig + testAccInputNotificationsWorkflowConfig(blueprintIdentifier, workflowIdentifier, notifications)
 	}
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

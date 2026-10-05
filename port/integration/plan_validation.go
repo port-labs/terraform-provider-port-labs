@@ -9,6 +9,14 @@ import (
 )
 
 func validatePlanRules(plan, state *IntegrationModel, isCreate bool, diags *diag.Diagnostics) {
+	if isCreate && plan.isSaasOAuth2() {
+		diags.AddError(
+			"SaasOAuth2 integrations cannot be created via Terraform",
+			"Authorize the integration in the Port UI, then import it with "+
+				"`terraform import port_integration.<name> <installation_id>`.",
+		)
+	}
+
 	if isCreate && !plan.Config.IsNull() && !plan.Config.IsUnknown() {
 		diags.AddError(
 			"config cannot be set on creation",
@@ -43,7 +51,7 @@ func validatePlanRules(plan, state *IntegrationModel, isCreate bool, diags *diag
 }
 
 func (r *IntegrationResource) validateSpecAtPlan(ctx context.Context, plan *IntegrationModel, diags *diag.Diagnostics) {
-	if r.portClient == nil || !plan.isSaas() {
+	if r.portClient == nil || !plan.isHosted() {
 		return
 	}
 	if plan.InstallationAppType.IsNull() || plan.InstallationAppType.IsUnknown() {
@@ -52,27 +60,38 @@ func (r *IntegrationResource) validateSpecAtPlan(ctx context.Context, plan *Inte
 	if plan.InstallationId.IsNull() || plan.InstallationId.IsUnknown() {
 		return
 	}
-	if plan.Spec.IsNull() || plan.Spec.IsUnknown() || plan.Spec.ValueString() == "" {
+	rawSpec := plan.Spec
+	if plan.isSaasOAuth2() {
+		rawSpec = extractAppSpec(plan.Spec)
+	}
+	if rawSpec.IsNull() || rawSpec.IsUnknown() || rawSpec.ValueString() == "" {
 		return
 	}
 
-	spec, err := parseSpecFromConfig(plan.Spec)
+	spec, err := parseSpecFromConfig(rawSpec)
 	if err != nil {
 		diags.AddError("invalid spec", err.Error())
 		return
 	}
-	if spec == nil || spec.IntegrationSpec == nil {
+	if spec == nil {
 		return
 	}
 
 	body := cli.ValidateIntegrationSpecBody{
-		ValidationMode:   consts.ValidateIntegrationSpecModeFull,
 		InstallationId:   plan.InstallationId.ValueString(),
 		InstallationType: plan.installationType(),
 		Spec:             spec,
-		Options: &cli.ValidateIntegrationSpecOptions{
+	}
+	if plan.isSaasOAuth2() {
+		body.ValidationMode = consts.ValidateSaasOAuth2Spec
+	} else {
+		if spec.IntegrationSpec == nil {
+			return
+		}
+		body.ValidationMode = consts.ValidateSaasSpec
+		body.Options = &cli.ValidateIntegrationSpecOptions{
 			SkipSecretExistenceCheck: true,
-		},
+		}
 	}
 
 	if err := r.portClient.ValidateIntegrationSpec(ctx, plan.InstallationAppType.ValueString(), body); err != nil {

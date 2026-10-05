@@ -53,7 +53,16 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 	applyServerFields(state, a, integrationId)
 
 	if !a.Spec.IsEmpty() {
-		state.Spec = mergeSpec(state.Spec, a.Spec, r.portClient.JSONEscapeHTML)
+		prior := state.Spec
+		if remoteJSON, err := utils.GoObjectToTerraformString(a.Spec, r.portClient.JSONEscapeHTML); err == nil {
+			if state.isSaasOAuth2() {
+				prior = extractAppSpec(prior)
+				remoteJSON = extractAppSpec(remoteJSON)
+			}
+			if remote, err := parseSpecFromConfig(remoteJSON); err == nil && remote != nil {
+				state.Spec = mergeSpec(prior, remote, r.portClient.JSONEscapeHTML)
+			}
+		}
 	}
 	if a.Config != nil {
 		state.Config, _ = utils.GoObjectToTerraformStringPreferExisting(state.Config, a.Config, r.portClient.JSONEscapeHTML)

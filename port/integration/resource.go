@@ -46,6 +46,15 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
+	if plan.isSaasOAuth2() {
+		resp.Diagnostics.AddError(
+			"SaasOAuth2 integrations cannot be created via Terraform",
+			"Authorize the integration in the Port UI (OAuth), then import it with "+
+				"`terraform import port_integration.<name> <installation_id>`.",
+		)
+		return
+	}
+
 	if !plan.Config.IsNull() && !plan.Config.IsUnknown() {
 		resp.Diagnostics.AddError(
 			"config cannot be set on creation",
@@ -75,9 +84,9 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 
 	applyWriteResult(plan, created, created.InstallationId)
 
-	if plan.isSaas() {
+	if plan.isHosted() {
 		// Port Hosted integrations provision asynchronously. This provider does not
-		// deploy Ocean for self-hosted installs, so only SaaS can wait for default
+		// deploy Ocean for self-hosted installs, so only hosted types wait for default
 		// mappings and deployment to finish here.
 		r.awaitInfra(ctx, plan, created.InstallationId, "created", true, true, &resp.Diagnostics)
 	}
@@ -139,7 +148,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	applyWriteResult(plan, updated, integrationIdentifier)
 
-	if plan.isSaas() {
+	if plan.isHosted() {
 		r.awaitInfra(ctx, plan, integrationIdentifier, "updated", true, false, &resp.Diagnostics)
 	}
 
@@ -161,7 +170,7 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	if state.isSaas() {
+	if state.isHosted() {
 		if err := r.portClient.WaitForIntegrationDeleted(ctx, integrationIdentifier); err != nil {
 			resp.Diagnostics.AddError("integration deletion did not complete", err.Error())
 			return

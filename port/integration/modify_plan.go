@@ -82,6 +82,9 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 	// mappings). Neither belongs in a diff unless the configuration itself
 	// changed, so fall back to state when only Port moved.
 	plan.Spec = planSpec(plan.Spec, state.Spec)
+	if plan.isSaasOAuth2() {
+		plan.Spec = extractAppSpec(plan.Spec)
+	}
 	if plan.Config.IsNull() || plan.Config.IsUnknown() {
 		plan.Config = state.Config
 	}
@@ -154,4 +157,15 @@ func specSections(spec types.String) map[string]json.RawMessage {
 		return nil
 	}
 	return sections
+}
+
+func extractAppSpec(spec types.String) types.String {
+	if app := priorSpecSections(spec)["appSpec"]; app != nil {
+		out, _ := json.Marshal(map[string]any{"appSpec": app})
+		return types.StringValue(string(out))
+	}
+	if spec.IsUnknown() {
+		return spec
+	}
+	return types.StringNull()
 }

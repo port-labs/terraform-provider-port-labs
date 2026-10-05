@@ -47,6 +47,15 @@ func integrationToPortBody(state *IntegrationModel, forCreate bool) (*cli.Integr
 			return nil, err
 		}
 		integration.Spec = spec
+	} else if state.isSaasOAuth2() {
+		spec, err := parseSpecFromConfig(state.Spec)
+		if err != nil {
+			return nil, err
+		}
+
+		if spec != nil && spec.AppSpec != nil {
+			integration.Spec = &cli.IntegrationClientSpec{AppSpec: spec.AppSpec}
+		}
 	}
 
 	if !state.Config.IsNull() {

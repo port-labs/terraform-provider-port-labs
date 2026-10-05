@@ -992,3 +992,117 @@ resource "port_page" "page_with_filters" {
 		},
 	})
 }
+
+func TestAccPortPageResourceWithFilterPresets(t *testing.T) {
+	serviceBlueprintIdentifier := utils.GenID()
+	pageIdentifier := utils.GenID()
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config := func(presetTitle string) string {
+		return fmt.Sprintf(`
+resource "port_blueprint" "service" {
+  identifier  = "%s"
+  title       = "Service Test"
+  icon        = "Microservice"
+
+  properties = {
+    string_props = {
+      language = {
+        type = "string"
+      }
+    }
+  }
+}
+
+resource "port_page" "page_with_filter_presets" {
+  identifier = "%s"
+  title      = "Page With Filter Presets"
+  icon       = "Dashboard"
+  type       = "dashboard"
+
+  depends_on = [port_blueprint.service]
+
+  page_filter_presets = [
+    jsonencode(
+      {
+        "identifier" = "ruby-services"
+        "title"      = "%s"
+        "filters" = [
+          {
+            "identifier" = "filter-ruby"
+            "title"      = "Service: language = Ruby"
+            "query" = {
+              "combinator" = "and"
+              "rules" = [
+                {
+                  "value"    = "Ruby"
+                  "property" = "language"
+                  "operator" = "="
+                }
+              ]
+              "blueprint" = port_blueprint.service.identifier
+            }
+          }
+        ]
+      }
+    )
+  ]
+
+  widgets = [
+    jsonencode(
+      {
+        "id" = "dashboardWidget"
+        "type" = "dashboard-widget"
+        "layout" = [
+          {
+            "height" = 400
+            "columns" = [
+              {
+                "id" = "widget1"
+                "size" = 12
+              }
+            ]
+          }
+        ]
+        "widgets" = [
+          {
+            "id" = "widget1"
+            "type" = "markdown"
+            "title" = "Guide"
+            "markdown" = "# Guide"
+          }
+        ]
+      }
+    )
+  ]
+}
+`, serviceBlueprintIdentifier, pageIdentifier, presetTitle)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + config("Ruby services"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.page_with_filter_presets", "identifier", pageIdentifier),
+					resource.TestCheckResourceAttr("port_page.page_with_filter_presets", "type", "dashboard"),
+					resource.TestCheckResourceAttr("port_page.page_with_filter_presets", "page_filter_presets.#", "1"),
+					resource.TestMatchResourceAttr("port_page.page_with_filter_presets", "page_filter_presets.0", regexp.MustCompile(`"identifier"\s*:\s*"ruby-services"`)),
+					resource.TestMatchResourceAttr("port_page.page_with_filter_presets", "page_filter_presets.0", regexp.MustCompile(`"title"\s*:\s*"Ruby services"`)),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + config("Ruby production services"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.page_with_filter_presets", "page_filter_presets.#", "1"),
+					resource.TestMatchResourceAttr("port_page.page_with_filter_presets", "page_filter_presets.0", regexp.MustCompile(`"title"\s*:\s*"Ruby production services"`)),
+				),
+			},
+		},
+	})
+}

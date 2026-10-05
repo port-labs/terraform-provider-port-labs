@@ -19,55 +19,42 @@ func PageToPortBody(pm *PageModel) (*cli.Page, error) {
 		Description: pm.Description.ValueStringPointer(),
 	}
 
-	widgets, err := widgetsToPortBody(pm.Widgets)
+	widgets, err := jsonObjectListToPortBody(pm.Widgets)
 	if err != nil {
 		return nil, err
 	}
 	pb.Widgets = widgets
 
-	pageFilters, err := pageFiltersToPortBody(pm.PageFilters)
+	pageFilters, err := jsonObjectListToPortBody(pm.PageFilters)
 	if err != nil {
 		return nil, err
 	}
 	pb.PageFilters = pageFilters
 
+	pageFilterPresets, err := jsonObjectListToPortBody(pm.PageFilterPresets)
+	if err != nil {
+		return nil, err
+	}
+	pb.PageFilterPresets = pageFilterPresets
+
 	return pb, nil
 }
 
-func widgetsToPortBody(widgets types.List) (*[]map[string]any, error) {
-	if widgets.IsNull() || widgets.IsUnknown() {
+func jsonObjectListToPortBody(items types.List) (*[]map[string]any, error) {
+	if items.IsNull() || items.IsUnknown() {
 		return nil, nil
 	}
-	widgetsBody := make([]map[string]any, len(widgets.Elements()))
-	for i, w := range widgets.Elements() {
-		strVal := w.(types.String)
+	body := make([]map[string]any, len(items.Elements()))
+	for i, item := range items.Elements() {
+		strVal := item.(types.String)
 		v, err := utils.TerraformJsonStringToGoObject(strVal.ValueStringPointer())
 
 		if err != nil {
 			return nil, err
 		}
 
-		widgetsBody[i] = *v
+		body[i] = *v
 	}
 
-	return &widgetsBody, nil
-}
-
-func pageFiltersToPortBody(pageFilters types.List) (*[]map[string]any, error) {
-	if pageFilters.IsNull() || pageFilters.IsUnknown() {
-		return nil, nil
-	}
-	pageFiltersBody := make([]map[string]any, len(pageFilters.Elements()))
-	for i, pf := range pageFilters.Elements() {
-		strVal := pf.(types.String)
-		v, err := utils.TerraformJsonStringToGoObject(strVal.ValueStringPointer())
-
-		if err != nil {
-			return nil, err
-		}
-
-		pageFiltersBody[i] = *v
-	}
-
-	return &pageFiltersBody, nil
+	return &body, nil
 }

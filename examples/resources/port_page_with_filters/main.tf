@@ -151,6 +151,32 @@ resource "port_page" "page_with_filters" {
     )
   ]
 
+  page_filter_presets = [
+    jsonencode(
+      {
+        "identifier" = "ruby-microservices"
+        "title"      = "Ruby Microservices"
+        "filters" = [
+          {
+            "identifier" = "584d867a-a0bc-4880-bcce-f0e62eca4905"
+            "title"      = "Microservice: language = Ruby"
+            "query" = {
+              "combinator" = "and"
+              "rules" = [
+                {
+                  "value"    = "Ruby"
+                  "property" = "language"
+                  "operator" = "="
+                }
+              ]
+              "blueprint" = "Microservice"
+            }
+          }
+        ]
+      }
+    )
+  ]
+
   widgets = [
     jsonencode(
       {

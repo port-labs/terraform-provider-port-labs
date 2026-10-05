@@ -2,8 +2,6 @@ package scorecard_group
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"reflect"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -11,87 +9,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/scorecard"
 )
-
-func configuredJSONObjectKeys(stateValue types.String) map[string]struct{} {
-	if stateValue.IsNull() || stateValue.IsUnknown() {
-		return nil
-	}
-
-	var values map[string]any
-	if err := json.Unmarshal([]byte(stateValue.ValueString()), &values); err != nil || len(values) == 0 {
-		return nil
-	}
-
-	keys := make(map[string]struct{}, len(values))
-	for key := range values {
-		keys[key] = struct{}{}
-	}
-	return keys
-}
-
-func jsonObjectFromAPIForRead(stateValue types.String, apiValues map[string]any, jsonEscapeHTML bool) types.String {
-	if stateValue.IsNull() || stateValue.IsUnknown() {
-		return types.StringNull()
-	}
-
-	configuredKeys := configuredJSONObjectKeys(stateValue)
-	if len(configuredKeys) == 0 {
-		return types.StringNull()
-	}
-
-	var stateMap map[string]any
-	if err := json.Unmarshal([]byte(stateValue.ValueString()), &stateMap); err != nil {
-		return stateValue
-	}
-
-	valuesForState := make(map[string]any, len(stateMap))
-	for key := range stateMap {
-		if apiValue, ok := apiValues[key]; ok {
-			valuesForState[key] = apiValue
-		} else {
-			valuesForState[key] = nil
-		}
-	}
-
-	stateJSON, err := utils.GoObjectToTerraformString(valuesForState, jsonEscapeHTML)
-	if err != nil {
-		return stateValue
-	}
-	return stateJSON
-}
-
-func syncJSONObjectState(stateValue *types.String, apiValues map[string]any, fieldName string, jsonEscapeHTML bool, syncFromAPI bool) error {
-	if stateValue.IsNull() || stateValue.IsUnknown() {
-		return nil
-	}
-
-	apiState := jsonObjectFromAPIForRead(*stateValue, apiValues, jsonEscapeHTML)
-	if syncFromAPI {
-		*stateValue = apiState
-		return nil
-	}
-
-	equal, err := utils.JSONStringsSemanticallyEqual(
-		stateValue.ValueString(),
-		apiState.ValueString(),
-		jsonEscapeHTML,
-	)
-	if err != nil {
-		return err
-	}
-	if equal {
-		return nil
-	}
-
-	configured := stateValue.ValueString()
-	*stateValue = apiState
-	return fmt.Errorf(
-		"%s were not applied by the API: configured %s, API returned %s",
-		fieldName,
-		configured,
-		apiState.ValueString(),
-	)
-}
 
 func shouldRefreshGroupLevels(stateLevels []scorecard.Level, cliLevels []cli.Level) bool {
 	if len(stateLevels) == 0 && reflect.DeepEqual(cliLevels, scorecard.DefaultCliLevels()) {
@@ -307,17 +224,17 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	}
 
 	jsonEscapeHTML := r.jsonEscapeHTML()
-	if err := syncJSONObjectState(&state.ScorecardProperties, group.ScorecardProperties, "scorecard properties", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+	if err := utils.SyncJSONObjectState(&state.ScorecardProperties, group.ScorecardProperties, "scorecard properties", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
 		return err
 	}
 
-	if err := syncJSONObjectState(&state.GroupProperties, group.GroupProperties, "group properties", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+	if err := utils.SyncJSONObjectState(&state.GroupProperties, group.GroupProperties, "group properties", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
 		return err
 	}
-	if err := syncJSONObjectState(&state.GroupRelations, group.GroupRelations, "group relations", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+	if err := utils.SyncJSONObjectState(&state.GroupRelations, group.GroupRelations, "group relations", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
 		return err
 	}
-	if err := syncJSONObjectState(&state.ScorecardRelations, group.ScorecardRelations, "scorecard relations", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+	if err := utils.SyncJSONObjectState(&state.ScorecardRelations, group.ScorecardRelations, "scorecard relations", jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
 		return err
 	}
 	switch {

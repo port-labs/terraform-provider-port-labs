@@ -40,4 +40,9 @@ const (
 	// Workflow self serve trigger context types
 	CreateEntityContext = "CREATE_ENTITY"
 	EntityContext       = "ENTITY"
+
+	// Workflow input node notification targets
+	EmailNotification   = "email"
+	WebhookNotification = "webhook"
+	SlackNotification   = "slack"
 )

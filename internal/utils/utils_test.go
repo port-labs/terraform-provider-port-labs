@@ -188,7 +188,7 @@ func TestJSONStringsSemanticallyEqual(t *testing.T) {
 func TestGoObjectToTerraformStringPreferExisting(t *testing.T) {
 	v := map[string]any{
 		"deleteDependentEntities": true,
-		"resources":                 []any{},
+		"resources":               []any{},
 	}
 
 	t.Run("returns preferred when semantically equal", func(t *testing.T) {
@@ -276,4 +276,22 @@ func TestGoObjectToTerraformStringPreferExistingAtListIndex(t *testing.T) {
 	want1, _ := GoObjectToTerraformString(object1, false)
 	assert.Equal(t, want1, got1)
 	assert.NotEqual(t, TerraformStringAtList(oldList, 1), got1)
+}
+
+func TestSyncJSONObjectState(t *testing.T) {
+	state := types.StringValue(`{"owner":"platform-team"}`)
+	apiValues := map[string]any{"owner": "platform-team", "extra": "ignored"}
+
+	err := SyncJSONObjectState(&state, apiValues, "properties", false, false)
+	assert.NoError(t, err)
+
+	state = types.StringValue(`{"owner":"platform-team"}`)
+	apiValues = map[string]any{"owner": "other-team"}
+	err = SyncJSONObjectState(&state, apiValues, "properties", false, false)
+	assert.Error(t, err)
+
+	state = types.StringValue(`{"owner":"platform-team"}`)
+	err = SyncJSONObjectState(&state, apiValues, "properties", false, true)
+	assert.NoError(t, err)
+	assert.Equal(t, types.StringValue(`{"owner":"other-team"}`), state)
 }

@@ -1,12 +1,20 @@
 package scorecard_test
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/version"
 )
 
 func testAccCreateBlueprintConfig(identifier string) string {
@@ -670,4 +678,174 @@ func TestAccPortScorecardRuleOrderPreservation(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccPortScorecardPropertiesAndRelations(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	scorecardIdentifier := utils.GenID()
+	teamName := "tf-sc-" + strings.ReplaceAll(utils.GenID(), "-", "")
+	scorecardPropKey := "tf_scorecard_" + strings.ReplaceAll(utils.GenID(), "-", "")
+	scorecardRelationKey := "tf_scorecard_rel_" + strings.ReplaceAll(utils.GenID(), "-", "")
+
+	config := testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_team" "platform" {
+		name = "%s"
+	}
+
+	resource "port_scorecard" "test" {
+		identifier = "%s"
+		title      = "Scorecard Properties Relations"
+		blueprint  = port_blueprint.microservice.identifier
+		properties = jsonencode({
+			%s = "platform-team"
+		})
+		relations = jsonencode({
+			%s = port_team.platform.identifier
+		})
+		rules = [{
+			identifier = "hasTeam"
+			title      = "Has Team"
+			level      = "Gold"
+			query = {
+				combinator = "and"
+				conditions = [jsonencode({
+					property = "$team"
+					operator = "isNotEmpty"
+				})]
+			}
+		}]
+		depends_on = [
+			port_blueprint.microservice,
+			port_team.platform,
+		]
+	}`, teamName, scorecardIdentifier, scorecardPropKey, scorecardRelationKey)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.TestAccPreCheck(t)
+			testAccExtendScorecardBlueprint(t, scorecardPropKey, scorecardRelationKey)
+		},
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + config,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "identifier", scorecardIdentifier),
+					resource.TestCheckResourceAttr("port_scorecard.test", "title", "Scorecard Properties Relations"),
+					resource.TestMatchResourceAttr("port_scorecard.test", "properties", regexp.MustCompile(regexp.QuoteMeta(scorecardPropKey))),
+					resource.TestMatchResourceAttr("port_scorecard.test", "properties", regexp.MustCompile(`"platform-team"`)),
+					resource.TestMatchResourceAttr("port_scorecard.test", "relations", regexp.MustCompile(regexp.QuoteMeta(scorecardRelationKey))),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func testAccExtendScorecardBlueprint(t *testing.T, propKey, relationKey string) {
+	t.Helper()
+
+	client, ctx := testAccPortClient(t)
+	teamTarget := "_team"
+	title := "TF Acc Test"
+	many := false
+	required := false
+
+	if _, err := client.PatchBlueprintRelation(ctx, "_scorecard", relationKey, &cli.Relation{
+		Title:    &title,
+		Target:   &teamTarget,
+		Many:     &many,
+		Required: &required,
+	}); err != nil {
+		t.Fatalf("failed to add relation %q on _scorecard: %v", relationKey, err)
+	}
+
+	if err := testAccPatchBlueprintProperty(ctx, client, "_scorecard", propKey, title); err != nil {
+		t.Fatalf("failed to add property %q on _scorecard: %v", propKey, err)
+	}
+
+	t.Cleanup(func() {
+		_ = testAccPatchBlueprintProperty(ctx, client, "_scorecard", propKey, "")
+		_ = testAccPatchBlueprintRelationDelete(ctx, client, "_scorecard", relationKey)
+	})
+}
+
+func testAccPatchBlueprintRelationDelete(ctx context.Context, client *cli.PortClient, blueprintID, relationKey string) error {
+	body := map[string]any{
+		"relations": map[string]any{
+			relationKey: nil,
+		},
+	}
+	resp, err := client.Client.R().
+		SetContext(ctx).
+		SetBody(body).
+		SetPathParam("identifier", blueprintID).
+		Patch("v1/blueprints/{identifier}")
+	if err != nil {
+		return err
+	}
+	var pb cli.PortBody
+	if err := json.Unmarshal(resp.Body(), &pb); err != nil {
+		return err
+	}
+	if !pb.OK {
+		return fmt.Errorf("failed to delete relation %q on blueprint %q, got: %s", relationKey, blueprintID, resp.Body())
+	}
+	return nil
+}
+
+func testAccPatchBlueprintProperty(ctx context.Context, client *cli.PortClient, blueprintID, propKey, title string) error {
+	var property any
+	if title == "" {
+		property = nil
+	} else {
+		property = map[string]any{
+			"type":  "string",
+			"title": title,
+		}
+	}
+
+	body := map[string]any{
+		"schema": map[string]any{
+			"properties": map[string]any{
+				propKey: property,
+			},
+		},
+	}
+
+	resp, err := client.Client.R().
+		SetContext(ctx).
+		SetBody(body).
+		SetPathParam("identifier", blueprintID).
+		Patch("v1/blueprints/{identifier}")
+	if err != nil {
+		return err
+	}
+
+	var pb cli.PortBody
+	if err := json.Unmarshal(resp.Body(), &pb); err != nil {
+		return err
+	}
+	if !pb.OK {
+		return fmt.Errorf("failed to patch property %q on blueprint %q, got: %s", propKey, blueprintID, resp.Body())
+	}
+	return nil
+}
+
+func testAccPortClient(t *testing.T) (*cli.PortClient, context.Context) {
+	t.Helper()
+
+	baseURL := os.Getenv("PORT_BASE_URL")
+	if baseURL == "" {
+		baseURL = consts.DefaultBaseUrl
+	}
+	client, err := cli.New(baseURL, cli.WithHeader("User-Agent", version.ProviderVersion))
+	if err != nil {
+		t.Fatalf("failed to create Port client: %v", err)
+	}
+	ctx := context.Background()
+	if _, err := client.Authenticate(ctx, os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET")); err != nil {
+		t.Fatalf("failed to authenticate with Port: %v", err)
+	}
+	return client, ctx
 }

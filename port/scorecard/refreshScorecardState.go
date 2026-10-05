@@ -64,7 +64,7 @@ func DefaultCliLevels() []cli.Level {
 	}
 }
 
-func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string) {
+func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string, syncPropertiesFromAPI bool) error {
 	oldFilter := state.Filter
 
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintIdentifier, s.Identifier))
@@ -212,4 +212,12 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 	if shouldRefreshLevels(state.Levels, s.Levels) {
 		state.Levels = fromCliLevelsToTerraformLevels(s.Levels)
 	}
+
+	if err := utils.SyncJSONObjectState(&state.Properties, s.Properties, "properties", r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
+		return err
+	}
+	if err := utils.SyncJSONObjectState(&state.Relations, s.Relations, "relations", r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
+		return err
+	}
+	return nil
 }

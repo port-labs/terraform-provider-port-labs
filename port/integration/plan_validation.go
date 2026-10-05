@@ -50,7 +50,7 @@ func validatePlanRules(plan, state *IntegrationModel, isCreate bool, diags *diag
 	}
 }
 
-func (r *IntegrationResource) validateSpecAtPlan(ctx context.Context, plan *IntegrationModel, diags *diag.Diagnostics) {
+func (r *IntegrationResource) validateSpecAtPlan(ctx context.Context, plan *IntegrationModel, specConfiguredInHCL bool, diags *diag.Diagnostics) {
 	if r.portClient == nil || !plan.isHosted() {
 		return
 	}
@@ -60,38 +60,56 @@ func (r *IntegrationResource) validateSpecAtPlan(ctx context.Context, plan *Inte
 	if plan.InstallationId.IsNull() || plan.InstallationId.IsUnknown() {
 		return
 	}
-	rawSpec := plan.Spec
+
 	if plan.isSaasOAuth2() {
-		rawSpec = extractAppSpec(plan.Spec)
-	}
-	if rawSpec.IsNull() || rawSpec.IsUnknown() || rawSpec.ValueString() == "" {
+		if !specConfiguredInHCL {
+			return
+		}
+		rawSpec := extractAppSpec(plan.Spec)
+		if rawSpec.IsNull() || rawSpec.IsUnknown() || rawSpec.ValueString() == "" {
+			return
+		}
+		spec, err := parseSpecFromConfig(rawSpec)
+		if err != nil {
+			diags.AddError("invalid spec", err.Error())
+			return
+		}
+		if spec == nil || spec.AppSpec == nil {
+			return
+		}
+		body := cli.ValidateIntegrationSpecBody{
+			ValidationMode:   consts.ValidateSaasOAuth2Spec,
+			InstallationId:   plan.InstallationId.ValueString(),
+			InstallationType: plan.installationType(),
+			Spec:             spec,
+		}
+		if err := r.portClient.ValidateIntegrationSpec(ctx, plan.InstallationAppType.ValueString(), body); err != nil {
+			diags.AddError("invalid integration spec", err.Error())
+		}
 		return
 	}
 
-	spec, err := parseSpecFromConfig(rawSpec)
+	if plan.Spec.IsNull() || plan.Spec.IsUnknown() || plan.Spec.ValueString() == "" {
+		return
+	}
+
+	spec, err := parseSpecFromConfig(plan.Spec)
 	if err != nil {
 		diags.AddError("invalid spec", err.Error())
 		return
 	}
-	if spec == nil {
+	if spec == nil || spec.IntegrationSpec == nil {
 		return
 	}
 
 	body := cli.ValidateIntegrationSpecBody{
+		ValidationMode:   consts.ValidateSaasSpec,
 		InstallationId:   plan.InstallationId.ValueString(),
 		InstallationType: plan.installationType(),
 		Spec:             spec,
-	}
-	if plan.isSaasOAuth2() {
-		body.ValidationMode = consts.ValidateSaasOAuth2Spec
-	} else {
-		if spec.IntegrationSpec == nil {
-			return
-		}
-		body.ValidationMode = consts.ValidateSaasSpec
-		body.Options = &cli.ValidateIntegrationSpecOptions{
+		Options: &cli.ValidateIntegrationSpecOptions{
 			SkipSecretExistenceCheck: true,
-		}
+		},
 	}
 
 	if err := r.portClient.ValidateIntegrationSpec(ctx, plan.InstallationAppType.ValueString(), body); err != nil {

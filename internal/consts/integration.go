@@ -16,8 +16,8 @@ const (
 )
 
 const (
-	ValidateSaasSpec       = "saasSpecValidation"
-	ValidateSaasOAuth2Spec = "saasOAuth2SpecValidation"
+	ValidateSaasSpec       = "full"
+	ValidateSaasOAuth2Spec = "appSpec"
 )
 
 const (

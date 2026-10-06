@@ -229,10 +229,11 @@ type NotificationFieldModel struct {
 }
 
 type PermissionsModel struct {
-	Users  types.List   `tfsdk:"users"`
-	Roles  types.List   `tfsdk:"roles"`
-	Teams  types.List   `tfsdk:"teams"`
-	Policy types.String `tfsdk:"policy"`
+	Users        types.List   `tfsdk:"users"`
+	Roles        types.List   `tfsdk:"roles"`
+	Teams        types.List   `tfsdk:"teams"`
+	Policy       types.String `tfsdk:"policy"`
+	ErrorMessage types.String `tfsdk:"error_message"`
 }
 
 type RespondersModel struct {

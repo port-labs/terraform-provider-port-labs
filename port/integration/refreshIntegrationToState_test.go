@@ -114,3 +114,58 @@ func TestMergeSpecImplicitAppSpec(t *testing.T) {
 		got.ValueString(),
 	)
 }
+
+func TestRefreshIntegrationState_SaasOAuth2StripsIntegrationSpec(t *testing.T) {
+	r := &IntegrationResource{portClient: &cli.PortClient{}}
+	state := &IntegrationModel{
+		InstallationId: types.StringValue("github-oauth"),
+	}
+	installationType := consts.InstallationTypeSaasOAuth2
+	remote := &cli.Integration{
+		InstallationId:   "github-oauth",
+		InstallationType: &installationType,
+		Spec: &cli.IntegrationClientSpec{
+			IntegrationSpec: map[string]any{
+				"githubAppPrivateKey": "oauth-secret-name",
+				"githubAppId":         "123",
+			},
+			AppSpec: map[string]any{
+				"scheduledResyncInterval":  "12h",
+				"liveEventsUuid":           "abc",
+				"liveEventsIngestHostname": "ingest.example.com",
+			},
+		},
+	}
+
+	r.refreshIntegrationState(state, remote, "github-oauth")
+
+	assert.Equal(t, consts.InstallationTypeSaasOAuth2, state.InstallationType.ValueString())
+	assert.JSONEq(t, `{"appSpec":{"scheduledResyncInterval":"12h"}}`, state.Spec.ValueString())
+}
+
+func TestRefreshIntegrationState_SaasOAuth2PreservesPriorAppSpec(t *testing.T) {
+	r := &IntegrationResource{portClient: &cli.PortClient{}}
+	state := &IntegrationModel{
+		InstallationId: types.StringValue("github-oauth"),
+		Spec:           types.StringValue(`{"appSpec":{"scheduledResyncInterval":"6h","liveEventsEnabled":false}}`),
+	}
+	installationType := consts.InstallationTypeSaasOAuth2
+	remote := &cli.Integration{
+		InstallationId:   "github-oauth",
+		InstallationType: &installationType,
+		Spec: &cli.IntegrationClientSpec{
+			IntegrationSpec: map[string]any{"githubAppPrivateKey": "oauth-secret-name"},
+			AppSpec: map[string]any{
+				"scheduledResyncInterval": "12h",
+				"liveEventsEnabled":       true,
+			},
+		},
+	}
+
+	r.refreshIntegrationState(state, remote, "github-oauth")
+
+	assert.JSONEq(t,
+		`{"appSpec":{"scheduledResyncInterval":"6h","liveEventsEnabled":false}}`,
+		state.Spec.ValueString(),
+	)
+}

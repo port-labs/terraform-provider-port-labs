@@ -39,3 +39,14 @@ func TestPlanSpec(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractAppSpec(t *testing.T) {
+	got := extractAppSpec(types.StringValue(
+		`{"integrationSpec":{"githubAppPrivateKey":"x"},"appSpec":{"scheduledResyncInterval":"12h"}}`,
+	))
+	assert.JSONEq(t, `{"appSpec":{"scheduledResyncInterval":"12h"}}`, got.ValueString())
+
+	assert.True(t, extractAppSpec(types.StringValue(`{"integrationSpec":{"token":"x"}}`)).IsNull())
+	assert.True(t, extractAppSpec(types.StringNull()).IsNull())
+	assert.True(t, extractAppSpec(types.StringUnknown()).IsUnknown())
+}

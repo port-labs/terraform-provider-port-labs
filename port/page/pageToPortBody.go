@@ -19,19 +19,19 @@ func PageToPortBody(pm *PageModel) (*cli.Page, error) {
 		Description: pm.Description.ValueStringPointer(),
 	}
 
-	widgets, err := jsonObjectListToPortBody(pm.Widgets)
+	widgets, err := pageJSONListToPortBody(pm.Widgets)
 	if err != nil {
 		return nil, err
 	}
 	pb.Widgets = widgets
 
-	pageFilters, err := jsonObjectListToPortBody(pm.PageFilters)
+	pageFilters, err := pageJSONListToPortBody(pm.PageFilters)
 	if err != nil {
 		return nil, err
 	}
 	pb.PageFilters = pageFilters
 
-	pageFilterPresets, err := jsonObjectListToPortBody(pm.PageFilterPresets)
+	pageFilterPresets, err := pageJSONListToPortBody(pm.PageFilterPresets)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func PageToPortBody(pm *PageModel) (*cli.Page, error) {
 	return pb, nil
 }
 
-func jsonObjectListToPortBody(items types.List) (*[]map[string]any, error) {
+func pageJSONListToPortBody(items types.List) (*[]map[string]any, error) {
 	if items.IsNull() || items.IsUnknown() {
 		return nil, nil
 	}

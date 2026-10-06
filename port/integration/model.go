@@ -39,3 +39,11 @@ func (m *IntegrationModel) installationType() string {
 func (m *IntegrationModel) isSaas() bool {
 	return consts.IsSaas(m.installationType())
 }
+
+func (m *IntegrationModel) isSaasOAuth2() bool {
+	return consts.IsSaasOAuth2(m.installationType())
+}
+
+func (m *IntegrationModel) isHosted() bool {
+	return consts.IsHosted(m.installationType())
+}

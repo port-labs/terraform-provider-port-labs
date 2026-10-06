@@ -291,6 +291,10 @@ terraform import port_page.microservice_entity_page microserviceEntity
 
 When the blueprint is managed in the same Terraform configuration, you can apply the entity page resource directly after the blueprint is created.
 
+~> **Use static widget IDs with Terraform**
+When managing entity pages across multiple organizations or environments with Terraform, use the static widget IDs ` + "`entityPageGrouper`, `overviewDashboard`, and `entityDetails`" + ` exactly as shown in the example below.
+Do not copy widget IDs from a UI-exported page JSON. Port generates those IDs per organization. Using them in a different organization or environment causes silent no-op updates: Terraform reports a successful apply, but the page layout does not change.
+
 ` + "```hcl" + `
 
 resource "port_page" "microservice_entity_page" {

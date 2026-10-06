@@ -139,7 +139,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	applyWriteResult(plan, updated, integrationIdentifier)
 
-	if plan.isSaas() {
+	if plan.isHosted() {
 		r.awaitInfra(ctx, plan, integrationIdentifier, "updated", true, false, &resp.Diagnostics)
 	}
 
@@ -161,7 +161,7 @@ func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteReq
 		return
 	}
 
-	if state.isSaas() {
+	if state.isHosted() {
 		if err := r.portClient.WaitForIntegrationDeleted(ctx, integrationIdentifier); err != nil {
 			resp.Diagnostics.AddError("integration deletion did not complete", err.Error())
 			return

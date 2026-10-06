@@ -77,6 +77,72 @@ description: |-
   }
   
   
+  Dashboard Page with filter presets
+  Named groups of page filters that users can apply together. Each preset contains the same filter objects used in page_filters.
+  
+  
+  resource "port_page" "microservice_dashboard_page" {
+    identifier = "microservice_dashboard_page"
+    title      = "Microservices"
+    icon       = "GitHub"
+    type       = "dashboard"
+    page_filter_presets = [
+      jsonencode(
+        {
+          "identifier" : "ruby-services",
+          "title" : "Ruby services",
+          "filters" : [
+            {
+              "identifier" : "language-ruby",
+              "title" : "Language is Ruby",
+              "query" : {
+                "combinator" : "and",
+                "rules" : [
+                  {
+                    "property" : "language",
+                    "operator" : "=",
+                    "value" : "Ruby"
+                  }
+                ],
+                "blueprint" : port_blueprint.base_blueprint.identifier
+              }
+            }
+          ]
+        }
+      )
+    ]
+    widgets = [
+      jsonencode(
+        {
+          "id" : "dashboardWidget",
+          "layout" : [
+            {
+              "height" : 400,
+              "columns" : [
+                {
+                  "id" : "microserviceGuide",
+                  "size" : 12
+                }
+              ]
+            }
+          ],
+          "type" : "dashboard-widget",
+          "widgets" : [
+            {
+              "title" : "Microservices Guide",
+              "icon" : "BlankPage",
+              "markdown" : "# This is the new Microservice Dashboard",
+              "type" : "markdown",
+              "description" : "",
+              "id" : "microserviceGuide"
+            }
+          ],
+        }
+      )
+    ]
+  }
+  
+  
   Entity Page
   Customize the entity page https://docs.getport.io/customize-pages-dashboards-and-plugins/page/entity-page template for a blueprint.
   Entity pages are auto-created when a blueprint is created (identifier: <blueprint>Entity).
@@ -479,6 +545,75 @@ resource "port_page" "microservice_dashboard_page" {
 
 ```
 
+### Dashboard Page with filter presets
+
+Named groups of page filters that users can apply together. Each preset contains the same filter objects used in `page_filters`.
+
+```hcl
+
+resource "port_page" "microservice_dashboard_page" {
+  identifier = "microservice_dashboard_page"
+  title      = "Microservices"
+  icon       = "GitHub"
+  type       = "dashboard"
+  page_filter_presets = [
+    jsonencode(
+      {
+        "identifier" : "ruby-services",
+        "title" : "Ruby services",
+        "filters" : [
+          {
+            "identifier" : "language-ruby",
+            "title" : "Language is Ruby",
+            "query" : {
+              "combinator" : "and",
+              "rules" : [
+                {
+                  "property" : "language",
+                  "operator" : "=",
+                  "value" : "Ruby"
+                }
+              ],
+              "blueprint" : port_blueprint.base_blueprint.identifier
+            }
+          }
+        ]
+      }
+    )
+  ]
+  widgets = [
+    jsonencode(
+      {
+        "id" : "dashboardWidget",
+        "layout" : [
+          {
+            "height" : 400,
+            "columns" : [
+              {
+                "id" : "microserviceGuide",
+                "size" : 12
+              }
+            ]
+          }
+        ],
+        "type" : "dashboard-widget",
+        "widgets" : [
+          {
+            "title" : "Microservices Guide",
+            "icon" : "BlankPage",
+            "markdown" : "# This is the new Microservice Dashboard",
+            "type" : "markdown",
+            "description" : "",
+            "id" : "microserviceGuide"
+          }
+        ],
+      }
+    )
+  ]
+}
+
+```
+
 ### Entity Page
 
 Customize the [entity page](https://docs.getport.io/customize-pages-dashboards-and-plugins/page/entity-page) template for a blueprint.
@@ -831,6 +966,7 @@ terraform import port_page.home_page "\$home"
 - `description` (String) The page description
 - `icon` (String) The icon of the page
 - `locked` (Boolean) Whether the page is locked, if true, viewers will not be able to edit the page widgets and filters
+- `page_filter_presets` (List of String) The page filter presets. Each preset is a JSON object with 'identifier' (string), 'title' (string), and 'filters' (array of page filters). Each filter has 'identifier', 'title', and 'query' (object with 'combinator' and 'rules' array). Preset identifiers must be unique on the page, and filter identifiers must be unique within a preset. Contextual filters are not allowed in presets.
 - `page_filters` (List of String) The page filters. Each filter is a JSON object with 'identifier' (string), 'title' (string), and 'query' (object with 'combinator' and 'rules' array). The rules array can contain any filter type.
 - `parent` (String) The identifier of the folder in which the page is in, default is the root of the sidebar
 - `title` (String) The title of the page

@@ -257,6 +257,39 @@ func TestTerraformStringAtList(t *testing.T) {
 	assert.True(t, TerraformStringAtList(types.List{}, 0).IsNull())
 }
 
+func TestTerraformJsonStringListToGoObjects(t *testing.T) {
+	got, err := TerraformJsonStringListToGoObjects(types.ListNull(types.StringType))
+	assert.NoError(t, err)
+	assert.Nil(t, got)
+
+	got, err = TerraformJsonStringListToGoObjects(types.ListUnknown(types.StringType))
+	assert.NoError(t, err)
+	assert.Nil(t, got)
+
+	emptyList, diags := types.ListValue(types.StringType, []attr.Value{})
+	assert.False(t, diags.HasError())
+	got, err = TerraformJsonStringListToGoObjects(emptyList)
+	assert.NoError(t, err)
+	assert.Equal(t, &[]map[string]any{}, got)
+
+	list, diags := types.ListValue(types.StringType, []attr.Value{
+		types.StringValue(`{"identifier":"ruby-services","title":"Ruby services"}`),
+		types.StringValue(""),
+	})
+	assert.False(t, diags.HasError())
+	got, err = TerraformJsonStringListToGoObjects(list)
+	assert.NoError(t, err)
+	assert.Equal(t, &[]map[string]any{
+		{"identifier": "ruby-services", "title": "Ruby services"},
+		{},
+	}, got)
+
+	invalidList, diags := types.ListValue(types.StringType, []attr.Value{types.StringValue("{")})
+	assert.False(t, diags.HasError())
+	_, err = TerraformJsonStringListToGoObjects(invalidList)
+	assert.Error(t, err)
+}
+
 func TestGoObjectToTerraformStringPreferExistingAtListIndex(t *testing.T) {
 	object0 := map[string]any{"alpha": 456, "zebra": 123}
 	object1 := map[string]any{"changed": true}

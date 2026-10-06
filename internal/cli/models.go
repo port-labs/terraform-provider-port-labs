@@ -408,9 +408,10 @@ type (
 		Title       *string           `json:"title,omitempty"`
 		Locked      *bool             `json:"locked,omitempty"`
 		Blueprint   *string           `json:"blueprint,omitempty"`
-		Widgets     *[]map[string]any `json:"widgets,omitempty"`
-		PageFilters *[]map[string]any `json:"pageFilters,omitempty"`
-		Description *string           `json:"description,omitempty"`
+		Widgets           *[]map[string]any `json:"widgets,omitempty"`
+		PageFilters       *[]map[string]any `json:"pageFilters,omitempty"`
+		PageFilterPresets *[]map[string]any `json:"pageFilterPresets,omitempty"`
+		Description       *string           `json:"description,omitempty"`
 	}
 
 	PageReadPermissions struct {

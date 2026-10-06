@@ -77,7 +77,7 @@ const testAccEntityPageDoublePageFilter = `
     jsonencode(
       {
         "identifier" = "b2c3d4e5-272c-4a20-9635-add07d097bb9"
-        "title"      = "Entity updated in the past 7 days"
+        "title"      = "Entity updated in the last 3 days"
         "query" = {
           "combinator" = "and"
           "rules" = [
@@ -85,7 +85,7 @@ const testAccEntityPageDoublePageFilter = `
               "property" = "$updatedAt"
               "operator" = "between"
               "value" = {
-                "preset" = "lastWeek"
+                "preset" = "last3Days"
               }
             }
           ]

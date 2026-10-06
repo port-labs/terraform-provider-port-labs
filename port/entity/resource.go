@@ -101,18 +101,19 @@ func (r *EntityResource) Create(ctx context.Context, req resource.CreateRequest,
 		return
 	}
 
-	writeEntityComputedFieldsToState(state, en)
+	writeEntityComputedFieldsToState(ctx, state, en)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
-func writeEntityComputedFieldsToState(state *EntityModel, e *cli.Entity) {
+func writeEntityComputedFieldsToState(ctx context.Context, state *EntityModel, e *cli.Entity) {
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", e.Blueprint, e.Identifier))
 	state.Identifier = types.StringValue(e.Identifier)
 	state.CreatedAt = types.StringValue(e.CreatedAt.String())
 	state.CreatedBy = types.StringValue(e.CreatedBy)
 	state.UpdatedAt = types.StringValue(e.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(e.UpdatedBy)
+	_ = refreshPropertySourcesEntityState(ctx, state, e)
 }
 
 func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -169,7 +170,7 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 		}
 	}
 
-	writeEntityComputedFieldsToState(state, en)
+	writeEntityComputedFieldsToState(ctx, state, en)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

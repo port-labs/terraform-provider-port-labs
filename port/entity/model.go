@@ -5,10 +5,22 @@ import (
 )
 
 type ArrayPropsModel struct {
-	StringItems  types.Map `tfsdk:"string_items"`
-	NumberItems  types.Map `tfsdk:"number_items"`
-	BooleanItems types.Map `tfsdk:"boolean_items"`
-	ObjectItems  types.Map `tfsdk:"object_items"`
+	StringItems       types.Map                          `tfsdk:"string_items"`
+	NumberItems       types.Map                          `tfsdk:"number_items"`
+	BooleanItems      types.Map                          `tfsdk:"boolean_items"`
+	ObjectItems       types.Map                          `tfsdk:"object_items"`
+	UnionStringSlices map[string]UnionStringSliceModel   `tfsdk:"union_string_slices"`
+	UnionNumberSlices map[string]UnionNumberSliceModel   `tfsdk:"union_number_slices"`
+}
+
+type UnionStringSliceModel struct {
+	SourceKey types.String `tfsdk:"source_key"`
+	Items     types.List   `tfsdk:"items"`
+}
+
+type UnionNumberSliceModel struct {
+	SourceKey types.String `tfsdk:"source_key"`
+	Items     types.List   `tfsdk:"items"`
 }
 
 type EntityPropertiesModel struct {
@@ -36,6 +48,7 @@ type EntityModel struct {
 	UpdatedAt                    types.String           `tfsdk:"updated_at"`
 	UpdatedBy                    types.String           `tfsdk:"updated_by"`
 	Properties                   *EntityPropertiesModel `tfsdk:"properties"`
+	PropertySources              types.Map              `tfsdk:"property_sources"`
 	Teams                        []types.String         `tfsdk:"teams"`
 	Relations                    *RelationModel         `tfsdk:"relations"`
 	CreateMissingRelatedEntities types.Bool             `tfsdk:"create_missing_related_entities"`

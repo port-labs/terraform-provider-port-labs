@@ -144,13 +144,20 @@ func (d *SearchDataSource) refreshPropertiesEntityState(ctx context.Context, sta
 	}
 }
 
-func refreshRelationsEntityState(state *EntityModel, e *cli.Entity) {
+func refreshRelationsEntityState(state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) {
 	relations := &RelationModel{
 		SingleRelation: make(map[string]*string),
 		ManyRelations:  make(map[string][]string),
 	}
 
 	for identifier, r := range e.Relations {
+		if blueprint != nil {
+			relation, ok := blueprint.Relations[identifier]
+			if ok && relation.Union != nil && *relation.Union {
+				continue
+			}
+		}
+
 		switch v := r.(type) {
 		case []interface{}:
 			if len(v) != 0 {
@@ -206,10 +213,11 @@ func (d *SearchDataSource) refreshEntityState(ctx context.Context, e *cli.Entity
 	state.UpdatedAt = types.StringValue(e.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(e.UpdatedBy)
 
-	if len(e.Team) != 0 {
-		state.Teams = make([]types.String, len(e.Team))
-		for i, t := range e.Team {
-			state.Teams[i] = types.StringValue(t)
+	if len(cli.EntityTeamIdentifiers(e.Team)) != 0 && !cli.EntityTeamIsUnionSlice(e.Team) {
+		teamIdentifiers := cli.EntityTeamIdentifiers(e.Team)
+		state.Teams = make([]types.String, len(teamIdentifiers))
+		for i, teamID := range teamIdentifiers {
+			state.Teams[i] = types.StringValue(teamID)
 		}
 	}
 
@@ -218,7 +226,7 @@ func (d *SearchDataSource) refreshEntityState(ctx context.Context, e *cli.Entity
 	}
 
 	if len(e.Relations) != 0 {
-		refreshRelationsEntityState(state, e)
+		refreshRelationsEntityState(state, e, b)
 	}
 
 	if len(e.Scorecards) != 0 {

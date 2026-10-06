@@ -116,11 +116,12 @@ type WorkflowTriggerContext struct {
 // but differ in their dynamic query: permissions take an RBAC `policy`, responders
 // take an entity search `usersQuery` over _user.
 type WorkflowNodePermissions struct {
-	Users      []string `json:"users,omitempty"`
-	Roles      []string `json:"roles,omitempty"`
-	Teams      []string `json:"teams,omitempty"`
-	Policy     any      `json:"policy,omitempty"`
-	UsersQuery any      `json:"usersQuery,omitempty"`
+	Users        []string `json:"users,omitempty"`
+	Roles        []string `json:"roles,omitempty"`
+	Teams        []string `json:"teams,omitempty"`
+	Policy       any      `json:"policy,omitempty"`
+	UsersQuery   any      `json:"usersQuery,omitempty"`
+	ErrorMessage string   `json:"errorMessage,omitempty"`
 }
 
 type WorkflowUserInputs struct {

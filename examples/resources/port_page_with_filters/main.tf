@@ -192,7 +192,11 @@ resource "port_page" "page_with_filters" {
               },
               {
                 "id"   = "QocSYJUnJdQLNRik"
-                "size" = 6
+                "size" = 3
+              },
+              {
+                "id"   = "ssZ3dPYBdlT3rO5z"
+                "size" = 3
               }
             ]
           },
@@ -247,6 +251,20 @@ resource "port_page" "page_with_filters" {
             "emptyStateText" = ""
             "icon"           = "Pie"
             "property"       = "property#studio"
+            "dataset" = {
+              "combinator" = "and"
+              "rules"      = []
+            }
+          },
+          {
+            "id"             = "ssZ3dPYBdlT3rO5z"
+            "type"           = "entities-pie-chart"
+            "blueprint"      = "Microservice"
+            "title"          = "Services by language"
+            "description"    = ""
+            "emptyStateText" = ""
+            "icon"           = "Pie"
+            "property"       = "property#language"
             "dataset" = {
               "combinator" = "and"
               "rules"      = []

@@ -58,6 +58,27 @@ func blueprintPermissionsToPortBody(state *BlueprintPermissionsModel) (*cli.Blue
 			updateMetadataProperties["$title"] = blueprintPermissionsTFBlockToBlueprintPermissionsBlock(*state.Entities.UpdateMetadataProperties.Title)
 		}
 	}
+
+	var readMetadataProperties cli.BlueprintRolesOrPropertiesPermissionsBlock = nil
+	if state.Entities.ReadMetadataProperties != nil {
+		readMetadataProperties = make(cli.BlueprintRolesOrPropertiesPermissionsBlock)
+		if state.Entities.ReadMetadataProperties.Team != nil {
+			readMetadataProperties["$team"] = blueprintPermissionsTFBlockToBlueprintPermissionsBlock(*state.Entities.ReadMetadataProperties.Team)
+		}
+		if state.Entities.ReadMetadataProperties.Icon != nil {
+			readMetadataProperties["$icon"] = blueprintPermissionsTFBlockToBlueprintPermissionsBlock(*state.Entities.ReadMetadataProperties.Icon)
+		}
+		if state.Entities.ReadMetadataProperties.Title != nil {
+			readMetadataProperties["$title"] = blueprintPermissionsTFBlockToBlueprintPermissionsBlock(*state.Entities.ReadMetadataProperties.Title)
+		}
+	}
+	var readProperties cli.BlueprintRolesOrPropertiesPermissionsBlock = nil
+	if state.Entities.ReadProperties != nil {
+		readProperties = make(cli.BlueprintRolesOrPropertiesPermissionsBlock, len(*state.Entities.ReadProperties))
+		for readPropertiesKey, readPropertiesValue := range *state.Entities.ReadProperties {
+			readProperties[readPropertiesKey] = blueprintPermissionsTFBlockToBlueprintPermissionsBlock(readPropertiesValue)
+		}
+	}
 	var updateProperties cli.BlueprintRolesOrPropertiesPermissionsBlock = nil
 	if state.Entities.UpdateProperties != nil {
 		updateProperties = make(cli.BlueprintRolesOrPropertiesPermissionsBlock, len(*state.Entities.UpdateProperties))
@@ -111,12 +132,24 @@ func blueprintPermissionsToPortBody(state *BlueprintPermissionsModel) (*cli.Blue
 			utils.CopyGenericMaps(finalUpdateProperties, updateProperties)
 		}
 	}
+	var finalReadProperties cli.BlueprintRolesOrPropertiesPermissionsBlock = nil
+	if readMetadataProperties != nil {
+		finalReadProperties = readMetadataProperties
+	}
+	if readProperties != nil {
+		if finalReadProperties == nil {
+			finalReadProperties = readProperties
+		} else {
+			utils.CopyGenericMaps(finalReadProperties, readProperties)
+		}
+	}
 	blueprintPermissions := cli.BlueprintPermissions{
 		Entities: cli.BlueprintPermissionsEntities{
 			Read:             readBlock,
 			Register:         registerBlock,
 			Unregister:       unregisterBlock,
 			Update:           updateBlock,
+			ReadProperties:   finalReadProperties,
 			UpdateProperties: finalUpdateProperties,
 			UpdateRelations:  updateRelations,
 		},

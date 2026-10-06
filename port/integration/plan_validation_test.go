@@ -21,6 +21,18 @@ func TestValidatePlanRules_ConfigOnCreate(t *testing.T) {
 	assert.True(t, diags.HasError())
 }
 
+func TestValidatePlanRules_SaasOAuth2CreateRejected(t *testing.T) {
+	plan := &IntegrationModel{
+		InstallationId:   types.StringValue("github-oauth"),
+		InstallationType: types.StringValue(consts.InstallationTypeSaasOAuth2),
+	}
+
+	diags := diag.Diagnostics{}
+	validatePlanRules(plan, nil, true, &diags)
+	assert.True(t, diags.HasError())
+	assert.Contains(t, diags.Errors()[0].Summary(), "SaasOAuth2 integrations cannot be created")
+}
+
 func TestValidatePlanRules_CreatePortResourcesOriginImmutable(t *testing.T) {
 	state := &IntegrationModel{
 		CreatePortResourcesOrigin: types.StringValue(consts.CreatePortResourcesOriginEmpty),

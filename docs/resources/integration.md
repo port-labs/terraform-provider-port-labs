@@ -195,7 +195,45 @@ description: |-
   NOTICE:
   The following config properties (selector.query|entity.mappings.*) are jq expressions, which means that you need to input either a valid jq expression (E.g .title), or if you want a string value, a quoted escaped string val (E.g 'my-string').
   NOTES:
-  config cannot be set on creation. Integrations receive default mappings during provisioning. Create first, then add config on a subsequent apply.create_port_resources_origin can only be set on creation. Use Empty to skip default resource creation, or Port to create default resources via Port. If omitted, default resources are created.Port Hosted spec is validated at plan time against the integration type definition in Port.status reflects async provisioning (Creating → Running) for Port Hosted integrations only.installation_id, installation_app_type, and installation_type cannot be changed after creation.spec is only supported for Port Hosted integrations (installation_type = "Saas"). Do not set it on self-hosted integrations.A changelog destination (webhook_changelog_destination / kafka_changelog_destination) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).Existing integrations can be brought under Terraform management with terraform import port_integration.my_integration <installation_id>.terraform destroy deletes the real integration in Port, not just removes it from state. Use terraform state rm if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
+  config cannot be set on creation. Integrations receive default mappings during provisioning. Create first, then add config on a subsequent apply.create_port_resources_origin can only be set on creation. Use Empty to skip default resource creation, or Port to create default resources via Port. If omitted, default resources are created.Port Hosted spec is validated at plan time against the integration type definition in Port.status reflects async provisioning (Creating → Running) for Port Hosted integrations only.installation_id, installation_app_type, and installation_type cannot be changed after creation.spec is only supported for Port Hosted integrations (installation_type = "Saas" or "SaasOAuth2"). Do not set it on self-hosted integrations.SaasOAuth2 is import-only: authorize the integration in the Port UI first, then terraform import. Terraform cannot create OAuth installs. For SaasOAuth2, spec may only contain appSpec — OAuth-managed integrationSpec credentials cannot be set or updated via Terraform.A changelog destination (webhook_changelog_destination / kafka_changelog_destination) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).Existing integrations can be brought under Terraform management with terraform import port_integration.my_integration <installation_id>.terraform destroy deletes the real integration in Port, not just removes it from state. Use terraform state rm if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
+  SaasOAuth2 example — import then manage mappings / appSpec
+  OAuth-authorized Port Hosted integrations (e.g. GitHub App via Connect) must be installed in the Port UI first:
+  
+  terraform import port_integration.github_oauth <installation_id>
+  
+  Then manage mappings and optional appSpec toggles (not OAuth credentials):
+  
+  resource "port_integration" "github_oauth" {
+    installation_id       = "github-oauth-prod"
+    installation_app_type = "github-ocean"
+    installation_type     = "SaasOAuth2"
+    title                 = "GitHub (OAuth)"
+  
+    spec = jsonencode({
+      appSpec = {
+        scheduledResyncInterval = "12h"
+        liveEventsEnabled       = true
+      }
+    })
+  
+    config = jsonencode({
+      resources = [
+        {
+          kind = "repository"
+          selector = { query = "true" }
+          port = {
+            entity = {
+              mappings = {
+                identifier = ".name"
+                blueprint  = "\"githubRepository\""
+                title      = ".name"
+              }
+            }
+          }
+        }
+      ]
+    })
+  }
 ---
 
 # port_integration (Resource)
@@ -425,10 +463,55 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 - Port Hosted `spec` is validated at plan time against the integration type definition in Port.
 - `status` reflects async provisioning (`Creating` → `Running`) for Port Hosted integrations only.
 - `installation_id`, `installation_app_type`, and `installation_type` cannot be changed after creation.
-- `spec` is only supported for Port Hosted integrations (`installation_type = "Saas"`). Do not set it on self-hosted integrations.
+- `spec` is only supported for Port Hosted integrations (`installation_type = "Saas"` or `"SaasOAuth2"`). Do not set it on self-hosted integrations.
+- `SaasOAuth2` is **import-only**: authorize the integration in the Port UI first, then `terraform import`. Terraform cannot create OAuth installs. For `SaasOAuth2`, `spec` may only contain `appSpec` — OAuth-managed `integrationSpec` credentials cannot be set or updated via Terraform.
 - A changelog destination (`webhook_changelog_destination` / `kafka_changelog_destination`) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).
 - Existing integrations can be brought under Terraform management with `terraform import port_integration.my_integration <installation_id>`.
 - `terraform destroy` deletes the real integration in Port, not just removes it from state. Use `terraform state rm` if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
+
+## SaasOAuth2 example — import then manage mappings / appSpec
+
+OAuth-authorized Port Hosted integrations (e.g. GitHub App via Connect) must be installed in the Port UI first:
+
+```shell
+terraform import port_integration.github_oauth <installation_id>
+```
+
+Then manage mappings and optional `appSpec` toggles (not OAuth credentials):
+
+```hcl
+resource "port_integration" "github_oauth" {
+  installation_id       = "github-oauth-prod"
+  installation_app_type = "github-ocean"
+  installation_type     = "SaasOAuth2"
+  title                 = "GitHub (OAuth)"
+
+  spec = jsonencode({
+    appSpec = {
+      scheduledResyncInterval = "12h"
+      liveEventsEnabled       = true
+    }
+  })
+
+  config = jsonencode({
+    resources = [
+      {
+        kind = "repository"
+        selector = { query = "true" }
+        port = {
+          entity = {
+            mappings = {
+              identifier = ".name"
+              blueprint  = "\"githubRepository\""
+              title      = ".name"
+            }
+          }
+        }
+      }
+    ]
+  })
+}
+```
 
 
 
@@ -444,9 +527,9 @@ The following config properties (`selector.query|entity.mappings.*`) are jq expr
 - `config` (String) Integration mapping and configuration as a JSON string (use `jsonencode`). **Cannot be set on creation** — integrations receive default mappings during provisioning. Add `config` after the initial `terraform apply` to override the defaults.
 - `create_port_resources_origin` (String) Controls whether Port creates default blueprints and mappings when the integration is created. Use `Empty` to skip default resource creation. Use `Port` to create default resources via Port. If omitted, default resources are created. Can only be set on creation.
 - `installation_app_type` (String) The integrated tool name for catalog integration types (e.g. `github-ocean`, `gitlab`, `pagerduty`). Cannot be changed after creation.
-- `installation_type` (String) The installation type of the integration. Use `Saas` for Port Hosted integrations (requires `spec`). Defaults to `OnPrem` for self-hosted integrations. Only `OnPrem` and `Saas` are supported by this resource. Cannot be changed after creation.
+- `installation_type` (String) The installation type of the integration. Use `Saas` for Port Hosted integrations created via Terraform (requires `spec`). Use `SaasOAuth2` only for OAuth-authorized Port Hosted integrations that already exist — **import-only** (cannot be created via Terraform). Defaults to `OnPrem` for self-hosted integrations. Cannot be changed after creation.
 - `kafka_changelog_destination` (Object) The changelog destination of the blueprint (just an empty `{}`) (see [below for nested schema](#nestedatt--kafka_changelog_destination))
-- `spec` (String) Port Hosted integration spec as a JSON string (use `jsonencode`). **Only supported when `installation_type` is `Saas`** — must not be set for self-hosted integrations. Required for Port Hosted integrations. Contains `integrationSpec` (credentials/settings) and optionally `appSpec` (feature toggles like `liveEventsEnabled`, `sendRawDataExamples`, etc.). Sensitive `integrationSpec` values (org secret references) are preserved from your HCL on read. If `appSpec` fields are omitted, Port applies its own defaults — which may differ from Port UI defaults. Declare `appSpec` explicitly to match the UI behavior.
+- `spec` (String) Port Hosted integration spec as a JSON string (use `jsonencode`). Supported for `Saas` and `SaasOAuth2` — must not be set for self-hosted integrations. For `Saas`, required and must include `integrationSpec` (credentials/settings) plus optional `appSpec` (feature toggles like `liveEventsEnabled`, `sendRawDataExamples`, etc.). For `SaasOAuth2`, optional and may only include `appSpec` — OAuth-managed `integrationSpec` credentials cannot be set or updated via Terraform. Sensitive `integrationSpec` values (org secret references) are preserved from your HCL on read for `Saas`. If `appSpec` fields are omitted, Port applies its own defaults — which may differ from Port UI defaults. Declare `appSpec` explicitly to match the UI behavior.
 - `title` (String)
 - `version` (String)
 - `webhook_changelog_destination` (Attributes) The webhook changelog destination of the integration (see [below for nested schema](#nestedatt--webhook_changelog_destination))

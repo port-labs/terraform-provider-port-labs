@@ -793,6 +793,13 @@ func (s *IntegrationClientSpec) IsEmpty() bool {
 	return s == nil || (s.IntegrationSpec == nil && s.AppSpec == nil)
 }
 
+func (s *IntegrationClientSpec) AppSpecOnly() *IntegrationClientSpec {
+	if s == nil || s.AppSpec == nil {
+		return nil
+	}
+	return &IntegrationClientSpec{AppSpec: s.AppSpec}
+}
+
 type IntegrationStatus struct {
 	Status  string  `json:"status"`
 	Message *string `json:"message,omitempty"`

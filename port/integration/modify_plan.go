@@ -45,6 +45,13 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 		return
 	}
 
+	var config IntegrationModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	specConfiguredInHCL := specIsConfigured(config.Spec)
+
 	isCreate := req.State.Raw.IsNull()
 
 	if isCreate {
@@ -52,7 +59,7 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 		if resp.Diagnostics.HasError() {
 			return
 		}
-		r.validateSpecAtPlan(ctx, &plan, &resp.Diagnostics)
+		r.validateSpecAtPlan(ctx, &plan, specConfiguredInHCL, &resp.Diagnostics)
 		return
 	}
 
@@ -82,14 +89,14 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 	// mappings). Neither belongs in a diff unless the configuration itself
 	// changed, so fall back to state when only Port moved.
 	plan.Spec = planSpec(plan.Spec, state.Spec)
+	if plan.isSaasOAuth2() {
+		plan.Spec = extractAppSpec(plan.Spec)
+	}
 	if plan.Config.IsNull() || plan.Config.IsUnknown() {
 		plan.Config = state.Config
 	}
 
-	// Validate the normalized plan (including inherited appSpec), then always
-	// persist it. Skipping Plan.Set on validation failure leaves Terraform with
-	// an inconsistent planned spec and surfaces a spurious provider bug.
-	r.validateSpecAtPlan(ctx, &plan, &resp.Diagnostics)
+	r.validateSpecAtPlan(ctx, &plan, specConfiguredInHCL, &resp.Diagnostics)
 	resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
 }
 
@@ -154,4 +161,19 @@ func specSections(spec types.String) map[string]json.RawMessage {
 		return nil
 	}
 	return sections
+}
+
+func extractAppSpec(spec types.String) types.String {
+	if spec.IsUnknown() {
+		return spec
+	}
+	app := priorSpecSections(spec)["appSpec"]
+	if app == nil {
+		return types.StringNull()
+	}
+	out, err := json.Marshal(map[string]any{"appSpec": app})
+	if err != nil {
+		return types.StringNull()
+	}
+	return types.StringValue(string(out))
 }

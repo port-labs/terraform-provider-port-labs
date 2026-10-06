@@ -194,6 +194,27 @@ func TerraformJsonStringToGoObject(v *string) (*map[string]any, error) {
 	return &vMap, nil
 }
 
+func TerraformJsonStringListToGoObjects(items types.List) (*[]map[string]any, error) {
+	if items.IsNull() || items.IsUnknown() {
+		return nil, nil
+	}
+	body := make([]map[string]any, len(items.Elements()))
+	for i, item := range items.Elements() {
+		strVal := item.(types.String)
+		v, err := TerraformJsonStringToGoObject(strVal.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if v == nil {
+			body[i] = map[string]any{}
+			continue
+		}
+		body[i] = *v
+	}
+
+	return &body, nil
+}
+
 func configuredJSONObjectKeys(stateValue types.String) map[string]struct{} {
 	if stateValue.IsNull() || stateValue.IsUnknown() {
 		return nil

@@ -297,10 +297,7 @@ func TestAccPortSystemBlueprintRelations(t *testing.T) {
 	})
 }
 
-// Covers PORT-18596: Create must UpdateBlueprint even when include_in_global_search is unset.
-// State-only checks are insufficient because the bug wrote relations into Terraform state
-// without applying them in Port.
-func TestAccPortSystemBlueprintCreateAppliesSchemaWithoutIncludeInGlobalSearch(t *testing.T) {
+func TestAccPortSystemBlueprintResourceAllowsUpdate(t *testing.T) {
 	identifier := "_user"
 	relationKey := fmt.Sprintf("tf_rel_%s", strings.ReplaceAll(utils.GenID(), "-", ""))
 	propKey := fmt.Sprintf("tf_prop_%s", strings.ReplaceAll(utils.GenID(), "-", ""))

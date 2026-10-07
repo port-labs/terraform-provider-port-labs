@@ -1,16 +1,24 @@
 package system_blueprint_test
 
 import (
+	"context"
 	"fmt"
-	"github.com/stretchr/testify/require"
 	"math/rand/v2"
+	"os"
 	"regexp"
 	"strings"
 	"testing"
 	"text/template"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/stretchr/testify/require"
+
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/version"
 )
 
 func TestAccPortSystemBlueprintBasic(t *testing.T) {
@@ -270,6 +278,8 @@ func TestAccPortSystemBlueprintRelations(t *testing.T) {
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.owner.description", "The team that owns this service"),
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.owner.many", "false"),
 					resource.TestCheckResourceAttr("port_system_blueprint.test", "relations.owner.required", "true"),
+					testAccCheckSystemBlueprintRelationInAPI(identifier, "owner", "_team"),
+					testAccCheckSystemBlueprintRelationInAPI(identifier, "groups", "_team"),
 				),
 			},
 			{
@@ -285,6 +295,159 @@ func TestAccPortSystemBlueprintRelations(t *testing.T) {
 			},
 		},
 	})
+}
+
+// Covers PORT-18596: Create must UpdateBlueprint even when include_in_global_search is unset.
+// State-only checks are insufficient because the bug wrote relations into Terraform state
+// without applying them in Port.
+func TestAccPortSystemBlueprintCreateAppliesSchemaWithoutIncludeInGlobalSearch(t *testing.T) {
+	identifier := "_user"
+	relationKey := fmt.Sprintf("tf_rel_%s", strings.ReplaceAll(utils.GenID(), "-", ""))
+	propKey := fmt.Sprintf("tf_prop_%s", strings.ReplaceAll(utils.GenID(), "-", ""))
+
+	configWithSchema := fmt.Sprintf(`
+	resource "port_system_blueprint" "test" {
+		identifier = "%s"
+		properties = {
+			string_props = {
+				"%s" = {
+					title = "TF Create Schema Prop"
+				}
+			}
+		}
+		relations = {
+			"%s" = {
+				target = "_team"
+				title = "TF Create Schema Relation"
+				many = false
+				required = false
+			}
+		}
+	}`, identifier, propKey, relationKey)
+
+	configWithoutSchema := fmt.Sprintf(`
+	resource "port_system_blueprint" "test" {
+		identifier = "%s"
+		properties = {}
+		relations = {}
+	}`, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + configWithSchema,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_system_blueprint.test", "identifier", identifier),
+					resource.TestCheckResourceAttr(
+						"port_system_blueprint.test",
+						fmt.Sprintf("properties.string_props.%s.title", propKey),
+						"TF Create Schema Prop",
+					),
+					resource.TestCheckResourceAttr(
+						"port_system_blueprint.test",
+						fmt.Sprintf("relations.%s.target", relationKey),
+						"_team",
+					),
+					testAccCheckSystemBlueprintPropertyInAPI(identifier, propKey),
+					testAccCheckSystemBlueprintRelationInAPI(identifier, relationKey, "_team"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + configWithoutSchema,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_system_blueprint.test", "identifier", identifier),
+					testAccCheckSystemBlueprintPropertyAbsentInAPI(identifier, propKey),
+					testAccCheckSystemBlueprintRelationAbsentInAPI(identifier, relationKey),
+				),
+			},
+		},
+	})
+}
+
+func testAccPortClient() (*cli.PortClient, context.Context, error) {
+	baseURL := os.Getenv("PORT_BASE_URL")
+	if baseURL == "" {
+		baseURL = consts.DefaultBaseUrl
+	}
+	client, err := cli.New(baseURL, cli.WithHeader("User-Agent", version.ProviderVersion))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create Port client: %w", err)
+	}
+	ctx := context.Background()
+	if _, err := client.Authenticate(ctx, os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET")); err != nil {
+		return nil, nil, fmt.Errorf("failed to authenticate with Port: %w", err)
+	}
+	return client, ctx, nil
+}
+
+func testAccReadSystemBlueprint(blueprintID string) (*cli.Blueprint, error) {
+	client, ctx, err := testAccPortClient()
+	if err != nil {
+		return nil, err
+	}
+	bp, _, err := client.ReadBlueprint(ctx, blueprintID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read blueprint %q from API: %w", blueprintID, err)
+	}
+	return bp, nil
+}
+
+func testAccCheckSystemBlueprintRelationInAPI(blueprintID, relationKey, target string) resource.TestCheckFunc {
+	return func(_ *terraform.State) error {
+		bp, err := testAccReadSystemBlueprint(blueprintID)
+		if err != nil {
+			return err
+		}
+		relation, ok := bp.Relations[relationKey]
+		if !ok {
+			return fmt.Errorf("relation %q was not found on blueprint %q in Port API", relationKey, blueprintID)
+		}
+		if relation.Target == nil || *relation.Target != target {
+			return fmt.Errorf("relation %q target = %v, want %q", relationKey, relation.Target, target)
+		}
+		return nil
+	}
+}
+
+func testAccCheckSystemBlueprintRelationAbsentInAPI(blueprintID, relationKey string) resource.TestCheckFunc {
+	return func(_ *terraform.State) error {
+		bp, err := testAccReadSystemBlueprint(blueprintID)
+		if err != nil {
+			return err
+		}
+		if _, ok := bp.Relations[relationKey]; ok {
+			return fmt.Errorf("relation %q still exists on blueprint %q in Port API", relationKey, blueprintID)
+		}
+		return nil
+	}
+}
+
+func testAccCheckSystemBlueprintPropertyInAPI(blueprintID, propKey string) resource.TestCheckFunc {
+	return func(_ *terraform.State) error {
+		bp, err := testAccReadSystemBlueprint(blueprintID)
+		if err != nil {
+			return err
+		}
+		if _, ok := bp.Schema.Properties[propKey]; !ok {
+			return fmt.Errorf("property %q was not found on blueprint %q in Port API", propKey, blueprintID)
+		}
+		return nil
+	}
+}
+
+func testAccCheckSystemBlueprintPropertyAbsentInAPI(blueprintID, propKey string) resource.TestCheckFunc {
+	return func(_ *terraform.State) error {
+		bp, err := testAccReadSystemBlueprint(blueprintID)
+		if err != nil {
+			return err
+		}
+		if _, ok := bp.Schema.Properties[propKey]; ok {
+			return fmt.Errorf("property %q still exists on blueprint %q in Port API", propKey, blueprintID)
+		}
+		return nil
+	}
 }
 
 func TestAccPortSystemBlueprintIncludeInGlobalSearch(t *testing.T) {

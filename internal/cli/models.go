@@ -408,9 +408,10 @@ type (
 		Title       *string           `json:"title,omitempty"`
 		Locked      *bool             `json:"locked,omitempty"`
 		Blueprint   *string           `json:"blueprint,omitempty"`
-		Widgets     *[]map[string]any `json:"widgets,omitempty"`
-		PageFilters *[]map[string]any `json:"pageFilters,omitempty"`
-		Description *string           `json:"description,omitempty"`
+		Widgets           *[]map[string]any `json:"widgets,omitempty"`
+		PageFilters       *[]map[string]any `json:"pageFilters,omitempty"`
+		PageFilterPresets *[]map[string]any `json:"pageFilterPresets,omitempty"`
+		Description       *string           `json:"description,omitempty"`
 	}
 
 	PageReadPermissions struct {
@@ -791,6 +792,13 @@ type IntegrationClientSpec struct {
 // IsEmpty reports whether the spec carries nothing Terraform can manage.
 func (s *IntegrationClientSpec) IsEmpty() bool {
 	return s == nil || (s.IntegrationSpec == nil && s.AppSpec == nil)
+}
+
+func (s *IntegrationClientSpec) AppSpecOnly() *IntegrationClientSpec {
+	if s == nil || s.AppSpec == nil {
+		return nil
+	}
+	return &IntegrationClientSpec{AppSpec: s.AppSpec}
 }
 
 type IntegrationStatus struct {

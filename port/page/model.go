@@ -12,8 +12,9 @@ type PageModel struct {
 	Icon        types.String `tfsdk:"icon"`
 	Locked      types.Bool   `tfsdk:"locked"`
 	Blueprint   types.String `tfsdk:"blueprint"`
-	Widgets     types.List   `tfsdk:"widgets"`
-	PageFilters types.List   `tfsdk:"page_filters"`
+	Widgets           types.List   `tfsdk:"widgets"`
+	PageFilters       types.List   `tfsdk:"page_filters"`
+	PageFilterPresets types.List   `tfsdk:"page_filter_presets"`
 	CreatedAt   types.String `tfsdk:"created_at"`
 	CreatedBy   types.String `tfsdk:"created_by"`
 	UpdatedAt   types.String `tfsdk:"updated_at"`

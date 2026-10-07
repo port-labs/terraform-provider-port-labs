@@ -1656,7 +1656,7 @@ func TestValidateConfigReportsNodeWithoutConfigBlock(t *testing.T) {
 	}, nil)
 
 	require.Len(t, diags.Errors(), 1, diags.Errors())
-	assert.Equal(t, "Missing trigger node", diags.Errors()[0].Summary())
+	assert.Equal(t, "Invalid node type combination", diags.Errors()[0].Summary())
 }
 
 type (

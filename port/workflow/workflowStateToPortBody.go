@@ -96,6 +96,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 				On:                  c.On.ValueString(),
 				BlueprintIdentifier: c.BlueprintIdentifier.ValueStringPointer(),
 				UserInput:           c.UserInput.ValueStringPointer(),
+				Visible:             c.Visible.ValueBoolPointer(),
 			})
 		}
 

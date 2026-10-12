@@ -82,6 +82,7 @@ type TriggerContextModel struct {
 	On                  types.String `tfsdk:"on"`
 	BlueprintIdentifier types.String `tfsdk:"blueprint_identifier"`
 	UserInput           types.String `tfsdk:"user_input"`
+	Visible             types.Bool   `tfsdk:"visible"`
 }
 
 type EventTriggerModel struct {

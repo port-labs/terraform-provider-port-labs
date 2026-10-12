@@ -878,6 +878,42 @@ func TestValidateSelfServeTriggerContexts(t *testing.T) {
 			},
 			summary: "Invalid attribute combination",
 		},
+		"entity with visible": {
+			context: TriggerContextModel{
+				On:        types.StringValue(consts.EntityContext),
+				UserInput: types.StringValue("service"),
+				Visible:   types.BoolValue(false),
+			},
+			summary: "Invalid attribute combination",
+		},
+		"create_entity with visible": {
+			context: TriggerContextModel{
+				On:                  types.StringValue(consts.CreateEntityContext),
+				BlueprintIdentifier: types.StringValue("service"),
+				Visible:             types.BoolValue(false),
+			},
+			summary: "Invalid attribute combination",
+		},
+		"self_service_hub without visible": {
+			context: TriggerContextModel{On: types.StringValue(consts.SelfServiceHubContext)},
+			summary: "Missing required attribute",
+		},
+		"self_service_hub with blueprint": {
+			context: TriggerContextModel{
+				On:                  types.StringValue(consts.SelfServiceHubContext),
+				Visible:             types.BoolValue(false),
+				BlueprintIdentifier: types.StringValue("service"),
+			},
+			summary: "Invalid attribute combination",
+		},
+		"self_service_hub with user_input": {
+			context: TriggerContextModel{
+				On:        types.StringValue(consts.SelfServiceHubContext),
+				Visible:   types.BoolValue(false),
+				UserInput: types.StringValue("service"),
+			},
+			summary: "Invalid attribute combination",
+		},
 	}
 
 	for name, test := range tests {
@@ -915,6 +951,43 @@ func TestValidateSelfServeTriggerContextsSkipUnknownRejectedValues(t *testing.T)
 				SelfServeTrigger: &SelfServeTriggerModel{Contexts: []TriggerContextModel{context}},
 			}
 			assert.NotContains(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)), "Invalid attribute combination")
+		})
+	}
+}
+
+func TestValidateSelfServeTriggerSelfServiceHubContext(t *testing.T) {
+	hubContext := TriggerContextModel{On: types.StringValue(consts.SelfServiceHubContext), Visible: types.BoolValue(false)}
+	tests := map[string]struct {
+		contexts  []TriggerContextModel
+		duplicate bool
+	}{
+		"hidden without other contexts": {contexts: []TriggerContextModel{hubContext}},
+		"alongside entity and create_entity": {contexts: []TriggerContextModel{
+			{On: types.StringValue(consts.EntityContext), UserInput: types.StringValue("service")},
+			{On: types.StringValue(consts.CreateEntityContext), BlueprintIdentifier: types.StringValue("service")},
+			hubContext,
+		}},
+		"unknown visible": {contexts: []TriggerContextModel{
+			{On: types.StringValue(consts.SelfServiceHubContext), Visible: types.BoolUnknown()},
+		}},
+		"duplicate": {
+			contexts:  []TriggerContextModel{hubContext, {On: types.StringValue(consts.SelfServiceHubContext), Visible: types.BoolValue(true)}},
+			duplicate: true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			node := WorkflowNodeModel{
+				Identifier:       types.StringValue("trigger"),
+				SelfServeTrigger: &SelfServeTriggerModel{Contexts: test.contexts},
+			}
+			summaries := errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil))
+			if test.duplicate {
+				assert.Equal(t, []string{"Duplicate SELF_SERVICE_HUB context"}, summaries)
+			} else {
+				assert.Empty(t, summaries)
+			}
 		})
 	}
 }
@@ -1409,6 +1482,10 @@ func TestEverySelfServeTriggerContextSerializes(t *testing.T) {
 			On:        types.StringValue(consts.EntityContext),
 			UserInput: types.StringValue("service"),
 		},
+		consts.SelfServiceHubContext: {
+			On:      types.StringValue(consts.SelfServiceHubContext),
+			Visible: types.BoolValue(false),
+		},
 	}
 
 	for on, triggerContext := range contexts {
@@ -1430,6 +1507,23 @@ func TestEverySelfServeTriggerContextSerializes(t *testing.T) {
 			assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)))
 		})
 	}
+}
+
+func TestHiddenSelfServiceHubContextSendsVisibleFalse(t *testing.T) {
+	w, err := workflowStateToPortBody(context.Background(), &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{{
+			Identifier: types.StringValue("trigger"),
+			SelfServeTrigger: &SelfServeTriggerModel{Contexts: []TriggerContextModel{
+				{On: types.StringValue(consts.SelfServiceHubContext), Visible: types.BoolValue(false)},
+			}},
+		}},
+	})
+	require.NoError(t, err)
+
+	body, err := json.Marshal(w.Nodes[0].Config.Contexts)
+	require.NoError(t, err)
+	assert.JSONEq(t, `[{"on":"SELF_SERVICE_HUB","visible":false}]`, string(body))
 }
 
 func TestValidateAIProviderAndModelMustBePaired(t *testing.T) {

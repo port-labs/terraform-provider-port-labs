@@ -280,6 +280,105 @@ func TestAccPortWorkflowSelfServeTrigger(t *testing.T) {
 	})
 }
 
+func TestAccPortWorkflowSelfServiceHubContext(t *testing.T) {
+	workflowIdentifier := utils.GenID()
+
+	config := func(contexts string) string {
+		return fmt.Sprintf(`
+	resource "port_workflow" "deploy" {
+		identifier = "%s"
+		title      = "Deploy"
+
+		node {
+			identifier = "trigger"
+			self_serve_trigger {
+				%s
+			}
+		}
+
+		node {
+			identifier = "notify"
+			webhook {
+				url = "https://example.com/deploy"
+			}
+		}
+
+		connections {
+			source_identifier = "trigger"
+			target_identifier = "notify"
+		}
+	}`, workflowIdentifier, contexts)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + config(`
+				contexts {
+					on      = "SELF_SERVICE_HUB"
+					visible = false
+				}`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.contexts.#", "1"),
+					resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.contexts.0.on", "SELF_SERVICE_HUB"),
+					resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.contexts.0.visible", "false"),
+				),
+			},
+			{
+				ResourceName:      "port_workflow.deploy",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     workflowIdentifier,
+			},
+			{
+				Config: acctest.ProviderConfig + config(`
+				contexts {
+					on      = "SELF_SERVICE_HUB"
+					visible = true
+				}`),
+				Check: resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.contexts.0.visible", "true"),
+			},
+			{
+				Config: acctest.ProviderConfig + config(""),
+				Check:  resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.contexts.#", "0"),
+			},
+		},
+	})
+}
+
+func TestAccPortWorkflowSelfServiceHubContextValidation(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + `
+	resource "port_workflow" "deploy" {
+		identifier = "invalid-hub-context"
+		title      = "Deploy"
+
+		node {
+			identifier = "trigger"
+			self_serve_trigger {
+				contexts {
+					on      = "SELF_SERVICE_HUB"
+					visible = false
+				}
+				contexts {
+					on      = "SELF_SERVICE_HUB"
+					visible = true
+				}
+			}
+		}
+	}`,
+				ExpectError: regexp.MustCompile("Duplicate SELF_SERVICE_HUB context"),
+			},
+		},
+	})
+}
+
 func TestAccPortWorkflowConditionOutlets(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	workflowIdentifier := utils.GenID()

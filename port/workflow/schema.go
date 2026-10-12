@@ -314,11 +314,17 @@ func selfServeTriggerBlock() schema.Block {
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"on": schema.StringAttribute{
-							MarkdownDescription: "The context type. One of `CREATE_ENTITY`, `ENTITY`.",
+							MarkdownDescription: "The context type. One of `CREATE_ENTITY`, `ENTITY`, `SELF_SERVICE_HUB`.",
 							Required:            true,
 							Validators: []validator.String{
-								stringvalidator.OneOf("CREATE_ENTITY", "ENTITY"),
+								stringvalidator.OneOf(consts.CreateEntityContext, consts.EntityContext, consts.SelfServiceHubContext),
 							},
+						},
+						"visible": schema.BoolAttribute{
+							MarkdownDescription: "Whether the trigger is shown in the Self-Service Hub. Required when `on` is `SELF_SERVICE_HUB`. " +
+								"A trigger without a `SELF_SERVICE_HUB` context is shown. A hidden trigger stays published and can still be run " +
+								"from entity pages, dashboards, links, the API and AI agents; this is not an access control.",
+							Optional: true,
 						},
 						"blueprint_identifier": schema.StringAttribute{
 							MarkdownDescription: "The blueprint the trigger creates an entity for. Required when `on` is `CREATE_ENTITY`.",

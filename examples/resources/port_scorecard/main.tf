@@ -73,6 +73,24 @@ resource "port_system_blueprint" "scorecard" {
   }
 }
 
+resource "port_system_blueprint" "rule" {
+  identifier = "_rule"
+  properties = {
+    number_props = {
+      sla = {
+        type  = "number"
+        title = "SLA"
+      }
+    }
+  }
+  relations = {
+    owner = {
+      title  = "Owner"
+      target = "_team"
+    }
+  }
+}
+
 resource "port_scorecard" "production_readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
@@ -88,6 +106,12 @@ resource "port_scorecard" "production_readiness" {
     identifier = "high-avalability"
     title      = "High Availability"
     level      = "Gold"
+    properties = jsonencode({
+      sla = 2
+    })
+    relations = jsonencode({
+      owner = "platform-team"
+    })
     query = {
       combinator = "and"
       conditions = [jsonencode({
@@ -99,5 +123,6 @@ resource "port_scorecard" "production_readiness" {
   }]
   depends_on = [
     port_system_blueprint.scorecard,
+    port_system_blueprint.rule,
   ]
 }

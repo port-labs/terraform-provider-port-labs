@@ -372,7 +372,87 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 	})
 }
 
+func TestAccPortScorecardGroupRulePropertiesAndRelations(t *testing.T) {
+	enableScorecardGroupBeta(t)
+
+	blueprintIdentifier := utils.GenID()
+	groupIdentifier := utils.GenID()
+	teamName := "tf-sc-group-rule-" + strings.ReplaceAll(utils.GenID(), "-", "")
+	rulePropKey := "tf_rule_" + strings.ReplaceAll(utils.GenID(), "-", "")
+	ruleRelationKey := "tf_rule_rel_" + strings.ReplaceAll(utils.GenID(), "-", "")
+
+	config := testAccCreateBlueprintConfig("microservice", blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_team" "platform" {
+		name = "%s"
+	}
+
+	resource "port_scorecard_group" "test" {
+		identifier = "%s"
+		title      = "Scorecard Group Rule Props Relations"
+		blueprints = [port_blueprint.microservice.identifier]
+		rules = [{
+			identifier = "has-author"
+			title      = "Has Author"
+			level      = "Gold"
+			properties = jsonencode({
+				%s = "high"
+			})
+			relations = jsonencode({
+				%s = port_team.platform.identifier
+			})
+			query = {
+				combinator = "and"
+				conditions = [jsonencode({
+					property = "author"
+					operator = "isNotEmpty"
+				})]
+			}
+		}]
+		depends_on = [
+			port_blueprint.microservice,
+			port_team.platform,
+		]
+	}`,
+		teamName,
+		groupIdentifier,
+		rulePropKey,
+		ruleRelationKey,
+	)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.TestAccPreCheckScorecardGroups(t)
+			testAccExtendRuleBlueprint(t, rulePropKey, ruleRelationKey)
+		},
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + config,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "identifier", groupIdentifier),
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "title", "Scorecard Group Rule Props Relations"),
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "blueprints.#", "1"),
+					resource.TestCheckResourceAttr("port_scorecard_group.test", "rules.#", "1"),
+					resource.TestMatchResourceAttr("port_scorecard_group.test", "rules.0.properties", regexp.MustCompile(regexp.QuoteMeta(rulePropKey))),
+					resource.TestMatchResourceAttr("port_scorecard_group.test", "rules.0.properties", regexp.MustCompile(`"high"`)),
+					resource.TestMatchResourceAttr("port_scorecard_group.test", "rules.0.relations", regexp.MustCompile(regexp.QuoteMeta(ruleRelationKey))),
+				),
+			},
+		},
+	})
+}
+
 func testAccExtendScorecardBlueprint(t *testing.T, propKey, relationKey string) {
+	t.Helper()
+	testAccExtendSystemBlueprint(t, "_scorecard", propKey, relationKey)
+}
+
+func testAccExtendRuleBlueprint(t *testing.T, propKey, relationKey string) {
+	t.Helper()
+	testAccExtendSystemBlueprint(t, "_rule", propKey, relationKey)
+}
+
+func testAccExtendSystemBlueprint(t *testing.T, blueprintID, propKey, relationKey string) {
 	t.Helper()
 
 	client, ctx := testAccPortClient(t)
@@ -381,22 +461,22 @@ func testAccExtendScorecardBlueprint(t *testing.T, propKey, relationKey string) 
 	many := false
 	required := false
 
-	if _, err := client.PatchBlueprintRelation(ctx, "_scorecard", relationKey, &cli.Relation{
+	if _, err := client.PatchBlueprintRelation(ctx, blueprintID, relationKey, &cli.Relation{
 		Title:    &title,
 		Target:   &teamTarget,
 		Many:     &many,
 		Required: &required,
 	}); err != nil {
-		t.Fatalf("failed to add relation %q on _scorecard: %v", relationKey, err)
+		t.Fatalf("failed to add relation %q on %s: %v", relationKey, blueprintID, err)
 	}
 
-	if err := testAccPatchBlueprintProperty(ctx, client, "_scorecard", propKey, title); err != nil {
-		t.Fatalf("failed to add property %q on _scorecard: %v", propKey, err)
+	if err := testAccPatchBlueprintProperty(ctx, client, blueprintID, propKey, title); err != nil {
+		t.Fatalf("failed to add property %q on %s: %v", propKey, blueprintID, err)
 	}
 
 	t.Cleanup(func() {
-		_ = testAccPatchBlueprintProperty(ctx, client, "_scorecard", propKey, "")
-		_ = testAccPatchBlueprintRelationDelete(ctx, client, "_scorecard", relationKey)
+		_ = testAccPatchBlueprintProperty(ctx, client, blueprintID, propKey, "")
+		_ = testAccPatchBlueprintRelationDelete(ctx, client, blueprintID, relationKey)
 	})
 }
 

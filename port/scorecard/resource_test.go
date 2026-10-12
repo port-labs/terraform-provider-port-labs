@@ -742,7 +742,79 @@ func TestAccPortScorecardPropertiesAndRelations(t *testing.T) {
 	})
 }
 
+func TestAccPortScorecardRulePropertiesAndRelations(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	scorecardIdentifier := utils.GenID()
+	teamName := "tf-sc-rule-" + strings.ReplaceAll(utils.GenID(), "-", "")
+	rulePropKey := "tf_rule_" + strings.ReplaceAll(utils.GenID(), "-", "")
+	ruleRelationKey := "tf_rule_rel_" + strings.ReplaceAll(utils.GenID(), "-", "")
+
+	config := testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_team" "platform" {
+		name = "%s"
+	}
+
+	resource "port_scorecard" "test" {
+		identifier = "%s"
+		title      = "Scorecard Rule Properties Relations"
+		blueprint  = port_blueprint.microservice.identifier
+		rules = [{
+			identifier = "hasTeam"
+			title      = "Has Team"
+			level      = "Gold"
+			properties = jsonencode({
+				%s = "high"
+			})
+			relations = jsonencode({
+				%s = port_team.platform.identifier
+			})
+			query = {
+				combinator = "and"
+				conditions = [jsonencode({
+					property = "$team"
+					operator = "isNotEmpty"
+				})]
+			}
+		}]
+		depends_on = [
+			port_blueprint.microservice,
+			port_team.platform,
+		]
+	}`, teamName, scorecardIdentifier, rulePropKey, ruleRelationKey)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.TestAccPreCheck(t)
+			testAccExtendRuleBlueprint(t, rulePropKey, ruleRelationKey)
+		},
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + config,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "identifier", scorecardIdentifier),
+					resource.TestCheckResourceAttr("port_scorecard.test", "title", "Scorecard Rule Properties Relations"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
+					resource.TestMatchResourceAttr("port_scorecard.test", "rules.0.properties", regexp.MustCompile(regexp.QuoteMeta(rulePropKey))),
+					resource.TestMatchResourceAttr("port_scorecard.test", "rules.0.properties", regexp.MustCompile(`"high"`)),
+					resource.TestMatchResourceAttr("port_scorecard.test", "rules.0.relations", regexp.MustCompile(regexp.QuoteMeta(ruleRelationKey))),
+				),
+			},
+		},
+	})
+}
+
 func testAccExtendScorecardBlueprint(t *testing.T, propKey, relationKey string) {
+	t.Helper()
+	testAccExtendSystemBlueprint(t, "_scorecard", propKey, relationKey)
+}
+
+func testAccExtendRuleBlueprint(t *testing.T, propKey, relationKey string) {
+	t.Helper()
+	testAccExtendSystemBlueprint(t, "_rule", propKey, relationKey)
+}
+
+func testAccExtendSystemBlueprint(t *testing.T, blueprintID, propKey, relationKey string) {
 	t.Helper()
 
 	client, ctx := testAccPortClient(t)
@@ -751,22 +823,22 @@ func testAccExtendScorecardBlueprint(t *testing.T, propKey, relationKey string) 
 	many := false
 	required := false
 
-	if _, err := client.PatchBlueprintRelation(ctx, "_scorecard", relationKey, &cli.Relation{
+	if _, err := client.PatchBlueprintRelation(ctx, blueprintID, relationKey, &cli.Relation{
 		Title:    &title,
 		Target:   &teamTarget,
 		Many:     &many,
 		Required: &required,
 	}); err != nil {
-		t.Fatalf("failed to add relation %q on _scorecard: %v", relationKey, err)
+		t.Fatalf("failed to add relation %q on %s: %v", relationKey, blueprintID, err)
 	}
 
-	if err := testAccPatchBlueprintProperty(ctx, client, "_scorecard", propKey, title); err != nil {
-		t.Fatalf("failed to add property %q on _scorecard: %v", propKey, err)
+	if err := testAccPatchBlueprintProperty(ctx, client, blueprintID, propKey, title); err != nil {
+		t.Fatalf("failed to add property %q on %s: %v", propKey, blueprintID, err)
 	}
 
 	t.Cleanup(func() {
-		_ = testAccPatchBlueprintProperty(ctx, client, "_scorecard", propKey, "")
-		_ = testAccPatchBlueprintRelationDelete(ctx, client, "_scorecard", relationKey)
+		_ = testAccPatchBlueprintProperty(ctx, client, blueprintID, propKey, "")
+		_ = testAccPatchBlueprintRelationDelete(ctx, client, blueprintID, relationKey)
 	})
 }
 

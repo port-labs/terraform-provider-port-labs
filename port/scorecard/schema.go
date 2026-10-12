@@ -66,6 +66,14 @@ func RuleSchema() map[string]schema.Attribute {
 				},
 			},
 		},
+		"properties": schema.StringAttribute{
+			MarkdownDescription: "Additional `_rule` blueprint properties applied to this rule, as a JSON encoded string. Property keys must match custom properties you added to the `_rule` blueprint. On update, omitted keys are cleared.",
+			Optional:            true,
+		},
+		"relations": schema.StringAttribute{
+			MarkdownDescription: "Additional `_rule` blueprint relations applied to this rule, as a JSON encoded string. Relation values can be a string, an array of strings, or `null` to clear a relation. The `scorecard` relation is managed by Port and cannot be set here. On update, omitted keys are cleared.",
+			Optional:            true,
+		},
 	}
 }
 func ScorecardSchema() map[string]schema.Attribute {
@@ -174,7 +182,7 @@ This resource allows you to manage a scorecard.
 
 See the [Port documentation](https://docs.getport.io/promote-scorecards/) for more information about scorecards.
 
-` + "`properties`" + ` and ` + "`relations`" + ` set additional ` + "`_scorecard`" + ` blueprint property and relation values on the scorecard entity. Define the schema on the system blueprint first (for example with ` + "`port_system_blueprint`" + `), then reference those keys in ` + "`jsonencode({...})`" + `. Use ` + "`depends_on`" + ` so the scorecard is created only after the blueprint schema exists.
+` + "`properties`" + ` and ` + "`relations`" + ` set additional ` + "`_scorecard`" + ` blueprint property and relation values on the scorecard entity. Each rule also accepts optional ` + "`properties`" + ` and ` + "`relations`" + ` for custom ` + "`_rule`" + ` blueprint fields. Define the schema on the system blueprints first (for example with ` + "`port_system_blueprint`" + `), then reference those keys in ` + "`jsonencode({...})`" + `. Use ` + "`depends_on`" + ` so the scorecard is created only after the blueprint schema exists.
 
 ## Example Usage
 
@@ -276,7 +284,7 @@ resource "port_scorecard" "readiness" {
 
 ## Example Usage with Properties and Relations
 
-This will set custom ` + "`_scorecard`" + ` blueprint properties and relations on the scorecard entity.
+This will set custom ` + "`_scorecard`" + ` blueprint properties and relations on the scorecard entity, and custom ` + "`_rule`" + ` fields on a rule.
 
 ` + "```hcl" + `
 
@@ -304,6 +312,24 @@ resource "port_system_blueprint" "scorecard" {
   }
 }
 
+resource "port_system_blueprint" "rule" {
+  identifier = "_rule"
+  properties = {
+    number_props = {
+      sla = {
+        type  = "number"
+        title = "SLA"
+      }
+    }
+  }
+  relations = {
+    owner = {
+      title  = "Owner"
+      target = "_team"
+    }
+  }
+}
+
 resource "port_scorecard" "readiness" {
   identifier = "Readiness"
   title      = "Readiness"
@@ -319,6 +345,12 @@ resource "port_scorecard" "readiness" {
     identifier = "hasOwner"
     title      = "Has Owner"
     level      = "Gold"
+    properties = jsonencode({
+      sla = 2
+    })
+    relations = jsonencode({
+      owner = "platform-team"
+    })
     query = {
       combinator = "and"
       conditions = [jsonencode({
@@ -330,6 +362,7 @@ resource "port_scorecard" "readiness" {
   depends_on = [
     port_blueprint.microservice,
     port_system_blueprint.scorecard,
+    port_system_blueprint.rule,
   ]
 }
 

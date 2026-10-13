@@ -108,6 +108,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 				On:                  types.StringValue(c.On),
 				BlueprintIdentifier: flex.GoStringToFramework(c.BlueprintIdentifier),
 				UserInput:           flex.GoStringToFramework(c.UserInput),
+				Visible:             flex.GoBoolToFramework(c.Visible),
 			})
 		}
 

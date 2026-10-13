@@ -844,12 +844,13 @@ Optional:
 
 Required:
 
-- `on` (String) The context type. One of `CREATE_ENTITY`, `ENTITY`.
+- `on` (String) The context type. One of `CREATE_ENTITY`, `ENTITY`, `SELF_SERVICE_HUB`.
 
 Optional:
 
 - `blueprint_identifier` (String) The blueprint the trigger creates an entity for. Required when `on` is `CREATE_ENTITY`.
 - `user_input` (String) The user input the trigger is bound to. Required when `on` is `ENTITY`.
+- `visible` (Boolean) Whether the trigger is shown in the Self-Service Hub. Required when `on` is `SELF_SERVICE_HUB`. A trigger without a `SELF_SERVICE_HUB` context is shown. A hidden trigger stays published and can still be run from entity pages, dashboards, links, the API and AI agents; this is not an access control.
 
 
 <a id="nestedblock--node--self_serve_trigger--permissions"></a>

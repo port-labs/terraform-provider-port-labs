@@ -210,3 +210,55 @@ resource "port_workflow" "audit_service_changes" {
     fallback          = true
   }
 }
+
+# A self service trigger that runs from a service's entity page and is hidden
+# from the Self-Service Hub. Hiding it does not unpublish it or change who can
+# run it: it can still be run from entity pages, dashboards, links, the API and
+# AI agents.
+resource "port_workflow" "restart_service" {
+  identifier = "restart-service"
+  title      = "Restart service"
+
+  node {
+    identifier = "trigger"
+
+    self_serve_trigger {
+      user_inputs {
+        user_properties = {
+          string_props = {
+            "service" = {
+              title     = "Service"
+              format    = "entity"
+              blueprint = "service"
+              required  = true
+            }
+          }
+        }
+      }
+
+      contexts {
+        on         = "ENTITY"
+        user_input = "service"
+      }
+
+      contexts {
+        on      = "SELF_SERVICE_HUB"
+        visible = false
+      }
+    }
+  }
+
+  node {
+    identifier = "restart"
+
+    webhook {
+      url  = "https://ci.example.com/restart"
+      body = jsonencode({ service = "{{ .outputs.trigger.inputs.service.identifier }}" })
+    }
+  }
+
+  connections {
+    source_identifier = "trigger"
+    target_identifier = "restart"
+  }
+}

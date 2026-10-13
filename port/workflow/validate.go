@@ -189,6 +189,7 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 	switch {
 	case node.SelfServeTrigger != nil:
 		blockPath := nodePath.AtName("self_serve_trigger")
+		seenSelfServiceHub := false
 		for i, context := range node.SelfServeTrigger.Contexts {
 			contextPath := blockPath.AtName("contexts").AtListIndex(i)
 			switch context.On.ValueString() {
@@ -197,11 +198,27 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 					"`blueprint_identifier` is required when `on` is `CREATE_ENTITY`.")
 				rejectSet(resp, contextPath.AtName("user_input"), context.UserInput,
 					"`user_input` cannot be set when `on` is `CREATE_ENTITY`.")
+				rejectSet(resp, contextPath.AtName("visible"), context.Visible,
+					"`visible` cannot be set when `on` is `CREATE_ENTITY`.")
 			case consts.EntityContext:
 				requireNonEmpty(resp, contextPath.AtName("user_input"), context.UserInput,
 					"`user_input` is required when `on` is `ENTITY`.")
 				rejectSet(resp, contextPath.AtName("blueprint_identifier"), context.BlueprintIdentifier,
 					"`blueprint_identifier` cannot be set when `on` is `ENTITY`.")
+				rejectSet(resp, contextPath.AtName("visible"), context.Visible,
+					"`visible` cannot be set when `on` is `ENTITY`.")
+			case consts.SelfServiceHubContext:
+				if seenSelfServiceHub {
+					resp.Diagnostics.AddAttributeError(contextPath.AtName("on"), "Duplicate SELF_SERVICE_HUB context",
+						"A self serve trigger can have at most one `SELF_SERVICE_HUB` context.")
+				}
+				seenSelfServiceHub = true
+				requireSet(resp, contextPath.AtName("visible"), context.Visible,
+					"`visible` is required when `on` is `SELF_SERVICE_HUB`.")
+				rejectSet(resp, contextPath.AtName("blueprint_identifier"), context.BlueprintIdentifier,
+					"`blueprint_identifier` cannot be set when `on` is `SELF_SERVICE_HUB`.")
+				rejectSet(resp, contextPath.AtName("user_input"), context.UserInput,
+					"`user_input` cannot be set when `on` is `SELF_SERVICE_HUB`.")
 			}
 		}
 		return consts.SelfServeTrigger
@@ -575,7 +592,7 @@ func requirePaired(resp *resource.ValidateConfigResponse, blockPath path.Path, b
 	)
 }
 
-func requireSet(resp *resource.ValidateConfigResponse, attributePath path.Path, value types.String, detail string) {
+func requireSet(resp *resource.ValidateConfigResponse, attributePath path.Path, value attr.Value, detail string) {
 	if value.IsNull() && !value.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(attributePath, "Missing required attribute", detail)
 	}

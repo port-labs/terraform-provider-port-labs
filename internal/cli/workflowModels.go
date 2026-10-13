@@ -110,6 +110,7 @@ type WorkflowTriggerContext struct {
 	On                  string  `json:"on"`
 	BlueprintIdentifier *string `json:"blueprintIdentifier,omitempty"`
 	UserInput           *string `json:"userInput,omitempty"`
+	Visible             *bool   `json:"visible,omitempty"`
 }
 
 // Self serve trigger permissions and input node responders share users/roles/teams

@@ -35,19 +35,25 @@ func queryFromCLI(q *cli.Query, jsonEscapeHTML bool) *scorecard.Query {
 	return stateQuery
 }
 
-func rulesFromCLI(rules []cli.Rule, jsonEscapeHTML bool) []scorecard.Rule {
+func rulesFromCLI(rules []cli.Rule, jsonEscapeHTML bool, syncPropertiesFromAPI bool) ([]scorecard.Rule, error) {
 	stateRules := make([]scorecard.Rule, 0, len(rules))
 	for _, rule := range rules {
-		stateRules = append(stateRules, ruleFromCLI(rule, scorecard.Rule{}, jsonEscapeHTML))
+		stateRule, err := ruleFromCLI(rule, scorecard.Rule{}, jsonEscapeHTML, syncPropertiesFromAPI)
+		if err != nil {
+			return nil, err
+		}
+		stateRules = append(stateRules, stateRule)
 	}
-	return stateRules
+	return stateRules, nil
 }
 
-func ruleFromCLI(rule cli.Rule, existingRule scorecard.Rule, jsonEscapeHTML bool) scorecard.Rule {
+func ruleFromCLI(rule cli.Rule, existingRule scorecard.Rule, jsonEscapeHTML bool, syncPropertiesFromAPI bool) (scorecard.Rule, error) {
 	stateRule := scorecard.Rule{
 		Title:      types.StringValue(rule.Title),
 		Level:      types.StringValue(rule.Level),
 		Identifier: types.StringValue(rule.Identifier),
+		Properties: existingRule.Properties,
+		Relations:  existingRule.Relations,
 	}
 	if !existingRule.Description.IsNull() && !existingRule.Description.IsUnknown() {
 		stateRule.Description = existingRule.Description
@@ -57,21 +63,23 @@ func ruleFromCLI(rule cli.Rule, existingRule scorecard.Rule, jsonEscapeHTML bool
 		stateRule.Description = types.StringNull()
 	}
 	stateRule.Query = queryFromCLI(&rule.Query, jsonEscapeHTML)
-	return stateRule
+	if err := scorecard.SyncRuleCustomFieldsFromAPI(&stateRule, rule, jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+		return scorecard.Rule{}, err
+	}
+	return stateRule, nil
 }
 
-func rulesFromStateAndCLI(stateRules []scorecard.Rule, apiRules []cli.Rule, jsonEscapeHTML bool) []scorecard.Rule {
-	apiStateRules := rulesFromCLI(apiRules, jsonEscapeHTML)
+func rulesFromStateAndCLI(stateRules []scorecard.Rule, apiRules []cli.Rule, jsonEscapeHTML bool, syncPropertiesFromAPI bool) ([]scorecard.Rule, error) {
 	if len(stateRules) == 0 {
-		return apiStateRules
+		return rulesFromCLI(apiRules, jsonEscapeHTML, syncPropertiesFromAPI)
 	}
 
-	apiRulesByIdentifier := make(map[string]scorecard.Rule, len(apiStateRules))
-	for _, rule := range apiStateRules {
-		apiRulesByIdentifier[rule.Identifier.ValueString()] = rule
+	apiRulesByIdentifier := make(map[string]cli.Rule, len(apiRules))
+	for _, rule := range apiRules {
+		apiRulesByIdentifier[rule.Identifier] = rule
 	}
 
-	orderedRules := make([]scorecard.Rule, 0, len(apiStateRules))
+	orderedRules := make([]scorecard.Rule, 0, len(apiRules))
 	processedIdentifiers := make(map[string]bool)
 
 	for _, existingRule := range stateRules {
@@ -80,21 +88,25 @@ func rulesFromStateAndCLI(stateRules []scorecard.Rule, apiRules []cli.Rule, json
 		if !exists {
 			continue
 		}
-		updatedRule := apiRule
-		if !existingRule.Description.IsNull() && !existingRule.Description.IsUnknown() {
-			updatedRule.Description = existingRule.Description
+		updatedRule, err := ruleFromCLI(apiRule, existingRule, jsonEscapeHTML, syncPropertiesFromAPI)
+		if err != nil {
+			return nil, err
 		}
 		orderedRules = append(orderedRules, updatedRule)
 		processedIdentifiers[identifier] = true
 	}
 
-	for _, apiRule := range apiStateRules {
-		if !processedIdentifiers[apiRule.Identifier.ValueString()] {
-			orderedRules = append(orderedRules, apiRule)
+	for _, apiRule := range apiRules {
+		if !processedIdentifiers[apiRule.Identifier] {
+			newRule, err := ruleFromCLI(apiRule, scorecard.Rule{}, jsonEscapeHTML, syncPropertiesFromAPI)
+			if err != nil {
+				return nil, err
+			}
+			orderedRules = append(orderedRules, newRule)
 		}
 	}
 
-	return orderedRules
+	return orderedRules, nil
 }
 
 func levelsFromCLI(levels []cli.Level) []scorecard.Level {
@@ -108,11 +120,15 @@ func levelsFromCLI(levels []cli.Level) []scorecard.Level {
 	return stateLevels
 }
 
-func memberSpecFromCLI(spec cli.ScorecardGroupMemberSpec, stateSpec MemberSpecModel, jsonEscapeHTML bool) MemberSpecModel {
+func memberSpecFromCLI(spec cli.ScorecardGroupMemberSpec, stateSpec MemberSpecModel, jsonEscapeHTML bool, syncPropertiesFromAPI bool) (MemberSpecModel, error) {
+	rules, err := rulesFromStateAndCLI(stateSpec.Rules, spec.Rules, jsonEscapeHTML, syncPropertiesFromAPI)
+	if err != nil {
+		return MemberSpecModel{}, err
+	}
 	return MemberSpecModel{
 		Filter: queryFromCLI(spec.Filter, jsonEscapeHTML),
-		Rules:  rulesFromStateAndCLI(stateSpec.Rules, spec.Rules, jsonEscapeHTML),
-	}
+		Rules:  rules,
+	}, nil
 }
 
 func (r *ScorecardGroupResource) jsonEscapeHTML() bool {
@@ -122,14 +138,19 @@ func (r *ScorecardGroupResource) jsonEscapeHTML() bool {
 	return r.portClient.JSONEscapeHTML
 }
 
-func refreshPerBlueprintState(state *ScorecardGroupModel, group *cli.ScorecardGroup, jsonEscapeHTML bool) {
-	state.Scorecards = memberSpecsFromGroup(state.Scorecards, group, jsonEscapeHTML)
+func refreshPerBlueprintState(state *ScorecardGroupModel, group *cli.ScorecardGroup, jsonEscapeHTML bool, syncPropertiesFromAPI bool) error {
+	scorecards, err := memberSpecsFromGroup(state.Scorecards, group, jsonEscapeHTML, syncPropertiesFromAPI)
+	if err != nil {
+		return err
+	}
+	state.Scorecards = scorecards
 	state.Blueprints = nil
 	state.Rules = nil
 	state.Filters = nil
+	return nil
 }
 
-func memberSpecsFromGroup(previous map[string]MemberSpecModel, group *cli.ScorecardGroup, jsonEscapeHTML bool) map[string]MemberSpecModel {
+func memberSpecsFromGroup(previous map[string]MemberSpecModel, group *cli.ScorecardGroup, jsonEscapeHTML bool, syncPropertiesFromAPI bool) (map[string]MemberSpecModel, error) {
 	if len(group.Scorecards) > 0 {
 		scorecards := make(map[string]MemberSpecModel, len(group.Scorecards))
 		for blueprintID, memberSpec := range group.Scorecards {
@@ -137,9 +158,13 @@ func memberSpecsFromGroup(previous map[string]MemberSpecModel, group *cli.Scorec
 			if previous != nil {
 				existingSpec = previous[blueprintID]
 			}
-			scorecards[blueprintID] = memberSpecFromCLI(memberSpec, existingSpec, jsonEscapeHTML)
+			spec, err := memberSpecFromCLI(memberSpec, existingSpec, jsonEscapeHTML, syncPropertiesFromAPI)
+			if err != nil {
+				return nil, err
+			}
+			scorecards[blueprintID] = spec
 		}
-		return scorecards
+		return scorecards, nil
 	}
 
 	blueprints := group.Blueprints
@@ -160,15 +185,19 @@ func memberSpecsFromGroup(previous map[string]MemberSpecModel, group *cli.Scorec
 		if group.Filters != nil {
 			filter = group.Filters[blueprintID]
 		}
+		rules, err := rulesFromStateAndCLI(existingSpec.Rules, group.Rules, jsonEscapeHTML, syncPropertiesFromAPI)
+		if err != nil {
+			return nil, err
+		}
 		scorecards[blueprintID] = MemberSpecModel{
 			Filter: queryFromCLI(filter, jsonEscapeHTML),
-			Rules:  rulesFromStateAndCLI(existingSpec.Rules, group.Rules, jsonEscapeHTML),
+			Rules:  rules,
 		}
 	}
-	return scorecards
+	return scorecards, nil
 }
 
-func refreshSharedRulesState(state *ScorecardGroupModel, group *cli.ScorecardGroup, jsonEscapeHTML bool) {
+func refreshSharedRulesState(state *ScorecardGroupModel, group *cli.ScorecardGroup, jsonEscapeHTML bool, syncPropertiesFromAPI bool) error {
 	state.Scorecards = nil
 	if len(group.Blueprints) > 0 {
 		state.Blueprints = make([]types.String, len(group.Blueprints))
@@ -179,7 +208,11 @@ func refreshSharedRulesState(state *ScorecardGroupModel, group *cli.ScorecardGro
 		state.Blueprints = nil
 	}
 
-	state.Rules = rulesFromStateAndCLI(state.Rules, group.Rules, jsonEscapeHTML)
+	rules, err := rulesFromStateAndCLI(state.Rules, group.Rules, jsonEscapeHTML, syncPropertiesFromAPI)
+	if err != nil {
+		return err
+	}
+	state.Rules = rules
 	if len(group.Filters) > 0 {
 		state.Filters = make(map[string]*scorecard.Query, len(group.Filters))
 		for blueprintID, filter := range group.Filters {
@@ -188,6 +221,7 @@ func refreshSharedRulesState(state *ScorecardGroupModel, group *cli.ScorecardGro
 	} else {
 		state.Filters = nil
 	}
+	return nil
 }
 
 func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context, state *ScorecardGroupModel, group *cli.ScorecardGroup, syncPropertiesFromAPI bool) error {
@@ -240,13 +274,21 @@ func (r *ScorecardGroupResource) refreshScorecardGroupState(ctx context.Context,
 	switch {
 	case len(state.Scorecards) > 0:
 		// Keep per-blueprint config even when the API canonicalizes to shared-rules.
-		refreshPerBlueprintState(state, group, jsonEscapeHTML)
+		if err := refreshPerBlueprintState(state, group, jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+			return err
+		}
 	case len(state.Blueprints) > 0 || len(state.Rules) > 0 || len(state.Filters) > 0:
-		refreshSharedRulesState(state, group, jsonEscapeHTML)
+		if err := refreshSharedRulesState(state, group, jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+			return err
+		}
 	case len(group.Scorecards) > 0:
-		refreshPerBlueprintState(state, group, jsonEscapeHTML)
+		if err := refreshPerBlueprintState(state, group, jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+			return err
+		}
 	default:
-		refreshSharedRulesState(state, group, jsonEscapeHTML)
+		if err := refreshSharedRulesState(state, group, jsonEscapeHTML, syncPropertiesFromAPI); err != nil {
+			return err
+		}
 	}
 	return nil
 }

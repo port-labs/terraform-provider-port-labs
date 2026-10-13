@@ -50,6 +50,9 @@ func rulesToCLI(rules []scorecard.Rule) ([]cli.Rule, error) {
 		if query != nil {
 			rule.Query = *query
 		}
+		if err := scorecard.ApplyRuleCustomFieldsToCLI(stateRule, &rule); err != nil {
+			return nil, err
+		}
 		cliRules = append(cliRules, rule)
 	}
 	return cliRules, nil

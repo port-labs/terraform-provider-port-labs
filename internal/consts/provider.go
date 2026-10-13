@@ -38,8 +38,9 @@ const (
 	WorkflowTimerExpired = "TIMER_EXPIRED"
 
 	// Workflow self serve trigger context types
-	CreateEntityContext = "CREATE_ENTITY"
-	EntityContext       = "ENTITY"
+	CreateEntityContext   = "CREATE_ENTITY"
+	EntityContext         = "ENTITY"
+	SelfServiceHubContext = "SELF_SERVICE_HUB"
 
 	// Workflow input node notification targets
 	EmailNotification   = "email"

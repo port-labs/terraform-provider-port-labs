@@ -42,31 +42,18 @@ func (r *WorkflowResource) ValidateConfig(ctx context.Context, req resource.Vali
 			continue
 		}
 
-		// Check the already decoded subtype objects once per node. Generic
-		// sibling-path validators repeatedly traverse the entire nested schema.
-		configuredTypes := 0
-		unknownType := false
-		attributes := object.Attributes()
-		for _, name := range nodeTypeBlockNames {
-			value := attributes[name]
-			if value.IsUnknown() {
-				unknownType = true
-			} else if !value.IsNull() {
-				configuredTypes++
-			}
-		}
-		if unknownType {
-			// Defer exclusivity and trigger-presence checks until all types are known.
-			typesKnown = false
-		} else if configuredTypes != 1 {
+		// An unknown block may still resolve to null, so exclusivity is only
+		// decided once every block is known.
+		blocks, anyUnknown := declaredNodeTypeBlocks(object)
+		if !anyUnknown && len(blocks) != 1 {
 			resp.Diagnostics.AddAttributeError(nodePath, "Invalid node type combination", "Exactly one node config block must be set.")
 			typesKnown = false
-			continue
 		}
 
 		var node WorkflowNodeModel
-		resp.Diagnostics.Append(object.As(ctx, &node, basetypes.ObjectAsOptions{UnhandledUnknownAsEmpty: true})...)
-		if resp.Diagnostics.HasError() {
+		decodeDiags := object.As(ctx, &node, basetypes.ObjectAsOptions{UnhandledUnknownAsEmpty: true})
+		resp.Diagnostics.Append(decodeDiags...)
+		if decodeDiags.HasError() {
 			return
 		}
 		hasUnknownValues := containsUnknown(object)
@@ -101,14 +88,16 @@ func (r *WorkflowResource) ValidateConfig(ctx context.Context, req resource.Vali
 	}
 
 	var connectionList types.List
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("connections"), &connectionList)...)
-	if resp.Diagnostics.HasError() || connectionList.IsNull() || connectionList.IsUnknown() {
+	connectionDiags := req.Config.GetAttribute(ctx, path.Root("connections"), &connectionList)
+	resp.Diagnostics.Append(connectionDiags...)
+	if connectionDiags.HasError() || connectionList.IsNull() || connectionList.IsUnknown() {
 		return
 	}
 
 	var connections []ConnectionModel
-	resp.Diagnostics.Append(connectionList.ElementsAs(ctx, &connections, true)...)
-	if resp.Diagnostics.HasError() {
+	connectionDiags = connectionList.ElementsAs(ctx, &connections, true)
+	resp.Diagnostics.Append(connectionDiags...)
+	if connectionDiags.HasError() {
 		return
 	}
 
@@ -161,15 +150,27 @@ var nodeTypeByBlock = map[string]string{
 	"input":              consts.InputNode,
 }
 
-func nodeTypeFromConfigObject(object types.Object) string {
+// declaredNodeTypeBlocks lists the node config blocks that are not null,
+// counting unknown blocks as declared.
+func declaredNodeTypeBlocks(object types.Object) (blocks []string, anyUnknown bool) {
 	attributes := object.Attributes()
 	for _, name := range nodeTypeBlockNames {
-		if block, declared := attributes[name]; declared && !block.IsNull() {
-			return nodeTypeByBlock[name]
+		block, declared := attributes[name]
+		if !declared || block.IsNull() {
+			continue
 		}
+		blocks = append(blocks, name)
+		anyUnknown = anyUnknown || block.IsUnknown()
 	}
+	return blocks, anyUnknown
+}
 
-	return ""
+func nodeTypeFromConfigObject(object types.Object) string {
+	blocks, _ := declaredNodeTypeBlocks(object)
+	if len(blocks) == 0 {
+		return ""
+	}
+	return nodeTypeByBlock[blocks[0]]
 }
 
 var triggerTypes = map[string]bool{

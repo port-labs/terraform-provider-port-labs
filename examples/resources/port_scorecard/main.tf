@@ -91,6 +91,10 @@ resource "port_system_blueprint" "rule" {
   }
 }
 
+resource "port_team" "platform" {
+  name = "examples-scorecard-platform"
+}
+
 resource "port_scorecard" "production_readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
@@ -100,7 +104,7 @@ resource "port_scorecard" "production_readiness" {
     priority = 1
   })
   relations = jsonencode({
-    owner_team = "platform-team"
+    owner_team = port_team.platform.identifier
   })
   rules = [{
     identifier = "high-avalability"
@@ -110,7 +114,7 @@ resource "port_scorecard" "production_readiness" {
       sla = 2
     })
     relations = jsonencode({
-      owner = "platform-team"
+      owner = port_team.platform.identifier
     })
     query = {
       combinator = "and"
@@ -124,5 +128,6 @@ resource "port_scorecard" "production_readiness" {
   depends_on = [
     port_system_blueprint.scorecard,
     port_system_blueprint.rule,
+    port_team.platform,
   ]
 }

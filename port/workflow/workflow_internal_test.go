@@ -1750,7 +1750,7 @@ func TestValidateConfigReportsNodeWithoutConfigBlock(t *testing.T) {
 	}, nil)
 
 	require.Len(t, diags.Errors(), 1, diags.Errors())
-	assert.Equal(t, "Missing trigger node", diags.Errors()[0].Summary())
+	assert.Equal(t, "Invalid node type combination", diags.Errors()[0].Summary())
 }
 
 type (
@@ -1768,17 +1768,7 @@ func validateWorkflowConfig(ctx context.Context, t *testing.T, config configObje
 	raw := configValue(t, schemaResp.Schema.Type().TerraformType(ctx), config)
 
 	if unknownAt != nil {
-		replaced := false
-		transformed, err := tftypes.Transform(raw, func(valuePath *tftypes.AttributePath, value tftypes.Value) (tftypes.Value, error) {
-			if !valuePath.Equal(unknownAt) {
-				return value, nil
-			}
-			replaced = true
-			return tftypes.NewValue(value.Type(), tftypes.UnknownValue), nil
-		})
-		require.NoError(t, err)
-		require.True(t, replaced, "no value at %s to make unknown", unknownAt)
-		raw = transformed
+		raw = withUnknownValue(t, raw, unknownAt)
 	}
 
 	resp := &resource.ValidateConfigResponse{}
@@ -1789,7 +1779,7 @@ func validateWorkflowConfig(ctx context.Context, t *testing.T, config configObje
 	return resp.Diagnostics
 }
 
-func configValue(t *testing.T, valueType tftypes.Type, data any) tftypes.Value {
+func configValue(t testing.TB, valueType tftypes.Type, data any) tftypes.Value {
 	t.Helper()
 
 	if data == nil {
@@ -1831,7 +1821,7 @@ func configValue(t *testing.T, valueType tftypes.Type, data any) tftypes.Value {
 	return tftypes.NewValue(valueType, data)
 }
 
-func configValues(t *testing.T, elementType tftypes.Type, data any) []tftypes.Value {
+func configValues(t testing.TB, elementType tftypes.Type, data any) []tftypes.Value {
 	t.Helper()
 
 	items, ok := data.(configList)
@@ -1842,6 +1832,22 @@ func configValues(t *testing.T, elementType tftypes.Type, data any) []tftypes.Va
 		values = append(values, configValue(t, elementType, item))
 	}
 	return values
+}
+
+func withUnknownValue(t testing.TB, value tftypes.Value, unknownAt *tftypes.AttributePath) tftypes.Value {
+	t.Helper()
+
+	replaced := false
+	transformed, err := tftypes.Transform(value, func(valuePath *tftypes.AttributePath, current tftypes.Value) (tftypes.Value, error) {
+		if !valuePath.Equal(unknownAt) {
+			return current, nil
+		}
+		replaced = true
+		return tftypes.NewValue(current.Type(), tftypes.UnknownValue), nil
+	})
+	require.NoError(t, err)
+	require.True(t, replaced, "no value at %s to make unknown", unknownAt)
+	return transformed
 }
 
 func validateWorkflow(nodes []WorkflowNodeModel, connections []ConnectionModel) diag.Diagnostics {

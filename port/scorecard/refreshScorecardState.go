@@ -118,6 +118,9 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 		}
 
 		stateRule.Query = stateQuery
+		if err := SyncRuleCustomFieldsFromAPI(stateRule, rule, r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
+			return err
+		}
 
 		stateRules = append(stateRules, *stateRule)
 	}
@@ -143,6 +146,8 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 					Title:      types.StringValue(apiRule.Title),
 					Level:      types.StringValue(apiRule.Level),
 					Identifier: types.StringValue(apiRule.Identifier),
+					Properties: existingRule.Properties,
+					Relations:  existingRule.Relations,
 				}
 
 				// Handle description - preserve from state if it exists, otherwise use API value
@@ -169,6 +174,9 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 					stateQuery.Conditions[i] = cond
 				}
 				updatedRule.Query = stateQuery
+				if err := SyncRuleCustomFieldsFromAPI(&updatedRule, *apiRule, r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
+					return err
+				}
 
 				orderedRules = append(orderedRules, updatedRule)
 				processedIdentifiers[identifier] = true
@@ -199,6 +207,9 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 					stateQuery.Conditions[i] = cond
 				}
 				newRule.Query = stateQuery
+				if err := SyncRuleCustomFieldsFromAPI(&newRule, apiRule, r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
+					return err
+				}
 
 				orderedRules = append(orderedRules, newRule)
 			}

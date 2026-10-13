@@ -490,11 +490,13 @@ type (
 	}
 
 	Rule struct {
-		Identifier  string `json:"identifier,omitempty"`
-		Title       string `json:"title,omitempty"`
-		Description string `json:"description,omitempty"`
-		Level       string `json:"level,omitempty"`
-		Query       Query  `json:"query,omitempty"`
+		Identifier  string         `json:"identifier,omitempty"`
+		Title       string         `json:"title,omitempty"`
+		Description string         `json:"description,omitempty"`
+		Level       string         `json:"level,omitempty"`
+		Query       Query          `json:"query,omitempty"`
+		Properties  map[string]any `json:"properties,omitempty"`
+		Relations   map[string]any `json:"relations,omitempty"`
 	}
 
 	Level struct {

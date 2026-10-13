@@ -81,6 +81,10 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 		query.Conditions = conditions
 		rule.Query = *query
 
+		if err := ApplyRuleCustomFieldsToCLI(stateRule, rule); err != nil {
+			return nil, err
+		}
+
 		rules = append(rules, *rule)
 	}
 

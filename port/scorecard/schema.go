@@ -288,6 +288,18 @@ This will set custom ` + "`_scorecard`" + ` blueprint properties and relations o
 
 ` + "```hcl" + `
 
+resource "port_blueprint" "team" {
+  title      = "Team"
+  icon       = "Team"
+  identifier = "team"
+}
+
+resource "port_entity" "platform_team" {
+  identifier = "platform-team"
+  title      = "Platform Team"
+  blueprint  = port_blueprint.team.identifier
+}
+
 resource "port_system_blueprint" "scorecard" {
   identifier = "_scorecard"
   properties = {
@@ -307,7 +319,7 @@ resource "port_system_blueprint" "scorecard" {
   relations = {
     owner_team = {
       title  = "Owner Team"
-      target = "_team"
+      target = port_blueprint.team.identifier
     }
   }
 }
@@ -325,7 +337,7 @@ resource "port_system_blueprint" "rule" {
   relations = {
     owner = {
       title  = "Owner"
-      target = "_team"
+      target = port_blueprint.team.identifier
     }
   }
 }
@@ -339,7 +351,7 @@ resource "port_scorecard" "readiness" {
     priority = 1
   })
   relations = jsonencode({
-    owner_team = "platform-team"
+    owner_team = port_entity.platform_team.identifier
   })
   rules = [{
     identifier = "hasOwner"
@@ -349,7 +361,7 @@ resource "port_scorecard" "readiness" {
       sla = 2
     })
     relations = jsonencode({
-      owner = "platform-team"
+      owner = port_entity.platform_team.identifier
     })
     query = {
       combinator = "and"
@@ -363,6 +375,7 @@ resource "port_scorecard" "readiness" {
     port_blueprint.microservice,
     port_system_blueprint.scorecard,
     port_system_blueprint.rule,
+    port_entity.platform_team,
   ]
 }
 

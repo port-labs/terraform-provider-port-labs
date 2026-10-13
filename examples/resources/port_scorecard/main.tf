@@ -49,6 +49,18 @@ resource "port_blueprint" "microservice" {
   }
 }
 
+resource "port_blueprint" "team" {
+  title      = "Team"
+  icon       = "Team"
+  identifier = "examples-scorecard-team"
+}
+
+resource "port_entity" "platform_team" {
+  identifier = "platform-team"
+  title      = "Platform Team"
+  blueprint  = port_blueprint.team.identifier
+}
+
 resource "port_system_blueprint" "scorecard" {
   identifier = "_scorecard"
   properties = {
@@ -68,7 +80,7 @@ resource "port_system_blueprint" "scorecard" {
   relations = {
     owner_team = {
       title  = "Owner Team"
-      target = "_team"
+      target = port_blueprint.team.identifier
     }
   }
 }
@@ -86,13 +98,9 @@ resource "port_system_blueprint" "rule" {
   relations = {
     owner = {
       title  = "Owner"
-      target = "_team"
+      target = port_blueprint.team.identifier
     }
   }
-}
-
-resource "port_team" "platform" {
-  name = "examples-scorecard-platform"
 }
 
 resource "port_scorecard" "production_readiness" {
@@ -104,7 +112,7 @@ resource "port_scorecard" "production_readiness" {
     priority = 1
   })
   relations = jsonencode({
-    owner_team = port_team.platform.identifier
+    owner_team = port_entity.platform_team.identifier
   })
   rules = [{
     identifier = "high-avalability"
@@ -114,7 +122,7 @@ resource "port_scorecard" "production_readiness" {
       sla = 2
     })
     relations = jsonencode({
-      owner = port_team.platform.identifier
+      owner = port_entity.platform_team.identifier
     })
     query = {
       combinator = "and"
@@ -128,6 +136,6 @@ resource "port_scorecard" "production_readiness" {
   depends_on = [
     port_system_blueprint.scorecard,
     port_system_blueprint.rule,
-    port_team.platform,
+    port_entity.platform_team,
   ]
 }

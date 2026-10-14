@@ -83,16 +83,17 @@ type ObjectItems struct {
 }
 
 type ArrayPropModel struct {
-	Title        types.String  `tfsdk:"title"`
-	Icon         types.String  `tfsdk:"icon"`
-	Description  types.String  `tfsdk:"description"`
-	MaxItems     types.Int64   `tfsdk:"max_items"`
-	MinItems     types.Int64   `tfsdk:"min_items"`
-	Required     types.Bool    `tfsdk:"required"`
-	StringItems  *StringItems  `tfsdk:"string_items"`
-	NumberItems  *NumberItems  `tfsdk:"number_items"`
-	BooleanItems *BooleanItems `tfsdk:"boolean_items"`
-	ObjectItems  *ObjectItems  `tfsdk:"object_items"`
+	Title             types.String  `tfsdk:"title"`
+	Icon              types.String  `tfsdk:"icon"`
+	Description       types.String  `tfsdk:"description"`
+	MaxItems          types.Int64   `tfsdk:"max_items"`
+	MinItems          types.Int64   `tfsdk:"min_items"`
+	Required          types.Bool    `tfsdk:"required"`
+	Union       types.Bool    `tfsdk:"union"`
+	StringItems *StringItems  `tfsdk:"string_items"`
+	NumberItems       *NumberItems  `tfsdk:"number_items"`
+	BooleanItems      *BooleanItems `tfsdk:"boolean_items"`
+	ObjectItems       *ObjectItems  `tfsdk:"object_items"`
 }
 
 type ObjectPropModel struct {

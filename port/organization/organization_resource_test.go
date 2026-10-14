@@ -30,6 +30,27 @@ func TestAccPortOrganization(t *testing.T) {
 	})
 }
 
+func TestAccPortOrganizationIdleTimeMS(t *testing.T) {
+	idleTimeMS := 1_800_000
+	var testAccOrganizationConfig = fmt.Sprintf(`
+	resource "port_organization" "test" {
+		idle_time_ms = %d
+	}`, idleTimeMS)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccOrganizationConfig,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_organization.test", "idle_time_ms", fmt.Sprintf("%d", idleTimeMS)),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortOrganizationUpdate(t *testing.T) {
 	orgName := utils.GenID()
 	updatedName := utils.GenID()

@@ -24,6 +24,12 @@ type BlueprintMetadataPermissionsTFBlock struct {
 	Title      *BlueprintPermissionsTFBlock `tfsdk:"title"`
 }
 
+type BlueprintReadMetadataPermissionsTFBlock struct {
+	Team  *BlueprintPermissionsTFBlock `tfsdk:"team"`
+	Icon  *BlueprintPermissionsTFBlock `tfsdk:"icon"`
+	Title *BlueprintPermissionsTFBlock `tfsdk:"title"`
+}
+
 type BlueprintRelationsPermissionsTFBlock map[string]BlueprintPermissionsTFBlock
 
 type EntitiesBlueprintPermissionsModel struct {
@@ -31,6 +37,8 @@ type EntitiesBlueprintPermissionsModel struct {
 	Register                 *BlueprintPermissionsTFBlockWithPolicy `tfsdk:"register"`
 	Unregister               *BlueprintPermissionsTFBlockWithPolicy `tfsdk:"unregister"`
 	Update                   *BlueprintPermissionsTFBlockWithPolicy `tfsdk:"update"`
+	ReadProperties           *BlueprintRelationsPermissionsTFBlock  `tfsdk:"read_properties"`
+	ReadMetadataProperties   *BlueprintReadMetadataPermissionsTFBlock `tfsdk:"read_metadata_properties"`
 	UpdateProperties         *BlueprintRelationsPermissionsTFBlock  `tfsdk:"update_properties"`
 	UpdateMetadataProperties *BlueprintMetadataPermissionsTFBlock   `tfsdk:"update_metadata_properties"`
 	UpdateRelations          *BlueprintRelationsPermissionsTFBlock  `tfsdk:"update_relations"`

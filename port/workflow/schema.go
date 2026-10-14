@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -65,14 +64,6 @@ func titleValidators() []validator.String {
 
 func descriptionValidators() []validator.String {
 	return []validator.String{stringvalidator.LengthAtMost(maxDescriptionLength)}
-}
-
-func nodeTypeValidators() []validator.Object {
-	expressions := make([]path.Expression, 0, len(nodeTypeBlockNames))
-	for _, name := range nodeTypeBlockNames {
-		expressions = append(expressions, path.MatchRelative().AtParent().AtName(name))
-	}
-	return []validator.Object{objectvalidator.ExactlyOneOf(expressions...)}
 }
 
 func onFailureAttribute() schema.Attribute {
@@ -338,7 +329,6 @@ func selfServeTriggerBlock() schema.Block {
 				},
 			},
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -388,7 +378,6 @@ func eventTriggerBlock() schema.Block {
 				},
 			},
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -403,7 +392,6 @@ func scheduleTriggerBlock() schema.Block {
 			},
 			"published": publishedAttribute(),
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -417,7 +405,6 @@ func kafkaBlock() schema.Block {
 			},
 			"on_failure": onFailureAttribute(),
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -470,7 +457,6 @@ func webhookBlock() schema.Block {
 			},
 			"on_failure": onFailureAttribute(),
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -496,7 +482,6 @@ func integrationActionBlock() schema.Block {
 			},
 			"on_failure": onFailureAttribute(),
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -543,7 +528,6 @@ func upsertEntityBlock() schema.Block {
 				},
 			},
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -601,7 +585,6 @@ func aiBlock() schema.Block {
 				Validators:          []validator.String{outputSchemaValidator()},
 			},
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -637,7 +620,6 @@ func aiAgentBlock() schema.Block {
 				Validators:          []validator.String{outputSchemaValidator()},
 			},
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -673,7 +655,6 @@ func conditionBlock() schema.Block {
 				},
 			},
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -809,7 +790,6 @@ func inputBlock() schema.Block {
 			},
 			"responders": respondersBlock("Who is allowed to respond to this input node."),
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 

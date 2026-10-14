@@ -6,6 +6,33 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
+func TestAddRelationsToState_defaultsUnionToFalseWhenUnset(t *testing.T) {
+	target := "parent"
+	many := true
+	b := &cli.Blueprint{
+		Identifier: "_team",
+		Relations: map[string]cli.Relation{
+			"parent_team": {
+				Title:  ptr("Parent Team"),
+				Target: &target,
+				Many:   &many,
+			},
+		},
+	}
+	systemBp := &cli.Blueprint{Relations: map[string]cli.Relation{}}
+	bm := &SystemBlueprintModel{}
+
+	addRelationsToState(b, systemBp, bm)
+
+	relation, ok := bm.Relations["parent_team"]
+	if !ok {
+		t.Fatal("expected parent_team relation in state")
+	}
+	if relation.Union.IsNull() || relation.Union.ValueBool() {
+		t.Fatalf("expected union to default to false, got %v", relation.Union)
+	}
+}
+
 func TestAddRelationsToState_skipsRuleResultTargetRelations(t *testing.T) {
 	envTarget := "Env"
 	vmTarget := "microservice"

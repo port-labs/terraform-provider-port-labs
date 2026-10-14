@@ -376,6 +376,7 @@ Optional:
 
 - `path` (String) Path for the Inherited ownership type. Required when type is 'Inherited'. Must be a valid relation identifiers path.
 - `title` (String) Optional title for the owning teams property.
+- `union` (Boolean) Whether multiple sources can add to the owning teams without overwriting each other. Only applies when type is 'Direct'. This setting cannot be changed after ownership is created.
 
 
 <a id="nestedatt--properties"></a>
@@ -530,6 +531,7 @@ Optional:
 - `many` (Boolean) The many of the relation
 - `required` (Boolean) The required of the relation
 - `title` (String) The title of the relation
+- `union` (Boolean) Whether multiple sources can add to this relation without overwriting each other. Only applies when many is true. This setting cannot be changed after the relation is created.
 
 
 <a id="nestedatt--team_inheritance"></a>

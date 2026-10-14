@@ -52,7 +52,7 @@ func TestRefreshBlueprintPermissionsStateWithNilUpdateMetadataProperties(t *test
 		},
 	}
 
-	err := refreshBlueprintPermissionsState(state, apiResponse, "testBlueprint", false)
+	err := refreshBlueprintPermissionsState(state, apiResponse, "testBlueprint", false, nil)
 	if err != nil {
 		t.Fatalf("refreshBlueprintPermissionsState failed: %v", err)
 	}
@@ -129,7 +129,7 @@ func TestRefreshBlueprintPermissionsStateWithExistingUpdateMetadataProperties(t 
 		},
 	}
 
-	err := refreshBlueprintPermissionsState(state, apiResponse, "testBlueprint", false)
+	err := refreshBlueprintPermissionsState(state, apiResponse, "testBlueprint", false, nil)
 	if err != nil {
 		t.Fatalf("refreshBlueprintPermissionsState failed: %v", err)
 	}
@@ -214,7 +214,7 @@ func TestRefreshBlueprintPermissionsStateWithPolicy(t *testing.T) {
 		},
 	}
 
-	err := refreshBlueprintPermissionsState(state, apiResponse, "testBlueprint", false)
+	err := refreshBlueprintPermissionsState(state, apiResponse, "testBlueprint", false, nil)
 	if err != nil {
 		t.Fatalf("refreshBlueprintPermissionsState failed: %v", err)
 	}
@@ -289,12 +289,147 @@ func TestRefreshBlueprintPermissionsStateDoesNotAdoptReadWhenUnconfigured(t *tes
 		},
 	}
 
-	err := refreshBlueprintPermissionsState(state, apiResponse, "testBlueprint", false)
+	err := refreshBlueprintPermissionsState(state, apiResponse, "testBlueprint", false, nil)
 	if err != nil {
 		t.Fatalf("refreshBlueprintPermissionsState failed: %v", err)
 	}
 
 	if state.Entities.Read != nil {
 		t.Fatal("Read should remain nil when it was not previously configured")
+	}
+}
+
+func TestRefreshBlueprintPermissionsStateWithReadProperties(t *testing.T) {
+	ownedByTeam := false
+	state := &BlueprintPermissionsModel{
+		ID:                  types.StringValue("testBlueprint"),
+		BlueprintIdentifier: types.StringValue("testBlueprint"),
+		Entities:            nil,
+	}
+
+	apiResponse := &cli.BlueprintPermissions{
+		Entities: cli.BlueprintPermissionsEntities{
+			Register: cli.BlueprintPermissionsBlock{
+				Users:       []string{},
+				Roles:       []string{"Admin"},
+				Teams:       []string{},
+				OwnedByTeam: &ownedByTeam,
+			},
+			Unregister: cli.BlueprintPermissionsBlock{
+				Users:       []string{},
+				Roles:       []string{"Admin"},
+				Teams:       []string{},
+				OwnedByTeam: &ownedByTeam,
+			},
+			Update: cli.BlueprintPermissionsBlock{
+				Users:       []string{},
+				Roles:       []string{"Admin"},
+				Teams:       []string{},
+				OwnedByTeam: &ownedByTeam,
+			},
+			ReadProperties: cli.BlueprintRolesOrPropertiesPermissionsBlock{
+				"$title": cli.BlueprintPermissionsBlock{
+					Users:       []string{},
+					Roles:       []string{"Member"},
+					Teams:       []string{},
+					OwnedByTeam: &ownedByTeam,
+				},
+				"$identifier": cli.BlueprintPermissionsBlock{
+					Users:       []string{},
+					Roles:       []string{"Member"},
+					Teams:       []string{},
+					OwnedByTeam: &ownedByTeam,
+				},
+				"myProp": cli.BlueprintPermissionsBlock{
+					Users:       []string{},
+					Roles:       []string{"Admin"},
+					Teams:       []string{},
+					OwnedByTeam: &ownedByTeam,
+				},
+			},
+		},
+	}
+
+	err := refreshBlueprintPermissionsState(state, apiResponse, "testBlueprint", false, nil)
+	if err != nil {
+		t.Fatalf("refreshBlueprintPermissionsState failed: %v", err)
+	}
+
+	if state.Entities.ReadMetadataProperties == nil {
+		t.Fatal("ReadMetadataProperties should not be nil after refresh")
+	}
+	if state.Entities.ReadMetadataProperties.Title == nil {
+		t.Fatal("ReadMetadataProperties.Title should not be nil")
+	}
+	if state.Entities.ReadProperties == nil {
+		t.Fatal("ReadProperties should not be nil after refresh")
+	}
+	if _, ok := (*state.Entities.ReadProperties)["myProp"]; !ok {
+		t.Fatal("expected myProp in ReadProperties")
+	}
+}
+
+func TestRefreshBlueprintPermissionsStateSkipsMirrorReadProperties(t *testing.T) {
+	ownedByTeam := false
+	state := &BlueprintPermissionsModel{
+		ID:                  types.StringValue("testBlueprint"),
+		BlueprintIdentifier: types.StringValue("testBlueprint"),
+		Entities:            nil,
+	}
+
+	apiResponse := &cli.BlueprintPermissions{
+		Entities: cli.BlueprintPermissionsEntities{
+			Register: cli.BlueprintPermissionsBlock{
+				Users:       []string{},
+				Roles:       []string{"Admin"},
+				Teams:       []string{},
+				OwnedByTeam: &ownedByTeam,
+			},
+			Unregister: cli.BlueprintPermissionsBlock{
+				Users:       []string{},
+				Roles:       []string{"Admin"},
+				Teams:       []string{},
+				OwnedByTeam: &ownedByTeam,
+			},
+			Update: cli.BlueprintPermissionsBlock{
+				Users:       []string{},
+				Roles:       []string{"Admin"},
+				Teams:       []string{},
+				OwnedByTeam: &ownedByTeam,
+			},
+			ReadProperties: cli.BlueprintRolesOrPropertiesPermissionsBlock{
+				"mirrorProp": cli.BlueprintPermissionsBlock{
+					Users:       []string{},
+					Roles:       []string{"Member"},
+					Teams:       []string{},
+					OwnedByTeam: &ownedByTeam,
+				},
+				"myProp": cli.BlueprintPermissionsBlock{
+					Users:       []string{},
+					Roles:       []string{"Admin"},
+					Teams:       []string{},
+					OwnedByTeam: &ownedByTeam,
+				},
+			},
+		},
+	}
+
+	mirrorPropertyKeys := map[string]struct{}{
+		"mirrorProp": {},
+	}
+
+	err := refreshBlueprintPermissionsState(state, apiResponse, "testBlueprint", false, mirrorPropertyKeys)
+	if err != nil {
+		t.Fatalf("refreshBlueprintPermissionsState failed: %v", err)
+	}
+
+	if state.Entities.ReadProperties == nil {
+		t.Fatal("ReadProperties should not be nil after refresh")
+	}
+	if _, ok := (*state.Entities.ReadProperties)["mirrorProp"]; ok {
+		t.Fatal("mirrorProp should be skipped when refreshing read properties")
+	}
+	if _, ok := (*state.Entities.ReadProperties)["myProp"]; !ok {
+		t.Fatal("expected myProp in ReadProperties")
 	}
 }

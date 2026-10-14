@@ -322,6 +322,20 @@ func arrayPropToState(ctx context.Context, property cli.WorkflowInputProperty, j
 			items.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, toStringMap(colors))
 		}
 
+		if value, ok := property.Items["pattern"].(string); ok && value != "" {
+			items.Pattern = types.StringValue(value)
+		}
+		if minLength, minLengthJqQuery, err := intOrJqToState(property.Items["minLength"], "minLength"); err != nil {
+			return nil, err
+		} else if minLengthJqQuery.IsNull() {
+			items.MinLength = minLength
+		}
+		if maxLength, maxLengthJqQuery, err := intOrJqToState(property.Items["maxLength"], "maxLength"); err != nil {
+			return nil, err
+		} else if maxLengthJqQuery.IsNull() {
+			items.MaxLength = maxLength
+		}
+
 		if defaults != nil {
 			values := make([]attr.Value, 0, len(defaults))
 			for _, value := range defaults {

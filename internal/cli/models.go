@@ -400,17 +400,18 @@ type (
 
 	Page struct {
 		Meta
-		Identifier  string            `json:"identifier,omitempty"`
-		Type        string            `json:"type,omitempty"`
-		Icon        *string           `json:"icon,omitempty"`
-		Parent      *string           `json:"parent,omitempty"`
-		After       *string           `json:"after,omitempty"`
-		Title       *string           `json:"title,omitempty"`
-		Locked      *bool             `json:"locked,omitempty"`
-		Blueprint   *string           `json:"blueprint,omitempty"`
-		Widgets     *[]map[string]any `json:"widgets,omitempty"`
-		PageFilters *[]map[string]any `json:"pageFilters,omitempty"`
-		Description *string           `json:"description,omitempty"`
+		Identifier        string            `json:"identifier,omitempty"`
+		Type              string            `json:"type,omitempty"`
+		Icon              *string           `json:"icon,omitempty"`
+		Parent            *string           `json:"parent,omitempty"`
+		After             *string           `json:"after,omitempty"`
+		Title             *string           `json:"title,omitempty"`
+		Locked            *bool             `json:"locked,omitempty"`
+		Blueprint         *string           `json:"blueprint,omitempty"`
+		Widgets           *[]map[string]any `json:"widgets,omitempty"`
+		PageFilters       *[]map[string]any `json:"pageFilters,omitempty"`
+		PageFilterPresets *[]map[string]any `json:"pageFilterPresets,omitempty"`
+		Description       *string           `json:"description,omitempty"`
 	}
 
 	PageReadPermissions struct {
@@ -489,11 +490,13 @@ type (
 	}
 
 	Rule struct {
-		Identifier  string `json:"identifier,omitempty"`
-		Title       string `json:"title,omitempty"`
-		Description string `json:"description,omitempty"`
-		Level       string `json:"level,omitempty"`
-		Query       Query  `json:"query,omitempty"`
+		Identifier  string         `json:"identifier,omitempty"`
+		Title       string         `json:"title,omitempty"`
+		Description string         `json:"description,omitempty"`
+		Level       string         `json:"level,omitempty"`
+		Query       Query          `json:"query,omitempty"`
+		Properties  map[string]any `json:"properties,omitempty"`
+		Relations   map[string]any `json:"relations,omitempty"`
 	}
 
 	Level struct {
@@ -791,6 +794,13 @@ type IntegrationClientSpec struct {
 // IsEmpty reports whether the spec carries nothing Terraform can manage.
 func (s *IntegrationClientSpec) IsEmpty() bool {
 	return s == nil || (s.IntegrationSpec == nil && s.AppSpec == nil)
+}
+
+func (s *IntegrationClientSpec) AppSpecOnly() *IntegrationClientSpec {
+	if s == nil || s.AppSpec == nil {
+		return nil
+	}
+	return &IntegrationClientSpec{AppSpec: s.AppSpec}
 }
 
 type IntegrationStatus struct {

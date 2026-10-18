@@ -15,6 +15,8 @@ type Rule struct {
 	Description types.String `tfsdk:"description"`
 	Level       types.String `tfsdk:"level"`
 	Query       *Query       `tfsdk:"query"`
+	Properties  types.String `tfsdk:"properties"`
+	Relations   types.String `tfsdk:"relations"`
 }
 
 type Level struct {

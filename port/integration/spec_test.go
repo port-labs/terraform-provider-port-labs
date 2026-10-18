@@ -86,6 +86,67 @@ func TestValidateIntegrationModel_OnPremRejectsSpec(t *testing.T) {
 	assert.ErrorContains(t, validateIntegrationModel(state), "spec is only supported")
 }
 
+func TestValidateIntegrationModel_SaasOAuth2RejectsIntegrationSpec(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:   types.StringValue("github-oauth"),
+		InstallationType: types.StringValue(consts.InstallationTypeSaasOAuth2),
+		Spec:             types.StringValue(`{"integrationSpec":{"githubAppPrivateKey":"x"},"appSpec":{"scheduledResyncInterval":"12h"}}`),
+	}
+	assert.ErrorContains(t, validateIntegrationModel(state), "spec.integrationSpec cannot be set")
+}
+
+func TestValidateIntegrationModel_SaasOAuth2AllowsAppSpecOnly(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:   types.StringValue("github-oauth"),
+		InstallationType: types.StringValue(consts.InstallationTypeSaasOAuth2),
+		Spec:             types.StringValue(`{"appSpec":{"scheduledResyncInterval":"12h"}}`),
+	}
+	assert.NoError(t, validateIntegrationModel(state))
+}
+
+func TestValidateIntegrationModel_SaasOAuth2AllowsMissingSpec(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:   types.StringValue("github-oauth"),
+		InstallationType: types.StringValue(consts.InstallationTypeSaasOAuth2),
+	}
+	assert.NoError(t, validateIntegrationModel(state))
+}
+
+func TestValidateSaasSpec_SaasOAuth2SkipsRequiredSpec(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:   types.StringValue("github-oauth"),
+		InstallationType: types.StringValue(consts.InstallationTypeSaasOAuth2),
+	}
+	assert.NoError(t, validateSaasSpec(state))
+}
+
+func TestIntegrationToPortBody_SaasOAuth2SendsAppSpecOnly(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:      types.StringValue("github-oauth"),
+		InstallationAppType: types.StringValue("github-ocean"),
+		InstallationType:    types.StringValue(consts.InstallationTypeSaasOAuth2),
+		Spec:                types.StringValue(`{"integrationSpec":{"githubAppPrivateKey":"should-not-send"},"appSpec":{"scheduledResyncInterval":"12h"}}`),
+	}
+
+	body, err := integrationToPortBody(state, false)
+	require.NoError(t, err)
+	require.NotNil(t, body.Spec)
+	assert.Nil(t, body.Spec.IntegrationSpec)
+	assert.Equal(t, "12h", body.Spec.AppSpec["scheduledResyncInterval"])
+}
+
+func TestIntegrationToPortBody_SaasOAuth2OmitsSpecWithoutAppSpec(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:   types.StringValue("github-oauth"),
+		InstallationType: types.StringValue(consts.InstallationTypeSaasOAuth2),
+		Spec:             types.StringNull(),
+	}
+
+	body, err := integrationToPortBody(state, false)
+	require.NoError(t, err)
+	assert.Nil(t, body.Spec)
+}
+
 func TestValidateIntegrationModel_OnPremAllowsEmptySpec(t *testing.T) {
 	state := &IntegrationModel{
 		InstallationId:   types.StringValue("my-kafka"),

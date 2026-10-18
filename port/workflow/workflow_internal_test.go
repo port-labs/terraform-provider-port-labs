@@ -878,6 +878,42 @@ func TestValidateSelfServeTriggerContexts(t *testing.T) {
 			},
 			summary: "Invalid attribute combination",
 		},
+		"entity with visible": {
+			context: TriggerContextModel{
+				On:        types.StringValue(consts.EntityContext),
+				UserInput: types.StringValue("service"),
+				Visible:   types.BoolValue(false),
+			},
+			summary: "Invalid attribute combination",
+		},
+		"create_entity with visible": {
+			context: TriggerContextModel{
+				On:                  types.StringValue(consts.CreateEntityContext),
+				BlueprintIdentifier: types.StringValue("service"),
+				Visible:             types.BoolValue(false),
+			},
+			summary: "Invalid attribute combination",
+		},
+		"self_service_hub without visible": {
+			context: TriggerContextModel{On: types.StringValue(consts.SelfServiceHubContext)},
+			summary: "Missing required attribute",
+		},
+		"self_service_hub with blueprint": {
+			context: TriggerContextModel{
+				On:                  types.StringValue(consts.SelfServiceHubContext),
+				Visible:             types.BoolValue(false),
+				BlueprintIdentifier: types.StringValue("service"),
+			},
+			summary: "Invalid attribute combination",
+		},
+		"self_service_hub with user_input": {
+			context: TriggerContextModel{
+				On:        types.StringValue(consts.SelfServiceHubContext),
+				Visible:   types.BoolValue(false),
+				UserInput: types.StringValue("service"),
+			},
+			summary: "Invalid attribute combination",
+		},
 	}
 
 	for name, test := range tests {
@@ -915,6 +951,43 @@ func TestValidateSelfServeTriggerContextsSkipUnknownRejectedValues(t *testing.T)
 				SelfServeTrigger: &SelfServeTriggerModel{Contexts: []TriggerContextModel{context}},
 			}
 			assert.NotContains(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)), "Invalid attribute combination")
+		})
+	}
+}
+
+func TestValidateSelfServeTriggerSelfServiceHubContext(t *testing.T) {
+	hubContext := TriggerContextModel{On: types.StringValue(consts.SelfServiceHubContext), Visible: types.BoolValue(false)}
+	tests := map[string]struct {
+		contexts  []TriggerContextModel
+		duplicate bool
+	}{
+		"hidden without other contexts": {contexts: []TriggerContextModel{hubContext}},
+		"alongside entity and create_entity": {contexts: []TriggerContextModel{
+			{On: types.StringValue(consts.EntityContext), UserInput: types.StringValue("service")},
+			{On: types.StringValue(consts.CreateEntityContext), BlueprintIdentifier: types.StringValue("service")},
+			hubContext,
+		}},
+		"unknown visible": {contexts: []TriggerContextModel{
+			{On: types.StringValue(consts.SelfServiceHubContext), Visible: types.BoolUnknown()},
+		}},
+		"duplicate": {
+			contexts:  []TriggerContextModel{hubContext, {On: types.StringValue(consts.SelfServiceHubContext), Visible: types.BoolValue(true)}},
+			duplicate: true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			node := WorkflowNodeModel{
+				Identifier:       types.StringValue("trigger"),
+				SelfServeTrigger: &SelfServeTriggerModel{Contexts: test.contexts},
+			}
+			summaries := errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil))
+			if test.duplicate {
+				assert.Equal(t, []string{"Duplicate SELF_SERVICE_HUB context"}, summaries)
+			} else {
+				assert.Empty(t, summaries)
+			}
 		})
 	}
 }
@@ -1409,6 +1482,10 @@ func TestEverySelfServeTriggerContextSerializes(t *testing.T) {
 			On:        types.StringValue(consts.EntityContext),
 			UserInput: types.StringValue("service"),
 		},
+		consts.SelfServiceHubContext: {
+			On:      types.StringValue(consts.SelfServiceHubContext),
+			Visible: types.BoolValue(false),
+		},
 	}
 
 	for on, triggerContext := range contexts {
@@ -1430,6 +1507,23 @@ func TestEverySelfServeTriggerContextSerializes(t *testing.T) {
 			assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)))
 		})
 	}
+}
+
+func TestHiddenSelfServiceHubContextSendsVisibleFalse(t *testing.T) {
+	w, err := workflowStateToPortBody(context.Background(), &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{{
+			Identifier: types.StringValue("trigger"),
+			SelfServeTrigger: &SelfServeTriggerModel{Contexts: []TriggerContextModel{
+				{On: types.StringValue(consts.SelfServiceHubContext), Visible: types.BoolValue(false)},
+			}},
+		}},
+	})
+	require.NoError(t, err)
+
+	body, err := json.Marshal(w.Nodes[0].Config.Contexts)
+	require.NoError(t, err)
+	assert.JSONEq(t, `[{"on":"SELF_SERVICE_HUB","visible":false}]`, string(body))
 }
 
 func TestValidateAIProviderAndModelMustBePaired(t *testing.T) {
@@ -1656,7 +1750,7 @@ func TestValidateConfigReportsNodeWithoutConfigBlock(t *testing.T) {
 	}, nil)
 
 	require.Len(t, diags.Errors(), 1, diags.Errors())
-	assert.Equal(t, "Missing trigger node", diags.Errors()[0].Summary())
+	assert.Equal(t, "Invalid node type combination", diags.Errors()[0].Summary())
 }
 
 type (
@@ -1674,17 +1768,7 @@ func validateWorkflowConfig(ctx context.Context, t *testing.T, config configObje
 	raw := configValue(t, schemaResp.Schema.Type().TerraformType(ctx), config)
 
 	if unknownAt != nil {
-		replaced := false
-		transformed, err := tftypes.Transform(raw, func(valuePath *tftypes.AttributePath, value tftypes.Value) (tftypes.Value, error) {
-			if !valuePath.Equal(unknownAt) {
-				return value, nil
-			}
-			replaced = true
-			return tftypes.NewValue(value.Type(), tftypes.UnknownValue), nil
-		})
-		require.NoError(t, err)
-		require.True(t, replaced, "no value at %s to make unknown", unknownAt)
-		raw = transformed
+		raw = withUnknownValue(t, raw, unknownAt)
 	}
 
 	resp := &resource.ValidateConfigResponse{}
@@ -1695,7 +1779,7 @@ func validateWorkflowConfig(ctx context.Context, t *testing.T, config configObje
 	return resp.Diagnostics
 }
 
-func configValue(t *testing.T, valueType tftypes.Type, data any) tftypes.Value {
+func configValue(t testing.TB, valueType tftypes.Type, data any) tftypes.Value {
 	t.Helper()
 
 	if data == nil {
@@ -1737,7 +1821,7 @@ func configValue(t *testing.T, valueType tftypes.Type, data any) tftypes.Value {
 	return tftypes.NewValue(valueType, data)
 }
 
-func configValues(t *testing.T, elementType tftypes.Type, data any) []tftypes.Value {
+func configValues(t testing.TB, elementType tftypes.Type, data any) []tftypes.Value {
 	t.Helper()
 
 	items, ok := data.(configList)
@@ -1748,6 +1832,22 @@ func configValues(t *testing.T, elementType tftypes.Type, data any) []tftypes.Va
 		values = append(values, configValue(t, elementType, item))
 	}
 	return values
+}
+
+func withUnknownValue(t testing.TB, value tftypes.Value, unknownAt *tftypes.AttributePath) tftypes.Value {
+	t.Helper()
+
+	replaced := false
+	transformed, err := tftypes.Transform(value, func(valuePath *tftypes.AttributePath, current tftypes.Value) (tftypes.Value, error) {
+		if !valuePath.Equal(unknownAt) {
+			return current, nil
+		}
+		replaced = true
+		return tftypes.NewValue(current.Type(), tftypes.UnknownValue), nil
+	})
+	require.NoError(t, err)
+	require.True(t, replaced, "no value at %s to make unknown", unknownAt)
+	return transformed
 }
 
 func validateWorkflow(nodes []WorkflowNodeModel, connections []ConnectionModel) diag.Diagnostics {

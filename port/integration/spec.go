@@ -31,17 +31,24 @@ func parseSpecFromConfig(raw types.String) (*cli.IntegrationClientSpec, error) {
 // when the resource is being destroyed. Keep this limited to issues that are
 // always invalid in HCL; defer SaaS spec requirements to ModifyPlan/CRUD.
 func validateIntegrationConfig(m *IntegrationModel) error {
-	if !m.isSaas() && specIsConfigured(m.Spec) {
+	if !m.isHosted() && specIsConfigured(m.Spec) {
 		return fmt.Errorf(
-			"spec is only supported when installation_type is %q",
+			"spec is only supported when installation_type is %q or %q",
 			consts.InstallationTypeSaas,
+			consts.InstallationTypeSaasOAuth2,
 		)
 	}
 
-	if specIsConfigured(m.Spec) {
-		if _, err := parseSpecFromConfig(m.Spec); err != nil {
-			return err
-		}
+	spec, err := parseSpecFromConfig(m.Spec)
+	if err != nil {
+		return err
+	}
+	if m.isSaasOAuth2() && spec != nil && len(spec.IntegrationSpec) > 0 {
+		return fmt.Errorf(
+			"spec.integrationSpec cannot be set when installation_type is %q; "+
+				"OAuth-managed credentials are not Terraform-managed. Use spec.appSpec and config only",
+			consts.InstallationTypeSaasOAuth2,
+		)
 	}
 
 	return nil

@@ -1,8 +1,9 @@
 package consts
 
 const (
-	InstallationTypeOnPrem = "OnPrem"
-	InstallationTypeSaas   = "Saas"
+	InstallationTypeOnPrem     = "OnPrem"
+	InstallationTypeSaas       = "Saas"
+	InstallationTypeSaasOAuth2 = "SaasOAuth2"
 )
 
 const (
@@ -15,7 +16,8 @@ const (
 )
 
 const (
-	ValidateIntegrationSpecModeFull = "full"
+	ValidateSaasSpec       = "full"
+	ValidateSaasOAuth2Spec = "appSpec"
 )
 
 const (
@@ -25,6 +27,14 @@ const (
 
 func IsSaas(installationType string) bool {
 	return installationType == InstallationTypeSaas
+}
+
+func IsSaasOAuth2(installationType string) bool {
+	return installationType == InstallationTypeSaasOAuth2
+}
+
+func IsHosted(installationType string) bool {
+	return IsSaas(installationType) || IsSaasOAuth2(installationType)
 }
 
 // ServerManagedAppSpecKeys are appSpec fields Port assigns during SaaS

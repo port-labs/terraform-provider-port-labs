@@ -42,9 +42,18 @@ func (r *WorkflowResource) ValidateConfig(ctx context.Context, req resource.Vali
 			continue
 		}
 
+		// An unknown block may still resolve to null, so exclusivity is only
+		// decided once every block is known.
+		blocks, anyUnknown := declaredNodeTypeBlocks(object)
+		if !anyUnknown && len(blocks) != 1 {
+			resp.Diagnostics.AddAttributeError(nodePath, "Invalid node type combination", "Exactly one node config block must be set.")
+			typesKnown = false
+		}
+
 		var node WorkflowNodeModel
-		resp.Diagnostics.Append(object.As(ctx, &node, basetypes.ObjectAsOptions{UnhandledUnknownAsEmpty: true})...)
-		if resp.Diagnostics.HasError() {
+		decodeDiags := object.As(ctx, &node, basetypes.ObjectAsOptions{UnhandledUnknownAsEmpty: true})
+		resp.Diagnostics.Append(decodeDiags...)
+		if decodeDiags.HasError() {
 			return
 		}
 		hasUnknownValues := containsUnknown(object)
@@ -79,14 +88,16 @@ func (r *WorkflowResource) ValidateConfig(ctx context.Context, req resource.Vali
 	}
 
 	var connectionList types.List
-	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("connections"), &connectionList)...)
-	if resp.Diagnostics.HasError() || connectionList.IsNull() || connectionList.IsUnknown() {
+	connectionDiags := req.Config.GetAttribute(ctx, path.Root("connections"), &connectionList)
+	resp.Diagnostics.Append(connectionDiags...)
+	if connectionDiags.HasError() || connectionList.IsNull() || connectionList.IsUnknown() {
 		return
 	}
 
 	var connections []ConnectionModel
-	resp.Diagnostics.Append(connectionList.ElementsAs(ctx, &connections, true)...)
-	if resp.Diagnostics.HasError() {
+	connectionDiags = connectionList.ElementsAs(ctx, &connections, true)
+	resp.Diagnostics.Append(connectionDiags...)
+	if connectionDiags.HasError() {
 		return
 	}
 
@@ -139,15 +150,27 @@ var nodeTypeByBlock = map[string]string{
 	"input":              consts.InputNode,
 }
 
-func nodeTypeFromConfigObject(object types.Object) string {
+// declaredNodeTypeBlocks lists the node config blocks that are not null,
+// counting unknown blocks as declared.
+func declaredNodeTypeBlocks(object types.Object) (blocks []string, anyUnknown bool) {
 	attributes := object.Attributes()
 	for _, name := range nodeTypeBlockNames {
-		if block, declared := attributes[name]; declared && !block.IsNull() {
-			return nodeTypeByBlock[name]
+		block, declared := attributes[name]
+		if !declared || block.IsNull() {
+			continue
 		}
+		blocks = append(blocks, name)
+		anyUnknown = anyUnknown || block.IsUnknown()
 	}
+	return blocks, anyUnknown
+}
 
-	return ""
+func nodeTypeFromConfigObject(object types.Object) string {
+	blocks, _ := declaredNodeTypeBlocks(object)
+	if len(blocks) == 0 {
+		return ""
+	}
+	return nodeTypeByBlock[blocks[0]]
 }
 
 var triggerTypes = map[string]bool{
@@ -189,6 +212,7 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 	switch {
 	case node.SelfServeTrigger != nil:
 		blockPath := nodePath.AtName("self_serve_trigger")
+		seenSelfServiceHub := false
 		for i, context := range node.SelfServeTrigger.Contexts {
 			contextPath := blockPath.AtName("contexts").AtListIndex(i)
 			switch context.On.ValueString() {
@@ -197,11 +221,27 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 					"`blueprint_identifier` is required when `on` is `CREATE_ENTITY`.")
 				rejectSet(resp, contextPath.AtName("user_input"), context.UserInput,
 					"`user_input` cannot be set when `on` is `CREATE_ENTITY`.")
+				rejectSet(resp, contextPath.AtName("visible"), context.Visible,
+					"`visible` cannot be set when `on` is `CREATE_ENTITY`.")
 			case consts.EntityContext:
 				requireNonEmpty(resp, contextPath.AtName("user_input"), context.UserInput,
 					"`user_input` is required when `on` is `ENTITY`.")
 				rejectSet(resp, contextPath.AtName("blueprint_identifier"), context.BlueprintIdentifier,
 					"`blueprint_identifier` cannot be set when `on` is `ENTITY`.")
+				rejectSet(resp, contextPath.AtName("visible"), context.Visible,
+					"`visible` cannot be set when `on` is `ENTITY`.")
+			case consts.SelfServiceHubContext:
+				if seenSelfServiceHub {
+					resp.Diagnostics.AddAttributeError(contextPath.AtName("on"), "Duplicate SELF_SERVICE_HUB context",
+						"A self serve trigger can have at most one `SELF_SERVICE_HUB` context.")
+				}
+				seenSelfServiceHub = true
+				requireSet(resp, contextPath.AtName("visible"), context.Visible,
+					"`visible` is required when `on` is `SELF_SERVICE_HUB`.")
+				rejectSet(resp, contextPath.AtName("blueprint_identifier"), context.BlueprintIdentifier,
+					"`blueprint_identifier` cannot be set when `on` is `SELF_SERVICE_HUB`.")
+				rejectSet(resp, contextPath.AtName("user_input"), context.UserInput,
+					"`user_input` cannot be set when `on` is `SELF_SERVICE_HUB`.")
 			}
 		}
 		return consts.SelfServeTrigger
@@ -575,7 +615,7 @@ func requirePaired(resp *resource.ValidateConfigResponse, blockPath path.Path, b
 	)
 }
 
-func requireSet(resp *resource.ValidateConfigResponse, attributePath path.Path, value types.String, detail string) {
+func requireSet(resp *resource.ValidateConfigResponse, attributePath path.Path, value attr.Value, detail string) {
 	if value.IsNull() && !value.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(attributePath, "Missing required attribute", detail)
 	}

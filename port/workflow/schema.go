@@ -6,7 +6,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
-	"github.com/hashicorp/terraform-plugin-framework-validators/objectvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -65,14 +64,6 @@ func titleValidators() []validator.String {
 
 func descriptionValidators() []validator.String {
 	return []validator.String{stringvalidator.LengthAtMost(maxDescriptionLength)}
-}
-
-func nodeTypeValidators() []validator.Object {
-	expressions := make([]path.Expression, 0, len(nodeTypeBlockNames))
-	for _, name := range nodeTypeBlockNames {
-		expressions = append(expressions, path.MatchRelative().AtParent().AtName(name))
-	}
-	return []validator.Object{objectvalidator.ExactlyOneOf(expressions...)}
 }
 
 func onFailureAttribute() schema.Attribute {
@@ -314,11 +305,17 @@ func selfServeTriggerBlock() schema.Block {
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"on": schema.StringAttribute{
-							MarkdownDescription: "The context type. One of `CREATE_ENTITY`, `ENTITY`.",
+							MarkdownDescription: "The context type. One of `CREATE_ENTITY`, `ENTITY`, `SELF_SERVICE_HUB`.",
 							Required:            true,
 							Validators: []validator.String{
-								stringvalidator.OneOf("CREATE_ENTITY", "ENTITY"),
+								stringvalidator.OneOf(consts.CreateEntityContext, consts.EntityContext, consts.SelfServiceHubContext),
 							},
+						},
+						"visible": schema.BoolAttribute{
+							MarkdownDescription: "Whether the trigger is shown in the Self-Service Hub. Required when `on` is `SELF_SERVICE_HUB`. " +
+								"A trigger without a `SELF_SERVICE_HUB` context is shown. A hidden trigger stays published and can still be run " +
+								"from entity pages, dashboards, links, the API and AI agents; this is not an access control.",
+							Optional: true,
 						},
 						"blueprint_identifier": schema.StringAttribute{
 							MarkdownDescription: "The blueprint the trigger creates an entity for. Required when `on` is `CREATE_ENTITY`.",
@@ -332,7 +329,6 @@ func selfServeTriggerBlock() schema.Block {
 				},
 			},
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -382,7 +378,6 @@ func eventTriggerBlock() schema.Block {
 				},
 			},
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -397,7 +392,6 @@ func scheduleTriggerBlock() schema.Block {
 			},
 			"published": publishedAttribute(),
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -411,7 +405,6 @@ func kafkaBlock() schema.Block {
 			},
 			"on_failure": onFailureAttribute(),
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -464,7 +457,6 @@ func webhookBlock() schema.Block {
 			},
 			"on_failure": onFailureAttribute(),
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -490,7 +482,6 @@ func integrationActionBlock() schema.Block {
 			},
 			"on_failure": onFailureAttribute(),
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -537,7 +528,6 @@ func upsertEntityBlock() schema.Block {
 				},
 			},
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -595,7 +585,6 @@ func aiBlock() schema.Block {
 				Validators:          []validator.String{outputSchemaValidator()},
 			},
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -631,7 +620,6 @@ func aiAgentBlock() schema.Block {
 				Validators:          []validator.String{outputSchemaValidator()},
 			},
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -667,7 +655,6 @@ func conditionBlock() schema.Block {
 				},
 			},
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 
@@ -803,7 +790,6 @@ func inputBlock() schema.Block {
 			},
 			"responders": respondersBlock("Who is allowed to respond to this input node."),
 		},
-		Validators: nodeTypeValidators(),
 	}
 }
 

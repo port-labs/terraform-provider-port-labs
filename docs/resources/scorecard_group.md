@@ -13,7 +13,7 @@ description: |-
   A scorecard group can be configured in one of two modes:
   Shared rules mode — set blueprints, rules, and optionally filters to apply the same rules to multiple blueprints.Per-blueprint mode — set scorecards to define different filter/rules per blueprint.
   See the Port documentation https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/ for more information about scorecards.
-  scorecard_properties sets _scorecard blueprint property values on every member scorecard in the group. group_properties sets _scorecard_group blueprint property values on the group entity. scorecard_relations and group_relations set relations on member scorecards and the group entity respectively. Define the property and relation schema on the system blueprints first (for example with port_system_blueprint), then reference those keys in jsonencode({...}). Use depends_on so the scorecard group is created only after the blueprint schema exists.
+  scorecard_properties sets _scorecard blueprint property values on every member scorecard in the group. group_properties sets _scorecard_group blueprint property values on the group entity. scorecard_relations and group_relations set relations on member scorecards and the group entity respectively. Each rule also accepts optional properties and relations for custom _rule blueprint fields. Define the property and relation schema on the system blueprints first (for example with port_system_blueprint), then reference those keys in jsonencode({...}). Use depends_on so the scorecard group is created only after the blueprint schema exists.
   Example Usage (shared rules)
   
   
@@ -59,6 +59,24 @@ description: |-
     }
   }
   
+  resource "port_system_blueprint" "rule" {
+    identifier = "_rule"
+    properties = {
+      number_props = {
+        sla = {
+          type  = "number"
+          title = "SLA"
+        }
+      }
+    }
+    relations = {
+      owner = {
+        title  = "Owner"
+        target = "_team"
+      }
+    }
+  }
+  
   resource "port_scorecard_group" "readiness" {
     identifier = "production-readiness"
     title      = "Production Readiness"
@@ -83,6 +101,12 @@ description: |-
       identifier = "has-owner"
       title      = "Has Owner"
       level      = "Gold"
+      properties = jsonencode({
+        sla = 2
+      })
+      relations = jsonencode({
+        owner = "platform-team"
+      })
       query = {
         combinator = "and"
         conditions = [jsonencode({
@@ -112,6 +136,7 @@ description: |-
     depends_on = [
       port_system_blueprint.scorecard_group,
       port_system_blueprint.scorecard,
+      port_system_blueprint.rule,
     ]
   }
   
@@ -246,7 +271,7 @@ A scorecard group can be configured in one of two modes:
 
 See the [Port documentation](https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/) for more information about scorecards.
 
-`scorecard_properties` sets `_scorecard` blueprint property values on every member scorecard in the group. `group_properties` sets `_scorecard_group` blueprint property values on the group entity. `scorecard_relations` and `group_relations` set relations on member scorecards and the group entity respectively. Define the property and relation schema on the system blueprints first (for example with `port_system_blueprint`), then reference those keys in `jsonencode({...})`. Use `depends_on` so the scorecard group is created only after the blueprint schema exists.
+`scorecard_properties` sets `_scorecard` blueprint property values on every member scorecard in the group. `group_properties` sets `_scorecard_group` blueprint property values on the group entity. `scorecard_relations` and `group_relations` set relations on member scorecards and the group entity respectively. Each rule also accepts optional `properties` and `relations` for custom `_rule` blueprint fields. Define the property and relation schema on the system blueprints first (for example with `port_system_blueprint`), then reference those keys in `jsonencode({...})`. Use `depends_on` so the scorecard group is created only after the blueprint schema exists.
 
 ## Example Usage (shared rules)
 
@@ -294,6 +319,24 @@ resource "port_system_blueprint" "scorecard" {
   }
 }
 
+resource "port_system_blueprint" "rule" {
+  identifier = "_rule"
+  properties = {
+    number_props = {
+      sla = {
+        type  = "number"
+        title = "SLA"
+      }
+    }
+  }
+  relations = {
+    owner = {
+      title  = "Owner"
+      target = "_team"
+    }
+  }
+}
+
 resource "port_scorecard_group" "readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
@@ -318,6 +361,12 @@ resource "port_scorecard_group" "readiness" {
     identifier = "has-owner"
     title      = "Has Owner"
     level      = "Gold"
+    properties = jsonencode({
+      sla = 2
+    })
+    relations = jsonencode({
+      owner = "platform-team"
+    })
     query = {
       combinator = "and"
       conditions = [jsonencode({
@@ -347,6 +396,7 @@ resource "port_scorecard_group" "readiness" {
   depends_on = [
     port_system_blueprint.scorecard_group,
     port_system_blueprint.scorecard,
+    port_system_blueprint.rule,
   ]
 }
 
@@ -524,6 +574,8 @@ Required:
 Optional:
 
 - `description` (String) The description of the rule
+- `properties` (String) Additional `_rule` blueprint properties applied to this rule, as a JSON encoded string. Property keys must match custom properties you added to the `_rule` blueprint. On update, omitted keys are cleared.
+- `relations` (String) Additional `_rule` blueprint relations applied to this rule, as a JSON encoded string. Relation values can be a string, an array of strings, or `null` to clear a relation. The `scorecard` relation is managed by Port and cannot be set here. On update, omitted keys are cleared.
 
 <a id="nestedatt--rules--query"></a>
 ### Nested Schema for `rules.query`
@@ -559,6 +611,8 @@ Required:
 Optional:
 
 - `description` (String) The description of the rule
+- `properties` (String) Additional `_rule` blueprint properties applied to this rule, as a JSON encoded string. Property keys must match custom properties you added to the `_rule` blueprint. On update, omitted keys are cleared.
+- `relations` (String) Additional `_rule` blueprint relations applied to this rule, as a JSON encoded string. Relation values can be a string, an array of strings, or `null` to clear a relation. The `scorecard` relation is managed by Port and cannot be set here. On update, omitted keys are cleared.
 
 <a id="nestedatt--scorecards--rules--query"></a>
 ### Nested Schema for `scorecards.rules.query`

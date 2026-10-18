@@ -10,6 +10,7 @@ import (
 func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	oldWidgets := pm.Widgets
 	oldPageFilters := pm.PageFilters
+	oldPageFilterPresets := pm.PageFilterPresets
 
 	pm.ID = types.StringValue(b.Identifier)
 	pm.Identifier = types.StringValue(b.Identifier)
@@ -50,6 +51,21 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 		pm.PageFilters, _ = types.ListValue(types.StringType, filterAttrs)
 	} else {
 		pm.PageFilters = types.ListNull(types.StringType)
+	}
+
+	if b.PageFilterPresets != nil {
+		presetAttrs := make([]attr.Value, len(*b.PageFilterPresets))
+		for i, preset := range *b.PageFilterPresets {
+			bPreset, err := utils.GoObjectToTerraformStringPreferExisting(
+				utils.TerraformStringAtList(oldPageFilterPresets, i), preset, r.portClient.JSONEscapeHTML)
+			if err != nil {
+				return err
+			}
+			presetAttrs[i] = bPreset
+		}
+		pm.PageFilterPresets, _ = types.ListValue(types.StringType, presetAttrs)
+	} else {
+		pm.PageFilterPresets = types.ListNull(types.StringType)
 	}
 	return nil
 }

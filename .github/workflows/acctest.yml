@@ -53,18 +53,21 @@ jobs:
           export -f run_pkg
 
           # Four packages at a time, four tests at a time inside each.
-          # These packages do not rename the org or edit _user/_team.
+          # These packages do not rename the org, edit _user/_team, or share sidebar order.
           go list ./... \
-            | grep -vE '/(system_blueprint|organization|action-permissions|page-permissions|blueprint-permissions)$' \
+            | grep -vE '/(system_blueprint|organization|action-permissions|page-permissions|blueprint-permissions|page|folder)$' \
             | xargs -r -P 4 -n 1 bash -c 'run_pkg "$1" 4' _
           parallel_rc=$?
 
+          # Serial: org/permissions mutate shared identity; page/folder share sidebar `after` ordering.
           go list \
             ./port/system_blueprint \
             ./port/organization \
             ./port/action-permissions \
             ./port/page-permissions \
             ./port/blueprint-permissions \
+            ./port/page \
+            ./port/folder \
             | xargs -r -P 1 -n 1 bash -c 'run_pkg "$1" 1' _
           serial_rc=$?
 

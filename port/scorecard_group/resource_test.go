@@ -78,7 +78,7 @@ func TestAccPortScorecardGroupSharedRules(t *testing.T) {
 		depends_on = [port_blueprint.microservice]
 	}`, groupIdentifier, testAccHasAuthorRuleHCL())
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheckScorecardGroups(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -136,7 +136,7 @@ func TestAccPortScorecardGroupSharedRulesMultipleBlueprints(t *testing.T) {
 		]
 	}`, groupIdentifier, testAccHasAuthorRuleHCL())
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheckScorecardGroups(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -174,7 +174,7 @@ func TestAccPortScorecardGroupPerBlueprint(t *testing.T) {
 		depends_on = [port_blueprint.microservice]
 	}`, groupIdentifier, testAccHasAuthorRuleHCL())
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheckScorecardGroups(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -248,7 +248,7 @@ func TestAccPortScorecardGroupPerBlueprintMultiple(t *testing.T) {
 		]
 	}`, groupIdentifier)
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheckScorecardGroups(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -298,7 +298,7 @@ func TestAccPortScorecardGroupBetaDisabled(t *testing.T) {
 		}]
 	}`
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -349,7 +349,7 @@ func TestAccPortScorecardGroupPropertiesAndRelations(t *testing.T) {
 		testAccHasAuthorRuleHCL(),
 	)
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acctest.TestAccPreCheckScorecardGroups(t)
 			testAccExtendScorecardBlueprint(t, scorecardPropKey, scorecardRelationKey)

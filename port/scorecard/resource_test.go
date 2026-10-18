@@ -234,7 +234,8 @@ func TestAccPortScorecard(t *testing.T) {
 			},
 		},
 	})
-	resource.ParallelTest(t, resource.TestCase{
+	// ParallelTest calls t.Parallel(); it cannot run twice in one test function.
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

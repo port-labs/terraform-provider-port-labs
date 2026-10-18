@@ -281,7 +281,7 @@ resource "port_page" "microservice_blueprint_page" {
 }
 `, pageIdentifier)
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -333,7 +333,7 @@ resource "port_page" "microservice_blueprint_page" {
 `, pageIdentifier)
 
 	// expect to fail on beta feature not enabled
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -391,7 +391,7 @@ resource "port_page" "microservice_dashboard_page" {
 }
 `, pageIdentifier)
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -496,7 +496,7 @@ resource "port_page" "microservice_dashboard_page_2" {
 }
 `, pageIdentifier2)
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -562,7 +562,7 @@ resource "port_page" "page_without_filters" {
 }
 `, pageIdentifier)
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -657,7 +657,7 @@ resource "port_page" "for_expression_page" {
 }
 `, pageIdentifier)
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -685,7 +685,7 @@ func TestAccPortPageResourceEntityPage(t *testing.T) {
 	blueprintConfig := testAccCreateBlueprintConfig(blueprintIdentifier)
 	entityPageConfig := testAccEntityPageConfig(entityPageIdentifier, testAccEntityPageSinglePageFilter, "Details")
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -717,7 +717,7 @@ func TestAccPortPageResourceEntityPageUpdatePageFilters(t *testing.T) {
 	entityPageConfig := testAccEntityPageConfig(entityPageIdentifier, testAccEntityPageSinglePageFilter, "Details")
 	updatedPageFiltersConfig := testAccEntityPageConfig(entityPageIdentifier, testAccEntityPageDoublePageFilter, "Details")
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -757,7 +757,7 @@ resource "port_page" "entity_page" {
 }
 `, entityPageIdentifier)
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -784,7 +784,7 @@ resource "port_page" "invalid_type_page" {
 }
 `, pageIdentifier)
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -975,7 +975,7 @@ resource "port_page" "page_with_filters" {
 }
 `, serviceBlueprintIdentifier, clusterBlueprintIdentifier, pageIdentifier)
 
-	resource.ParallelTest(t, resource.TestCase{
+	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

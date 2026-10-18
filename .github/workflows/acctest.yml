@@ -46,12 +46,16 @@ jobs:
           set -uo pipefail
           mkdir -p test-results coverage
           run_pkg() {
-            local pkg="$1" name="${pkg##*/}" parallel="$2"
+            local pkg="$1"
+            local parallel="$2"
+            local name="${pkg##*/}"
             gotestsum --rerun-fails=3 --packages "$pkg" --format testname --junitfile "test-results/${name}.xml" -- \
               -timeout 10m -parallel "$parallel" -shuffle "$GITHUB_RUN_ID" -coverprofile "coverage/${name}.out"
           }
           export -f run_pkg
 
+          # Keep going so both phases run and artifacts are still uploaded on failure.
+          set +e
           # Four packages at a time, four tests at a time inside each.
           # These packages do not rename the org, edit _user/_team, or share sidebar order.
           go list ./... \
@@ -70,6 +74,7 @@ jobs:
             ./port/folder \
             | xargs -r -P 1 -n 1 bash -c 'run_pkg "$1" 1' _
           serial_rc=$?
+          set -e
 
           exit $(( parallel_rc || serial_rc ))
       - uses: actions/upload-artifact@v4
@@ -77,13 +82,13 @@ jobs:
         with:
           name: test-results-junit
           path: test-results
-          if-no-files-found: ignore
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-profiles
           path: coverage
-          if-no-files-found: ignore
+          if-no-files-found: error
 
   publish_report:
     name: Publish Test Report
@@ -94,9 +99,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          pattern: 'test-results-*'
-          merge-multiple: 'true'
-          path: 'test-results'
+          name: test-results-junit
+          path: test-results
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v5
         with:
@@ -122,23 +126,20 @@ jobs:
       - name: Download all coverage reports
         uses: actions/download-artifact@v4
         with:
-          pattern: 'coverage-*'
-          path: 'coverage-artifacts'
-          merge-multiple: true
+          name: coverage-profiles
+          path: coverage-artifacts
       - name: Merge coverage reports
         run: |
           set -euo pipefail
           mkdir -p coverage
-          find coverage-artifacts -type f -name '*.out' -exec cp -t coverage/ {} +
           shopt -s nullglob
-          outs=(coverage/*.out)
+          outs=(coverage-artifacts/*.out)
           if [ ${#outs[@]} -eq 0 ]; then
-            echo "No coverage *.out profiles found under coverage-artifacts" >&2
-            find coverage-artifacts -type f -print >&2 || true
+            echo "No coverage *.out profiles downloaded" >&2
+            ls -la coverage-artifacts >&2 || true
             exit 1
           fi
           echo "mode: set" > coverage/coverage.merged
-          # grep exits 1 when there are no non-mode lines; don't fail the step for that.
           grep -h -v '^mode: ' "${outs[@]}" >> coverage/coverage.merged || true
           go tool cover -func=coverage/coverage.merged > coverage/coverage.txt
           go tool cover -html=coverage/coverage.merged -o coverage/coverage.html

@@ -45,37 +45,57 @@ jobs:
         run: |
           set -uo pipefail
           mkdir -p test-results coverage
-          run_pkg() {
-            local pkg="$1"
-            local parallel="$2"
-            local name="${pkg##*/}"
-            gotestsum --rerun-fails=3 --packages "$pkg" --format testname --junitfile "test-results/${name}.xml" -- \
-              -timeout 10m -parallel "$parallel" -shuffle "$GITHUB_RUN_ID" -coverprofile "coverage/${name}.out"
-          }
-          export -f run_pkg
 
-          # Keep going so both phases run and artifacts are still uploaded on failure.
+          # Shared org/_user/_team mutation, or sidebar `after` ordering.
+          serial_packages=(
+            ./port/system_blueprint
+            ./port/organization
+            ./port/action-permissions
+            ./port/page-permissions
+            ./port/blueprint-permissions
+            ./port/page
+            ./port/folder
+          )
+          serial_re='/(system_blueprint|organization|action-permissions|page-permissions|blueprint-permissions|page|folder)$'
+
+          # Keep `local` on separate lines: with export -f + bash -c,
+          # `local pkg="$1" name="${pkg##*/}"` expands name before pkg is set.
+          run_package() {
+            local pkg=$1
+            local name=${pkg##*/}
+
+            gotestsum \
+              --rerun-fails=3 \
+              --packages "$pkg" \
+              --format testname \
+              --junitfile "test-results/${name}.xml" \
+              -- \
+              -timeout 10m \
+              -parallel "$TEST_PARALLEL" \
+              -shuffle "$GITHUB_RUN_ID" \
+              -coverprofile "coverage/${name}.out"
+          }
+          export -f run_package
+
+          run_packages() {
+            local jobs=$1
+            xargs -r -P "$jobs" -n 1 bash -c 'run_package "$@"' _
+          }
+
+          # Continue after failures so both phases run and artifacts still upload.
           set +e
-          # Four packages at a time, four tests at a time inside each.
-          # These packages do not rename the org, edit _user/_team, or share sidebar order.
-          go list ./... \
-            | grep -vE '/(system_blueprint|organization|action-permissions|page-permissions|blueprint-permissions|page|folder)$' \
-            | xargs -r -P 4 -n 1 bash -c 'run_pkg "$1" 4' _
+
+          TEST_PARALLEL=4
+          export TEST_PARALLEL
+          go list ./... | grep -vE "$serial_re" | run_packages 4
           parallel_rc=$?
 
-          # Serial: org/permissions mutate shared identity; page/folder share sidebar `after` ordering.
-          go list \
-            ./port/system_blueprint \
-            ./port/organization \
-            ./port/action-permissions \
-            ./port/page-permissions \
-            ./port/blueprint-permissions \
-            ./port/page \
-            ./port/folder \
-            | xargs -r -P 1 -n 1 bash -c 'run_pkg "$1" 1' _
+          TEST_PARALLEL=1
+          export TEST_PARALLEL
+          go list "${serial_packages[@]}" | run_packages 1
           serial_rc=$?
-          set -e
 
+          set -e
           exit $(( parallel_rc || serial_rc ))
       - uses: actions/upload-artifact@v4
         if: always()

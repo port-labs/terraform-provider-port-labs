@@ -9,6 +9,35 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
+// configuredArrayKeys returns a set of property identifiers that are configured in oldProperties.ArrayProps
+func configuredArrayKeys(oldProperties *EntityPropertiesModel) map[string]struct{} {
+	keys := make(map[string]struct{})
+	if oldProperties == nil || oldProperties.ArrayProps == nil {
+		return keys
+	}
+	if !oldProperties.ArrayProps.StringItems.IsNull() {
+		for k := range oldProperties.ArrayProps.StringItems.Elements() {
+			keys[k] = struct{}{}
+		}
+	}
+	if !oldProperties.ArrayProps.NumberItems.IsNull() {
+		for k := range oldProperties.ArrayProps.NumberItems.Elements() {
+			keys[k] = struct{}{}
+		}
+	}
+	if !oldProperties.ArrayProps.BooleanItems.IsNull() {
+		for k := range oldProperties.ArrayProps.BooleanItems.Elements() {
+			keys[k] = struct{}{}
+		}
+	}
+	if !oldProperties.ArrayProps.ObjectItems.IsNull() {
+		for k := range oldProperties.ArrayProps.ObjectItems.Elements() {
+			keys[k] = struct{}{}
+		}
+	}
+	return keys
+}
+
 func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayProperties map[string][]interface{}, blueprint *cli.Blueprint, oldProperties *EntityPropertiesModel) {
 	mapStringItems := make(map[string][]*string)
 	mapNumberItems := make(map[string][]*float64)
@@ -23,7 +52,15 @@ func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *Ent
 			ObjectItems:  types.MapNull(types.ListType{ElemType: types.StringType}),
 		}
 	}
+
+	// Only include array properties that were in the original config
+	configuredKeys := configuredArrayKeys(oldProperties)
+
 	for k, t := range arrayProperties {
+		// Skip properties not in the original config
+		if _, configured := configuredKeys[k]; !configured {
+			continue
+		}
 
 		switch blueprint.Schema.Properties[k].Items["type"] {
 		// array without items type is array of string by default
@@ -94,11 +131,51 @@ func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *Ent
 	}
 }
 
+// isPropertyConfigured checks if a property key was configured in oldProperties
+func isPropertyConfigured(k string, oldProperties *EntityPropertiesModel) bool {
+	if oldProperties == nil {
+		return false
+	}
+	if oldProperties.StringProps != nil {
+		if _, ok := oldProperties.StringProps[k]; ok {
+			return true
+		}
+	}
+	if oldProperties.NumberProps != nil {
+		if _, ok := oldProperties.NumberProps[k]; ok {
+			return true
+		}
+	}
+	if oldProperties.BooleanProps != nil {
+		if _, ok := oldProperties.BooleanProps[k]; ok {
+			return true
+		}
+	}
+	if oldProperties.ObjectProps != nil {
+		if _, ok := oldProperties.ObjectProps[k]; ok {
+			return true
+		}
+	}
+	if oldProperties.ArrayProps != nil {
+		configuredArrays := configuredArrayKeys(oldProperties)
+		if _, ok := configuredArrays[k]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 func (r *EntityResource) refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) {
 	oldProperties := state.Properties
 	state.Properties = &EntityPropertiesModel{}
 	arrayProperties := make(map[string][]interface{})
 	for k, v := range e.Properties {
+		// Skip properties not in the original config to avoid perpetual diffs
+		// when the API returns null values or defaults for unset properties
+		if !isPropertyConfigured(k, oldProperties) {
+			continue
+		}
+
 		switch t := v.(type) {
 		case float64:
 			if state.Properties.NumberProps == nil {
@@ -158,13 +235,37 @@ func (r *EntityResource) refreshPropertiesEntityState(ctx context.Context, state
 	}
 }
 
-func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli.Entity) {
+// isRelationConfigured checks if a relation identifier was configured in oldRelations
+func isRelationConfigured(identifier string, oldRelations *RelationModel) bool {
+	if oldRelations == nil {
+		return false
+	}
+	if oldRelations.SingleRelation != nil {
+		if _, ok := oldRelations.SingleRelation[identifier]; ok {
+			return true
+		}
+	}
+	if oldRelations.ManyRelations != nil {
+		if _, ok := oldRelations.ManyRelations[identifier]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, oldRelations *RelationModel) {
 	state.Relations = &RelationModel{
 		SingleRelation: make(map[string]*string),
 		ManyRelations:  make(map[string][]string),
 	}
 
 	for identifier, r := range e.Relations {
+		// Skip relations not in the original config to avoid perpetual diffs
+		// when the API returns null values for unset relations
+		if !isRelationConfigured(identifier, oldRelations) {
+			continue
+		}
+
 		switch v := r.(type) {
 		case []any:
 			values := make([]string, 0, len(v))
@@ -224,10 +325,11 @@ func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityMo
 		r.refreshPropertiesEntityState(ctx, state, e, blueprint)
 	}
 
+	oldRelations := state.Relations
 	if len(e.Relations) == 0 {
 		state.Relations = nil
 	} else {
-		refreshRelationsEntityState(ctx, state, e)
+		refreshRelationsEntityState(ctx, state, e, oldRelations)
 	}
 
 	return nil

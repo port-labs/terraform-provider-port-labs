@@ -160,6 +160,10 @@ func stringPropToBody(ctx context.Context, prop StringPropModel) (*cli.WorkflowI
 	property.Dataset = dataset
 	property.Sort = sortToBody(prop.Sort)
 
+	if encryption := encryptionToBody(prop.Encryption, prop.ClientSideEncryption); encryption != nil {
+		property.Encryption = encryption
+	}
+
 	return property, nil
 }
 
@@ -220,6 +224,10 @@ func objectPropToBody(ctx context.Context, prop ObjectPropModel) (*cli.WorkflowI
 			return nil, fmt.Errorf("`default` must be a JSON object: %w", err)
 		}
 		property.Default = defaultValue
+	}
+
+	if encryption := encryptionToBody(prop.Encryption, prop.ClientSideEncryption); encryption != nil {
+		property.Encryption = encryption
 	}
 
 	return property, nil
@@ -289,6 +297,16 @@ func arrayItemsToBody(ctx context.Context, property *cli.WorkflowInputProperty, 
 		}
 		if enumColors != nil {
 			items["enumColors"] = enumColors
+		}
+
+		if !prop.StringItems.Pattern.IsNull() {
+			items["pattern"] = prop.StringItems.Pattern.ValueString()
+		}
+		if !prop.StringItems.MinLength.IsNull() {
+			items["minLength"] = int(prop.StringItems.MinLength.ValueInt64())
+		}
+		if !prop.StringItems.MaxLength.IsNull() {
+			items["maxLength"] = int(prop.StringItems.MaxLength.ValueInt64())
 		}
 
 		if !prop.StringItems.Default.IsNull() {

@@ -118,6 +118,35 @@ func (c *PortClient) PatchBlueprintRelation(ctx context.Context, blueprintID str
 	return &pb.Blueprint, nil
 }
 
+// PatchBlueprintAggregationProperties updates specific aggregation properties on a blueprint
+// using PATCH, preserving any other aggregation properties (including system-managed ones).
+// To delete an aggregation property, set its value to nil in the map.
+func (c *PortClient) PatchBlueprintAggregationProperties(ctx context.Context, blueprintID string, aggregationProperties map[string]*BlueprintAggregationProperty) (*Blueprint, error) {
+	defer c.LockBlueprint(blueprintID)()
+
+	const url = "v1/blueprints/{identifier}"
+	body := map[string]any{
+		"aggregationProperties": aggregationProperties,
+	}
+	resp, err := c.Client.R().
+		SetBody(body).
+		SetContext(ctx).
+		SetPathParam("identifier", blueprintID).
+		Patch(url)
+	if err != nil {
+		return nil, err
+	}
+	var pb PortBody
+	err = json.Unmarshal(resp.Body(), &pb)
+	if err != nil {
+		return nil, err
+	}
+	if !pb.OK {
+		return nil, fmt.Errorf("failed to patch aggregation properties on blueprint %q, got: %s", blueprintID, resp.Body())
+	}
+	return &pb.Blueprint, nil
+}
+
 func (c *PortClient) DeleteBlueprintRelation(ctx context.Context, blueprintID string, relationID string) (int, error) {
 	defer c.LockBlueprint(blueprintID)()
 

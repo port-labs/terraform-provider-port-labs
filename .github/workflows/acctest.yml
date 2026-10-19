@@ -14,10 +14,6 @@ permissions:
 env:
   FORCE_COLOR: 1
 
-concurrency:
-  group: acctest
-  cancel-in-progress: false
-
 jobs:
   changes:
     name: Detect changes
@@ -47,6 +43,9 @@ jobs:
     name: Acceptance tests
     needs: changes
     if: ${{ needs.changes.outputs.go == 'true' }}
+    concurrency:
+      group: acctest
+      cancel-in-progress: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

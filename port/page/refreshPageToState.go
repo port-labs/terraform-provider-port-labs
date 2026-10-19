@@ -7,6 +7,33 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
+// stripEmptyArrays recursively removes empty arrays from a map to prevent
+// perpetual diffs when the API injects default empty arrays like "hiddenQuery: []"
+// that weren't in the user's config.
+func stripEmptyArrays(data interface{}) interface{} {
+	switch v := data.(type) {
+	case map[string]interface{}:
+		result := make(map[string]interface{})
+		for key, value := range v {
+			cleaned := stripEmptyArrays(value)
+			// Skip empty arrays
+			if arr, ok := cleaned.([]interface{}); ok && len(arr) == 0 {
+				continue
+			}
+			result[key] = cleaned
+		}
+		return result
+	case []interface{}:
+		result := make([]interface{}, len(v))
+		for i, item := range v {
+			result[i] = stripEmptyArrays(item)
+		}
+		return result
+	default:
+		return data
+	}
+}
+
 func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	oldWidgets := pm.Widgets
 	oldPageFilters := pm.PageFilters
@@ -26,8 +53,10 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	if b.Widgets != nil {
 		widgetAttrs := make([]attr.Value, len(*b.Widgets))
 		for i, widget := range *b.Widgets {
+			// Strip empty arrays like "hiddenQuery: []" that the API adds but aren't in user config
+			cleanedWidget := stripEmptyArrays(widget)
 			bWidget, err := utils.GoObjectToTerraformStringPreferExisting(
-				utils.TerraformStringAtList(oldWidgets, i), widget, r.portClient.JSONEscapeHTML)
+				utils.TerraformStringAtList(oldWidgets, i), cleanedWidget, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return err
 			}

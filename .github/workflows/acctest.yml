@@ -53,6 +53,7 @@ jobs:
           echo "CI org slot ${slot} / pool ${POOL_SIZE}" >>"$GITHUB_STEP_SUMMARY"
       - name: Lock CI org slot
         if: ${{ needs.changes.outputs.go == 'true' }}
+        timeout-minutes: 30
         uses: ben-z/gh-action-mutex@v1.0.0-alpha.10
         with:
           branch: lock/acctest-org-${{ steps.claim.outputs.slot }}

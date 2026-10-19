@@ -17,6 +17,7 @@ Organization resource to manage organization-level settings such as name and hid
 
 ### Optional
 
+- `inactivity_timeout` (Number) The inactivity timeout in minutes for the organization. Must be at least 10 when set. Set to `null` to clear.
 - `name` (String) The name of the organization
 
 ### Read-Only

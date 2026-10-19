@@ -20,6 +20,7 @@ func retainManagedRelations(ctx context.Context, req privateState, resp privateS
 	var diags diag.Diagnostics
 
 	managed := fallbackManaged
+	hasPrivateState := false
 
 	if req != nil {
 		raw, getDiags := req.GetKey(ctx, managedRelationsKey)
@@ -29,10 +30,21 @@ func retainManagedRelations(ctx context.Context, req privateState, resp privateS
 		}
 
 		if raw != nil {
+			hasPrivateState = true
 			var recorded []string
 			if err := json.Unmarshal(raw, &recorded); err == nil {
 				managed = recorded
 			}
+		}
+	}
+
+	// If we have no private state AND no relations in fallback (state.Relations),
+	// this is likely an import scenario. Treat all relations from Port as managed
+	// so they are preserved in state instead of being dropped.
+	if !hasPrivateState && len(managed) == 0 && len(b.Relations) > 0 {
+		managed = make([]string, 0, len(b.Relations))
+		for identifier := range b.Relations {
+			managed = append(managed, identifier)
 		}
 	}
 

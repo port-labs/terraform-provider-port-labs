@@ -17,6 +17,9 @@ func PageSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"identifier": schema.StringAttribute{
 			Description: "The Identifier of the page",

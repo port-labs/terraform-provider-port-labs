@@ -15,6 +15,9 @@ func EntitySchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"identifier": schema.StringAttribute{
 			MarkdownDescription: "The identifier of the entity",
@@ -118,6 +121,9 @@ func EntitySchema() map[string]schema.Attribute {
 		"created_at": schema.StringAttribute{
 			MarkdownDescription: "The creation date of the entity",
 			Computed:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"created_by": schema.StringAttribute{
 			MarkdownDescription: "The creator of the entity",

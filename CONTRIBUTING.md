@@ -62,7 +62,7 @@ You can preview how the documentation will look in the Terraform registry with [
 
 ## Running your tests
 
-Expose the following environment variables:
+Expose the following environment variables (your own Port org / credentials):
 
 `PORT_CLIENT_ID`
 
@@ -79,6 +79,10 @@ make acctest
 
 TEST_FILTER=.*MyCustomResource.* make acctest
 ```
+
+### CI acceptance tests (maintainers)
+
+GitHub Actions does **not** use `PORT_CLIENT_ID` / `PORT_CLIENT_SECRET`. It claims one of three dedicated CI orgs via indexed secrets `PORT_CI_ORG_{0,1,2}_CLIENT_ID` / `_CLIENT_SECRET`. See [.github/CI_ORG_POOL.md](.github/CI_ORG_POOL.md) for setup and locking details.
 
 ## Running your code as the actual terraform provider
 

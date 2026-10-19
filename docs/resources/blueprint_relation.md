@@ -40,6 +40,7 @@ description: |-
     target     = port_blueprint.entra_id_group.identifier
     title      = "Groups"
     many       = true
+    union      = true
   }
   
   resource "port_blueprint_relation" "entra_id_group_to_user" {
@@ -104,6 +105,7 @@ resource "port_blueprint_relation" "entra_id_user_to_group" {
   target     = port_blueprint.entra_id_group.identifier
   title      = "Groups"
   many       = true
+  union      = true
 }
 
 resource "port_blueprint_relation" "entra_id_group_to_user" {
@@ -141,6 +143,7 @@ terraform import port_blueprint_relation.members "entra-id-group:members"
 - `many` (Boolean) Whether the relation points at many entities
 - `required` (Boolean) Whether the relation is required. Port rejects a required relation whose target blueprint already has a required relation back to this one, so at most one direction of a circular pair can be required.
 - `title` (String) The title of the relation. Port does not accept an empty value for this field, so removing it from the configuration leaves the existing title in place rather than clearing it.
+- `union` (Boolean) Whether multiple sources can add to this relation without overwriting each other. Only applies when `many` is true. This setting cannot be changed after the relation is created.
 
 ### Read-Only
 

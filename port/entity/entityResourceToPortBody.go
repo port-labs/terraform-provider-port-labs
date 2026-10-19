@@ -60,6 +60,34 @@ func writeArrayResourceToBody(ctx context.Context, state *EntityModel, propertie
 	return nil
 }
 
+func writeUnionManyRelationsToBody(ctx context.Context, relations *RelationModel) (map[string]interface{}, error) {
+	relationsBody := make(map[string]interface{})
+	if relations == nil || relations.UnionManyRelations == nil {
+		return relationsBody, nil
+	}
+
+	for identifier, slice := range relations.UnionManyRelations {
+		if slice.SourceKey.IsNull() {
+			continue
+		}
+
+		var items []interface{}
+		if !slice.Items.IsNull() {
+			var err error
+			items, err = utils.TerraformListToGoArray(ctx, slice.Items, "string")
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		relationsBody[identifier] = map[string]interface{}{
+			slice.SourceKey.ValueString(): items,
+		}
+	}
+
+	return relationsBody, nil
+}
+
 func writeRelationsToBody(ctx context.Context, relations *RelationModel) (map[string]interface{}, error) {
 	relationsBody := make(map[string]interface{})
 	if relations != nil {
@@ -70,12 +98,50 @@ func writeRelationsToBody(ctx context.Context, relations *RelationModel) (map[st
 		}
 
 		if relations.ManyRelations != nil {
-			for identifier, relations := range relations.ManyRelations {
-				relationsBody[identifier] = relations
+			for identifier, relationIdentifiers := range relations.ManyRelations {
+				relationsBody[identifier] = relationIdentifiers
 			}
+		}
+
+		unionManyRelations, err := writeUnionManyRelationsToBody(ctx, relations)
+		if err != nil {
+			return nil, err
+		}
+		for identifier, relationValue := range unionManyRelations {
+			relationsBody[identifier] = relationValue
 		}
 	}
 	return relationsBody, nil
+}
+
+func writeTeamToBody(ctx context.Context, state *EntityModel, blueprint *cli.Blueprint) (any, error) {
+	if state.UnionTeamSlice != nil && !state.UnionTeamSlice.SourceKey.IsNull() {
+		teams := make([]string, 0)
+		if !state.UnionTeamSlice.Teams.IsNull() {
+			for _, team := range state.UnionTeamSlice.Teams.Elements() {
+				teams = append(teams, team.(basetypes.StringValue).ValueString())
+			}
+		}
+
+		return map[string]interface{}{
+			state.UnionTeamSlice.SourceKey.ValueString(): teams,
+		}, nil
+	}
+
+	if blueprintHasUnionTeamOwnership(blueprint) {
+		return nil, nil
+	}
+
+	if state.Teams == nil {
+		return nil, nil
+	}
+
+	teams := make([]string, len(state.Teams))
+	for i, team := range state.Teams {
+		teams[i] = team.ValueString()
+	}
+
+	return teams, nil
 }
 
 func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Blueprint) (*cli.Entity, error) {
@@ -95,10 +161,13 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 		e.Identifier = state.Identifier.ValueString()
 	}
 
-	if state.Teams != nil {
-		e.Team = make([]string, len(state.Teams))
-		for i, t := range state.Teams {
-			e.Team[i] = t.ValueString()
+	if state.Teams != nil || state.UnionTeamSlice != nil {
+		team, err := writeTeamToBody(ctx, state, bp)
+		if err != nil {
+			return nil, err
+		}
+		if team != nil {
+			e.Team = team
 		}
 	}
 

@@ -276,6 +276,7 @@ func (r *Resource) mergeSystemBlueprint(ctx context.Context, state *SystemBluepr
 			Type:  existingBp.Ownership.Type,
 			Path:  existingBp.Ownership.Path,
 			Title: existingBp.Ownership.Title,
+			Union: existingBp.Ownership.Union,
 		}
 	}
 

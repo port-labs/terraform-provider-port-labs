@@ -13,4 +13,5 @@ type BlueprintRelationModel struct {
 	Description types.String `tfsdk:"description"`
 	Required    types.Bool   `tfsdk:"required"`
 	Many        types.Bool   `tfsdk:"many"`
+	Union       types.Bool   `tfsdk:"union"`
 }

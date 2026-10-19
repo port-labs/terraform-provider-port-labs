@@ -826,10 +826,10 @@ type ValidateIntegrationSpecBody struct {
 
 type Integration struct {
 	InstallationId            string                 `json:"installationId"`
-	Title                     *string                `json:"title"`
-	InstallationAppType       *string                `json:"installationAppType"`
-	InstallationType          *string                `json:"installationType"`
-	Version                   *string                `json:"version"`
+	Title                     *string                `json:"title,omitempty"`
+	InstallationAppType       *string                `json:"installationAppType,omitempty"`
+	InstallationType          *string                `json:"installationType,omitempty"`
+	Version                   *string                `json:"version,omitempty"`
 	Config                    *map[string]any        `json:"config,omitempty"`
 	Spec                      *IntegrationClientSpec `json:"spec,omitempty"`
 	CreatePortResourcesOrigin *string                `json:"createPortResourcesOrigin,omitempty"`

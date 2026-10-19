@@ -161,11 +161,19 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	if isBlueprintChanged {
-		// Delete the old entity
+		// Try to delete the old entity from the previous blueprint.
+		// If the blueprint was renamed (not moved to a different blueprint), the old
+		// blueprint identifier no longer exists and Port has already moved the entity
+		// automatically. In that case, the delete will fail with a 404, which we can
+		// safely ignore.
 		err := r.portClient.DeleteEntity(ctx, previousState.Identifier.ValueString(), previousState.Blueprint.ValueString())
 		if err != nil {
-			resp.Diagnostics.AddError("failed to delete entity", err.Error())
-			return
+			// Check if the error is because the blueprint was renamed (doesn't exist)
+			// In this case, the entity was automatically moved by Port
+			if !strings.Contains(err.Error(), "not_found") {
+				resp.Diagnostics.AddError("failed to delete entity", err.Error())
+				return
+			}
 		}
 	}
 

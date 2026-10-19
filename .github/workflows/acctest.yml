@@ -1,17 +1,9 @@
 name: Acceptance Tests
 on:
   pull_request:
-    paths:
-      - '**/*.go'
-      - 'go.mod'
-      - 'go.sum'
   push:
     branches:
       - main
-    paths:
-      - '**/*.go'
-      - 'go.mod'
-      - 'go.sum'
 
 env:
   FORCE_COLOR: 1
@@ -21,8 +13,34 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  changes:
+    name: Detect changes
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.filter.outputs.go }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            go:
+              - '**/*.go'
+              - 'go.mod'
+              - 'go.sum'
+
+  acctest_skip:
+    name: Acceptance tests
+    needs: changes
+    if: ${{ needs.changes.outputs.go != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No Go changes; skipping acceptance tests."
+
   acctest:
     name: Acceptance tests
+    needs: changes
+    if: ${{ needs.changes.outputs.go == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -110,10 +128,18 @@ jobs:
           path: coverage
           if-no-files-found: error
 
+  publish_report_skip:
+    name: Publish Test Report
+    needs: changes
+    if: ${{ needs.changes.outputs.go != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "No Go changes; skipping test report."
+
   publish_report:
     name: Publish Test Report
-    if: ${{ always() }}
-    needs: acctest
+    needs: [changes, acctest]
+    if: ${{ always() && needs.changes.outputs.go == 'true' && needs.acctest.result != 'cancelled' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -134,8 +160,8 @@ jobs:
 
   publish_cover_report:
     name: Publish Coverage Report
-    if: ${{ always() }}
-    needs: acctest
+    needs: [changes, acctest]
+    if: ${{ always() && needs.changes.outputs.go == 'true' && needs.acctest.result != 'cancelled' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

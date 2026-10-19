@@ -70,7 +70,7 @@ description: |-
               "description" : "",
               "id" : "microserviceGuide"
             }
-          ],
+          ]
         }
       )
     ]
@@ -397,7 +397,7 @@ description: |-
               "description" : "",
               "id" : "microserviceGuide"
             }
-          ],
+          ]
         }
       )
     ]
@@ -537,7 +537,7 @@ resource "port_page" "microservice_dashboard_page" {
             "description" : "",
             "id" : "microserviceGuide"
           }
-        ],
+        ]
       }
     )
   ]
@@ -880,7 +880,7 @@ resource "port_page" "microservice_dashboard_page" {
             "description" : "",
             "id" : "microserviceGuide"
           }
-        ],
+        ]
       }
     )
   ]

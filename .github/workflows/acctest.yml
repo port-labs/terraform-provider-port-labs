@@ -45,10 +45,12 @@ jobs:
       - name: Select CI org slot
         if: ${{ needs.changes.outputs.go == 'true' }}
         id: claim
+        env:
+          POOL_SIZE: ${{ vars.ACCTEST_ORG_POOL_SIZE || 3 }}
         run: |
-          slot=$((GITHUB_RUN_ID % 3))
+          slot=$((GITHUB_RUN_ID % POOL_SIZE))
           echo "slot=${slot}" >>"$GITHUB_OUTPUT"
-          echo "Using CI org slot ${slot}" >>"$GITHUB_STEP_SUMMARY"
+          echo "CI org slot ${slot} / pool ${POOL_SIZE}" >>"$GITHUB_STEP_SUMMARY"
       - name: Lock CI org slot
         if: ${{ needs.changes.outputs.go == 'true' }}
         uses: ben-z/gh-action-mutex@v1.0.0-alpha.10
@@ -71,8 +73,8 @@ jobs:
         env:
           TF_ACC: 1
           CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
-          PORT_CLIENT_ID: ${{ secrets[format('PORT_CI_ORG_{0}_CLIENT_ID', steps.claim.outputs.slot)] }}
-          PORT_CLIENT_SECRET: ${{ secrets[format('PORT_CI_ORG_{0}_CLIENT_SECRET', steps.claim.outputs.slot)] }}
+          PORT_CLIENT_ID: ${{ secrets[format('PORT_CI_ORG_{0}_CLIENT_ID', steps.claim.outputs.slot)] != '' && secrets[format('PORT_CI_ORG_{0}_CLIENT_ID', steps.claim.outputs.slot)] || secrets.PORT_CLIENT_ID }}
+          PORT_CLIENT_SECRET: ${{ secrets[format('PORT_CI_ORG_{0}_CLIENT_SECRET', steps.claim.outputs.slot)] != '' && secrets[format('PORT_CI_ORG_{0}_CLIENT_SECRET', steps.claim.outputs.slot)] || secrets.PORT_CLIENT_SECRET }}
           PORT_BASE_URL: ${{ secrets.PORT_BASE_URL }}
         run: |
           set -uo pipefail

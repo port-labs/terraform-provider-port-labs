@@ -1,12 +1,18 @@
 package aggregation_properties_test
 
 import (
+	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/version"
 )
 
 func baseBlueprintsTemplate(parentBlueprintIdentifier string, childBlueprintIdentifier string) string {
@@ -910,6 +916,161 @@ func TestAccPortAddAndRemovePathFilterFromAggregationProperty(t *testing.T) {
 					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.description", "Count Parents without Path Filter"),
 					resource.TestCheckResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.method.count_entities", "true"),
 					resource.TestCheckNoResourceAttr("port_aggregation_properties.child_aggregation_properties", "properties.count_parents.path_filter"),
+				),
+			},
+		},
+	})
+}
+
+// testAccPortClient creates an authenticated Port client for acceptance tests.
+func testAccPortClient(t *testing.T) (*cli.PortClient, context.Context) {
+	t.Helper()
+
+	baseURL := os.Getenv("PORT_BASE_URL")
+	if baseURL == "" {
+		baseURL = consts.DefaultBaseUrl
+	}
+	client, err := cli.New(baseURL, cli.WithHeader("User-Agent", version.ProviderVersion))
+	if err != nil {
+		t.Fatalf("failed to create Port client: %v", err)
+	}
+	ctx := context.Background()
+	if _, err := client.Authenticate(ctx, os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET")); err != nil {
+		t.Fatalf("failed to authenticate with Port: %v", err)
+	}
+	return client, ctx
+}
+
+// TestAccPreservesSystemAggregationOnTeamBlueprint tests that the aggregation_properties
+// resource preserves system-managed aggregations (like _team.size) when creating, updating,
+// and destroying user-defined aggregation properties on a system blueprint.
+//
+// This test reproduces the issue from ZD 11534 where applying port_aggregation_properties
+// on _team would fail with "protected_blueprint_violation" because the provider was
+// replacing the entire aggregationProperties map instead of merging.
+func TestAccPreservesSystemAggregationOnTeamBlueprint(t *testing.T) {
+	client, ctx := testAccPortClient(t)
+
+	// Read the _team blueprint before the test to capture existing aggregations
+	teamBpBefore, statusCode, err := client.ReadBlueprint(ctx, "_team")
+	if err != nil {
+		if statusCode == 404 {
+			t.Skip("_team blueprint not available in this organization")
+		}
+		t.Fatalf("failed to read _team blueprint before test: %v", err)
+	}
+
+	// Record which system aggregations exist (e.g., "size")
+	systemAggregations := make(map[string]bool)
+	for k := range teamBpBefore.AggregationProperties {
+		systemAggregations[k] = true
+	}
+	if len(systemAggregations) == 0 {
+		t.Skip("_team blueprint has no existing aggregations to preserve")
+	}
+	t.Logf("System aggregations on _team before test: %v", systemAggregations)
+
+	// Create a helper blueprint that _team can reference
+	helperBlueprintIdentifier := utils.GenID()
+
+	var testAccConfigCreate = fmt.Sprintf(`
+	resource "port_blueprint" "helper" {
+		title = "Helper Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = "Helper for aggregation test"
+	}
+
+	resource "port_aggregation_properties" "team_aggregation" {
+		blueprint_identifier = "_team"
+		properties = {
+			"tf_test_count" = {
+				target_blueprint_identifier = port_blueprint.helper.identifier
+				title = "TF Test Count"
+				icon = "Terraform"
+				description = "Test aggregation from Terraform"
+				method = {
+					count_entities = true
+				}
+			}
+		}
+	}
+`, helperBlueprintIdentifier)
+
+	var testAccConfigUpdate = fmt.Sprintf(`
+	resource "port_blueprint" "helper" {
+		title = "Helper Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = "Helper for aggregation test"
+	}
+
+	resource "port_aggregation_properties" "team_aggregation" {
+		blueprint_identifier = "_team"
+		properties = {
+			"tf_test_count" = {
+				target_blueprint_identifier = port_blueprint.helper.identifier
+				title = "TF Test Count Updated"
+				icon = "Terraform"
+				description = "Test aggregation from Terraform - updated"
+				method = {
+					count_entities = true
+				}
+			}
+		}
+	}
+`, helperBlueprintIdentifier)
+
+	// Config with just the helper blueprint (no aggregation resource)
+	var testAccConfigDestroy = fmt.Sprintf(`
+	resource "port_blueprint" "helper" {
+		title = "Helper Blueprint"
+		icon = "Terraform"
+		identifier = "%s"
+		description = "Helper for aggregation test"
+	}
+`, helperBlueprintIdentifier)
+
+	// Helper function to verify system aggregations are preserved
+	checkSystemAggregationsPreserved := func(phase string) resource.TestCheckFunc {
+		return func(s *terraform.State) error {
+			teamBp, _, err := client.ReadBlueprint(ctx, "_team")
+			if err != nil {
+				return fmt.Errorf("failed to read _team blueprint during %s: %w", phase, err)
+			}
+			for sysAgg := range systemAggregations {
+				if _, exists := teamBp.AggregationProperties[sysAgg]; !exists {
+					return fmt.Errorf("system aggregation %q was removed from _team during %s", sysAgg, phase)
+				}
+			}
+			t.Logf("System aggregations preserved during %s: %v", phase, systemAggregations)
+			return nil
+		}
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_aggregation_properties.team_aggregation", "blueprint_identifier", "_team"),
+					resource.TestCheckResourceAttr("port_aggregation_properties.team_aggregation", "properties.tf_test_count.title", "TF Test Count"),
+					checkSystemAggregationsPreserved("create"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_aggregation_properties.team_aggregation", "properties.tf_test_count.title", "TF Test Count Updated"),
+					checkSystemAggregationsPreserved("update"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccConfigDestroy,
+				Check: resource.ComposeTestCheckFunc(
+					checkSystemAggregationsPreserved("destroy"),
 				),
 			},
 		},

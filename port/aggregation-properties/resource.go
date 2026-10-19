@@ -93,6 +93,7 @@ func (r *AggregationPropertiesResource) Create(ctx context.Context, req resource
 			return
 		}
 		resp.Diagnostics.AddError("failed reading blueprint", err.Error())
+		return
 	}
 
 	// check if the aggregation properties already exists
@@ -105,9 +106,15 @@ func (r *AggregationPropertiesResource) Create(ctx context.Context, req resource
 		}
 	}
 
-	b.AggregationProperties = *aggregationProperties
+	// Use PATCH to add only the new aggregation properties, preserving any
+	// existing ones (including system-managed aggregations like _team.size)
+	patchProperties := make(map[string]*cli.BlueprintAggregationProperty)
+	for k, v := range *aggregationProperties {
+		prop := v
+		patchProperties[k] = &prop
+	}
 
-	_, err = r.portClient.UpdateBlueprint(ctx, b, state.BlueprintIdentifier.ValueString())
+	_, err = r.portClient.PatchBlueprintAggregationProperties(ctx, state.BlueprintIdentifier.ValueString(), patchProperties)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create aggregation properties", err.Error())
@@ -138,7 +145,7 @@ func (r *AggregationPropertiesResource) Update(ctx context.Context, req resource
 		return
 	}
 
-	b, statusCode, err := r.portClient.ReadBlueprint(ctx, state.BlueprintIdentifier.ValueString())
+	_, statusCode, err := r.portClient.ReadBlueprint(ctx, state.BlueprintIdentifier.ValueString())
 
 	if err != nil {
 		if statusCode == 404 {
@@ -146,11 +153,31 @@ func (r *AggregationPropertiesResource) Update(ctx context.Context, req resource
 			return
 		}
 		resp.Diagnostics.AddError("failed reading blueprint", err.Error())
+		return
 	}
 
-	b.AggregationProperties = *aggregationProperties
+	// Build patch map: update properties in the new state, and delete properties
+	// that were in the previous state but are no longer in the new state.
+	// This preserves any system-managed aggregations (like _team.size) that are
+	// not managed by this Terraform resource.
+	patchProperties := make(map[string]*cli.BlueprintAggregationProperty)
 
-	_, err = r.portClient.UpdateBlueprint(ctx, b, state.BlueprintIdentifier.ValueString())
+	// Add/update all properties from the new state
+	for k, v := range *aggregationProperties {
+		prop := v
+		patchProperties[k] = &prop
+	}
+
+	// Mark properties that were removed from config as nil (to delete them)
+	if previousState != nil && previousState.Properties != nil {
+		for prevKey := range previousState.Properties {
+			if _, stillExists := (*aggregationProperties)[prevKey]; !stillExists {
+				patchProperties[prevKey] = nil
+			}
+		}
+	}
+
+	_, err = r.portClient.PatchBlueprintAggregationProperties(ctx, state.BlueprintIdentifier.ValueString(), patchProperties)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update aggregation property", err.Error())
@@ -172,7 +199,7 @@ func (r *AggregationPropertiesResource) Delete(ctx context.Context, req resource
 		return
 	}
 
-	b, statusCode, err := r.portClient.ReadBlueprint(ctx, state.BlueprintIdentifier.ValueString())
+	_, statusCode, err := r.portClient.ReadBlueprint(ctx, state.BlueprintIdentifier.ValueString())
 
 	if err != nil {
 		if statusCode == 404 {
@@ -180,15 +207,23 @@ func (r *AggregationPropertiesResource) Delete(ctx context.Context, req resource
 			return
 		}
 		resp.Diagnostics.AddError("failed reading blueprint", err.Error())
+		return
 	}
 
-	b.AggregationProperties = make(map[string]cli.BlueprintAggregationProperty)
+	// Only delete the aggregation properties that were managed by this resource.
+	// Preserve any system-managed or externally-managed aggregations (like _team.size).
+	if state.Properties != nil && len(state.Properties) > 0 {
+		patchProperties := make(map[string]*cli.BlueprintAggregationProperty)
+		for propKey := range state.Properties {
+			patchProperties[propKey] = nil
+		}
 
-	_, err = r.portClient.UpdateBlueprint(ctx, b, state.BlueprintIdentifier.ValueString())
+		_, err = r.portClient.PatchBlueprintAggregationProperties(ctx, state.BlueprintIdentifier.ValueString(), patchProperties)
 
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete aggregation property", err.Error())
-		return
+		if err != nil {
+			resp.Diagnostics.AddError("failed to delete aggregation property", err.Error())
+			return
+		}
 	}
 
 	resp.State.RemoveResource(ctx)

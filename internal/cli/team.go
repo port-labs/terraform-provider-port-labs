@@ -136,33 +136,31 @@ func (c *PortClient) enrichTeamFromTeamEntityWithRetry(ctx context.Context, port
 func (c *PortClient) enrichTeamFromTeamEntity(ctx context.Context, portTeam *PortTeam) (*Team, error) {
 	team := &Team{PortTeam: *portTeam}
 
-	isUsersAndTeamsV2, err := c.HasFeatureFlags(ctx, FeatureFlagUsersAndTeamsV2)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read feature flags: %w", err)
-	}
-
-	if isUsersAndTeamsV2 {
-		searchResults, searchErr := c.Search(ctx, &SearchRequestQuery{
-			Query: &map[string]any{
-				"combinator": "and",
-				"rules": []map[string]any{
-					{"property": "$blueprint", "operator": "=", "value": "_team"},
-					{"property": "$title", "operator": "=", "value": portTeam.Name},
-				},
+	// Search for the team entity in the _team blueprint to get the identifier.
+	// The _team entity identifier is what users need to reference the team in
+	// entity teams[] arrays and permission configurations.
+	// Note: The search is done unconditionally because all Port orgs now have
+	// teams represented as entities in the _team system blueprint.
+	searchResults, searchErr := c.Search(ctx, &SearchRequestQuery{
+		Query: &map[string]any{
+			"combinator": "and",
+			"rules": []map[string]any{
+				{"property": "$blueprint", "operator": "=", "value": "_team"},
+				{"property": "$title", "operator": "=", "value": portTeam.Name},
 			},
-			Include: []string{"identifier"},
-		})
-		if searchErr != nil {
-			return nil, searchErr
-		}
-		if len(searchResults.Entities) == 0 {
-			return nil, MissingTeamEntityError
-		}
-		if len(searchResults.Entities) != 1 {
-			return nil, fmt.Errorf("failed to read team results, got %d results instead of 1", len(searchResults.Entities))
-		}
-		team.Identifier = &searchResults.Entities[0].Identifier
+		},
+		Include: []string{"identifier"},
+	})
+	if searchErr != nil {
+		return nil, searchErr
 	}
+	if len(searchResults.Entities) == 0 {
+		return nil, MissingTeamEntityError
+	}
+	if len(searchResults.Entities) != 1 {
+		return nil, fmt.Errorf("failed to read team results, got %d results instead of 1", len(searchResults.Entities))
+	}
+	team.Identifier = &searchResults.Entities[0].Identifier
 
 	return team, nil
 }

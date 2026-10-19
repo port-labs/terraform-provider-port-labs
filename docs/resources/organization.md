@@ -17,6 +17,7 @@ Organization resource to manage organization-level settings such as name and hid
 
 ### Optional
 
+- `idle_time_ms` (Number) The idle timeout in milliseconds for the organization. Must be at least 600000 (10 minutes) when set. Set to `null` to clear.
 - `name` (String) The name of the organization
 
 ### Read-Only

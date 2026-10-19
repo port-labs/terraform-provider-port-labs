@@ -1,3 +1,4 @@
+# Example: Environment blueprint with string properties
 resource "port_blueprint" "environment" {
   title      = "Environment"
   icon       = "Environment"
@@ -5,8 +6,7 @@ resource "port_blueprint" "environment" {
   properties = {
     string_props = {
       "name" = {
-        type  = "string"
-        title = "name"
+        title = "Name"
       }
       "docs-url" = {
         title  = "Docs URL"
@@ -16,72 +16,109 @@ resource "port_blueprint" "environment" {
   }
 }
 
+# Example: Microservice blueprint with various property configurations
 resource "port_blueprint" "microservice" {
   identifier  = "examples-entity-srvc"
-  title       = "Microsvc from Port TF Examples"
+  title       = "Microservice"
   icon        = "Terraform"
-  description = ""
   properties = {
     string_props = {
-      myStringIdentifier = {
-        description = "This is a string property"
-        title       = "text"
-        icon        = "Terraform"
+      "service_name" = {
+        description = "The name of the microservice"
+        title       = "Service Name"
         required    = true
-        min_length  = 1
-        max_length  = 10
-        default     = "default"
-        enum        = ["default", "default2"]
-        pattern     = "^[a-zA-Z0-9]*$"
-        format      = "user"
+      }
+      "language" = {
+        title   = "Language"
+        enum    = ["go", "python", "javascript"]
+        default = "go"
         enum_colors = {
-          default  = "red"
-          default2 = "green"
+          go         = "blue"
+          python     = "green"
+          javascript = "yellow"
         }
       }
     }
-  }
-
-}
-
-
-resource "port_entity" "microservice" {
-  title     = "monolith"
-  blueprint = port_blueprint.microservice.identifier
-  relations = {
-    "tfRelation" = {
-      "title"  = "Test Relation"
-      "target" = port_blueprint.environment.identifier
+    number_props = {
+      "version" = {
+        title   = "Version"
+        default = 1
+      }
+    }
+    boolean_props = {
+      "is_active" = {
+        title   = "Is Active"
+        default = true
+      }
     }
   }
+  relations = {
+    "environment" = {
+      title    = "Environment"
+      target   = port_blueprint.environment.identifier
+      many     = false
+      required = false
+    }
+  }
+}
+
+# Example: Basic entity with properties
+resource "port_entity" "microservice" {
+  title     = "Payments Service"
+  blueprint = port_blueprint.microservice.identifier
   properties = {
     string_props = {
-      "microservice_name" = "golang_monolith"
+      "service_name" = "payments"
+      "language"     = "go"
+    }
+    number_props = {
+      "version" = 2
+    }
+    boolean_props = {
+      "is_active" = true
     }
   }
 }
 
+# Example: Entity with a single relation
 resource "port_entity" "prod_env" {
-  title     = "production"
+  title     = "Production"
   blueprint = port_blueprint.environment.identifier
   properties = {
     string_props = {
-      "name" = "production-env"
+      "name" = "production"
     }
   }
 }
 
-resource "port_entity" "example_entity" {
-  title     = "Example Entity"
-  blueprint = port_blueprint.example_blueprint.identifier
+resource "port_entity" "microservice_with_relation" {
+  title     = "Orders Service"
+  blueprint = port_blueprint.microservice.identifier
   properties = {
     string_props = {
-      "name" = "example_value"
+      "service_name" = "orders"
     }
   }
   relations = {
     single_relations = {
-      "example_relation" = "missing-identifier" // Non-existing identifier to trigger creation
+      "environment" = port_entity.prod_env.identifier
+    }
+  }
+}
+
+# Example: Entity with create_missing_related_entities
+# This will create the related entity if it doesn't exist
+resource "port_entity" "service_with_auto_create" {
+  title     = "Notifications Service"
+  blueprint = port_blueprint.microservice.identifier
+  properties = {
+    string_props = {
+      "service_name" = "notifications"
+    }
+  }
+  relations = {
+    single_relations = {
+      "environment" = "staging"
     }
   }
   create_missing_related_entities = true

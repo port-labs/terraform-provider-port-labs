@@ -5,18 +5,23 @@ import (
 	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/planmodifiers"
 )
 
 func PageSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				planmodifiers.UseStateForUnknownUnlessChanged(path.Root("identifier")),
+			},
 		},
 		"identifier": schema.StringAttribute{
 			Description: "The Identifier of the page",

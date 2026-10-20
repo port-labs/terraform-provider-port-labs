@@ -3,18 +3,23 @@ package entity
 import (
 	"context"
 
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/planmodifiers"
 )
 
 func EntitySchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				planmodifiers.UseStateForUnknownUnlessChanged(path.Root("identifier"), path.Root("blueprint")),
+			},
 		},
 		"identifier": schema.StringAttribute{
 			MarkdownDescription: "The identifier of the entity",
@@ -118,6 +123,9 @@ func EntitySchema() map[string]schema.Attribute {
 		"created_at": schema.StringAttribute{
 			MarkdownDescription: "The creation date of the entity",
 			Computed:            true,
+			PlanModifiers: []planmodifier.String{
+				planmodifiers.UseStateForUnknownUnlessChanged(path.Root("blueprint")),
+			},
 		},
 		"created_by": schema.StringAttribute{
 			MarkdownDescription: "The creator of the entity",

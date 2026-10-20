@@ -136,11 +136,13 @@ func (c *PortClient) enrichTeamFromTeamEntityWithRetry(ctx context.Context, port
 func (c *PortClient) enrichTeamFromTeamEntity(ctx context.Context, portTeam *PortTeam) (*Team, error) {
 	team := &Team{PortTeam: *portTeam}
 
-	// Search for the team entity in the _team blueprint to get the identifier.
-	// The _team entity identifier is what users need to reference the team in
-	// entity teams[] arrays and permission configurations.
-	// Note: The search is done unconditionally because all Port orgs now have
-	// teams represented as entities in the _team system blueprint.
+	isUsersAndTeamsV2, err := c.HasFeatureFlags(ctx, FeatureFlagUsersAndTeamsV2)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read feature flags: %w", err)
+	}
+
+	// Look up the team's _team entity to expose its identifier, which is what entity teams[] arrays and permission
+	// configurations reference.
 	searchResults, searchErr := c.Search(ctx, &SearchRequestQuery{
 		Query: &map[string]any{
 			"combinator": "and",
@@ -151,6 +153,19 @@ func (c *PortClient) enrichTeamFromTeamEntity(ctx context.Context, portTeam *Por
 		},
 		Include: []string{"identifier"},
 	})
+
+	if !isUsersAndTeamsV2 {
+		// Orgs without ownership v2 are not guaranteed to have _team entities, so the lookup is best-effort:
+		// anything other than exactly one match leaves the identifier null instead of failing the operation.
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
+		if searchErr == nil && len(searchResults.Entities) == 1 {
+			team.Identifier = &searchResults.Entities[0].Identifier
+		}
+		return team, nil
+	}
+
 	if searchErr != nil {
 		return nil, searchErr
 	}

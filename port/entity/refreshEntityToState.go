@@ -2,12 +2,42 @@ package entity
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
+
+// configuredArrayKeys returns a set of property identifiers that are configured in oldProperties.ArrayProps
+func configuredArrayKeys(oldProperties *EntityPropertiesModel) map[string]struct{} {
+	keys := make(map[string]struct{})
+	if oldProperties == nil || oldProperties.ArrayProps == nil {
+		return keys
+	}
+	if !oldProperties.ArrayProps.StringItems.IsNull() {
+		for k := range oldProperties.ArrayProps.StringItems.Elements() {
+			keys[k] = struct{}{}
+		}
+	}
+	if !oldProperties.ArrayProps.NumberItems.IsNull() {
+		for k := range oldProperties.ArrayProps.NumberItems.Elements() {
+			keys[k] = struct{}{}
+		}
+	}
+	if !oldProperties.ArrayProps.BooleanItems.IsNull() {
+		for k := range oldProperties.ArrayProps.BooleanItems.Elements() {
+			keys[k] = struct{}{}
+		}
+	}
+	if !oldProperties.ArrayProps.ObjectItems.IsNull() {
+		for k := range oldProperties.ArrayProps.ObjectItems.Elements() {
+			keys[k] = struct{}{}
+		}
+	}
+	return keys
+}
 
 func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayProperties map[string][]interface{}, blueprint *cli.Blueprint, oldProperties *EntityPropertiesModel) {
 	mapStringItems := make(map[string][]*string)
@@ -94,11 +124,68 @@ func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *Ent
 	}
 }
 
+// isPropertyConfigured checks if a property key was configured in oldProperties
+func isPropertyConfigured(k string, oldProperties *EntityPropertiesModel) bool {
+	if oldProperties == nil {
+		return false
+	}
+	if oldProperties.StringProps != nil {
+		if _, ok := oldProperties.StringProps[k]; ok {
+			return true
+		}
+	}
+	if oldProperties.NumberProps != nil {
+		if _, ok := oldProperties.NumberProps[k]; ok {
+			return true
+		}
+	}
+	if oldProperties.BooleanProps != nil {
+		if _, ok := oldProperties.BooleanProps[k]; ok {
+			return true
+		}
+	}
+	if oldProperties.ObjectProps != nil {
+		if _, ok := oldProperties.ObjectProps[k]; ok {
+			return true
+		}
+	}
+	if oldProperties.ArrayProps != nil {
+		configuredArrays := configuredArrayKeys(oldProperties)
+		if _, ok := configuredArrays[k]; ok {
+			return true
+		}
+	}
+	return false
+}
+
 func (r *EntityResource) refreshPropertiesEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) {
 	oldProperties := state.Properties
 	state.Properties = &EntityPropertiesModel{}
 	arrayProperties := make(map[string][]interface{})
 	for k, v := range e.Properties {
+		// The API returns {} for an unset object property; treat it like null unless state holds an empty object.
+		if isEmptyJSONObject(v) && !hasEmptyObjectInState(k, oldProperties) {
+			v = nil
+		}
+		// Likewise an empty array is treated like null unless state holds [] for it, so an unset array property
+		// doesn't cause a perpetual diff and a user-written null stays null.
+		if isEmptyJSONArray(v) && !hasEmptyArrayInState(k, oldProperties) {
+			v = nil
+		}
+		if v == nil {
+			// The API returns null for every unset blueprint property. Only keep a null that is in state (the user
+			// wrote it explicitly) so unset properties don't cause a perpetual diff. Non-null values are always
+			// kept so out-of-band changes show up as drift and import gets every value.
+			if !isPropertyConfigured(k, oldProperties) {
+				continue
+			}
+			// The user wrote {} and the API normalized it to null: keep the user's value.
+			if hasEmptyObjectInState(k, oldProperties) {
+				setObjectProp(state.Properties, k, oldProperties.ObjectProps[k])
+				continue
+			}
+		}
+
 		switch t := v.(type) {
 		case float64:
 			if state.Properties.NumberProps == nil {
@@ -118,14 +205,12 @@ func (r *EntityResource) refreshPropertiesEntityState(ctx context.Context, state
 		case []interface{}:
 			arrayProperties[k] = t
 		case interface{}:
-			if state.Properties.ObjectProps == nil {
-				state.Properties.ObjectProps = make(map[string]types.String)
-			}
 			var oldValue types.String
 			if oldProperties != nil && oldProperties.ObjectProps != nil {
 				oldValue = oldProperties.ObjectProps[k]
 			}
-			state.Properties.ObjectProps[k], _ = utils.GoObjectToTerraformStringPreferExisting(oldValue, &t, r.portClient.JSONEscapeHTML)
+			objectValue, _ := utils.GoObjectToTerraformStringPreferExisting(oldValue, &t, r.portClient.JSONEscapeHTML)
+			setObjectProp(state.Properties, k, objectValue)
 		case nil:
 			switch blueprint.Schema.Properties[k].Type {
 			case "string":
@@ -144,10 +229,7 @@ func (r *EntityResource) refreshPropertiesEntityState(ctx context.Context, state
 				}
 				state.Properties.BooleanProps[k] = types.BoolNull()
 			case "object":
-				if state.Properties.ObjectProps == nil {
-					state.Properties.ObjectProps = make(map[string]types.String)
-				}
-				state.Properties.ObjectProps[k] = types.StringNull()
+				setObjectProp(state.Properties, k, types.StringNull())
 			case "array":
 				arrayProperties[k] = []interface{}(nil)
 			}
@@ -156,15 +238,121 @@ func (r *EntityResource) refreshPropertiesEntityState(ctx context.Context, state
 	if len(arrayProperties) != 0 {
 		r.refreshArrayEntityState(ctx, state, arrayProperties, blueprint, oldProperties)
 	}
+	if oldProperties == nil && isEmptyPropertiesModel(state.Properties) {
+		state.Properties = nil
+	}
 }
 
-func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli.Entity) {
+// setObjectProp sets an object property in p, creating the ObjectProps map on first use.
+func setObjectProp(p *EntityPropertiesModel, k string, v types.String) {
+	if p.ObjectProps == nil {
+		p.ObjectProps = make(map[string]types.String)
+	}
+	p.ObjectProps[k] = v
+}
+
+func isEmptyJSONArray(v interface{}) bool {
+	a, ok := v.([]interface{})
+	return ok && len(a) == 0
+}
+
+// hasEmptyArrayInState reports whether state holds k as an array property (of any item type) whose value is [].
+func hasEmptyArrayInState(k string, oldProperties *EntityPropertiesModel) bool {
+	if oldProperties == nil || oldProperties.ArrayProps == nil {
+		return false
+	}
+	a := oldProperties.ArrayProps
+	for _, items := range []types.Map{a.StringItems, a.NumberItems, a.BooleanItems, a.ObjectItems} {
+		if items.IsNull() || items.IsUnknown() {
+			continue
+		}
+		if list, ok := items.Elements()[k].(types.List); ok && !list.IsNull() && !list.IsUnknown() && len(list.Elements()) == 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// hasEmptyManyRelationInState reports whether state holds identifier as a many-relation whose value is [].
+func hasEmptyManyRelationInState(identifier string, oldRelations *RelationModel) bool {
+	if oldRelations == nil || oldRelations.ManyRelations == nil {
+		return false
+	}
+	values, ok := oldRelations.ManyRelations[identifier]
+	return ok && values != nil && len(values) == 0
+}
+
+// hasNullManyRelationInState reports whether state holds identifier as a many-relation set to null.
+func hasNullManyRelationInState(identifier string, oldRelations *RelationModel) bool {
+	if oldRelations == nil || oldRelations.ManyRelations == nil {
+		return false
+	}
+	values, ok := oldRelations.ManyRelations[identifier]
+	return ok && values == nil
+}
+
+func isEmptyJSONObject(v interface{}) bool {
+	m, ok := v.(map[string]interface{})
+	return ok && len(m) == 0
+}
+
+// hasEmptyObjectInState reports whether state holds k as an object property whose value is the empty JSON object.
+func hasEmptyObjectInState(k string, oldProperties *EntityPropertiesModel) bool {
+	if oldProperties == nil || oldProperties.ObjectProps == nil {
+		return false
+	}
+	old, ok := oldProperties.ObjectProps[k]
+	if !ok || old.IsNull() || old.IsUnknown() {
+		return false
+	}
+	var m map[string]interface{}
+	return json.Unmarshal([]byte(old.ValueString()), &m) == nil && m != nil && len(m) == 0
+}
+
+func isEmptyPropertiesModel(p *EntityPropertiesModel) bool {
+	return p == nil || (len(p.StringProps) == 0 && len(p.NumberProps) == 0 && len(p.BooleanProps) == 0 &&
+		len(p.ObjectProps) == 0 && p.ArrayProps == nil)
+}
+
+// isRelationConfigured checks if a relation identifier was configured in oldRelations
+func isRelationConfigured(identifier string, oldRelations *RelationModel) bool {
+	if oldRelations == nil {
+		return false
+	}
+	if oldRelations.SingleRelation != nil {
+		if _, ok := oldRelations.SingleRelation[identifier]; ok {
+			return true
+		}
+	}
+	if oldRelations.ManyRelations != nil {
+		if _, ok := oldRelations.ManyRelations[identifier]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, oldRelations *RelationModel) {
 	state.Relations = &RelationModel{
 		SingleRelation: make(map[string]*string),
 		ManyRelations:  make(map[string][]string),
 	}
 
 	for identifier, r := range e.Relations {
+		// The API returns null for every unset relation; only keep a null that is in state. Non-null relations are
+		// always kept so drift and import work.
+		if r == nil && !isRelationConfigured(identifier, oldRelations) {
+			continue
+		}
+		// The API returns [] for an unset many-relation; drop it unless state holds [] for it (the user wrote it).
+		// A non-empty list is always kept so drift and import work.
+		if isEmptyJSONArray(r) && !hasEmptyManyRelationInState(identifier, oldRelations) {
+			if hasNullManyRelationInState(identifier, oldRelations) {
+				state.Relations.ManyRelations[identifier] = nil
+			}
+			continue
+		}
+
 		switch v := r.(type) {
 		case []any:
 			values := make([]string, 0, len(v))
@@ -189,6 +377,9 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 	}
 	if len(state.Relations.ManyRelations) == 0 {
 		state.Relations.ManyRelations = nil
+	}
+	if oldRelations == nil && state.Relations.SingleRelation == nil && state.Relations.ManyRelations == nil {
+		state.Relations = nil
 	}
 }
 
@@ -224,10 +415,11 @@ func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityMo
 		r.refreshPropertiesEntityState(ctx, state, e, blueprint)
 	}
 
+	oldRelations := state.Relations
 	if len(e.Relations) == 0 {
 		state.Relations = nil
 	} else {
-		refreshRelationsEntityState(ctx, state, e)
+		refreshRelationsEntityState(ctx, state, e, oldRelations)
 	}
 
 	return nil

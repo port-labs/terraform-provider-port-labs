@@ -2,6 +2,7 @@ package entity
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -52,15 +53,7 @@ func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *Ent
 			ObjectItems:  types.MapNull(types.ListType{ElemType: types.StringType}),
 		}
 	}
-
-	// Only include array properties that were in the original config
-	configuredKeys := configuredArrayKeys(oldProperties)
-
 	for k, t := range arrayProperties {
-		// Skip properties not in the original config
-		if _, configured := configuredKeys[k]; !configured {
-			continue
-		}
 
 		switch blueprint.Schema.Properties[k].Items["type"] {
 		// array without items type is array of string by default
@@ -170,10 +163,25 @@ func (r *EntityResource) refreshPropertiesEntityState(ctx context.Context, state
 	state.Properties = &EntityPropertiesModel{}
 	arrayProperties := make(map[string][]interface{})
 	for k, v := range e.Properties {
-		// Skip properties not in the original config to avoid perpetual diffs
-		// when the API returns null values or defaults for unset properties
-		if !isPropertyConfigured(k, oldProperties) {
-			continue
+		// The API returns {} for an unset object property; treat it like null unless state holds an empty object.
+		if isEmptyJSONObject(v) && !hasEmptyObjectInState(k, oldProperties) {
+			v = nil
+		}
+		if v == nil {
+			// The API returns null for every unset blueprint property. Only keep a null that is in state (the user
+			// wrote it explicitly) so unset properties don't cause a perpetual diff. Non-null values are always
+			// kept so out-of-band changes show up as drift and import gets every value.
+			if !isPropertyConfigured(k, oldProperties) {
+				continue
+			}
+			// The user wrote {} and the API normalized it to null: keep the user's value.
+			if hasEmptyObjectInState(k, oldProperties) {
+				if state.Properties.ObjectProps == nil {
+					state.Properties.ObjectProps = make(map[string]types.String)
+				}
+				state.Properties.ObjectProps[k] = oldProperties.ObjectProps[k]
+				continue
+			}
 		}
 
 		switch t := v.(type) {
@@ -233,6 +241,32 @@ func (r *EntityResource) refreshPropertiesEntityState(ctx context.Context, state
 	if len(arrayProperties) != 0 {
 		r.refreshArrayEntityState(ctx, state, arrayProperties, blueprint, oldProperties)
 	}
+	if oldProperties == nil && isEmptyPropertiesModel(state.Properties) {
+		state.Properties = nil
+	}
+}
+
+func isEmptyJSONObject(v interface{}) bool {
+	m, ok := v.(map[string]interface{})
+	return ok && len(m) == 0
+}
+
+// hasEmptyObjectInState reports whether state holds k as an object property whose value is the empty JSON object.
+func hasEmptyObjectInState(k string, oldProperties *EntityPropertiesModel) bool {
+	if oldProperties == nil || oldProperties.ObjectProps == nil {
+		return false
+	}
+	old, ok := oldProperties.ObjectProps[k]
+	if !ok || old.IsNull() || old.IsUnknown() {
+		return false
+	}
+	var m map[string]interface{}
+	return json.Unmarshal([]byte(old.ValueString()), &m) == nil && m != nil && len(m) == 0
+}
+
+func isEmptyPropertiesModel(p *EntityPropertiesModel) bool {
+	return p == nil || (len(p.StringProps) == 0 && len(p.NumberProps) == 0 && len(p.BooleanProps) == 0 &&
+		len(p.ObjectProps) == 0 && p.ArrayProps == nil)
 }
 
 // isRelationConfigured checks if a relation identifier was configured in oldRelations
@@ -260,9 +294,9 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 	}
 
 	for identifier, r := range e.Relations {
-		// Skip relations not in the original config to avoid perpetual diffs
-		// when the API returns null values for unset relations
-		if !isRelationConfigured(identifier, oldRelations) {
+		// The API returns null for every unset relation; only keep a null that is in state. Non-null relations are
+		// always kept so drift and import work.
+		if r == nil && !isRelationConfigured(identifier, oldRelations) {
 			continue
 		}
 
@@ -290,6 +324,9 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 	}
 	if len(state.Relations.ManyRelations) == 0 {
 		state.Relations.ManyRelations = nil
+	}
+	if oldRelations == nil && state.Relations.SingleRelation == nil && state.Relations.ManyRelations == nil {
+		state.Relations = nil
 	}
 }
 

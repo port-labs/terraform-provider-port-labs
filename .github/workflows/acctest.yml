@@ -1,41 +1,65 @@
 name: Acceptance Tests
 on:
   pull_request:
-    paths:
-      - '**/*.go'
-      - 'go.mod'
-      - 'go.sum'
   push:
     branches:
       - main
-    paths:
-      - '**/*.go'
-      - 'go.mod'
-      - 'go.sum'
+
+permissions:
+  contents: read
+  actions: write
+  checks: write
+  pull-requests: write
 
 env:
   FORCE_COLOR: 1
 
-concurrency:
-  group: acctest
-  cancel-in-progress: false
-
 jobs:
-  acctest:
-    name: Acceptance tests
+  changes:
+    name: Detect changes
     runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.filter.outputs.go }}
     steps:
       - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            go:
+              - '**/*.go'
+              - 'go.mod'
+              - 'go.sum'
+
+  acctest:
+    name: Acceptance tests
+    needs: changes
+    runs-on: ubuntu-latest
+    # Real suites share one lock; skips get a unique group so they never wait.
+    concurrency:
+      group: ${{ needs.changes.outputs.go == 'true' && 'acctest' || format('acctest-skip-{0}', github.run_id) }}
+      cancel-in-progress: false
+    steps:
+      - name: Skip (no Go changes)
+        if: ${{ needs.changes.outputs.go != 'true' }}
+        run: echo "No Go changes; skipping acceptance tests."
+
+      - uses: actions/checkout@v4
+        if: ${{ needs.changes.outputs.go == 'true' }}
       - uses: actions/setup-go@v6
+        if: ${{ needs.changes.outputs.go == 'true' }}
         with:
           go-version-file: 'go.mod'
           cache: true
       - uses: hashicorp/setup-terraform@v3
+        if: ${{ needs.changes.outputs.go == 'true' }}
         with:
           terraform_wrapper: false
       - name: Install gotestsum
+        if: ${{ needs.changes.outputs.go == 'true' }}
         run: go install gotest.tools/gotestsum@latest
       - name: Test
+        if: ${{ needs.changes.outputs.go == 'true' }}
         env:
           TF_ACC: 1
           CI_USER_NAME: ${{ secrets.CI_USER_NAME }}
@@ -98,13 +122,13 @@ jobs:
           set -e
           exit $(( parallel_rc || serial_rc ))
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() && needs.changes.outputs.go == 'true' }}
         with:
           name: test-results-junit
           path: test-results
           if-no-files-found: error
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() && needs.changes.outputs.go == 'true' }}
         with:
           name: coverage-profiles
           path: coverage
@@ -112,16 +136,23 @@ jobs:
 
   publish_report:
     name: Publish Test Report
-    if: ${{ always() }}
-    needs: acctest
+    needs: [changes, acctest]
+    if: ${{ always() && needs.acctest.result != 'cancelled' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Skip (no Go changes)
+        if: ${{ needs.changes.outputs.go != 'true' }}
+        run: echo "No Go changes; skipping test report."
+
       - uses: actions/checkout@v4
+        if: ${{ needs.changes.outputs.go == 'true' }}
       - uses: actions/download-artifact@v4
+        if: ${{ needs.changes.outputs.go == 'true' }}
         with:
           name: test-results-junit
           path: test-results
       - name: Publish Test Report
+        if: ${{ needs.changes.outputs.go == 'true' }}
         uses: mikepenz/action-junit-report@v5
         with:
           report_paths: './test-results/*.xml'
@@ -134,8 +165,8 @@ jobs:
 
   publish_cover_report:
     name: Publish Coverage Report
-    if: ${{ always() }}
-    needs: acctest
+    needs: [changes, acctest]
+    if: ${{ always() && needs.changes.outputs.go == 'true' && needs.acctest.result != 'cancelled' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -189,6 +220,7 @@ jobs:
             echo "STMTS_COVERAGE=$stmts" >> $GITHUB_OUTPUT
           fi
       - name: Comment PR with code coverage summary
+        if: ${{ steps.pr-number.outputs.PR_NUMBER != 0 }}
         uses: actions/github-script@v7
         env:
           CODE_COVERAGE_ARTIFACT_URL: ${{ steps.upload-coverage.outputs.artifact-url }}

@@ -161,9 +161,7 @@ func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 
 	if isBlueprintChanged {
-		// Delete the old entity
-		err := r.portClient.DeleteEntity(ctx, previousState.Identifier.ValueString(), previousState.Blueprint.ValueString())
-		if err != nil {
+		if err := deleteEntityFromPreviousBlueprint(ctx, r.portClient, previousState.Identifier.ValueString(), previousState.Blueprint.ValueString()); err != nil {
 			resp.Diagnostics.AddError("failed to delete entity", err.Error())
 			return
 		}
@@ -199,4 +197,16 @@ func (r *EntityResource) ImportState(ctx context.Context, req resource.ImportSta
 
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("blueprint"), idParts[0])...)
 	resp.Diagnostics.Append(resp.State.SetAttribute(ctx, path.Root("identifier"), idParts[1])...)
+}
+
+// deleteEntityFromPreviousBlueprint deletes the entity from the blueprint it used to belong to after it was recreated
+// under its new blueprint. If the blueprint was renamed, the old blueprint identifier no longer exists and Port has
+// already moved the entity, so the delete returns HTTP 404; that is treated as success. Other errors are returned even
+// if their text mentions "not_found".
+func deleteEntityFromPreviousBlueprint(ctx context.Context, c *cli.PortClient, identifier, blueprint string) error {
+	err := c.DeleteEntity(ctx, identifier, blueprint)
+	if err != nil && !cli.IsNotFound(err) {
+		return err
+	}
+	return nil
 }

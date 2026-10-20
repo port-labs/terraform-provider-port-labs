@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
@@ -303,6 +304,135 @@ func TestRefreshEntityState_EmptyObjectVsNull(t *testing.T) {
 
 			require.NotNil(t, state.Properties)
 			assert.Equal(t, tt.wantProps, state.Properties.ObjectProps)
+		})
+	}
+}
+
+func manyRelationsTestState(many map[string][]string) *EntityModel {
+	return &EntityModel{
+		Properties: &EntityPropertiesModel{
+			StringProps: map[string]types.String{"configured_prop": types.StringValue("value")},
+		},
+		Relations: &RelationModel{ManyRelations: many},
+	}
+}
+
+// An empty many-relation the API returns for a relation not in state is treated like null and dropped, while a
+// user-written [] and a non-empty relation set elsewhere (drift) are kept.
+func TestRefreshEntityState_EmptyManyRelations(t *testing.T) {
+	tests := []struct {
+		name     string
+		oldMany  map[string][]string
+		apiRels  map[string]interface{}
+		wantMany map[string][]string
+	}{
+		{"api [] and relation unset is dropped",
+			map[string][]string{"configured_rel": {"a"}},
+			map[string]interface{}{"configured_rel": []interface{}{"a"}, "unset_rel": []interface{}{}},
+			map[string][]string{"configured_rel": {"a"}}},
+		{"api [] and user-written [] is kept",
+			map[string][]string{"configured_rel": {}},
+			map[string]interface{}{"configured_rel": []interface{}{}},
+			map[string][]string{"configured_rel": {}}},
+		{"api [] and user-written null stays null",
+			map[string][]string{"configured_rel": nil},
+			map[string]interface{}{"configured_rel": []interface{}{}},
+			map[string][]string{"configured_rel": nil}},
+		{"api non-empty and relation unset is kept as drift",
+			map[string][]string{"configured_rel": {"a"}},
+			map[string]interface{}{"configured_rel": []interface{}{"a"}, "drifted_rel": []interface{}{"x"}},
+			map[string][]string{"configured_rel": {"a"}, "drifted_rel": {"x"}}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			state := manyRelationsTestState(tt.oldMany)
+			apiEntity := newRefreshTestEntity(map[string]interface{}{"configured_prop": "value"}, tt.apiRels)
+
+			require.NoError(t, newRefreshTestResource().refreshEntityState(context.Background(), state, apiEntity, refreshTestBlueprint()))
+
+			require.NotNil(t, state.Relations)
+			assert.Equal(t, tt.wantMany, state.Relations.ManyRelations)
+		})
+	}
+}
+
+// With no relations block in state (e.g. import or a resource without relations), an API that only returns empty
+// many-relations must leave relations null.
+func TestRefreshEntityState_OnlyEmptyManyRelationsKeepsRelationsNull(t *testing.T) {
+	state := &EntityModel{}
+	apiEntity := newRefreshTestEntity(nil, map[string]interface{}{"unset_rel": []interface{}{}, "null_rel": nil})
+
+	require.NoError(t, newRefreshTestResource().refreshEntityState(context.Background(), state, apiEntity, refreshTestBlueprint()))
+
+	assert.Nil(t, state.Relations)
+}
+
+func stringArrayItems(t *testing.T, items map[string][]string) types.Map {
+	t.Helper()
+	m, diags := types.MapValueFrom(context.Background(), types.ListType{ElemType: types.StringType}, items)
+	require.False(t, diags.HasError(), "%v", diags)
+	return m
+}
+
+func arrayPropsTestState(t *testing.T, stringItems types.Map) *EntityModel {
+	t.Helper()
+	return &EntityModel{
+		Properties: &EntityPropertiesModel{
+			StringProps: map[string]types.String{"configured_prop": types.StringValue("value")},
+			ArrayProps: &ArrayPropsModel{
+				StringItems:  stringItems,
+				NumberItems:  types.MapNull(types.ListType{ElemType: types.Float64Type}),
+				BooleanItems: types.MapNull(types.ListType{ElemType: types.BoolType}),
+				ObjectItems:  types.MapNull(types.ListType{ElemType: types.StringType}),
+			},
+		},
+	}
+}
+
+// An empty array the API returns for an array property not in state is treated like null and dropped, while a
+// user-written [] and a non-empty array set elsewhere (drift) are kept.
+func TestRefreshEntityState_EmptyArrayProperties(t *testing.T) {
+	nullStringItem, diags := types.MapValue(types.ListType{ElemType: types.StringType},
+		map[string]attr.Value{"tags": types.ListNull(types.StringType)})
+	require.False(t, diags.HasError())
+
+	tests := []struct {
+		name      string
+		oldItems  types.Map
+		apiProps  map[string]interface{}
+		wantItems map[string]attr.Value
+	}{
+		{"api [] and array unset is dropped",
+			types.MapNull(types.ListType{ElemType: types.StringType}),
+			map[string]interface{}{"configured_prop": "value", "tags": []interface{}{}},
+			nil},
+		{"api [] and user-written [] is kept",
+			stringArrayItems(t, map[string][]string{"tags": {}}),
+			map[string]interface{}{"configured_prop": "value", "tags": []interface{}{}},
+			stringArrayItems(t, map[string][]string{"tags": {}}).Elements()},
+		{"api [] and user-written null stays null",
+			nullStringItem,
+			map[string]interface{}{"configured_prop": "value", "tags": []interface{}{}},
+			nullStringItem.Elements()},
+		{"api non-empty and array unset is kept as drift",
+			types.MapNull(types.ListType{ElemType: types.StringType}),
+			map[string]interface{}{"configured_prop": "value", "tags": []interface{}{"x"}},
+			stringArrayItems(t, map[string][]string{"tags": {"x"}}).Elements()},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			state := arrayPropsTestState(t, tt.oldItems)
+			apiEntity := newRefreshTestEntity(tt.apiProps, nil)
+
+			require.NoError(t, newRefreshTestResource().refreshEntityState(context.Background(), state, apiEntity, refreshTestBlueprint()))
+
+			require.NotNil(t, state.Properties)
+			if tt.wantItems == nil {
+				assert.Nil(t, state.Properties.ArrayProps, "an array block that only had an unset [] must stay null")
+				return
+			}
+			require.NotNil(t, state.Properties.ArrayProps)
+			assert.Equal(t, tt.wantItems, state.Properties.ArrayProps.StringItems.Elements())
 		})
 	}
 }

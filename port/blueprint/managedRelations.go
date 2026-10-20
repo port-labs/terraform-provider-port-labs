@@ -10,6 +10,7 @@ import (
 )
 
 const managedRelationsKey = "managed_relations"
+const importAdoptRelationsKey = "import_adopt_relations"
 
 type privateState interface {
 	GetKey(ctx context.Context, key string) ([]byte, diag.Diagnostics)
@@ -20,7 +21,7 @@ func retainManagedRelations(ctx context.Context, req privateState, resp privateS
 	var diags diag.Diagnostics
 
 	managed := fallbackManaged
-	hasPrivateState := false
+	importing := false
 
 	if req != nil {
 		raw, getDiags := req.GetKey(ctx, managedRelationsKey)
@@ -30,21 +31,33 @@ func retainManagedRelations(ctx context.Context, req privateState, resp privateS
 		}
 
 		if raw != nil {
-			hasPrivateState = true
 			var recorded []string
 			if err := json.Unmarshal(raw, &recorded); err == nil {
 				managed = recorded
 			}
 		}
+
+		marker, getDiags := req.GetKey(ctx, importAdoptRelationsKey)
+		diags.Append(getDiags...)
+		if diags.HasError() {
+			return diags
+		}
+		importing = len(marker) != 0
 	}
 
-	// If we have no private state AND no relations in fallback (state.Relations),
-	// this is likely an import scenario. Treat all relations from Port as managed
-	// so they are preserved in state instead of being dropped.
-	if !hasPrivateState && len(managed) == 0 && len(b.Relations) > 0 {
+	// Only the first Read after `terraform import` adopts every relation the blueprint has in Port; any other Read
+	// keeps just the relations this resource already manages, so relations owned by port_blueprint_relation or the UI
+	// are never pulled into state (and then deleted on the next apply).
+	if importing {
 		managed = make([]string, 0, len(b.Relations))
 		for identifier := range b.Relations {
 			managed = append(managed, identifier)
+		}
+		if resp != nil {
+			diags.Append(resp.SetKey(ctx, importAdoptRelationsKey, nil)...)
+			if diags.HasError() {
+				return diags
+			}
 		}
 	}
 
@@ -64,6 +77,15 @@ func retainManagedRelations(ctx context.Context, req privateState, resp privateS
 	}
 
 	return diags
+}
+
+// markImportForRelationAdoption flags the private state of a freshly imported blueprint so the Read that follows the
+// import adopts all of its relations.
+func markImportForRelationAdoption(ctx context.Context, private privateState) diag.Diagnostics {
+	if private == nil {
+		return nil
+	}
+	return private.SetKey(ctx, importAdoptRelationsKey, []byte(`true`))
 }
 
 func setManagedRelations(ctx context.Context, private privateState, identifiers []string) diag.Diagnostics {

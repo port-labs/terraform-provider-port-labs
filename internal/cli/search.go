@@ -7,6 +7,17 @@ import (
 	"strings"
 )
 
+// SearchError is returned by Search when Port answers with ok=false. It keeps the HTTP status so callers can tell a
+// missing blueprint (404) apart from auth or server failures.
+type SearchError struct {
+	StatusCode int
+	Body       []byte
+}
+
+func (e *SearchError) Error() string {
+	return fmt.Sprintf("failed to search, got: %s", e.Body)
+}
+
 func (c *PortClient) Search(ctx context.Context, searchRequest *SearchRequestQuery) (*SearchResult, error) {
 	url := "v1/entities/search"
 
@@ -42,7 +53,7 @@ func (c *PortClient) Search(ctx context.Context, searchRequest *SearchRequestQue
 		return nil, err
 	}
 	if !searchResult.OK {
-		return nil, fmt.Errorf("failed to search, got: %s", resp.Body())
+		return nil, &SearchError{StatusCode: resp.StatusCode(), Body: resp.Body()}
 	}
 	return &searchResult, nil
 }

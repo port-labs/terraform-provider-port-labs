@@ -1,11 +1,59 @@
 package page
 
 import (
+	"encoding/json"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
+
+// stripEmptyArrays recursively removes empty arrays the API injects (like "hiddenQuery: []") to prevent perpetual
+// diffs. old is the matching value from the prior state (the user's config): a key that exists at the same path in old
+// is kept as returned, so a user-written [] is preserved and an array emptied out of band still shows as drift. With no
+// prior value (nil) every empty array is stripped.
+func stripEmptyArrays(data interface{}, old interface{}) interface{} {
+	switch v := data.(type) {
+	case map[string]interface{}:
+		oldMap, _ := old.(map[string]interface{})
+		result := make(map[string]interface{})
+		for key, value := range v {
+			oldValue, inOld := oldMap[key]
+			cleaned := stripEmptyArrays(value, oldValue)
+			if arr, ok := cleaned.([]interface{}); ok && len(arr) == 0 && !inOld {
+				continue
+			}
+			result[key] = cleaned
+		}
+		return result
+	case []interface{}:
+		oldList, _ := old.([]interface{})
+		result := make([]interface{}, len(v))
+		for i, item := range v {
+			var oldItem interface{}
+			if i < len(oldList) {
+				oldItem = oldList[i]
+			}
+			result[i] = stripEmptyArrays(item, oldItem)
+		}
+		return result
+	default:
+		return data
+	}
+}
+
+// parseJSONState decodes a JSON string from state, returning nil when it is null, unknown or not valid JSON.
+func parseJSONState(s types.String) interface{} {
+	if s.IsNull() || s.IsUnknown() {
+		return nil
+	}
+	var v interface{}
+	if err := json.Unmarshal([]byte(s.ValueString()), &v); err != nil {
+		return nil
+	}
+	return v
+}
 
 func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	oldWidgets := pm.Widgets
@@ -26,8 +74,11 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	if b.Widgets != nil {
 		widgetAttrs := make([]attr.Value, len(*b.Widgets))
 		for i, widget := range *b.Widgets {
+			// Strip empty arrays like "hiddenQuery: []" that the API adds but aren't in user config
+			oldWidget := utils.TerraformStringAtList(oldWidgets, i)
+			cleanedWidget := stripEmptyArrays(widget, parseJSONState(oldWidget))
 			bWidget, err := utils.GoObjectToTerraformStringPreferExisting(
-				utils.TerraformStringAtList(oldWidgets, i), widget, r.portClient.JSONEscapeHTML)
+				oldWidget, cleanedWidget, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return err
 			}

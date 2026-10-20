@@ -3,12 +3,31 @@
 page_title: "port_organization Resource - port"
 subcategory: ""
 description: |-
-  Organization resource to manage organization-level settings such as name and hidden blueprints
+  Organization Resource
+  Manages Port organization settings. Currently supports setting the organization name.
+  ~> Note: This resource manages organization-wide settings. Changes affect all users in the organization.
+  Example Usage
+  
+  resource "port_organization" "my_org" {
+    name = "My Organization"
+  }
 ---
 
 # port_organization (Resource)
 
-Organization resource to manage organization-level settings such as name and hidden blueprints
+# Organization Resource
+
+Manages Port organization settings. Currently supports setting the organization name.
+
+~> **Note:** This resource manages organization-wide settings. Changes affect all users in the organization.
+
+## Example Usage
+
+```hcl
+resource "port_organization" "my_org" {
+  name = "My Organization"
+}
+```
 
 
 

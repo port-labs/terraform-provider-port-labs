@@ -1,12 +1,123 @@
 ---
 page_title: "port Provider"
 description: |-
-  Interact with Port-labs
+  The Port provider is used to interact with Port https://www.getport.io/, an internal developer portal platform.
+  Authentication
+  The provider requires API credentials to authenticate with Port. You can obtain these from the Port UI under Settings > Credentials.
+  Environment Variables (Recommended)
+  Set the following environment variables:
+  PORT_CLIENT_ID - Your Port client IDPORT_CLIENT_SECRET - Your Port client secretPORT_BASE_URL (optional) - Port API URL. Defaults to https://api.getport.io. Use https://api.port.io for EU region.
+  Provider Configuration
+  Alternatively, configure credentials in the provider block:
+  
+  provider "port" {
+    client_id = "<CLIENT_ID>"
+    secret    = "<CLIENT_SECRET>"
+    base_url  = "https://api.getport.io"  # or https://api.port.io for EU
+  }
+  
+  Example Usage
+  
+  terraform {
+    required_providers {
+      port = {
+        source  = "port-labs/port-labs"
+        version = "~> 2"
+      }
+    }
+  }
+  
+  # Configure via environment variables (recommended)
+  provider "port" {}
+  
+  # Create a blueprint
+  resource "port_blueprint" "microservice" {
+    identifier = "microservice"
+    title      = "Microservice"
+    icon       = "Microservice"
+  }
+  
+  # Create an entity
+  resource "port_entity" "my_service" {
+    identifier = "my-service"
+    title      = "My Service"
+    blueprint  = port_blueprint.microservice.identifier
+  }
+  
+  Regional URLs
+  Port offers different API endpoints for different regions:
+  | Region | API URL |
+  |--------|---------|
+  | US (default) | `https://api.getport.io` |
+  | EU | `https://api.port.io` |
 ---
 
 # port Provider
 
-Interact with Port-labs
+The Port provider is used to interact with [Port](https://www.getport.io/), an internal developer portal platform.
+
+## Authentication
+
+The provider requires API credentials to authenticate with Port. You can obtain these from the Port UI under Settings > Credentials.
+
+### Environment Variables (Recommended)
+
+Set the following environment variables:
+
+- `PORT_CLIENT_ID` - Your Port client ID
+- `PORT_CLIENT_SECRET` - Your Port client secret
+- `PORT_BASE_URL` (optional) - Port API URL. Defaults to `https://api.getport.io`. Use `https://api.port.io` for EU region.
+
+### Provider Configuration
+
+Alternatively, configure credentials in the provider block:
+
+```hcl
+provider "port" {
+  client_id = "<CLIENT_ID>"
+  secret    = "<CLIENT_SECRET>"
+  base_url  = "https://api.getport.io"  # or https://api.port.io for EU
+}
+```
+
+## Example Usage
+
+```hcl
+terraform {
+  required_providers {
+    port = {
+      source  = "port-labs/port-labs"
+      version = "~> 2"
+    }
+  }
+}
+
+# Configure via environment variables (recommended)
+provider "port" {}
+
+# Create a blueprint
+resource "port_blueprint" "microservice" {
+  identifier = "microservice"
+  title      = "Microservice"
+  icon       = "Microservice"
+}
+
+# Create an entity
+resource "port_entity" "my_service" {
+  identifier = "my-service"
+  title      = "My Service"
+  blueprint  = port_blueprint.microservice.identifier
+}
+```
+
+## Regional URLs
+
+Port offers different API endpoints for different regions:
+
+| Region | API URL |
+|--------|---------|
+| US (default) | `https://api.getport.io` |
+| EU | `https://api.port.io` |
 
 
 
@@ -15,12 +126,12 @@ Interact with Port-labs
 
 ### Optional
 
-- `base_url` (String)
-- `blueprint_property_type_change_protection` (Boolean) Protects you from accidentally changing the property type of blueprints which will delete the property before recreating it with the new type. Defaults to `true`
-- `client_id` (String) Client ID for Port-labs
-- `json_escape_html` (Boolean) When set to `false` disables the default HTML escaping of json.Marshal when reading data from Port. Defaults to `true`
-- `secret` (String, Sensitive) Client Secret for Port-labs
-- `token` (String, Sensitive) Token for Port-labs
+- `base_url` (String) Port API URL. Can also be set via the `PORT_BASE_URL` environment variable. Defaults to `https://api.getport.io`. Use `https://api.port.io` for EU region.
+- `blueprint_property_type_change_protection` (Boolean) Protects you from accidentally changing the property type of blueprints which will delete the property before recreating it with the new type. Defaults to `true`.
+- `client_id` (String) Client ID for Port. Can also be set via the `PORT_CLIENT_ID` environment variable.
+- `json_escape_html` (Boolean) When set to `false` disables the default HTML escaping of json.Marshal when reading data from Port. Defaults to `true`.
+- `secret` (String, Sensitive) Client Secret for Port. Can also be set via the `PORT_CLIENT_SECRET` environment variable.
+- `token` (String, Sensitive) Token for Port (alternative to client_id/secret authentication).
 
 ## Limitations
 

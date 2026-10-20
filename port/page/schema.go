@@ -201,7 +201,7 @@ resource "port_page" "microservice_dashboard_page" {
             "description" : "",
             "id" : "microserviceGuide"
           }
-        ],
+        ]
       }
     )
   ]
@@ -270,7 +270,7 @@ resource "port_page" "microservice_dashboard_page" {
             "description" : "",
             "id" : "microserviceGuide"
           }
-        ],
+        ]
       }
     )
   ]
@@ -323,7 +323,7 @@ resource "port_page" "microservice_entity_page" {
         }
       }
     )
-  ],
+  ]
   widgets = [
     jsonencode(
       {
@@ -498,7 +498,7 @@ resource "port_page" "microservice_dashboard_page" {
             "description" : "",
             "id" : "microserviceGuide"
           }
-        ],
+        ]
       }
     )
   ]
@@ -544,7 +544,7 @@ resource "port_page" "microservice_dashboard_page" {
             "description" : "",
             "id" : "microserviceGuide"
           }
-        ],
+        ]
       }
     )
   ]

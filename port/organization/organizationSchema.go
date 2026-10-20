@@ -23,7 +23,24 @@ func OrganizationSchema() map[string]schema.Attribute {
 
 func (r *OrganizationResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Organization resource to manage organization-level settings such as name and hidden blueprints",
+		MarkdownDescription: organizationMarkdownDescription,
 		Attributes:          OrganizationSchema(),
 	}
 }
+
+var organizationMarkdownDescription = `
+
+# Organization Resource
+
+Manages Port organization settings. Currently supports setting the organization name.
+
+~> **Note:** This resource manages organization-wide settings. Changes affect all users in the organization.
+
+## Example Usage
+
+` + "```hcl" + `
+resource "port_organization" "my_org" {
+  name = "My Organization"
+}
+` + "```" + `
+`

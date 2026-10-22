@@ -837,13 +837,19 @@ type Integration struct {
 	ChangelogDestination      *ChangelogDestination  `json:"changelogDestination,omitempty"`
 }
 
+type OrganizationSettings struct {
+	HiddenGlobalSearchTabs []string `json:"hiddenGlobalSearchTabs"`
+}
+
 type Organization struct {
-	Name         string   `json:"name"`
-	FeatureFlags []string `json:"featureFlags"`
+	Name         string                `json:"name"`
+	FeatureFlags []string              `json:"featureFlags"`
+	Settings     *OrganizationSettings `json:"settings,omitempty"`
 }
 
 type OrganizationUpdate struct {
-	Name *string `json:"name,omitempty"`
+	Name     *string               `json:"name,omitempty"`
+	Settings *OrganizationSettings `json:"settings,omitempty"`
 }
 
 type OrganizationSecret struct {

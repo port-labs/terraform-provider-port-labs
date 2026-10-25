@@ -15,18 +15,24 @@ var (
 )
 
 type IntegrationModel struct {
-	ID                          types.String `tfsdk:"id"`
-	InstallationId              types.String `tfsdk:"installation_id"`
-	InstallationAppType         types.String `tfsdk:"installation_app_type"`
-	InstallationType            types.String `tfsdk:"installation_type"`
-	Title                       types.String `tfsdk:"title"`
-	Version                     types.String `tfsdk:"version"`
-	Config                      types.String `tfsdk:"config"`
-	Spec                        types.String `tfsdk:"spec"`
-	CreatePortResourcesOrigin   types.String `tfsdk:"create_port_resources_origin"`
-	Status                      types.String `tfsdk:"status"`
-	KafkaChangelogDestination   types.Object `tfsdk:"kafka_changelog_destination"`
-	WebhookChangelogDestination types.Object `tfsdk:"webhook_changelog_destination"`
+	ID                          types.String               `tfsdk:"id"`
+	InstallationId              types.String               `tfsdk:"installation_id"`
+	InstallationAppType         types.String               `tfsdk:"installation_app_type"`
+	InstallationType            types.String               `tfsdk:"installation_type"`
+	Title                       types.String               `tfsdk:"title"`
+	Version                     types.String               `tfsdk:"version"`
+	Config                      types.String               `tfsdk:"config"`
+	Spec                        types.String               `tfsdk:"spec"`
+	CreatePortResourcesOrigin   types.String               `tfsdk:"create_port_resources_origin"`
+	Status                      types.String               `tfsdk:"status"`
+	KafkaChangelogDestination   types.Object               `tfsdk:"kafka_changelog_destination"`
+	WebhookChangelogDestination types.Object               `tfsdk:"webhook_changelog_destination"`
+	NotificationChannels        []NotificationChannelModel `tfsdk:"notification_channels"`
+}
+
+type NotificationChannelModel struct {
+	Channel types.String `tfsdk:"channel"`
+	Enabled types.Bool   `tfsdk:"enabled"`
 }
 
 func (m *IntegrationModel) installationType() string {

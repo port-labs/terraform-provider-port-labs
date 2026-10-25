@@ -113,6 +113,28 @@ func IntegrationSchema() map[string]schema.Attribute {
 			Computed:            true,
 			AttributeTypes:      map[string]attr.Type{},
 		},
+		"notification_channels": schema.ListNestedAttribute{
+			MarkdownDescription: "Notification channels for this integration, and whether each one is enabled. Only supported when `installation_type` is `Saas` or `SaasOAuth2`. Each entry is one of `email` or `slack`. Channels left out of this list are not changed. Recipient emails and teams already saved in Port are kept when `enabled` is updated.",
+			Optional:            true,
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"channel": schema.StringAttribute{
+						MarkdownDescription: "The notification channel. One of `email` or `slack`.",
+						Required:            true,
+						Validators: []validator.String{
+							stringvalidator.OneOf(
+								consts.NotificationChannelEmail,
+								consts.NotificationChannelSlack,
+							),
+						},
+					},
+					"enabled": schema.BoolAttribute{
+						MarkdownDescription: "Whether this channel sends integration notifications.",
+						Required:            true,
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -352,6 +374,7 @@ The following config properties (` + "`selector.query|entity.mappings.*`" + `) a
 - ` + "`spec`" + ` is only supported for Port Hosted integrations (` + "`installation_type = \"Saas\"`" + ` or ` + "`\"SaasOAuth2\"`" + `). Do not set it on self-hosted integrations.
 - ` + "`SaasOAuth2`" + ` is **import-only**: authorize the integration in the Port UI first, then ` + "`terraform import`" + `. Terraform cannot create OAuth installs. For ` + "`SaasOAuth2`" + `, ` + "`spec`" + ` may only contain ` + "`appSpec`" + ` — OAuth-managed ` + "`integrationSpec`" + ` credentials cannot be set or updated via Terraform.
 - A changelog destination (` + "`webhook_changelog_destination`" + ` / ` + "`kafka_changelog_destination`" + `) can be added or updated, but not removed — the Port API does not support clearing it. To remove it, delete and recreate the integration (e.g. taint the resource).
+- ` + "`notification_channels`" + ` is only supported for Port Hosted integrations (` + "`installation_type = \"Saas\"`" + ` or ` + "`\"SaasOAuth2\"`" + `). It sets whether the ` + "`email`" + ` and ` + "`slack`" + ` notification channels are enabled. Removing a channel from the list stops managing it and leaves the saved opt-in in place. Recipient emails and teams configured in Port are preserved.
 - Existing integrations can be brought under Terraform management with ` + "`terraform import port_integration.my_integration <installation_id>`" + `.
 - ` + "`terraform destroy`" + ` deletes the real integration in Port, not just removes it from state. Use ` + "`terraform state rm`" + ` if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
 

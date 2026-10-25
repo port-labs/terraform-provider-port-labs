@@ -83,6 +83,18 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	// The integration already exists, so an error here would taint it and the
+	// next apply would replace it. Warn instead: Read refreshes the channels
+	// from Port, so the next apply retries them through Update.
+	if err := r.applyNotificationChannels(ctx, created.InstallationId, plan.NotificationChannels); err != nil {
+		resp.Diagnostics.AddWarning(
+			"integration created but notification channels were not set",
+			err.Error()+". Run 'terraform apply' again to retry.",
+		)
+	}
 }
 
 func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -105,6 +117,10 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	r.refreshIntegrationState(state, a, integrationIdentifier)
+	if err := r.refreshNotificationChannels(ctx, integrationIdentifier, state.NotificationChannels); err != nil {
+		resp.Diagnostics.AddError("failed reading notification channels", err.Error())
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -144,6 +160,12 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if err := r.applyNotificationChannels(ctx, integrationIdentifier, plan.NotificationChannels); err != nil {
+		resp.Diagnostics.AddError("failed to set notification channels", err.Error())
+	}
 }
 
 func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

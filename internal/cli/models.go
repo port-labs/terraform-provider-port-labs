@@ -837,6 +837,14 @@ type Integration struct {
 	ChangelogDestination      *ChangelogDestination  `json:"changelogDestination,omitempty"`
 }
 
+// OptInSetting is one integration notification channel.
+// Emails and Teams are the saved audience. Empty lists notify every org admin.
+type OptInSetting struct {
+	Channel string   `json:"channel"`
+	Enabled bool     `json:"enabled"`
+	Emails  []string `json:"emails"`
+	Teams   []string `json:"teams"`
+}
 type Organization struct {
 	Name         string   `json:"name"`
 	FeatureFlags []string `json:"featureFlags"`

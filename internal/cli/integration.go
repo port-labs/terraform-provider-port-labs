@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/avast/retry-go/v4"
+	"github.com/go-resty/resty/v2"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
@@ -117,6 +118,76 @@ func (c *PortClient) ValidateIntegrationSpec(ctx context.Context, integrationTyp
 		return fmt.Errorf("failed to validate integration spec, got: %s", resp.Body())
 	}
 	return nil
+}
+
+type channelOptInEnvelope struct {
+	OK      bool            `json:"ok"`
+	Message string          `json:"message"`
+	Data    json.RawMessage `json:"data"`
+}
+
+func (c *PortClient) GetChannelNotificationOptIn(ctx context.Context, id, channel string) (*OptInSetting, error) {
+	resp, err := c.Client.R().
+		SetContext(ctx).
+		SetPathParam("identifier", id).
+		SetQueryParam("channel", channel).
+		Get("v1/integration/{identifier}/notifications/opt-ins")
+	if err != nil {
+		return nil, err
+	}
+	body, err := readChannelOptInEnvelope(resp)
+	if err != nil {
+		return nil, err
+	}
+	var data []OptInSetting
+	if len(body.Data) > 0 && string(body.Data) != "null" {
+		if err := json.Unmarshal(body.Data, &data); err != nil {
+			return nil, fmt.Errorf("failed to read notification opt-in for channel %q: %w", channel, err)
+		}
+	}
+	if len(data) == 0 {
+		return nil, fmt.Errorf("notification opt-in for channel %q was empty", channel)
+	}
+	return &data[0], nil
+}
+
+func (c *PortClient) SetChannelNotificationEnabled(ctx context.Context, id string, optin OptInSetting) error {
+	if optin.Emails == nil {
+		optin.Emails = []string{}
+	}
+	if optin.Teams == nil {
+		optin.Teams = []string{}
+	}
+
+	resp, err := c.Client.R().
+		SetContext(ctx).
+		SetBody(optin).
+		SetPathParam("identifier", id).
+		Post("v1/integration/{identifier}/notifications/opt-ins")
+	if err != nil {
+		return err
+	}
+	_, err = readChannelOptInEnvelope(resp)
+	return err
+}
+
+func readChannelOptInEnvelope(resp *resty.Response) (*channelOptInEnvelope, error) {
+	if resp == nil {
+		return nil, fmt.Errorf("notification opt-in request returned no response")
+	}
+	var body channelOptInEnvelope
+	if len(resp.Body()) > 0 {
+		if err := json.Unmarshal(resp.Body(), &body); err != nil && !resp.IsError() {
+			return nil, fmt.Errorf("failed to read notification opt-in response: %w", err)
+		}
+	}
+	if !resp.IsError() && body.OK {
+		return &body, nil
+	}
+	if body.Message != "" {
+		return nil, fmt.Errorf("%s", body.Message)
+	}
+	return nil, fmt.Errorf("notification opt-in request failed (HTTP %d): %s", resp.StatusCode(), resp.Body())
 }
 
 func (c *PortClient) DeleteIntegration(ctx context.Context, id string) (int, error) {

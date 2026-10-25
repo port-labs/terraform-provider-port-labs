@@ -194,6 +194,84 @@ func TestPortIntegrationPatchTitleNull(t *testing.T) {
 	})
 }
 
+const integrationNotificationChannels = `
+		notification_channels = [
+			{
+				channel = "email"
+				enabled = true
+			},
+			{
+				channel = "slack"
+				enabled = false
+			}
+		]`
+
+const integrationNotificationChannelsUpdated = `
+		notification_channels = [
+			{
+				channel = "email"
+				enabled = false
+			},
+			{
+				channel = "slack"
+				enabled = true
+			}
+		]`
+
+func TestPortIntegrationNotificationChannels(t *testing.T) {
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
+	secretName := utils.GenID()
+	title := "Linear notification channels acctest"
+	resourceName := "port_integration.linear"
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: saasLinearIntegrationHCL(installationID, secretName, title, integrationNotificationChannels),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "installation_id", installationID),
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.0.channel", "email"),
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.0.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.1.channel", "slack"),
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.1.enabled", "false"),
+				),
+			},
+			{
+				Config: saasLinearIntegrationHCL(installationID, secretName, title, integrationNotificationChannelsUpdated),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.0.channel", "email"),
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.0.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.1.channel", "slack"),
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.1.enabled", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestPortIntegrationOnPremRejectsNotificationChannels(t *testing.T) {
+	enableIntegrationBetaFeatures(t)
+
+	installationID := utils.GenID()
+	config := integrationHCLWithInstallationType(installationID, "kafka", "OnPrem", integrationNotificationChannels)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      config,
+				ExpectError: regexp.MustCompile(`notification_channels is only supported when installation_type is`),
+			},
+		},
+	})
+}
+
 func TestPortIntegrationWithWebhook(t *testing.T) {
 	enableIntegrationBetaFeatures(t)
 
@@ -439,7 +517,12 @@ func TestPortIntegrationInvalidIdentifier(t *testing.T) {
 	}
 }
 
-func saasLinearIntegrationHCL(installationID, secretName, title string) string {
+func saasLinearIntegrationHCL(installationID, secretName, title string, blocks ...string) string {
+	extras := strings.Join(blocks, "\n")
+	if extras != "" {
+		extras = "\n" + extras
+	}
+
 	return fmt.Sprintf(`
 %s
 resource "port_organization_secret" "linear_api_key" {
@@ -463,8 +546,8 @@ resource "port_integration" "linear" {
 			liveEventsEnabled       = false
 			scheduledResyncInterval = "12h"
 		}
-	})
-}`, acctest.ProviderConfig, secretName, installationID, title)
+	})%s
+}`, acctest.ProviderConfig, secretName, installationID, title, extras)
 }
 
 func TestPortIntegrationSaasLinear(t *testing.T) {

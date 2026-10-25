@@ -23,7 +23,7 @@ func OrganizationSchema() map[string]schema.Attribute {
 			Computed:            true,
 		},
 		"hidden_global_search_tabs": schema.SetAttribute{
-			MarkdownDescription: "Spotlight tabs to hide from global search. Allowed values: `all`, `blueprint`, `page`, `action`, `workflow`, `entity`, `markdown`. At least one content tab must remain visible, and `all` cannot be the only visible tab. Which content tabs count depends on whether classic actions are disabled.",
+			MarkdownDescription: "Spotlight tabs to hide from global search. Allowed values: `all`, `blueprint`, `page`, `action`, `workflow`, `entity`, `markdown`. At least one content tab must remain visible, and `all` cannot be the only visible tab.",
 			Optional:            true,
 			Computed:            true,
 			ElementType:         types.StringType,

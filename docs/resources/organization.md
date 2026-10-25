@@ -3,12 +3,12 @@
 page_title: "port_organization Resource - port"
 subcategory: ""
 description: |-
-  Organization resource to manage organization-level settings such as name, hidden blueprints and hidden global search tabs
+  Organization resource to manage organization-level settings such as name and hidden global search tabs
 ---
 
 # port_organization (Resource)
 
-Organization resource to manage organization-level settings such as name, hidden blueprints and hidden global search tabs
+Organization resource to manage organization-level settings such as name and hidden global search tabs
 
 
 

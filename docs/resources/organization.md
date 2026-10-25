@@ -17,7 +17,7 @@ Organization resource to manage organization-level settings such as name and hid
 
 ### Optional
 
-- `hidden_global_search_tabs` (Set of String) Spotlight tabs to hide from global search. Allowed values: `all`, `blueprint`, `page`, `action`, `workflow`, `entity`, `markdown`. At least one content tab must remain visible, and `all` cannot be the only visible tab. Which content tabs count depends on whether classic actions are disabled.
+- `hidden_global_search_tabs` (Set of String) Spotlight tabs to hide from global search. Allowed values: `all`, `blueprint`, `page`, `action`, `workflow`, `entity`, `markdown`. At least one content tab must remain visible, and `all` cannot be the only visible tab.
 - `name` (String) The name of the organization
 
 ### Read-Only

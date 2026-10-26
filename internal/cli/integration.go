@@ -126,7 +126,7 @@ type channelOptInEnvelope struct {
 	Data    json.RawMessage `json:"data"`
 }
 
-func (c *PortClient) GetChannelNotificationOptIn(ctx context.Context, id, channel string) (*OptInSetting, error) {
+func (c *PortClient) GetChannelNotificationOptIn(ctx context.Context, id, channel string) (*NotificationOptInSetting, error) {
 	resp, err := c.Client.R().
 		SetContext(ctx).
 		SetPathParam("identifier", id).
@@ -139,7 +139,7 @@ func (c *PortClient) GetChannelNotificationOptIn(ctx context.Context, id, channe
 	if err != nil {
 		return nil, err
 	}
-	var data []OptInSetting
+	var data []NotificationOptInSetting
 	if len(body.Data) > 0 && string(body.Data) != "null" {
 		if err := json.Unmarshal(body.Data, &data); err != nil {
 			return nil, fmt.Errorf("failed to read notification opt-in for channel %q: %w", channel, err)
@@ -151,7 +151,7 @@ func (c *PortClient) GetChannelNotificationOptIn(ctx context.Context, id, channe
 	return &data[0], nil
 }
 
-func (c *PortClient) SetChannelNotificationEnabled(ctx context.Context, id string, optin OptInSetting) error {
+func (c *PortClient) SetChannelNotificationEnabled(ctx context.Context, id string, optin NotificationOptInSetting) error {
 	if optin.Emails == nil {
 		optin.Emails = []string{}
 	}

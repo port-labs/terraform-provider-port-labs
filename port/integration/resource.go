@@ -117,10 +117,12 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	r.refreshIntegrationState(state, a, integrationIdentifier)
-	if err := r.refreshNotificationChannels(ctx, integrationIdentifier, state.NotificationChannels); err != nil {
+	channels, err := r.refreshNotificationChannels(ctx, integrationIdentifier, state.NotificationChannels)
+	if err != nil {
 		resp.Diagnostics.AddError("failed reading notification channels", err.Error())
 		return
 	}
+	state.NotificationChannels = channels
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -163,8 +165,10 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	if err := r.applyNotificationChannels(ctx, integrationIdentifier, plan.NotificationChannels); err != nil {
-		resp.Diagnostics.AddError("failed to set notification channels", err.Error())
+	if notificationChannelsChanged(state.NotificationChannels, plan.NotificationChannels) {
+		if err := r.applyNotificationChannels(ctx, integrationIdentifier, plan.NotificationChannels); err != nil {
+			resp.Diagnostics.AddError("failed to set notification channels", err.Error())
+		}
 	}
 }
 

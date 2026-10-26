@@ -11,7 +11,7 @@ import (
 
 func validateNotificationChannels(m *IntegrationModel) error {
 	channels := m.NotificationChannels
-	if len(channels) == 0 {
+	if channels.IsNull() || channels.IsUnknown() || len(channels.Elements()) == 0 {
 		return nil
 	}
 	if !m.InstallationType.IsUnknown() && !m.isHosted() {
@@ -21,26 +21,26 @@ func validateNotificationChannels(m *IntegrationModel) error {
 			consts.InstallationTypeSaasOAuth2,
 		)
 	}
-
-	seen := make(map[string]struct{}, len(channels))
-	for _, channel := range channels {
-		if channel.Channel.IsNull() || channel.Channel.IsUnknown() {
-			return fmt.Errorf("notification_channels entries must have a known channel")
-		}
-		name := channel.Channel.ValueString()
-		if _, dup := seen[name]; dup {
-			return fmt.Errorf("notification_channels lists %q more than once", name)
-		}
-		seen[name] = struct{}{}
-	}
 	return nil
+}
+
+func notificationChannelsByName(ctx context.Context, channels types.Map) (map[string]NotificationChannelModel, error) {
+	if channels.IsNull() || channels.IsUnknown() {
+		return nil, nil
+	}
+	configured := make(map[string]NotificationChannelModel, len(channels.Elements()))
+	diags := channels.ElementsAs(ctx, &configured, false)
+	if diags.HasError() {
+		return nil, fmt.Errorf("read notification_channels: %s", diags)
+	}
+	return configured, nil
 }
 
 // notificationOptIn builds the opt-in to save. Enabled comes from the
 // resource. Emails and teams stay as Port last saved them, because the
 // opt-in API replaces the whole audience on every write.
-func notificationOptIn(channel string, enabled bool, current *cli.OptInSetting) cli.OptInSetting {
-	setting := cli.OptInSetting{
+func notificationOptIn(channel string, enabled bool, current *cli.NotificationOptInSetting) cli.NotificationOptInSetting {
+	setting := cli.NotificationOptInSetting{
 		Channel: channel,
 		Enabled: enabled,
 		Emails:  []string{},
@@ -58,19 +58,30 @@ func notificationOptIn(channel string, enabled bool, current *cli.OptInSetting) 
 	return setting
 }
 
-func (r *IntegrationResource) applyNotificationChannels(ctx context.Context, installationID string, channels []NotificationChannelModel) error {
-	for _, channel := range channels {
-		if channel.Channel.IsNull() || channel.Channel.IsUnknown() || channel.Enabled.IsNull() || channel.Enabled.IsUnknown() {
+// notificationChannelsChanged reports whether this apply is changing the
+// channel map. Opt-in writes are a separate Port call, and repeating one
+// after an integration update that left the channels alone makes Port
+// schedule another integration update.
+func notificationChannelsChanged(state, plan types.Map) bool {
+	return !state.Equal(plan)
+}
+
+func (r *IntegrationResource) applyNotificationChannels(ctx context.Context, installationID string, channels types.Map) error {
+	configured, err := notificationChannelsByName(ctx, channels)
+	if err != nil {
+		return err
+	}
+	for name, channel := range configured {
+		if channel.Enabled.IsNull() || channel.Enabled.IsUnknown() {
 			continue
 		}
-		name := channel.Channel.ValueString()
 		enabled := channel.Enabled.ValueBool()
 
 		current, err := r.portClient.GetChannelNotificationOptIn(ctx, installationID, name)
 		if err != nil {
 			return fmt.Errorf("read notification channel %q: %w", name, err)
 		}
-		if current.Channel == name && current.Enabled == enabled {
+		if current.Enabled == enabled {
 			continue
 		}
 		if err := r.portClient.SetChannelNotificationEnabled(ctx, installationID, notificationOptIn(name, enabled, current)); err != nil {
@@ -80,18 +91,28 @@ func (r *IntegrationResource) applyNotificationChannels(ctx context.Context, ins
 	return nil
 }
 
-func (r *IntegrationResource) refreshNotificationChannels(ctx context.Context, installationID string, channels []NotificationChannelModel) error {
-	for i, channel := range channels {
-		if channel.Channel.IsNull() || channel.Channel.IsUnknown() {
+func (r *IntegrationResource) refreshNotificationChannels(ctx context.Context, installationID string, channels types.Map) (types.Map, error) {
+	configured, err := notificationChannelsByName(ctx, channels)
+	if err != nil || configured == nil {
+		return channels, err
+	}
+	refreshed := make(map[string]NotificationChannelModel, len(configured))
+	for name, channel := range configured {
+		if channel.Enabled.IsNull() || channel.Enabled.IsUnknown() {
+			refreshed[name] = channel
 			continue
 		}
-		name := channel.Channel.ValueString()
 		current, err := r.portClient.GetChannelNotificationOptIn(ctx, installationID, name)
 		if err != nil {
-			return fmt.Errorf("read notification channel %q: %w", name, err)
+			return channels, fmt.Errorf("read notification channel %q: %w", name, err)
 		}
-		channels[i].Channel = types.StringValue(current.Channel)
-		channels[i].Enabled = types.BoolValue(current.Enabled)
+		// Port may return a different channel casing. The config key is the name Terraform stores.
+		channel.Enabled = types.BoolValue(current.Enabled)
+		refreshed[name] = channel
 	}
-	return nil
+	updated, diags := types.MapValueFrom(ctx, channels.ElementType(ctx), refreshed)
+	if diags.HasError() {
+		return channels, fmt.Errorf("read notification_channels: %s", diags)
+	}
+	return updated, nil
 }

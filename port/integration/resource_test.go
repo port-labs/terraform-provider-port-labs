@@ -195,28 +195,24 @@ func TestPortIntegrationPatchTitleNull(t *testing.T) {
 }
 
 const integrationNotificationChannels = `
-		notification_channels = [
-			{
-				channel = "email"
+		notification_channels = {
+			email = {
 				enabled = true
-			},
-			{
-				channel = "slack"
+			}
+			slack = {
 				enabled = false
 			}
-		]`
+		}`
 
 const integrationNotificationChannelsUpdated = `
-		notification_channels = [
-			{
-				channel = "email"
+		notification_channels = {
+			email = {
 				enabled = false
-			},
-			{
-				channel = "slack"
+			}
+			slack = {
 				enabled = true
 			}
-		]`
+		}`
 
 func TestPortIntegrationNotificationChannels(t *testing.T) {
 	enableIntegrationBetaFeatures(t)
@@ -234,20 +230,16 @@ func TestPortIntegrationNotificationChannels(t *testing.T) {
 				Config: saasLinearIntegrationHCL(installationID, secretName, title, integrationNotificationChannels),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "installation_id", installationID),
-					resource.TestCheckResourceAttr(resourceName, "notification_channels.#", "2"),
-					resource.TestCheckResourceAttr(resourceName, "notification_channels.0.channel", "email"),
-					resource.TestCheckResourceAttr(resourceName, "notification_channels.0.enabled", "true"),
-					resource.TestCheckResourceAttr(resourceName, "notification_channels.1.channel", "slack"),
-					resource.TestCheckResourceAttr(resourceName, "notification_channels.1.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.%", "2"),
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.email.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.slack.enabled", "false"),
 				),
 			},
 			{
 				Config: saasLinearIntegrationHCL(installationID, secretName, title, integrationNotificationChannelsUpdated),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceName, "notification_channels.0.channel", "email"),
-					resource.TestCheckResourceAttr(resourceName, "notification_channels.0.enabled", "false"),
-					resource.TestCheckResourceAttr(resourceName, "notification_channels.1.channel", "slack"),
-					resource.TestCheckResourceAttr(resourceName, "notification_channels.1.enabled", "true"),
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.email.enabled", "false"),
+					resource.TestCheckResourceAttr(resourceName, "notification_channels.slack.enabled", "true"),
 				),
 			},
 		},

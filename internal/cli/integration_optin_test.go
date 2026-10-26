@@ -14,7 +14,7 @@ import (
 )
 
 func TestSetChannelNotificationEnabledSendsAudience(t *testing.T) {
-	var got OptInSetting
+	var got NotificationOptInSetting
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, http.MethodPost, r.Method)
 		assert.Equal(t, "/v1/integration/github-prod/notifications/opt-ins", r.URL.Path)
@@ -27,14 +27,14 @@ func TestSetChannelNotificationEnabledSendsAudience(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	client := &PortClient{Client: resty.New().SetBaseURL(server.URL)}
-	err := client.SetChannelNotificationEnabled(context.Background(), "github-prod", OptInSetting{
+	err := client.SetChannelNotificationEnabled(context.Background(), "github-prod", NotificationOptInSetting{
 		Channel: "slack",
 		Enabled: true,
 		Emails:  []string{"admin@example.com"},
 		Teams:   []string{"team-1"},
 	})
 	require.NoError(t, err)
-	assert.Equal(t, OptInSetting{
+	assert.Equal(t, NotificationOptInSetting{
 		Channel: "slack",
 		Enabled: true,
 		Emails:  []string{"admin@example.com"},
@@ -55,7 +55,7 @@ func TestGetChannelNotificationOptIn(t *testing.T) {
 	client := &PortClient{Client: resty.New().SetBaseURL(server.URL)}
 	got, err := client.GetChannelNotificationOptIn(context.Background(), "github-prod", "email")
 	require.NoError(t, err)
-	assert.Equal(t, &OptInSetting{
+	assert.Equal(t, &NotificationOptInSetting{
 		Channel: "email",
 		Enabled: false,
 		Emails:  []string{"admin@example.com"},
@@ -75,7 +75,7 @@ func TestSetChannelNotificationEnabledSendsEmptyAudienceWhenUnset(t *testing.T) 
 	t.Cleanup(server.Close)
 
 	client := &PortClient{Client: resty.New().SetBaseURL(server.URL)}
-	err := client.SetChannelNotificationEnabled(context.Background(), "github-prod", OptInSetting{
+	err := client.SetChannelNotificationEnabled(context.Background(), "github-prod", NotificationOptInSetting{
 		Channel: "email",
 		Enabled: true,
 	})
@@ -92,7 +92,7 @@ func TestSetChannelNotificationEnabledReportsAPIMessage(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	client := &PortClient{Client: resty.New().SetBaseURL(server.URL)}
-	err := client.SetChannelNotificationEnabled(context.Background(), "github-prod", OptInSetting{
+	err := client.SetChannelNotificationEnabled(context.Background(), "github-prod", NotificationOptInSetting{
 		Channel: "sms",
 		Enabled: true,
 	})

@@ -53,13 +53,18 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 	specConfiguredInHCL := specIsConfigured(config.Spec)
 
 	isCreate := req.State.Raw.IsNull()
+	installationTypeConfigured := !config.InstallationType.IsNull()
 
 	if isCreate {
+		if !installationTypeConfigured {
+			plan.InstallationType = types.StringValue(consts.InstallationTypeOnPrem)
+		}
 		validatePlanRules(&plan, nil, true, &resp.Diagnostics)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 		r.validateSpecAtPlan(ctx, &plan, specConfiguredInHCL, &resp.Diagnostics)
+		resp.Diagnostics.Append(resp.Plan.Set(ctx, &plan)...)
 		return
 	}
 
@@ -67,6 +72,10 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if !installationTypeConfigured {
+		plan.InstallationType = state.InstallationType
 	}
 
 	for _, f := range immutableFields {

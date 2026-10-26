@@ -109,9 +109,6 @@ func WebhookSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"id": schema.StringAttribute{
 			Computed: true,
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-			},
 		},
 		"identifier": schema.StringAttribute{
 			MarkdownDescription: "The identifier of the webhook",
@@ -180,16 +177,10 @@ func WebhookSchema() map[string]schema.Attribute {
 		"updated_at": schema.StringAttribute{
 			MarkdownDescription: "The last update date of the webhook",
 			Computed:            true,
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-			},
 		},
 		"updated_by": schema.StringAttribute{
 			MarkdownDescription: "The last updater of the webhook",
 			Computed:            true,
-			PlanModifiers: []planmodifier.String{
-				stringplanmodifier.UseStateForUnknown(),
-			},
 		},
 	}
 }

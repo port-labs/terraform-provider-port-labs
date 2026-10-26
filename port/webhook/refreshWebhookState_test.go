@@ -58,7 +58,7 @@ func TestRefreshWebhookStateKeepsSecretWhenAPIOmitsIt(t *testing.T) {
 
 func TestWebhookStableComputedUseStateForUnknown(t *testing.T) {
 	attrs := WebhookSchema()
-	for _, name := range []string{"id", "url", "webhook_key", "created_at", "created_by", "updated_at", "updated_by"} {
+	for _, name := range []string{"url", "webhook_key", "created_at", "created_by"} {
 		attr, ok := attrs[name].(schema.StringAttribute)
 		if !ok {
 			t.Fatalf("%s is not a string attribute", name)

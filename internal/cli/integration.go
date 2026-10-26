@@ -247,7 +247,7 @@ func (c *PortClient) WaitForIntegrationReady(ctx context.Context, installationId
 			case consts.IntegrationStatusDeleting:
 				return nil, fmt.Errorf("integration %q is being deleted", installationId)
 			case consts.IntegrationStatusError, consts.IntegrationStatusUnHealthy:
-				return nil, fmt.Errorf("integration operation failed (status: %s%s)", status, statusMessage(integration))
+				return nil, operationFailed(integration, installationId, "operation")
 			default:
 				return nil, fmt.Errorf("integration %q unexpected status: %s%s", installationId, status, statusMessage(integration))
 			}
@@ -292,12 +292,17 @@ func IsIntegrationConfigProvisioned(config *map[string]any) bool {
 func (c *PortClient) WaitForIntegrationDeleted(ctx context.Context, installationId string) error {
 	err := retry.Do(
 		func() error {
-			_, statusCode, err := c.GetIntegration(ctx, installationId)
+			integration, statusCode, err := c.GetIntegration(ctx, installationId)
 			if statusCode == 404 {
 				return nil
 			}
 			if err != nil {
 				return err
+			}
+			// Port sets Deleting before accepting a delete, so a later Error means the delete itself failed
+			switch integrationStatus(integration) {
+			case consts.IntegrationStatusError, consts.IntegrationStatusUnHealthy:
+				return operationFailed(integration, installationId, "delete")
 			}
 			return errIntegrationNotDeleted
 		},
@@ -307,6 +312,31 @@ func (c *PortClient) WaitForIntegrationDeleted(ctx context.Context, installation
 		return fmt.Errorf("timed out waiting for integration %q to be deleted (still exists after %d polling attempts)", installationId, integrationMaxAttempts)
 	}
 	return err
+}
+
+// IntegrationOperationFailedError is returned when Port reports that an operation on an integration failed, so
+// waiting for it to finish is pointless
+type IntegrationOperationFailedError struct {
+	InstallationId string
+	Operation      string
+	Status         string
+	Message        string
+}
+
+func (e *IntegrationOperationFailedError) Error() string {
+	message := ""
+	if e.Message != "" {
+		message = ": " + e.Message
+	}
+	return fmt.Sprintf("integration %q %s failed (status: %s%s)", e.InstallationId, e.Operation, e.Status, message)
+}
+
+func operationFailed(i *Integration, installationId, operation string) *IntegrationOperationFailedError {
+	message := ""
+	if i.StatusInfo != nil && i.StatusInfo.IntegrationStatus.Message != nil {
+		message = *i.StatusInfo.IntegrationStatus.Message
+	}
+	return &IntegrationOperationFailedError{InstallationId: installationId, Operation: operation, Status: integrationStatus(i), Message: message}
 }
 
 func integrationStatus(i *Integration) string {

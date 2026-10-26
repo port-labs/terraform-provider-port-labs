@@ -15,6 +15,7 @@ Interact with Port-labs
 
 ### Optional
 
+- `adopt_existing_resources` (Set of String) The resource types that take ownership of an object with the same identifier that already exists in Port (e.g. created by an integration or alongside a blueprint) when created, instead of failing. Allowed values are `port_page`, `port_blueprint`, `port_blueprint_relation`, `port_integration`; any other value is rejected. It sets the default for the `adopt_existing` attribute of those resources, which a resource's own `adopt_existing` overrides. The plan shows a warning for every object that will be taken over. Defaults to none
 - `base_url` (String)
 - `blueprint_property_type_change_protection` (Boolean) Protects you from accidentally changing the property type of blueprints which will delete the property before recreating it with the new type. Defaults to `true`
 - `client_id` (String) Client ID for Port-labs

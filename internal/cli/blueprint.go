@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 )
 
 func (c *PortClient) ReadBlueprint(ctx context.Context, id string) (*Blueprint, int, error) {
@@ -61,6 +62,9 @@ func (c *PortClient) CreateBlueprint(ctx context.Context, b *Blueprint, createCa
 		return nil, err
 	}
 	if !pb.OK {
+		if resp.StatusCode() == http.StatusConflict {
+			return nil, &IdentifierTakenError{Identifier: b.Identifier, Response: string(resp.Body())}
+		}
 		return nil, fmt.Errorf("failed to create blueprint, got: %s", resp.Body())
 	}
 	return &pb.Blueprint, nil

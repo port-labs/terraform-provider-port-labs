@@ -561,10 +561,14 @@ func BlueprintSchema() map[string]schema.Attribute {
 			Default:             booldefault.StaticBool(false),
 		},
 		"create_catalog_page": schema.BoolAttribute{
-			MarkdownDescription: "This flag is only relevant for blueprint creation. If not set, the parameter is omitted and Port's API default applies",
+			MarkdownDescription: "This flag is only relevant for blueprint creation. If not set, the parameter is omitted and Port's API default applies. To manage the auto-created catalog page, declare a `port_page` resource of type `blueprint-entities` with the same identifier, which adopts the existing page on creation",
 			Optional:            true,
 		},
 		"ownership": OwnershipSchema(),
+		"adopt_existing": schema.BoolAttribute{
+			MarkdownDescription: "Whether to take ownership of a blueprint with the same identifier that already exists in Port, such as one created by an integration's default resources, instead of failing. Only used on creation. When not set, it is allowed only if `port_blueprint` is listed in the provider's `adopt_existing_resources`. Relations and aggregation properties on the existing blueprint are kept. If the blueprint already exists when planning, the plan shows a warning that it will be taken over",
+			Optional:            true,
+		},
 		"include_in_global_search": schema.BoolAttribute{
 			MarkdownDescription: "Whether to include this blueprint's entities in global search (Spotlight). When not set, the organization's `include_blueprints_in_global_search_by_default` setting applies.",
 			Optional:            true,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
 )
 
 func (c *PortClient) GetPage(ctx context.Context, pageId string) (*Page, int, error) {
@@ -42,6 +43,9 @@ func (c *PortClient) CreatePage(ctx context.Context, page *Page) (*Page, error) 
 	if !pb.OK {
 		if resp.IsSuccess() {
 			return nil, nil
+		}
+		if resp.StatusCode() == http.StatusConflict {
+			return nil, &IdentifierTakenError{Identifier: page.Identifier, Response: string(resp.Body())}
 		}
 		return nil, fmt.Errorf("failed to create page, got: %s", resp.Body())
 	}

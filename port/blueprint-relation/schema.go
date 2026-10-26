@@ -59,6 +59,10 @@ func BlueprintRelationSchema() map[string]schema.Attribute {
 			Computed:            true,
 			Default:             booldefault.StaticBool(false),
 		},
+		"adopt_existing": schema.BoolAttribute{
+			MarkdownDescription: "Whether to take ownership of a relation with the same identifier that already exists on the blueprint, such as one created by an integration's default resources, instead of failing. Only used on creation. When not set, it is allowed only if `port_blueprint_relation` is listed in the provider's `adopt_existing_resources`. If the relation already exists when planning, the plan shows a warning that it will be taken over. Do not set it for a relation declared inline on a `port_blueprint` resource",
+			Optional:            true,
+		},
 	}
 }
 
@@ -84,7 +88,11 @@ can be created first with its relations attached. Declaring the relations as the
 blueprints get created first, and the relations afterwards.
 
 A relation must be managed either inline on ` + "`port_blueprint`" + ` or by this resource, never by both.
-Creating a relation that already exists on the blueprint fails, rather than silently taking it over.
+Creating a relation that already exists on the blueprint fails, rather than silently taking it over, both
+when planning and when applying. For a relation created outside Terraform, such as by an integration's default
+resources, set ` + "`adopt_existing = true`" + ` (or list ` + "`port_blueprint_relation`" + ` in the provider's ` + "`adopt_existing_resources`" + `) to take it
+over on creation without an import. The plan then
+shows a warning when the relation will be taken over.
 
 ~> **Moving an existing relation here is destructive.** Removing a relation from a ` + "`port_blueprint`" + `
 resource deletes it, which deletes the relation's values on every entity and strips any mirror property or

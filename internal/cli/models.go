@@ -777,6 +777,7 @@ type PortProviderModel struct {
 	BaseUrl                               types.String `tfsdk:"base_url"`
 	JSONEscapeHTML                        types.Bool   `tfsdk:"json_escape_html"`
 	BlueprintPropertyTypeChangeProtection types.Bool   `tfsdk:"blueprint_property_type_change_protection"`
+	AdoptExistingResources                types.Set    `tfsdk:"adopt_existing_resources"`
 }
 
 type PortBodyDelete struct {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
@@ -46,6 +47,41 @@ var ProviderConfigNoEscapeHTML = fmt.Sprintf(`provider "port" {
 	json_escape_html = false
 	}
 `, os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET"), os.Getenv("PORT_BASE_URL"))
+
+// ProviderConfigWithAdoption is the provider configuration with adopt_existing_resources set to the given
+// resource kinds
+func ProviderConfigWithAdoption(kinds ...string) string {
+	quoted := make([]string, 0, len(kinds))
+	for _, kind := range kinds {
+		quoted = append(quoted, fmt.Sprintf("%q", kind))
+	}
+	return fmt.Sprintf(`provider "port" {
+	client_id = "%s"
+	secret = "%s"
+	base_url = "%s"
+	adopt_existing_resources = [%s]
+	}
+`, os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET"), os.Getenv("PORT_BASE_URL"), strings.Join(quoted, ", "))
+}
+
+// PortClient returns an authenticated Port client, for preparing objects outside Terraform in tests
+func PortClient(t *testing.T) *cli.PortClient {
+	return testAccPortClient(t)
+}
+
+// IsLocal reports whether acceptance tests run against a local Port environment
+func IsLocal() bool {
+	return strings.Contains(os.Getenv("PORT_BASE_URL"), "localhost")
+}
+
+// SkipUnlessAcceptance skips the test unless acceptance tests are enabled, for tests that prepare objects in Port
+// before resource.Test would skip them
+func SkipUnlessAcceptance(t *testing.T) {
+	t.Helper()
+	if os.Getenv("TF_ACC") == "" {
+		t.Skip("acceptance tests skipped unless TF_ACC is set")
+	}
+}
 
 func TestAccPreCheck(t *testing.T) {
 	if v := os.Getenv("PORT_CLIENT_ID"); v == "" {

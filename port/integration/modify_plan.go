@@ -60,6 +60,10 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 			return
 		}
 		r.validateSpecAtPlan(ctx, &plan, specConfiguredInHCL, &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		r.checkExistingAtPlan(ctx, &plan, &resp.Diagnostics)
 		return
 	}
 

@@ -2,6 +2,9 @@ package page
 
 import "github.com/hashicorp/terraform-plugin-framework/types"
 
+// entityPageType is the type of a blueprint's entity page, which Port always creates along with the blueprint
+const entityPageType = "entity"
+
 type PageModel struct {
 	ID                types.String `tfsdk:"id"`
 	Identifier        types.String `tfsdk:"identifier"`
@@ -20,4 +23,5 @@ type PageModel struct {
 	UpdatedAt         types.String `tfsdk:"updated_at"`
 	UpdatedBy         types.String `tfsdk:"updated_by"`
 	Description       types.String `tfsdk:"description"`
+	AdoptExisting     types.Bool   `tfsdk:"adopt_existing"`
 }

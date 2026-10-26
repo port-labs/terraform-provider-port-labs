@@ -1,6 +1,7 @@
 package integration_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"regexp"
@@ -9,6 +10,8 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
@@ -610,4 +613,66 @@ func TestPortIntegrationValidIdentifier(t *testing.T) {
 			})
 		})
 	}
+}
+
+// createIntegrationOutsideTerraform registers an integration as a self-hosted Ocean integration does when it
+// starts, and deletes it when the test ends
+func createIntegrationOutsideTerraform(t *testing.T, installationID, appType string) {
+	t.Helper()
+	acctest.SkipUnlessAcceptance(t)
+	portClient := acctest.PortClient(t)
+	title, version := "Registered outside Terraform", defaultVersion
+	installationType := consts.InstallationTypeOnPrem
+	_, err := portClient.CreateIntegration(context.Background(), &cli.Integration{
+		InstallationId:      installationID,
+		Title:               &title,
+		Version:             &version,
+		InstallationAppType: &appType,
+		InstallationType:    &installationType,
+	})
+	if err != nil {
+		t.Fatalf("failed to create integration: %s", err)
+	}
+	t.Cleanup(func() { _, _ = portClient.DeleteIntegration(context.Background(), installationID) })
+}
+
+func TestAccPortIntegrationAdoptsExistingIntegration(t *testing.T) {
+	enableIntegrationBetaFeatures(t)
+	installationID := utils.GenID()
+	appType := "kafka"
+	createIntegrationOutsideTerraform(t, installationID, appType)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + integrationHCL(installationID, appType),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("integration already exists"),
+			},
+			{
+				Config: acctest.ProviderConfigWithAdoption("port_integration") + integrationHCL(installationID, appType),
+				Check:  integrationDefaultChecks(installationID, appType),
+			},
+		},
+	})
+}
+
+func TestAccPortIntegrationAdoptionRejectsDifferentAppType(t *testing.T) {
+	enableIntegrationBetaFeatures(t)
+	installationID := utils.GenID()
+	createIntegrationOutsideTerraform(t, installationID, "kafka")
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfigWithAdoption("port_integration") + integrationHCL(installationID, "gitlab"),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("cannot take over existing integration"),
+			},
+		},
+	})
 }

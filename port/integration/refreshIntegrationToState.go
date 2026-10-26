@@ -64,27 +64,34 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 	}
 }
 
-// applyWriteResult syncs the server response after Create or Update while
-// keeping every Computed attribute at its planned value. Port changes status
-// and version during writes, and fills spec/config with server defaults — none
-// of that may differ from what Terraform planned. Read picks it all up next.
-func applyWriteResult(plan *IntegrationModel, a *cli.Integration, integrationId string) {
-	savedSpec := plan.Spec
-	savedConfig := plan.Config
-	savedStatus := plan.Status
-	savedVersion := plan.Version
-
-	applyServerFields(plan, a, integrationId)
-
-	plan.Spec = nullIfUnknown(savedSpec)
-	plan.Config = nullIfUnknown(savedConfig)
-	plan.Status = nullIfUnknown(savedStatus)
-	plan.Version = nullIfUnknown(savedVersion)
+// applyWriteResult stores the plan. The plan is already the pending change
+// computed from state and config. The create/update response is an in-flight
+// operation and omits configured fields, so it must not be copied onto the plan.
+// Unknown computed values become null; Read fills server-owned values later.
+func applyWriteResult(plan *IntegrationModel, installationId string) {
+	plan.ID = types.StringValue(installationId)
+	plan.InstallationAppType = nullIfUnknown(plan.InstallationAppType)
+	plan.InstallationType = nullIfUnknown(plan.InstallationType)
+	plan.Title = nullIfUnknown(plan.Title)
+	plan.Version = nullIfUnknown(plan.Version)
+	plan.Config = nullIfUnknown(plan.Config)
+	plan.Spec = nullIfUnknown(plan.Spec)
+	plan.CreatePortResourcesOrigin = nullIfUnknown(plan.CreatePortResourcesOrigin)
+	plan.Status = nullIfUnknown(plan.Status)
+	plan.KafkaChangelogDestination = nullObjectIfUnknown(plan.KafkaChangelogDestination, kafkaChangelogDestinationType)
+	plan.WebhookChangelogDestination = nullObjectIfUnknown(plan.WebhookChangelogDestination, webhookChangelogDestinationType)
 }
 
 func nullIfUnknown(v types.String) types.String {
 	if v.IsUnknown() {
 		return types.StringNull()
+	}
+	return v
+}
+
+func nullObjectIfUnknown(v types.Object, attrTypes map[string]attr.Type) types.Object {
+	if v.IsUnknown() {
+		return types.ObjectNull(attrTypes)
 	}
 	return v
 }

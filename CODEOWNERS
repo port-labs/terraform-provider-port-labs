@@ -8,7 +8,7 @@
 
 /port/organization/ @port-labs/buildops
 
-/port/integration/ @port-labs/connect-team
+/port/integration/ @port-labs/connect-team @port-labs/lighthouse-team
 
 /port/page/ @port-labs/spotlight-team
 /port/page-permissions/ @port-labs/spotlight-team
@@ -24,7 +24,7 @@
 /docs/resources/organization.md @port-labs/buildops
 /docs/resources/organization_secret.md @port-labs/buildops
 
-/docs/resources/integration.md @port-labs/connect-team
+/docs/resources/integration.md @port-labs/connect-team @port-labs/lighthouse-team
 
 /docs/resources/page.md @port-labs/spotlight-team
 /docs/resources/page_permissions.md @port-labs/spotlight-team
@@ -40,7 +40,7 @@
 /examples/resources/port_organization/ @port-labs/buildops
 /examples/resources/port_organization_settings/ @port-labs/buildops
 
-/examples/resources/port_integration/ @port-labs/connect-team
+/examples/resources/port_integration/ @port-labs/connect-team @port-labs/lighthouse-team
 
 /examples/resources/port_page/ @port-labs/spotlight-team
 /examples/resources/port_page_with_filters/ @port-labs/spotlight-team
@@ -56,9 +56,9 @@
 
 /internal/cli/organization.go @port-labs/buildops
 
-/internal/cli/integration.go @port-labs/connect-team
+/internal/cli/integration.go @port-labs/connect-team @port-labs/lighthouse-team
 
-/internal/consts/integration.go @port-labs/connect-team
+/internal/consts/integration.go @port-labs/connect-team @port-labs/lighthouse-team
 
 /internal/cli/page.go @port-labs/spotlight-team
 /internal/cli/pagePermissions.go @port-labs/spotlight-team

@@ -949,6 +949,10 @@ func testAccPortClient(t *testing.T) (*cli.PortClient, context.Context) {
 // on _team would fail with "protected_blueprint_violation" because the provider was
 // replacing the entire aggregationProperties map instead of merging.
 func TestAccPreservesSystemAggregationOnTeamBlueprint(t *testing.T) {
+	if os.Getenv("TF_ACC") == "" {
+		t.Skip("Acceptance tests skipped unless env 'TF_ACC' set")
+	}
+	acctest.TestAccPreCheck(t)
 	client, ctx := testAccPortClient(t)
 
 	// Read the _team blueprint before the test to capture existing aggregations

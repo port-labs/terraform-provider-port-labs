@@ -89,3 +89,52 @@ func TestAccPortOrganizationImport(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortOrganizationHiddenGlobalSearchTabs(t *testing.T) {
+	orgName := utils.GenID()
+	var testAccOrganizationConfigCreate = fmt.Sprintf(`
+	resource "port_organization" "test" {
+		name = "%s"
+		hidden_global_search_tabs = ["blueprint", "page"]
+	}`, orgName)
+
+	var testAccOrganizationConfigUpdate = fmt.Sprintf(`
+	resource "port_organization" "test" {
+		name = "%s"
+		hidden_global_search_tabs = ["entity"]
+	}`, orgName)
+
+	var testAccOrganizationConfigClear = fmt.Sprintf(`
+	resource "port_organization" "test" {
+		name = "%s"
+		hidden_global_search_tabs = []
+	}`, orgName)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccOrganizationConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_organization.test", "hidden_global_search_tabs.#", "2"),
+					resource.TestCheckTypeSetElemAttr("port_organization.test", "hidden_global_search_tabs.*", "blueprint"),
+					resource.TestCheckTypeSetElemAttr("port_organization.test", "hidden_global_search_tabs.*", "page"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccOrganizationConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_organization.test", "hidden_global_search_tabs.#", "1"),
+					resource.TestCheckTypeSetElemAttr("port_organization.test", "hidden_global_search_tabs.*", "entity"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccOrganizationConfigClear,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_organization.test", "hidden_global_search_tabs.#", "0"),
+				),
+			},
+		},
+	})
+}

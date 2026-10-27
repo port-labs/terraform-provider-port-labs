@@ -156,51 +156,32 @@ func (r *AggregationPropertiesResource) Update(ctx context.Context, req resource
 		return
 	}
 
-	// Check if any properties were removed from the config
-	hasRemovals := false
-	if previousState != nil && previousState.Properties != nil {
-		for prevKey := range previousState.Properties {
-			if _, stillExists := (*aggregationProperties)[prevKey]; !stillExists {
-				hasRemovals = true
-				break
-			}
-		}
+	// Use PUT with read-modify-write to ensure fields are properly updated/cleared.
+	// PATCH doesn't clear omitted fields (like path_filter), so we must use PUT.
+	// Start with existing aggregations and merge in our changes.
+	mergedProps := make(map[string]cli.BlueprintAggregationProperty)
+
+	// Copy all existing aggregation properties (preserves system-managed ones)
+	for k, v := range b.AggregationProperties {
+		mergedProps[k] = v
 	}
 
-	if hasRemovals {
-		// When properties are removed, we need to use PUT with the full map.
-		// Start with existing aggregations and merge in our changes.
-		mergedProps := make(map[string]cli.BlueprintAggregationProperty)
-
-		// Copy all existing aggregation properties (preserves system-managed ones)
-		for k, v := range b.AggregationProperties {
-			mergedProps[k] = v
-		}
-
-		// Remove properties that were previously managed by Terraform but are now gone
+	// Remove properties that were previously managed by Terraform but are now gone
+	if previousState != nil && previousState.Properties != nil {
 		for prevKey := range previousState.Properties {
 			if _, stillExists := (*aggregationProperties)[prevKey]; !stillExists {
 				delete(mergedProps, prevKey)
 			}
 		}
-
-		// Add/update properties from the new state
-		for k, v := range *aggregationProperties {
-			mergedProps[k] = v
-		}
-
-		b.AggregationProperties = mergedProps
-		_, err = r.portClient.UpdateBlueprint(ctx, b, state.BlueprintIdentifier.ValueString())
-	} else {
-		// No removals - use PATCH to add/update only the managed properties,
-		// preserving any system-managed aggregations.
-		patchProperties := make(map[string]*cli.BlueprintAggregationProperty)
-		for k, v := range *aggregationProperties {
-			prop := v
-			patchProperties[k] = &prop
-		}
-		_, err = r.portClient.PatchBlueprintAggregationProperties(ctx, state.BlueprintIdentifier.ValueString(), patchProperties)
 	}
+
+	// Add/update properties from the new state
+	for k, v := range *aggregationProperties {
+		mergedProps[k] = v
+	}
+
+	b.AggregationProperties = mergedProps
+	_, err = r.portClient.UpdateBlueprint(ctx, b, state.BlueprintIdentifier.ValueString())
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update aggregation property", err.Error())

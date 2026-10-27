@@ -128,17 +128,13 @@ func (r *BlueprintResource) refreshBlueprintState(ctx context.Context, bm *Bluep
 		}
 	}
 
-	if len(b.Relations) > 0 {
-		addRelationsToState(b, bm)
-	}
-
-	if len(b.MirrorProperties) > 0 {
-		addMirrorPropertiesToState(b, bm)
-	}
-
-	if len(b.CalculationProperties) > 0 {
-		addCalculationPropertiesToState(ctx, b, bm)
-	}
+	// Call these unconditionally, not just `if len(b.X) > 0`: a resource going from "has
+	// relations/mirror properties/calculation properties" to "has none" (all removed in Port)
+	// needs bm.X cleared too, not left stale. The helpers themselves now fully rebuild (or
+	// correctly empty) their target map, so it's safe to always call them.
+	addRelationsToState(b, bm)
+	addMirrorPropertiesToState(b, bm)
+	addCalculationPropertiesToState(ctx, b, bm)
 
 	return nil
 }

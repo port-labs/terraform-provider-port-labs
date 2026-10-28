@@ -149,6 +149,14 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
+	// Port treats any spec on the body as a spec patch and starts an operator
+	// sync, even when the value is unchanged. Leave it off, and skip the ready
+	// wait, unless the planned spec actually differs.
+	specChanged := !plan.Spec.Equal(state.Spec)
+	if !specChanged {
+		body.Spec = nil
+	}
+
 	updated, err := r.portClient.UpdateIntegration(ctx, integrationIdentifier, body)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update integration", err.Error())
@@ -157,7 +165,7 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	applyWriteResult(plan, updated, integrationIdentifier)
 
-	if plan.isHosted() {
+	if plan.isHosted() && specChanged {
 		r.awaitInfra(ctx, plan, integrationIdentifier, "updated", true, false, &resp.Diagnostics)
 	}
 

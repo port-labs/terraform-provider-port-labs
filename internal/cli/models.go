@@ -837,6 +837,15 @@ type Integration struct {
 	ChangelogDestination      *ChangelogDestination  `json:"changelogDestination,omitempty"`
 }
 
+// NotificationOptInSetting is one integration notification channel.
+// Emails and Teams are the saved audience. Empty lists notify every org admin.
+type NotificationOptInSetting struct {
+	Channel string   `json:"channel"`
+	Enabled bool     `json:"enabled"`
+	Emails  []string `json:"emails"`
+	Teams   []string `json:"teams"`
+}
+
 type OrganizationSettings struct {
 	HiddenGlobalSearchTabs []string `json:"hiddenGlobalSearchTabs"`
 }

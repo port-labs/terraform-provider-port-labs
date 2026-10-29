@@ -25,6 +25,11 @@ const (
 	CreatePortResourcesOriginPort  = "Port"
 )
 
+const (
+	NotificationChannelEmail = "email"
+	NotificationChannelSlack = "slack"
+)
+
 func IsSaas(installationType string) bool {
 	return installationType == InstallationTypeSaas
 }

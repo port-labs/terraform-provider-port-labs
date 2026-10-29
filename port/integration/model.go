@@ -27,6 +27,11 @@ type IntegrationModel struct {
 	Status                      types.String `tfsdk:"status"`
 	KafkaChangelogDestination   types.Object `tfsdk:"kafka_changelog_destination"`
 	WebhookChangelogDestination types.Object `tfsdk:"webhook_changelog_destination"`
+	NotificationChannels        types.Map    `tfsdk:"notification_channels"`
+}
+
+type NotificationChannelModel struct {
+	Enabled types.Bool `tfsdk:"enabled"`
 }
 
 func (m *IntegrationModel) installationType() string {

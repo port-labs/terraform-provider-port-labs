@@ -961,6 +961,7 @@ terraform import port_page.home_page "\$home"
 
 ### Optional
 
+- `adopt_existing` (Boolean) Whether to take ownership of a page with the same identifier that already exists in Port, such as the catalog page Port creates alongside a blueprint, instead of failing. Only used on creation. When not set, it is allowed only if `port_page` is listed in the provider's `adopt_existing_resources`. If the page already exists when planning, the plan shows a warning that it will be taken over
 - `after` (String) The identifier of the page/folder after which the page should be placed
 - `blueprint` (String) The blueprint for which the page is created, relevant for pages of type "blueprint-entities" and "entity"
 - `description` (String) The page description

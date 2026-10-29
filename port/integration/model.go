@@ -28,6 +28,7 @@ type IntegrationModel struct {
 	KafkaChangelogDestination   types.Object `tfsdk:"kafka_changelog_destination"`
 	WebhookChangelogDestination types.Object `tfsdk:"webhook_changelog_destination"`
 	NotificationChannels        types.Map    `tfsdk:"notification_channels"`
+	AdoptExisting               types.Bool   `tfsdk:"adopt_existing"`
 }
 
 type NotificationChannelModel struct {

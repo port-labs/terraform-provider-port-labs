@@ -60,6 +60,10 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 			return
 		}
 		r.validateSpecAtPlan(ctx, &plan, specConfiguredInHCL, &resp.Diagnostics)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		r.checkExistingAtPlan(ctx, &plan, &resp.Diagnostics)
 		return
 	}
 
@@ -94,6 +98,15 @@ func (r *IntegrationResource) ModifyPlan(ctx context.Context, req resource.Modif
 	}
 	if plan.Config.IsNull() || plan.Config.IsUnknown() {
 		plan.Config = state.Config
+	}
+	// Any raw difference, such as a spec planSpec just folded back into state,
+	// makes the framework mark unset computed attributes unknown. Removing a
+	// destination was rejected above, so an unset one keeps its state value.
+	if config.KafkaChangelogDestination.IsNull() && plan.KafkaChangelogDestination.IsUnknown() {
+		plan.KafkaChangelogDestination = state.KafkaChangelogDestination
+	}
+	if config.WebhookChangelogDestination.IsNull() && plan.WebhookChangelogDestination.IsUnknown() {
+		plan.WebhookChangelogDestination = state.WebhookChangelogDestination
 	}
 
 	r.validateSpecAtPlan(ctx, &plan, specConfiguredInHCL, &resp.Diagnostics)

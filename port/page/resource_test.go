@@ -300,6 +300,111 @@ resource "port_page" "microservice_blueprint_page" {
 	})
 }
 
+func TestAccPortPageResourceAdoptsAutoCreatedCatalogPage(t *testing.T) {
+	// end with `s` so the catalog page Port auto-creates has the same identifier as the blueprint
+	identifier := fmt.Sprintf("test-%ss", utils.GenID()[:10])
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var testAccPortPageResourceAdopt = `
+resource "port_blueprint" "microservice" {
+  identifier          = "%s"
+  title               = "TF test microservice"
+  icon                = "Terraform"
+  create_catalog_page = true
+}
+
+resource "port_page" "microservice_blueprint_page" {
+  identifier     = port_blueprint.microservice.identifier
+  title          = "Adopted Microservices"
+  icon           = "Microservice"
+  blueprint      = port_blueprint.microservice.identifier
+  type           = "blueprint-entities"
+  adopt_existing = %t
+  widgets        = [
+    jsonencode(
+      {
+        "id" : "blabla",
+        "type" : "table-entities-explorer",
+        "blueprint" : port_blueprint.microservice.identifier,
+        "dataset" : {
+          "combinator" : "and",
+          "rules" : [
+          ]
+        }
+      }
+    )
+  ]
+}
+`
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				// without opting in, the auto-created page is not silently taken over
+				Config:      acctest.ProviderConfig + fmt.Sprintf(testAccPortPageResourceAdopt, identifier, false),
+				ExpectError: regexp.MustCompile("page already exists"),
+			},
+			{
+				Config: acctest.ProviderConfig + fmt.Sprintf(testAccPortPageResourceAdopt, identifier, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "create_catalog_page", "true"),
+					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "identifier", identifier),
+					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "title", "Adopted Microservices"),
+					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "type", "blueprint-entities"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortPageResourceAdoptsCatalogPageByProviderPolicy(t *testing.T) {
+	// the customer's case: a blueprint left to Port's default catalog page creation, and a port_page declaring
+	// that page, applied in one run with only the provider-level policy
+	identifier := fmt.Sprintf("test-%ss", utils.GenID()[:10])
+	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var config = fmt.Sprintf(`
+resource "port_blueprint" "microservice" {
+  identifier = "%s"
+  title      = "TF test microservice"
+  icon       = "Terraform"
+}
+
+resource "port_page" "microservice_blueprint_page" {
+  identifier = port_blueprint.microservice.identifier
+  title      = "Adopted Microservices"
+  icon       = "Microservice"
+  blueprint  = port_blueprint.microservice.identifier
+  type       = "blueprint-entities"
+}
+`, identifier)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfigWithAdoption("port_page") + config,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "identifier", identifier),
+					resource.TestCheckResourceAttr("port_page.microservice_blueprint_page", "title", "Adopted Microservices"),
+				),
+			},
+			{
+				// nothing left to converge once the page is in state
+				Config:   acctest.ProviderConfigWithAdoption("port_page") + config,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
 func TestAccPortPageResourceBasicBetaDisabled(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	pageIdentifier := utils.GenID()

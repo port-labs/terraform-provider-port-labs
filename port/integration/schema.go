@@ -60,6 +60,10 @@ func IntegrationSchema() map[string]schema.Attribute {
 				stringplanmodifier.UseStateForUnknown(),
 			},
 		},
+		"adopt_existing": schema.BoolAttribute{
+			MarkdownDescription: "Whether to take ownership of an integration with the same `installation_id` that already exists in Port, such as a self-hosted integration that registered itself or one installed from the Port UI, instead of failing. Only used on creation. When not set, it is allowed only if `port_integration` is listed in the provider's `adopt_existing_resources`. The existing integration must have the same `installation_type` and `installation_app_type`, since they cannot be changed. If the integration already exists when planning, the plan shows a warning that it will be taken over",
+			Optional:            true,
+		},
 		"create_port_resources_origin": schema.StringAttribute{
 			MarkdownDescription: "Controls whether Port creates default blueprints and mappings when the integration is created. Use `Empty` to skip default resource creation. Use `Port` to create default resources via Port. If omitted, default resources are created. Can only be set on creation.",
 			Optional:            true,
@@ -376,6 +380,32 @@ The following config properties (` + "`selector.query|entity.mappings.*`" + `) a
 - ` + "`notification_channels`" + ` is only supported for Port Hosted integrations (` + "`installation_type = \"Saas\"`" + ` or ` + "`\"SaasOAuth2\"`" + `). Keys are ` + "`email`" + ` and ` + "`slack`" + `. It sets whether each channel is enabled. Removing a channel from the map stops managing it and leaves the saved opt-in in place. Recipient emails and teams configured in Port are preserved.
 - Existing integrations can be brought under Terraform management with ` + "`terraform import port_integration.my_integration <installation_id>`" + `.
 - ` + "`terraform destroy`" + ` deletes the real integration in Port, not just removes it from state. Use ` + "`terraform state rm`" + ` if you only want to stop managing an integration with Terraform without deleting it from Port. This is especially relevant for imported resources.
+
+## Managing the resources an integration creates
+
+Installing an integration can make Port create default resources for it, such as the ` + "`gitlabGroup`" + ` blueprint and the ` + "`_team.gitlab_group`" + ` relation of GitLab. To manage them with Terraform in the same configuration, let their resources take them over, and make them depend on the integration so they are created after Port has provisioned them:
+
+` + "```hcl" + `
+provider "port" {
+  adopt_existing_resources = ["port_blueprint", "port_blueprint_relation"]
+}
+
+resource "port_blueprint" "gitlab_group" {
+  depends_on = [port_integration.gitlab]
+
+  identifier = "gitlabGroup"
+  title      = "Group"
+}
+
+resource "port_blueprint_relation" "team_gitlab_group" {
+  blueprint  = "_team"
+  identifier = "gitlab_group"
+  target     = port_blueprint.gitlab_group.identifier
+}
+` + "```" + `
+
+- Without ` + "`depends_on`" + `, Terraform may create the blueprint before Port provisions it. Port then skips creating it, so nothing fails, but the resources are created by Terraform rather than taken over.
+- Port provisions default resources during the apply only for Port Hosted integrations (` + "`installation_type = \"Saas\"`" + `) in organizations with provisioned defaults, and only for the integration types it supports (e.g. ` + "`gitlab-v2`" + `). For self-hosted integrations the default resources are created when the integration starts running, after the apply, so Terraform creates them first and the integration skips them.
 
 ## SaasOAuth2 example — import then manage mappings / appSpec
 

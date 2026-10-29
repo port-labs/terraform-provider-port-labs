@@ -3,11 +3,16 @@ package provider
 import (
 	"context"
 	"os"
+	"strings"
 
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/action"
@@ -77,8 +82,29 @@ func (p *PortLabsProvider) Schema(ctx context.Context, req provider.SchemaReques
 				MarkdownDescription: "Protects you from accidentally changing the property type of blueprints which " +
 					"will delete the property before recreating it with the new type. Defaults to `true`",
 			},
+			"adopt_existing_resources": schema.SetAttribute{
+				Optional:    true,
+				ElementType: types.StringType,
+				MarkdownDescription: "The resource types that take ownership of an object with the same identifier that " +
+					"already exists in Port (e.g. created by an integration or alongside a blueprint) when created, " +
+					"instead of failing. Allowed values are `" + strings.Join(adoptableResourceKindNames(), "`, `") + "`; " +
+					"any other value is rejected. It sets the default for the `adopt_existing` attribute of those " +
+					"resources, which a resource's own `adopt_existing` overrides. The plan shows a warning for every " +
+					"object that will be taken over. Defaults to none",
+				Validators: []validator.Set{
+					setvalidator.ValueStringsAre(stringvalidator.OneOf(adoptableResourceKindNames()...)),
+				},
+			},
 		},
 	}
+}
+
+func adoptableResourceKindNames() []string {
+	names := make([]string, 0, len(consts.AdoptableResourceKinds))
+	for _, kind := range consts.AdoptableResourceKinds {
+		names = append(names, string(kind))
+	}
+	return names
 }
 
 func (p *PortLabsProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
@@ -119,6 +145,17 @@ func (p *PortLabsProvider) Configure(ctx context.Context, req provider.Configure
 	} else {
 		c.BlueprintPropertyTypeChangeProtection = data.BlueprintPropertyTypeChangeProtection.ValueBool()
 	}
+
+	var adoptExistingResources []string
+	resp.Diagnostics.Append(data.AdoptExistingResources.ElementsAs(ctx, &adoptExistingResources, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	adoptableKinds := make([]consts.ResourceKind, 0, len(adoptExistingResources))
+	for _, kind := range adoptExistingResources {
+		adoptableKinds = append(adoptableKinds, consts.ResourceKind(kind))
+	}
+	c.AdoptExistingResources = cli.NewAdoptionPolicy(adoptableKinds...)
 
 	if data.Token.ValueString() != "" {
 		c.Client.SetAuthToken(data.Token.ValueString())

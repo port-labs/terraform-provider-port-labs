@@ -199,4 +199,5 @@ type BlueprintModel struct {
 	CreateCatalogPage           types.Bool                          `tfsdk:"create_catalog_page"`
 	Ownership                   *OwnershipModel                     `tfsdk:"ownership"`
 	IncludeInGlobalSearch       types.Bool                          `tfsdk:"include_in_global_search"`
+	AdoptExisting               types.Bool                          `tfsdk:"adopt_existing"`
 }

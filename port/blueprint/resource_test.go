@@ -20,6 +20,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/version"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
@@ -46,6 +47,168 @@ func TestAccPortBlueprintBasic(t *testing.T) {
 					resource.TestCheckResourceAttr("port_blueprint.microservice", "icon", "Terraform"),
 					resource.TestCheckNoResourceAttr("port_blueprint.microservice", "properties"),
 				),
+			},
+		},
+	})
+}
+
+func TestAccPortBlueprintAdoptsExistingBlueprint(t *testing.T) {
+	acctest.SkipUnlessAcceptance(t)
+	identifier := utils.GenID()
+	icon := "Terraform"
+	portClient, ctx, err := initializePortTestClient(t)
+	if err != nil {
+		t.Fatalf("Failed to initialize port client: %s", err.Error())
+		return
+	}
+
+	// simulate a blueprint created outside Terraform, e.g. by an integration's default resources,
+	// with a relation to another blueprint that Terraform does not declare
+	target := utils.GenID()
+	_, err = portClient.CreateBlueprint(ctx, &cli.Blueprint{
+		Identifier:            target,
+		Icon:                  &icon,
+		Title:                 "Relation target",
+		Schema:                cli.BlueprintSchema{Properties: map[string]cli.BlueprintProperty{}},
+		CalculationProperties: map[string]cli.BlueprintCalculationProperty{},
+		AggregationProperties: map[string]cli.BlueprintAggregationProperty{},
+		MirrorProperties:      map[string]cli.BlueprintMirrorProperty{},
+		Relations:             map[string]cli.Relation{},
+	}, nil)
+	if err != nil {
+		t.Fatalf("Failed to create blueprint: %s", err.Error())
+		return
+	}
+	t.Cleanup(func() { _ = portClient.DeleteBlueprint(context.Background(), target) })
+
+	_, err = portClient.CreateBlueprint(ctx, &cli.Blueprint{
+		Identifier: identifier,
+		Icon:       &icon,
+		Title:      "Created outside Terraform",
+		Schema: cli.BlueprintSchema{
+			Properties: map[string]cli.BlueprintProperty{},
+		},
+		CalculationProperties: map[string]cli.BlueprintCalculationProperty{},
+		AggregationProperties: map[string]cli.BlueprintAggregationProperty{},
+		MirrorProperties:      map[string]cli.BlueprintMirrorProperty{},
+		Relations: map[string]cli.Relation{
+			"parent": {Target: &target},
+		},
+	}, nil)
+	if err != nil {
+		t.Fatalf("Failed to create blueprint: %s", err.Error())
+		return
+	}
+
+	var testAccBlueprintConfigAdopt = `
+	resource "port_blueprint" "microservice" {
+		title = "Adopted by Terraform"
+		icon = "Terraform"
+		identifier = "%s"
+		adopt_existing = %t
+	}
+`
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				// without opting in, the existing blueprint is not silently taken over
+				Config:      acctest.ProviderConfig + fmt.Sprintf(testAccBlueprintConfigAdopt, identifier, false),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("blueprint already exists"),
+			},
+			{
+				Config: acctest.ProviderConfig + fmt.Sprintf(testAccBlueprintConfigAdopt, identifier, true),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "Adopted by Terraform"),
+					resource.TestCheckResourceAttr("port_blueprint.microservice", "identifier", identifier),
+					func(*terraform.State) error {
+						bp, _, err := portClient.ReadBlueprint(ctx, identifier)
+						if err != nil {
+							return err
+						}
+						if _, ok := bp.Relations["parent"]; !ok {
+							return fmt.Errorf("expected unmanaged relation %q to be kept on adopted blueprint", "parent")
+						}
+						return nil
+					},
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortBlueprintAdoptsExistingBlueprintByProviderPolicy(t *testing.T) {
+	acctest.SkipUnlessAcceptance(t)
+	identifier := utils.GenID()
+	icon := "Terraform"
+	portClient, ctx, err := initializePortTestClient(t)
+	if err != nil {
+		t.Fatalf("Failed to initialize port client: %s", err.Error())
+		return
+	}
+
+	_, err = portClient.CreateBlueprint(ctx, &cli.Blueprint{
+		Identifier: identifier,
+		Icon:       &icon,
+		Title:      "Created outside Terraform",
+		Schema: cli.BlueprintSchema{
+			Properties: map[string]cli.BlueprintProperty{},
+		},
+		CalculationProperties: map[string]cli.BlueprintCalculationProperty{},
+		AggregationProperties: map[string]cli.BlueprintAggregationProperty{},
+		MirrorProperties:      map[string]cli.BlueprintMirrorProperty{},
+		Relations:             map[string]cli.Relation{},
+	}, nil)
+	if err != nil {
+		t.Fatalf("Failed to create blueprint: %s", err.Error())
+		return
+	}
+
+	var config = fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "Adopted by Terraform"
+		icon = "Terraform"
+		identifier = "%s"
+	}
+`, identifier)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				// a policy for other kinds does not let blueprints be taken over
+				Config:      acctest.ProviderConfigWithAdoption("port_page", "port_blueprint_relation") + config,
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("blueprint already exists"),
+			},
+			{
+				Config: acctest.ProviderConfigWithAdoption("port_blueprint") + config,
+				Check:  resource.TestCheckResourceAttr("port_blueprint.microservice", "title", "Adopted by Terraform"),
+			},
+		},
+	})
+}
+
+func TestAccPortProviderRejectsUnknownAdoptableKind(t *testing.T) {
+	var config = fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF Provider Test"
+		identifier = "%s"
+	}
+`, utils.GenID())
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfigWithAdoption("port_blueprints") + config,
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`value must be\s+one of`),
 			},
 		},
 	})

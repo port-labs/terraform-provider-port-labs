@@ -26,6 +26,9 @@ var (
 	errIntegrationNotDeleted       = utils.StringErr("integration is not deleted yet")
 )
 
+// FeatureFlagProvisionedDefaults makes Port create an integration's default resources when it is installed
+const FeatureFlagProvisionedDefaults = "USE_PROVISIONED_DEFAULTS"
+
 type PortBodyForIntegration struct {
 	OK          bool        `json:"ok"`
 	Integration Integration `json:"integration"`

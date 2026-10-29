@@ -2,11 +2,14 @@ package page
 
 import (
 	"context"
+	"errors"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/adoption"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 )
 
@@ -55,7 +58,7 @@ func (r *PageResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	p, statusCode, err := r.portClient.GetPage(ctx, state.Identifier.ValueString())
 
 	if err != nil {
-		if statusCode == 404 {
+		if statusCode == http.StatusNotFound {
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -89,14 +92,14 @@ func (r *PageResource) Delete(ctx context.Context, req resource.DeleteRequest, r
 		return
 	}
 
-	if state.Type.ValueString() == "entity" {
+	if state.Type.ValueString() == entityPageType {
 		tflog.Debug(ctx, "entity page is tied to its blueprint and is not deletable, unregistering from state")
 		resp.State.RemoveResource(ctx)
 		return
 	}
 	statusCode, err := r.portClient.DeletePage(ctx, state.Identifier.ValueString())
 	if err != nil {
-		if statusCode == 404 {
+		if statusCode == http.StatusNotFound {
 			resp.State.RemoveResource(ctx)
 			return
 		}
@@ -116,10 +119,11 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 		return
 	}
 
-	if state.Type.ValueString() == "entity" {
+	switch state.Type.ValueString() {
+	case entityPageType:
 		_, statusCode, err := r.portClient.GetPage(ctx, state.Identifier.ValueString())
 		if err != nil {
-			if statusCode == 404 {
+			if statusCode == http.StatusNotFound {
 				resp.Diagnostics.AddError(
 					"Unsupported Operation",
 					"Entity pages cannot be created. They are automatically created when a blueprint is created. Import the existing entity page with: terraform import port_page.<resource_name> <identifier>",
@@ -129,34 +133,20 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 			resp.Diagnostics.AddError("failed to get page", err.Error())
 			return
 		}
-
-		page, err := PageToPortBody(state)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to convert page resource to body", err.Error())
-			return
-		}
-
-		p, err := r.portClient.UpdatePage(ctx, page.Identifier, page)
-		if err != nil {
-			resp.Diagnostics.AddError("failed to update page", err.Error())
-			return
-		}
-
-		updatedPage, _, err := r.portClient.GetPage(ctx, state.Identifier.ValueString())
-		if err != nil {
-			resp.Diagnostics.AddError("failed to get updated page", err.Error())
-			return
-		}
-
-		state.ID = types.StringValue(p.Identifier)
-		state.CreatedAt = types.StringValue(updatedPage.CreatedAt.String())
-		state.CreatedBy = types.StringValue(updatedPage.CreatedBy)
-		state.UpdatedAt = types.StringValue(updatedPage.UpdatedAt.String())
-		state.UpdatedBy = types.StringValue(updatedPage.UpdatedBy)
-		state.Description = types.StringPointerValue(updatedPage.Description)
-
-		resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+		r.adoptExistingPage(ctx, state, resp)
 		return
+	default:
+		// the page may have been created outside Terraform, e.g. the catalog page Port creates alongside
+		// a blueprint, and is only taken over when explicitly allowed
+		existing, statusCode, err := r.portClient.GetPage(ctx, state.Identifier.ValueString())
+		if err == nil {
+			r.takeOverPage(ctx, existing, state, resp)
+			return
+		}
+		if statusCode != http.StatusNotFound {
+			resp.Diagnostics.AddError("failed to get page", err.Error())
+			return
+		}
 	}
 
 	page, err := PageToPortBody(state)
@@ -166,6 +156,17 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 	}
 
 	p, err := r.portClient.CreatePage(ctx, page)
+	var takenErr *cli.IdentifierTakenError
+	if errors.As(err, &takenErr) {
+		// Port creates a blueprint's catalog page asynchronously, so it can appear after the check above
+		existing, _, err := r.portClient.GetPage(ctx, state.Identifier.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError("failed to get page", err.Error())
+			return
+		}
+		r.takeOverPage(ctx, existing, state, resp)
+		return
+	}
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create page", err.Error())
 		return
@@ -186,6 +187,46 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 	state.UpdatedAt = types.StringValue(p.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(p.UpdatedBy)
 	state.Description = types.StringPointerValue(p.Description)
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
+}
+
+// takeOverPage takes ownership of a page that appeared in Port during this apply, when allowed
+func (r *PageResource) takeOverPage(ctx context.Context, existing *cli.Page, state *PageModel, resp *resource.CreateResponse) {
+	identifier := state.Identifier.ValueString()
+	conflict := pageTypeConflict(identifier, existing.Type, state.Type.ValueString())
+	if !adoption.TakeOver(adoption.AtApply, r.portClient, existingPage(identifier), state.AdoptExisting, conflict, &resp.Diagnostics) {
+		return
+	}
+	r.adoptExistingPage(ctx, state, resp)
+}
+
+// adoptExistingPage takes ownership of a page that already exists in Port by updating it to match the plan
+func (r *PageResource) adoptExistingPage(ctx context.Context, state *PageModel, resp *resource.CreateResponse) {
+	page, err := PageToPortBody(state)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to convert page resource to body", err.Error())
+		return
+	}
+
+	p, err := r.portClient.UpdatePage(ctx, page.Identifier, page)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to update page", err.Error())
+		return
+	}
+
+	updatedPage, _, err := r.portClient.GetPage(ctx, state.Identifier.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError("failed to get updated page", err.Error())
+		return
+	}
+
+	state.ID = types.StringValue(p.Identifier)
+	state.CreatedAt = types.StringValue(updatedPage.CreatedAt.String())
+	state.CreatedBy = types.StringValue(updatedPage.CreatedBy)
+	state.UpdatedAt = types.StringValue(updatedPage.UpdatedAt.String())
+	state.UpdatedBy = types.StringValue(updatedPage.UpdatedBy)
+	state.Description = types.StringPointerValue(updatedPage.Description)
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }

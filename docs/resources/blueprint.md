@@ -283,8 +283,9 @@ resource "port_blueprint" "microservice" {
 
 ### Optional
 
+- `adopt_existing` (Boolean) Whether to take ownership of a blueprint with the same identifier that already exists in Port, such as one created by an integration's default resources, instead of failing. Only used on creation. When not set, it is allowed only if `port_blueprint` is listed in the provider's `adopt_existing_resources`. Relations and aggregation properties on the existing blueprint are kept. If the blueprint already exists when planning, the plan shows a warning that it will be taken over
 - `calculation_properties` (Attributes Map) The calculation properties of the blueprint (see [below for nested schema](#nestedatt--calculation_properties))
-- `create_catalog_page` (Boolean) This flag is only relevant for blueprint creation. If not set, the parameter is omitted and Port's API default applies
+- `create_catalog_page` (Boolean) This flag is only relevant for blueprint creation. If not set, the parameter is omitted and Port's API default applies. To manage the auto-created catalog page, declare a `port_page` resource of type `blueprint-entities` with the same identifier, which adopts the existing page on creation
 - `description` (String) The description of the blueprint
 - `force_delete_entities` (Boolean) If set to true, the blueprint will be deleted with all its entities, even if they are not managed by Terraform
 - `icon` (String) The icon of the blueprint

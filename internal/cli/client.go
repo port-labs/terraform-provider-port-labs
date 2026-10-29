@@ -23,6 +23,7 @@ type PortClient struct {
 	featureFlags                          []string
 	JSONEscapeHTML                        bool
 	BlueprintPropertyTypeChangeProtection bool
+	AdoptExistingResources                AdoptionPolicy
 
 	blueprintLocks sync.Map
 }

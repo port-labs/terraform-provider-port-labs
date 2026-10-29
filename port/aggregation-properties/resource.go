@@ -93,6 +93,7 @@ func (r *AggregationPropertiesResource) Create(ctx context.Context, req resource
 			return
 		}
 		resp.Diagnostics.AddError("failed reading blueprint", err.Error())
+		return
 	}
 
 	// check if the aggregation properties already exists
@@ -105,9 +106,15 @@ func (r *AggregationPropertiesResource) Create(ctx context.Context, req resource
 		}
 	}
 
-	b.AggregationProperties = *aggregationProperties
+	// Use PATCH to add only the new aggregation properties, preserving any
+	// existing ones (including system-managed aggregations like _team.size)
+	patchProperties := make(map[string]*cli.BlueprintAggregationProperty)
+	for k, v := range *aggregationProperties {
+		prop := v
+		patchProperties[k] = &prop
+	}
 
-	_, err = r.portClient.UpdateBlueprint(ctx, b, state.BlueprintIdentifier.ValueString())
+	_, err = r.portClient.PatchBlueprintAggregationProperties(ctx, state.BlueprintIdentifier.ValueString(), patchProperties)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to create aggregation properties", err.Error())
@@ -146,10 +153,34 @@ func (r *AggregationPropertiesResource) Update(ctx context.Context, req resource
 			return
 		}
 		resp.Diagnostics.AddError("failed reading blueprint", err.Error())
+		return
 	}
 
-	b.AggregationProperties = *aggregationProperties
+	// Use PUT with read-modify-write to ensure fields are properly updated/cleared.
+	// PATCH doesn't clear omitted fields (like path_filter), so we must use PUT.
+	// Start with existing aggregations and merge in our changes.
+	mergedProps := make(map[string]cli.BlueprintAggregationProperty)
 
+	// Copy all existing aggregation properties (preserves system-managed ones)
+	for k, v := range b.AggregationProperties {
+		mergedProps[k] = v
+	}
+
+	// Remove properties that were previously managed by Terraform but are now gone
+	if previousState != nil && previousState.Properties != nil {
+		for prevKey := range previousState.Properties {
+			if _, stillExists := (*aggregationProperties)[prevKey]; !stillExists {
+				delete(mergedProps, prevKey)
+			}
+		}
+	}
+
+	// Add/update properties from the new state
+	for k, v := range *aggregationProperties {
+		mergedProps[k] = v
+	}
+
+	b.AggregationProperties = mergedProps
 	_, err = r.portClient.UpdateBlueprint(ctx, b, state.BlueprintIdentifier.ValueString())
 
 	if err != nil {
@@ -180,15 +211,28 @@ func (r *AggregationPropertiesResource) Delete(ctx context.Context, req resource
 			return
 		}
 		resp.Diagnostics.AddError("failed reading blueprint", err.Error())
+		return
 	}
 
-	b.AggregationProperties = make(map[string]cli.BlueprintAggregationProperty)
+	// Only delete the aggregation properties that were managed by this resource.
+	// Preserve any system-managed or externally-managed aggregations (like _team.size).
+	if len(state.Properties) > 0 {
+		// Build a new map with only the unmanaged aggregation properties
+		remainingProps := make(map[string]cli.BlueprintAggregationProperty)
+		for k, v := range b.AggregationProperties {
+			// Keep this property only if it wasn't managed by this resource
+			if _, isManaged := state.Properties[k]; !isManaged {
+				remainingProps[k] = v
+			}
+		}
 
-	_, err = r.portClient.UpdateBlueprint(ctx, b, state.BlueprintIdentifier.ValueString())
+		b.AggregationProperties = remainingProps
+		_, err = r.portClient.UpdateBlueprint(ctx, b, state.BlueprintIdentifier.ValueString())
 
-	if err != nil {
-		resp.Diagnostics.AddError("failed to delete aggregation property", err.Error())
-		return
+		if err != nil {
+			resp.Diagnostics.AddError("failed to delete aggregation property", err.Error())
+			return
+		}
 	}
 
 	resp.State.RemoveResource(ctx)

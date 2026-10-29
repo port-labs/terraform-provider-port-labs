@@ -48,38 +48,106 @@ func (p *PortLabsProvider) Metadata(ctx context.Context, req provider.MetadataRe
 
 func (p *PortLabsProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Interact with Port-labs",
+		MarkdownDescription: providerMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"client_id": schema.StringAttribute{
-				MarkdownDescription: "Client ID for Port-labs",
+				MarkdownDescription: "Client ID for Port. Can also be set via the `PORT_CLIENT_ID` environment variable.",
 				Optional:            true,
 			},
 			"secret": schema.StringAttribute{
-				MarkdownDescription: "Client Secret for Port-labs",
+				MarkdownDescription: "Client Secret for Port. Can also be set via the `PORT_CLIENT_SECRET` environment variable.",
 				Sensitive:           true,
 				Optional:            true,
 			},
 			"token": schema.StringAttribute{
-				MarkdownDescription: "Token for Port-labs",
+				MarkdownDescription: "Token for Port (alternative to client_id/secret authentication).",
 				Sensitive:           true,
 				Optional:            true,
 			},
 			"base_url": schema.StringAttribute{
-				Optional: true,
+				MarkdownDescription: "Port API URL. Can also be set via the `PORT_BASE_URL` environment variable. Defaults to `https://api.getport.io`. Use `https://api.port.io` for EU region.",
+				Optional:            true,
 			},
 			"json_escape_html": schema.BoolAttribute{
 				Optional: true,
 				MarkdownDescription: "When set to `false` disables the default HTML escaping of json.Marshal when " +
-					"reading data from Port. Defaults to `true`",
+					"reading data from Port. Defaults to `true`.",
 			},
 			"blueprint_property_type_change_protection": schema.BoolAttribute{
 				Optional: true,
 				MarkdownDescription: "Protects you from accidentally changing the property type of blueprints which " +
-					"will delete the property before recreating it with the new type. Defaults to `true`",
+					"will delete the property before recreating it with the new type. Defaults to `true`.",
 			},
 		},
 	}
 }
+
+var providerMarkdownDescription = `
+The Port provider is used to interact with [Port](https://www.getport.io/), an internal developer portal platform.
+
+## Authentication
+
+The provider requires API credentials to authenticate with Port. You can obtain these from the Port UI under Settings > Credentials.
+
+### Environment Variables (Recommended)
+
+Set the following environment variables:
+
+- ` + "`PORT_CLIENT_ID`" + ` - Your Port client ID
+- ` + "`PORT_CLIENT_SECRET`" + ` - Your Port client secret
+- ` + "`PORT_BASE_URL`" + ` (optional) - Port API URL. Defaults to ` + "`https://api.getport.io`" + `. Use ` + "`https://api.port.io`" + ` for EU region.
+
+### Provider Configuration
+
+Alternatively, configure credentials in the provider block:
+
+` + "```hcl" + `
+provider "port" {
+  client_id = "<CLIENT_ID>"
+  secret    = "<CLIENT_SECRET>"
+  base_url  = "https://api.getport.io"  # or https://api.port.io for EU
+}
+` + "```" + `
+
+## Example Usage
+
+` + "```hcl" + `
+terraform {
+  required_providers {
+    port = {
+      source  = "port-labs/port-labs"
+      version = "~> 2"
+    }
+  }
+}
+
+# Configure via environment variables (recommended)
+provider "port" {}
+
+# Create a blueprint
+resource "port_blueprint" "microservice" {
+  identifier = "microservice"
+  title      = "Microservice"
+  icon       = "Microservice"
+}
+
+# Create an entity
+resource "port_entity" "my_service" {
+  identifier = "my-service"
+  title      = "My Service"
+  blueprint  = port_blueprint.microservice.identifier
+}
+` + "```" + `
+
+## Regional URLs
+
+Port offers different API endpoints for different regions:
+
+| Region | API URL |
+|--------|---------|
+| US (default) | ` + "`https://api.getport.io`" + ` |
+| EU | ` + "`https://api.port.io`" + ` |
+`
 
 func (p *PortLabsProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	var data *cli.PortProviderModel

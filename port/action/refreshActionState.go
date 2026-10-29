@@ -625,9 +625,12 @@ func (r *ActionResource) refreshActionState(ctx context.Context, state *ActionMo
 	}
 
 	if a.ApprovalNotification != nil {
-		if a.ApprovalNotification.Type == "email" {
+		switch a.ApprovalNotification.Type {
+		case "email":
 			state.ApprovalEmailNotification, _ = types.ObjectValue(nil, nil)
-		} else {
+		case "none":
+			state.ApprovalNoneNotification, _ = types.ObjectValue(nil, nil)
+		default:
 			state.ApprovalWebhookNotification = &ApprovalWebhookNotificationModel{
 				Url: types.StringValue(a.ApprovalNotification.Url),
 			}
@@ -635,7 +638,6 @@ func (r *ActionResource) refreshActionState(ctx context.Context, state *ActionMo
 			if a.ApprovalNotification.Format != nil {
 				state.ApprovalWebhookNotification.Format = types.StringValue(*a.ApprovalNotification.Format)
 			}
-
 		}
 	}
 	state.Publish = flex.GoBoolToFramework(a.Publish)

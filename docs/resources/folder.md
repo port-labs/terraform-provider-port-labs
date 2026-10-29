@@ -5,10 +5,6 @@ subcategory: ""
 description: |-
   Folder resource
   For more information about folders, see the Port documentation https://docs.port.io/customize-pages-dashboards-and-plugins/page/folders#folder-identifiers.
-  ~> WARNING
-  The folder resource is currently in beta and is subject to change in future versions.
-  Use it by setting the Environment Variable PORT_BETA_FEATURES_ENABLED=true.
-  If this Environment Variable isn't specified, you won't be able to use the resource.
   Example Usage
   Basic Folder
   
@@ -46,11 +42,6 @@ description: |-
 # Folder resource
 
 For more information about folders, see the [Port documentation](https://docs.port.io/customize-pages-dashboards-and-plugins/page/folders#folder-identifiers).
-
-~> **WARNING**
-The folder resource is currently in beta and is subject to change in future versions.
-Use it by setting the Environment Variable `PORT_BETA_FEATURES_ENABLED=true`.
-If this Environment Variable isn't specified, you won't be able to use the resource.
 
 ## Example Usage
 

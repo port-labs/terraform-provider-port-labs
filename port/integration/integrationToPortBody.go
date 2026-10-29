@@ -30,9 +30,9 @@ func integrationToPortBody(state *IntegrationModel, forCreate bool) (*cli.Integr
 	installationType := state.installationType()
 	integration := &cli.Integration{
 		InstallationId:      installationId,
-		Title:               state.Title.ValueStringPointer(),
-		Version:             state.Version.ValueStringPointer(),
-		InstallationAppType: state.InstallationAppType.ValueStringPointer(),
+		Title:               knownStringPointer(state.Title),
+		Version:             knownStringPointer(state.Version),
+		InstallationAppType: knownStringPointer(state.InstallationAppType),
 		InstallationType:    &installationType,
 	}
 
@@ -75,6 +75,15 @@ func integrationToPortBody(state *IntegrationModel, forCreate bool) (*cli.Integr
 	}
 
 	return integration, nil
+}
+
+// knownStringPointer is like ValueStringPointer but also returns nil for an unknown value (ValueStringPointer returns a
+// pointer to "" for unknown), so an unset Optional+Computed attribute is omitted on create instead of sent as "".
+func knownStringPointer(v types.String) *string {
+	if v.IsUnknown() {
+		return nil
+	}
+	return v.ValueStringPointer()
 }
 
 // isConfigured reports whether a computed attribute holds a value to send to

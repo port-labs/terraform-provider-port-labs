@@ -3,6 +3,7 @@ package integration
 import (
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
@@ -113,6 +114,42 @@ func TestMergeSpecImplicitAppSpec(t *testing.T) {
 		`{"integrationSpec":{"token":"my-secret"},"appSpec":{"liveEventsEnabled":true}}`,
 		got.ValueString(),
 	)
+}
+
+func TestApplyWriteResultKeepsPlan(t *testing.T) {
+	webhook := types.ObjectValueMust(webhookChangelogDestinationType, map[string]attr.Value{
+		"url":   types.StringValue("https://example.com/hook"),
+		"agent": types.BoolValue(true),
+	})
+	plan := &IntegrationModel{
+		ID:                          types.StringUnknown(),
+		InstallationId:              types.StringValue("github"),
+		InstallationAppType:         types.StringValue("github-ocean"),
+		InstallationType:            types.StringValue(consts.InstallationTypeSaas),
+		Title:                       types.StringValue("GitHub"),
+		Version:                     types.StringValue("1.2.3"),
+		Spec:                        types.StringValue(`{"integrationSpec":{"githubToken":"my-secret"}}`),
+		Config:                      types.StringNull(),
+		Status:                      types.StringUnknown(),
+		CreatePortResourcesOrigin:   types.StringValue(consts.CreatePortResourcesOriginPort),
+		KafkaChangelogDestination:   types.ObjectNull(kafkaChangelogDestinationType),
+		WebhookChangelogDestination: webhook,
+	}
+
+	applyWriteResult(plan, "github")
+
+	assert.Equal(t, "github", plan.ID.ValueString())
+	assert.Equal(t, "github", plan.InstallationId.ValueString())
+	assert.Equal(t, "github-ocean", plan.InstallationAppType.ValueString())
+	assert.Equal(t, consts.InstallationTypeSaas, plan.InstallationType.ValueString())
+	assert.Equal(t, "GitHub", plan.Title.ValueString())
+	assert.Equal(t, "1.2.3", plan.Version.ValueString())
+	assert.JSONEq(t, `{"integrationSpec":{"githubToken":"my-secret"}}`, plan.Spec.ValueString())
+	assert.True(t, plan.Config.IsNull())
+	assert.True(t, plan.Status.IsNull())
+	assert.Equal(t, consts.CreatePortResourcesOriginPort, plan.CreatePortResourcesOrigin.ValueString())
+	assert.True(t, plan.KafkaChangelogDestination.IsNull())
+	assert.True(t, plan.WebhookChangelogDestination.Equal(webhook))
 }
 
 func TestRefreshIntegrationState_SaasOAuth2StripsIntegrationSpec(t *testing.T) {

@@ -73,7 +73,7 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 
-	applyWriteResult(plan, created, created.InstallationId)
+	applyWriteResult(plan, created.InstallationId)
 
 	if plan.isSaas() {
 		// Port Hosted integrations provision asynchronously. This provider does not
@@ -157,13 +157,13 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		body.Spec = nil
 	}
 
-	updated, err := r.portClient.UpdateIntegration(ctx, integrationIdentifier, body)
+	_, err = r.portClient.UpdateIntegration(ctx, integrationIdentifier, body)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update integration", err.Error())
 		return
 	}
 
-	applyWriteResult(plan, updated, integrationIdentifier)
+	applyWriteResult(plan, integrationIdentifier)
 
 	if plan.isHosted() && specChanged {
 		r.awaitInfra(ctx, plan, integrationIdentifier, "updated", true, false, &resp.Diagnostics)

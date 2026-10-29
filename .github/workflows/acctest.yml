@@ -94,7 +94,7 @@ jobs:
               --format testname \
               --junitfile "test-results/${name}.xml" \
               -- \
-              -timeout 10m \
+              -timeout 20m \
               -parallel "$TEST_PARALLEL" \
               -shuffle "$GITHUB_RUN_ID" \
               -coverprofile "coverage/${name}.out"

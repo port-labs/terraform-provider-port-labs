@@ -24,14 +24,8 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 	state.Description = flex.GoStringToFramework(w.Description)
 	state.Enabled = flex.GoBoolToFramework(w.Enabled)
 
-	if w.Security.RequestIdentifierPath != nil || w.Security.Secret != nil || w.Security.SignatureHeaderName != nil || w.Security.SignatureAlgorithm != nil || w.Security.SignaturePrefix != nil {
-		state.Security = &SecurityModel{
-			Secret:                flex.GoStringToFramework(w.Security.Secret),
-			SignatureHeaderName:   flex.GoStringToFramework(w.Security.SignatureHeaderName),
-			SignatureAlgorithm:    flex.GoStringToFramework(w.Security.SignatureAlgorithm),
-			SignaturePrefix:       flex.GoStringToFramework(w.Security.SignaturePrefix),
-			RequestIdentifierPath: flex.GoStringToFramework(w.Security.RequestIdentifierPath),
-		}
+	if security := securityFromAPI(state.Security, w.Security); security != nil {
+		state.Security = security
 	}
 
 	if len(w.Mappings) > 0 {
@@ -122,4 +116,29 @@ func refreshWebhookState(ctx context.Context, state *WebhookModel, w *cli.Webhoo
 	}
 
 	return nil
+}
+
+// GET /v1/webhooks/{id} never returns security.secret. Keep the value already
+// in state so a configured secret is not planned as an in-place change on every refresh.
+func securityFromAPI(prior *SecurityModel, api *cli.Security) *SecurityModel {
+	if api == nil || !securityReturned(api) {
+		return nil
+	}
+
+	secret := flex.GoStringToFramework(api.Secret)
+	if api.Secret == nil && prior != nil {
+		secret = prior.Secret
+	}
+
+	return &SecurityModel{
+		Secret:                secret,
+		SignatureHeaderName:   flex.GoStringToFramework(api.SignatureHeaderName),
+		SignatureAlgorithm:    flex.GoStringToFramework(api.SignatureAlgorithm),
+		SignaturePrefix:       flex.GoStringToFramework(api.SignaturePrefix),
+		RequestIdentifierPath: flex.GoStringToFramework(api.RequestIdentifierPath),
+	}
+}
+
+func securityReturned(api *cli.Security) bool {
+	return api.RequestIdentifierPath != nil || api.Secret != nil || api.SignatureHeaderName != nil || api.SignatureAlgorithm != nil || api.SignaturePrefix != nil
 }

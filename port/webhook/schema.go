@@ -19,6 +19,7 @@ func WebhookSecuritySchema() map[string]schema.Attribute {
 		"secret": schema.StringAttribute{
 			MarkdownDescription: "The secret of the webhook",
 			Optional:            true,
+			Sensitive:           true,
 		},
 		"signature_header_name": schema.StringAttribute{
 			MarkdownDescription: "The signature header name of the webhook",
@@ -136,10 +137,16 @@ func WebhookSchema() map[string]schema.Attribute {
 		"url": schema.StringAttribute{
 			MarkdownDescription: "The url of the webhook",
 			Computed:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"webhook_key": schema.StringAttribute{
 			MarkdownDescription: "The webhook key of the webhook",
 			Computed:            true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"security": schema.SingleNestedAttribute{
 			MarkdownDescription: "The security of the webhook",

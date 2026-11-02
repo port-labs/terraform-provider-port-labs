@@ -14,6 +14,7 @@
 
 /port/page/ @port-labs/spotlight-team
 /port/page-permissions/ @port-labs/spotlight-team
+/port/folder/ @port-labs/spotlight-team
 /port/scorecard/ @port-labs/spotlight-team
 /port/scorecard_group/ @port-labs/spotlight-team
 
@@ -30,6 +31,7 @@
 
 /docs/resources/page.md @port-labs/spotlight-team
 /docs/resources/page_permissions.md @port-labs/spotlight-team
+/docs/resources/folder.md @port-labs/spotlight-team
 /docs/resources/scorecard.md @port-labs/spotlight-team
 /docs/resources/scorecard_group.md @port-labs/spotlight-team
 
@@ -46,6 +48,7 @@
 
 /examples/resources/port_page/ @port-labs/spotlight-team
 /examples/resources/port_page_with_filters/ @port-labs/spotlight-team
+/examples/resources/port_folder/ @port-labs/spotlight-team
 /examples/resources/port_scorecard/ @port-labs/spotlight-team
 /examples/resources/port_scorecard_group/ @port-labs/spotlight-team
 
@@ -65,6 +68,7 @@
 
 /internal/cli/page.go @port-labs/spotlight-team
 /internal/cli/pagePermissions.go @port-labs/spotlight-team
+/internal/cli/folder.go @port-labs/spotlight-team
 /internal/cli/scorecard.go @port-labs/spotlight-team
 /internal/cli/scorecardGroup.go @port-labs/spotlight-team
 

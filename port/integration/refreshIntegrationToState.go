@@ -70,13 +70,9 @@ func (r *IntegrationResource) refreshIntegrationState(state *IntegrationModel, a
 // Unknown computed values become null; Read fills server-owned values later.
 func applyWriteResult(plan *IntegrationModel, installationId string) {
 	plan.ID = types.StringValue(installationId)
-	plan.InstallationAppType = nullIfUnknown(plan.InstallationAppType)
-	plan.InstallationType = nullIfUnknown(plan.InstallationType)
-	plan.Title = nullIfUnknown(plan.Title)
 	plan.Version = nullIfUnknown(plan.Version)
 	plan.Config = nullIfUnknown(plan.Config)
 	plan.Spec = nullIfUnknown(plan.Spec)
-	plan.CreatePortResourcesOrigin = nullIfUnknown(plan.CreatePortResourcesOrigin)
 	plan.Status = nullIfUnknown(plan.Status)
 	plan.KafkaChangelogDestination = nullObjectIfUnknown(plan.KafkaChangelogDestination, kafkaChangelogDestinationType)
 	plan.WebhookChangelogDestination = nullObjectIfUnknown(plan.WebhookChangelogDestination, webhookChangelogDestinationType)

@@ -19,6 +19,7 @@ func WebhookSecuritySchema() map[string]schema.Attribute {
 		"secret": schema.StringAttribute{
 			MarkdownDescription: "The secret of the webhook",
 			Optional:            true,
+			Sensitive:           true,
 		},
 		"signature_header_name": schema.StringAttribute{
 			MarkdownDescription: "The signature header name of the webhook",

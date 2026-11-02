@@ -2,7 +2,6 @@ package folder
 
 import (
 	"context"
-	"os"
 
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -41,31 +40,11 @@ func (r *FolderResource) Schema(ctx context.Context, req resource.SchemaRequest,
 	}
 }
 
-func (r *FolderResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
-	var state FolderModel
-	resp.Diagnostics.Append(req.Config.Get(ctx, &state)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	betaFeaturesEnabledEnv := os.Getenv("PORT_BETA_FEATURES_ENABLED")
-	if betaFeaturesEnabledEnv != "true" {
-		resp.Diagnostics.AddError("Beta features are not enabled", "Folder resource is currently in beta and is subject to change in future versions. Use it by setting the Environment Variable PORT_BETA_FEATURES_ENABLED=true.")
-		return
-	}
-}
-
 var FolderResourceMarkdownDescription = `
 
 # Folder resource
 
 For more information about folders, see the [Port documentation](https://docs.port.io/customize-pages-dashboards-and-plugins/page/folders#folder-identifiers).
-
-~> **WARNING**
-The folder resource is currently in beta and is subject to change in future versions.
-Use it by setting the Environment Variable ` + "`PORT_BETA_FEATURES_ENABLED=true`" + `.
-If this Environment Variable isn't specified, you won't be able to use the resource.
 
 ## Example Usage
 

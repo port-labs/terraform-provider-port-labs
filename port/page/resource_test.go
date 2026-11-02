@@ -2,7 +2,6 @@ package page_test
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -249,13 +248,9 @@ resource "port_page" "entity_page" {
 `, identifier, pageFilters, testAccEntityPageWidgets(widgetTitle))
 }
 
-func TestAccPortPageResourceBasicBetaEnabled(t *testing.T) {
+func TestAccPortPageResourceBasic(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	pageIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortPageResourceBasic = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
 
 resource "port_page" "microservice_blueprint_page" {
@@ -300,57 +295,8 @@ resource "port_page" "microservice_blueprint_page" {
 	})
 }
 
-func TestAccPortPageResourceBasicBetaDisabled(t *testing.T) {
-	blueprintIdentifier := utils.GenID()
-	pageIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "false")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var testAccPortPageResourceBasic = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
-
-resource "port_page" "microservice_blueprint_page" {
-  identifier            = "%s"
-  title                 = "Microservices"
-  icon                  = "Microservice"
-  blueprint             = port_blueprint.microservice.identifier
-  type                  = "blueprint-entities"
-  widgets               = [
-    jsonencode(
-      {
-        "id" : "blabla",
-        "type" : "table-entities-explorer",
-        "blueprint" : port_blueprint.microservice.identifier,
-        "dataset" : {
-          "combinator" : "and",
-          "rules" : [
-          ]
-        }
-      }
-    )
-  ]
-}
-`, pageIdentifier)
-
-	// expect to fail on beta feature not enabled
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config:      acctest.ProviderConfig + testAccPortPageResourceBasic,
-				ExpectError: regexp.MustCompile("Beta features are not enabled"),
-			},
-		},
-	})
-}
-
 func TestAccPortPageResourceCreateDashboardPage(t *testing.T) {
 	pageIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortPageResourceBasic = fmt.Sprintf(`
 
 resource "port_page" "microservice_dashboard_page" {
@@ -412,10 +358,6 @@ resource "port_page" "microservice_dashboard_page" {
 
 func TestAccPortPageResourceCreatePageAfterPage(t *testing.T) {
 	pageIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortPageResourceBasic = fmt.Sprintf(`
 
 resource "port_page" "microservice_dashboard_page" {
@@ -522,10 +464,6 @@ resource "port_page" "microservice_dashboard_page_2" {
 
 func TestAccPortPageResourceWithoutFilters(t *testing.T) {
 	pageIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortPageResourceWithoutFilters = fmt.Sprintf(`
 resource "port_page" "page_without_filters" {
   identifier = "%s"
@@ -585,10 +523,6 @@ resource "port_page" "page_without_filters" {
 // changed from []types.String to types.List to handle unknown list values during planning.
 func TestAccPortPageResourceWithForExpression(t *testing.T) {
 	pageIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	var testAccPortPageResourceWithForExpression = fmt.Sprintf(`
 locals {
@@ -677,10 +611,6 @@ resource "port_page" "for_expression_page" {
 func TestAccPortPageResourceEntityPage(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	entityPageIdentifier := blueprintIdentifier + "Entity"
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	blueprintConfig := testAccCreateBlueprintConfig(blueprintIdentifier)
 	entityPageConfig := testAccEntityPageConfig(entityPageIdentifier, testAccEntityPageSinglePageFilter, "Details")
@@ -708,10 +638,6 @@ func TestAccPortPageResourceEntityPage(t *testing.T) {
 func TestAccPortPageResourceEntityPageUpdatePageFilters(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	entityPageIdentifier := blueprintIdentifier + "Entity"
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	blueprintConfig := testAccCreateBlueprintConfig(blueprintIdentifier)
 	entityPageConfig := testAccEntityPageConfig(entityPageIdentifier, testAccEntityPageSinglePageFilter, "Details")
@@ -742,10 +668,6 @@ func TestAccPortPageResourceEntityPageUpdatePageFilters(t *testing.T) {
 
 func TestAccPortPageResourceEntityPageCreateNotSupported(t *testing.T) {
 	entityPageIdentifier := utils.GenID() + "Entity"
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	config := fmt.Sprintf(`
 resource "port_page" "entity_page" {
@@ -771,10 +693,6 @@ resource "port_page" "entity_page" {
 
 func TestAccPortPageResourceInvalidType(t *testing.T) {
 	pageIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	config := fmt.Sprintf(`
 resource "port_page" "invalid_type_page" {
@@ -800,10 +718,6 @@ func TestAccPortPageResourceWithFilters(t *testing.T) {
 	serviceBlueprintIdentifier := utils.GenID()
 	clusterBlueprintIdentifier := utils.GenID()
 	pageIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	var testAccPortPageResourceWithFilters = fmt.Sprintf(`
 resource "port_blueprint" "service" {
@@ -996,10 +910,6 @@ resource "port_page" "page_with_filters" {
 func TestAccPortPageResourceWithFilterPresets(t *testing.T) {
 	serviceBlueprintIdentifier := utils.GenID()
 	pageIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 
 	config := func(presetTitle string) string {
 		return fmt.Sprintf(`

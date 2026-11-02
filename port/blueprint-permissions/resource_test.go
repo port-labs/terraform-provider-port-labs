@@ -2,7 +2,6 @@ package blueprint_permissions_test
 
 import (
 	"fmt"
-	"os"
 	"regexp"
 	"testing"
 
@@ -57,10 +56,6 @@ resource "port_blueprint" "microservice" {
 
 func TestAccPortBlueprintPermissionsBasic(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortBlueprintResourceBasic = createBlueprint(blueprintIdentifier)
 
 	var testAccBaseBlueprintPermissionsConfigUpdate = `
@@ -156,10 +151,6 @@ func TestAccPortBlueprintPermissionsBasic(t *testing.T) {
 
 func TestAccPortBlueprintPermissionsWithProperties(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortBlueprintResourceBasic = createBlueprintWithProperties(blueprintIdentifier)
 
 	var testAccBaseBlueprintPermissionsConfigUpdate = `
@@ -262,10 +253,6 @@ func TestAccPortBlueprintPermissionsWithProperties(t *testing.T) {
 func TestAccPortBlueprintPermissionsWithRelations(t *testing.T) {
 	blueprintMicroserviceIdentifier := utils.GenID()
 	blueprintEnvIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortBlueprintResourceBasic = fmt.Sprintf(`
 resource "port_blueprint" "environment" {
   title      = "Environment"
@@ -430,10 +417,6 @@ resource "port_blueprint" "microservice" {
 
 func TestAccPortBlueprintPermissionsWithInvalidProperties(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortBlueprintResourceBasic = createBlueprintWithProperties(blueprintIdentifier)
 
 	teamName := utils.GenID()
@@ -523,10 +506,6 @@ func TestAccPortBlueprintPermissionsWithInvalidProperties(t *testing.T) {
 
 func TestAccPortBlueprintPermissionsWithPolicy(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortBlueprintResourceBasic = createBlueprint(blueprintIdentifier)
 
 	readPolicy := `{"combinator":"and","rules":[{"operator":"=","property":{"context":"user","property":"$identifier"},"value":"true"}]}`

@@ -50,6 +50,9 @@ func validateIntegrationConfig(m *IntegrationModel) error {
 			consts.InstallationTypeSaasOAuth2,
 		)
 	}
+	if err := validateNotificationChannels(m); err != nil {
+		return err
+	}
 
 	return nil
 }

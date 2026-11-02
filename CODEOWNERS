@@ -9,6 +9,8 @@
 /port/organization/ @port-labs/buildops
 
 /port/integration/ @port-labs/connect-team
+/port/integration/notification_channels.go @port-labs/lighthouse-team
+/port/integration/notification_channels_test.go @port-labs/lighthouse-team
 
 /port/page/ @port-labs/spotlight-team
 /port/page-permissions/ @port-labs/spotlight-team
@@ -57,6 +59,7 @@
 /internal/cli/organization.go @port-labs/buildops
 
 /internal/cli/integration.go @port-labs/connect-team
+/internal/cli/integration_optin_test.go @port-labs/lighthouse-team
 
 /internal/consts/integration.go @port-labs/connect-team
 

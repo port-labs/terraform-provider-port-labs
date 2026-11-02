@@ -83,6 +83,18 @@ func (r *IntegrationResource) Create(ctx context.Context, req resource.CreateReq
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	// The integration already exists, so an error here would taint it and the
+	// next apply would replace it. Warn instead: Read refreshes the channels
+	// from Port, so the next apply retries them through Update.
+	if err := r.applyNotificationChannels(ctx, created.InstallationId, plan.NotificationChannels); err != nil {
+		resp.Diagnostics.AddWarning(
+			"integration created but notification channels were not set",
+			err.Error()+". Run 'terraform apply' again to retry.",
+		)
+	}
 }
 
 func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
@@ -105,6 +117,12 @@ func (r *IntegrationResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	r.refreshIntegrationState(state, a, integrationIdentifier)
+	channels, err := r.refreshNotificationChannels(ctx, integrationIdentifier, state.NotificationChannels)
+	if err != nil {
+		resp.Diagnostics.AddError("failed reading notification channels", err.Error())
+		return
+	}
+	state.NotificationChannels = channels
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
 
@@ -131,6 +149,14 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 		return
 	}
 
+	// Port treats any spec on the body as a spec patch and starts an operator
+	// sync, even when the value is unchanged. Leave it off, and skip the ready
+	// wait, unless the planned spec actually differs.
+	specChanged := !plan.Spec.Equal(state.Spec)
+	if !specChanged {
+		body.Spec = nil
+	}
+
 	updated, err := r.portClient.UpdateIntegration(ctx, integrationIdentifier, body)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update integration", err.Error())
@@ -139,11 +165,19 @@ func (r *IntegrationResource) Update(ctx context.Context, req resource.UpdateReq
 
 	applyWriteResult(plan, updated, integrationIdentifier)
 
-	if plan.isHosted() {
+	if plan.isHosted() && specChanged {
 		r.awaitInfra(ctx, plan, integrationIdentifier, "updated", true, false, &resp.Diagnostics)
 	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &plan)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	if notificationChannelsChanged(state.NotificationChannels, plan.NotificationChannels) {
+		if err := r.applyNotificationChannels(ctx, integrationIdentifier, plan.NotificationChannels); err != nil {
+			resp.Diagnostics.AddError("failed to set notification channels", err.Error())
+		}
+	}
 }
 
 func (r *IntegrationResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {

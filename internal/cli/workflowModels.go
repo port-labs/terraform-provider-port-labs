@@ -93,7 +93,6 @@ type WorkflowNodeConfig struct {
 	// Shared by most invocation node types.
 	OnFailure *string `json:"onFailure,omitempty"`
 
-	// Every node type except the triggers.
 	TimeoutMinutes *int64 `json:"timeoutMinutes,omitempty"`
 }
 

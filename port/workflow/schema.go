@@ -85,8 +85,6 @@ func onFailureAttribute() schema.Attribute {
 const timeoutMinutesDescription = "The maximum time in minutes a run of this node may stay open before it times out. " +
 	"Between `60` and `43200` (30 days). "
 
-// Port stores its per-type default when timeoutMinutes is omitted, so the same
-// static default here keeps plans empty and lets removing the attribute restore it.
 func timeoutMinutesAttribute(defaultMinutes int64) schema.Attribute {
 	return schema.Int64Attribute{
 		MarkdownDescription: timeoutMinutesDescription + fmt.Sprintf("Defaults to `%d`, Port's default for this node type.", defaultMinutes),
@@ -476,7 +474,6 @@ func webhookBlock() schema.Block {
 				},
 			},
 			"on_failure": onFailureAttribute(),
-			// Port stores nothing when omitted and resolves the default per run, so there is no static default.
 			"timeout_minutes": schema.Int64Attribute{
 				MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default per run: " +
 					"`1440` when `agent` is true or `synchronized` is false, `60` otherwise.",
@@ -508,7 +505,6 @@ func integrationActionBlock() schema.Block {
 				Optional:            true,
 			},
 			"on_failure": onFailureAttribute(),
-			// Port stores nothing when omitted and resolves the default per run, so there is no static default.
 			"timeout_minutes": schema.Int64Attribute{
 				MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default per run: " +
 					"`4320` for every `cursor-cloud-agents` action, `1440` otherwise.",

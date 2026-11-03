@@ -2310,9 +2310,6 @@ func TestMixedNotificationsRoundTrip(t *testing.T) {
 	assert.Equal(t, notifications, result)
 }
 
-// Port's per-type timeoutMinutes defaults, from workflowInvocation.ts in the
-// workflow-service-client package. WEBHOOK has none: the workflow service
-// resolves it at run time from agent and synchronized.
 type nodeTimeoutCase struct {
 	block          string
 	configType     string
@@ -2439,7 +2436,6 @@ func TestNodeTimeoutMinutesSchema(t *testing.T) {
 			assert.True(t, attribute.Optional)
 
 			if c.defaultMinutes == nil {
-				// Port stores no value when omitted, so a computed default would drift.
 				assert.False(t, attribute.Computed)
 				assert.Nil(t, attribute.Default)
 			} else {

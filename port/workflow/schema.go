@@ -511,7 +511,7 @@ func integrationActionBlock() schema.Block {
 			// Port stores nothing when omitted and resolves the default per run, so there is no static default.
 			"timeout_minutes": schema.Int64Attribute{
 				MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default per run: " +
-					"`4320` for `cursor-cloud-agents` with `create_agent` or `trigger_agent`, `1440` otherwise.",
+					"`4320` for every `cursor-cloud-agents` action, `1440` otherwise.",
 				Optional:   true,
 				Validators: []validator.Int64{int64validator.Between(minTimeoutMinutes, maxTimeoutMinutes)},
 			},

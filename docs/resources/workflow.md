@@ -810,7 +810,7 @@ Optional:
 - `integration_invocation_type` (String) The invocation type of the integration action.
 - `integration_provider` (String) The provider of the integration action.
 - `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
-- `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default per run: `4320` for `cursor-cloud-agents` with `create_agent` or `trigger_agent`, `1440` otherwise.
+- `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default per run: `4320` for every `cursor-cloud-agents` action, `1440` otherwise.
 
 
 <a id="nestedblock--node--kafka"></a>

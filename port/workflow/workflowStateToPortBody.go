@@ -129,6 +129,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.Kafka != nil:
 		config.Type = consts.Kafka
+		config.TimeoutMinutes = n.Kafka.TimeoutMinutes.ValueInt64Pointer()
 		config.OnFailure = n.Kafka.OnFailure.ValueStringPointer()
 		payload, err := jsonStringToAny(n.Kafka.Payload)
 		if err != nil {
@@ -138,6 +139,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.Webhook != nil:
 		config.Type = consts.Webhook
+		config.TimeoutMinutes = n.Webhook.TimeoutMinutes.ValueInt64Pointer()
 		w := n.Webhook
 		config.Url = w.Url.ValueStringPointer()
 		config.Agent = w.Agent.ValueBoolPointer()
@@ -160,6 +162,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.IntegrationAction != nil:
 		config.Type = consts.IntegrationAction
+		config.TimeoutMinutes = n.IntegrationAction.TimeoutMinutes.ValueInt64Pointer()
 		i := n.IntegrationAction
 		config.InstallationId = i.InstallationId.ValueStringPointer()
 		config.IntegrationProvider = i.IntegrationProvider.ValueStringPointer()
@@ -174,6 +177,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.UpsertEntity != nil:
 		config.Type = consts.UpsertEntity
+		config.TimeoutMinutes = n.UpsertEntity.TimeoutMinutes.ValueInt64Pointer()
 		u := n.UpsertEntity
 		config.BlueprintIdentifier = u.BlueprintIdentifier.ValueStringPointer()
 		config.OnFailure = u.OnFailure.ValueStringPointer()
@@ -188,6 +192,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.AI != nil:
 		config.Type = consts.AI
+		config.TimeoutMinutes = n.AI.TimeoutMinutes.ValueInt64Pointer()
 		a := n.AI
 		config.UserPrompt = a.UserPrompt.ValueStringPointer()
 		config.SystemPrompt = a.SystemPrompt.ValueStringPointer()
@@ -212,6 +217,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.AIAgent != nil:
 		config.Type = consts.AIAgent
+		config.TimeoutMinutes = n.AIAgent.TimeoutMinutes.ValueInt64Pointer()
 		a := n.AIAgent
 		config.UserPrompt = a.UserPrompt.ValueStringPointer()
 		config.AgentIdentifier = a.AgentIdentifier.ValueStringPointer()
@@ -226,6 +232,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.Condition != nil:
 		config.Type = consts.ConditionNode
+		config.TimeoutMinutes = n.Condition.TimeoutMinutes.ValueInt64Pointer()
 		outlets := make([]cli.WorkflowOutlet, 0, len(n.Condition.Outlets))
 		for _, o := range n.Condition.Outlets {
 			outlets = append(outlets, cli.WorkflowOutlet{
@@ -240,6 +247,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.Input != nil:
 		config.Type = consts.InputNode
+		config.TimeoutMinutes = n.Input.TimeoutMinutes.ValueInt64Pointer()
 		i := n.Input
 		config.Description = i.Description.ValueStringPointer()
 

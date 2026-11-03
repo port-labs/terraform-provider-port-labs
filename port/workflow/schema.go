@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"context"
+	"fmt"
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -11,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -47,6 +49,8 @@ const (
 	maxDescriptionLength = 1100
 	maxCategoryLength    = 40
 	maxNodesCount        = 100
+	minTimeoutMinutes    = 60
+	maxTimeoutMinutes    = 30 * 24 * 60
 )
 
 var identifierPattern = regexp.MustCompile(`^[\p{L}0-9@_:-]+$`)
@@ -75,6 +79,21 @@ func onFailureAttribute() schema.Attribute {
 		Validators: []validator.String{
 			stringvalidator.OneOf("continue", "terminate"),
 		},
+	}
+}
+
+const timeoutMinutesDescription = "The maximum time in minutes a run of this node may stay open before it times out. " +
+	"Between `60` and `43200` (30 days). "
+
+// Port stores its per-type default when timeoutMinutes is omitted, so the same
+// static default here keeps plans empty and lets removing the attribute restore it.
+func timeoutMinutesAttribute(defaultMinutes int64) schema.Attribute {
+	return schema.Int64Attribute{
+		MarkdownDescription: timeoutMinutesDescription + fmt.Sprintf("Defaults to `%d`, Port's default for this node type.", defaultMinutes),
+		Optional:            true,
+		Computed:            true,
+		Default:             int64default.StaticInt64(defaultMinutes),
+		Validators:          []validator.Int64{int64validator.Between(minTimeoutMinutes, maxTimeoutMinutes)},
 	}
 }
 
@@ -403,7 +422,8 @@ func kafkaBlock() schema.Block {
 				MarkdownDescription: "The Kafka message payload as a JSON encoded string.",
 				Optional:            true,
 			},
-			"on_failure": onFailureAttribute(),
+			"on_failure":      onFailureAttribute(),
+			"timeout_minutes": timeoutMinutesAttribute(60),
 		},
 	}
 }
@@ -456,6 +476,13 @@ func webhookBlock() schema.Block {
 				},
 			},
 			"on_failure": onFailureAttribute(),
+			// Port stores nothing when omitted and resolves the default per run, so there is no static default.
+			"timeout_minutes": schema.Int64Attribute{
+				MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default per run: " +
+					"`1440` when `agent` is true or `synchronized` is false, `60` otherwise.",
+				Optional:   true,
+				Validators: []validator.Int64{int64validator.Between(minTimeoutMinutes, maxTimeoutMinutes)},
+			},
 		},
 	}
 }
@@ -480,7 +507,8 @@ func integrationActionBlock() schema.Block {
 				MarkdownDescription: "The integration action execution properties as a JSON encoded string.",
 				Optional:            true,
 			},
-			"on_failure": onFailureAttribute(),
+			"on_failure":      onFailureAttribute(),
+			"timeout_minutes": timeoutMinutesAttribute(1440),
 		},
 	}
 }
@@ -493,7 +521,8 @@ func upsertEntityBlock() schema.Block {
 				MarkdownDescription: "The identifier of the blueprint to upsert into.",
 				Optional:            true,
 			},
-			"on_failure": onFailureAttribute(),
+			"on_failure":      onFailureAttribute(),
+			"timeout_minutes": timeoutMinutesAttribute(60),
 		},
 		Blocks: map[string]schema.Block{
 			"mapping": schema.SingleNestedBlock{
@@ -535,6 +564,7 @@ func aiBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "An AI node that runs a prompt through Port AI.",
 		Attributes: map[string]schema.Attribute{
+			"timeout_minutes": timeoutMinutesAttribute(1440),
 			"user_prompt": schema.StringAttribute{
 				MarkdownDescription: "The message or query processed by Port AI.",
 				Optional:            true,
@@ -592,6 +622,7 @@ func aiAgentBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "An AI agent node that invokes a configured Port AI agent.",
 		Attributes: map[string]schema.Attribute{
+			"timeout_minutes": timeoutMinutesAttribute(1440),
 			"user_prompt": schema.StringAttribute{
 				MarkdownDescription: "The message or query processed by the agent.",
 				Optional:            true,
@@ -626,6 +657,9 @@ func aiAgentBlock() schema.Block {
 func conditionBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "A condition node that branches the workflow based on JQ expressions. Connections leaving this node must set `source_outlet_identifier` or `fallback`.",
+		Attributes: map[string]schema.Attribute{
+			"timeout_minutes": timeoutMinutesAttribute(60),
+		},
 		Blocks: map[string]schema.Block{
 			"outlets": schema.ListNestedBlock{
 				MarkdownDescription: "The branches of the condition, evaluated in order.",
@@ -662,6 +696,7 @@ func inputBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "An input node that pauses the workflow and waits for a human response. Connections leaving this node must set `source_outlet_identifier`.",
 		Attributes: map[string]schema.Attribute{
+			"timeout_minutes": timeoutMinutesAttribute(7 * 24 * 60),
 			"description": schema.StringAttribute{
 				MarkdownDescription: "The description shown on the response form.",
 				Optional:            true,

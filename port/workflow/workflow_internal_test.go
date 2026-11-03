@@ -2333,7 +2333,7 @@ func nodeTimeoutCases() []nodeTimeoutCase {
 				return WorkflowNodeModel{Webhook: &WebhookModel{TimeoutMinutes: v}}
 			},
 			func(n WorkflowNodeModel) types.Int64 { return n.Webhook.TimeoutMinutes }},
-		{"integration_action", consts.IntegrationAction, int64Ptr(1440),
+		{"integration_action", consts.IntegrationAction, nil,
 			func(v types.Int64) WorkflowNodeModel {
 				return WorkflowNodeModel{IntegrationAction: &IntegrationActionModel{TimeoutMinutes: v}}
 			},

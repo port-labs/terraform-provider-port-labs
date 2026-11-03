@@ -507,8 +507,14 @@ func integrationActionBlock() schema.Block {
 				MarkdownDescription: "The integration action execution properties as a JSON encoded string.",
 				Optional:            true,
 			},
-			"on_failure":      onFailureAttribute(),
-			"timeout_minutes": timeoutMinutesAttribute(1440),
+			"on_failure": onFailureAttribute(),
+			// Port stores nothing when omitted and resolves the default per run, so there is no static default.
+			"timeout_minutes": schema.Int64Attribute{
+				MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default per run: " +
+					"`4320` for `cursor-cloud-agents` with `create_agent` or `trigger_agent`, `1440` otherwise.",
+				Optional:   true,
+				Validators: []validator.Int64{int64validator.Between(minTimeoutMinutes, maxTimeoutMinutes)},
+			},
 		},
 	}
 }

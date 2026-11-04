@@ -733,6 +733,10 @@ func TestAccPortWorkflowNodeTimeout(t *testing.T) {
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
+				Config:      acctest.ProviderConfig + config("timeout_minutes = 59", ""),
+				ExpectError: regexp.MustCompile(`between 60 and 43200`),
+			},
+			{
 				Config: acctest.ProviderConfig + config("timeout_minutes = 120", ""),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_workflow.timeouts", "node.1.webhook.timeout_minutes", "120"),
@@ -745,10 +749,6 @@ func TestAccPortWorkflowNodeTimeout(t *testing.T) {
 					resource.TestCheckNoResourceAttr("port_workflow.timeouts", "node.1.webhook.timeout_minutes"),
 					resource.TestCheckResourceAttr("port_workflow.timeouts", "node.2.upsert_entity.timeout_minutes", "180"),
 				),
-			},
-			{
-				Config:      acctest.ProviderConfig + config("timeout_minutes = 59", ""),
-				ExpectError: regexp.MustCompile(`between 60 and 43200`),
 			},
 		},
 	})

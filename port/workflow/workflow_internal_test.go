@@ -2382,9 +2382,14 @@ func TestNodeTimeoutMinutesToPortBody(t *testing.T) {
 			require.NotNil(t, set.TimeoutMinutes)
 			assert.Equal(t, int64(120), *set.TimeoutMinutes)
 
+			for _, v := range []types.Int64{types.Int64Null(), types.Int64Unknown()} {
+				unset, err := nodeConfigToPortBody(ctx, c.withTimeout(v))
+				require.NoError(t, err)
+				assert.Nil(t, unset.TimeoutMinutes)
+			}
+
 			unset, err := nodeConfigToPortBody(ctx, c.withTimeout(types.Int64Null()))
 			require.NoError(t, err)
-			assert.Nil(t, unset.TimeoutMinutes)
 
 			raw, err := json.Marshal(unset)
 			require.NoError(t, err)

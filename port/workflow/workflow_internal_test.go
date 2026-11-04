@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -2311,49 +2310,49 @@ func TestMixedNotificationsRoundTrip(t *testing.T) {
 }
 
 type nodeTimeoutCase struct {
-	block          string
-	configType     string
-	defaultMinutes *int64
-	withTimeout    func(types.Int64) WorkflowNodeModel
-	timeoutOf      func(WorkflowNodeModel) types.Int64
+	block       string
+	configType  string
+	computed    bool
+	withTimeout func(types.Int64) WorkflowNodeModel
+	timeoutOf   func(WorkflowNodeModel) types.Int64
 }
 
 func int64Ptr(v int64) *int64 { return &v }
 
 func nodeTimeoutCases() []nodeTimeoutCase {
 	return []nodeTimeoutCase{
-		{"kafka", consts.Kafka, int64Ptr(60),
+		{"kafka", consts.Kafka, true,
 			func(v types.Int64) WorkflowNodeModel { return WorkflowNodeModel{Kafka: &KafkaModel{TimeoutMinutes: v}} },
 			func(n WorkflowNodeModel) types.Int64 { return n.Kafka.TimeoutMinutes }},
-		{"webhook", consts.Webhook, nil,
+		{"webhook", consts.Webhook, false,
 			func(v types.Int64) WorkflowNodeModel {
 				return WorkflowNodeModel{Webhook: &WebhookModel{TimeoutMinutes: v}}
 			},
 			func(n WorkflowNodeModel) types.Int64 { return n.Webhook.TimeoutMinutes }},
-		{"integration_action", consts.IntegrationAction, nil,
+		{"integration_action", consts.IntegrationAction, false,
 			func(v types.Int64) WorkflowNodeModel {
 				return WorkflowNodeModel{IntegrationAction: &IntegrationActionModel{TimeoutMinutes: v}}
 			},
 			func(n WorkflowNodeModel) types.Int64 { return n.IntegrationAction.TimeoutMinutes }},
-		{"upsert_entity", consts.UpsertEntity, int64Ptr(60),
+		{"upsert_entity", consts.UpsertEntity, true,
 			func(v types.Int64) WorkflowNodeModel {
 				return WorkflowNodeModel{UpsertEntity: &UpsertEntityModel{TimeoutMinutes: v}}
 			},
 			func(n WorkflowNodeModel) types.Int64 { return n.UpsertEntity.TimeoutMinutes }},
-		{"ai", consts.AI, int64Ptr(1440),
+		{"ai", consts.AI, true,
 			func(v types.Int64) WorkflowNodeModel { return WorkflowNodeModel{AI: &AIModel{TimeoutMinutes: v}} },
 			func(n WorkflowNodeModel) types.Int64 { return n.AI.TimeoutMinutes }},
-		{"ai_agent", consts.AIAgent, int64Ptr(1440),
+		{"ai_agent", consts.AIAgent, true,
 			func(v types.Int64) WorkflowNodeModel {
 				return WorkflowNodeModel{AIAgent: &AIAgentModel{TimeoutMinutes: v}}
 			},
 			func(n WorkflowNodeModel) types.Int64 { return n.AIAgent.TimeoutMinutes }},
-		{"condition", consts.ConditionNode, int64Ptr(60),
+		{"condition", consts.ConditionNode, true,
 			func(v types.Int64) WorkflowNodeModel {
 				return WorkflowNodeModel{Condition: &ConditionModel{TimeoutMinutes: v}}
 			},
 			func(n WorkflowNodeModel) types.Int64 { return n.Condition.TimeoutMinutes }},
-		{"input", consts.InputNode, int64Ptr(10080),
+		{"input", consts.InputNode, true,
 			func(v types.Int64) WorkflowNodeModel { return WorkflowNodeModel{Input: &InputModel{TimeoutMinutes: v}} },
 			func(n WorkflowNodeModel) types.Int64 { return n.Input.TimeoutMinutes }},
 	}
@@ -2435,15 +2434,12 @@ func TestNodeTimeoutMinutesSchema(t *testing.T) {
 			require.True(t, ok, "timeout_minutes must be an Int64 attribute")
 			assert.True(t, attribute.Optional)
 
-			if c.defaultMinutes == nil {
+			if !c.computed {
 				assert.False(t, attribute.Computed)
 				assert.Nil(t, attribute.Default)
 			} else {
 				assert.True(t, attribute.Computed)
-				require.NotNil(t, attribute.Default)
-				defaultResp := &defaults.Int64Response{}
-				attribute.Default.DefaultInt64(ctx, defaults.Int64Request{}, defaultResp)
-				assert.Equal(t, types.Int64Value(*c.defaultMinutes), defaultResp.PlanValue)
+				assert.Nil(t, attribute.Default)
 			}
 
 			for value, valid := range map[int64]bool{59: false, 60: true, 43200: true, 43201: false} {

@@ -2,7 +2,6 @@ package workflow
 
 import (
 	"context"
-	"fmt"
 	"regexp"
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -12,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -85,12 +83,11 @@ func onFailureAttribute() schema.Attribute {
 const timeoutMinutesDescription = "The maximum time in minutes a run of this node may stay open before it times out. " +
 	"Between `60` and `43200` (30 days). "
 
-func timeoutMinutesAttribute(defaultMinutes int64) schema.Attribute {
+func timeoutMinutesAttribute() schema.Attribute {
 	return schema.Int64Attribute{
-		MarkdownDescription: timeoutMinutesDescription + fmt.Sprintf("Defaults to `%d`, Port's default for this node type.", defaultMinutes),
+		MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default for this node type.",
 		Optional:            true,
 		Computed:            true,
-		Default:             int64default.StaticInt64(defaultMinutes),
 		Validators:          []validator.Int64{int64validator.Between(minTimeoutMinutes, maxTimeoutMinutes)},
 	}
 }
@@ -421,7 +418,7 @@ func kafkaBlock() schema.Block {
 				Optional:            true,
 			},
 			"on_failure":      onFailureAttribute(),
-			"timeout_minutes": timeoutMinutesAttribute(60),
+			"timeout_minutes": timeoutMinutesAttribute(),
 		},
 	}
 }
@@ -524,7 +521,7 @@ func upsertEntityBlock() schema.Block {
 				Optional:            true,
 			},
 			"on_failure":      onFailureAttribute(),
-			"timeout_minutes": timeoutMinutesAttribute(60),
+			"timeout_minutes": timeoutMinutesAttribute(),
 		},
 		Blocks: map[string]schema.Block{
 			"mapping": schema.SingleNestedBlock{
@@ -566,7 +563,7 @@ func aiBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "An AI node that runs a prompt through Port AI.",
 		Attributes: map[string]schema.Attribute{
-			"timeout_minutes": timeoutMinutesAttribute(1440),
+			"timeout_minutes": timeoutMinutesAttribute(),
 			"user_prompt": schema.StringAttribute{
 				MarkdownDescription: "The message or query processed by Port AI.",
 				Optional:            true,
@@ -624,7 +621,7 @@ func aiAgentBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "An AI agent node that invokes a configured Port AI agent.",
 		Attributes: map[string]schema.Attribute{
-			"timeout_minutes": timeoutMinutesAttribute(1440),
+			"timeout_minutes": timeoutMinutesAttribute(),
 			"user_prompt": schema.StringAttribute{
 				MarkdownDescription: "The message or query processed by the agent.",
 				Optional:            true,
@@ -660,7 +657,7 @@ func conditionBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "A condition node that branches the workflow based on JQ expressions. Connections leaving this node must set `source_outlet_identifier` or `fallback`.",
 		Attributes: map[string]schema.Attribute{
-			"timeout_minutes": timeoutMinutesAttribute(60),
+			"timeout_minutes": timeoutMinutesAttribute(),
 		},
 		Blocks: map[string]schema.Block{
 			"outlets": schema.ListNestedBlock{
@@ -698,7 +695,7 @@ func inputBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "An input node that pauses the workflow and waits for a human response. Connections leaving this node must set `source_outlet_identifier`.",
 		Attributes: map[string]schema.Attribute{
-			"timeout_minutes": timeoutMinutesAttribute(7 * 24 * 60),
+			"timeout_minutes": timeoutMinutesAttribute(),
 			"description": schema.StringAttribute{
 				MarkdownDescription: "The description shown on the response form.",
 				Optional:            true,

@@ -136,7 +136,7 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 			return
 		}
 
-		p, err := r.portClient.UpdatePage(ctx, page.Identifier, page)
+		_, err = r.portClient.UpdatePage(ctx, page.Identifier, page)
 		if err != nil {
 			resp.Diagnostics.AddError("failed to update page", err.Error())
 			return
@@ -148,7 +148,8 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 			return
 		}
 
-		state.ID = types.StringValue(p.Identifier)
+		// Use updatedPage.Identifier since the UpdatePage response may have an empty identifier
+		state.ID = types.StringValue(updatedPage.Identifier)
 		state.CreatedAt = types.StringValue(updatedPage.CreatedAt.String())
 		state.CreatedBy = types.StringValue(updatedPage.CreatedBy)
 		state.UpdatedAt = types.StringValue(updatedPage.UpdatedAt.String())

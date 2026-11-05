@@ -31,7 +31,7 @@ func (r *Resource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *r
 	blueprintSchemas := blueprint.BlueprintSchema()
 
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Port System Blueprint Resource. This resource is used to extend system blueprints with additional properties and relations.",
+		MarkdownDescription: systemBlueprintMarkdownDescription,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -55,3 +55,65 @@ func (r *Resource) Schema(ctx context.Context, _ resource.SchemaRequest, resp *r
 		},
 	}
 }
+
+var systemBlueprintMarkdownDescription = `
+
+# System Blueprint Resource
+
+Extends Port system blueprints (` + "`_user`" + `, ` + "`_team`" + `, etc.) with additional properties, relations, and calculation properties. System blueprints are built-in blueprints that Port provides for common concepts.
+
+~> **Note:** System blueprints cannot be created or deleted. This resource only manages extensions (properties, relations) added to them. Changes affect all entities of that system blueprint across the organization.
+
+## Example Usage
+
+### Add custom properties to the _user blueprint
+
+` + "```hcl" + `
+resource "port_system_blueprint" "user" {
+  identifier = "_user"
+  properties = {
+    string_props = {
+      "department" = {
+        title = "Department"
+      }
+      "github_username" = {
+        title = "GitHub Username"
+      }
+    }
+  }
+}
+` + "```" + `
+
+### Add relation to the _team blueprint
+
+` + "```hcl" + `
+resource "port_blueprint" "cost_center" {
+  identifier = "cost_center"
+  title      = "Cost Center"
+}
+
+resource "port_system_blueprint" "team" {
+  identifier = "_team"
+  relations = {
+    "cost_center" = {
+      title  = "Cost Center"
+      target = port_blueprint.cost_center.identifier
+    }
+  }
+}
+` + "```" + `
+
+## Available System Blueprints
+
+- ` + "`_user`" + ` - Port users
+- ` + "`_team`" + ` - Port teams
+- ` + "`_rule`" + ` - Scorecard rules (when scorecard groups are enabled)
+
+## Import
+
+System blueprints can be imported using their identifier:
+
+` + "```shell" + `
+terraform import port_system_blueprint.user _user
+` + "```" + `
+`

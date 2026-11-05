@@ -935,8 +935,146 @@ func WorkflowBlocks() map[string]schema.Block {
 
 func (r *WorkflowResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Workflow resource for managing Port workflows and their node/connection graph",
+		MarkdownDescription: workflowResourceMarkdownDescription,
 		Attributes:          WorkflowSchema(),
 		Blocks:              WorkflowBlocks(),
 	}
 }
+
+var workflowResourceMarkdownDescription = `
+
+# Workflow Resource
+
+Manages a Port workflow. Workflows are directed graphs of nodes that can be triggered manually (self-service), by events, or on a schedule.
+
+Docs about workflows can be found [here](https://docs.getport.io/actions-and-automations/create-self-service-experiences/setup-ui-for-action/workflow/).
+
+## Example Usage
+
+### Self-service workflow with approval
+
+` + "```hcl" + `
+resource "port_workflow" "deploy_service" {
+  identifier  = "deploy-service"
+  title       = "Deploy Service"
+  description = "Deploy a service to production"
+
+  node {
+    identifier = "trigger"
+    title      = "Deployment Request"
+
+    self_serve_trigger {
+      user_inputs {
+        user_properties = {
+          string_props = {
+            "service" = {
+              title    = "Service"
+              format   = "entity"
+              blueprint = "service"
+              required = true
+            }
+          }
+        }
+      }
+      permissions {
+        roles = ["Member"]
+      }
+    }
+  }
+
+  node {
+    identifier = "approval"
+
+    input {
+      description = "Approve this deployment?"
+      user_inputs {
+        buttons = [
+          {
+            identifier = "approve"
+            label      = "Approve"
+            variant    = "PRIMARY"
+          },
+          {
+            identifier = "reject"
+            label      = "Reject"
+            variant    = "DANGER"
+          },
+        ]
+      }
+      outlets {
+        identifier        = "approve"
+        title             = "Approved"
+        num_of_responders = 1
+      }
+      responders {
+        roles = ["Admin"]
+      }
+    }
+  }
+
+  node {
+    identifier = "deploy"
+    webhook {
+      url    = "https://ci.example.com/deploy"
+      method = "POST"
+      body   = jsonencode({
+        service = "{{ .outputs.trigger.inputs.service.identifier }}"
+      })
+    }
+  }
+
+  connections {
+    source_identifier = "trigger"
+    target_identifier = "approval"
+  }
+
+  connections {
+    source_identifier        = "approval"
+    target_identifier        = "deploy"
+    source_outlet_identifier = "approve"
+  }
+}
+` + "```" + `
+
+### Event-triggered workflow
+
+` + "```hcl" + `
+resource "port_workflow" "on_service_update" {
+  identifier = "on-service-update"
+  title      = "On Service Update"
+
+  node {
+    identifier = "trigger"
+
+    event_trigger {
+      type                 = "ENTITY_UPDATED"
+      blueprint_identifier = "service"
+    }
+  }
+
+  node {
+    identifier = "notify"
+
+    webhook {
+      url  = "https://hooks.slack.com/services/..."
+      body = jsonencode({
+        text = "Service {{ .outputs.trigger.diff.after.identifier }} was updated"
+      })
+    }
+  }
+
+  connections {
+    source_identifier = "trigger"
+    target_identifier = "notify"
+  }
+}
+` + "```" + `
+
+## Import
+
+Workflows can be imported using the workflow identifier:
+
+` + "```shell" + `
+terraform import port_workflow.deploy_service deploy-service
+` + "```" + `
+`

@@ -13,12 +13,21 @@ func (r *AggregationPropertiesResource) refreshAggregationPropertiesState(state 
 	oldProperties := state.Properties
 	state.Properties = map[string]*AggregationPropertyModel{}
 
+	// Only refresh aggregation properties that are already tracked in state (managed by this resource).
+	// This prevents system-managed aggregations (like _team.size) from being added to state
+	// and causing drift or unexpected behavior.
 	for aggregationPropertyIdentifier, aggregationProperty := range aggregationProperties {
+		// Skip properties not managed by this resource
+		if oldProperties == nil {
+			continue
+		}
+		if _, isManaged := oldProperties[aggregationPropertyIdentifier]; !isManaged {
+			continue
+		}
+
 		var oldQuery types.String
-		if oldProperties != nil {
-			if oldProp, ok := oldProperties[aggregationPropertyIdentifier]; ok && oldProp != nil {
-				oldQuery = oldProp.Query
-			}
+		if oldProp, ok := oldProperties[aggregationPropertyIdentifier]; ok && oldProp != nil {
+			oldQuery = oldProp.Query
 		}
 
 		state.Properties[aggregationPropertyIdentifier] = &AggregationPropertyModel{

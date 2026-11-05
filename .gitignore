@@ -7,3 +7,4 @@ terraform-provider-port-labs
 **/terraform.tfstat*
 **/.terraform
 pkg
+terraform-provider-port

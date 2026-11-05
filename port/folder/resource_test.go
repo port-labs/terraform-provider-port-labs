@@ -26,6 +26,7 @@ func TestAccPortFolderResourceBasic(t *testing.T) {
 				Config: acctest.ProviderConfig + testAccPortFolderResourceBasic,
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_folder.example_folder", "title", "Example Folder"),
+					resource.TestCheckResourceAttr("port_folder.example_folder", "sidebar", "catalog"),
 				),
 			},
 		},
@@ -205,9 +206,10 @@ func TestAccPortFolderResourceImport(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      "port_folder.example_folder",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "port_folder.example_folder",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"created_at", "created_by", "updated_at", "updated_by"},
 			},
 		},
 	})

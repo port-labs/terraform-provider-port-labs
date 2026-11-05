@@ -192,7 +192,6 @@ func (r *PageResource) Create(ctx context.Context, req resource.CreateRequest, r
 
 func (r *PageResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var state *PageModel
-	var p *cli.Page
 	var updatedPage *cli.Page
 
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &state)...)
@@ -213,7 +212,7 @@ func (r *PageResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	p, err = r.portClient.UpdatePage(ctx, page.Identifier, page)
+	_, err = r.portClient.UpdatePage(ctx, page.Identifier, page)
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update page", err.Error())
 		return
@@ -225,7 +224,8 @@ func (r *PageResource) Update(ctx context.Context, req resource.UpdateRequest, r
 		return
 	}
 
-	state.ID = types.StringValue(p.Identifier)
+	// The UpdatePage response has an empty identifier for entity pages; use the page read back after the update.
+	state.ID = types.StringValue(updatedPage.Identifier)
 	state.CreatedAt = types.StringValue(updatedPage.CreatedAt.String())
 	state.CreatedBy = types.StringValue(updatedPage.CreatedBy)
 	state.UpdatedAt = types.StringValue(updatedPage.UpdatedAt.String())

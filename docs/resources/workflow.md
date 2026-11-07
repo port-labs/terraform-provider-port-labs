@@ -85,6 +85,7 @@ Optional:
 - `output_schema` (String) A JSON schema, encoded as a JSON string, the AI response is validated against.
 - `provider` (String) The AI provider to use. Must be set together with `model`.
 - `system_prompt` (String) Instructions describing the AI's role and operational rules.
+- `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default for this node type.
 - `tools` (List of String) Regex patterns matched against the available tool names.
 - `user_prompt` (String) The message or query processed by Port AI.
 
@@ -106,6 +107,7 @@ Optional:
 - `model` (String) The AI model to use. Must be set together with `provider`.
 - `output_schema` (String) A JSON schema, encoded as a JSON string, the agent response is validated against.
 - `provider` (String) The AI provider to use. Must be set together with `model`.
+- `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default for this node type.
 - `user_prompt` (String) The message or query processed by the agent.
 
 
@@ -115,6 +117,7 @@ Optional:
 Optional:
 
 - `outlets` (Block List) The branches of the condition, evaluated in order. (see [below for nested schema](#nestedblock--node--condition--outlets))
+- `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default for this node type.
 
 <a id="nestedblock--node--condition--outlets"></a>
 ### Nested Schema for `node.condition.outlets`
@@ -180,6 +183,7 @@ Optional:
 - `notifications` (Block List) Notifications sent when the input node starts waiting. (see [below for nested schema](#nestedblock--node--input--notifications))
 - `outlets` (Block List) The branches of the input node, each bound to a button. (see [below for nested schema](#nestedblock--node--input--outlets))
 - `responders` (Block, Optional) Who is allowed to respond to this input node. (see [below for nested schema](#nestedblock--node--input--responders))
+- `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default for this node type.
 - `user_inputs` (Block, Optional) The form presented to the responders. (see [below for nested schema](#nestedblock--node--input--user_inputs))
 
 <a id="nestedblock--node--input--notifications"></a>
@@ -806,6 +810,7 @@ Optional:
 - `integration_invocation_type` (String) The invocation type of the integration action.
 - `integration_provider` (String) The provider of the integration action.
 - `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
+- `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default per run: `4320` for every `cursor-cloud-agents` action, `1440` otherwise.
 
 
 <a id="nestedblock--node--kafka"></a>
@@ -815,6 +820,7 @@ Optional:
 
 - `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
 - `payload` (String) The Kafka message payload as a JSON encoded string.
+- `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default for this node type.
 
 
 <a id="nestedblock--node--schedule_trigger"></a>
@@ -1401,6 +1407,7 @@ Optional:
 - `blueprint_identifier` (String) The identifier of the blueprint to upsert into.
 - `mapping` (Block, Optional) The entity fields to upsert. (see [below for nested schema](#nestedblock--node--upsert_entity--mapping))
 - `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
+- `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default for this node type.
 
 <a id="nestedblock--node--upsert_entity--mapping"></a>
 ### Nested Schema for `node.upsert_entity.mapping`
@@ -1428,4 +1435,5 @@ Optional:
 - `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
 - `on_timeout` (String) The action to take if the webhook times out. One of `fail`, `continue`.
 - `synchronized` (Boolean) Whether the request is sent synchronously.
+- `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default per run: `1440` when `agent` is true or `synchronized` is false, `60` otherwise.
 - `url` (String) The URL of the webhook.

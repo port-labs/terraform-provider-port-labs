@@ -104,19 +104,21 @@ type ScheduleTriggerModel struct {
 }
 
 type KafkaModel struct {
-	Payload   types.String `tfsdk:"payload"`
-	OnFailure types.String `tfsdk:"on_failure"`
+	Payload        types.String `tfsdk:"payload"`
+	OnFailure      types.String `tfsdk:"on_failure"`
+	TimeoutMinutes types.Int64  `tfsdk:"timeout_minutes"`
 }
 
 type WebhookModel struct {
-	Url          types.String `tfsdk:"url"`
-	Agent        types.Bool   `tfsdk:"agent"`
-	Synchronized types.Bool   `tfsdk:"synchronized"`
-	Method       types.String `tfsdk:"method"`
-	Headers      types.Map    `tfsdk:"headers"`
-	Body         types.String `tfsdk:"body"`
-	OnTimeout    types.String `tfsdk:"on_timeout"`
-	OnFailure    types.String `tfsdk:"on_failure"`
+	Url            types.String `tfsdk:"url"`
+	Agent          types.Bool   `tfsdk:"agent"`
+	Synchronized   types.Bool   `tfsdk:"synchronized"`
+	Method         types.String `tfsdk:"method"`
+	Headers        types.Map    `tfsdk:"headers"`
+	Body           types.String `tfsdk:"body"`
+	OnTimeout      types.String `tfsdk:"on_timeout"`
+	OnFailure      types.String `tfsdk:"on_failure"`
+	TimeoutMinutes types.Int64  `tfsdk:"timeout_minutes"`
 }
 
 type IntegrationActionModel struct {
@@ -125,12 +127,14 @@ type IntegrationActionModel struct {
 	IntegrationInvocationType types.String `tfsdk:"integration_invocation_type"`
 	ExecutionProperties       types.String `tfsdk:"execution_properties"`
 	OnFailure                 types.String `tfsdk:"on_failure"`
+	TimeoutMinutes            types.Int64  `tfsdk:"timeout_minutes"`
 }
 
 type UpsertEntityModel struct {
 	BlueprintIdentifier types.String        `tfsdk:"blueprint_identifier"`
 	Mapping             *UpsertMappingModel `tfsdk:"mapping"`
 	OnFailure           types.String        `tfsdk:"on_failure"`
+	TimeoutMinutes      types.Int64         `tfsdk:"timeout_minutes"`
 }
 
 type UpsertMappingModel struct {
@@ -143,13 +147,14 @@ type UpsertMappingModel struct {
 }
 
 type AIModel struct {
-	UserPrompt   types.String     `tfsdk:"user_prompt"`
-	SystemPrompt types.String     `tfsdk:"system_prompt"`
-	Provider     types.String     `tfsdk:"provider"`
-	Model        types.String     `tfsdk:"model"`
-	Tools        types.List       `tfsdk:"tools"`
-	McpServers   []McpServerModel `tfsdk:"mcp_servers"`
-	OutputSchema types.String     `tfsdk:"output_schema"`
+	UserPrompt     types.String     `tfsdk:"user_prompt"`
+	SystemPrompt   types.String     `tfsdk:"system_prompt"`
+	Provider       types.String     `tfsdk:"provider"`
+	Model          types.String     `tfsdk:"model"`
+	Tools          types.List       `tfsdk:"tools"`
+	McpServers     []McpServerModel `tfsdk:"mcp_servers"`
+	OutputSchema   types.String     `tfsdk:"output_schema"`
+	TimeoutMinutes types.Int64      `tfsdk:"timeout_minutes"`
 }
 
 type McpServerModel struct {
@@ -162,10 +167,12 @@ type AIAgentModel struct {
 	Provider        types.String `tfsdk:"provider"`
 	Model           types.String `tfsdk:"model"`
 	OutputSchema    types.String `tfsdk:"output_schema"`
+	TimeoutMinutes  types.Int64  `tfsdk:"timeout_minutes"`
 }
 
 type ConditionModel struct {
-	Outlets []ConditionOutletModel `tfsdk:"outlets"`
+	Outlets        []ConditionOutletModel `tfsdk:"outlets"`
+	TimeoutMinutes types.Int64            `tfsdk:"timeout_minutes"`
 }
 
 type ConditionOutletModel struct {
@@ -182,11 +189,12 @@ type StatusLabelModel struct {
 }
 
 type InputModel struct {
-	Description   types.String          `tfsdk:"description"`
-	UserInputs    *InputUserInputsModel `tfsdk:"user_inputs"`
-	Outlets       []InputOutletModel    `tfsdk:"outlets"`
-	Notifications []NotificationModel   `tfsdk:"notifications"`
-	Responders    *RespondersModel      `tfsdk:"responders"`
+	Description    types.String          `tfsdk:"description"`
+	UserInputs     *InputUserInputsModel `tfsdk:"user_inputs"`
+	Outlets        []InputOutletModel    `tfsdk:"outlets"`
+	Notifications  []NotificationModel   `tfsdk:"notifications"`
+	Responders     *RespondersModel      `tfsdk:"responders"`
+	TimeoutMinutes types.Int64           `tfsdk:"timeout_minutes"`
 }
 
 type InputUserInputsModel struct {

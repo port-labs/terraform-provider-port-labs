@@ -129,6 +129,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.Kafka != nil:
 		config.Type = consts.Kafka
+		config.TimeoutMinutes = knownInt64Pointer(n.Kafka.TimeoutMinutes)
 		config.OnFailure = n.Kafka.OnFailure.ValueStringPointer()
 		payload, err := jsonStringToAny(n.Kafka.Payload)
 		if err != nil {
@@ -138,6 +139,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.Webhook != nil:
 		config.Type = consts.Webhook
+		config.TimeoutMinutes = knownInt64Pointer(n.Webhook.TimeoutMinutes)
 		w := n.Webhook
 		config.Url = w.Url.ValueStringPointer()
 		config.Agent = w.Agent.ValueBoolPointer()
@@ -160,6 +162,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.IntegrationAction != nil:
 		config.Type = consts.IntegrationAction
+		config.TimeoutMinutes = knownInt64Pointer(n.IntegrationAction.TimeoutMinutes)
 		i := n.IntegrationAction
 		config.InstallationId = i.InstallationId.ValueStringPointer()
 		config.IntegrationProvider = i.IntegrationProvider.ValueStringPointer()
@@ -174,6 +177,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.UpsertEntity != nil:
 		config.Type = consts.UpsertEntity
+		config.TimeoutMinutes = knownInt64Pointer(n.UpsertEntity.TimeoutMinutes)
 		u := n.UpsertEntity
 		config.BlueprintIdentifier = u.BlueprintIdentifier.ValueStringPointer()
 		config.OnFailure = u.OnFailure.ValueStringPointer()
@@ -188,6 +192,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.AI != nil:
 		config.Type = consts.AI
+		config.TimeoutMinutes = knownInt64Pointer(n.AI.TimeoutMinutes)
 		a := n.AI
 		config.UserPrompt = a.UserPrompt.ValueStringPointer()
 		config.SystemPrompt = a.SystemPrompt.ValueStringPointer()
@@ -212,6 +217,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.AIAgent != nil:
 		config.Type = consts.AIAgent
+		config.TimeoutMinutes = knownInt64Pointer(n.AIAgent.TimeoutMinutes)
 		a := n.AIAgent
 		config.UserPrompt = a.UserPrompt.ValueStringPointer()
 		config.AgentIdentifier = a.AgentIdentifier.ValueStringPointer()
@@ -226,6 +232,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.Condition != nil:
 		config.Type = consts.ConditionNode
+		config.TimeoutMinutes = knownInt64Pointer(n.Condition.TimeoutMinutes)
 		outlets := make([]cli.WorkflowOutlet, 0, len(n.Condition.Outlets))
 		for _, o := range n.Condition.Outlets {
 			outlets = append(outlets, cli.WorkflowOutlet{
@@ -240,6 +247,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 
 	case n.Input != nil:
 		config.Type = consts.InputNode
+		config.TimeoutMinutes = knownInt64Pointer(n.Input.TimeoutMinutes)
 		i := n.Input
 		config.Description = i.Description.ValueStringPointer()
 
@@ -605,4 +613,12 @@ func terraformMapToStrings(ctx context.Context, m types.Map) (map[string]string,
 	}
 
 	return result, nil
+}
+
+// An unknown Computed value would otherwise be sent as 0.
+func knownInt64Pointer(v types.Int64) *int64 {
+	if v.IsUnknown() {
+		return nil
+	}
+	return v.ValueInt64Pointer()
 }

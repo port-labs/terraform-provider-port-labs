@@ -678,3 +678,78 @@ func TestAccPortWorkflowSlackNotificationValidation(t *testing.T) {
 		},
 	})
 }
+
+func TestAccPortWorkflowNodeTimeout(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	workflowIdentifier := utils.GenID()
+
+	config := func(webhookTimeout, upsertTimeout string) string {
+		return testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_workflow" "timeouts" {
+		identifier = "%s"
+		title      = "Node timeouts"
+
+		node {
+			identifier = "trigger"
+			event_trigger {
+				type                 = "ENTITY_UPDATED"
+				blueprint_identifier = port_blueprint.microservice.identifier
+			}
+		}
+
+		node {
+			identifier = "notify"
+			webhook {
+				url = "https://example.com/hook"
+				%s
+			}
+		}
+
+		node {
+			identifier = "record"
+			upsert_entity {
+				blueprint_identifier = port_blueprint.microservice.identifier
+				%s
+				mapping {
+					identifier = "run-{{ .run.id }}"
+				}
+			}
+		}
+
+		connections {
+			source_identifier = "trigger"
+			target_identifier = "notify"
+		}
+
+		connections {
+			source_identifier = "notify"
+			target_identifier = "record"
+		}
+	}`, workflowIdentifier, webhookTimeout, upsertTimeout)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + config("timeout_minutes = 59", ""),
+				ExpectError: regexp.MustCompile(`between 60 and 43200`),
+			},
+			{
+				Config: acctest.ProviderConfig + config("timeout_minutes = 120", ""),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.timeouts", "node.1.webhook.timeout_minutes", "120"),
+					resource.TestCheckResourceAttr("port_workflow.timeouts", "node.2.upsert_entity.timeout_minutes", "60"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + config("", "timeout_minutes = 180"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr("port_workflow.timeouts", "node.1.webhook.timeout_minutes"),
+					resource.TestCheckResourceAttr("port_workflow.timeouts", "node.2.upsert_entity.timeout_minutes", "180"),
+				),
+			},
+		},
+	})
+}

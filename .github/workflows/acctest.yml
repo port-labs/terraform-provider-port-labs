@@ -84,20 +84,23 @@ jobs:
 
           # Keep `local` on separate lines: with export -f + bash -c,
           # `local pkg="$1" name="${pkg##*/}"` expands name before pkg is set.
+          #
+          # Use --raw-command so retries omit -coverprofile. gotestsum
+          # --rerun-fails re-invokes go test with the same -coverprofile path,
+          # which would otherwise replace the full-package profile with only
+          # the retried tests and tank Publish Coverage Report.
           run_package() {
             local pkg=$1
             local name=${pkg##*/}
 
+            echo 0 > "test-results/${name}.attempt"
             gotestsum \
               --rerun-fails=3 \
-              --packages "$pkg" \
               --format testname \
               --junitfile "test-results/${name}.xml" \
+              --raw-command \
               -- \
-              -timeout 10m \
-              -parallel "$TEST_PARALLEL" \
-              -shuffle "$GITHUB_RUN_ID" \
-              -coverprofile "coverage/${name}.out"
+              .github/scripts/acctest-go-test.sh "$name" "$pkg"
           }
           export -f run_package
 

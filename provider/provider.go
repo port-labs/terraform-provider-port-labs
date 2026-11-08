@@ -27,6 +27,7 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/search"
 	system_blueprint "github.com/port-labs/terraform-provider-port-labs/v2/port/system_blueprint"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/team"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/user"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/webhook"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/workflow"
 	"github.com/port-labs/terraform-provider-port-labs/v2/version"
@@ -171,6 +172,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		scorecard.NewScorecardResource,
 		scorecard_group.NewScorecardGroupResource,
 		team.NewTeamResource,
+		user.NewUserResource,
 		page.NewPageResource,
 		page_permissions.NewPagePermissionsResource,
 		system_blueprint.NewResource,

@@ -47,6 +47,8 @@ const (
 	maxDescriptionLength = 1100
 	maxCategoryLength    = 40
 	maxNodesCount        = 100
+	minTimeoutMinutes    = 60
+	maxTimeoutMinutes    = 30 * 24 * 60
 )
 
 var identifierPattern = regexp.MustCompile(`^[\p{L}0-9@_:-]+$`)
@@ -75,6 +77,18 @@ func onFailureAttribute() schema.Attribute {
 		Validators: []validator.String{
 			stringvalidator.OneOf("continue", "terminate"),
 		},
+	}
+}
+
+const timeoutMinutesDescription = "The maximum time in minutes a run of this node may stay open before it times out. " +
+	"Between `60` and `43200` (30 days). "
+
+func timeoutMinutesAttribute() schema.Attribute {
+	return schema.Int64Attribute{
+		MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default for this node type.",
+		Optional:            true,
+		Computed:            true,
+		Validators:          []validator.Int64{int64validator.Between(minTimeoutMinutes, maxTimeoutMinutes)},
 	}
 }
 
@@ -403,7 +417,8 @@ func kafkaBlock() schema.Block {
 				MarkdownDescription: "The Kafka message payload as a JSON encoded string.",
 				Optional:            true,
 			},
-			"on_failure": onFailureAttribute(),
+			"on_failure":      onFailureAttribute(),
+			"timeout_minutes": timeoutMinutesAttribute(),
 		},
 	}
 }
@@ -456,6 +471,12 @@ func webhookBlock() schema.Block {
 				},
 			},
 			"on_failure": onFailureAttribute(),
+			"timeout_minutes": schema.Int64Attribute{
+				MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default per run: " +
+					"`1440` when `agent` is true or `synchronized` is false, `60` otherwise.",
+				Optional:   true,
+				Validators: []validator.Int64{int64validator.Between(minTimeoutMinutes, maxTimeoutMinutes)},
+			},
 		},
 	}
 }
@@ -481,6 +502,12 @@ func integrationActionBlock() schema.Block {
 				Optional:            true,
 			},
 			"on_failure": onFailureAttribute(),
+			"timeout_minutes": schema.Int64Attribute{
+				MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default per run: " +
+					"`4320` for every `cursor-cloud-agents` action, `1440` otherwise.",
+				Optional:   true,
+				Validators: []validator.Int64{int64validator.Between(minTimeoutMinutes, maxTimeoutMinutes)},
+			},
 		},
 	}
 }
@@ -493,7 +520,8 @@ func upsertEntityBlock() schema.Block {
 				MarkdownDescription: "The identifier of the blueprint to upsert into.",
 				Optional:            true,
 			},
-			"on_failure": onFailureAttribute(),
+			"on_failure":      onFailureAttribute(),
+			"timeout_minutes": timeoutMinutesAttribute(),
 		},
 		Blocks: map[string]schema.Block{
 			"mapping": schema.SingleNestedBlock{
@@ -535,6 +563,7 @@ func aiBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "An AI node that runs a prompt through Port AI.",
 		Attributes: map[string]schema.Attribute{
+			"timeout_minutes": timeoutMinutesAttribute(),
 			"user_prompt": schema.StringAttribute{
 				MarkdownDescription: "The message or query processed by Port AI.",
 				Optional:            true,
@@ -592,6 +621,7 @@ func aiAgentBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "An AI agent node that invokes a configured Port AI agent.",
 		Attributes: map[string]schema.Attribute{
+			"timeout_minutes": timeoutMinutesAttribute(),
 			"user_prompt": schema.StringAttribute{
 				MarkdownDescription: "The message or query processed by the agent.",
 				Optional:            true,
@@ -626,6 +656,9 @@ func aiAgentBlock() schema.Block {
 func conditionBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "A condition node that branches the workflow based on JQ expressions. Connections leaving this node must set `source_outlet_identifier` or `fallback`.",
+		Attributes: map[string]schema.Attribute{
+			"timeout_minutes": timeoutMinutesAttribute(),
+		},
 		Blocks: map[string]schema.Block{
 			"outlets": schema.ListNestedBlock{
 				MarkdownDescription: "The branches of the condition, evaluated in order.",
@@ -662,6 +695,7 @@ func inputBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "An input node that pauses the workflow and waits for a human response. Connections leaving this node must set `source_outlet_identifier`.",
 		Attributes: map[string]schema.Attribute{
+			"timeout_minutes": timeoutMinutesAttribute(),
 			"description": schema.StringAttribute{
 				MarkdownDescription: "The description shown on the response form.",
 				Optional:            true,

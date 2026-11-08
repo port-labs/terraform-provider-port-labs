@@ -2308,3 +2308,152 @@ func TestMixedNotificationsRoundTrip(t *testing.T) {
 
 	assert.Equal(t, notifications, result)
 }
+
+type nodeTimeoutCase struct {
+	block       string
+	configType  string
+	computed    bool
+	withTimeout func(types.Int64) WorkflowNodeModel
+	timeoutOf   func(WorkflowNodeModel) types.Int64
+}
+
+func int64Ptr(v int64) *int64 { return &v }
+
+func nodeTimeoutCases() []nodeTimeoutCase {
+	return []nodeTimeoutCase{
+		{"kafka", consts.Kafka, true,
+			func(v types.Int64) WorkflowNodeModel { return WorkflowNodeModel{Kafka: &KafkaModel{TimeoutMinutes: v}} },
+			func(n WorkflowNodeModel) types.Int64 { return n.Kafka.TimeoutMinutes }},
+		{"webhook", consts.Webhook, false,
+			func(v types.Int64) WorkflowNodeModel {
+				return WorkflowNodeModel{Webhook: &WebhookModel{TimeoutMinutes: v}}
+			},
+			func(n WorkflowNodeModel) types.Int64 { return n.Webhook.TimeoutMinutes }},
+		{"integration_action", consts.IntegrationAction, false,
+			func(v types.Int64) WorkflowNodeModel {
+				return WorkflowNodeModel{IntegrationAction: &IntegrationActionModel{TimeoutMinutes: v}}
+			},
+			func(n WorkflowNodeModel) types.Int64 { return n.IntegrationAction.TimeoutMinutes }},
+		{"upsert_entity", consts.UpsertEntity, true,
+			func(v types.Int64) WorkflowNodeModel {
+				return WorkflowNodeModel{UpsertEntity: &UpsertEntityModel{TimeoutMinutes: v}}
+			},
+			func(n WorkflowNodeModel) types.Int64 { return n.UpsertEntity.TimeoutMinutes }},
+		{"ai", consts.AI, true,
+			func(v types.Int64) WorkflowNodeModel { return WorkflowNodeModel{AI: &AIModel{TimeoutMinutes: v}} },
+			func(n WorkflowNodeModel) types.Int64 { return n.AI.TimeoutMinutes }},
+		{"ai_agent", consts.AIAgent, true,
+			func(v types.Int64) WorkflowNodeModel {
+				return WorkflowNodeModel{AIAgent: &AIAgentModel{TimeoutMinutes: v}}
+			},
+			func(n WorkflowNodeModel) types.Int64 { return n.AIAgent.TimeoutMinutes }},
+		{"condition", consts.ConditionNode, true,
+			func(v types.Int64) WorkflowNodeModel {
+				return WorkflowNodeModel{Condition: &ConditionModel{TimeoutMinutes: v}}
+			},
+			func(n WorkflowNodeModel) types.Int64 { return n.Condition.TimeoutMinutes }},
+		{"input", consts.InputNode, true,
+			func(v types.Int64) WorkflowNodeModel { return WorkflowNodeModel{Input: &InputModel{TimeoutMinutes: v}} },
+			func(n WorkflowNodeModel) types.Int64 { return n.Input.TimeoutMinutes }},
+	}
+}
+
+func TestNodeTimeoutCasesCoverEveryNonTriggerBlock(t *testing.T) {
+	triggers := map[string]bool{"self_serve_trigger": true, "event_trigger": true, "schedule_trigger": true}
+	want := []string{}
+	for _, b := range nodeTypeBlockNames {
+		if !triggers[b] {
+			want = append(want, b)
+		}
+	}
+	got := []string{}
+	for _, c := range nodeTimeoutCases() {
+		got = append(got, c.block)
+	}
+	assert.ElementsMatch(t, want, got)
+}
+
+func TestNodeTimeoutMinutesToPortBody(t *testing.T) {
+	ctx := context.Background()
+	for _, c := range nodeTimeoutCases() {
+		t.Run(c.block, func(t *testing.T) {
+			set, err := nodeConfigToPortBody(ctx, c.withTimeout(types.Int64Value(120)))
+			require.NoError(t, err)
+			require.NotNil(t, set.TimeoutMinutes)
+			assert.Equal(t, int64(120), *set.TimeoutMinutes)
+
+			for _, v := range []types.Int64{types.Int64Null(), types.Int64Unknown()} {
+				unset, err := nodeConfigToPortBody(ctx, c.withTimeout(v))
+				require.NoError(t, err)
+				assert.Nil(t, unset.TimeoutMinutes)
+			}
+
+			unset, err := nodeConfigToPortBody(ctx, c.withTimeout(types.Int64Null()))
+			require.NoError(t, err)
+
+			raw, err := json.Marshal(unset)
+			require.NoError(t, err)
+			assert.NotContains(t, string(raw), "timeoutMinutes")
+		})
+	}
+}
+
+func TestRefreshNodeTimeoutMinutes(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	refresh := func(t *testing.T, configType string, timeout *int64) WorkflowNodeModel {
+		state := &WorkflowModel{
+			Identifier: types.StringValue("wf"),
+			Nodes:      []WorkflowNodeModel{{Identifier: types.StringValue("n")}},
+		}
+		err := r.refreshWorkflowState(ctx, state, &cli.Workflow{
+			Identifier: "wf",
+			Nodes: []cli.WorkflowNode{{
+				Identifier: "n",
+				Config:     cli.WorkflowNodeConfig{Type: configType, TimeoutMinutes: timeout},
+			}},
+		})
+		require.NoError(t, err)
+		require.Len(t, state.Nodes, 1)
+		return state.Nodes[0]
+	}
+
+	for _, c := range nodeTimeoutCases() {
+		t.Run(c.block, func(t *testing.T) {
+			assert.Equal(t, types.Int64Value(1440), c.timeoutOf(refresh(t, c.configType, int64Ptr(1440))))
+			assert.True(t, c.timeoutOf(refresh(t, c.configType, nil)).IsNull())
+		})
+	}
+}
+
+func TestNodeTimeoutMinutesSchema(t *testing.T) {
+	ctx := context.Background()
+	resp := &resource.SchemaResponse{}
+	(&WorkflowResource{}).Schema(ctx, resource.SchemaRequest{}, resp)
+	nodeBlocks := resp.Schema.Blocks["node"].(schema.ListNestedBlock).NestedObject.Blocks
+
+	for _, c := range nodeTimeoutCases() {
+		t.Run(c.block, func(t *testing.T) {
+			attribute, ok := nodeBlocks[c.block].(schema.SingleNestedBlock).Attributes["timeout_minutes"].(schema.Int64Attribute)
+			require.True(t, ok, "timeout_minutes must be an Int64 attribute")
+			assert.True(t, attribute.Optional)
+
+			if !c.computed {
+				assert.False(t, attribute.Computed)
+				assert.Nil(t, attribute.Default)
+			} else {
+				assert.True(t, attribute.Computed)
+				assert.Nil(t, attribute.Default)
+			}
+
+			for value, valid := range map[int64]bool{59: false, 60: true, 43200: true, 43201: false} {
+				validateResp := &validator.Int64Response{}
+				for _, v := range attribute.Validators {
+					v.ValidateInt64(ctx, validator.Int64Request{ConfigValue: types.Int64Value(value)}, validateResp)
+				}
+				assert.Equal(t, !valid, validateResp.Diagnostics.HasError(), "timeout_minutes = %d", value)
+			}
+		})
+	}
+}

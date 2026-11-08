@@ -143,8 +143,9 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 			return node, err
 		}
 		node.Kafka = &KafkaModel{
-			Payload:   payload,
-			OnFailure: flex.GoStringToFramework(config.OnFailure),
+			TimeoutMinutes: types.Int64PointerValue(config.TimeoutMinutes),
+			Payload:        payload,
+			OnFailure:      flex.GoStringToFramework(config.OnFailure),
 		}
 
 	case consts.Webhook:
@@ -157,14 +158,15 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 			priorHeaders = prior.Webhook.Headers
 		}
 		node.Webhook = &WebhookModel{
-			Url:          flex.GoStringToFramework(config.Url),
-			Agent:        flex.GoBoolToFramework(config.Agent),
-			Synchronized: flex.GoBoolToFramework(config.Synchronized),
-			Method:       flex.GoStringToFramework(config.Method),
-			Headers:      stringsToMap(ctx, config.Headers, priorHeaders),
-			Body:         body,
-			OnTimeout:    flex.GoStringToFramework(config.OnTimeout),
-			OnFailure:    flex.GoStringToFramework(config.OnFailure),
+			TimeoutMinutes: types.Int64PointerValue(config.TimeoutMinutes),
+			Url:            flex.GoStringToFramework(config.Url),
+			Agent:          flex.GoBoolToFramework(config.Agent),
+			Synchronized:   flex.GoBoolToFramework(config.Synchronized),
+			Method:         flex.GoStringToFramework(config.Method),
+			Headers:        stringsToMap(ctx, config.Headers, priorHeaders),
+			Body:           body,
+			OnTimeout:      flex.GoStringToFramework(config.OnTimeout),
+			OnFailure:      flex.GoStringToFramework(config.OnFailure),
 		}
 
 	case consts.IntegrationAction:
@@ -173,6 +175,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 			return node, err
 		}
 		node.IntegrationAction = &IntegrationActionModel{
+			TimeoutMinutes:            types.Int64PointerValue(config.TimeoutMinutes),
 			InstallationId:            flex.GoStringToFramework(config.InstallationId),
 			IntegrationProvider:       flex.GoStringToFramework(config.IntegrationProvider),
 			IntegrationInvocationType: flex.GoStringToFramework(config.IntegrationInvocationType),
@@ -182,6 +185,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 
 	case consts.UpsertEntity:
 		upsert := &UpsertEntityModel{
+			TimeoutMinutes:      types.Int64PointerValue(config.TimeoutMinutes),
 			BlueprintIdentifier: flex.GoStringToFramework(config.BlueprintIdentifier),
 			OnFailure:           flex.GoStringToFramework(config.OnFailure),
 		}
@@ -204,12 +208,13 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 			priorTools = prior.AI.Tools
 		}
 		ai := &AIModel{
-			UserPrompt:   flex.GoStringToFramework(config.UserPrompt),
-			SystemPrompt: stringOrEmpty(config.SystemPrompt),
-			Provider:     flex.GoStringToFramework(config.Provider),
-			Model:        flex.GoStringToFramework(config.Model),
-			Tools:        stringsToList(ctx, config.Tools, priorTools),
-			OutputSchema: outputSchema,
+			TimeoutMinutes: types.Int64PointerValue(config.TimeoutMinutes),
+			UserPrompt:     flex.GoStringToFramework(config.UserPrompt),
+			SystemPrompt:   stringOrEmpty(config.SystemPrompt),
+			Provider:       flex.GoStringToFramework(config.Provider),
+			Model:          flex.GoStringToFramework(config.Model),
+			Tools:          stringsToList(ctx, config.Tools, priorTools),
+			OutputSchema:   outputSchema,
 		}
 		for _, s := range config.McpServers {
 			ai.McpServers = append(ai.McpServers, McpServerModel{Identifier: types.StringValue(s.Identifier)})
@@ -222,6 +227,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 			return node, err
 		}
 		node.AIAgent = &AIAgentModel{
+			TimeoutMinutes:  types.Int64PointerValue(config.TimeoutMinutes),
 			UserPrompt:      flex.GoStringToFramework(config.UserPrompt),
 			AgentIdentifier: flex.GoStringToFramework(config.AgentIdentifier),
 			Provider:        flex.GoStringToFramework(config.Provider),
@@ -230,7 +236,7 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 		}
 
 	case consts.ConditionNode:
-		condition := &ConditionModel{}
+		condition := &ConditionModel{TimeoutMinutes: types.Int64PointerValue(config.TimeoutMinutes)}
 		for _, o := range derefSlice(config.Outlets) {
 			condition.Outlets = append(condition.Outlets, ConditionOutletModel{
 				Identifier:          types.StringValue(o.Identifier),
@@ -248,8 +254,9 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 			priorResponders = prior.Input.Responders
 		}
 		input := &InputModel{
-			Description: flex.GoStringToFramework(config.Description),
-			Responders:  respondersToModel(ctx, config.Responders, priorResponders, r.portClient.JSONEscapeHTML),
+			TimeoutMinutes: types.Int64PointerValue(config.TimeoutMinutes),
+			Description:    flex.GoStringToFramework(config.Description),
+			Responders:     respondersToModel(ctx, config.Responders, priorResponders, r.portClient.JSONEscapeHTML),
 		}
 
 		if config.UserInputs != nil {

@@ -197,6 +197,10 @@ func ArrayPropertySchema() schema.MapNestedAttribute {
 				int64validator.AtLeast(0),
 			},
 		},
+		"union": schema.BoolAttribute{
+			MarkdownDescription: "Only applicable to array properties with `string` or `number` items. When `true`, every writer owns its own slice of the value and the property returns the combination of all slices, with each value appearing once. Writers send `{ \"<sourceKey>\": [values] }` instead of a plain array. Cannot be changed after the property is created.",
+			Optional:            true,
+		},
 		"string_items": schema.SingleNestedAttribute{
 			MarkdownDescription: "The items of the array property",
 			Optional:            true,

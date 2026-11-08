@@ -96,7 +96,7 @@ func (c *PortClient) DeleteEntity(ctx context.Context, id string, blueprint stri
 	}
 
 	if !pb.OK {
-		return fmt.Errorf("failed to delete entity, got: %s", resp.Body())
+		return &APIError{Op: "failed to delete entity", StatusCode: resp.StatusCode(), Body: string(resp.Body())}
 	}
 	return nil
 }

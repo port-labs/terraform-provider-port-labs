@@ -375,6 +375,7 @@ Optional:
 
 Optional:
 
+- `additional_properties` (String) JSON Schema `additionalProperties` for each object item, as a JSON encoded boolean or schema. `true` allows any extra keys, `false` rejects them, and an object is the schema those keys must match.
 - `default` (List of Map of String) The default value of the items.
 - `format` (String) The format of each item.
 
@@ -457,6 +458,7 @@ Optional:
 
 Optional:
 
+- `additional_properties` (String) JSON Schema `additionalProperties` for the object input, as a JSON encoded boolean or schema. `true` allows any extra keys, `false` rejects them, and an object is the schema those keys must match.
 - `default` (String) The default of the object input, as a JSON encoded string.
 - `default_jq_query` (String) The default jq query of the object input.
 - `depends_on` (List of String) The inputs this input depends on.
@@ -974,6 +976,7 @@ Optional:
 
 Optional:
 
+- `additional_properties` (String) JSON Schema `additionalProperties` for each object item, as a JSON encoded boolean or schema. `true` allows any extra keys, `false` rejects them, and an object is the schema those keys must match.
 - `default` (List of Map of String) The default value of the items.
 - `format` (String) The format of each item.
 
@@ -1056,6 +1059,7 @@ Optional:
 
 Optional:
 
+- `additional_properties` (String) JSON Schema `additionalProperties` for the object input, as a JSON encoded boolean or schema. `true` allows any extra keys, `false` rejects them, and an object is the schema those keys must match.
 - `default` (String) The default of the object input, as a JSON encoded string.
 - `default_jq_query` (String) The default jq query of the object input.
 - `depends_on` (List of String) The inputs this input depends on.

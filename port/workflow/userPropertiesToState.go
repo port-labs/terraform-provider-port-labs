@@ -235,9 +235,15 @@ func booleanPropToState(property cli.WorkflowInputProperty) *BooleanPropModel {
 }
 
 func objectPropToState(property cli.WorkflowInputProperty, jsonEscapeHTML bool) (*ObjectPropModel, error) {
+	additionalProperties, err := additionalPropertiesToState(property.AdditionalProperties, jsonEscapeHTML)
+	if err != nil {
+		return nil, err
+	}
+
 	prop := &ObjectPropModel{
-		Format:  flex.GoStringToFramework(property.Format),
-		Default: types.StringNull(),
+		Format:               flex.GoStringToFramework(property.Format),
+		Default:              types.StringNull(),
+		AdditionalProperties: additionalProperties,
 	}
 
 	if jqQuery, ok := jqQueryToState(property.Default); ok {
@@ -374,8 +380,14 @@ func arrayPropToState(ctx context.Context, property cli.WorkflowInputProperty, j
 		prop.NumberItems = items
 
 	case "object":
+		additionalProperties, err := additionalPropertiesToState(property.Items["additionalProperties"], jsonEscapeHTML)
+		if err != nil {
+			return nil, err
+		}
+
 		items := &ObjectItemsModel{
-			Default: types.ListNull(types.MapType{ElemType: types.StringType}),
+			Default:              types.ListNull(types.MapType{ElemType: types.StringType}),
+			AdditionalProperties: additionalProperties,
 		}
 
 		if value, ok := property.Items["format"].(string); ok {
@@ -403,6 +415,17 @@ func arrayPropToState(ctx context.Context, property cli.WorkflowInputProperty, j
 	}
 
 	return prop, nil
+}
+
+func additionalPropertiesToState(value any, jsonEscapeHTML bool) (types.String, error) {
+	if value == nil {
+		return types.StringNull(), nil
+	}
+	encoded, err := utils.GoObjectToTerraformString(value, jsonEscapeHTML)
+	if err != nil {
+		return types.StringNull(), fmt.Errorf("converting `additional_properties` to a string: %w", err)
+	}
+	return encoded, nil
 }
 
 func intOrJqToState(value any, name string) (types.Int64, types.String, error) {

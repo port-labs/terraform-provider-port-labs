@@ -91,9 +91,10 @@ type ObjectPropModel struct {
 	Disabled        types.Bool   `tfsdk:"disabled"`
 	DisabledJqQuery types.String `tfsdk:"disabled_jq_query"`
 
-	Default        types.String `tfsdk:"default"`
-	DefaultJqQuery types.String `tfsdk:"default_jq_query"`
-	Format         types.String `tfsdk:"format"`
+	Default              types.String `tfsdk:"default"`
+	DefaultJqQuery       types.String `tfsdk:"default_jq_query"`
+	Format               types.String `tfsdk:"format"`
+	AdditionalProperties types.String `tfsdk:"additional_properties"`
 }
 
 type ArrayPropModel struct {
@@ -139,8 +140,9 @@ type NumberItemsModel struct {
 }
 
 type ObjectItemsModel struct {
-	Format  types.String `tfsdk:"format"`
-	Default types.List   `tfsdk:"default"`
+	Format               types.String `tfsdk:"format"`
+	Default              types.List   `tfsdk:"default"`
+	AdditionalProperties types.String `tfsdk:"additional_properties"`
 }
 
 type EntitiesSortModel struct {

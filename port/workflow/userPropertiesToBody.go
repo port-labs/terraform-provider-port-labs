@@ -212,6 +212,12 @@ func objectPropToBody(ctx context.Context, prop ObjectPropModel) (*cli.WorkflowI
 
 	property.Format = prop.Format.ValueStringPointer()
 
+	additionalProperties, err := additionalPropertiesToBody(prop.AdditionalProperties)
+	if err != nil {
+		return nil, err
+	}
+	property.AdditionalProperties = additionalProperties
+
 	if !prop.DefaultJqQuery.IsNull() {
 		property.Default = jqQueryBody(prop.DefaultJqQuery)
 	} else if !prop.Default.IsNull() {
@@ -335,6 +341,13 @@ func arrayItemsToBody(ctx context.Context, property *cli.WorkflowInputProperty, 
 		if !prop.ObjectItems.Format.IsNull() {
 			items["format"] = prop.ObjectItems.Format.ValueString()
 		}
+		additionalProperties, err := additionalPropertiesToBody(prop.ObjectItems.AdditionalProperties)
+		if err != nil {
+			return err
+		}
+		if additionalProperties != nil {
+			items["additionalProperties"] = additionalProperties
+		}
 
 		if !prop.ObjectItems.Default.IsNull() {
 			defaults := make([]map[string]any, 0, len(prop.ObjectItems.Default.Elements()))
@@ -360,6 +373,18 @@ func arrayItemsToBody(ctx context.Context, property *cli.WorkflowInputProperty, 
 	}
 
 	return nil
+}
+
+func additionalPropertiesToBody(value types.String) (any, error) {
+	if value.IsNull() || value.IsUnknown() || value.ValueString() == "" {
+		return nil, nil
+	}
+
+	decoded, err := decodeAdditionalProperties(value.ValueString())
+	if err != nil {
+		return nil, fmt.Errorf("`additional_properties` %w", err)
+	}
+	return decoded, nil
 }
 
 func enumToBody(ctx context.Context, enum types.List, enumJqQuery types.String, elementType string) (any, error) {

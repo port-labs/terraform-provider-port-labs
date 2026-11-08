@@ -638,6 +638,59 @@ func TestUserInputNumberBoundsAndUniqueItemsRoundTrip(t *testing.T) {
 	assert.Equal(t, boolPtr(true), result.Properties["tags"].UniqueItems)
 }
 
+func TestObjectAdditionalPropertiesRoundTrip(t *testing.T) {
+	var fromAPI cli.WorkflowInputProperty
+	require.NoError(t, json.Unmarshal([]byte(`{"type":"object","additionalProperties":false}`), &fromAPI))
+	assert.Equal(t, false, fromAPI.AdditionalProperties)
+
+	schema := map[string]any{"type": "string"}
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"open":   {Type: "object", AdditionalProperties: true},
+			"locked": fromAPI,
+			"meta":   {Type: "object", AdditionalProperties: schema},
+			"plain":  {Type: "object"},
+			"labels": {
+				Type: "array",
+				Items: map[string]any{
+					"type":                 "object",
+					"additionalProperties": schema,
+				},
+			},
+			"flags": {
+				Type: "array",
+				Items: map[string]any{
+					"type":                 "object",
+					"additionalProperties": false,
+				},
+			},
+		},
+	})
+
+	assert.Equal(t, true, result.Properties["open"].AdditionalProperties)
+	assert.Equal(t, false, result.Properties["locked"].AdditionalProperties)
+	assert.Equal(t, schema, result.Properties["meta"].AdditionalProperties)
+	assert.Nil(t, result.Properties["plain"].AdditionalProperties)
+	assert.Equal(t, schema, result.Properties["labels"].Items["additionalProperties"])
+	assert.Equal(t, false, result.Properties["flags"].Items["additionalProperties"])
+
+	encoded, err := json.Marshal(result.Properties["locked"])
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"type":"object","additionalProperties":false}`, string(encoded))
+}
+
+func TestDecodeAdditionalPropertiesRejectsNonBooleanNonObject(t *testing.T) {
+	_, err := decodeAdditionalProperties(`"nope"`)
+	require.Error(t, err)
+
+	_, err = decodeAdditionalProperties(`[]`)
+	require.Error(t, err)
+
+	value, err := decodeAdditionalProperties(`false`)
+	require.NoError(t, err)
+	assert.Equal(t, false, value)
+}
+
 func TestInputNodeWithoutUserPropertiesStaysUnset(t *testing.T) {
 	ctx := context.Background()
 	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}

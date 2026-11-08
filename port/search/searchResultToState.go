@@ -213,6 +213,13 @@ func (d *SearchDataSource) refreshEntityState(ctx context.Context, e *cli.Entity
 		}
 	}
 
+	if len(e.MappingWarnings) != 0 {
+		state.MappingWarnings = make([]types.String, len(e.MappingWarnings))
+		for i, warning := range e.MappingWarnings {
+			state.MappingWarnings[i] = types.StringValue(warning)
+		}
+	}
+
 	if len(e.Properties) != 0 {
 		d.refreshPropertiesEntityState(ctx, state, e, b)
 	}

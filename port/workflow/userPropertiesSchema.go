@@ -272,8 +272,20 @@ func booleanPropertySchema() schema.Attribute {
 	}
 }
 
+func additionalPropertiesAttribute(subject string) schema.Attribute {
+	return schema.StringAttribute{
+		MarkdownDescription: "JSON Schema `additionalProperties` for " + subject + ", as a JSON encoded boolean or schema. " +
+			"`true` allows any extra keys, `false` rejects them, and an object is the schema those keys must match.",
+		Optional: true,
+		Validators: []validator.String{
+			additionalPropertiesValidator(),
+		},
+	}
+}
+
 func objectPropertySchema() schema.Attribute {
 	properties := map[string]schema.Attribute{
+		"additional_properties": additionalPropertiesAttribute("the object input"),
 		"default": schema.StringAttribute{
 			MarkdownDescription: "The default of the object input, as a JSON encoded string.",
 			Optional:            true,
@@ -429,6 +441,7 @@ func arrayPropertySchema() schema.Attribute {
 			MarkdownDescription: "The object items of the array input.",
 			Optional:            true,
 			Attributes: map[string]schema.Attribute{
+				"additional_properties": additionalPropertiesAttribute("each object item"),
 				"format": schema.StringAttribute{
 					MarkdownDescription: "The format of each item.",
 					Optional:            true,

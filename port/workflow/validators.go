@@ -48,6 +48,32 @@ func (v isTrueValidator) ValidateBool(_ context.Context, req validator.BoolReque
 	)
 }
 
+// additionalProperties is a JSON Schema keyword: a boolean, or a schema object
+// describing keys that are not listed under `properties`.
+func additionalPropertiesValidator() validator.String {
+	return stringValidator{
+		summary:     "Invalid additionalProperties",
+		description: "must be a JSON encoded boolean or schema object",
+		validate: func(value string) error {
+			_, err := decodeAdditionalProperties(value)
+			return err
+		},
+	}
+}
+
+func decodeAdditionalProperties(value string) (any, error) {
+	var decoded any
+	if err := json.Unmarshal([]byte(value), &decoded); err != nil {
+		return nil, fmt.Errorf("must be valid JSON: %s", err)
+	}
+	switch decoded.(type) {
+	case bool, map[string]any:
+		return decoded, nil
+	default:
+		return nil, fmt.Errorf("must be a JSON boolean or object")
+	}
+}
+
 func decodeJSONObject(value string) (map[string]any, error) {
 	var decoded any
 	if err := json.Unmarshal([]byte(value), &decoded); err != nil {

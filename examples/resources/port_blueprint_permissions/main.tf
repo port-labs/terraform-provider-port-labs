@@ -143,6 +143,28 @@ resource "port_blueprint_permissions" "microservice_permissions" {
         "teams" = [],
         "ownedByTeam" : false,
       }
+    },
+    "read_metadata_properties" = {
+      "title" = {
+        "roles" = [
+          "Admin",
+          "Member",
+        ],
+        "users" = [],
+        "teams" = [],
+        "ownedByTeam" : false,
+      }
+    },
+    "read_properties" = {
+      "myStringIdentifier" : {
+        "roles" = [
+          "Admin",
+          "Member",
+        ],
+        "users" = [],
+        "teams" = [],
+        "ownedByTeam" : false,
+      }
     }
   }
 }

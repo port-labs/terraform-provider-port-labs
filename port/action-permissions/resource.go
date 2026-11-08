@@ -93,16 +93,18 @@ func (r *ActionPermissionsResource) Update(ctx context.Context, req resource.Upd
 		return
 	}
 
-	_, err = r.portClient.UpdateActionPermissions(ctx, actionIdentifier, permissions)
+	updatedPermissions, err := r.portClient.UpdateActionPermissions(ctx, actionIdentifier, permissions)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update action permissions", err.Error())
 		return
 	}
 
-	state.ID = types.StringValue(actionIdentifier)
-	state.ActionIdentifier = types.StringValue(actionIdentifier)
-	state.BlueprintIdentifier = types.StringNull()
+	err = r.refreshActionPermissionsState(state, updatedPermissions, actionIdentifier)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to refresh action permissions state", err.Error())
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 }
@@ -138,16 +140,18 @@ func (r *ActionPermissionsResource) Create(ctx context.Context, req resource.Cre
 		return
 	}
 
-	_, err = r.portClient.UpdateActionPermissions(ctx, actionIdentifier, permissions)
+	updatedPermissions, err := r.portClient.UpdateActionPermissions(ctx, actionIdentifier, permissions)
 
 	if err != nil {
 		resp.Diagnostics.AddError("failed to update action permissions", err.Error())
 		return
 	}
 
-	state.ID = types.StringValue(actionIdentifier)
-	state.ActionIdentifier = types.StringValue(actionIdentifier)
-	state.BlueprintIdentifier = types.StringNull()
+	err = r.refreshActionPermissionsState(state, updatedPermissions, actionIdentifier)
+	if err != nil {
+		resp.Diagnostics.AddError("failed to refresh action permissions state", err.Error())
+		return
+	}
 
 	resp.Diagnostics.Append(resp.State.Set(ctx, &state)...)
 

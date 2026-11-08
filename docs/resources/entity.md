@@ -3,12 +3,262 @@
 page_title: "port_entity Resource - port"
 subcategory: ""
 description: |-
-  Entity resource
+  Entity Resource
+  Manages a Port entity. Entities are instances of blueprints representing your software catalog items (services, environments, packages, etc.).
+  Docs about entities can be found here https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/.
+  Example Usage
+  Basic entity with properties
+  
+  resource "port_blueprint" "microservice" {
+    identifier = "microservice"
+    title      = "Microservice"
+    properties = {
+      string_props = {
+        "name" = {
+          title = "Name"
+        }
+        "language" = {
+          title = "Language"
+          enum  = ["go", "python", "javascript"]
+        }
+      }
+      boolean_props = {
+        "is_active" = {
+          title   = "Is Active"
+          default = true
+        }
+      }
+    }
+  }
+  
+  resource "port_entity" "my_service" {
+    identifier = "my-service"
+    title      = "My Service"
+    blueprint  = port_blueprint.microservice.identifier
+    properties = {
+      string_props = {
+        "name"     = "my-service"
+        "language" = "go"
+      }
+      boolean_props = {
+        "is_active" = true
+      }
+    }
+  }
+  
+  Entity with relations
+  
+  resource "port_blueprint" "environment" {
+    identifier = "environment"
+    title      = "Environment"
+  }
+  
+  resource "port_blueprint" "microservice" {
+    identifier = "microservice"
+    title      = "Microservice"
+    relations = {
+      "environment" = {
+        title  = "Environment"
+        target = port_blueprint.environment.identifier
+      }
+    }
+  }
+  
+  resource "port_entity" "production" {
+    identifier = "production"
+    title      = "Production"
+    blueprint  = port_blueprint.environment.identifier
+  }
+  
+  resource "port_entity" "my_service" {
+    identifier = "my-service"
+    title      = "My Service"
+    blueprint  = port_blueprint.microservice.identifier
+    relations = {
+      single_relations = {
+        "environment" = port_entity.production.identifier
+      }
+    }
+  }
+  
+  Entity with teams
+  
+  resource "port_team" "backend" {
+    name = "Backend Team"
+  }
+  
+  resource "port_blueprint" "microservice" {
+    identifier = "microservice"
+    title      = "Microservice"
+    ownership = {
+      type = "Direct"
+    }
+  }
+  
+  resource "port_entity" "my_service" {
+    identifier = "my-service"
+    title      = "My Service"
+    blueprint  = port_blueprint.microservice.identifier
+    teams      = [port_team.backend.identifier]
+  }
+  
+  Entity with create_missing_related_entities
+  When create_missing_related_entities is true, Port will create stub entities for any relations that reference non-existent entities.
+  
+  resource "port_entity" "my_service" {
+    identifier = "my-service"
+    title      = "My Service"
+    blueprint  = "microservice"
+    relations = {
+      single_relations = {
+        "environment" = "staging"  # Will be created if it doesn't exist
+      }
+    }
+    create_missing_related_entities = true
+  }
+  
+  Import
+  Entities can be imported using the format blueprint_identifier:entity_identifier:
+  
+  terraform import port_entity.my_service microservice:my-service
 ---
 
 # port_entity (Resource)
 
-Entity resource
+# Entity Resource
+
+Manages a Port entity. Entities are instances of blueprints representing your software catalog items (services, environments, packages, etc.).
+
+Docs about entities can be found [here](https://docs.getport.io/build-your-software-catalog/sync-data-to-catalog/).
+
+## Example Usage
+
+### Basic entity with properties
+
+```hcl
+resource "port_blueprint" "microservice" {
+  identifier = "microservice"
+  title      = "Microservice"
+  properties = {
+    string_props = {
+      "name" = {
+        title = "Name"
+      }
+      "language" = {
+        title = "Language"
+        enum  = ["go", "python", "javascript"]
+      }
+    }
+    boolean_props = {
+      "is_active" = {
+        title   = "Is Active"
+        default = true
+      }
+    }
+  }
+}
+
+resource "port_entity" "my_service" {
+  identifier = "my-service"
+  title      = "My Service"
+  blueprint  = port_blueprint.microservice.identifier
+  properties = {
+    string_props = {
+      "name"     = "my-service"
+      "language" = "go"
+    }
+    boolean_props = {
+      "is_active" = true
+    }
+  }
+}
+```
+
+### Entity with relations
+
+```hcl
+resource "port_blueprint" "environment" {
+  identifier = "environment"
+  title      = "Environment"
+}
+
+resource "port_blueprint" "microservice" {
+  identifier = "microservice"
+  title      = "Microservice"
+  relations = {
+    "environment" = {
+      title  = "Environment"
+      target = port_blueprint.environment.identifier
+    }
+  }
+}
+
+resource "port_entity" "production" {
+  identifier = "production"
+  title      = "Production"
+  blueprint  = port_blueprint.environment.identifier
+}
+
+resource "port_entity" "my_service" {
+  identifier = "my-service"
+  title      = "My Service"
+  blueprint  = port_blueprint.microservice.identifier
+  relations = {
+    single_relations = {
+      "environment" = port_entity.production.identifier
+    }
+  }
+}
+```
+
+### Entity with teams
+
+```hcl
+resource "port_team" "backend" {
+  name = "Backend Team"
+}
+
+resource "port_blueprint" "microservice" {
+  identifier = "microservice"
+  title      = "Microservice"
+  ownership = {
+    type = "Direct"
+  }
+}
+
+resource "port_entity" "my_service" {
+  identifier = "my-service"
+  title      = "My Service"
+  blueprint  = port_blueprint.microservice.identifier
+  teams      = [port_team.backend.identifier]
+}
+```
+
+### Entity with create_missing_related_entities
+
+When `create_missing_related_entities` is true, Port will create stub entities for any relations that reference non-existent entities.
+
+```hcl
+resource "port_entity" "my_service" {
+  identifier = "my-service"
+  title      = "My Service"
+  blueprint  = "microservice"
+  relations = {
+    single_relations = {
+      "environment" = "staging"  # Will be created if it doesn't exist
+    }
+  }
+  create_missing_related_entities = true
+}
+```
+
+## Import
+
+Entities can be imported using the format `blueprint_identifier:entity_identifier`:
+
+```shell
+terraform import port_entity.my_service microservice:my-service
+```
 
 
 

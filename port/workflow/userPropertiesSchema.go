@@ -391,6 +391,24 @@ func arrayPropertySchema() schema.Attribute {
 					MarkdownDescription: "The dataset filtering the entities of the items, as a JSON encoded string.",
 					Optional:            true,
 				},
+				"pattern": schema.StringAttribute{
+					MarkdownDescription: "The regex pattern each item has to match.",
+					Optional:            true,
+				},
+				"min_length": schema.Int64Attribute{
+					MarkdownDescription: "The min length of each item.",
+					Optional:            true,
+					Validators: []validator.Int64{
+						int64validator.AtLeast(1),
+					},
+				},
+				"max_length": schema.Int64Attribute{
+					MarkdownDescription: "The max length of each item.",
+					Optional:            true,
+					Validators: []validator.Int64{
+						int64validator.AtLeast(1),
+					},
+				},
 			},
 		},
 		"number_items": schema.SingleNestedAttribute{

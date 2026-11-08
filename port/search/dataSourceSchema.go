@@ -152,6 +152,12 @@ func EntitySchema() map[string]schema.Attribute {
 			MarkdownDescription: "The last updater of the entity",
 			Computed:            true,
 		},
+		"property_sources": schema.MapAttribute{
+			MarkdownDescription: "Per-source contributions for union array properties. Each map value is a JSON object mapping source identifiers to their contributed values.",
+			Computed:            true,
+			Optional:            true,
+			ElementType:         types.StringType,
+		},
 	}
 }
 

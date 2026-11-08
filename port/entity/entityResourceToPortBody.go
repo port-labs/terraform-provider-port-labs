@@ -9,6 +9,52 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
+func writeUnionArrayResourceToBody(ctx context.Context, state *EntityModel, properties map[string]interface{}) error {
+	if state.Properties.ArrayProps == nil {
+		return nil
+	}
+
+	for identifier, slice := range state.Properties.ArrayProps.UnionStringSlices {
+		if slice.SourceKey.IsNull() {
+			continue
+		}
+
+		var items []interface{}
+		if !slice.Items.IsNull() {
+			var err error
+			items, err = utils.TerraformListToGoArray(ctx, slice.Items, "string")
+			if err != nil {
+				return err
+			}
+		}
+
+		properties[identifier] = map[string]interface{}{
+			slice.SourceKey.ValueString(): items,
+		}
+	}
+
+	for identifier, slice := range state.Properties.ArrayProps.UnionNumberSlices {
+		if slice.SourceKey.IsNull() {
+			continue
+		}
+
+		var items []interface{}
+		if !slice.Items.IsNull() {
+			var err error
+			items, err = utils.TerraformListToGoArray(ctx, slice.Items, "float64")
+			if err != nil {
+				return err
+			}
+		}
+
+		properties[identifier] = map[string]interface{}{
+			slice.SourceKey.ValueString(): items,
+		}
+	}
+
+	return nil
+}
+
 func writeArrayResourceToBody(ctx context.Context, state *EntityModel, properties map[string]interface{}) error {
 	if !state.Properties.ArrayProps.StringItems.IsNull() {
 		for identifier, itemArray := range state.Properties.ArrayProps.StringItems.Elements() {
@@ -130,6 +176,11 @@ func entityResourceToBody(ctx context.Context, state *EntityModel, bp *cli.Bluep
 
 		if state.Properties.ArrayProps != nil {
 			err := writeArrayResourceToBody(ctx, state, properties)
+			if err != nil {
+				return nil, err
+			}
+
+			err = writeUnionArrayResourceToBody(ctx, state, properties)
 			if err != nil {
 				return nil, err
 			}

@@ -321,6 +321,10 @@ func (r *BlueprintResource) ImportState(ctx context.Context, req resource.Import
 	resp.Diagnostics.Append(resp.State.SetAttribute(
 		ctx, path.Root("id"), req.ID,
 	)...)
+
+	if resp.Private != nil {
+		resp.Diagnostics.Append(markImportForRelationAdoption(ctx, resp.Private)...)
+	}
 }
 
 func forceDeleteBlueprint(ctx context.Context, portClient *cli.PortClient, state *BlueprintModel, resp *resource.DeleteResponse) {

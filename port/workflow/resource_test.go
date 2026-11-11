@@ -753,3 +753,125 @@ func TestAccPortWorkflowNodeTimeout(t *testing.T) {
 		},
 	})
 }
+
+func testAccSubWorkflowConfig(childIdentifier, parentIdentifier, published, executeWorkflow string) string {
+	return fmt.Sprintf(`
+	resource "port_workflow" "child" {
+		identifier = "%s"
+		title      = "Child workflow"
+
+		node {
+			identifier = "called"
+			title      = "Called by another workflow"
+			workflow_trigger {
+				%s
+			}
+		}
+
+		node {
+			identifier = "notify"
+			webhook {
+				url  = "https://example.com/hook"
+				body = jsonencode({ service = "{{ .outputs.called.service }}" })
+			}
+		}
+
+		connections {
+			source_identifier = "called"
+			target_identifier = "notify"
+		}
+	}
+
+	resource "port_workflow" "parent" {
+		identifier = "%s"
+		title      = "Parent workflow"
+
+		node {
+			identifier = "nightly"
+			schedule_trigger {
+				cron = "0 3 * * *"
+			}
+		}
+
+		node {
+			identifier = "call_child"
+			execute_workflow {
+				workflow_identifier = port_workflow.child.identifier
+				trigger_identifier  = "called"
+				%s
+			}
+		}
+
+		connections {
+			source_identifier = "nightly"
+			target_identifier = "call_child"
+		}
+	}`, childIdentifier, published, parentIdentifier, executeWorkflow)
+}
+
+func TestAccPortWorkflowExecuteWorkflow(t *testing.T) {
+	childIdentifier := utils.GenID()
+	parentIdentifier := utils.GenID()
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, "", `
+				wait       = false
+				on_failure = "continue"`),
+				ExpectError: regexp.MustCompile("`on_failure` can only be set when `wait` is `true`"),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, "", ""),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.published", "true"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.workflow_identifier", childIdentifier),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.trigger_identifier", "called"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.input", "{}"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.wait", "true"),
+					resource.TestCheckNoResourceAttr("port_workflow.parent", "node.1.execute_workflow.on_failure"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.timeout_minutes", "1440"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, "published = false", `
+				input           = jsonencode({ service = "{{ .run.id }}", replicas = 2 })
+				on_failure      = "continue"
+				timeout_minutes = 120`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.published", "false"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.input",
+						`{"replicas":2,"service":"{{ .run.id }}"}`),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.wait", "true"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.on_failure", "continue"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.timeout_minutes", "120"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, "", `
+				wait = false`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.published", "true"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.input", "{}"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.wait", "false"),
+					resource.TestCheckNoResourceAttr("port_workflow.parent", "node.1.execute_workflow.on_failure"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.timeout_minutes", "1440"),
+				),
+			},
+			{
+				ResourceName:      "port_workflow.parent",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     parentIdentifier,
+			},
+			{
+				ResourceName:      "port_workflow.child",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     childIdentifier,
+			},
+		},
+	})
+}

@@ -31,12 +31,14 @@ var nodeTypeBlockNames = []string{
 	"self_serve_trigger",
 	"event_trigger",
 	"schedule_trigger",
+	"workflow_trigger",
 	"kafka",
 	"webhook",
 	"integration_action",
 	"upsert_entity",
 	"ai",
 	"ai_agent",
+	"execute_workflow",
 	"condition",
 	"input",
 }
@@ -405,6 +407,66 @@ func scheduleTriggerBlock() schema.Block {
 				Validators:          []validator.String{cronValidator()},
 			},
 			"published": publishedAttribute(),
+		},
+	}
+}
+
+func workflowTriggerBlock() schema.Block {
+	return schema.SingleNestedBlock{
+		MarkdownDescription: "A workflow trigger node that lets other workflows execute this workflow through an " +
+			"`execute_workflow` node. The input passed by the calling workflow is available as the output of this node.",
+		Attributes: map[string]schema.Attribute{
+			"published": schema.BoolAttribute{
+				MarkdownDescription: "Whether the trigger is published. When `false`, other workflows cannot execute this workflow through this trigger.",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(true),
+			},
+		},
+	}
+}
+
+func executeWorkflowBlock() schema.Block {
+	return schema.SingleNestedBlock{
+		MarkdownDescription: "An execute workflow node that starts a run of another workflow through one of its `workflow_trigger` nodes. " +
+			"A workflow cannot execute itself, directly or through other workflows: Port fails such a run when it starts.",
+		Attributes: map[string]schema.Attribute{
+			"workflow_identifier": schema.StringAttribute{
+				MarkdownDescription: "The identifier of the workflow to execute.",
+				Optional:            true,
+			},
+			"trigger_identifier": schema.StringAttribute{
+				MarkdownDescription: "The identifier of the `workflow_trigger` node in the executed workflow through which it is run.",
+				Optional:            true,
+			},
+			"input": schema.StringAttribute{
+				MarkdownDescription: "The input passed to the executed workflow as a JSON encoded object, available as the output of its trigger node. " +
+					"String values support JQ templates. Defaults to `{}`.",
+				Optional:   true,
+				Computed:   true,
+				Default:    stringdefault.StaticString("{}"),
+				Validators: []validator.String{jsonObjectValidator()},
+			},
+			"wait": schema.BoolAttribute{
+				MarkdownDescription: "Whether to wait for the executed workflow run to conclude before continuing.",
+				Optional:            true,
+				Computed:            true,
+				Default:             booldefault.StaticBool(true),
+			},
+			"on_failure": schema.StringAttribute{
+				MarkdownDescription: "The action to take if the executed workflow run fails. One of `continue`, `terminate`. " +
+					"Can only be set when `wait` is `true`. When omitted, the run terminates.",
+				Optional: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf("continue", "terminate"),
+				},
+			},
+			"timeout_minutes": schema.Int64Attribute{
+				MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default of `1440` (1 day).",
+				Optional:            true,
+				Computed:            true,
+				Validators:          []validator.Int64{int64validator.Between(minTimeoutMinutes, maxTimeoutMinutes)},
+			},
 		},
 	}
 }
@@ -923,12 +985,14 @@ func WorkflowBlocks() map[string]schema.Block {
 					"self_serve_trigger": selfServeTriggerBlock(),
 					"event_trigger":      eventTriggerBlock(),
 					"schedule_trigger":   scheduleTriggerBlock(),
+					"workflow_trigger":   workflowTriggerBlock(),
 					"kafka":              kafkaBlock(),
 					"webhook":            webhookBlock(),
 					"integration_action": integrationActionBlock(),
 					"upsert_entity":      upsertEntityBlock(),
 					"ai":                 aiBlock(),
 					"ai_agent":           aiAgentBlock(),
+					"execute_workflow":   executeWorkflowBlock(),
 					"condition":          conditionBlock(),
 					"input":              inputBlock(),
 				},

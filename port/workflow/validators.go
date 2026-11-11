@@ -86,6 +86,17 @@ func decodeJSONObject(value string) (map[string]any, error) {
 	return object, nil
 }
 
+func jsonObjectValidator() validator.String {
+	return stringValidator{
+		summary:     "Invalid JSON object",
+		description: "must be a JSON encoded object",
+		validate: func(value string) error {
+			_, err := decodeJSONObject(value)
+			return err
+		},
+	}
+}
+
 // The service parses the output schema as a JSON Schema object whose `type` is
 // `object`, so any other shape is rejected on save.
 func outputSchemaValidator() validator.String {

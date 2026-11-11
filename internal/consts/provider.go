@@ -26,13 +26,15 @@ const (
 	SelfServeTrigger = "SELF_SERVE_TRIGGER"
 	EventTrigger     = "EVENT_TRIGGER"
 	ScheduleTrigger  = "SCHEDULE_TRIGGER"
+	WorkflowTrigger  = "WORKFLOW_TRIGGER"
 
 	// Workflow invocation node config types. Kafka, Webhook, UpsertEntity and
 	// IntegrationAction reuse the constants declared above.
-	AI            = "AI"
-	AIAgent       = "AI_AGENT"
-	ConditionNode = "CONDITION"
-	InputNode     = "INPUT"
+	AI              = "AI"
+	AIAgent         = "AI_AGENT"
+	ConditionNode   = "CONDITION"
+	InputNode       = "INPUT"
+	ExecuteWorkflow = "EXECUTE_WORKFLOW"
 
 	// Workflow trigger event types
 	WorkflowTimerExpired = "TIMER_EXPIRED"

@@ -127,6 +127,30 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 		config.Cron = n.ScheduleTrigger.Cron.ValueStringPointer()
 		config.Published = n.ScheduleTrigger.Published.ValueBoolPointer()
 
+	case n.WorkflowTrigger != nil:
+		config.Type = consts.WorkflowTrigger
+		config.Published = n.WorkflowTrigger.Published.ValueBoolPointer()
+
+	case n.ExecuteWorkflow != nil:
+		config.Type = consts.ExecuteWorkflow
+		e := n.ExecuteWorkflow
+		config.TimeoutMinutes = knownInt64Pointer(e.TimeoutMinutes)
+		config.WorkflowIdentifier = e.WorkflowIdentifier.ValueStringPointer()
+		config.TriggerIdentifier = e.TriggerIdentifier.ValueStringPointer()
+		config.Wait = e.Wait.ValueBoolPointer()
+		config.OnFailure = e.OnFailure.ValueStringPointer()
+
+		// The API requires `input`, so a missing value is sent as an empty object.
+		input := map[string]any{}
+		if !e.Input.IsNull() && !e.Input.IsUnknown() {
+			decoded, err := decodeJSONObject(e.Input.ValueString())
+			if err != nil {
+				return nil, fmt.Errorf("execute_workflow input %s", err)
+			}
+			input = decoded
+		}
+		config.Input = input
+
 	case n.Kafka != nil:
 		config.Type = consts.Kafka
 		config.TimeoutMinutes = knownInt64Pointer(n.Kafka.TimeoutMinutes)

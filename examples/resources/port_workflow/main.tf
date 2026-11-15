@@ -262,3 +262,61 @@ resource "port_workflow" "restart_service" {
     target_identifier = "restart"
   }
 }
+
+# A sub-workflow that other workflows can execute through its workflow trigger.
+# The input passed by the calling workflow is the output of the trigger node.
+resource "port_workflow" "notify_owner" {
+  identifier = "notify-owner"
+  title      = "Notify service owner"
+
+  node {
+    identifier = "called"
+    title      = "Called by another workflow"
+
+    workflow_trigger {}
+  }
+
+  node {
+    identifier = "notify"
+
+    webhook {
+      url  = "https://chat.example.com/notify"
+      body = jsonencode({ service = "{{ .outputs.called.service }}" })
+    }
+  }
+
+  connections {
+    source_identifier = "called"
+    target_identifier = "notify"
+  }
+}
+
+resource "port_workflow" "nightly_report" {
+  identifier = "nightly-report"
+  title      = "Nightly report"
+
+  node {
+    identifier = "nightly"
+
+    schedule_trigger {
+      cron = "0 3 * * *"
+    }
+  }
+
+  node {
+    identifier = "notify_owner"
+
+    execute_workflow {
+      workflow_identifier = port_workflow.notify_owner.identifier
+      trigger_identifier  = "called"
+      input               = jsonencode({ service = "payments" })
+      # Continue the nightly report even if the notification run fails.
+      on_failure = "continue"
+    }
+  }
+
+  connections {
+    source_identifier = "nightly"
+    target_identifier = "notify_owner"
+  }
+}

@@ -28,6 +28,7 @@ type WorkflowNodeModel struct {
 	SelfServeTrigger *SelfServeTriggerModel `tfsdk:"self_serve_trigger"`
 	EventTrigger     *EventTriggerModel     `tfsdk:"event_trigger"`
 	ScheduleTrigger  *ScheduleTriggerModel  `tfsdk:"schedule_trigger"`
+	WorkflowTrigger  *WorkflowTriggerModel  `tfsdk:"workflow_trigger"`
 
 	Kafka             *KafkaModel             `tfsdk:"kafka"`
 	Webhook           *WebhookModel           `tfsdk:"webhook"`
@@ -35,6 +36,7 @@ type WorkflowNodeModel struct {
 	UpsertEntity      *UpsertEntityModel      `tfsdk:"upsert_entity"`
 	AI                *AIModel                `tfsdk:"ai"`
 	AIAgent           *AIAgentModel           `tfsdk:"ai_agent"`
+	ExecuteWorkflow   *ExecuteWorkflowModel   `tfsdk:"execute_workflow"`
 	Condition         *ConditionModel         `tfsdk:"condition"`
 	Input             *InputModel             `tfsdk:"input"`
 }
@@ -101,6 +103,19 @@ type NodeConditionModel struct {
 type ScheduleTriggerModel struct {
 	Cron      types.String `tfsdk:"cron"`
 	Published types.Bool   `tfsdk:"published"`
+}
+
+type WorkflowTriggerModel struct {
+	Published types.Bool `tfsdk:"published"`
+}
+
+type ExecuteWorkflowModel struct {
+	WorkflowIdentifier types.String `tfsdk:"workflow_identifier"`
+	TriggerIdentifier  types.String `tfsdk:"trigger_identifier"`
+	Input              types.String `tfsdk:"input"`
+	Wait               types.Bool   `tfsdk:"wait"`
+	OnFailure          types.String `tfsdk:"on_failure"`
+	TimeoutMinutes     types.Int64  `tfsdk:"timeout_minutes"`
 }
 
 type KafkaModel struct {

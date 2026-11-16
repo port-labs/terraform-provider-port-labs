@@ -90,6 +90,12 @@ type WorkflowNodeConfig struct {
 	Notifications []WorkflowInputNotification `json:"notifications,omitempty"`
 	Responders    *WorkflowNodePermissions    `json:"responders,omitempty"`
 
+	// EXECUTE_WORKFLOW
+	WorkflowIdentifier *string `json:"workflowIdentifier,omitempty"`
+	TriggerIdentifier  *string `json:"triggerIdentifier,omitempty"`
+	Input              any     `json:"input,omitempty"`
+	Wait               *bool   `json:"wait,omitempty"`
+
 	// Shared by most invocation node types.
 	OnFailure *string `json:"onFailure,omitempty"`
 

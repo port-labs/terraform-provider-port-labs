@@ -59,6 +59,15 @@ func stringOrEmpty(value *string) types.String {
 	return types.StringValue(*value)
 }
 
+// The API treats a missing `published` or `wait` as true and the schema declares
+// the same default, so an absent value refreshes as true to match the plan.
+func boolOrTrue(value *bool) types.Bool {
+	if value == nil {
+		return types.BoolValue(true)
+	}
+	return types.BoolValue(*value)
+}
+
 func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.WorkflowNode, prior WorkflowNodeModel) (WorkflowNodeModel, error) {
 	node := WorkflowNodeModel{
 		Identifier:  types.StringValue(apiNode.Identifier),
@@ -135,6 +144,29 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 		node.ScheduleTrigger = &ScheduleTriggerModel{
 			Cron:      flex.GoStringToFramework(config.Cron),
 			Published: flex.GoBoolToFramework(config.Published),
+		}
+
+	case consts.WorkflowTrigger:
+		node.WorkflowTrigger = &WorkflowTriggerModel{
+			Published: boolOrTrue(config.Published),
+		}
+
+	case consts.ExecuteWorkflow:
+		input := config.Input
+		if input == nil {
+			input = map[string]any{}
+		}
+		inputString, err := anyToJSONString(input, r.portClient.JSONEscapeHTML)
+		if err != nil {
+			return node, err
+		}
+		node.ExecuteWorkflow = &ExecuteWorkflowModel{
+			WorkflowIdentifier: flex.GoStringToFramework(config.WorkflowIdentifier),
+			TriggerIdentifier:  flex.GoStringToFramework(config.TriggerIdentifier),
+			Input:              inputString,
+			Wait:               boolOrTrue(config.Wait),
+			OnFailure:          flex.GoStringToFramework(config.OnFailure),
+			TimeoutMinutes:     types.Int64PointerValue(config.TimeoutMinutes),
 		}
 
 	case consts.Kafka:

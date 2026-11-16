@@ -310,6 +310,63 @@ func TestWorkflowRPCReadRoundTripAndNoOpPlan(t *testing.T) {
 	assert.True(t, replanned.Equal(refreshed), "unchanged refreshed workflow did not produce a no-op plan")
 }
 
+func rpcSubWorkflowConfig(executeWorkflow configObject) configObject {
+	executeWorkflow["workflow_identifier"] = "child"
+	executeWorkflow["trigger_identifier"] = "called"
+	return configObject{
+		"identifier": "rpc_parent",
+		"node": configList{
+			configObject{"identifier": "called", "workflow_trigger": configObject{}},
+			configObject{"identifier": "call_child", "execute_workflow": executeWorkflow},
+		},
+		"connections": configList{configObject{"source_identifier": "called", "target_identifier": "call_child"}},
+	}
+}
+
+func TestWorkflowRPCWorkflowTriggerAndExecuteWorkflowDefaults(t *testing.T) {
+	server, resourceType := newWorkflowRPCServer(t, nil)
+	config := configValue(t, resourceType, rpcSubWorkflowConfig(configObject{}))
+	// An empty workflow_trigger block is a declared node and satisfies the trigger requirement.
+	requireNoErrorDiagnostics(t, validateResourceConfig(t, server, config))
+
+	planned, err := planResourceChange(t, server, config, tftypes.NewValue(resourceType, nil)).PlannedState.Unmarshal(resourceType)
+	require.NoError(t, err)
+
+	nodes := tftypes.NewAttributePath().WithAttributeName("node")
+	trigger := nodes.WithElementKeyInt(0).WithAttributeName("workflow_trigger")
+	execute := nodes.WithElementKeyInt(1).WithAttributeName("execute_workflow")
+	for attributePath, want := range map[*tftypes.AttributePath]any{
+		trigger.WithAttributeName("published"): true,
+		execute.WithAttributeName("input"):     "{}",
+		execute.WithAttributeName("wait"):      true,
+	} {
+		got := valueAt(t, planned, attributePath)
+		assert.True(t, got.Equal(tftypes.NewValue(got.Type(), want)), "default %s = %s", attributePath, got)
+	}
+	assert.True(t, valueAt(t, planned, execute.WithAttributeName("on_failure")).IsNull(),
+		"on_failure must stay null so it can be omitted when wait is false")
+	assert.False(t, valueAt(t, planned, execute.WithAttributeName("timeout_minutes")).IsKnown(),
+		"timeout_minutes is resolved by the API")
+}
+
+func TestWorkflowRPCExecuteWorkflowValidation(t *testing.T) {
+	server, resourceType := newWorkflowRPCServer(t, nil)
+	for _, tc := range []struct {
+		name            string
+		executeWorkflow configObject
+		want            []string
+	}{
+		{"on_failure_with_wait", configObject{"on_failure": "continue"}, nil},
+		{"on_failure_without_wait", configObject{"wait": false, "on_failure": "continue"}, []string{"Invalid attribute combination"}},
+		{"input_not_object", configObject{"input": `["a"]`}, []string{"Invalid JSON object"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			config := configValue(t, resourceType, rpcSubWorkflowConfig(tc.executeWorkflow))
+			assert.Equal(t, tc.want, rpcErrorSummaries(validateResourceConfig(t, server, config)))
+		})
+	}
+}
+
 // BenchmarkWorkflowRPCPlan runs both RPCs Terraform sends for a resource
 // during `terraform plan`.
 func BenchmarkWorkflowRPCPlan(b *testing.B) {

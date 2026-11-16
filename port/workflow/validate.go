@@ -140,12 +140,14 @@ var nodeTypeByBlock = map[string]string{
 	"self_serve_trigger": consts.SelfServeTrigger,
 	"event_trigger":      consts.EventTrigger,
 	"schedule_trigger":   consts.ScheduleTrigger,
+	"workflow_trigger":   consts.WorkflowTrigger,
 	"kafka":              consts.Kafka,
 	"webhook":            consts.Webhook,
 	"integration_action": consts.IntegrationAction,
 	"upsert_entity":      consts.UpsertEntity,
 	"ai":                 consts.AI,
 	"ai_agent":           consts.AIAgent,
+	"execute_workflow":   consts.ExecuteWorkflow,
 	"condition":          consts.ConditionNode,
 	"input":              consts.InputNode,
 }
@@ -177,6 +179,7 @@ var triggerTypes = map[string]bool{
 	consts.SelfServeTrigger: true,
 	consts.EventTrigger:     true,
 	consts.ScheduleTrigger:  true,
+	consts.WorkflowTrigger:  true,
 }
 
 func validateTriggerPresence(resp *resource.ValidateConfigResponse, nodeTypes []string) {
@@ -189,7 +192,7 @@ func validateTriggerPresence(resp *resource.ValidateConfigResponse, nodeTypes []
 	resp.Diagnostics.AddAttributeError(
 		path.Root("node"),
 		"Missing trigger node",
-		"A workflow must define at least one trigger node: `self_serve_trigger`, `event_trigger` or `schedule_trigger`.",
+		"A workflow must define at least one trigger node: `self_serve_trigger`, `event_trigger`, `schedule_trigger` or `workflow_trigger`.",
 	)
 }
 
@@ -271,6 +274,9 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 			"`cron` is required for a `schedule_trigger` node.")
 		return consts.ScheduleTrigger
 
+	case node.WorkflowTrigger != nil:
+		return consts.WorkflowTrigger
+
 	case node.Kafka != nil:
 		return consts.Kafka
 
@@ -309,6 +315,18 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 			"`agent_identifier` is required for an `ai_agent` node.")
 		requirePaired(resp, blockPath, "ai_agent", node.AIAgent.Provider, node.AIAgent.Model)
 		return consts.AIAgent
+
+	case node.ExecuteWorkflow != nil:
+		blockPath := nodePath.AtName("execute_workflow")
+		requireNonEmpty(resp, blockPath.AtName("workflow_identifier"), node.ExecuteWorkflow.WorkflowIdentifier,
+			"`workflow_identifier` is required for an `execute_workflow` node.")
+		requireNonEmpty(resp, blockPath.AtName("trigger_identifier"), node.ExecuteWorkflow.TriggerIdentifier,
+			"`trigger_identifier` is required for an `execute_workflow` node.")
+		if !node.ExecuteWorkflow.Wait.IsUnknown() && !node.ExecuteWorkflow.Wait.IsNull() && !node.ExecuteWorkflow.Wait.ValueBool() {
+			rejectSet(resp, blockPath.AtName("on_failure"), node.ExecuteWorkflow.OnFailure,
+				"`on_failure` can only be set when `wait` is `true`.")
+		}
+		return consts.ExecuteWorkflow
 
 	case node.Condition != nil:
 		blockPath := nodePath.AtName("condition")

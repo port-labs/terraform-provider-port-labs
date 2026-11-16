@@ -62,6 +62,7 @@ Optional:
 - `condition` (Block, Optional) A condition node that branches the workflow based on JQ expressions. Connections leaving this node must set `source_outlet_identifier` or `fallback`. (see [below for nested schema](#nestedblock--node--condition))
 - `description` (String) The description of the node
 - `event_trigger` (Block, Optional) An event trigger node that starts the workflow when an entity event occurs. (see [below for nested schema](#nestedblock--node--event_trigger))
+- `execute_workflow` (Block, Optional) An execute workflow node that starts a run of another workflow through one of its `workflow_trigger` nodes. A workflow cannot execute itself, directly or through other workflows: Port fails such a run when it starts. (see [below for nested schema](#nestedblock--node--execute_workflow))
 - `icon` (String) The icon of the node
 - `input` (Block, Optional) An input node that pauses the workflow and waits for a human response. Connections leaving this node must set `source_outlet_identifier`. (see [below for nested schema](#nestedblock--node--input))
 - `integration_action` (Block, Optional) An integration action node that invokes an installed integration. (see [below for nested schema](#nestedblock--node--integration_action))
@@ -74,6 +75,7 @@ Optional:
 - `variables` (Map of String) Named expressions made available to the node at run time
 - `verbose` (Boolean) When true, the workflow service writes extended per-node run logs
 - `webhook` (Block, Optional) A webhook node that sends an HTTP request. (see [below for nested schema](#nestedblock--node--webhook))
+- `workflow_trigger` (Block, Optional) A workflow trigger node that lets other workflows execute this workflow through an `execute_workflow` node. The input passed by the calling workflow is available as the output of this node. (see [below for nested schema](#nestedblock--node--workflow_trigger))
 
 <a id="nestedblock--node--ai"></a>
 ### Nested Schema for `node.ai`
@@ -172,6 +174,19 @@ Optional:
 - `combinator` (String) How the expressions are combined. One of `and`, `or`.
 - `expressions` (List of String) The JQ expressions evaluated against the event.
 
+
+
+<a id="nestedblock--node--execute_workflow"></a>
+### Nested Schema for `node.execute_workflow`
+
+Optional:
+
+- `input` (String) The input passed to the executed workflow as a JSON encoded object, available as the output of its trigger node. String values support JQ templates. Defaults to `{}`.
+- `on_failure` (String) The action to take if the executed workflow run fails. One of `continue`, `terminate`. Can only be set when `wait` is `true`. When omitted, the run terminates.
+- `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default of `1440` (1 day).
+- `trigger_identifier` (String) The identifier of the `workflow_trigger` node in the executed workflow through which it is run.
+- `wait` (Boolean) Whether to wait for the executed workflow run to conclude before continuing.
+- `workflow_identifier` (String) The identifier of the workflow to execute.
 
 
 <a id="nestedblock--node--input"></a>
@@ -1441,3 +1456,11 @@ Optional:
 - `synchronized` (Boolean) Whether the request is sent synchronously.
 - `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default per run: `1440` when `agent` is true or `synchronized` is false, `60` otherwise.
 - `url` (String) The URL of the webhook.
+
+
+<a id="nestedblock--node--workflow_trigger"></a>
+### Nested Schema for `node.workflow_trigger`
+
+Optional:
+
+- `published` (Boolean) Whether the trigger is published. When `false`, other workflows cannot execute this workflow through this trigger.

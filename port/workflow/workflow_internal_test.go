@@ -783,6 +783,25 @@ func eventTriggerNode(identifier string) WorkflowNodeModel {
 	}
 }
 
+func workflowTriggerNode(identifier string) WorkflowNodeModel {
+	return WorkflowNodeModel{
+		Identifier:      types.StringValue(identifier),
+		WorkflowTrigger: &WorkflowTriggerModel{Published: types.BoolValue(true)},
+	}
+}
+
+func executeWorkflowNode(identifier string) WorkflowNodeModel {
+	return WorkflowNodeModel{
+		Identifier: types.StringValue(identifier),
+		ExecuteWorkflow: &ExecuteWorkflowModel{
+			WorkflowIdentifier: types.StringValue("child"),
+			TriggerIdentifier:  types.StringValue("called"),
+			Input:              types.StringValue("{}"),
+			Wait:               types.BoolValue(true),
+		},
+	}
+}
+
 func conditionNode(identifier string, outletIdentifiers ...string) WorkflowNodeModel {
 	outlets := make([]ConditionOutletModel, 0, len(outletIdentifiers))
 	for _, o := range outletIdentifiers {
@@ -855,6 +874,42 @@ func TestValidateNodeRequiredAttributes(t *testing.T) {
 			},
 			summary: "Missing required attribute",
 		},
+		"execute_workflow without workflow_identifier": {
+			node: WorkflowNodeModel{
+				Identifier:      types.StringValue("call"),
+				ExecuteWorkflow: &ExecuteWorkflowModel{TriggerIdentifier: types.StringValue("called")},
+			},
+			summary: "Missing required attribute",
+		},
+		"execute_workflow without trigger_identifier": {
+			node: WorkflowNodeModel{
+				Identifier:      types.StringValue("call"),
+				ExecuteWorkflow: &ExecuteWorkflowModel{WorkflowIdentifier: types.StringValue("child")},
+			},
+			summary: "Missing required attribute",
+		},
+		"execute_workflow with blank workflow_identifier": {
+			node: WorkflowNodeModel{
+				Identifier: types.StringValue("call"),
+				ExecuteWorkflow: &ExecuteWorkflowModel{
+					WorkflowIdentifier: types.StringValue(" "),
+					TriggerIdentifier:  types.StringValue("called"),
+				},
+			},
+			summary: "Missing required attribute",
+		},
+		"execute_workflow on_failure without wait": {
+			node: WorkflowNodeModel{
+				Identifier: types.StringValue("call"),
+				ExecuteWorkflow: &ExecuteWorkflowModel{
+					WorkflowIdentifier: types.StringValue("child"),
+					TriggerIdentifier:  types.StringValue("called"),
+					Wait:               types.BoolValue(false),
+					OnFailure:          types.StringValue("continue"),
+				},
+			},
+			summary: "Invalid attribute combination",
+		},
 		"input without user inputs": {
 			node:    WorkflowNodeModel{Identifier: types.StringValue("approval"), Input: &InputModel{}},
 			summary: "Missing required block",
@@ -885,7 +940,18 @@ func TestValidateNodeAcceptsCompleteConfigs(t *testing.T) {
 			UpsertEntity: &UpsertEntityModel{BlueprintIdentifier: types.StringValue("service")},
 		},
 		conditionNode("branch", "approved"),
+		workflowTriggerNode("called"),
+		executeWorkflowNode("call"),
+		{
+			Identifier: types.StringValue("fire_and_forget"),
+			ExecuteWorkflow: &ExecuteWorkflowModel{
+				WorkflowIdentifier: types.StringValue("child"),
+				TriggerIdentifier:  types.StringValue("called"),
+				Wait:               types.BoolValue(false),
+			},
+		},
 	}
+	nodes[len(nodes)-2].ExecuteWorkflow.OnFailure = types.StringValue("continue")
 
 	diags := validateNodes(nodes, []ConnectionModel{
 		{
@@ -1053,12 +1119,20 @@ func TestValidateConnections(t *testing.T) {
 			Identifier: types.StringValue("notify"),
 			Webhook:    &WebhookModel{Url: types.StringValue("https://example.com/hook")},
 		},
+		workflowTriggerNode("called"),
 	}
 
 	tests := map[string]struct {
 		connection ConnectionModel
 		summary    string
 	}{
+		"connection into workflow trigger": {
+			connection: ConnectionModel{
+				SourceIdentifier: types.StringValue("notify"),
+				TargetIdentifier: types.StringValue("called"),
+			},
+			summary: "Invalid connection",
+		},
 		"self connection": {
 			connection: ConnectionModel{
 				SourceIdentifier: types.StringValue("notify"),
@@ -1416,6 +1490,8 @@ func TestEveryNodeTypeSerializesItsConfigType(t *testing.T) {
 			Identifier:      types.StringValue("n"),
 			ScheduleTrigger: &ScheduleTriggerModel{Cron: types.StringValue("0 9 * * *")},
 		}, consts.ScheduleTrigger},
+		"workflow_trigger": {"workflow_trigger", workflowTriggerNode("n"), consts.WorkflowTrigger},
+		"execute_workflow": {"execute_workflow", executeWorkflowNode("n"), consts.ExecuteWorkflow},
 		"kafka": {"kafka", WorkflowNodeModel{
 			Identifier: types.StringValue("n"),
 			Kafka:      &KafkaModel{Payload: types.StringValue(`{"event":"tick"}`)},
@@ -2400,6 +2476,11 @@ func nodeTimeoutCases() []nodeTimeoutCase {
 				return WorkflowNodeModel{AIAgent: &AIAgentModel{TimeoutMinutes: v}}
 			},
 			func(n WorkflowNodeModel) types.Int64 { return n.AIAgent.TimeoutMinutes }},
+		{"execute_workflow", consts.ExecuteWorkflow, true,
+			func(v types.Int64) WorkflowNodeModel {
+				return WorkflowNodeModel{ExecuteWorkflow: &ExecuteWorkflowModel{TimeoutMinutes: v}}
+			},
+			func(n WorkflowNodeModel) types.Int64 { return n.ExecuteWorkflow.TimeoutMinutes }},
 		{"condition", consts.ConditionNode, true,
 			func(v types.Int64) WorkflowNodeModel {
 				return WorkflowNodeModel{Condition: &ConditionModel{TimeoutMinutes: v}}
@@ -2412,7 +2493,7 @@ func nodeTimeoutCases() []nodeTimeoutCase {
 }
 
 func TestNodeTimeoutCasesCoverEveryNonTriggerBlock(t *testing.T) {
-	triggers := map[string]bool{"self_serve_trigger": true, "event_trigger": true, "schedule_trigger": true}
+	triggers := map[string]bool{"self_serve_trigger": true, "event_trigger": true, "schedule_trigger": true, "workflow_trigger": true}
 	want := []string{}
 	for _, b := range nodeTypeBlockNames {
 		if !triggers[b] {
@@ -2509,4 +2590,139 @@ func TestNodeTimeoutMinutesSchema(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestWorkflowTriggerAloneSatisfiesTriggerPresence(t *testing.T) {
+	resp := &resource.ValidateConfigResponse{}
+	validateTriggerPresence(resp, []string{consts.WorkflowTrigger, consts.Webhook})
+	assert.False(t, resp.Diagnostics.HasError(), errorSummaries(resp.Diagnostics))
+}
+
+func TestWorkflowTriggerToPortBody(t *testing.T) {
+	ctx := context.Background()
+
+	config, err := nodeConfigToPortBody(ctx, WorkflowNodeModel{
+		WorkflowTrigger: &WorkflowTriggerModel{Published: types.BoolValue(false)},
+	})
+	require.NoError(t, err)
+
+	raw, err := json.Marshal(config)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"type":"WORKFLOW_TRIGGER","published":false}`, string(raw))
+}
+
+func TestExecuteWorkflowToPortBody(t *testing.T) {
+	ctx := context.Background()
+
+	tests := map[string]struct {
+		model ExecuteWorkflowModel
+		want  string
+	}{
+		"waits and continues on failure": {
+			model: ExecuteWorkflowModel{
+				WorkflowIdentifier: types.StringValue("child"),
+				TriggerIdentifier:  types.StringValue("called"),
+				Input:              types.StringValue(`{"service":"{{ .outputs.trigger.diff.after.identifier }}","replicas":2}`),
+				Wait:               types.BoolValue(true),
+				OnFailure:          types.StringValue("continue"),
+				TimeoutMinutes:     types.Int64Value(120),
+			},
+			want: `{"type":"EXECUTE_WORKFLOW","workflowIdentifier":"child","triggerIdentifier":"called",
+				"input":{"service":"{{ .outputs.trigger.diff.after.identifier }}","replicas":2},
+				"wait":true,"onFailure":"continue","timeoutMinutes":120}`,
+		},
+		"does not wait and sends an empty input": {
+			model: ExecuteWorkflowModel{
+				WorkflowIdentifier: types.StringValue("child"),
+				TriggerIdentifier:  types.StringValue("called"),
+				Input:              types.StringNull(),
+				Wait:               types.BoolValue(false),
+				TimeoutMinutes:     types.Int64Unknown(),
+			},
+			want: `{"type":"EXECUTE_WORKFLOW","workflowIdentifier":"child","triggerIdentifier":"called","input":{},"wait":false}`,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			config, err := nodeConfigToPortBody(ctx, WorkflowNodeModel{ExecuteWorkflow: &test.model})
+			require.NoError(t, err)
+
+			raw, err := json.Marshal(config)
+			require.NoError(t, err)
+			assert.JSONEq(t, test.want, string(raw))
+		})
+	}
+}
+
+func TestExecuteWorkflowRejectsNonObjectInput(t *testing.T) {
+	_, err := nodeConfigToPortBody(context.Background(), WorkflowNodeModel{ExecuteWorkflow: &ExecuteWorkflowModel{
+		WorkflowIdentifier: types.StringValue("child"),
+		TriggerIdentifier:  types.StringValue("called"),
+		Input:              types.StringValue(`["a"]`),
+	}})
+	assert.ErrorContains(t, err, "must be a JSON object")
+
+	for value, valid := range map[string]bool{`{}`: true, `{"a":"{{ .run.id }}"}`: true, `[]`: false, `"a"`: false, `{`: false} {
+		resp := &validator.StringResponse{}
+		jsonObjectValidator().ValidateString(context.Background(), validator.StringRequest{ConfigValue: types.StringValue(value)}, resp)
+		assert.Equal(t, !valid, resp.Diagnostics.HasError(), "input = %s", value)
+	}
+}
+
+func TestRefreshWorkflowTriggerAndExecuteWorkflow(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	refresh := func(t *testing.T, config cli.WorkflowNodeConfig) WorkflowNodeModel {
+		state := &WorkflowModel{Identifier: types.StringValue("wf")}
+		err := r.refreshWorkflowState(ctx, state, &cli.Workflow{
+			Identifier: "wf",
+			Nodes:      []cli.WorkflowNode{{Identifier: "n", Config: config}},
+		})
+		require.NoError(t, err)
+		require.Len(t, state.Nodes, 1)
+		return state.Nodes[0]
+	}
+
+	t.Run("workflow trigger defaults published to true", func(t *testing.T) {
+		node := refresh(t, cli.WorkflowNodeConfig{Type: consts.WorkflowTrigger})
+		require.NotNil(t, node.WorkflowTrigger)
+		assert.Equal(t, types.BoolValue(true), node.WorkflowTrigger.Published)
+
+		node = refresh(t, cli.WorkflowNodeConfig{Type: consts.WorkflowTrigger, Published: boolPtr(false)})
+		assert.Equal(t, types.BoolValue(false), node.WorkflowTrigger.Published)
+	})
+
+	t.Run("execute workflow reads every field", func(t *testing.T) {
+		node := refresh(t, cli.WorkflowNodeConfig{
+			Type:               consts.ExecuteWorkflow,
+			WorkflowIdentifier: strPtr("child"),
+			TriggerIdentifier:  strPtr("called"),
+			Input:              map[string]any{"service": "{{ .run.id }}"},
+			Wait:               boolPtr(true),
+			OnFailure:          strPtr("continue"),
+			TimeoutMinutes:     int64Ptr(1440),
+		})
+		require.NotNil(t, node.ExecuteWorkflow)
+		assert.Equal(t, ExecuteWorkflowModel{
+			WorkflowIdentifier: types.StringValue("child"),
+			TriggerIdentifier:  types.StringValue("called"),
+			Input:              types.StringValue(`{"service":"{{ .run.id }}"}`),
+			Wait:               types.BoolValue(true),
+			OnFailure:          types.StringValue("continue"),
+			TimeoutMinutes:     types.Int64Value(1440),
+		}, *node.ExecuteWorkflow)
+	})
+
+	t.Run("execute workflow treats missing input and wait as their defaults", func(t *testing.T) {
+		node := refresh(t, cli.WorkflowNodeConfig{
+			Type:               consts.ExecuteWorkflow,
+			WorkflowIdentifier: strPtr("child"),
+			TriggerIdentifier:  strPtr("called"),
+		})
+		assert.Equal(t, types.StringValue("{}"), node.ExecuteWorkflow.Input)
+		assert.Equal(t, types.BoolValue(true), node.ExecuteWorkflow.Wait)
+		assert.True(t, node.ExecuteWorkflow.OnFailure.IsNull())
+	})
 }

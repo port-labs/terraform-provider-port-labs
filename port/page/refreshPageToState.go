@@ -1,11 +1,60 @@
 package page
 
 import (
+	"encoding/json"
+	"fmt"
+	"reflect"
+	"slices"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
+
+func normalizeHiddenQueries(v any) any {
+	switch t := v.(type) {
+	case map[string]any:
+		out := make(map[string]any, len(t))
+		for key, value := range t {
+			if arr, ok := value.([]any); ok && key == "hiddenQuery" {
+				if len(arr) > 0 {
+					sorted := slices.Clone(arr)
+					slices.SortFunc(sorted, func(a, b any) int {
+						return strings.Compare(fmt.Sprint(a), fmt.Sprint(b))
+					})
+					out[key] = sorted
+				}
+				continue
+			}
+			out[key] = normalizeHiddenQueries(value)
+		}
+		return out
+	case []any:
+		out := make([]any, len(t))
+		for i, item := range t {
+			out[i] = normalizeHiddenQueries(item)
+		}
+		return out
+	default:
+		return v
+	}
+}
+
+func resolveWidgetState(prevWidget types.String, remoteWidget map[string]any, jsonEscapeHTML bool) (types.String, error) {
+	remoteWidgetJSON, err := utils.GoObjectToTerraformString(remoteWidget, jsonEscapeHTML)
+	if err != nil || prevWidget.IsNull() || prevWidget.IsUnknown() {
+		return remoteWidgetJSON, err
+	}
+
+	var prev map[string]any
+	if json.Unmarshal([]byte(prevWidget.ValueString()), &prev) == nil &&
+		reflect.DeepEqual(normalizeHiddenQueries(prev), normalizeHiddenQueries(remoteWidget)) {
+		return prevWidget, nil
+	}
+	return remoteWidgetJSON, nil
+}
 
 func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	oldWidgets := pm.Widgets
@@ -26,7 +75,7 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	if b.Widgets != nil {
 		widgetAttrs := make([]attr.Value, len(*b.Widgets))
 		for i, widget := range *b.Widgets {
-			bWidget, err := utils.GoObjectToTerraformStringPreferExisting(
+			bWidget, err := resolveWidgetState(
 				utils.TerraformStringAtList(oldWidgets, i), widget, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return err

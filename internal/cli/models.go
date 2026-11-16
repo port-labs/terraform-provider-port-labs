@@ -411,6 +411,7 @@ type (
 		Widgets           *[]map[string]any `json:"widgets,omitempty"`
 		PageFilters       *[]map[string]any `json:"pageFilters,omitempty"`
 		PageFilterPresets *[]map[string]any `json:"pageFilterPresets,omitempty"`
+		PageDateFilter    *map[string]any   `json:"pageDateFilter,omitempty"`
 		Description       *string           `json:"description,omitempty"`
 	}
 

@@ -12,11 +12,6 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func hiddenQueryKey(v any) string {
-	b, _ := json.Marshal(v)
-	return string(b)
-}
-
 func normalizeHiddenQueries(v any) any {
 	switch t := v.(type) {
 	case map[string]any:
@@ -28,7 +23,8 @@ func normalizeHiddenQueries(v any) any {
 				}
 				keys := make([]string, len(arr))
 				for i, item := range arr {
-					keys[i] = hiddenQueryKey(item)
+					b, _ := json.Marshal(item)
+					keys[i] = string(b)
 				}
 				idx := make([]int, len(arr))
 				for i := range idx {

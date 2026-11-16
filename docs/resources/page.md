@@ -8,8 +8,8 @@ description: |-
   Widget type identifiers are divided by type: Data widgets https://docs.port.io/customize-pages-dashboards-and-plugins/dashboards/data-widgets#widget-type-identifiers-terraform, Custom widgets https://docs.port.io/customize-pages-dashboards-and-plugins/dashboards/custom-widgets#widget-type-identifiers-terraform, and Personal widgets https://docs.port.io/customize-pages-dashboards-and-plugins/dashboards/personal-widgets#widget-type-identifiers-terraform.
   Example Usage
   Blueprint Entities Page
-
-
+  
+  
   resource "port_page" "microservice_blueprint_page" {
     identifier            = "microservice_blueprint_page"
     title                 = "Microservices"
@@ -31,11 +31,11 @@ description: |-
       )
     ]
   }
-
-
+  
+  
   Dashboard Page
-
-
+  
+  
   resource "port_page" "microservice_dashboard_page" {
     identifier            = "microservice_dashboard_page"
     title                 = "Microservices"
@@ -71,12 +71,12 @@ description: |-
       )
     ]
   }
-
-
+  
+  
   Dashboard Page with filter presets
   Named groups of page filters that users can apply together. Each preset contains the same filter objects used in page_filters.
-
-
+  
+  
   resource "port_page" "microservice_dashboard_page" {
     identifier = "microservice_dashboard_page"
     title      = "Microservices"
@@ -137,12 +137,12 @@ description: |-
       )
     ]
   }
-
-
+  
+  
   Dashboard Page with a date filter
   Set the date range that the page opens with. page_date_filter is a JSON object with a range. Use a relative range (such as quickRange or last) so the dashboard stays current. Widgets that support it choose which date property is filtered with dashboardDateProperty.
-
-
+  
+  
   resource "port_page" "microservice_dashboard_page" {
     identifier = "microservice_dashboard_page"
     title      = "Microservices"
@@ -189,23 +189,23 @@ description: |-
       )
     ]
   }
-
-
+  
+  
   Other range types: { "type": "fixed", "from": "2026-01-01", "to": "2026-03-31" }, { "type": "since", "from": "2026-01-01" }, { "type": "last", "amount": 2, "unit": "week", "offset": 1 }, { "type": "next", "amount": 1, "unit": "month" } and { "type": "periodToDate", "period": "quarter" }.
   Entity Page
   Customize the entity page https://docs.getport.io/customize-pages-dashboards-and-plugins/page/entity-page template for a blueprint.
   Entity pages are auto-created when a blueprint is created (identifier: <blueprint>Entity).
   The provider does not call the create page API for entity pages; it updates the existing page instead.
   If the entity page does not exist yet, import it before applying:
-
+  
   terraform import port_page.microservice_entity_page microserviceEntity
-
+  
   When the blueprint is managed in the same Terraform configuration, you can apply the entity page resource directly after the blueprint is created.
   ~> Use static widget IDs with Terraform
   When managing entity pages across multiple organizations or environments with Terraform, use the static widget IDs entityPageGrouper, overviewDashboard, and entityDetails exactly as shown in the example below.
   Do not copy widget IDs from a UI-exported page JSON. Port generates those IDs per organization. Using them in a different organization or environment causes silent no-op updates: Terraform reports a successful apply, but the page layout does not change.
-
-
+  
+  
   resource "port_page" "microservice_entity_page" {
     identifier = "microserviceEntity"
     title      = "Microservices"
@@ -367,12 +367,12 @@ description: |-
       )
     ]
   }
-
-
+  
+  
   Page with parent
   Create a page inside a folder.
-
-
+  
+  
   resource "port_page" "microservice_dashboard_page" {
     identifier            = "microservice_dashboard_page"
     title                 = "Microservices"
@@ -409,12 +409,12 @@ description: |-
       )
     ]
   }
-
-
+  
+  
   Page with after
   Create a page after another page.
-
-
+  
+  
   resource "port_page" "microservice_dashboard_page" {
     identifier            = "microservice_dashboard_page"
     title                 = "Microservices"
@@ -451,11 +451,11 @@ description: |-
       )
     ]
   }
-
-
+  
+  
   Home Page
-
-
+  
+  
   resource "port_page" "home_page" {
     identifier            = "$home"
     title                 = "Home"
@@ -501,11 +501,11 @@ description: |-
       )
     ]
   }
-
-
+  
+  
   The home page is a special page, which is created by default when you create a new organization.
   When deleting the home page resource using terraform, the home page will not be deleted from Port as it isn't deletable page, instead, the home page will be removed from the terraform state.Due to only having one home page you'll have to import the state of the home page manually.
-
+  
   terraform import port_page.home_page "\$home"
 ---
 
@@ -943,6 +943,7 @@ resource "port_page" "microservice_dashboard_page" {
 
 ```
 
+
 ### Page with after
 
 Create a page after another page.
@@ -1049,8 +1050,9 @@ The home page is a special page, which is created by default when you create a n
 terraform import port_page.home_page "\$home"
 ```
 
-<!-- schema generated by tfplugindocs -->
 
+
+<!-- schema generated by tfplugindocs -->
 ## Schema
 
 ### Required

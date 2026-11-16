@@ -1,11 +1,67 @@
 package page
 
 import (
+	"encoding/json"
+	"reflect"
+	"slices"
+	"strings"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
+
+func normalizeHiddenQueries(v any) any {
+	switch t := v.(type) {
+	case map[string]any:
+		out := make(map[string]any, len(t))
+		for key, value := range t {
+			if arr, ok := value.([]any); ok && key == "hiddenQuery" {
+				if len(arr) == 0 {
+					continue
+				}
+				keys := make([]string, len(arr))
+				for i, item := range arr {
+					b, _ := json.Marshal(item)
+					keys[i] = string(b)
+				}
+				idx := make([]int, len(arr))
+				for i := range idx {
+					idx[i] = i
+				}
+				slices.SortFunc(idx, func(a, b int) int { return strings.Compare(keys[a], keys[b]) })
+				sorted := make([]any, len(arr))
+				for i, j := range idx {
+					sorted[i] = arr[j]
+				}
+				out[key] = sorted
+				continue
+			}
+			out[key] = normalizeHiddenQueries(value)
+		}
+		return out
+	case []any:
+		out := make([]any, len(t))
+		for i, item := range t {
+			out[i] = normalizeHiddenQueries(item)
+		}
+		return out
+	default:
+		return v
+	}
+}
+
+func resolveWidgetState(prevWidget types.String, remoteWidget map[string]any, jsonEscapeHTML bool) (types.String, error) {
+	if !prevWidget.IsNull() && !prevWidget.IsUnknown() {
+		var prev map[string]any
+		if json.Unmarshal([]byte(prevWidget.ValueString()), &prev) == nil &&
+			reflect.DeepEqual(normalizeHiddenQueries(prev), normalizeHiddenQueries(remoteWidget)) {
+			return prevWidget, nil
+		}
+	}
+	return utils.GoObjectToTerraformString(remoteWidget, jsonEscapeHTML)
+}
 
 func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	oldWidgets := pm.Widgets
@@ -27,7 +83,7 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	if b.Widgets != nil {
 		widgetAttrs := make([]attr.Value, len(*b.Widgets))
 		for i, widget := range *b.Widgets {
-			bWidget, err := utils.GoObjectToTerraformStringPreferExisting(
+			bWidget, err := resolveWidgetState(
 				utils.TerraformStringAtList(oldWidgets, i), widget, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return err

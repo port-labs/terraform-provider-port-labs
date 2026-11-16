@@ -41,6 +41,12 @@ func TestResolveWidgetState(t *testing.T) {
 			keepPrev:     true,
 		},
 		{
+			name:         "hiddenQuery string and number stay distinct",
+			prevWidget:   types.StringValue(`{"id":"details","hiddenQuery":["1",1]}`),
+			remoteWidget: `{"id":"details","hiddenQuery":[1,"1"]}`,
+			keepPrev:     true,
+		},
+		{
 			name:         "numbers, HTML characters and key order do not cause drift",
 			prevWidget:   types.StringValue(`{"title":"a<b>&c","layout":[{"height":400}],"id":"details"}`),
 			remoteWidget: `{"id":"details","layout":[{"height":400}],"title":"a<b>&c"}`,

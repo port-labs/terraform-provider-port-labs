@@ -2,7 +2,6 @@ package page
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"slices"
 	"strings"
@@ -13,19 +12,34 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
+func hiddenQueryKey(v any) string {
+	b, _ := json.Marshal(v)
+	return string(b)
+}
+
 func normalizeHiddenQueries(v any) any {
 	switch t := v.(type) {
 	case map[string]any:
 		out := make(map[string]any, len(t))
 		for key, value := range t {
 			if arr, ok := value.([]any); ok && key == "hiddenQuery" {
-				if len(arr) > 0 {
-					sorted := slices.Clone(arr)
-					slices.SortFunc(sorted, func(a, b any) int {
-						return strings.Compare(fmt.Sprint(a), fmt.Sprint(b))
-					})
-					out[key] = sorted
+				if len(arr) == 0 {
+					continue
 				}
+				keys := make([]string, len(arr))
+				for i, item := range arr {
+					keys[i] = hiddenQueryKey(item)
+				}
+				idx := make([]int, len(arr))
+				for i := range idx {
+					idx[i] = i
+				}
+				slices.SortFunc(idx, func(a, b int) int { return strings.Compare(keys[a], keys[b]) })
+				sorted := make([]any, len(arr))
+				for i, j := range idx {
+					sorted[i] = arr[j]
+				}
+				out[key] = sorted
 				continue
 			}
 			out[key] = normalizeHiddenQueries(value)
@@ -43,17 +57,14 @@ func normalizeHiddenQueries(v any) any {
 }
 
 func resolveWidgetState(prevWidget types.String, remoteWidget map[string]any, jsonEscapeHTML bool) (types.String, error) {
-	remoteWidgetJSON, err := utils.GoObjectToTerraformString(remoteWidget, jsonEscapeHTML)
-	if err != nil || prevWidget.IsNull() || prevWidget.IsUnknown() {
-		return remoteWidgetJSON, err
+	if !prevWidget.IsNull() && !prevWidget.IsUnknown() {
+		var prev map[string]any
+		if json.Unmarshal([]byte(prevWidget.ValueString()), &prev) == nil &&
+			reflect.DeepEqual(normalizeHiddenQueries(prev), normalizeHiddenQueries(remoteWidget)) {
+			return prevWidget, nil
+		}
 	}
-
-	var prev map[string]any
-	if json.Unmarshal([]byte(prevWidget.ValueString()), &prev) == nil &&
-		reflect.DeepEqual(normalizeHiddenQueries(prev), normalizeHiddenQueries(remoteWidget)) {
-		return prevWidget, nil
-	}
-	return remoteWidgetJSON, nil
+	return utils.GoObjectToTerraformString(remoteWidget, jsonEscapeHTML)
 }
 
 func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {

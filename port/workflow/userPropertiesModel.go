@@ -156,15 +156,16 @@ type DatasetModel struct {
 }
 
 type DatasetRuleModel struct {
-	Blueprint  types.String       `tfsdk:"blueprint"`
-	Property   types.String       `tfsdk:"property"`
-	Relation   types.String       `tfsdk:"relation"`
-	Direction  types.String       `tfsdk:"direction"`
-	Operator   types.String       `tfsdk:"operator"`
-	Value      *ValueModel        `tfsdk:"value"`
-	ValueJson  types.String       `tfsdk:"value_json"`
-	Combinator types.String       `tfsdk:"combinator"`
-	Rules      []DatasetRuleModel `tfsdk:"rules"`
+	Blueprint    types.String       `tfsdk:"blueprint"`
+	Property     types.String       `tfsdk:"property"`
+	PropertyJson types.String       `tfsdk:"property_json"`
+	Relation     types.String       `tfsdk:"relation"`
+	Direction    types.String       `tfsdk:"direction"`
+	Operator     types.String       `tfsdk:"operator"`
+	Value        *ValueModel        `tfsdk:"value"`
+	ValueJson    types.String       `tfsdk:"value_json"`
+	Combinator   types.String       `tfsdk:"combinator"`
+	Rules        []DatasetRuleModel `tfsdk:"rules"`
 }
 
 type ValueModel struct {

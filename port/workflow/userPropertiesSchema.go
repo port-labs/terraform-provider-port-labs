@@ -521,6 +521,13 @@ func datasetRuleSchema(depth int) map[string]schema.Attribute {
 		"property": schema.StringAttribute{
 			MarkdownDescription: "The property identifier of the rule.",
 			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("property_json")),
+			},
+		},
+		"property_json": schema.StringAttribute{
+			MarkdownDescription: "The property of the rule as a JSON encoded object, for contextual rules (`{\"context\": \"user\", \"property\": \"port_role\"}`) and path rules (`{\"path\": [\"team_memberships\", \"team\"], \"fromBlueprint\": \"person\"}`). Use instead of `property`.",
+			Optional:            true,
 		},
 		"relation": schema.StringAttribute{
 			MarkdownDescription: "The relation identifier of the rule. Use instead of `property` to filter on a relation.",

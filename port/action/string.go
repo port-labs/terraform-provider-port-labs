@@ -180,14 +180,23 @@ func stringPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 	return nil
 }
 
-func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *StringPropModel {
+func (r *ActionResource) addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty, prior *StringPropModel) (*StringPropModel, error) {
 	stringProp := &StringPropModel{
 		MinLength: flex.GoInt64ToFramework(v.MinLength),
 		MaxLength: flex.GoInt64ToFramework(v.MaxLength),
 		Format:    flex.GoStringToFramework(v.Format),
 		Blueprint: flex.GoStringToFramework(v.Blueprint),
-		Dataset:   writeDatasetToResource(v.Dataset),
 	}
+
+	var priorDataset *DatasetModel
+	if prior != nil {
+		priorDataset = prior.Dataset
+	}
+	dataset, err := writeDatasetToResource(v.Dataset, priorDataset, r.portClient.JSONEscapeHTML)
+	if err != nil {
+		return nil, err
+	}
+	stringProp.Dataset = dataset
 
 	// Handle encryption - can be either a string or an object
 	stringProp.Encryption = types.StringNull()
@@ -270,5 +279,5 @@ func addStringPropertiesToResource(ctx context.Context, v *cli.ActionProperty) *
 		}
 	}
 
-	return stringProp
+	return stringProp, nil
 }

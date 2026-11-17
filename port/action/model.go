@@ -13,8 +13,6 @@ type Rule struct {
 	Blueprint    types.String `tfsdk:"blueprint"`
 	Property     types.String `tfsdk:"property"`
 	PropertyJson types.String `tfsdk:"property_json"`
-	Relation     types.String `tfsdk:"relation"`
-	Direction    types.String `tfsdk:"direction"`
 	Operator     types.String `tfsdk:"operator"`
 	Value        *Value       `tfsdk:"value"`
 	// Group rule fields (logical combinators) - for nested rules

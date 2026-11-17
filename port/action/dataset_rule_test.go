@@ -26,11 +26,6 @@ func TestDatasetRuleRoundTrip(t *testing.T) {
 				Value:        &Value{JqQuery: types.StringValue(".user.id")},
 			},
 			{
-				Relation:  types.StringValue("team"),
-				Direction: types.StringValue("upstream"),
-				Operator:  types.StringValue("isNotEmpty"),
-			},
-			{
 				Property: types.StringValue("language"),
 				Operator: types.StringValue("="),
 				Value:    &Value{JqQuery: types.StringValue(".form.language")},
@@ -46,7 +41,6 @@ func TestDatasetRuleRoundTrip(t *testing.T) {
 	assert.JSONEq(t, `{"combinator":"and","rules":[
 		{"property":{"context":"user","property":"port_role"},"operator":"=","value":{"jqQuery":"\"Admin\""}},
 		{"property":{"path":["team_memberships","team"],"fromBlueprint":"person"},"operator":"matchAny","value":{"jqQuery":".user.id"}},
-		{"relation":"team","direction":"upstream","operator":"isNotEmpty"},
 		{"property":"language","operator":"=","value":{"jqQuery":".form.language"}}
 	]}`, string(encoded))
 
@@ -54,12 +48,10 @@ func TestDatasetRuleRoundTrip(t *testing.T) {
 	var fromApi cli.Dataset
 	require.NoError(t, json.Unmarshal(encoded, &fromApi))
 	state := writeDatasetToResource(&fromApi)
-	require.Len(t, state.Rules, 4)
+	require.Len(t, state.Rules, 3)
 	assert.JSONEq(t, `{"context":"user","property":"port_role"}`, state.Rules[0].PropertyJson.ValueString())
 	assert.Equal(t, `"Admin"`, state.Rules[0].Value.JqQuery.ValueString())
 	assert.True(t, state.Rules[0].Property.IsNull())
-	assert.Equal(t, "team", state.Rules[2].Relation.ValueString())
-	assert.Equal(t, "upstream", state.Rules[2].Direction.ValueString())
-	assert.Equal(t, "language", state.Rules[3].Property.ValueString())
-	assert.Equal(t, ".form.language", state.Rules[3].Value.JqQuery.ValueString())
+	assert.Equal(t, "language", state.Rules[2].Property.ValueString())
+	assert.Equal(t, ".form.language", state.Rules[2].Value.JqQuery.ValueString())
 }

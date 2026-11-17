@@ -127,11 +127,9 @@ type (
 		Blueprint *string `json:"blueprint,omitempty"`
 		// Property is a property identifier (string), or an object for contextual
 		// ({context, property}) and path ({path, fromBlueprint}) rules.
-		Property  any           `json:"property,omitempty"`
-		Relation  *string       `json:"relation,omitempty"`
-		Direction *string       `json:"direction,omitempty"`
-		Operator  string        `json:"operator,omitempty"`
-		Value     *DatasetValue `json:"value,omitempty"`
+		Property any           `json:"property,omitempty"`
+		Operator string        `json:"operator,omitempty"`
+		Value    *DatasetValue `json:"value,omitempty"`
 		// Group rule fields (logical combinators) - for nested rules
 		Combinator *string       `json:"combinator,omitempty"`
 		Rules      []DatasetRule `json:"rules,omitempty"`

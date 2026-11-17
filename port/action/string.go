@@ -134,7 +134,11 @@ func stringPropResourceToBody(ctx context.Context, d *SelfServiceTriggerModel, p
 		}
 
 		if prop.Dataset != nil {
-			property.Dataset = actionDataSetToPortBody(prop.Dataset)
+			dataset, err := actionDataSetToPortBody(prop.Dataset)
+			if err != nil {
+				return err
+			}
+			property.Dataset = dataset
 		}
 
 		if !prop.Visible.IsNull() {

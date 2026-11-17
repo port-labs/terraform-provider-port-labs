@@ -859,10 +859,14 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--value))
+- `value_json` (String) A fixed value, as a JSON encoded string (for example a literal, or a contextual value like `{"context": "user", "property": "$identifier"}`). Use `value` for a value resolved by a jq query.
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules`
@@ -871,10 +875,14 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--value))
+- `value_json` (String) A fixed value, as a JSON encoded string (for example a literal, or a contextual value like `{"context": "user", "property": "$identifier"}`). Use `value` for a value resolved by a jq query.
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules`
@@ -883,10 +891,14 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--value))
+- `value_json` (String) A fixed value, as a JSON encoded string (for example a literal, or a contextual value like `{"context": "user", "property": "$identifier"}`). Use `value` for a value resolved by a jq query.
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules`
@@ -895,10 +907,14 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--value))
+- `value_json` (String) A fixed value, as a JSON encoded string (for example a literal, or a contextual value like `{"context": "user", "property": "$identifier"}`). Use `value` for a value resolved by a jq query.
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules`
@@ -907,10 +923,14 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--value))
+- `value_json` (String) A fixed value, as a JSON encoded string (for example a literal, or a contextual value like `{"context": "user", "property": "$identifier"}`). Use `value` for a value resolved by a jq query.
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules`
@@ -919,10 +939,14 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--value))
+- `value_json` (String) A fixed value, as a JSON encoded string (for example a literal, or a contextual value like `{"context": "user", "property": "$identifier"}`). Use `value` for a value resolved by a jq query.
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules`
@@ -931,10 +955,14 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--value))
+- `value_json` (String) A fixed value, as a JSON encoded string (for example a literal, or a contextual value like `{"context": "user", "property": "$identifier"}`). Use `value` for a value resolved by a jq query.
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules`
@@ -943,10 +971,14 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--value))
+- `value_json` (String) A fixed value, as a JSON encoded string (for example a literal, or a contextual value like `{"context": "user", "property": "$identifier"}`). Use `value` for a value resolved by a jq query.
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules`
@@ -955,10 +987,14 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
+- `value_json` (String) A fixed value, as a JSON encoded string (for example a literal, or a contextual value like `{"context": "user", "property": "$identifier"}`). Use `value` for a value resolved by a jq query.
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules`
@@ -967,10 +1003,14 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
+- `value_json` (String) A fixed value, as a JSON encoded string (for example a literal, or a contextual value like `{"context": "user", "property": "$identifier"}`). Use `value` for a value resolved by a jq query.
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules`
@@ -979,9 +1019,13 @@ Optional:
 
 - `blueprint` (String) The blueprint identifier of the rule
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
+- `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
+- `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
+- `value_json` (String) A fixed value, as a JSON encoded string (for example a literal, or a contextual value like `{"context": "user", "property": "$identifier"}`). Use `value` for a value resolved by a jq query.
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>
 ### Nested Schema for `self_service_trigger.user_properties.string_props.dataset.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.rules.value`

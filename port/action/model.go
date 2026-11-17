@@ -10,10 +10,14 @@ type Value struct {
 }
 type Rule struct {
 	// Leaf rule fields (property filters)
-	Blueprint types.String `tfsdk:"blueprint"`
-	Property  types.String `tfsdk:"property"`
-	Operator  types.String `tfsdk:"operator"`
-	Value     *Value       `tfsdk:"value"`
+	Blueprint    types.String `tfsdk:"blueprint"`
+	Property     types.String `tfsdk:"property"`
+	PropertyJson types.String `tfsdk:"property_json"`
+	Relation     types.String `tfsdk:"relation"`
+	Direction    types.String `tfsdk:"direction"`
+	Operator     types.String `tfsdk:"operator"`
+	Value        *Value       `tfsdk:"value"`
+	ValueJson    types.String `tfsdk:"value_json"`
 	// Group rule fields (logical combinators) - for nested rules
 	Combinator types.String `tfsdk:"combinator"`
 	Rules      []Rule       `tfsdk:"rules"`

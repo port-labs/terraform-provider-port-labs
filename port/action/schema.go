@@ -38,6 +38,24 @@ func datasetRuleSchema(depth int) map[string]schema.Attribute {
 		"property": schema.StringAttribute{
 			MarkdownDescription: "The property identifier of the rule",
 			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(
+					path.MatchRelative().AtParent().AtName("property_json"),
+					path.MatchRelative().AtParent().AtName("relation"),
+				),
+			},
+		},
+		"property_json": schema.StringAttribute{
+			MarkdownDescription: "The property of the rule as a JSON encoded object, for contextual rules (`{\"context\": \"user\", \"property\": \"port_role\"}`) and path rules (`{\"path\": [\"team_memberships\", \"team\"], \"fromBlueprint\": \"person\"}`). Use instead of `property`.",
+			Optional:            true,
+		},
+		"relation": schema.StringAttribute{
+			MarkdownDescription: "The relation identifier of the rule. Use instead of `property` to filter on a relation.",
+			Optional:            true,
+		},
+		"direction": schema.StringAttribute{
+			MarkdownDescription: "The direction of the relation the rule filters on. Set alongside `relation`.",
+			Optional:            true,
 		},
 		"operator": schema.StringAttribute{
 			MarkdownDescription: "The operator of the rule. Required for leaf rules, should not be set for group rules.",
@@ -48,6 +66,13 @@ func datasetRuleSchema(depth int) map[string]schema.Attribute {
 			Optional:            true,
 			AttributeTypes: map[string]attr.Type{
 				"jq_query": types.StringType,
+			},
+		},
+		"value_json": schema.StringAttribute{
+			MarkdownDescription: "A fixed value, as a JSON encoded string (for example a literal, or a contextual value like `{\"context\": \"user\", \"property\": \"$identifier\"}`). Use `value` for a value resolved by a jq query.",
+			Optional:            true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("value")),
 			},
 		},
 		// Group rule fields

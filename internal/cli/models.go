@@ -119,15 +119,17 @@ type (
 		TokenUrl         string `json:"tokenUrl,omitempty"`
 	}
 
-	DatasetValue struct {
-		JqQuery string `json:"jqQuery,omitempty"`
-	}
 	DatasetRule struct {
 		// Leaf rule fields (property filters)
-		Blueprint *string       `json:"blueprint,omitempty"`
-		Property  *string       `json:"property,omitempty"`
-		Operator  string        `json:"operator,omitempty"`
-		Value     *DatasetValue `json:"value,omitempty"`
+		Blueprint *string `json:"blueprint,omitempty"`
+		// Property is a property identifier (string), or an object for contextual
+		// ({context, property}) and path ({path, fromBlueprint}) rules.
+		Property  any     `json:"property,omitempty"`
+		Relation  *string `json:"relation,omitempty"`
+		Direction *string `json:"direction,omitempty"`
+		Operator  string  `json:"operator,omitempty"`
+		// Value is {"jqQuery": "..."} for a dynamic value, or any fixed JSON value.
+		Value any `json:"value,omitempty"`
 		// Group rule fields (logical combinators) - for nested rules
 		Combinator *string       `json:"combinator,omitempty"`
 		Rules      []DatasetRule `json:"rules,omitempty"`
@@ -137,61 +139,6 @@ type (
 		Rules      []DatasetRule `json:"rules,omitempty"`
 	}
 )
-
-// Custom UnmarshalJSON for DatasetValue to handle both simple values and jqQuery objects
-func (dv *DatasetValue) UnmarshalJSON(data []byte) error {
-	type Alias DatasetValue
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(dv),
-	}
-
-	if err := json.Unmarshal(data, aux); err == nil && dv.JqQuery != "" {
-		return nil
-	}
-
-	var rawValue any
-	if err := json.Unmarshal(data, &rawValue); err != nil {
-		return err
-	}
-
-	switch v := rawValue.(type) {
-	case string:
-		dv.JqQuery = v
-	case float64:
-		dv.JqQuery = json.Number(data).String()
-	case bool:
-		if v {
-			dv.JqQuery = "true"
-		} else {
-			dv.JqQuery = "false"
-		}
-	case nil:
-		dv.JqQuery = ""
-	default:
-		jsonBytes, err := json.Marshal(v)
-		if err != nil {
-			return err
-		}
-		dv.JqQuery = string(jsonBytes)
-	}
-
-	return nil
-}
-
-// Custom MarshalJSON for DatasetValue to always preserve the jqQuery wrapper.
-// The Port API expects dataset rule values to be in the format {"jqQuery": "..."}
-// for dynamic JQ expression evaluation.
-func (dv DatasetValue) MarshalJSON() ([]byte, error) {
-	if dv.JqQuery == "" {
-		return []byte("null"), nil
-	}
-
-	// Always output the jqQuery wrapper - the API requires this format
-	// for proper JQ expression evaluation in dataset rules
-	return json.Marshal(map[string]string{"jqQuery": dv.JqQuery})
-}
 
 type (
 	BlueprintCalculationProperty struct {

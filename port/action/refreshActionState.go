@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"reflect"
 	"strconv"
@@ -233,13 +234,31 @@ func convertCliRuleToRule(v cli.DatasetRule) Rule {
 	} else {
 		// Leaf rule - has operator
 		rule.Blueprint = flex.GoStringToFramework(v.Blueprint)
-		rule.Property = flex.GoStringToFramework(v.Property)
+		rule.Property = types.StringNull()
+		rule.PropertyJson = types.StringNull()
+		switch property := v.Property.(type) {
+		case nil:
+		case string:
+			rule.Property = types.StringValue(property)
+		default:
+			if encoded, err := json.Marshal(property); err == nil {
+				rule.PropertyJson = types.StringValue(string(encoded))
+			}
+		}
+		rule.Relation = flex.GoStringToFramework(v.Relation)
+		rule.Direction = flex.GoStringToFramework(v.Direction)
 		rule.Operator = flex.GoStringToFramework(&v.Operator)
 		rule.Combinator = types.StringNull()
+		rule.ValueJson = types.StringNull()
 
-		if v.Value != nil {
-			rule.Value = &Value{
-				JqQuery: flex.GoStringToFramework(&v.Value.JqQuery),
+		if wrapper, ok := v.Value.(map[string]any); ok && len(wrapper) == 1 {
+			if jq, isJq := wrapper["jqQuery"].(string); isJq {
+				rule.Value = &Value{JqQuery: types.StringValue(jq)}
+			}
+		}
+		if rule.Value == nil && v.Value != nil {
+			if encoded, err := json.Marshal(v.Value); err == nil {
+				rule.ValueJson = types.StringValue(string(encoded))
 			}
 		}
 	}

@@ -598,7 +598,7 @@ func TestUserInputDatasetRelationRuleRoundTrip(t *testing.T) {
 	require.NotNil(t, dataset)
 	require.Len(t, dataset.Rules, 3)
 
-	assert.Equal(t, strPtr("language"), dataset.Rules[0].Property)
+	assert.Equal(t, "language", dataset.Rules[0].Property)
 	assert.Nil(t, dataset.Rules[0].Relation)
 
 	assert.Equal(t, strPtr("service"), dataset.Rules[1].Relation)
@@ -2725,4 +2725,34 @@ func TestRefreshWorkflowTriggerAndExecuteWorkflow(t *testing.T) {
 		assert.Equal(t, types.BoolValue(true), node.ExecuteWorkflow.Wait)
 		assert.True(t, node.ExecuteWorkflow.OnFailure.IsNull())
 	})
+}
+
+func TestUserInputDatasetObjectPropertyRoundTrip(t *testing.T) {
+	contextual := map[string]any{"context": "user", "property": "port_role"}
+	path := map[string]any{"path": []any{"team_memberships", "team"}, "fromBlueprint": "person"}
+	userValue := map[string]any{"context": "user", "property": "$identifier"}
+
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"team": {
+				Type:      "string",
+				Format:    strPtr("entity"),
+				Blueprint: strPtr("team"),
+				Dataset: &cli.WorkflowDataset{
+					Combinator: "and",
+					Rules: []cli.WorkflowDatasetRule{
+						{Property: contextual, Operator: "=", Value: "Admin"},
+						{Property: path, Operator: "matchAny", Value: userValue},
+					},
+				},
+			},
+		},
+	})
+
+	dataset := result.Properties["team"].Dataset
+	require.NotNil(t, dataset)
+	require.Len(t, dataset.Rules, 2)
+	assert.Equal(t, contextual, dataset.Rules[0].Property)
+	assert.Equal(t, path, dataset.Rules[1].Property)
+	assert.Equal(t, userValue, dataset.Rules[1].Value)
 }

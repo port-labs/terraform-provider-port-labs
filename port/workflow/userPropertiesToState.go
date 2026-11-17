@@ -513,7 +513,19 @@ func datasetRuleToState(rule cli.WorkflowDatasetRule, jsonEscapeHTML bool) Datas
 	}
 
 	model.Blueprint = flex.GoStringToFramework(rule.Blueprint)
-	model.Property = flex.GoStringToFramework(rule.Property)
+	model.Property = types.StringNull()
+	model.PropertyJson = types.StringNull()
+	switch property := rule.Property.(type) {
+	case nil:
+	case string:
+		model.Property = types.StringValue(property)
+	case *string:
+		model.Property = flex.GoStringToFramework(property)
+	default:
+		if value, err := utils.GoObjectToTerraformString(property, jsonEscapeHTML); err == nil {
+			model.PropertyJson = value
+		}
+	}
 	model.Relation = flex.GoStringToFramework(rule.Relation)
 	model.Direction = flex.GoStringToFramework(rule.Direction)
 	model.Operator = flex.GoStringToFramework(&rule.Operator)

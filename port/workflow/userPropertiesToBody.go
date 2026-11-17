@@ -465,9 +465,9 @@ func datasetRuleToBody(model DatasetRuleModel) (cli.WorkflowDatasetRule, error) 
 	rule.Operator = model.Operator.ValueString()
 	rule.Blueprint = model.Blueprint.ValueStringPointer()
 	if !model.PropertyJson.IsNull() {
-		var property any
-		if err := json.Unmarshal([]byte(model.PropertyJson.ValueString()), &property); err != nil {
-			return rule, fmt.Errorf("`dataset` rule `property_json` must be valid JSON: %w", err)
+		property, err := utils.JSONObjectToGo(model.PropertyJson.ValueString())
+		if err != nil {
+			return rule, fmt.Errorf("`dataset` rule `property_json` %w", err)
 		}
 		rule.Property = property
 	} else if !model.Property.IsNull() {

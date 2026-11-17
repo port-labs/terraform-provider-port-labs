@@ -47,11 +47,54 @@ func TestDatasetRuleRoundTrip(t *testing.T) {
 	// Simulate the API response and convert back to state.
 	var fromApi cli.Dataset
 	require.NoError(t, json.Unmarshal(encoded, &fromApi))
-	state := writeDatasetToResource(&fromApi)
+	state, err := writeDatasetToResource(&fromApi, nil, true)
+	require.NoError(t, err)
 	require.Len(t, state.Rules, 3)
 	assert.JSONEq(t, `{"context":"user","property":"port_role"}`, state.Rules[0].PropertyJson.ValueString())
 	assert.Equal(t, `"Admin"`, state.Rules[0].Value.JqQuery.ValueString())
 	assert.True(t, state.Rules[0].Property.IsNull())
 	assert.Equal(t, "language", state.Rules[2].Property.ValueString())
 	assert.Equal(t, ".form.language", state.Rules[2].Value.JqQuery.ValueString())
+}
+
+func TestDatasetRulePropertyJsonDoesNotDriftOnHTMLCharacters(t *testing.T) {
+	prior := &DatasetModel{
+		Combinator: types.StringValue("and"),
+		Rules: []Rule{{
+			// `jsonencode()` escapes <, > and & in what it writes to the config.
+			PropertyJson: types.StringValue(`{"context":"user","property":"a\u0026b\u003cc\u003e"}`),
+			Operator:     types.StringValue("="),
+		}},
+	}
+	fromApi := &cli.Dataset{
+		Combinator: "and",
+		Rules: []cli.DatasetRule{{
+			Property: map[string]any{"context": "user", "property": "a&b<c>"},
+			Operator: "=",
+		}},
+	}
+
+	for _, escapeHTML := range []bool{true, false} {
+		state, err := writeDatasetToResource(fromApi, prior, escapeHTML)
+		require.NoError(t, err)
+		assert.Equal(t, prior.Rules[0].PropertyJson, state.Rules[0].PropertyJson, "escapeHTML=%v", escapeHTML)
+	}
+
+	// Without a prior value the provider setting decides how it is written.
+	state, err := writeDatasetToResource(fromApi, nil, false)
+	require.NoError(t, err)
+	assert.Contains(t, state.Rules[0].PropertyJson.ValueString(), "a&b<c>")
+	state, err = writeDatasetToResource(fromApi, nil, true)
+	require.NoError(t, err)
+	assert.Contains(t, state.Rules[0].PropertyJson.ValueString(), `\u0026`)
+}
+
+func TestDatasetRulePropertyJsonMustBeAnObject(t *testing.T) {
+	for _, invalid := range []string{`["a"]`, `"a"`, `{`} {
+		_, err := actionDataSetToPortBody(&DatasetModel{
+			Combinator: types.StringValue("and"),
+			Rules:      []Rule{{PropertyJson: types.StringValue(invalid), Operator: types.StringValue("=")}},
+		})
+		assert.Error(t, err, invalid)
+	}
 }

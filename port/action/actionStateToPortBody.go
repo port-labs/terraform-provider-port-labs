@@ -2,7 +2,6 @@ package action
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"reflect"
 
@@ -63,9 +62,9 @@ func convertRuleToCliRule(rule Rule) (cli.DatasetRule, error) {
 			cliRule.Blueprint = &blueprint
 		}
 		if !rule.PropertyJson.IsNull() {
-			var property any
-			if err := json.Unmarshal([]byte(rule.PropertyJson.ValueString()), &property); err != nil {
-				return cliRule, fmt.Errorf("`property_json` must be valid JSON: %w", err)
+			property, err := utils.JSONObjectToGo(rule.PropertyJson.ValueString())
+			if err != nil {
+				return cliRule, fmt.Errorf("`property_json` %w", err)
 			}
 			cliRule.Property = property
 		} else if !rule.Property.IsNull() {

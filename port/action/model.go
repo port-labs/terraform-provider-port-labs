@@ -17,7 +17,6 @@ type Rule struct {
 	Direction    types.String `tfsdk:"direction"`
 	Operator     types.String `tfsdk:"operator"`
 	Value        *Value       `tfsdk:"value"`
-	ValueJson    types.String `tfsdk:"value_json"`
 	// Group rule fields (logical combinators) - for nested rules
 	Combinator types.String `tfsdk:"combinator"`
 	Rules      []Rule       `tfsdk:"rules"`

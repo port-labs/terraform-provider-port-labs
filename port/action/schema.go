@@ -68,13 +68,6 @@ func datasetRuleSchema(depth int) map[string]schema.Attribute {
 				"jq_query": types.StringType,
 			},
 		},
-		"value_json": schema.StringAttribute{
-			MarkdownDescription: "A fixed value, as a JSON encoded string (for example a literal, or a contextual value like `{\"context\": \"user\", \"property\": \"$identifier\"}`). Use `value` for a value resolved by a jq query.",
-			Optional:            true,
-			Validators: []validator.String{
-				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("value")),
-			},
-		},
 		// Group rule fields
 		"combinator": schema.StringAttribute{
 			MarkdownDescription: "The combinator for a group rule (and/or). Used with nested rules instead of operator.",

@@ -71,8 +71,6 @@ func convertRuleToCliRule(rule Rule) (cli.DatasetRule, error) {
 		} else if !rule.Property.IsNull() {
 			cliRule.Property = rule.Property.ValueString()
 		}
-		cliRule.Relation = rule.Relation.ValueStringPointer()
-		cliRule.Direction = rule.Direction.ValueStringPointer()
 	}
 
 	return cliRule, nil

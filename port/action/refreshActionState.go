@@ -245,8 +245,6 @@ func convertCliRuleToRule(v cli.DatasetRule) Rule {
 				rule.PropertyJson = types.StringValue(string(encoded))
 			}
 		}
-		rule.Relation = flex.GoStringToFramework(v.Relation)
-		rule.Direction = flex.GoStringToFramework(v.Direction)
 		rule.Operator = flex.GoStringToFramework(&v.Operator)
 		rule.Combinator = types.StringNull()
 

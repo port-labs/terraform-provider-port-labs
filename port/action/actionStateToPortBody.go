@@ -53,13 +53,9 @@ func convertRuleToCliRule(rule Rule) (cli.DatasetRule, error) {
 		cliRule.Operator = rule.Operator.ValueString()
 
 		if rule.Value != nil && !rule.Value.JqQuery.IsNull() {
-			cliRule.Value = map[string]string{"jqQuery": rule.Value.JqQuery.ValueString()}
-		} else if !rule.ValueJson.IsNull() {
-			var value any
-			if err := json.Unmarshal([]byte(rule.ValueJson.ValueString()), &value); err != nil {
-				return cliRule, fmt.Errorf("`value_json` must be valid JSON: %w", err)
+			cliRule.Value = &cli.DatasetValue{
+				JqQuery: rule.Value.JqQuery.ValueString(),
 			}
-			cliRule.Value = value
 		}
 
 		if !rule.Blueprint.IsNull() {

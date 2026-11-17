@@ -249,16 +249,10 @@ func convertCliRuleToRule(v cli.DatasetRule) Rule {
 		rule.Direction = flex.GoStringToFramework(v.Direction)
 		rule.Operator = flex.GoStringToFramework(&v.Operator)
 		rule.Combinator = types.StringNull()
-		rule.ValueJson = types.StringNull()
 
-		if wrapper, ok := v.Value.(map[string]any); ok && len(wrapper) == 1 {
-			if jq, isJq := wrapper["jqQuery"].(string); isJq {
-				rule.Value = &Value{JqQuery: types.StringValue(jq)}
-			}
-		}
-		if rule.Value == nil && v.Value != nil {
-			if encoded, err := json.Marshal(v.Value); err == nil {
-				rule.ValueJson = types.StringValue(string(encoded))
+		if v.Value != nil {
+			rule.Value = &Value{
+				JqQuery: flex.GoStringToFramework(&v.Value.JqQuery),
 			}
 		}
 	}

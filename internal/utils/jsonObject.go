@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -49,4 +50,30 @@ func (jsonObjectValidator) ValidateString(ctx context.Context, req validator.Str
 // and HTML escaping never cause drift.
 func PropertyToTerraformString(prior types.String, property any, jsonEscapeHTML bool) (types.String, error) {
 	return GoObjectToTerraformStringPreferExisting(prior, property, jsonEscapeHTML)
+}
+
+type notJSONObjectValidator struct{ useInstead string }
+
+// NotJSONObject rejects a string that looks like a JSON object, which is
+// never a valid identifier, and points the user at the attribute to use.
+func NotJSONObject(useInstead string) validator.String {
+	return notJSONObjectValidator{useInstead: useInstead}
+}
+
+func (v notJSONObjectValidator) Description(context.Context) string {
+	return fmt.Sprintf("value must be an identifier, not a JSON object; use `%s` for object values", v.useInstead)
+}
+
+func (v notJSONObjectValidator) MarkdownDescription(ctx context.Context) string {
+	return v.Description(ctx)
+}
+
+func (v notJSONObjectValidator) ValidateString(_ context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
+		return
+	}
+	if strings.HasPrefix(strings.TrimSpace(req.ConfigValue.ValueString()), "{") {
+		resp.Diagnostics.AddAttributeError(req.Path, "Property must be an identifier",
+			fmt.Sprintf("This attribute takes a property identifier, but the value looks like a JSON object. Use `%s` for contextual or path rules.", v.useInstead))
+	}
 }

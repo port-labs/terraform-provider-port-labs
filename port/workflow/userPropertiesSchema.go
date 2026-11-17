@@ -523,6 +523,7 @@ func datasetRuleSchema(depth int) map[string]schema.Attribute {
 			Optional:            true,
 			Validators: []validator.String{
 				stringvalidator.ConflictsWith(path.MatchRelative().AtParent().AtName("property_json")),
+				utils.NotJSONObject("property_json"),
 			},
 		},
 		"property_json": schema.StringAttribute{

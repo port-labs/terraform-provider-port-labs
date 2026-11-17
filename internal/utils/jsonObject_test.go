@@ -68,3 +68,23 @@ func TestPropertyToTerraformStringPreservesPriorFormatting(t *testing.T) {
 	require.NoError(t, err)
 	assert.Contains(t, got.ValueString(), "a&b<c>")
 }
+
+func TestNotJSONObjectValidator(t *testing.T) {
+	for _, tc := range []struct {
+		name    string
+		value   types.String
+		wantErr bool
+	}{
+		{"identifier", types.StringValue("$identifier"), false},
+		{"jsonencoded object", types.StringValue(`{"context":"user","property":"port_role"}`), true},
+		{"leading space", types.StringValue(` {"a":1}`), true},
+		{"null is skipped", types.StringNull(), false},
+		{"unknown is skipped", types.StringUnknown(), false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resp := &validator.StringResponse{}
+			NotJSONObject("property_json").ValidateString(context.Background(), validator.StringRequest{Path: path.Root("p"), ConfigValue: tc.value}, resp)
+			assert.Equal(t, tc.wantErr, resp.Diagnostics.HasError())
+		})
+	}
+}

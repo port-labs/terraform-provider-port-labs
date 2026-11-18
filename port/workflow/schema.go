@@ -925,10 +925,10 @@ func WorkflowSchema() map[string]schema.Attribute {
 			},
 		},
 		"allow_anyone_to_view_runs": schema.BoolAttribute{
-			MarkdownDescription: "Whether any user can view this workflow's runs",
+			MarkdownDescription: "Whether any organization member can view this workflow's runs. When false (the default), only admins and the user who triggered each run can view it",
 			Optional:            true,
 			Computed:            true,
-			Default:             booldefault.StaticBool(true),
+			Default:             booldefault.StaticBool(false),
 		},
 	}
 }

@@ -320,6 +320,33 @@ func TestRefreshWorkflowStatePreservesNodeOrder(t *testing.T) {
 	assert.True(t, state.AllowAnyoneToViewRuns.ValueBool())
 }
 
+func TestRefreshWorkflowStateDefaultsOmittedAllowAnyoneToViewRuns(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes:      []WorkflowNodeModel{{Identifier: types.StringValue("trigger")}},
+	}
+
+	apiWorkflow := &cli.Workflow{
+		Identifier: "wf",
+		Nodes: []cli.WorkflowNode{
+			{
+				Identifier: "trigger",
+				Config: cli.WorkflowNodeConfig{
+					Type:  consts.EventTrigger,
+					Event: &cli.WorkflowTriggerEvent{Type: consts.EntityCreated, BlueprintIdentifier: "service"},
+				},
+			},
+		},
+	}
+
+	err := r.refreshWorkflowState(ctx, state, apiWorkflow)
+	require.NoError(t, err)
+	assert.False(t, state.AllowAnyoneToViewRuns.ValueBool())
+}
+
 func TestRefreshWorkflowStateKeepsUnsetCollectionsNull(t *testing.T) {
 	ctx := context.Background()
 	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}

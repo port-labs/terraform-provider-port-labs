@@ -1016,3 +1016,69 @@ resource "port_page" "page_with_filter_presets" {
 		},
 	})
 }
+
+func TestAccPortPageResourceWithDateFilter(t *testing.T) {
+	pageIdentifier := utils.GenID()
+
+	config := func(dateFilter string) string {
+		return fmt.Sprintf(`
+resource "port_page" "page_with_date_filter" {
+  identifier = "%s"
+  title      = "Page With Date Filter"
+  icon       = "Dashboard"
+  type       = "dashboard"
+
+  page_date_filter = jsonencode(%s)
+
+  widgets = [
+    jsonencode(
+      {
+        "id" = "dashboardWidget"
+        "type" = "dashboard-widget"
+        "layout" = [
+          {
+            "height" = 400
+            "columns" = [
+              {
+                "id" = "widget1"
+                "size" = 12
+              }
+            ]
+          }
+        ]
+        "widgets" = [
+          {
+            "id" = "widget1"
+            "type" = "markdown"
+            "title" = "Guide"
+            "markdown" = "# Guide"
+          }
+        ]
+      }
+    )
+  ]
+}
+`, pageIdentifier, dateFilter)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + config(`{ range = { type = "quickRange", quickRange = "30d" } }`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_page.page_with_date_filter", "identifier", pageIdentifier),
+					resource.TestMatchResourceAttr("port_page.page_with_date_filter", "page_date_filter", regexp.MustCompile(`"quickRange"\s*:\s*"30d"`)),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + config(`{ range = { type = "last", amount = 2, unit = "week", offset = 1 } }`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("port_page.page_with_date_filter", "page_date_filter", regexp.MustCompile(`"type"\s*:\s*"last"`)),
+					resource.TestMatchResourceAttr("port_page.page_with_date_filter", "page_date_filter", regexp.MustCompile(`"amount"\s*:\s*2`)),
+				),
+			},
+		},
+	})
+}

@@ -15,6 +15,7 @@ type PageModel struct {
 	Widgets           types.List   `tfsdk:"widgets"`
 	PageFilters       types.List   `tfsdk:"page_filters"`
 	PageFilterPresets types.List   `tfsdk:"page_filter_presets"`
+	PageDateFilter    types.String `tfsdk:"page_date_filter"`
 	CreatedAt         types.String `tfsdk:"created_at"`
 	CreatedBy         types.String `tfsdk:"created_by"`
 	UpdatedAt         types.String `tfsdk:"updated_at"`

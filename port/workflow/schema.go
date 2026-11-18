@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -422,9 +423,25 @@ func workflowTriggerBlock() schema.Block {
 				Computed:            true,
 				Default:             booldefault.StaticBool(true),
 			},
+			"output": schema.MapAttribute{
+				MarkdownDescription: "A map of keys to JQ expressions evaluated against this workflow's run when it concludes successfully. " +
+					"The result is returned to the calling `execute_workflow` node only when it waits for completion " +
+					"(`wait = true`), and later nodes of the calling workflow read it as `.outputs[\"<execute node>\"].<key>`. " +
+					"If an expression cannot be evaluated, the run fails. " +
+					"`workflowRunIdentifier`, `status` and `error` are reserved and cannot be used as keys.",
+				Optional:    true,
+				ElementType: types.StringType,
+				Validators: []validator.Map{
+					mapvalidator.KeysAre(stringvalidator.NoneOf(executeWorkflowReservedOutputKeys...)),
+				},
+			},
 		},
 	}
 }
+
+// executeWorkflowReservedOutputKeys are always set by Port on the output of an
+// execute_workflow node, so a workflow trigger cannot return them.
+var executeWorkflowReservedOutputKeys = []string{"workflowRunIdentifier", "status", "error"}
 
 func executeWorkflowBlock() schema.Block {
 	return schema.SingleNestedBlock{

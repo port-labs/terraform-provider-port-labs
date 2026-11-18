@@ -824,9 +824,15 @@ func TestAccPortWorkflowExecuteWorkflow(t *testing.T) {
 				ExpectError: regexp.MustCompile("`on_failure` can only be set when `wait` is `true`"),
 			},
 			{
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, `
+				output = { status = ".outputs.notify.status" }`, ""),
+				ExpectError: regexp.MustCompile(`(?s)value must be none of.*workflowRunIdentifier`),
+			},
+			{
 				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, "", ""),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.published", "true"),
+					resource.TestCheckNoResourceAttr("port_workflow.child", "node.0.workflow_trigger.output.%"),
 					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.workflow_identifier", childIdentifier),
 					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.trigger_identifier", "called"),
 					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.input", "{}"),
@@ -835,11 +841,16 @@ func TestAccPortWorkflowExecuteWorkflow(t *testing.T) {
 				),
 			},
 			{
-				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, "published = false", `
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, `
+				published = false
+				output    = { service = ".outputs.called.service", hookStatus = ".outputs.notify.status" }`, `
 				input      = jsonencode({ service = "{{ .run.id }}", replicas = 2 })
 				on_failure = "continue"`),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.published", "false"),
+					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.output.%", "2"),
+					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.output.service", ".outputs.called.service"),
+					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.output.hookStatus", ".outputs.notify.status"),
 					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.input",
 						`{"replicas":2,"service":"{{ .run.id }}"}`),
 					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.wait", "true"),
@@ -847,10 +858,13 @@ func TestAccPortWorkflowExecuteWorkflow(t *testing.T) {
 				),
 			},
 			{
-				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, "", `
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, `
+				output = { service = ".outputs.called.service" }`, `
 				wait = false`),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.published", "true"),
+					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.output.%", "1"),
+					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.output.service", ".outputs.called.service"),
 					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.input", "{}"),
 					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.wait", "false"),
 					resource.TestCheckNoResourceAttr("port_workflow.parent", "node.1.execute_workflow.on_failure"),

@@ -2609,6 +2609,31 @@ func TestWorkflowTriggerToPortBody(t *testing.T) {
 	raw, err := json.Marshal(config)
 	require.NoError(t, err)
 	assert.JSONEq(t, `{"type":"WORKFLOW_TRIGGER","published":false}`, string(raw))
+
+	output, diags := types.MapValueFrom(ctx, types.StringType, map[string]string{"url": `.outputs["deploy"].url`})
+	require.False(t, diags.HasError())
+	config, err = nodeConfigToPortBody(ctx, WorkflowNodeModel{
+		WorkflowTrigger: &WorkflowTriggerModel{Published: types.BoolValue(true), Output: output},
+	})
+	require.NoError(t, err)
+
+	raw, err = json.Marshal(config)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"type":"WORKFLOW_TRIGGER","published":true,"output":{"url":".outputs[\"deploy\"].url"}}`, string(raw))
+}
+
+func TestWorkflowTriggerOutputRejectsReservedKeys(t *testing.T) {
+	ctx := context.Background()
+	validators := workflowTriggerBlock().(schema.SingleNestedBlock).Attributes["output"].(schema.MapAttribute).Validators
+	require.Len(t, validators, 1)
+
+	for key, valid := range map[string]bool{"url": true, "workflowRunIdentifier": false, "status": false, "error": false} {
+		value, diags := types.MapValueFrom(ctx, types.StringType, map[string]string{key: ".workflowRun.identifier"})
+		require.False(t, diags.HasError())
+		resp := &validator.MapResponse{}
+		validators[0].ValidateMap(ctx, validator.MapRequest{Path: path.Root("output"), ConfigValue: value}, resp)
+		assert.Equal(t, !valid, resp.Diagnostics.HasError(), "output key %q", key)
+	}
 }
 
 func TestExecuteWorkflowToPortBody(t *testing.T) {
@@ -2692,6 +2717,14 @@ func TestRefreshWorkflowTriggerAndExecuteWorkflow(t *testing.T) {
 
 		node = refresh(t, cli.WorkflowNodeConfig{Type: consts.WorkflowTrigger, Published: boolPtr(false)})
 		assert.Equal(t, types.BoolValue(false), node.WorkflowTrigger.Published)
+	})
+
+	t.Run("workflow trigger reads output and keeps an absent output null", func(t *testing.T) {
+		node := refresh(t, cli.WorkflowNodeConfig{Type: consts.WorkflowTrigger, Output: map[string]string{}})
+		assert.True(t, node.WorkflowTrigger.Output.IsNull())
+
+		node = refresh(t, cli.WorkflowNodeConfig{Type: consts.WorkflowTrigger, Output: map[string]string{"url": ".workflowRun.url"}})
+		assert.Equal(t, map[string]attr.Value{"url": types.StringValue(".workflowRun.url")}, node.WorkflowTrigger.Output.Elements())
 	})
 
 	t.Run("execute workflow reads every field", func(t *testing.T) {

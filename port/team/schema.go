@@ -54,7 +54,67 @@ func TeamSchema() map[string]schema.Attribute {
 }
 func (r *TeamResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Team resource",
+		MarkdownDescription: teamResourceMarkdownDescription,
 		Attributes:          TeamSchema(),
 	}
 }
+
+var teamResourceMarkdownDescription = `
+
+# Team Resource
+
+Manages a Port team. Teams can be assigned ownership of entities and used in permissions.
+
+Docs about teams can be found [here](https://docs.getport.io/sso-rbac/rbac-overview/).
+
+## Example Usage
+
+### Basic team
+
+` + "```hcl" + `
+resource "port_team" "backend" {
+  name        = "Backend Team"
+  description = "The backend engineering team"
+  users = [
+    "developer1@example.com",
+    "developer2@example.com",
+  ]
+}
+` + "```" + `
+
+### Team with entity ownership
+
+Use the team's ` + "`identifier`" + ` attribute to assign entities to teams. The identifier is automatically generated from the team name.
+
+` + "```hcl" + `
+resource "port_team" "platform" {
+  name = "Platform Team"
+  users = [
+    "platform-lead@example.com",
+  ]
+}
+
+resource "port_blueprint" "service" {
+  identifier = "service"
+  title      = "Service"
+  ownership = {
+    type = "Direct"
+  }
+}
+
+resource "port_entity" "api_gateway" {
+  identifier = "api-gateway"
+  title      = "API Gateway"
+  blueprint  = port_blueprint.service.identifier
+  teams      = [port_team.platform.identifier]
+}
+` + "```" + `
+
+## Import
+
+Teams can be imported using the team name:
+
+` + "```shell" + `
+terraform import port_team.backend "Backend Team"
+` + "```" + `
+`

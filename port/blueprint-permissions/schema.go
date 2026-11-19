@@ -152,14 +152,13 @@ Docs about blueprint permissions can be found [here](https://docs.getport.io/bui
 ` + "```hcl" + `
 resource "port_blueprint_permissions" "microservices_permissions" {
 	blueprint_identifier = "my_blueprint_identifier"
-		entities             = {
-			"register" = {
-				"roles" : [
-					"Member",
-				],
-				"users" : [],
-				"teams" : []
-			},
+	entities = {
+		"register" = {
+			"roles" = [
+				"Member",
+			]
+			"users" = []
+			"teams" = []
 		}
 	}
 }` + "\n```" + `
@@ -171,77 +170,76 @@ resource "port_blueprint_permissions" "microservices_permissions" {
 ` + "```hcl" + `
 resource "port_blueprint_permissions" "microservices_permissions" {
 	blueprint_identifier = "my_blueprint_identifier"
-		entities             = {
-			"register" = {
-				"roles" : [
+	entities = {
+		register = {
+			roles = [
+				"Member",
+			]
+			users = []
+			teams = []
+		}
+		unregister = {
+			roles = [
+				"Member",
+			]
+			users = []
+			teams = []
+		}
+		update = {
+			roles = [
+				"Member",
+			]
+			users = ["test-admin-user@test.com"]
+			teams = []
+		}
+		update_metadata_properties = {
+			icon = {
+				roles = [
 					"Member",
-				],
-				"users" : [],
-				"teams" : []
-			},
-			"unregister" = {
-				"roles" : [
+				]
+				users = []
+				teams = []
+			}
+			identifier = {
+				roles = [
 					"Member",
-				],
-				"users" : [],
-				"teams" : []
-			},
-			"update" = {
-				"roles" : [
+				]
+				users = []
+				teams = ["Team Spiderman"]
+			}
+			team = {
+				roles = [
+					"Admin",
+				]
+				users = []
+				teams = []
+			}
+			title = {
+				roles = [
 					"Member",
-				],
-				"users" : ["test-admin-user@test.com"],
-				"teams" : []
-			},
-			"update_metadata_properties" = {
-				"icon" = {
-					"roles" : [
-						"Member",
-					],
-					"users" : [],
-					"teams" : []
-				},
-				"identifier" = {
-					"roles" : [
-						"Member",
-					],
-					"users" : [],
-					"teams" : ["Team Spiderman"]
-				},
-				"team" = {
-					"roles" : [
-						"Admin",
-					],
-					"users" : [],
-					"teams" : []
-				},
-				"title" = {
-					"roles" : [
-						"Member",
-					],
-					"users" : [],
-					"teams" : []
-				}
+				]
+				users = []
+				teams = []
 			}
 		}
+	}
 }` + "\n```" + `
 
 
-### Allow update ` + "`" + `myStringProperty` + "``" + ` for admins and a specific user and team:
+### Allow update ` + "`" + `myStringProperty` + "`" + ` for admins and a specific user and team:
 
 ` + "```hcl" + `
 resource "port_blueprint_permissions" "microservices_permissions" {
 	blueprint_identifier = "my_blueprint_identifier"
-		entities = {
-			# all properties from the previous example...
-			"update_properties" = {
-				"myStringProperty" = {
-					"roles": [
-						"Admin",
-					],
-					"users": ["test-admin-user@test.com"],
-					"teams": ["Team Spiderman"],
-				}
+	entities = {
+		# register, unregister, update, update_metadata_properties as shown above...
+		update_properties = {
+			myStringProperty = {
+				roles = [
+					"Admin",
+				]
+				users = ["test-admin-user@test.com"]
+				teams = ["Team Spiderman"]
 			}
 		}
 	}
@@ -252,18 +250,18 @@ resource "port_blueprint_permissions" "microservices_permissions" {
 ` + "```hcl" + `
 resource "port_blueprint_permissions" "microservices_permissions" {
 	blueprint_identifier = "my_blueprint_identifier"
-		entities = {
-			# all properties from the first example...
-			"update_relations" = {
-				"myRelations" = {
-					"roles": [
-						"Admin",
-					],
-					"users": ["test-admin-user@test.com"],
-					"teams": ["Team Spiderman"],
-				}
+	entities = {
+		# register, unregister, update, update_metadata_properties as shown above...
+		update_relations = {
+			myRelations = {
+				roles = [
+					"Admin",
+				]
+				users = ["test-admin-user@test.com"]
+				teams = ["Team Spiderman"]
 			}
 		}
+	}
 }` + "\n```" + `
 
 ### Configure a dynamic policy with a Port search query (including contextual rules):
@@ -315,29 +313,28 @@ resource "port_blueprint_permissions" "microservices_permissions" {
 - All the permission lists (roles, users, teams) are managed by Port in a sorted manner, this means that if your ` + "`" + `.tf` + "`" + ` has for example roles defined out of order, your state will be invalid
     E.g:
 
-    ` + "```hcl" + `
-	resource "port_blueprint_permissions" "microservices_permissions" {
-		blueprint_identifier = "my_blueprint_identifier"
-			entities             = {
-				# invalid:
-				"register" = {
-					"roles" : [
-						"Member",
-					"Admin",
-					],
-					"users" : [],
-					"teams" : []
-				},
-				# valid
-				"register" = {
-					"roles" : [
-						"Admin",
-					"Member",
-					],
-					"users" : [],
-					"teams" : []
-				},
-				...
-			},
-		},
-	}` + "\n```"
+` + "```hcl" + `
+resource "port_blueprint_permissions" "microservices_permissions" {
+	blueprint_identifier = "my_blueprint_identifier"
+	entities = {
+		# invalid - roles are out of alphabetical order:
+		register = {
+			roles = [
+				"Member",
+				"Admin",
+			]
+			users = []
+			teams = []
+		}
+		# valid - roles are in alphabetical order:
+		register = {
+			roles = [
+				"Admin",
+				"Member",
+			]
+			users = []
+			teams = []
+		}
+		# ... remaining required permission blocks ...
+	}
+}` + "\n```"

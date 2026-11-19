@@ -113,6 +113,15 @@ func writeEntityComputedFieldsToState(state *EntityModel, e *cli.Entity) {
 	state.CreatedBy = types.StringValue(e.CreatedBy)
 	state.UpdatedAt = types.StringValue(e.UpdatedAt.String())
 	state.UpdatedBy = types.StringValue(e.UpdatedBy)
+
+	if len(e.MappingWarnings) == 0 {
+		state.MappingWarnings = nil
+	} else {
+		state.MappingWarnings = make([]types.String, len(e.MappingWarnings))
+		for i, warning := range e.MappingWarnings {
+			state.MappingWarnings[i] = types.StringValue(warning)
+		}
+	}
 }
 
 func (r *EntityResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {

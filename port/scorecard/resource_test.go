@@ -681,6 +681,95 @@ func TestAccPortScorecardRuleOrderPreservation(t *testing.T) {
 	})
 }
 
+func TestAccPortScorecardRuleOrderInsensitivePlan(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	scorecardIdentifier := utils.GenID()
+
+	ruleTitles := map[string]string{
+		"zebra": "Zebra Rule",
+		"alpha": "Alpha Rule",
+		"beta":  "Beta Rule",
+	}
+	ruleLevels := map[string]string{
+		"zebra": "Gold",
+		"alpha": "Silver",
+		"beta":  "Bronze",
+	}
+	ruleProperties := map[string]string{
+		"zebra": "$team",
+		"alpha": "author",
+		"beta":  "url",
+	}
+
+	scorecardConfig := func(ruleOrder []string, titles map[string]string) string {
+		rulesHCL := ""
+		for _, id := range ruleOrder {
+			title := ruleTitles[id]
+			if titles != nil {
+				if override, ok := titles[id]; ok {
+					title = override
+				}
+			}
+			rulesHCL += fmt.Sprintf(`{
+				identifier = "%s"
+				title      = "%s"
+				level      = "%s"
+				query = {
+					combinator = "and"
+					conditions = [jsonencode({
+						property = "%s"
+						operator = "isNotEmpty"
+					})]
+				}
+			},
+			`, id, title, ruleLevels[id], ruleProperties[id])
+		}
+
+		return testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_scorecard" "test" {
+		identifier = "%s"
+		title      = "Rule Order Insensitive Plan"
+		blueprint  = "%s"
+		rules = [
+			%s
+		]
+		depends_on = [
+			port_blueprint.microservice
+		]
+	}`, scorecardIdentifier, blueprintIdentifier, rulesHCL)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + scorecardConfig([]string{"zebra", "alpha", "beta"}, nil),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.identifier", "zebra"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.2.identifier", "beta"),
+				),
+			},
+			{
+				// Same rules, different order only — must not produce a plan diff.
+				Config:   acctest.ProviderConfig + scorecardConfig([]string{"beta", "zebra", "alpha"}, nil),
+				PlanOnly: true,
+			},
+			{
+				// Real content change must still be detected even when order also differs.
+				Config: acctest.ProviderConfig + scorecardConfig(
+					[]string{"beta", "zebra", "alpha"},
+					map[string]string{"zebra": "Zebra Rule Renamed"},
+				),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.identifier", "zebra"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.title", "Zebra Rule Renamed"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortScorecardPropertiesAndRelations(t *testing.T) {
 	blueprintIdentifier := utils.GenID()
 	scorecardIdentifier := utils.GenID()

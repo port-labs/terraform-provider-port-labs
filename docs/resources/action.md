@@ -861,6 +861,7 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--value))
 
@@ -873,6 +874,7 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--value))
 
@@ -885,6 +887,7 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--value))
 
@@ -897,6 +900,7 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--value))
 
@@ -909,6 +913,7 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--value))
 
@@ -921,6 +926,7 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--value))
 
@@ -933,6 +939,7 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--value))
 
@@ -945,6 +952,7 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--value))
 
@@ -957,6 +965,7 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
 
@@ -969,6 +978,7 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `rules` (Attributes List) Nested rules for a group rule. Used with combinator for logical grouping. (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
 
@@ -981,6 +991,7 @@ Optional:
 - `combinator` (String) The combinator for a group rule (and/or). Used with nested rules instead of operator.
 - `operator` (String) The operator of the rule. Required for leaf rules, should not be set for group rules.
 - `property` (String) The property identifier of the rule
+- `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `value` (Object) The value of the rule (see [below for nested schema](#nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
 
 <a id="nestedatt--self_service_trigger--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value"></a>

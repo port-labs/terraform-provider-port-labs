@@ -194,26 +194,33 @@ func (r *ActionResource) writeInvocationMethodToResource(ctx context.Context, a 
 	return nil
 }
 
-func writeDatasetToResource(ds *cli.Dataset) *DatasetModel {
+func writeDatasetToResource(ds *cli.Dataset, prior *DatasetModel, jsonEscapeHTML bool) (*DatasetModel, error) {
 	if ds == nil {
-		return nil
+		return nil, nil
 	}
 
 	datasetModel := &DatasetModel{
 		Combinator: types.StringValue(ds.Combinator),
 	}
 
-	for _, v := range ds.Rules {
-		rule := convertCliRuleToRule(v)
+	for i, v := range ds.Rules {
+		var priorRule *Rule
+		if prior != nil && i < len(prior.Rules) {
+			priorRule = &prior.Rules[i]
+		}
+		rule, err := convertCliRuleToRule(v, priorRule, jsonEscapeHTML)
+		if err != nil {
+			return nil, err
+		}
 		datasetModel.Rules = append(datasetModel.Rules, rule)
 	}
 
-	return datasetModel
+	return datasetModel, nil
 }
 
 // convertCliRuleToRule recursively converts a CLI DatasetRule to a Terraform Rule.
 // Handles both leaf rules (with operator) and group rules (with combinator + nested rules).
-func convertCliRuleToRule(v cli.DatasetRule) Rule {
+func convertCliRuleToRule(v cli.DatasetRule, prior *Rule, jsonEscapeHTML bool) (Rule, error) {
 	rule := Rule{}
 
 	// Check if this is a group rule (has combinator)
@@ -222,8 +229,16 @@ func convertCliRuleToRule(v cli.DatasetRule) Rule {
 		// Recursively convert nested rules
 		if len(v.Rules) > 0 {
 			rule.Rules = make([]Rule, 0, len(v.Rules))
-			for _, nestedRule := range v.Rules {
-				rule.Rules = append(rule.Rules, convertCliRuleToRule(nestedRule))
+			for i, nestedRule := range v.Rules {
+				var priorNested *Rule
+				if prior != nil && i < len(prior.Rules) {
+					priorNested = &prior.Rules[i]
+				}
+				nested, err := convertCliRuleToRule(nestedRule, priorNested, jsonEscapeHTML)
+				if err != nil {
+					return rule, err
+				}
+				rule.Rules = append(rule.Rules, nested)
 			}
 		}
 		// Group rules don't have operator/property/blueprint/value
@@ -233,7 +248,23 @@ func convertCliRuleToRule(v cli.DatasetRule) Rule {
 	} else {
 		// Leaf rule - has operator
 		rule.Blueprint = flex.GoStringToFramework(v.Blueprint)
-		rule.Property = flex.GoStringToFramework(v.Property)
+		rule.Property = types.StringNull()
+		rule.PropertyJson = types.StringNull()
+		switch property := v.Property.(type) {
+		case nil:
+		case string:
+			rule.Property = types.StringValue(property)
+		default:
+			priorProperty := types.StringNull()
+			if prior != nil {
+				priorProperty = prior.PropertyJson
+			}
+			encoded, err := utils.GoObjectToTerraformStringPreferExisting(priorProperty, property, jsonEscapeHTML)
+			if err != nil {
+				return rule, fmt.Errorf("converting dataset rule `property` to `property_json`: %w", err)
+			}
+			rule.PropertyJson = encoded
+		}
 		rule.Operator = flex.GoStringToFramework(&v.Operator)
 		rule.Combinator = types.StringNull()
 
@@ -244,7 +275,7 @@ func convertCliRuleToRule(v cli.DatasetRule) Rule {
 		}
 	}
 
-	return rule
+	return rule, nil
 }
 
 func buildBoolOrJq(prop any) (types.Bool, types.String) {
@@ -303,14 +334,22 @@ func (r *ActionResource) buildUserProperties(ctx context.Context, a *cli.Action,
 				if properties.StringProps == nil {
 					properties.StringProps = make(map[string]StringPropModel)
 				}
-				stringProp := addStringPropertiesToResource(ctx, &v)
+				var priorString *StringPropModel
+				if state.SelfServiceTrigger != nil && state.SelfServiceTrigger.UserProperties != nil && state.SelfServiceTrigger.UserProperties.StringProps != nil {
+					if old, ok := state.SelfServiceTrigger.UserProperties.StringProps[k]; ok {
+						priorString = &old
+					}
+				}
+				stringProp, err := r.addStringPropertiesToResource(ctx, &v, priorString)
+				if err != nil {
+					return nil, err
+				}
 
 				if requiredJq.IsNull() && lo.Contains(required, k) {
 					stringProp.Required = types.BoolValue(true)
 				}
 
-				err := r.setCommonProperties(ctx, v, stringProp)
-				if err != nil {
+				if err := r.setCommonProperties(ctx, v, stringProp); err != nil {
 					return nil, err
 				}
 

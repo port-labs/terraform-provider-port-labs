@@ -553,8 +553,8 @@ func TestUserInputDatasetRoundTrip(t *testing.T) {
 				Dataset: &cli.WorkflowDataset{
 					Combinator: "and",
 					Rules: []cli.WorkflowDatasetRule{
-						{Property: strPtr("tier"), Operator: "=", Value: map[string]any{"jqQuery": ".form.tier"}},
-						{Property: strPtr("archived"), Operator: "=", Value: false},
+						{Property: "tier", Operator: "=", Value: map[string]any{"jqQuery": ".form.tier"}},
+						{Property: "archived", Operator: "=", Value: false},
 					},
 				},
 			},
@@ -579,13 +579,13 @@ func TestUserInputDatasetRelationRuleRoundTrip(t *testing.T) {
 				Dataset: &cli.WorkflowDataset{
 					Combinator: "and",
 					Rules: []cli.WorkflowDatasetRule{
-						{Property: strPtr("language"), Operator: "isNotEmpty"},
+						{Property: "language", Operator: "isNotEmpty"},
 						{Relation: strPtr("service"), Direction: strPtr("upstream"), Operator: "isNotEmpty"},
 						{
 							Combinator: strPtr("or"),
 							Rules: []cli.WorkflowDatasetRule{
 								{Relation: strPtr("team"), Operator: "isNotEmpty"},
-								{Property: strPtr("archived"), Operator: "=", Value: false},
+								{Property: "archived", Operator: "=", Value: false},
 							},
 						},
 					},
@@ -598,7 +598,7 @@ func TestUserInputDatasetRelationRuleRoundTrip(t *testing.T) {
 	require.NotNil(t, dataset)
 	require.Len(t, dataset.Rules, 3)
 
-	assert.Equal(t, strPtr("language"), dataset.Rules[0].Property)
+	assert.Equal(t, "language", dataset.Rules[0].Property)
 	assert.Nil(t, dataset.Rules[0].Relation)
 
 	assert.Equal(t, strPtr("service"), dataset.Rules[1].Relation)
@@ -2665,7 +2665,7 @@ func TestExecuteWorkflowRejectsNonObjectInput(t *testing.T) {
 
 	for value, valid := range map[string]bool{`{}`: true, `{"a":"{{ .run.id }}"}`: true, `[]`: false, `"a"`: false, `{`: false} {
 		resp := &validator.StringResponse{}
-		jsonObjectValidator().ValidateString(context.Background(), validator.StringRequest{ConfigValue: types.StringValue(value)}, resp)
+		utils.JSONObject().ValidateString(context.Background(), validator.StringRequest{ConfigValue: types.StringValue(value)}, resp)
 		assert.Equal(t, !valid, resp.Diagnostics.HasError(), "input = %s", value)
 	}
 }
@@ -2725,4 +2725,64 @@ func TestRefreshWorkflowTriggerAndExecuteWorkflow(t *testing.T) {
 		assert.Equal(t, types.BoolValue(true), node.ExecuteWorkflow.Wait)
 		assert.True(t, node.ExecuteWorkflow.OnFailure.IsNull())
 	})
+}
+
+func TestUserInputDatasetObjectPropertyRoundTrip(t *testing.T) {
+	contextual := map[string]any{"context": "user", "property": "port_role"}
+	path := map[string]any{"path": []any{"team_memberships", "team"}, "fromBlueprint": "person"}
+	userValue := map[string]any{"context": "user", "property": "$identifier"}
+
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"team": {
+				Type:      "string",
+				Format:    strPtr("entity"),
+				Blueprint: strPtr("team"),
+				Dataset: &cli.WorkflowDataset{
+					Combinator: "and",
+					Rules: []cli.WorkflowDatasetRule{
+						{Property: contextual, Operator: "=", Value: "Admin"},
+						{Property: path, Operator: "matchAny", Value: userValue},
+					},
+				},
+			},
+		},
+	})
+
+	dataset := result.Properties["team"].Dataset
+	require.NotNil(t, dataset)
+	require.Len(t, dataset.Rules, 2)
+	assert.Equal(t, contextual, dataset.Rules[0].Property)
+	assert.Equal(t, path, dataset.Rules[1].Property)
+	assert.Equal(t, userValue, dataset.Rules[1].Value)
+}
+
+func TestDatasetPropertyJsonDoesNotDriftOnHTMLCharacters(t *testing.T) {
+	prior := &DatasetModel{
+		Combinator: types.StringValue("and"),
+		Rules: []DatasetRuleModel{{
+			PropertyJson: types.StringValue(`{"context":"user","property":"a\u0026b\u003cc\u003e"}`),
+			Operator:     types.StringValue("="),
+		}},
+	}
+	fromApi := &cli.WorkflowDataset{
+		Combinator: "and",
+		Rules: []cli.WorkflowDatasetRule{{
+			Property: map[string]any{"context": "user", "property": "a&b<c>"},
+			Operator: "=",
+		}},
+	}
+
+	for _, escapeHTML := range []bool{true, false} {
+		state, err := datasetToState(fromApi, prior, escapeHTML)
+		require.NoError(t, err)
+		assert.Equal(t, prior.Rules[0].PropertyJson, state.Rules[0].PropertyJson, "escapeHTML=%v", escapeHTML)
+	}
+}
+
+func TestDatasetRulePropertyJsonMustBeAnObject(t *testing.T) {
+	for _, invalid := range []string{`["a"]`, `"a"`, `{`} {
+		_, err := datasetRuleToBody(DatasetRuleModel{PropertyJson: types.StringValue(invalid), Operator: types.StringValue("=")})
+		assert.Error(t, err, invalid)
+	}
 }

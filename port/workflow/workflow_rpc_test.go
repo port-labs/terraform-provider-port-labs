@@ -384,3 +384,23 @@ func BenchmarkWorkflowRPCPlan(b *testing.B) {
 		})
 	}
 }
+
+func TestWorkflowRPCDatasetPropertyAndPropertyJsonConflict(t *testing.T) {
+	server, resourceType := newWorkflowRPCServer(t, nil)
+
+	config := rpcWorkflowConfig(1)
+	rule := serviceUserProperty(config)["dataset"].(configObject)["rules"].(configList)[0].(configObject)
+	rule["property_json"] = `{"context":"user","property":"port_role"}`
+	assert.NotEmpty(t, rpcErrorSummaries(validateResourceConfig(t, server, configValue(t, resourceType, config))))
+
+	delete(rule, "property")
+	assert.Empty(t, rpcErrorSummaries(validateResourceConfig(t, server, configValue(t, resourceType, config))))
+
+	rule["property"] = `{"context":"user","property":"port_role"}`
+	delete(rule, "property_json")
+	assert.NotEmpty(t, rpcErrorSummaries(validateResourceConfig(t, server, configValue(t, resourceType, config))), "jsonencoded object in property")
+
+	delete(rule, "property")
+	rule["property_json"] = `["not","an","object"]`
+	assert.NotEmpty(t, rpcErrorSummaries(validateResourceConfig(t, server, configValue(t, resourceType, config))))
+}

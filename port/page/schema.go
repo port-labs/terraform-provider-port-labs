@@ -72,6 +72,10 @@ func PageSchema() map[string]schema.Attribute {
 			Optional:    true,
 			ElementType: types.StringType,
 		},
+		"page_date_filter": schema.StringAttribute{
+			Description: "The date range filter of the page, as a JSON object with a 'range' object. The 'range' has a 'type' that is one of 'quickRange' (with 'quickRange': 'today', 'yesterday', '7d', '30d', '3m', '6m' or '12m'), 'fixed' (with 'from' and 'to' dates in YYYY-MM-DD format), 'since' (with a 'from' date), 'last' or 'next' (with 'amount', 'unit' of 'day', 'week', 'month' or 'quarter', and an optional 'offset'), or 'periodToDate' (with 'period' of 'day', 'week', 'month', 'quarter' or 'year'). On entity pages, the filter applies to all entities of the blueprint. Widgets choose which date property is filtered with their 'dashboardDateProperty' setting.",
+			Optional:    true,
+		},
 		"created_at": schema.StringAttribute{
 			MarkdownDescription: "The creation date of the page",
 			Computed:            true,
@@ -256,6 +260,63 @@ resource "port_page" "microservice_dashboard_page" {
 }
 
 ` + "```" + `
+
+### Dashboard Page with a date filter
+
+Set the date range that the page opens with. ` + "`page_date_filter`" + ` is a JSON object with a ` + "`range`" + `. Use a relative range (such as ` + "`quickRange`" + ` or ` + "`last`" + `) so the dashboard stays current. Widgets that support it choose which date property is filtered with ` + "`dashboardDateProperty`" + `.
+
+` + "```hcl" + `
+
+resource "port_page" "microservice_dashboard_page" {
+  identifier = "microservice_dashboard_page"
+  title      = "Microservices"
+  icon       = "GitHub"
+  type       = "dashboard"
+  page_date_filter = jsonencode(
+    {
+      "range" : {
+        "type" : "quickRange",
+        "quickRange" : "30d"
+      }
+    }
+  )
+  widgets = [
+    jsonencode(
+      {
+        "id" : "dashboardWidget",
+        "layout" : [
+          {
+            "height" : 400,
+            "columns" : [
+              {
+                "id" : "microserviceTable",
+                "size" : 12
+              }
+            ]
+          }
+        ],
+        "type" : "dashboard-widget",
+        "widgets" : [
+          {
+            "id" : "microserviceTable",
+            "type" : "table-entities-explorer",
+            "title" : "Microservices",
+            "blueprint" : port_blueprint.base_blueprint.identifier,
+            "dashboardDateProperty" : "$updatedAt",
+            "dataset" : {
+              "combinator" : "and",
+              "rules" : []
+            }
+          }
+        ]
+      }
+    )
+  ]
+}
+
+` + "```" + `
+
+Other range types: ` + "`{ \"type\": \"fixed\", \"from\": \"2026-01-01\", \"to\": \"2026-03-31\" }`" + `, ` + "`{ \"type\": \"since\", \"from\": \"2026-01-01\" }`" + `, ` + "`{ \"type\": \"last\", \"amount\": 2, \"unit\": \"week\", \"offset\": 1 }`" + `, ` + "`{ \"type\": \"next\", \"amount\": 1, \"unit\": \"month\" }`" + ` and ` + "`{ \"type\": \"periodToDate\", \"period\": \"quarter\" }`" + `.
 
 ### Entity Page
 

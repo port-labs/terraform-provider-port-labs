@@ -67,6 +67,7 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	oldWidgets := pm.Widgets
 	oldPageFilters := pm.PageFilters
 	oldPageFilterPresets := pm.PageFilterPresets
+	oldPageDateFilter := pm.PageDateFilter
 
 	pm.ID = types.StringValue(b.Identifier)
 	pm.Identifier = types.StringValue(b.Identifier)
@@ -123,5 +124,11 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	} else {
 		pm.PageFilterPresets = types.ListNull(types.StringType)
 	}
+
+	pageDateFilter, err := utils.GoObjectToTerraformStringPreferExisting(oldPageDateFilter, b.PageDateFilter, r.portClient.JSONEscapeHTML)
+	if err != nil {
+		return err
+	}
+	pm.PageDateFilter = pageDateFilter
 	return nil
 }

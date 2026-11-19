@@ -265,6 +265,7 @@ resource "port_workflow" "restart_service" {
 
 # A sub-workflow that other workflows can execute through its workflow trigger.
 # The input passed by the calling workflow is the output of the trigger node.
+# `output` is returned to a calling execute_workflow node that waits for the run.
 resource "port_workflow" "notify_owner" {
   identifier = "notify-owner"
   title      = "Notify service owner"
@@ -273,7 +274,12 @@ resource "port_workflow" "notify_owner" {
     identifier = "called"
     title      = "Called by another workflow"
 
-    workflow_trigger {}
+    workflow_trigger {
+      output = {
+        notifiedService = ".outputs.called.service"
+        notifyStatus    = ".outputs.notify.status"
+      }
+    }
   }
 
   node {
@@ -315,8 +321,27 @@ resource "port_workflow" "nightly_report" {
     }
   }
 
+  # The sub-workflow's output keys sit next to `workflowRunIdentifier` and `status`.
+  node {
+    identifier = "log_result"
+
+    webhook {
+      url = "https://reports.example.com/notifications"
+      body = jsonencode({
+        run     = "{{ .outputs.notify_owner.workflowRunIdentifier }}"
+        service = "{{ .outputs.notify_owner.notifiedService }}"
+        status  = "{{ .outputs.notify_owner.notifyStatus }}"
+      })
+    }
+  }
+
   connections {
     source_identifier = "nightly"
     target_identifier = "notify_owner"
+  }
+
+  connections {
+    source_identifier = "notify_owner"
+    target_identifier = "log_result"
   }
 }

@@ -1463,4 +1463,5 @@ Optional:
 
 Optional:
 
+- `output` (Map of String) A map of keys to JQ expressions evaluated against this workflow's run when it concludes successfully. The result is returned to the calling `execute_workflow` node only when it waits for completion (`wait = true`), and later nodes of the calling workflow read it as `.outputs["<execute node>"].<key>`. If an expression cannot be evaluated, the run fails. `workflowRunIdentifier`, `status` and `error` are reserved and cannot be used as keys.
 - `published` (Boolean) Whether the trigger is published. When `false`, other workflows cannot execute this workflow through this trigger.

@@ -223,7 +223,7 @@ type (
 		Target          string                          `json:"target,omitempty"`
 		CalculationSpec map[string]string               `json:"calculationSpec,omitempty"`
 		Query           any                             `json:"query,omitempty"`
-		PathFilter      []AggregationPropertyPathFilter `json:"pathFilter,omitempty"`
+		PathFilter      []AggregationPropertyPathFilter `json:"pathFilter"`
 	}
 
 	AggregationPropertyPathFilter struct {

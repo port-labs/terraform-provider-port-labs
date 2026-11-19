@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 // CURSOR_AGENT is intentionally absent: it is still a live member of the service
@@ -445,7 +446,7 @@ func executeWorkflowBlock() schema.Block {
 				Optional:   true,
 				Computed:   true,
 				Default:    stringdefault.StaticString("{}"),
-				Validators: []validator.String{jsonObjectValidator()},
+				Validators: []validator.String{utils.JSONObject()},
 			},
 			"wait": schema.BoolAttribute{
 				MarkdownDescription: "Whether to wait for the executed workflow run to conclude before continuing.",

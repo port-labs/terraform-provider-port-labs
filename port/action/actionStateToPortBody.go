@@ -62,7 +62,7 @@ func convertRuleToCliRule(rule Rule) (cli.DatasetRule, error) {
 			cliRule.Blueprint = &blueprint
 		}
 		if !rule.PropertyJson.IsNull() {
-			property, err := utils.JSONObjectToGo(rule.PropertyJson.ValueString())
+			property, err := utils.DecodeJSONObject(rule.PropertyJson.ValueString())
 			if err != nil {
 				return cliRule, fmt.Errorf("`property_json` %w", err)
 			}

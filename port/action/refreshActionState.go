@@ -259,7 +259,7 @@ func convertCliRuleToRule(v cli.DatasetRule, prior *Rule, jsonEscapeHTML bool) (
 			if prior != nil {
 				priorProperty = prior.PropertyJson
 			}
-			encoded, err := utils.PropertyToTerraformString(priorProperty, property, jsonEscapeHTML)
+			encoded, err := utils.GoObjectToTerraformStringPreferExisting(priorProperty, property, jsonEscapeHTML)
 			if err != nil {
 				return rule, fmt.Errorf("converting dataset rule `property` to `property_json`: %w", err)
 			}

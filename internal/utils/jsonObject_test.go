@@ -11,13 +11,13 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestJSONObjectToGo(t *testing.T) {
-	object, err := JSONObjectToGo(`{"context":"user","property":"port_role"}`)
+func TestDecodeJSONObject(t *testing.T) {
+	object, err := DecodeJSONObject(`{"context":"user","property":"port_role"}`)
 	require.NoError(t, err)
 	assert.Equal(t, map[string]any{"context": "user", "property": "port_role"}, object)
 
 	for _, invalid := range []string{`["a"]`, `"a"`, `1`, `null`, `{`, ``} {
-		_, err := JSONObjectToGo(invalid)
+		_, err := DecodeJSONObject(invalid)
 		assert.Error(t, err, invalid)
 	}
 }
@@ -42,29 +42,29 @@ func TestJSONObjectValidator(t *testing.T) {
 	}
 }
 
-func TestPropertyToTerraformStringPreservesPriorFormatting(t *testing.T) {
+func TestPreferExistingKeepsPriorPropertyJson(t *testing.T) {
 	property := map[string]any{"context": "user", "property": "a&b<c>"}
 
 	// Escaped in the prior value, as `jsonencode()` writes it.
 	prior := types.StringValue(`{"context":"user","property":"a&b<c>"}`)
 	for _, escapeHTML := range []bool{true, false} {
-		got, err := PropertyToTerraformString(prior, property, escapeHTML)
+		got, err := GoObjectToTerraformStringPreferExisting(prior, property, escapeHTML)
 		require.NoError(t, err)
 		assert.Equal(t, prior, got, "escapeHTML=%v", escapeHTML)
 	}
 
 	// Without a prior value the provider setting decides.
-	got, err := PropertyToTerraformString(types.StringNull(), property, false)
+	got, err := GoObjectToTerraformStringPreferExisting(types.StringNull(), property, false)
 	require.NoError(t, err)
 	assert.JSONEq(t, `{"context":"user","property":"a&b<c>"}`, got.ValueString())
 	assert.Contains(t, got.ValueString(), "a&b<c>")
 
-	got, err = PropertyToTerraformString(types.StringNull(), property, true)
+	got, err = GoObjectToTerraformStringPreferExisting(types.StringNull(), property, true)
 	require.NoError(t, err)
 	assert.Contains(t, got.ValueString(), `\u0026`)
 
 	// A prior value that differs semantically is replaced.
-	got, err = PropertyToTerraformString(types.StringValue(`{"context":"other"}`), property, false)
+	got, err = GoObjectToTerraformStringPreferExisting(types.StringValue(`{"context":"other"}`), property, false)
 	require.NoError(t, err)
 	assert.Contains(t, got.ValueString(), "a&b<c>")
 }

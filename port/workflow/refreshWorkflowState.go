@@ -24,7 +24,11 @@ func (r *WorkflowResource) refreshWorkflowState(ctx context.Context, state *Work
 	state.Icon = flex.GoStringToFramework(w.Icon)
 	state.Description = flex.GoStringToFramework(w.Description)
 	state.Category = flex.GoStringToFramework(w.Category)
-	state.AllowAnyoneToViewRuns = flex.GoBoolToFramework(w.AllowAnyoneToViewRuns)
+	if w.AllowAnyoneToViewRuns != nil {
+		state.AllowAnyoneToViewRuns = types.BoolValue(*w.AllowAnyoneToViewRuns)
+	} else {
+		state.AllowAnyoneToViewRuns = types.BoolValue(false)
+	}
 
 	orderedNodes := reorderNodes(state.Nodes, w.Nodes)
 	nodes := make([]WorkflowNodeModel, 0, len(orderedNodes))

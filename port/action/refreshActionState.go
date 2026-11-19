@@ -545,50 +545,50 @@ func (r *ActionResource) writeTriggerToResource(ctx context.Context, a *cli.Acti
 
 		if a.Trigger.Event.Type == consts.EntityCreated {
 			automationTrigger.EntityCreatedEvent = &EntityCreatedEventModel{
-				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+				BlueprintIdentifier: flex.GoStringToFramework(a.Trigger.Event.BlueprintIdentifier),
 			}
 		}
 
 		if a.Trigger.Event.Type == consts.EntityUpdated {
 			automationTrigger.EntityUpdatedEvent = &EntityUpdatedEventModel{
-				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+				BlueprintIdentifier: flex.GoStringToFramework(a.Trigger.Event.BlueprintIdentifier),
 			}
 		}
 
 		if a.Trigger.Event.Type == consts.EntityDeleted {
 			automationTrigger.EntityDeletedEvent = &EntityDeletedEventModel{
-				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+				BlueprintIdentifier: flex.GoStringToFramework(a.Trigger.Event.BlueprintIdentifier),
 			}
 		}
 
 		if a.Trigger.Event.Type == consts.AnyEntityChange {
 			automationTrigger.AnyEntityChangeEvent = &AnyEntityChangeEventModel{
-				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
+				BlueprintIdentifier: flex.GoStringToFramework(a.Trigger.Event.BlueprintIdentifier),
 			}
 		}
 
 		if a.Trigger.Event.Type == consts.TimerPropertyExpired {
 			automationTrigger.TimerPropertyExpiredEvent = &TimerPropertyExpiredEventModel{
-				BlueprintIdentifier: types.StringValue(*a.Trigger.Event.BlueprintIdentifier),
-				PropertyIdentifier:  types.StringValue(*a.Trigger.Event.PropertyIdentifier),
+				BlueprintIdentifier: flex.GoStringToFramework(a.Trigger.Event.BlueprintIdentifier),
+				PropertyIdentifier:  flex.GoStringToFramework(a.Trigger.Event.PropertyIdentifier),
 			}
 		}
 
 		if a.Trigger.Event.Type == consts.RunCreated {
 			automationTrigger.RunCreatedEvent = &RunCreatedEvent{
-				ActionIdentifier: types.StringValue(*a.Trigger.Event.ActionIdentifier),
+				ActionIdentifier: flex.GoStringToFramework(a.Trigger.Event.ActionIdentifier),
 			}
 		}
 
 		if a.Trigger.Event.Type == consts.RunUpdated {
 			automationTrigger.RunUpdatedEvent = &RunUpdatedEvent{
-				ActionIdentifier: types.StringValue(*a.Trigger.Event.ActionIdentifier),
+				ActionIdentifier: flex.GoStringToFramework(a.Trigger.Event.ActionIdentifier),
 			}
 		}
 
 		if a.Trigger.Event.Type == consts.AnyRunChange {
 			automationTrigger.AnyRunChangeEvent = &AnyRunChangeEvent{
-				ActionIdentifier: types.StringValue(*a.Trigger.Event.ActionIdentifier),
+				ActionIdentifier: flex.GoStringToFramework(a.Trigger.Event.ActionIdentifier),
 			}
 		}
 

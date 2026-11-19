@@ -11,10 +11,15 @@ func actionPermissionsToPortBody(state *PermissionsModel) (*cli.ActionPermission
 		return nil, nil
 	}
 
+	executeRoles := flex.TerraformStringListToGoArray(state.Execute.Roles)
+	if executeOwnedByTeamEnabled(state.Execute.OwnedByTeam) {
+		executeRoles = withoutMemberRole(executeRoles)
+	}
+
 	actionPermissions := cli.ActionPermissions{
 		Execute: cli.ActionExecutePermissions{
 			Users:       flex.TerraformStringListToGoArray(state.Execute.Users),
-			Roles:       flex.TerraformStringListToGoArray(state.Execute.Roles),
+			Roles:       executeRoles,
 			Teams:       flex.TerraformStringListToGoArray(state.Execute.Teams),
 			OwnedByTeam: state.Execute.OwnedByTeam.ValueBoolPointer(),
 		},

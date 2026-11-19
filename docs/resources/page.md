@@ -139,6 +139,59 @@ description: |-
   }
   
   
+  Dashboard Page with a date filter
+  Set the date range that the page opens with. page_date_filter is a JSON object with a range. Use a relative range (such as quickRange or last) so the dashboard stays current. Widgets that support it choose which date property is filtered with dashboardDateProperty.
+  
+  
+  resource "port_page" "microservice_dashboard_page" {
+    identifier = "microservice_dashboard_page"
+    title      = "Microservices"
+    icon       = "GitHub"
+    type       = "dashboard"
+    page_date_filter = jsonencode(
+      {
+        "range" : {
+          "type" : "quickRange",
+          "quickRange" : "30d"
+        }
+      }
+    )
+    widgets = [
+      jsonencode(
+        {
+          "id" : "dashboardWidget",
+          "layout" : [
+            {
+              "height" : 400,
+              "columns" : [
+                {
+                  "id" : "microserviceTable",
+                  "size" : 12
+                }
+              ]
+            }
+          ],
+          "type" : "dashboard-widget",
+          "widgets" : [
+            {
+              "id" : "microserviceTable",
+              "type" : "table-entities-explorer",
+              "title" : "Microservices",
+              "blueprint" : port_blueprint.base_blueprint.identifier,
+              "dashboardDateProperty" : "$updatedAt",
+              "dataset" : {
+                "combinator" : "and",
+                "rules" : []
+              }
+            }
+          ]
+        }
+      )
+    ]
+  }
+  
+  
+  Other range types: { "type": "fixed", "from": "2026-01-01", "to": "2026-03-31" }, { "type": "since", "from": "2026-01-01" }, { "type": "last", "amount": 2, "unit": "week", "offset": 1 }, { "type": "next", "amount": 1, "unit": "month" } and { "type": "periodToDate", "period": "quarter" }.
   Entity Page
   Customize the entity page https://docs.getport.io/customize-pages-dashboards-and-plugins/page/entity-page template for a blueprint.
   Entity pages are auto-created when a blueprint is created (identifier: <blueprint>Entity).
@@ -605,6 +658,63 @@ resource "port_page" "microservice_dashboard_page" {
 
 ```
 
+### Dashboard Page with a date filter
+
+Set the date range that the page opens with. `page_date_filter` is a JSON object with a `range`. Use a relative range (such as `quickRange` or `last`) so the dashboard stays current. Widgets that support it choose which date property is filtered with `dashboardDateProperty`.
+
+```hcl
+
+resource "port_page" "microservice_dashboard_page" {
+  identifier = "microservice_dashboard_page"
+  title      = "Microservices"
+  icon       = "GitHub"
+  type       = "dashboard"
+  page_date_filter = jsonencode(
+    {
+      "range" : {
+        "type" : "quickRange",
+        "quickRange" : "30d"
+      }
+    }
+  )
+  widgets = [
+    jsonencode(
+      {
+        "id" : "dashboardWidget",
+        "layout" : [
+          {
+            "height" : 400,
+            "columns" : [
+              {
+                "id" : "microserviceTable",
+                "size" : 12
+              }
+            ]
+          }
+        ],
+        "type" : "dashboard-widget",
+        "widgets" : [
+          {
+            "id" : "microserviceTable",
+            "type" : "table-entities-explorer",
+            "title" : "Microservices",
+            "blueprint" : port_blueprint.base_blueprint.identifier,
+            "dashboardDateProperty" : "$updatedAt",
+            "dataset" : {
+              "combinator" : "and",
+              "rules" : []
+            }
+          }
+        ]
+      }
+    )
+  ]
+}
+
+```
+
+Other range types: `{ "type": "fixed", "from": "2026-01-01", "to": "2026-03-31" }`, `{ "type": "since", "from": "2026-01-01" }`, `{ "type": "last", "amount": 2, "unit": "week", "offset": 1 }`, `{ "type": "next", "amount": 1, "unit": "month" }` and `{ "type": "periodToDate", "period": "quarter" }`.
+
 ### Entity Page
 
 Customize the [entity page](https://docs.getport.io/customize-pages-dashboards-and-plugins/page/entity-page) template for a blueprint.
@@ -957,6 +1067,7 @@ terraform import port_page.home_page "\$home"
 - `description` (String) The page description
 - `icon` (String) The icon of the page
 - `locked` (Boolean) Whether the page is locked, if true, viewers will not be able to edit the page widgets and filters
+- `page_date_filter` (String) The date range filter of the page, as a JSON object with a 'range' object. The 'range' has a 'type' that is one of 'quickRange' (with 'quickRange': 'today', 'yesterday', '7d', '30d', '3m', '6m' or '12m'), 'fixed' (with 'from' and 'to' dates in YYYY-MM-DD format), 'since' (with a 'from' date), 'last' or 'next' (with 'amount', 'unit' of 'day', 'week', 'month' or 'quarter', and an optional 'offset'), or 'periodToDate' (with 'period' of 'day', 'week', 'month', 'quarter' or 'year'). On entity pages, the filter applies to all entities of the blueprint. Widgets choose which date property is filtered with their 'dashboardDateProperty' setting.
 - `page_filter_presets` (List of String) The page filter presets. Each preset is a JSON object with 'identifier' (string), 'title' (string), and 'filters' (array of page filters). Each filter has 'identifier', 'title', and 'query' (object with 'combinator' and 'rules' array). Preset identifiers must be unique on the page, and filter identifiers must be unique within a preset. Contextual filters are not allowed in presets.
 - `page_filters` (List of String) The page filters. Each filter is a JSON object with 'identifier' (string), 'title' (string), and 'query' (object with 'combinator' and 'rules' array). The rules array can contain any filter type.
 - `parent` (String) The identifier of the folder in which the page is in, default is the root of the sidebar

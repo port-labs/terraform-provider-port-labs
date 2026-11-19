@@ -187,12 +187,34 @@ func (r *BlueprintResource) updatePropertiesToState(ctx context.Context, b *cli.
 	return nil
 }
 
+// addRelationsToState fully rebuilds bm.Relations from the live Port blueprint b.
+//
+// Previously this only ever ADDED keys found in b.Relations into bm.Relations, and never
+// reset/cleared bm.Relations first. That is harmless when the Terraform resource's prior state
+// already matches the real relation set, but it silently masks drift whenever bm already carries
+// a relation key that is no longer (or not yet) present in Port: that stale key simply survives
+// the refresh untouched.
+//
+// This surfaces concretely the first time a resource is reconciled with no cached Terraform state
+// (a freshly created or freshly imported resource): callers that reconstruct a synthetic "prior
+// state" from the resource's desired configuration before calling Read (as upjet's Terraform
+// Plugin Framework external client does, see terraformPluginFrameworkExternalClient.Connect in
+// crossplane/upjet when GetObservation() returns an empty/missing status) will pass in a `bm`
+// that already contains a relation the user just added but Port has not received yet. Because
+// this function only adds keys from `b` and never removes ones that are absent from it, that
+// not-yet-persisted relation survives the refresh, making the freshly-read "observed" state look
+// identical to the desired config. Any caller that compares observed vs. desired state to decide
+// whether an update is needed (e.g. Crossplane's provider-port, or `terraform plan` itself in
+// unusual state-reconstruction scenarios) then concludes nothing changed and never calls
+// UpdateBlueprint -- a pure relations addition, with nothing else in the blueprint changing, is
+// dropped without any error.
+//
+// updatePropertiesToState (above) does not have this problem: it already does a full
+// `bm.Properties = properties` rebuild rather than merging into whatever bm.Properties previously
+// held.
 func addRelationsToState(b *cli.Blueprint, bm *BlueprintModel) {
+	bm.Relations = make(map[string]RelationModel, len(b.Relations))
 	for k, v := range b.Relations {
-		if bm.Relations == nil {
-			bm.Relations = make(map[string]RelationModel)
-		}
-
 		relationModel := &RelationModel{
 			Target:      types.StringValue(*v.Target),
 			Title:       flex.GoStringToFramework(v.Title),
@@ -206,31 +228,27 @@ func addRelationsToState(b *cli.Blueprint, bm *BlueprintModel) {
 	}
 }
 
+// addMirrorPropertiesToState fully rebuilds bm.MirrorProperties from b. See the comment on
+// addRelationsToState above -- same additive-only-merge issue applied here too.
 func addMirrorPropertiesToState(b *cli.Blueprint, bm *BlueprintModel) {
-	if b.MirrorProperties != nil {
-		for k, v := range b.MirrorProperties {
+	bm.MirrorProperties = make(map[string]MirrorPropertyModel, len(b.MirrorProperties))
+	for k, v := range b.MirrorProperties {
 
-			if bm.MirrorProperties == nil {
-				bm.MirrorProperties = make(map[string]MirrorPropertyModel)
-			}
-
-			mirrorPropertyModel := &MirrorPropertyModel{
-				Path:  types.StringValue(v.Path),
-				Title: flex.GoStringToFramework(v.Title),
-			}
-
-			bm.MirrorProperties[k] = *mirrorPropertyModel
-
+		mirrorPropertyModel := &MirrorPropertyModel{
+			Path:  types.StringValue(v.Path),
+			Title: flex.GoStringToFramework(v.Title),
 		}
+
+		bm.MirrorProperties[k] = *mirrorPropertyModel
+
 	}
 }
 
+// addCalculationPropertiesToState fully rebuilds bm.CalculationProperties from b. See the comment
+// on addRelationsToState above -- same additive-only-merge issue applied here too.
 func addCalculationPropertiesToState(ctx context.Context, b *cli.Blueprint, bm *BlueprintModel) {
+	bm.CalculationProperties = make(map[string]CalculationPropertyModel, len(b.CalculationProperties))
 	for k, v := range b.CalculationProperties {
-		if bm.CalculationProperties == nil {
-			bm.CalculationProperties = make(map[string]CalculationPropertyModel)
-		}
-
 		calculationPropertyModel := &CalculationPropertyModel{
 			Calculation: types.StringValue(v.Calculation),
 			Type:        types.StringValue(v.Type),

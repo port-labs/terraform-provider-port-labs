@@ -36,5 +36,11 @@ func PageToPortBody(pm *PageModel) (*cli.Page, error) {
 	}
 	pb.PageFilterPresets = pageFilterPresets
 
+	pageDateFilter, err := utils.TerraformJsonStringToGoObject(pm.PageDateFilter.ValueStringPointer())
+	if err != nil {
+		return nil, err
+	}
+	pb.PageDateFilter = pageDateFilter
+
 	return pb, nil
 }

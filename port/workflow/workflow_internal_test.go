@@ -2665,7 +2665,7 @@ func TestExecuteWorkflowRejectsNonObjectInput(t *testing.T) {
 
 	for value, valid := range map[string]bool{`{}`: true, `{"a":"{{ .run.id }}"}`: true, `[]`: false, `"a"`: false, `{`: false} {
 		resp := &validator.StringResponse{}
-		jsonObjectValidator().ValidateString(context.Background(), validator.StringRequest{ConfigValue: types.StringValue(value)}, resp)
+		utils.JSONObject().ValidateString(context.Background(), validator.StringRequest{ConfigValue: types.StringValue(value)}, resp)
 		assert.Equal(t, !valid, resp.Diagnostics.HasError(), "input = %s", value)
 	}
 }

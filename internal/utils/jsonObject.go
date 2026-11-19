@@ -7,17 +7,17 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-// JSONObjectToGo decodes a JSON encoded string that must hold an object.
-func JSONObjectToGo(s string) (map[string]any, error) {
-	var object map[string]any
-	if err := json.Unmarshal([]byte(s), &object); err != nil {
-		return nil, fmt.Errorf("must be a JSON encoded object: %w", err)
+// DecodeJSONObject decodes a JSON encoded string that must hold an object.
+func DecodeJSONObject(value string) (map[string]any, error) {
+	var decoded any
+	if err := json.Unmarshal([]byte(value), &decoded); err != nil {
+		return nil, fmt.Errorf("must be valid JSON: %s", err)
 	}
-	if object == nil {
-		return nil, fmt.Errorf("must be a JSON encoded object, got null")
+	object, ok := decoded.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("must be a JSON object")
 	}
 	return object, nil
 }
@@ -29,27 +29,20 @@ type jsonObjectValidator struct{}
 func JSONObject() validator.String { return jsonObjectValidator{} }
 
 func (jsonObjectValidator) Description(context.Context) string {
-	return "value must be a JSON encoded object"
+	return "must be a JSON encoded object"
 }
 
 func (v jsonObjectValidator) MarkdownDescription(ctx context.Context) string {
 	return v.Description(ctx)
 }
 
-func (jsonObjectValidator) ValidateString(ctx context.Context, req validator.StringRequest, resp *validator.StringResponse) {
+func (jsonObjectValidator) ValidateString(_ context.Context, req validator.StringRequest, resp *validator.StringResponse) {
 	if req.ConfigValue.IsNull() || req.ConfigValue.IsUnknown() {
 		return
 	}
-	if _, err := JSONObjectToGo(req.ConfigValue.ValueString()); err != nil {
+	if _, err := DecodeJSONObject(req.ConfigValue.ValueString()); err != nil {
 		resp.Diagnostics.AddAttributeError(req.Path, "Invalid JSON object", err.Error())
 	}
-}
-
-// PropertyToTerraformString encodes an object-typed dataset rule property for
-// state, keeping the prior value when it is semantically equal so formatting
-// and HTML escaping never cause drift.
-func PropertyToTerraformString(prior types.String, property any, jsonEscapeHTML bool) (types.String, error) {
-	return GoObjectToTerraformStringPreferExisting(prior, property, jsonEscapeHTML)
 }
 
 type notJSONObjectValidator struct{ useInstead string }

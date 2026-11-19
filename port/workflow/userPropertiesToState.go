@@ -554,7 +554,7 @@ func datasetRuleToState(rule cli.WorkflowDatasetRule, prior *DatasetRuleModel, j
 		if prior != nil {
 			priorProperty = prior.PropertyJson
 		}
-		value, err := utils.PropertyToTerraformString(priorProperty, property, jsonEscapeHTML)
+		value, err := utils.GoObjectToTerraformStringPreferExisting(priorProperty, property, jsonEscapeHTML)
 		if err != nil {
 			return model, fmt.Errorf("converting dataset rule `property` to `property_json`: %w", err)
 		}

@@ -19,6 +19,11 @@ resource "port_workflow" "deploy_service" {
               title    = "Service"
               required = true
             }
+            "target" = {
+              title     = "Target service"
+              format    = "entity"
+              blueprint = "service"
+            }
           }
           number_props = {
             "min_replicas" = {
@@ -44,6 +49,18 @@ resource "port_workflow" "deploy_service" {
 
       permissions {
         roles = ["Member"]
+      }
+
+      # Surface this workflow when creating a service entity.
+      contexts {
+        on                   = "CREATE_ENTITY"
+        blueprint_identifier = "service"
+      }
+
+      # Also surface it from the actions menu for a selected service entity input.
+      contexts {
+        on         = "ENTITY"
+        user_input = "target"
       }
     }
   }

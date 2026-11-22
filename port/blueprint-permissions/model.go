@@ -9,6 +9,14 @@ type BlueprintPermissionsTFBlock struct {
 	OwnedByTeam types.Bool     `tfsdk:"owned_by_team"`
 }
 
+type BlueprintPermissionsTFBlockWithPolicy struct {
+	Users       []types.String `tfsdk:"users"`
+	Roles       []types.String `tfsdk:"roles"`
+	Teams       []types.String `tfsdk:"teams"`
+	OwnedByTeam types.Bool     `tfsdk:"owned_by_team"`
+	Policy      types.String   `tfsdk:"policy"`
+}
+
 type BlueprintMetadataPermissionsTFBlock struct {
 	Team       *BlueprintPermissionsTFBlock `tfsdk:"team"`
 	Icon       *BlueprintPermissionsTFBlock `tfsdk:"icon"`
@@ -19,12 +27,13 @@ type BlueprintMetadataPermissionsTFBlock struct {
 type BlueprintRelationsPermissionsTFBlock map[string]BlueprintPermissionsTFBlock
 
 type EntitiesBlueprintPermissionsModel struct {
-	Register                 *BlueprintPermissionsTFBlock          `tfsdk:"register"`
-	Unregister               *BlueprintPermissionsTFBlock          `tfsdk:"unregister"`
-	Update                   *BlueprintPermissionsTFBlock          `tfsdk:"update"`
-	UpdateProperties         *BlueprintRelationsPermissionsTFBlock `tfsdk:"update_properties"`
-	UpdateMetadataProperties *BlueprintMetadataPermissionsTFBlock  `tfsdk:"update_metadata_properties"`
-	UpdateRelations          *BlueprintRelationsPermissionsTFBlock `tfsdk:"update_relations"`
+	Read                     *BlueprintPermissionsTFBlockWithPolicy `tfsdk:"read"`
+	Register                 *BlueprintPermissionsTFBlockWithPolicy `tfsdk:"register"`
+	Unregister               *BlueprintPermissionsTFBlockWithPolicy `tfsdk:"unregister"`
+	Update                   *BlueprintPermissionsTFBlockWithPolicy `tfsdk:"update"`
+	UpdateProperties         *BlueprintRelationsPermissionsTFBlock  `tfsdk:"update_properties"`
+	UpdateMetadataProperties *BlueprintMetadataPermissionsTFBlock   `tfsdk:"update_metadata_properties"`
+	UpdateRelations          *BlueprintRelationsPermissionsTFBlock  `tfsdk:"update_relations"`
 }
 
 type BlueprintPermissionsModel struct {

@@ -70,14 +70,14 @@ func (m *SearchDataModel) GenerateID() string {
 	// Concatenate the model fields into a single string
 	var sb strings.Builder
 	sb.WriteString(m.Query.ValueString())
-	sb.WriteString(fmt.Sprintf("%t", m.ExcludeCalculatedProperties.ValueBool()))
+	fmt.Fprintf(&sb, "%t", m.ExcludeCalculatedProperties.ValueBool())
 	for _, include := range m.Include {
 		sb.WriteString(include.ValueString())
 	}
 	for _, exclude := range m.Exclude {
 		sb.WriteString(exclude.ValueString())
 	}
-	sb.WriteString(fmt.Sprintf("%t", m.AttachTitleToRelation.ValueBool()))
+	fmt.Fprintf(&sb, "%t", m.AttachTitleToRelation.ValueBool())
 
 	// Compute the SHA-256 hash of the concatenated string
 	hash := sha256.Sum256([]byte(sb.String()))

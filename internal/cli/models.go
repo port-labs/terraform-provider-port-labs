@@ -195,19 +195,25 @@ func (dv DatasetValue) MarshalJSON() ([]byte, error) {
 
 type (
 	BlueprintCalculationProperty struct {
-		Type               string              `json:"type,omitempty"`
-		Title              *string             `json:"title,omitempty"`
-		Identifier         string              `json:"identifier,omitempty"`
-		Calculation        string              `json:"calculation,omitempty"`
-		Default            any                 `json:"default,omitempty"`
-		Icon               *string             `json:"icon,omitempty"`
-		Format             *string             `json:"format,omitempty"`
-		DateFormat         *string             `json:"dateFormat,omitempty"`
-		Description        *string             `json:"description,omitempty"`
-		Colorized          *bool               `json:"colorized,omitempty"`
-		Colors             map[string]string   `json:"colors,omitempty"`
-		Spec               *string             `json:"spec,omitempty"`
-		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
+		Type               string                             `json:"type,omitempty"`
+		Title              *string                            `json:"title,omitempty"`
+		Identifier         string                             `json:"identifier,omitempty"`
+		Calculation        string                             `json:"calculation,omitempty"`
+		Items              *BlueprintCalculationPropertyItems `json:"items,omitempty"`
+		Default            any                                `json:"default,omitempty"`
+		Icon               *string                            `json:"icon,omitempty"`
+		Format             *string                            `json:"format,omitempty"`
+		DateFormat         *string                            `json:"dateFormat,omitempty"`
+		Description        *string                            `json:"description,omitempty"`
+		Colorized          *bool                              `json:"colorized,omitempty"`
+		Colors             map[string]string                  `json:"colors,omitempty"`
+		Spec               *string                            `json:"spec,omitempty"`
+		SpecAuthentication *SpecAuthentication                `json:"specAuthentication,omitempty"`
+	}
+
+	BlueprintCalculationPropertyItems struct {
+		Type   *string `json:"type,omitempty"`
+		Format *string `json:"format,omitempty"`
 	}
 
 	BlueprintAggregationProperty struct {
@@ -394,17 +400,19 @@ type (
 
 	Page struct {
 		Meta
-		Identifier  string            `json:"identifier,omitempty"`
-		Type        string            `json:"type,omitempty"`
-		Icon        *string           `json:"icon,omitempty"`
-		Parent      *string           `json:"parent,omitempty"`
-		After       *string           `json:"after,omitempty"`
-		Title       *string           `json:"title,omitempty"`
-		Locked      *bool             `json:"locked,omitempty"`
-		Blueprint   *string           `json:"blueprint,omitempty"`
-		Widgets     *[]map[string]any `json:"widgets,omitempty"`
-		PageFilters *[]map[string]any `json:"pageFilters,omitempty"`
-		Description *string           `json:"description,omitempty"`
+		Identifier        string            `json:"identifier,omitempty"`
+		Type              string            `json:"type,omitempty"`
+		Icon              *string           `json:"icon,omitempty"`
+		Parent            *string           `json:"parent,omitempty"`
+		After             *string           `json:"after,omitempty"`
+		Title             *string           `json:"title,omitempty"`
+		Locked            *bool             `json:"locked,omitempty"`
+		Blueprint         *string           `json:"blueprint,omitempty"`
+		Widgets           *[]map[string]any `json:"widgets,omitempty"`
+		PageFilters       *[]map[string]any `json:"pageFilters,omitempty"`
+		PageFilterPresets *[]map[string]any `json:"pageFilterPresets,omitempty"`
+		PageDateFilter    *map[string]any   `json:"pageDateFilter,omitempty"`
+		Description       *string           `json:"description,omitempty"`
 	}
 
 	PageReadPermissions struct {
@@ -418,15 +426,17 @@ type (
 	}
 
 	BlueprintPermissionsBlock struct {
-		Users       []string `json:"users"`
-		Roles       []string `json:"roles"`
-		Teams       []string `json:"teams"`
-		OwnedByTeam *bool    `json:"ownedByTeam"`
+		Users       []string        `json:"users"`
+		Roles       []string        `json:"roles"`
+		Teams       []string        `json:"teams"`
+		OwnedByTeam *bool           `json:"ownedByTeam"`
+		Policy      *map[string]any `json:"policy,omitempty"`
 	}
 
 	BlueprintRolesOrPropertiesPermissionsBlock map[string]BlueprintPermissionsBlock
 
 	BlueprintPermissionsEntities struct {
+		Read             *BlueprintPermissionsBlock                 `json:"read,omitempty"`
 		Register         BlueprintPermissionsBlock                  `json:"register"`
 		Unregister       BlueprintPermissionsBlock                  `json:"unregister"`
 		Update           BlueprintPermissionsBlock                  `json:"update"`
@@ -450,20 +460,44 @@ type (
 
 	Scorecard struct {
 		Meta
-		Identifier string  `json:"identifier,omitempty"`
-		Title      string  `json:"title,omitempty"`
-		Blueprint  string  `json:"blueprint,omitempty"`
-		Filter     *Query  `json:"filter,omitempty"`
-		Levels     []Level `json:"levels,omitempty"`
-		Rules      []Rule  `json:"rules,omitempty"`
+		Identifier string         `json:"identifier,omitempty"`
+		Title      string         `json:"title,omitempty"`
+		Blueprint  string         `json:"blueprint,omitempty"`
+		Filter     *Query         `json:"filter,omitempty"`
+		Levels     []Level        `json:"levels,omitempty"`
+		Rules      []Rule         `json:"rules,omitempty"`
+		Properties map[string]any `json:"properties,omitempty"`
+		Relations  map[string]any `json:"relations,omitempty"`
+	}
+
+	ScorecardGroupMemberSpec struct {
+		Filter *Query `json:"filter,omitempty"`
+		Rules  []Rule `json:"rules"`
+	}
+
+	ScorecardGroup struct {
+		Meta
+		Identifier          string                              `json:"identifier,omitempty"`
+		Title               string                              `json:"title,omitempty"`
+		Levels              []Level                             `json:"levels,omitempty"`
+		GroupProperties     map[string]any                      `json:"groupProperties,omitempty"`
+		ScorecardProperties map[string]any                      `json:"scorecardProperties,omitempty"`
+		GroupRelations      map[string]any                      `json:"groupRelations,omitempty"`
+		ScorecardRelations  map[string]any                      `json:"scorecardRelations,omitempty"`
+		Scorecards          map[string]ScorecardGroupMemberSpec `json:"scorecards,omitempty"`
+		Blueprints          []string                            `json:"blueprints,omitempty"`
+		Rules               []Rule                              `json:"rules,omitempty"`
+		Filters             map[string]*Query                   `json:"filters,omitempty"`
 	}
 
 	Rule struct {
-		Identifier  string `json:"identifier,omitempty"`
-		Title       string `json:"title,omitempty"`
-		Description string `json:"description,omitempty"`
-		Level       string `json:"level,omitempty"`
-		Query       Query  `json:"query,omitempty"`
+		Identifier  string         `json:"identifier,omitempty"`
+		Title       string         `json:"title,omitempty"`
+		Description string         `json:"description,omitempty"`
+		Level       string         `json:"level,omitempty"`
+		Query       Query          `json:"query,omitempty"`
+		Properties  map[string]any `json:"properties,omitempty"`
+		Relations   map[string]any `json:"relations,omitempty"`
 	}
 
 	Level struct {
@@ -682,13 +716,15 @@ type PortBody struct {
 	Action               Action            `json:"action"`
 	ActionPermissions    ActionPermissions `json:"permissions"`
 	Webhook              Webhook           `json:"integration"`
-	Scorecard            Scorecard         `json:"Scorecard"`
+	Scorecard            Scorecard         `json:"scorecard"`
+	ScorecardGroup       ScorecardGroup    `json:"scorecardGroup"`
 	Team                 PortTeam          `json:"team"`
 	Page                 Page              `json:"page"`
 	MigrationId          string            `json:"migrationId"`
 	Migration            Migration         `json:"migration"`
 	Folder               Folder            `json:"folder"`
 	Organization         *Organization     `json:"organization"`
+	Workflow             Workflow          `json:"workflow"`
 }
 
 type SearchEntityResult struct {
@@ -748,22 +784,82 @@ type PortBodyDelete struct {
 	Ok bool `json:"ok"`
 }
 
+// IntegrationClientSpec is the user-manageable part of an integration spec.
+// Only client-managed spec sections are modeled; other API fields are omitted
+// on unmarshal and kept out of every request body.
+type IntegrationClientSpec struct {
+	IntegrationSpec map[string]any `json:"integrationSpec,omitempty"`
+	AppSpec         map[string]any `json:"appSpec,omitempty"`
+}
+
+// IsEmpty reports whether the spec carries nothing Terraform can manage.
+func (s *IntegrationClientSpec) IsEmpty() bool {
+	return s == nil || (s.IntegrationSpec == nil && s.AppSpec == nil)
+}
+
+func (s *IntegrationClientSpec) AppSpecOnly() *IntegrationClientSpec {
+	if s == nil || s.AppSpec == nil {
+		return nil
+	}
+	return &IntegrationClientSpec{AppSpec: s.AppSpec}
+}
+
+type IntegrationStatus struct {
+	Status  string  `json:"status"`
+	Message *string `json:"message,omitempty"`
+}
+
+type IntegrationStatusInfo struct {
+	IntegrationStatus IntegrationStatus `json:"integrationStatus"`
+}
+
+type ValidateIntegrationSpecOptions struct {
+	SkipSecretExistenceCheck bool `json:"skipSecretExistenceCheck,omitempty"`
+}
+
+type ValidateIntegrationSpecBody struct {
+	ValidationMode   string                          `json:"validationMode"`
+	InstallationId   string                          `json:"installationId"`
+	InstallationType string                          `json:"installationType"`
+	Spec             *IntegrationClientSpec          `json:"spec,omitempty"`
+	Options          *ValidateIntegrationSpecOptions `json:"options,omitempty"`
+}
+
 type Integration struct {
-	InstallationId       string                `json:"installationId"`
-	Title                *string               `json:"title"`
-	InstallationAppType  *string               `json:"installationAppType"`
-	Version              *string               `json:"version"`
-	Config               *map[string]any       `json:"config"`
-	ChangelogDestination *ChangelogDestination `json:"changelogDestination,omitempty"`
+	InstallationId            string                 `json:"installationId"`
+	Title                     *string                `json:"title"`
+	InstallationAppType       *string                `json:"installationAppType"`
+	InstallationType          *string                `json:"installationType"`
+	Version                   *string                `json:"version"`
+	Config                    *map[string]any        `json:"config,omitempty"`
+	Spec                      *IntegrationClientSpec `json:"spec,omitempty"`
+	CreatePortResourcesOrigin *string                `json:"createPortResourcesOrigin,omitempty"`
+	StatusInfo                *IntegrationStatusInfo `json:"statusInfo,omitempty"`
+	ChangelogDestination      *ChangelogDestination  `json:"changelogDestination,omitempty"`
+}
+
+// NotificationOptInSetting is one integration notification channel.
+// Emails and Teams are the saved audience. Empty lists notify every org admin.
+type NotificationOptInSetting struct {
+	Channel string   `json:"channel"`
+	Enabled bool     `json:"enabled"`
+	Emails  []string `json:"emails"`
+	Teams   []string `json:"teams"`
+}
+
+type OrganizationSettings struct {
+	HiddenGlobalSearchTabs []string `json:"hiddenGlobalSearchTabs"`
 }
 
 type Organization struct {
-	Name         string   `json:"name"`
-	FeatureFlags []string `json:"featureFlags"`
+	Name         string                `json:"name"`
+	FeatureFlags []string              `json:"featureFlags"`
+	Settings     *OrganizationSettings `json:"settings,omitempty"`
 }
 
 type OrganizationUpdate struct {
-	Name *string `json:"name,omitempty"`
+	Name     *string               `json:"name,omitempty"`
+	Settings *OrganizationSettings `json:"settings,omitempty"`
 }
 
 type OrganizationSecret struct {

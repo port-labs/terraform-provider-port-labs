@@ -1,19 +1,54 @@
 package integration
 
-import "github.com/hashicorp/terraform-plugin-framework/types"
+import (
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
+)
 
-type WebhookChangelogDestinationModel struct {
-	Url   types.String `tfsdk:"url"`
-	Agent types.Bool   `tfsdk:"agent"`
-}
+var (
+	kafkaChangelogDestinationType   = map[string]attr.Type{}
+	webhookChangelogDestinationType = map[string]attr.Type{
+		"url":   types.StringType,
+		"agent": types.BoolType,
+	}
+)
 
 type IntegrationModel struct {
-	ID                          types.String                      `tfsdk:"id"`
-	InstallationId              types.String                      `tfsdk:"installation_id"`
-	InstallationAppType         types.String                      `tfsdk:"installation_app_type"`
-	Title                       types.String                      `tfsdk:"title"`
-	Version                     types.String                      `tfsdk:"version"`
-	Config                      types.String                      `tfsdk:"config"`
-	KafkaChangelogDestination   types.Object                      `tfsdk:"kafka_changelog_destination"`
-	WebhookChangelogDestination *WebhookChangelogDestinationModel `tfsdk:"webhook_changelog_destination"`
+	ID                          types.String `tfsdk:"id"`
+	InstallationId              types.String `tfsdk:"installation_id"`
+	InstallationAppType         types.String `tfsdk:"installation_app_type"`
+	InstallationType            types.String `tfsdk:"installation_type"`
+	Title                       types.String `tfsdk:"title"`
+	Version                     types.String `tfsdk:"version"`
+	Config                      types.String `tfsdk:"config"`
+	Spec                        types.String `tfsdk:"spec"`
+	CreatePortResourcesOrigin   types.String `tfsdk:"create_port_resources_origin"`
+	Status                      types.String `tfsdk:"status"`
+	KafkaChangelogDestination   types.Object `tfsdk:"kafka_changelog_destination"`
+	WebhookChangelogDestination types.Object `tfsdk:"webhook_changelog_destination"`
+	NotificationChannels        types.Map    `tfsdk:"notification_channels"`
+}
+
+type NotificationChannelModel struct {
+	Enabled types.Bool `tfsdk:"enabled"`
+}
+
+func (m *IntegrationModel) installationType() string {
+	if m.InstallationType.IsNull() || m.InstallationType.ValueString() == "" {
+		return consts.InstallationTypeOnPrem
+	}
+	return m.InstallationType.ValueString()
+}
+
+func (m *IntegrationModel) isSaas() bool {
+	return consts.IsSaas(m.installationType())
+}
+
+func (m *IntegrationModel) isSaasOAuth2() bool {
+	return consts.IsSaasOAuth2(m.installationType())
+}
+
+func (m *IntegrationModel) isHosted() bool {
+	return consts.IsHosted(m.installationType())
 }

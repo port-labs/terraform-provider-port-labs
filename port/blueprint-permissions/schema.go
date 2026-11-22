@@ -38,7 +38,15 @@ func getAssigneeProps(permName string) map[string]schema.Attribute {
 			Default:             booldefault.StaticBool(false),
 		},
 	}
+}
 
+func getAssigneePropsWithPolicy(permName string) map[string]schema.Attribute {
+	attrs := getAssigneeProps(permName)
+	attrs["policy"] = schema.StringAttribute{
+		MarkdownDescription: fmt.Sprintf("Policy as a Port search query JSON string for %+v permissions. Supports contextual query rules. Pass with jsonencode(). Evaluated by Port, not Terraform.", permName),
+		Optional:            true,
+	}
+	return attrs
 }
 
 func BlueprintPermissionsSchema() map[string]schema.Attribute {
@@ -53,20 +61,25 @@ func BlueprintPermissionsSchema() map[string]schema.Attribute {
 			MarkdownDescription: "Entities permissions to read the blueprint",
 			Required:            true,
 			Attributes: map[string]schema.Attribute{
+				"read": schema.SingleNestedAttribute{
+					MarkdownDescription: "Manage permissions to read entities of the blueprint",
+					Optional:            true,
+					Attributes:          getAssigneePropsWithPolicy("read"),
+				},
 				"register": schema.SingleNestedAttribute{
 					MarkdownDescription: "Manage permissions to register entities of the blueprint",
 					Required:            true,
-					Attributes:          getAssigneeProps("register"),
+					Attributes:          getAssigneePropsWithPolicy("register"),
 				},
 				"unregister": schema.SingleNestedAttribute{
 					MarkdownDescription: "Manage permissions to unregister entities of the blueprint",
 					Required:            true,
-					Attributes:          getAssigneeProps("unregister"),
+					Attributes:          getAssigneePropsWithPolicy("unregister"),
 				},
 				"update": schema.SingleNestedAttribute{
 					MarkdownDescription: "Manage permissions to update entities of the blueprint",
 					Required:            true,
-					Attributes:          getAssigneeProps("update"),
+					Attributes:          getAssigneePropsWithPolicy("update"),
 				},
 				"update_metadata_properties": schema.SingleNestedAttribute{
 					Required: true,
@@ -251,6 +264,47 @@ resource "port_blueprint_permissions" "microservices_permissions" {
 				}
 			}
 		}
+}` + "\n```" + `
+
+### Configure a dynamic policy with a Port search query (including contextual rules):
+
+Policy is expected to be passed as a JSON string (use ` + "`" + `jsonencode` + "`" + `). Evaluation is done by Port, not Terraform.
+Docs about catalog RBAC policies: [Govern data access](https://docs.port.io/context-lake/consuming-the-lake/govern-data-access/overview/).
+
+` + "```hcl" + `
+resource "port_blueprint_permissions" "microservices_permissions" {
+	blueprint_identifier = "my_blueprint_identifier"
+	entities = {
+		"read" = {
+			"roles" = ["Admin", "Member"]
+			"users" = []
+			"teams" = []
+			"policy" = jsonencode({
+				combinator = "and"
+				rules = [{
+					property = {
+						property = "$identifier"
+						context  = "user"
+					}
+					operator = "="
+					value    = "true"
+				}]
+			})
+		}
+		"register" = {
+			"roles" = ["Admin"]
+			"policy" = jsonencode({
+				combinator = "and"
+				rules = [{
+					property = "$blueprint"
+					operator = "="
+					value    = "my_blueprint_identifier"
+				}]
+			})
+		}
+		# unregister / update can also set policy the same way
+		# ... remaining required permission blocks ...
+	}
 }` + "\n```" + `
 
 ## Disclaimer

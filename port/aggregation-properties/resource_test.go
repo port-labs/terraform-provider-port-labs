@@ -65,7 +65,7 @@ func TestAccPortAggregationPropertyWithCycleRelation(t *testing.T) {
 	}
 `
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -124,7 +124,7 @@ func TestAccCreateAggregationPropertyAverageEntities(t *testing.T) {
 	}
 `
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -201,7 +201,7 @@ func TestAccPortCreateAggregationAverageProperties(t *testing.T) {
 	}
 `
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -318,7 +318,7 @@ func TestAccPortCreateAggregationPropertyAggregateByProperty(t *testing.T) {
 	}
 `
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -410,7 +410,7 @@ func TestAccPortCreateBlueprintWithAggregationByPropertyWithFilter(t *testing.T)
 	}
 `
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -490,7 +490,7 @@ func TestAccMultipleAggregationPropertiesForBlueprintCreate(t *testing.T) {
 	}
 `
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -585,7 +585,7 @@ func TestAccPortCreateAggregationPropertyWithPathFilter(t *testing.T) {
 	}
 `, parentBlueprintIdentifier, intermediateBlueprintIdentifier, childBlueprintIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -674,7 +674,7 @@ func TestAccPortCreateAggregationPropertyWithPathFilterAndFromBlueprint(t *testi
 	}
 `, parentBlueprintIdentifier, intermediateBlueprintIdentifier, childBlueprintIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -877,7 +877,7 @@ func TestAccPortAddAndRemovePathFilterFromAggregationProperty(t *testing.T) {
 	}
 `, parentBlueprintIdentifier, intermediateBlueprintIdentifier, childBlueprintIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

@@ -1,12 +1,20 @@
 package scorecard_test
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
+	"os"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
+	"github.com/port-labs/terraform-provider-port-labs/v2/version"
 )
 
 func testAccCreateBlueprintConfig(identifier string) string {
@@ -64,7 +72,7 @@ func TestAccPortScorecardBasic(t *testing.T) {
 		port_blueprint.microservice
 		]
 	  }`, scorecardIdentifier, blueprintIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -195,7 +203,7 @@ func TestAccPortScorecard(t *testing.T) {
 		  port_blueprint.microservice
 		]
 	  }`, scorecardIdentifier, blueprintIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -226,6 +234,7 @@ func TestAccPortScorecard(t *testing.T) {
 			},
 		},
 	})
+	// ParallelTest calls t.Parallel(); it cannot run twice in one test function.
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
@@ -334,7 +343,7 @@ func TestAccPortScorecardUpdate(t *testing.T) {
 		]
 	 }`, scorecardIdentifier, blueprintIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -406,7 +415,7 @@ func TestAccPortScorecardImport(t *testing.T) {
 		]
 	  }`, scorecardIdentifier, blueprintIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -485,7 +494,7 @@ func TestAccPortScorecardUpdateIdentifier(t *testing.T) {
 		]
 	 }`, scorecardIdentifierUpdated, blueprintIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -628,7 +637,7 @@ func TestAccPortScorecardRuleOrderPreservation(t *testing.T) {
 		]
 	}`, scorecardIdentifier, blueprintIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -670,4 +679,335 @@ func TestAccPortScorecardRuleOrderPreservation(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestAccPortScorecardRuleOrderInsensitivePlan(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	scorecardIdentifier := utils.GenID()
+
+	ruleTitles := map[string]string{
+		"zebra": "Zebra Rule",
+		"alpha": "Alpha Rule",
+		"beta":  "Beta Rule",
+	}
+	ruleLevels := map[string]string{
+		"zebra": "Gold",
+		"alpha": "Silver",
+		"beta":  "Bronze",
+	}
+	ruleProperties := map[string]string{
+		"zebra": "$team",
+		"alpha": "author",
+		"beta":  "url",
+	}
+
+	scorecardConfig := func(ruleOrder []string, titles map[string]string) string {
+		rulesHCL := ""
+		for _, id := range ruleOrder {
+			title := ruleTitles[id]
+			if titles != nil {
+				if override, ok := titles[id]; ok {
+					title = override
+				}
+			}
+			rulesHCL += fmt.Sprintf(`{
+				identifier = "%s"
+				title      = "%s"
+				level      = "%s"
+				query = {
+					combinator = "and"
+					conditions = [jsonencode({
+						property = "%s"
+						operator = "isNotEmpty"
+					})]
+				}
+			},
+			`, id, title, ruleLevels[id], ruleProperties[id])
+		}
+
+		return testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_scorecard" "test" {
+		identifier = "%s"
+		title      = "Rule Order Insensitive Plan"
+		blueprint  = "%s"
+		rules = [
+			%s
+		]
+		depends_on = [
+			port_blueprint.microservice
+		]
+	}`, scorecardIdentifier, blueprintIdentifier, rulesHCL)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + scorecardConfig([]string{"zebra", "alpha", "beta"}, nil),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.0.identifier", "zebra"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.2.identifier", "beta"),
+				),
+			},
+			{
+				// Same rules, different order only — must not produce a plan diff.
+				Config:   acctest.ProviderConfig + scorecardConfig([]string{"beta", "zebra", "alpha"}, nil),
+				PlanOnly: true,
+			},
+			{
+				// Real content change must still be detected even when order also differs.
+				Config: acctest.ProviderConfig + scorecardConfig(
+					[]string{"beta", "zebra", "alpha"},
+					map[string]string{"zebra": "Zebra Rule Renamed"},
+				),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.identifier", "zebra"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.1.title", "Zebra Rule Renamed"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortScorecardPropertiesAndRelations(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	scorecardIdentifier := utils.GenID()
+	teamName := "tf-sc-" + strings.ReplaceAll(utils.GenID(), "-", "")
+	scorecardPropKey := "tf_scorecard_" + strings.ReplaceAll(utils.GenID(), "-", "")
+	scorecardRelationKey := "tf_scorecard_rel_" + strings.ReplaceAll(utils.GenID(), "-", "")
+
+	config := testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_team" "platform" {
+		name = "%s"
+	}
+
+	resource "port_scorecard" "test" {
+		identifier = "%s"
+		title      = "Scorecard Properties Relations"
+		blueprint  = port_blueprint.microservice.identifier
+		properties = jsonencode({
+			%s = "platform-team"
+		})
+		relations = jsonencode({
+			%s = port_team.platform.identifier
+		})
+		rules = [{
+			identifier = "hasTeam"
+			title      = "Has Team"
+			level      = "Gold"
+			query = {
+				combinator = "and"
+				conditions = [jsonencode({
+					property = "$team"
+					operator = "isNotEmpty"
+				})]
+			}
+		}]
+		depends_on = [
+			port_blueprint.microservice,
+			port_team.platform,
+		]
+	}`, teamName, scorecardIdentifier, scorecardPropKey, scorecardRelationKey)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.TestAccPreCheck(t)
+			testAccExtendScorecardBlueprint(t, scorecardPropKey, scorecardRelationKey)
+		},
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + config,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "identifier", scorecardIdentifier),
+					resource.TestCheckResourceAttr("port_scorecard.test", "title", "Scorecard Properties Relations"),
+					resource.TestMatchResourceAttr("port_scorecard.test", "properties", regexp.MustCompile(regexp.QuoteMeta(scorecardPropKey))),
+					resource.TestMatchResourceAttr("port_scorecard.test", "properties", regexp.MustCompile(`"platform-team"`)),
+					resource.TestMatchResourceAttr("port_scorecard.test", "relations", regexp.MustCompile(regexp.QuoteMeta(scorecardRelationKey))),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortScorecardRulePropertiesAndRelations(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	scorecardIdentifier := utils.GenID()
+	teamName := "tf-sc-rule-" + strings.ReplaceAll(utils.GenID(), "-", "")
+	rulePropKey := "tf_rule_" + strings.ReplaceAll(utils.GenID(), "-", "")
+	ruleRelationKey := "tf_rule_rel_" + strings.ReplaceAll(utils.GenID(), "-", "")
+
+	config := testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_team" "platform" {
+		name = "%s"
+	}
+
+	resource "port_scorecard" "test" {
+		identifier = "%s"
+		title      = "Scorecard Rule Properties Relations"
+		blueprint  = port_blueprint.microservice.identifier
+		rules = [{
+			identifier = "hasTeam"
+			title      = "Has Team"
+			level      = "Gold"
+			properties = jsonencode({
+				%s = "high"
+			})
+			relations = jsonencode({
+				%s = port_team.platform.identifier
+			})
+			query = {
+				combinator = "and"
+				conditions = [jsonencode({
+					property = "$team"
+					operator = "isNotEmpty"
+				})]
+			}
+		}]
+		depends_on = [
+			port_blueprint.microservice,
+			port_team.platform,
+		]
+	}`, teamName, scorecardIdentifier, rulePropKey, ruleRelationKey)
+
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acctest.TestAccPreCheck(t)
+			testAccExtendRuleBlueprint(t, rulePropKey, ruleRelationKey)
+		},
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + config,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_scorecard.test", "identifier", scorecardIdentifier),
+					resource.TestCheckResourceAttr("port_scorecard.test", "title", "Scorecard Rule Properties Relations"),
+					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
+					resource.TestMatchResourceAttr("port_scorecard.test", "rules.0.properties", regexp.MustCompile(regexp.QuoteMeta(rulePropKey))),
+					resource.TestMatchResourceAttr("port_scorecard.test", "rules.0.properties", regexp.MustCompile(`"high"`)),
+					resource.TestMatchResourceAttr("port_scorecard.test", "rules.0.relations", regexp.MustCompile(regexp.QuoteMeta(ruleRelationKey))),
+				),
+			},
+		},
+	})
+}
+
+func testAccExtendScorecardBlueprint(t *testing.T, propKey, relationKey string) {
+	t.Helper()
+	testAccExtendSystemBlueprint(t, "_scorecard", propKey, relationKey)
+}
+
+func testAccExtendRuleBlueprint(t *testing.T, propKey, relationKey string) {
+	t.Helper()
+	testAccExtendSystemBlueprint(t, "_rule", propKey, relationKey)
+}
+
+func testAccExtendSystemBlueprint(t *testing.T, blueprintID, propKey, relationKey string) {
+	t.Helper()
+
+	client, ctx := testAccPortClient(t)
+	teamTarget := "_team"
+	title := "TF Acc Test"
+	many := false
+	required := false
+
+	if _, err := client.PatchBlueprintRelation(ctx, blueprintID, relationKey, &cli.Relation{
+		Title:    &title,
+		Target:   &teamTarget,
+		Many:     &many,
+		Required: &required,
+	}); err != nil {
+		t.Fatalf("failed to add relation %q on %s: %v", relationKey, blueprintID, err)
+	}
+
+	if err := testAccPatchBlueprintProperty(ctx, client, blueprintID, propKey, title); err != nil {
+		t.Fatalf("failed to add property %q on %s: %v", propKey, blueprintID, err)
+	}
+
+	t.Cleanup(func() {
+		_ = testAccPatchBlueprintProperty(ctx, client, blueprintID, propKey, "")
+		_ = testAccPatchBlueprintRelationDelete(ctx, client, blueprintID, relationKey)
+	})
+}
+
+func testAccPatchBlueprintRelationDelete(ctx context.Context, client *cli.PortClient, blueprintID, relationKey string) error {
+	body := map[string]any{
+		"relations": map[string]any{
+			relationKey: nil,
+		},
+	}
+	resp, err := client.Client.R().
+		SetContext(ctx).
+		SetBody(body).
+		SetPathParam("identifier", blueprintID).
+		Patch("v1/blueprints/{identifier}")
+	if err != nil {
+		return err
+	}
+	var pb cli.PortBody
+	if err := json.Unmarshal(resp.Body(), &pb); err != nil {
+		return err
+	}
+	if !pb.OK {
+		return fmt.Errorf("failed to delete relation %q on blueprint %q, got: %s", relationKey, blueprintID, resp.Body())
+	}
+	return nil
+}
+
+func testAccPatchBlueprintProperty(ctx context.Context, client *cli.PortClient, blueprintID, propKey, title string) error {
+	var property any
+	if title == "" {
+		property = nil
+	} else {
+		property = map[string]any{
+			"type":  "string",
+			"title": title,
+		}
+	}
+
+	body := map[string]any{
+		"schema": map[string]any{
+			"properties": map[string]any{
+				propKey: property,
+			},
+		},
+	}
+
+	resp, err := client.Client.R().
+		SetContext(ctx).
+		SetBody(body).
+		SetPathParam("identifier", blueprintID).
+		Patch("v1/blueprints/{identifier}")
+	if err != nil {
+		return err
+	}
+
+	var pb cli.PortBody
+	if err := json.Unmarshal(resp.Body(), &pb); err != nil {
+		return err
+	}
+	if !pb.OK {
+		return fmt.Errorf("failed to patch property %q on blueprint %q, got: %s", propKey, blueprintID, resp.Body())
+	}
+	return nil
+}
+
+func testAccPortClient(t *testing.T) (*cli.PortClient, context.Context) {
+	t.Helper()
+
+	baseURL := os.Getenv("PORT_BASE_URL")
+	if baseURL == "" {
+		baseURL = consts.DefaultBaseUrl
+	}
+	client, err := cli.New(baseURL, cli.WithHeader("User-Agent", version.ProviderVersion))
+	if err != nil {
+		t.Fatalf("failed to create Port client: %v", err)
+	}
+	ctx := context.Background()
+	if _, err := client.Authenticate(ctx, os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET")); err != nil {
+		t.Fatalf("failed to authenticate with Port: %v", err)
+	}
+	return client, ctx
 }

@@ -18,7 +18,11 @@ import (
 
 func (r *ActionResource) writeInvocationMethodToResource(ctx context.Context, a *cli.Action, state *ActionModel) error {
 	if a.InvocationMethod.Type == consts.Kafka {
-		payload, err := utils.GoObjectToTerraformString(a.InvocationMethod.Payload, r.portClient.JSONEscapeHTML)
+		var oldPayload types.String
+		if state.KafkaMethod != nil {
+			oldPayload = state.KafkaMethod.Payload
+		}
+		payload, err := utils.GoObjectToTerraformStringPreferExisting(oldPayload, a.InvocationMethod.Payload, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -29,16 +33,22 @@ func (r *ActionResource) writeInvocationMethodToResource(ctx context.Context, a 
 	}
 
 	if a.InvocationMethod.Type == consts.Webhook {
-		agent, err := utils.GoObjectToTerraformString(a.InvocationMethod.Agent, r.portClient.JSONEscapeHTML)
+		var oldAgent, oldSynchronized, oldBody types.String
+		if state.WebhookMethod != nil {
+			oldAgent = state.WebhookMethod.Agent
+			oldSynchronized = state.WebhookMethod.Synchronized
+			oldBody = state.WebhookMethod.Body
+		}
+		agent, err := utils.GoObjectToTerraformStringPreferExisting(oldAgent, a.InvocationMethod.Agent, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
-		synchronized, err := utils.GoObjectToTerraformString(a.InvocationMethod.Synchronized, r.portClient.JSONEscapeHTML)
+		synchronized, err := utils.GoObjectToTerraformStringPreferExisting(oldSynchronized, a.InvocationMethod.Synchronized, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
 		headers, _ := types.MapValueFrom(ctx, types.StringType, a.InvocationMethod.Headers)
-		body, err := utils.GoObjectToTerraformString(a.InvocationMethod.Body, r.portClient.JSONEscapeHTML)
+		body, err := utils.GoObjectToTerraformStringPreferExisting(oldBody, a.InvocationMethod.Body, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -54,11 +64,16 @@ func (r *ActionResource) writeInvocationMethodToResource(ctx context.Context, a 
 	}
 
 	if a.InvocationMethod.Type == consts.Github {
-		workflowInputs, err := utils.GoObjectToTerraformString(a.InvocationMethod.WorkflowInputs, r.portClient.JSONEscapeHTML)
+		var oldWorkflowInputs, oldReportWorkflowStatus types.String
+		if state.GithubMethod != nil {
+			oldWorkflowInputs = state.GithubMethod.WorkflowInputs
+			oldReportWorkflowStatus = state.GithubMethod.ReportWorkflowStatus
+		}
+		workflowInputs, err := utils.GoObjectToTerraformStringPreferExisting(oldWorkflowInputs, a.InvocationMethod.WorkflowInputs, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
-		reportWorkflowStatus, err := utils.GoObjectToTerraformString(a.InvocationMethod.ReportWorkflowStatus, r.portClient.JSONEscapeHTML)
+		reportWorkflowStatus, err := utils.GoObjectToTerraformStringPreferExisting(oldReportWorkflowStatus, a.InvocationMethod.ReportWorkflowStatus, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -73,7 +88,11 @@ func (r *ActionResource) writeInvocationMethodToResource(ctx context.Context, a 
 	}
 
 	if a.InvocationMethod.Type == consts.Gitlab {
-		pipelineVariables, err := utils.GoObjectToTerraformString(a.InvocationMethod.PipelineVariables, r.portClient.JSONEscapeHTML)
+		var oldPipelineVariables types.String
+		if state.GitlabMethod != nil {
+			oldPipelineVariables = state.GitlabMethod.PipelineVariables
+		}
+		pipelineVariables, err := utils.GoObjectToTerraformStringPreferExisting(oldPipelineVariables, a.InvocationMethod.PipelineVariables, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -87,7 +106,11 @@ func (r *ActionResource) writeInvocationMethodToResource(ctx context.Context, a 
 	}
 
 	if a.InvocationMethod.Type == consts.AzureDevops {
-		payload, err := utils.GoObjectToTerraformString(a.InvocationMethod.Payload, r.portClient.JSONEscapeHTML)
+		var oldPayload types.String
+		if state.AzureMethod != nil {
+			oldPayload = state.AzureMethod.Payload
+		}
+		payload, err := utils.GoObjectToTerraformStringPreferExisting(oldPayload, a.InvocationMethod.Payload, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -112,11 +135,16 @@ func (r *ActionResource) writeInvocationMethodToResource(ctx context.Context, a 
 			}
 			teamsJQ = types.StringNull()
 		}
-		properties, err := utils.GoObjectToTerraformString(a.InvocationMethod.Mapping.Properties, r.portClient.JSONEscapeHTML)
+		var oldProperties, oldRelations types.String
+		if state.UpsertEntityMethod != nil && state.UpsertEntityMethod.Mapping != nil {
+			oldProperties = state.UpsertEntityMethod.Mapping.Properties
+			oldRelations = state.UpsertEntityMethod.Mapping.Relations
+		}
+		properties, err := utils.GoObjectToTerraformStringPreferExisting(oldProperties, a.InvocationMethod.Mapping.Properties, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
-		relations, err := utils.GoObjectToTerraformString(a.InvocationMethod.Mapping.Relations, r.portClient.JSONEscapeHTML)
+		relations, err := utils.GoObjectToTerraformStringPreferExisting(oldRelations, a.InvocationMethod.Mapping.Relations, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -136,11 +164,16 @@ func (r *ActionResource) writeInvocationMethodToResource(ctx context.Context, a 
 	}
 
 	if a.InvocationMethod.Type == consts.IntegrationAction {
-		workflowInputs, err := utils.GoObjectToTerraformString(a.InvocationMethod.IntegrationActionExecutionProperties.WorkflowInputs, r.portClient.JSONEscapeHTML)
+		var oldWorkflowInputs, oldReportWorkflowStatus types.String
+		if state.IntegrationMethod != nil && state.IntegrationMethod.IntegrationActionExecutionProperties != nil {
+			oldWorkflowInputs = state.IntegrationMethod.IntegrationActionExecutionProperties.WorkflowInputs
+			oldReportWorkflowStatus = state.IntegrationMethod.IntegrationActionExecutionProperties.ReportWorkflowStatus
+		}
+		workflowInputs, err := utils.GoObjectToTerraformStringPreferExisting(oldWorkflowInputs, a.InvocationMethod.IntegrationActionExecutionProperties.WorkflowInputs, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
-		reportWorkflowStatus, err := utils.GoObjectToTerraformString(a.InvocationMethod.IntegrationActionExecutionProperties.ReportWorkflowStatus, r.portClient.JSONEscapeHTML)
+		reportWorkflowStatus, err := utils.GoObjectToTerraformStringPreferExisting(oldReportWorkflowStatus, a.InvocationMethod.IntegrationActionExecutionProperties.ReportWorkflowStatus, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -306,7 +339,13 @@ func (r *ActionResource) buildUserProperties(ctx context.Context, a *cli.Action,
 					properties.ArrayProps = make(map[string]ArrayPropModel)
 				}
 
-				arrayProp, err := r.addArrayPropertiesToResource(&v)
+				var oldArrayProp *ArrayPropModel
+				if state.SelfServiceTrigger != nil && state.SelfServiceTrigger.UserProperties != nil && state.SelfServiceTrigger.UserProperties.ArrayProps != nil {
+					if old, ok := state.SelfServiceTrigger.UserProperties.ArrayProps[k]; ok {
+						oldArrayProp = &old
+					}
+				}
+				arrayProp, err := r.addArrayPropertiesToResource(&v, oldArrayProp)
 				if err != nil {
 					return nil, err
 				}
@@ -351,7 +390,18 @@ func (r *ActionResource) buildUserProperties(ctx context.Context, a *cli.Action,
 					objectProp.Required = types.BoolValue(true)
 				}
 
+				var oldObjectDefault types.String
+				if state.SelfServiceTrigger != nil && state.SelfServiceTrigger.UserProperties != nil && state.SelfServiceTrigger.UserProperties.ObjectProps != nil {
+					if oldProp, ok := state.SelfServiceTrigger.UserProperties.ObjectProps[k]; ok {
+						oldObjectDefault = oldProp.Default
+					}
+				}
+
 				err := r.setCommonProperties(ctx, v, objectProp)
+				if err != nil {
+					return nil, err
+				}
+				err = r.setObjectDefault(objectProp, v.Default, oldObjectDefault)
 				if err != nil {
 					return nil, err
 				}
@@ -457,7 +507,11 @@ func (r *ActionResource) writeTriggerToResource(ctx context.Context, a *cli.Acti
 		}
 
 		if a.Trigger.Condition != nil {
-			triggerCondition, err := utils.GoObjectToTerraformString(a.Trigger.Condition, r.portClient.JSONEscapeHTML)
+			var oldCondition types.String
+			if state.SelfServiceTrigger != nil {
+				oldCondition = state.SelfServiceTrigger.Condition
+			}
+			triggerCondition, err := utils.GoObjectToTerraformStringPreferExisting(oldCondition, a.Trigger.Condition, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return err
 			}
@@ -590,6 +644,27 @@ func (r *ActionResource) refreshActionState(ctx context.Context, state *ActionMo
 	return nil
 }
 
+func (r *ActionResource) setObjectDefault(objectProp *ObjectPropModel, defaultValue interface{}, oldObjectDefault types.String) error {
+	v, ok := defaultValue.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	if v["jqQuery"] != nil {
+		objectProp.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
+		return nil
+	}
+	encoded, err := utils.GoObjectToTerraformStringPreferExisting(oldObjectDefault, v, r.portClient.JSONEscapeHTML)
+	if err != nil {
+		return fmt.Errorf("error converting default value to terraform string: %s", err.Error())
+	}
+	if encoded.IsNull() {
+		objectProp.Default = types.StringNull()
+		objectProp.DefaultJqQuery = types.StringNull()
+	}
+	objectProp.Default = encoded
+	return nil
+}
+
 func (r *ActionResource) setCommonProperties(ctx context.Context, v cli.ActionProperty, prop interface{}) error {
 	properties := []string{"Description", "Icon", "Default", "Title", "DependsOn", "Dataset", "Visible", "Disabled"}
 	for _, property := range properties {
@@ -670,22 +745,6 @@ func (r *ActionResource) setCommonProperties(ctx context.Context, v cli.ActionPr
 						p.Default = types.BoolValue(v)
 					case map[string]interface{}:
 						p.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
-					}
-				}
-			case *ObjectPropModel:
-				if v, ok := v.Default.(map[string]interface{}); ok {
-					if v["jqQuery"] != nil {
-						p.DefaultJqQuery = types.StringValue(v["jqQuery"].(string))
-					} else {
-						defaultValue, err := utils.GoObjectToTerraformString(v, r.portClient.JSONEscapeHTML)
-						if err != nil {
-							return fmt.Errorf("error converting default value to terraform string: %s", err.Error())
-						}
-						if defaultValue.IsNull() {
-							p.Default = types.StringNull()
-							p.DefaultJqQuery = types.StringNull()
-						}
-						p.Default = defaultValue
 					}
 				}
 			}

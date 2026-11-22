@@ -14,6 +14,21 @@ func blueprintPermissionsTFBlockToBlueprintPermissionsBlock(block BlueprintPermi
 	}
 }
 
+func blueprintEntityScopePermissionsTFBlockToBlueprintPermissionsBlock(block BlueprintPermissionsTFBlockWithPolicy) (cli.BlueprintPermissionsBlock, error) {
+	policy, err := utils.TerraformJsonStringToGoObject(block.Policy.ValueStringPointer())
+	if err != nil {
+		return cli.BlueprintPermissionsBlock{}, err
+	}
+
+	return cli.BlueprintPermissionsBlock{
+		Users:       utils.TFStringListToStringArray(block.Users),
+		Roles:       utils.TFStringListToStringArray(block.Roles),
+		Teams:       utils.TFStringListToStringArray(block.Teams),
+		OwnedByTeam: block.OwnedByTeam.ValueBoolPointer(),
+		Policy:      policy,
+	}, nil
+}
+
 func blueprintPermissionsToPortBody(state *BlueprintPermissionsModel) (*cli.BlueprintPermissions, error) {
 	if state == nil {
 		return nil, nil
@@ -51,18 +66,39 @@ func blueprintPermissionsToPortBody(state *BlueprintPermissionsModel) (*cli.Blue
 		}
 	}
 
+	var readBlock *cli.BlueprintPermissionsBlock
+	if state.Entities.Read != nil {
+		block, err := blueprintEntityScopePermissionsTFBlockToBlueprintPermissionsBlock(*state.Entities.Read)
+		if err != nil {
+			return nil, err
+		}
+		readBlock = &block
+	}
+
 	var registerBlock = cli.BlueprintPermissionsBlock{}
 	if state.Entities.Register != nil {
-		registerBlock = blueprintPermissionsTFBlockToBlueprintPermissionsBlock(*state.Entities.Register)
+		block, err := blueprintEntityScopePermissionsTFBlockToBlueprintPermissionsBlock(*state.Entities.Register)
+		if err != nil {
+			return nil, err
+		}
+		registerBlock = block
 	}
 
 	var unregisterBlock = cli.BlueprintPermissionsBlock{}
 	if state.Entities.Unregister != nil {
-		unregisterBlock = blueprintPermissionsTFBlockToBlueprintPermissionsBlock(*state.Entities.Unregister)
+		block, err := blueprintEntityScopePermissionsTFBlockToBlueprintPermissionsBlock(*state.Entities.Unregister)
+		if err != nil {
+			return nil, err
+		}
+		unregisterBlock = block
 	}
 	var updateBlock = cli.BlueprintPermissionsBlock{}
 	if state.Entities.Update != nil {
-		updateBlock = blueprintPermissionsTFBlockToBlueprintPermissionsBlock(*state.Entities.Update)
+		block, err := blueprintEntityScopePermissionsTFBlockToBlueprintPermissionsBlock(*state.Entities.Update)
+		if err != nil {
+			return nil, err
+		}
+		updateBlock = block
 	}
 	var finalUpdateProperties cli.BlueprintRolesOrPropertiesPermissionsBlock = nil
 	if updateMetadataProperties != nil {
@@ -77,6 +113,7 @@ func blueprintPermissionsToPortBody(state *BlueprintPermissionsModel) (*cli.Blue
 	}
 	blueprintPermissions := cli.BlueprintPermissions{
 		Entities: cli.BlueprintPermissionsEntities{
+			Read:             readBlock,
 			Register:         registerBlock,
 			Unregister:       unregisterBlock,
 			Update:           updateBlock,

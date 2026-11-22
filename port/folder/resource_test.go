@@ -2,8 +2,6 @@ package folder_test
 
 import (
 	"fmt"
-	"os"
-	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -11,12 +9,8 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func TestAccPortFolderResourceBasicBetaEnabled(t *testing.T) {
+func TestAccPortFolderResourceBasic(t *testing.T) {
 	folderIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortFolderResourceBasic = fmt.Sprintf(`
     resource "port_folder" "example_folder" {
 		identifier  = "%s"
@@ -38,38 +32,9 @@ func TestAccPortFolderResourceBasicBetaEnabled(t *testing.T) {
 	})
 }
 
-func TestAccPortFolderResourceBasicBetaDisabled(t *testing.T) {
-	folderIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "false")
-	if err != nil {
-		t.Fatal(err)
-	}
-	var testAccPortFolderResourceBasic = fmt.Sprintf(`
-    resource "port_folder" "example_folder" {
-        identifier  = "%s"
-        title              = "Example Folder"
-    }
-    `, folderIdentifier)
-
-	resource.Test(t, resource.TestCase{
-		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
-		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config:      acctest.ProviderConfig + testAccPortFolderResourceBasic,
-				ExpectError: regexp.MustCompile("Beta features are not enabled"),
-			},
-		},
-	})
-}
-
 func TestAccPortFolderResourceCreateFolderWithParent(t *testing.T) {
 	parentFolderIdentifier := utils.GenID()
 	childFolderIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortFolderResourceParent = fmt.Sprintf(`
     resource "port_folder" "parent_folder" {
         identifier  = "%s"
@@ -106,10 +71,6 @@ func TestAccPortFolderResourceCreateFolderWithParent(t *testing.T) {
 func TestAccPortFolderResourceUpdateFolder(t *testing.T) {
 	folderIdentifier := utils.GenID()
 	updatedTitle := "Updated Folder Title"
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortFolderResource = fmt.Sprintf(`
     resource "port_folder" "example_folder" {
         identifier  = "%s"
@@ -148,10 +109,6 @@ func TestAccPortFolderResourceUpdateFolder(t *testing.T) {
 
 func TestAccPortFolderResourceAfterNoDrift(t *testing.T) {
 	folderIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortFolderResource = fmt.Sprintf(`
     resource "port_folder" "example_folder" {
         identifier  = "%s"
@@ -181,10 +138,6 @@ func TestAccPortFolderResourceAfterNoDrift(t *testing.T) {
 func TestAccPortFolderResourceAfterExplicitValue(t *testing.T) {
 	folderAIdentifier := utils.GenID()
 	folderBIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortFolderResourceInitial = fmt.Sprintf(`
     resource "port_folder" "folder_a" {
         identifier  = "%s"
@@ -233,10 +186,6 @@ func TestAccPortFolderResourceAfterExplicitValue(t *testing.T) {
 
 func TestAccPortFolderResourceImport(t *testing.T) {
 	folderIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortFolderResource = fmt.Sprintf(`
     resource "port_folder" "example_folder" {
         identifier  = "%s"

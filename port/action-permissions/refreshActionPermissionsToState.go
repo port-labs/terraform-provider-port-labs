@@ -30,7 +30,11 @@ func (r *ActionPermissionsResource) refreshActionPermissionsState(state *ActionP
 	state.Permissions.Execute.OwnedByTeam = flex.GoBoolToFramework(a.Execute.OwnedByTeam)
 
 	if a.Execute.Policy != nil {
-		policy, err := utils.GoObjectToTerraformString(a.Execute.Policy, r.portClient.JSONEscapeHTML)
+		var oldPolicy types.String
+		if oldPermissions != nil && oldPermissions.Execute != nil {
+			oldPolicy = oldPermissions.Execute.Policy
+		}
+		policy, err := utils.GoObjectToTerraformStringPreferExisting(oldPolicy, a.Execute.Policy, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}
@@ -51,7 +55,11 @@ func (r *ActionPermissionsResource) refreshActionPermissionsState(state *ActionP
 	}
 
 	if a.Approve.Policy != nil {
-		policy, err := utils.GoObjectToTerraformString(a.Approve.Policy, r.portClient.JSONEscapeHTML)
+		var oldPolicy types.String
+		if oldPermissions != nil && oldPermissions.Approve != nil {
+			oldPolicy = oldPermissions.Approve.Policy
+		}
+		policy, err := utils.GoObjectToTerraformStringPreferExisting(oldPolicy, a.Approve.Policy, r.portClient.JSONEscapeHTML)
 		if err != nil {
 			return err
 		}

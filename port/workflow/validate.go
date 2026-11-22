@@ -1,0 +1,673 @@
+package workflow
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
+)
+
+var _ resource.ResourceWithValidateConfig = &WorkflowResource{}
+
+// Node config attributes cannot be marked Required in the schema: Terraform
+// enforces required attributes of a SingleNestedBlock even when the block itself
+// is absent, which would make every node config block mandatory.
+func (r *WorkflowResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var nodeList types.List
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("node"), &nodeList)...)
+	if resp.Diagnostics.HasError() || nodeList.IsNull() || nodeList.IsUnknown() {
+		return
+	}
+
+	elements := nodeList.Elements()
+	nodeTypes := make(map[string]string, len(elements))
+	outlets := make(map[string]map[string]bool, len(elements))
+	declaredTypes := make([]string, 0, len(elements))
+	typesKnown := true
+	identifiersKnown := true
+
+	for i, element := range elements {
+		nodePath := path.Root("node").AtListIndex(i)
+
+		object, isObject := element.(types.Object)
+		if !isObject || object.IsNull() || object.IsUnknown() {
+			typesKnown = false
+			identifiersKnown = false
+			continue
+		}
+
+		// An unknown block may still resolve to null, so exclusivity is only
+		// decided once every block is known.
+		blocks, anyUnknown := declaredNodeTypeBlocks(object)
+		if !anyUnknown && len(blocks) != 1 {
+			resp.Diagnostics.AddAttributeError(nodePath, "Invalid node type combination", "Exactly one node config block must be set.")
+			typesKnown = false
+		}
+
+		var node WorkflowNodeModel
+		decodeDiags := object.As(ctx, &node, basetypes.ObjectAsOptions{UnhandledUnknownAsEmpty: true})
+		resp.Diagnostics.Append(decodeDiags...)
+		if decodeDiags.HasError() {
+			return
+		}
+		hasUnknownValues := containsUnknown(object)
+
+		nodeType := validateNode(resp, nodePath, node, hasUnknownValues)
+		if nodeType == "" && hasUnknownValues {
+			nodeType = nodeTypeFromConfigObject(object)
+			typesKnown = typesKnown && nodeType != ""
+		}
+		declaredTypes = append(declaredTypes, nodeType)
+
+		if node.Identifier.IsUnknown() {
+			identifiersKnown = false
+			continue
+		}
+
+		identifier := node.Identifier.ValueString()
+		if _, duplicate := nodeTypes[identifier]; duplicate {
+			resp.Diagnostics.AddAttributeError(
+				nodePath.AtName("identifier"),
+				"Duplicate node identifier",
+				fmt.Sprintf("Node identifier %q is used more than once. Each node must have a unique identifier.", identifier),
+			)
+		}
+
+		nodeTypes[identifier] = nodeType
+		outlets[identifier] = nodeOutlets(node)
+	}
+
+	if typesKnown {
+		validateTriggerPresence(resp, declaredTypes)
+	}
+
+	var connectionList types.List
+	connectionDiags := req.Config.GetAttribute(ctx, path.Root("connections"), &connectionList)
+	resp.Diagnostics.Append(connectionDiags...)
+	if connectionDiags.HasError() || connectionList.IsNull() || connectionList.IsUnknown() {
+		return
+	}
+
+	var connections []ConnectionModel
+	connectionDiags = connectionList.ElementsAs(ctx, &connections, true)
+	resp.Diagnostics.Append(connectionDiags...)
+	if connectionDiags.HasError() {
+		return
+	}
+
+	validateConnections(resp, connections, nodeTypes, outlets, identifiersKnown)
+}
+
+func containsUnknown(value attr.Value) bool {
+	if value == nil {
+		return false
+	}
+	if value.IsUnknown() {
+		return true
+	}
+
+	switch typed := value.(type) {
+	case interface{ Attributes() map[string]attr.Value }:
+		for _, attribute := range typed.Attributes() {
+			if containsUnknown(attribute) {
+				return true
+			}
+		}
+	case interface{ Elements() []attr.Value }:
+		for _, element := range typed.Elements() {
+			if containsUnknown(element) {
+				return true
+			}
+		}
+	case interface{ Elements() map[string]attr.Value }:
+		for _, element := range typed.Elements() {
+			if containsUnknown(element) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+var nodeTypeByBlock = map[string]string{
+	"self_serve_trigger": consts.SelfServeTrigger,
+	"event_trigger":      consts.EventTrigger,
+	"schedule_trigger":   consts.ScheduleTrigger,
+	"workflow_trigger":   consts.WorkflowTrigger,
+	"kafka":              consts.Kafka,
+	"webhook":            consts.Webhook,
+	"integration_action": consts.IntegrationAction,
+	"upsert_entity":      consts.UpsertEntity,
+	"ai":                 consts.AI,
+	"ai_agent":           consts.AIAgent,
+	"execute_workflow":   consts.ExecuteWorkflow,
+	"condition":          consts.ConditionNode,
+	"input":              consts.InputNode,
+}
+
+// declaredNodeTypeBlocks lists the node config blocks that are not null,
+// counting unknown blocks as declared.
+func declaredNodeTypeBlocks(object types.Object) (blocks []string, anyUnknown bool) {
+	attributes := object.Attributes()
+	for _, name := range nodeTypeBlockNames {
+		block, declared := attributes[name]
+		if !declared || block.IsNull() {
+			continue
+		}
+		blocks = append(blocks, name)
+		anyUnknown = anyUnknown || block.IsUnknown()
+	}
+	return blocks, anyUnknown
+}
+
+func nodeTypeFromConfigObject(object types.Object) string {
+	blocks, _ := declaredNodeTypeBlocks(object)
+	if len(blocks) == 0 {
+		return ""
+	}
+	return nodeTypeByBlock[blocks[0]]
+}
+
+var triggerTypes = map[string]bool{
+	consts.SelfServeTrigger: true,
+	consts.EventTrigger:     true,
+	consts.ScheduleTrigger:  true,
+	consts.WorkflowTrigger:  true,
+}
+
+func validateTriggerPresence(resp *resource.ValidateConfigResponse, nodeTypes []string) {
+	for _, nodeType := range nodeTypes {
+		if triggerTypes[nodeType] {
+			return
+		}
+	}
+
+	resp.Diagnostics.AddAttributeError(
+		path.Root("node"),
+		"Missing trigger node",
+		"A workflow must define at least one trigger node: `self_serve_trigger`, `event_trigger`, `schedule_trigger` or `workflow_trigger`.",
+	)
+}
+
+func nodeOutlets(node WorkflowNodeModel) map[string]bool {
+	identifiers := map[string]bool{}
+	if node.Condition != nil {
+		for _, outlet := range node.Condition.Outlets {
+			identifiers[outlet.Identifier.ValueString()] = true
+		}
+	}
+	if node.Input != nil {
+		for _, outlet := range node.Input.Outlets {
+			identifiers[outlet.Identifier.ValueString()] = true
+		}
+	}
+	return identifiers
+}
+
+func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, node WorkflowNodeModel, hasUnknownValues bool) string {
+	switch {
+	case node.SelfServeTrigger != nil:
+		blockPath := nodePath.AtName("self_serve_trigger")
+		seenSelfServiceHub := false
+		for i, context := range node.SelfServeTrigger.Contexts {
+			contextPath := blockPath.AtName("contexts").AtListIndex(i)
+			switch context.On.ValueString() {
+			case consts.CreateEntityContext:
+				requireSet(resp, contextPath.AtName("blueprint_identifier"), context.BlueprintIdentifier,
+					"`blueprint_identifier` is required when `on` is `CREATE_ENTITY`.")
+				rejectSet(resp, contextPath.AtName("user_input"), context.UserInput,
+					"`user_input` cannot be set when `on` is `CREATE_ENTITY`.")
+				rejectSet(resp, contextPath.AtName("visible"), context.Visible,
+					"`visible` cannot be set when `on` is `CREATE_ENTITY`.")
+			case consts.EntityContext:
+				requireNonEmpty(resp, contextPath.AtName("user_input"), context.UserInput,
+					"`user_input` is required when `on` is `ENTITY`.")
+				rejectSet(resp, contextPath.AtName("blueprint_identifier"), context.BlueprintIdentifier,
+					"`blueprint_identifier` cannot be set when `on` is `ENTITY`.")
+				rejectSet(resp, contextPath.AtName("visible"), context.Visible,
+					"`visible` cannot be set when `on` is `ENTITY`.")
+			case consts.SelfServiceHubContext:
+				if seenSelfServiceHub {
+					resp.Diagnostics.AddAttributeError(contextPath.AtName("on"), "Duplicate SELF_SERVICE_HUB context",
+						"A self serve trigger can have at most one `SELF_SERVICE_HUB` context.")
+				}
+				seenSelfServiceHub = true
+				requireSet(resp, contextPath.AtName("visible"), context.Visible,
+					"`visible` is required when `on` is `SELF_SERVICE_HUB`.")
+				rejectSet(resp, contextPath.AtName("blueprint_identifier"), context.BlueprintIdentifier,
+					"`blueprint_identifier` cannot be set when `on` is `SELF_SERVICE_HUB`.")
+				rejectSet(resp, contextPath.AtName("user_input"), context.UserInput,
+					"`user_input` cannot be set when `on` is `SELF_SERVICE_HUB`.")
+			}
+		}
+		return consts.SelfServeTrigger
+
+	case node.EventTrigger != nil:
+		blockPath := nodePath.AtName("event_trigger")
+		requireSet(resp, blockPath.AtName("type"), node.EventTrigger.Type, "`type` is required for an `event_trigger` node.")
+		requireSet(resp, blockPath.AtName("blueprint_identifier"), node.EventTrigger.BlueprintIdentifier,
+			"`blueprint_identifier` is required for an `event_trigger` node.")
+
+		if node.EventTrigger.Type.ValueString() == consts.WorkflowTimerExpired {
+			requireSet(resp, blockPath.AtName("property_identifier"), node.EventTrigger.PropertyIdentifier,
+				"`property_identifier` is required when `type` is `TIMER_EXPIRED`.")
+		}
+
+		if node.EventTrigger.Condition != nil && node.EventTrigger.Condition.Expressions.IsNull() {
+			resp.Diagnostics.AddAttributeError(
+				blockPath.AtName("condition").AtName("expressions"),
+				"Missing required attribute",
+				"`expressions` is required when a `condition` block is set.",
+			)
+		}
+		return consts.EventTrigger
+
+	case node.ScheduleTrigger != nil:
+		requireSet(resp, nodePath.AtName("schedule_trigger").AtName("cron"), node.ScheduleTrigger.Cron,
+			"`cron` is required for a `schedule_trigger` node.")
+		return consts.ScheduleTrigger
+
+	case node.WorkflowTrigger != nil:
+		return consts.WorkflowTrigger
+
+	case node.Kafka != nil:
+		return consts.Kafka
+
+	case node.Webhook != nil:
+		requireSet(resp, nodePath.AtName("webhook").AtName("url"), node.Webhook.Url,
+			"`url` is required for a `webhook` node.")
+		return consts.Webhook
+
+	case node.IntegrationAction != nil:
+		blockPath := nodePath.AtName("integration_action")
+		requireSet(resp, blockPath.AtName("installation_id"), node.IntegrationAction.InstallationId,
+			"`installation_id` is required for an `integration_action` node.")
+		requireSet(resp, blockPath.AtName("integration_provider"), node.IntegrationAction.IntegrationProvider,
+			"`integration_provider` is required for an `integration_action` node.")
+		requireSet(resp, blockPath.AtName("integration_invocation_type"), node.IntegrationAction.IntegrationInvocationType,
+			"`integration_invocation_type` is required for an `integration_action` node.")
+		return consts.IntegrationAction
+
+	case node.UpsertEntity != nil:
+		requireSet(resp, nodePath.AtName("upsert_entity").AtName("blueprint_identifier"), node.UpsertEntity.BlueprintIdentifier,
+			"`blueprint_identifier` is required for an `upsert_entity` node.")
+		return consts.UpsertEntity
+
+	case node.AI != nil:
+		blockPath := nodePath.AtName("ai")
+		requireSet(resp, blockPath.AtName("user_prompt"), node.AI.UserPrompt,
+			"`user_prompt` is required for an `ai` node.")
+		requirePaired(resp, blockPath, "ai", node.AI.Provider, node.AI.Model)
+		return consts.AI
+
+	case node.AIAgent != nil:
+		blockPath := nodePath.AtName("ai_agent")
+		requireSet(resp, blockPath.AtName("user_prompt"), node.AIAgent.UserPrompt,
+			"`user_prompt` is required for an `ai_agent` node.")
+		requireSet(resp, blockPath.AtName("agent_identifier"), node.AIAgent.AgentIdentifier,
+			"`agent_identifier` is required for an `ai_agent` node.")
+		requirePaired(resp, blockPath, "ai_agent", node.AIAgent.Provider, node.AIAgent.Model)
+		return consts.AIAgent
+
+	case node.ExecuteWorkflow != nil:
+		blockPath := nodePath.AtName("execute_workflow")
+		requireNonEmpty(resp, blockPath.AtName("workflow_identifier"), node.ExecuteWorkflow.WorkflowIdentifier,
+			"`workflow_identifier` is required for an `execute_workflow` node.")
+		requireNonEmpty(resp, blockPath.AtName("trigger_identifier"), node.ExecuteWorkflow.TriggerIdentifier,
+			"`trigger_identifier` is required for an `execute_workflow` node.")
+		if !node.ExecuteWorkflow.Wait.IsUnknown() && !node.ExecuteWorkflow.Wait.IsNull() && !node.ExecuteWorkflow.Wait.ValueBool() {
+			rejectSet(resp, blockPath.AtName("on_failure"), node.ExecuteWorkflow.OnFailure,
+				"`on_failure` can only be set when `wait` is `true`.")
+		}
+		return consts.ExecuteWorkflow
+
+	case node.Condition != nil:
+		blockPath := nodePath.AtName("condition")
+		seenOutlets := map[string]bool{}
+		for i, outlet := range node.Condition.Outlets {
+			outletPath := blockPath.AtName("outlets").AtListIndex(i)
+			requireUnique(resp, outletPath.AtName("identifier"), outlet.Identifier, seenOutlets, "outlet")
+			requireNonEmpty(resp, outletPath.AtName("expression"), outlet.Expression,
+				"`expression` cannot be empty.")
+			validateStatusLabels(resp, outletPath, outlet.StatusLabel, outlet.WorkflowStatusLabel)
+		}
+		return consts.ConditionNode
+
+	case node.Input != nil:
+		blockPath := nodePath.AtName("input")
+		// The API requires `userInputs` on an input node, so the block itself is
+		// mandatory even though the buttons it holds may be empty.
+		buttonsDeclared := node.Input.UserInputs != nil
+		buttons := map[string]bool{}
+		if !buttonsDeclared {
+			if !hasUnknownValues {
+				resp.Diagnostics.AddAttributeError(
+					blockPath.AtName("user_inputs"),
+					"Missing required block",
+					"An `input` node must define a `user_inputs` block.",
+				)
+			}
+		} else {
+			seenButtons := map[string]bool{}
+			for i, button := range node.Input.UserInputs.Buttons {
+				buttonPath := blockPath.AtName("user_inputs").AtName("buttons").AtListIndex(i)
+				requireUnique(resp, buttonPath.AtName("identifier"), button.Identifier, seenButtons, "button")
+				buttons[button.Identifier.ValueString()] = true
+			}
+		}
+
+		seenOutlets := map[string]bool{}
+		for i, outlet := range node.Input.Outlets {
+			outletPath := blockPath.AtName("outlets").AtListIndex(i)
+			identifier := outlet.Identifier.ValueString()
+			requireUnique(resp, outletPath.AtName("identifier"), outlet.Identifier, seenOutlets, "outlet")
+			if buttonsDeclared && !hasUnknownValues && !outlet.Identifier.IsUnknown() && !buttons[identifier] {
+				resp.Diagnostics.AddAttributeError(
+					outletPath.AtName("identifier"),
+					"Unknown button identifier",
+					fmt.Sprintf("Outlet %q does not match any button defined in `user_inputs.buttons`.", identifier),
+				)
+			}
+			validateStatusLabels(resp, outletPath, outlet.StatusLabel, outlet.WorkflowStatusLabel)
+		}
+
+		slackDeclared := false
+		for i, notification := range node.Input.Notifications {
+			notificationPath := blockPath.AtName("notifications").AtListIndex(i)
+			switch notification.Target.ValueString() {
+			case consts.SlackNotification:
+				validateSlackNotification(resp, notificationPath, notification)
+				if slackDeclared {
+					resp.Diagnostics.AddAttributeError(
+						notificationPath.AtName("target"),
+						"Duplicate slack notification",
+						"An `input` node can have at most one notification with `target` set to `slack`.",
+					)
+				}
+				slackDeclared = true
+			case consts.WebhookNotification:
+				requireSet(resp, notificationPath.AtName("url"), notification.Url,
+					"`url` is required when `target` is `webhook`.")
+			case consts.EmailNotification:
+				if len(notification.Fields) == 0 && !hasUnknownValues {
+					resp.Diagnostics.AddAttributeError(
+						notificationPath.AtName("fields"),
+						"Missing required block",
+						"At least one `fields` block is required when `target` is `email`.",
+					)
+				}
+			}
+		}
+		return consts.InputNode
+	}
+
+	return ""
+}
+
+func validateSlackNotification(resp *resource.ValidateConfigResponse, notificationPath path.Path, notification NotificationModel) {
+	webhookAttributes := []struct {
+		name  string
+		value attr.Value
+	}{
+		{"url", notification.Url},
+		{"method", notification.Method},
+		{"headers", notification.Headers},
+		{"body", notification.Body},
+		{"agent", notification.Agent},
+	}
+	for _, attribute := range webhookAttributes {
+		rejectSet(resp, notificationPath.AtName(attribute.name), attribute.value,
+			fmt.Sprintf("`%s` only applies when `target` is `webhook` and cannot be set when `target` is `slack`.", attribute.name))
+	}
+
+	if len(notification.Fields) > 0 {
+		resp.Diagnostics.AddAttributeError(
+			notificationPath.AtName("fields"),
+			"Invalid attribute combination",
+			"`fields` only applies when `target` is `email` and cannot be set when `target` is `slack`.",
+		)
+	}
+}
+
+func validateStatusLabels(resp *resource.ValidateConfigResponse, outletPath path.Path, labels ...*StatusLabelModel) {
+	names := []string{"status_label", "workflow_status_label"}
+	for i, label := range labels {
+		if label != nil {
+			requireNonEmpty(resp, outletPath.AtName(names[i]).AtName("text"), label.Text,
+				fmt.Sprintf("`text` is required when a `%s` block is set.", names[i]))
+		}
+	}
+}
+
+func validateConnections(resp *resource.ValidateConfigResponse, connections []ConnectionModel, nodeTypes map[string]string, outlets map[string]map[string]bool, identifiersKnown bool) {
+	multipleOutletTypes := map[string]bool{
+		consts.ConditionNode: true,
+		consts.InputNode:     true,
+	}
+
+	// Only condition and input nodes may have several outgoing connections, and
+	// each must leave through a distinct outlet. Every other node is limited to a
+	// single outgoing connection, so fan-out has to go through a branching node.
+	seenSources := map[string]bool{}
+
+	for i, connection := range connections {
+		connectionPath := path.Root("connections").AtListIndex(i)
+		source := connection.SourceIdentifier.ValueString()
+		target := connection.TargetIdentifier.ValueString()
+
+		if source == target && !connection.SourceIdentifier.IsUnknown() {
+			resp.Diagnostics.AddAttributeError(
+				connectionPath,
+				"Invalid connection",
+				fmt.Sprintf("Node %q cannot connect to itself. Self-connections are not supported.", source),
+			)
+		}
+
+		if identifiersKnown {
+			validateEndpoint(resp, connectionPath, "source_identifier", connection.SourceIdentifier, nodeTypes)
+			validateEndpoint(resp, connectionPath, "target_identifier", connection.TargetIdentifier, nodeTypes)
+		}
+
+		if targetType, known := nodeTypes[target]; known && triggerTypes[targetType] {
+			resp.Diagnostics.AddAttributeError(
+				connectionPath.AtName("target_identifier"),
+				"Invalid connection",
+				fmt.Sprintf("Node %q is a trigger. Trigger nodes start a workflow, so they cannot have incoming connections.", target),
+			)
+		}
+
+		sourceType, known := nodeTypes[source]
+		if !known {
+			continue
+		}
+
+		hasOutlet := !connection.SourceOutletIdentifier.IsNull() && !connection.SourceOutletIdentifier.IsUnknown()
+		hasFallback := connection.Fallback.ValueBool()
+
+		if hasOutlet && len(outlets[source]) > 0 && !outlets[source][connection.SourceOutletIdentifier.ValueString()] {
+			resp.Diagnostics.AddAttributeError(
+				connectionPath.AtName("source_outlet_identifier"),
+				"Unknown outlet",
+				fmt.Sprintf("Node %q has no outlet named %q.", source, connection.SourceOutletIdentifier.ValueString()),
+			)
+		}
+
+		sourceKey := source
+		if multipleOutletTypes[sourceType] {
+			sourceKey = fmt.Sprintf("%s\x00%s\x00%t", source, connection.SourceOutletIdentifier.ValueString(), hasFallback)
+		}
+		if seenSources[sourceKey] {
+			detail := fmt.Sprintf("Node %q already has an outgoing connection. A %q node supports only one.", source, sourceType)
+			if multipleOutletTypes[sourceType] {
+				detail = fmt.Sprintf("Node %q already has an outgoing connection using this outlet. Each connection leaving a %q node must use a distinct outlet.", source, sourceType)
+			}
+			resp.Diagnostics.AddAttributeError(connectionPath, "Duplicate connection source", detail)
+		}
+		seenSources[sourceKey] = true
+
+		if multipleOutletTypes[sourceType] {
+			if !hasOutlet && !hasFallback {
+				resp.Diagnostics.AddAttributeError(
+					connectionPath.AtName("source_outlet_identifier"),
+					"Missing outlet",
+					fmt.Sprintf("Connections leaving a %q node must set `source_outlet_identifier` or `fallback`.", sourceType),
+				)
+			}
+			if hasFallback && sourceType == consts.InputNode {
+				resp.Diagnostics.AddAttributeError(
+					connectionPath.AtName("fallback"),
+					"Invalid fallback",
+					"`fallback` is only supported for connections leaving a `condition` node.",
+				)
+			}
+			continue
+		}
+
+		if hasOutlet || hasFallback {
+			resp.Diagnostics.AddAttributeError(
+				connectionPath,
+				"Invalid connection",
+				fmt.Sprintf("Connections leaving a %q node cannot set `source_outlet_identifier` or `fallback`.", sourceType),
+			)
+		}
+	}
+
+	validateNoCycles(resp, connections)
+}
+
+func validateEndpoint(resp *resource.ValidateConfigResponse, connectionPath path.Path, attribute string, value types.String, nodeTypes map[string]string) {
+	if value.IsNull() || value.IsUnknown() {
+		return
+	}
+
+	if _, known := nodeTypes[value.ValueString()]; !known {
+		resp.Diagnostics.AddAttributeError(
+			connectionPath.AtName(attribute),
+			"Unknown node identifier",
+			fmt.Sprintf("No node is declared with the identifier %q.", value.ValueString()),
+		)
+	}
+}
+
+// Mirrors the service's topological sort over the connection graph. Self-loops
+// are skipped because they are reported with a more specific message.
+func validateNoCycles(resp *resource.ValidateConfigResponse, connections []ConnectionModel) {
+	adjacency := map[string][]string{}
+	incoming := map[string]int{}
+
+	for _, connection := range connections {
+		if connection.SourceIdentifier.IsUnknown() || connection.TargetIdentifier.IsUnknown() {
+			return
+		}
+
+		source := connection.SourceIdentifier.ValueString()
+		target := connection.TargetIdentifier.ValueString()
+		if source == target {
+			continue
+		}
+
+		if _, seen := incoming[source]; !seen {
+			incoming[source] = 0
+		}
+		incoming[target]++
+		adjacency[source] = append(adjacency[source], target)
+	}
+
+	frontier := make([]string, 0, len(incoming))
+	for node, degree := range incoming {
+		if degree == 0 {
+			frontier = append(frontier, node)
+		}
+	}
+
+	processed := 0
+	for len(frontier) > 0 {
+		node := frontier[len(frontier)-1]
+		frontier = frontier[:len(frontier)-1]
+		processed++
+
+		for _, target := range adjacency[node] {
+			incoming[target]--
+			if incoming[target] == 0 {
+				frontier = append(frontier, target)
+			}
+		}
+	}
+
+	if processed < len(incoming) {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("connections"),
+			"Cyclic connections",
+			"The connections form a cycle. A workflow graph must be acyclic, so a node cannot be reachable from itself.",
+		)
+	}
+}
+
+// The service falls back to defaults for both or neither, so a lone value is rejected.
+func requirePaired(resp *resource.ValidateConfigResponse, blockPath path.Path, blockName string, provider, model types.String) {
+	if provider.IsUnknown() || model.IsUnknown() {
+		return
+	}
+
+	providerSet := !provider.IsNull()
+	modelSet := !model.IsNull()
+	if providerSet == modelSet {
+		return
+	}
+
+	missing := "model"
+	if modelSet {
+		missing = "provider"
+	}
+	resp.Diagnostics.AddAttributeError(
+		blockPath.AtName(missing),
+		"Missing required attribute",
+		fmt.Sprintf("`provider` and `model` must be set together on an `%s` node, or both omitted to use the defaults.", blockName),
+	)
+}
+
+func requireSet(resp *resource.ValidateConfigResponse, attributePath path.Path, value attr.Value, detail string) {
+	if value.IsNull() && !value.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(attributePath, "Missing required attribute", detail)
+	}
+}
+
+// The API trims these values and rejects the result when it is empty, so a
+// blank string is as invalid as an absent one.
+func requireNonEmpty(resp *resource.ValidateConfigResponse, attributePath path.Path, value types.String, detail string) {
+	if value.IsUnknown() {
+		return
+	}
+	if value.IsNull() || strings.TrimSpace(value.ValueString()) == "" {
+		resp.Diagnostics.AddAttributeError(attributePath, "Missing required attribute", detail)
+	}
+}
+
+func requireUnique(resp *resource.ValidateConfigResponse, attributePath path.Path, value types.String, seen map[string]bool, noun string) {
+	if value.IsUnknown() {
+		return
+	}
+
+	identifier := value.ValueString()
+	if seen[identifier] {
+		resp.Diagnostics.AddAttributeError(
+			attributePath,
+			fmt.Sprintf("Duplicate %s identifier", noun),
+			fmt.Sprintf("The %s identifier %q is used more than once. Each %s of a node must have a unique identifier.", noun, identifier, noun),
+		)
+	}
+	seen[identifier] = true
+}
+
+func rejectSet(resp *resource.ValidateConfigResponse, attributePath path.Path, value attr.Value, detail string) {
+	if !value.IsNull() && !value.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(attributePath, "Invalid attribute combination", detail)
+	}
+}

@@ -284,7 +284,7 @@ resource "port_blueprint" "microservice" {
 ### Optional
 
 - `calculation_properties` (Attributes Map) The calculation properties of the blueprint (see [below for nested schema](#nestedatt--calculation_properties))
-- `create_catalog_page` (Boolean) This flag is only relevant for blueprint creation, by default if not set, a catalog page will be created for the blueprint
+- `create_catalog_page` (Boolean) This flag is only relevant for blueprint creation. If not set, the parameter is omitted and Port's API default applies
 - `description` (String) The description of the blueprint
 - `force_delete_entities` (Boolean) If set to true, the blueprint will be deleted with all its entities, even if they are not managed by Terraform
 - `icon` (String) The icon of the blueprint
@@ -321,9 +321,19 @@ Optional:
 - `description` (String) The description of the calculation property
 - `format` (String) The format of the calculation property
 - `icon` (String) The icon of the calculation property
+- `items` (Attributes) The items of an `array` calculation property (see [below for nested schema](#nestedatt--calculation_properties--items))
 - `spec` (String) The spec of the calculation property
 - `spec_authentication` (Attributes) The spec authentication of the calculation property (see [below for nested schema](#nestedatt--calculation_properties--spec_authentication))
 - `title` (String) The title of the calculation property
+
+<a id="nestedatt--calculation_properties--items"></a>
+### Nested Schema for `calculation_properties.items`
+
+Optional:
+
+- `format` (String) The format of the items
+- `type` (String) The type of the items
+
 
 <a id="nestedatt--calculation_properties--spec_authentication"></a>
 ### Nested Schema for `calculation_properties.spec_authentication`

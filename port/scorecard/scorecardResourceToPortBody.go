@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 func fromTerraformLevelsToCliLevels(tfLevels []Level) []cli.Level {
@@ -80,6 +81,10 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 		query.Conditions = conditions
 		rule.Query = *query
 
+		if err := ApplyRuleCustomFieldsToCLI(stateRule, rule); err != nil {
+			return nil, err
+		}
+
 		rules = append(rules, *rule)
 	}
 
@@ -87,6 +92,26 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 
 	if len(state.Levels) > 0 {
 		s.Levels = fromTerraformLevelsToCliLevels(state.Levels)
+	}
+
+	if !state.Properties.IsNull() && !state.Properties.IsUnknown() {
+		properties, err := utils.TerraformJsonStringToGoObject(state.Properties.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if properties != nil {
+			s.Properties = *properties
+		}
+	}
+
+	if !state.Relations.IsNull() && !state.Relations.IsUnknown() {
+		relations, err := utils.TerraformJsonStringToGoObject(state.Relations.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if relations != nil {
+			s.Relations = *relations
+		}
 	}
 
 	return s, nil

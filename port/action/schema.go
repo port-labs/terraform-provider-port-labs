@@ -92,7 +92,12 @@ func MetadataProperties() map[string]schema.Attribute {
 			Optional:            true,
 			Validators: []validator.Bool{
 				isTrueValidator{},
-				boolvalidator.ConflictsWith(path.MatchRoot("self_service_trigger").AtName("required_jq_query")),
+				// Relative so that these property schemas can be embedded under
+				// any parent that also declares required_jq_query alongside
+				// user_properties (port_action's trigger, port_workflow's node).
+				boolvalidator.ConflictsWith(
+					path.MatchRelative().AtParent().AtParent().AtParent().AtParent().AtName("required_jq_query"),
+				),
 			},
 		},
 		"description": schema.StringAttribute{

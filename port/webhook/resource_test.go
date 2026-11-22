@@ -136,7 +136,7 @@ func TestAccPortWebhookBasic(t *testing.T) {
 		icon       = "Terraform"
 		enabled    = true
 	}`, webhookIdentifier)
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -209,7 +209,7 @@ func TestAccPortWebhook(t *testing.T) {
 			]
 	}`, webhookIdentifier, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -334,7 +334,7 @@ func TestAccPortWebhookWithAllOperationOptions(t *testing.T) {
 		]
 	}`, webhookIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -438,7 +438,7 @@ func TestAccPortWebhookImport(t *testing.T) {
 		  ]
 	}`, webhookIdentifier, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -507,7 +507,7 @@ func TestAccPortWebhookUpdateIdentifier(t *testing.T) {
 		enabled    = true
 	}`, webhookIdentifierUpdated)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -649,7 +649,7 @@ func TestAccPortWebhookCreateWithRelations(t *testing.T) {
 		]
 	}`, webhookIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -819,7 +819,7 @@ func TestAccPortWebhookCreateWithInvalidRelations(t *testing.T) {
 		]
 	}`, webhookIdentifier+"3")
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -913,7 +913,7 @@ func TestAccPortWebhookUpdateRelationType(t *testing.T) {
 		]
 	}`, webhookIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -992,7 +992,7 @@ func TestAccPortWebhookCreateWithComplexIdentifier(t *testing.T) {
 		]
 	}`, webhookIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
@@ -1126,7 +1126,7 @@ func TestAccPortWebhookCreateWithInvalidIdentifier(t *testing.T) {
 		]
 	}`, webhookIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{

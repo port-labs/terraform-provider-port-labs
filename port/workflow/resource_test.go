@@ -1,0 +1,873 @@
+package workflow_test
+
+import (
+	"fmt"
+	"regexp"
+	"strings"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/acctest"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
+)
+
+func testAccCreateBlueprintConfig(identifier string) string {
+	return fmt.Sprintf(`
+	resource "port_blueprint" "microservice" {
+		title = "TF test microservice"
+		icon = "Terraform"
+		identifier = "%s"
+		properties = {
+			string_props = {
+				"author" = {
+					type = "string"
+					title = "text"
+				}
+			}
+		}
+	}
+	`, identifier)
+}
+
+func TestAccPortWorkflowBasic(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	workflowIdentifier := utils.GenID()
+
+	var testAccWorkflowConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_workflow" "review_pr" {
+		identifier                = "%s"
+		title                     = "Review PR"
+		category                  = "engineering"
+		description               = "Reviews pull requests"
+		allow_anyone_to_view_runs = false
+
+		node {
+			identifier  = "trigger"
+			title       = "PR Trigger"
+			icon        = "Terraform"
+			description = "Runs when the service changes"
+			verbose     = true
+			links       = ["https://example.com/runs"]
+			variables = {
+				env = ".diff.after.properties.author"
+			}
+			event_trigger {
+				type                 = "ENTITY_UPDATED"
+				blueprint_identifier = port_blueprint.microservice.identifier
+				condition {
+					expressions = [".diff.after.properties.author != null"]
+					combinator  = "and"
+				}
+			}
+		}
+
+		node {
+			identifier = "notify"
+			webhook {
+				url        = "https://example.com/hook"
+				method     = "POST"
+				body       = jsonencode({ text = "a service changed" })
+				on_failure = "continue"
+			}
+		}
+
+		connections {
+			source_identifier = "trigger"
+			target_identifier = "notify"
+			description       = "notify on change"
+		}
+	}`, workflowIdentifier)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccWorkflowConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "identifier", workflowIdentifier),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "title", "Review PR"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "category", "engineering"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "allow_anyone_to_view_runs", "false"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.0.identifier", "trigger"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.0.icon", "Terraform"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.0.verbose", "true"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.0.links.0", "https://example.com/runs"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.0.event_trigger.type", "ENTITY_UPDATED"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.0.event_trigger.blueprint_identifier", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.0.event_trigger.condition.combinator", "and"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.1.webhook.url", "https://example.com/hook"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.1.webhook.on_failure", "continue"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "connections.0.source_identifier", "trigger"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "connections.0.target_identifier", "notify"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortWorkflowUpdate(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	workflowIdentifier := utils.GenID()
+
+	var testAccWorkflowConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_workflow" "review_pr" {
+		identifier = "%s"
+		title      = "Review PR"
+		category   = "engineering"
+
+		node {
+			identifier = "trigger"
+			event_trigger {
+				type                 = "ENTITY_UPDATED"
+				blueprint_identifier = port_blueprint.microservice.identifier
+			}
+		}
+
+		node {
+			identifier = "notify"
+			webhook {
+				url = "https://example.com/hook"
+			}
+		}
+
+		connections {
+			source_identifier = "trigger"
+			target_identifier = "notify"
+		}
+	}`, workflowIdentifier)
+
+	var testAccWorkflowConfigUpdate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_workflow" "review_pr" {
+		identifier = "%s"
+		title      = "Review PR (updated)"
+		category   = "platform"
+
+		node {
+			identifier = "trigger"
+			event_trigger {
+				type                 = "ENTITY_UPDATED"
+				blueprint_identifier = port_blueprint.microservice.identifier
+			}
+		}
+
+		node {
+			identifier = "notify"
+			webhook {
+				url    = "https://example.com/hook-updated"
+				method = "PUT"
+			}
+		}
+
+		node {
+			identifier = "record"
+			upsert_entity {
+				blueprint_identifier = port_blueprint.microservice.identifier
+				mapping {
+					identifier = "run-{{ .run.id }}"
+					title      = "Run record"
+				}
+			}
+		}
+
+		connections {
+			source_identifier = "trigger"
+			target_identifier = "notify"
+		}
+
+		connections {
+			source_identifier = "notify"
+			target_identifier = "record"
+		}
+	}`, workflowIdentifier)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccWorkflowConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "title", "Review PR"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "category", "engineering"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.#", "2"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.1.webhook.url", "https://example.com/hook"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.1.webhook.method", "POST"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccWorkflowConfigUpdate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "title", "Review PR (updated)"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "category", "platform"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.#", "3"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.1.webhook.url", "https://example.com/hook-updated"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.1.webhook.method", "PUT"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.2.identifier", "record"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.2.upsert_entity.blueprint_identifier", blueprintIdentifier),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "connections.#", "2"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortWorkflowSelfServeTrigger(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	workflowIdentifier := utils.GenID()
+
+	var testAccWorkflowConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_workflow" "deploy" {
+		identifier = "%s"
+		title      = "Deploy"
+
+		node {
+			identifier = "trigger"
+			self_serve_trigger {
+				action_card_button_text    = "Deploy"
+				execute_action_button_text = "Go"
+
+				user_inputs {
+					user_properties = {
+						string_props = {
+							"service" = {
+								title    = "Service"
+								required = true
+							}
+						}
+						number_props = {
+							"replicas" = {
+								title = "Replicas"
+							}
+						}
+					}
+				}
+
+				permissions {
+					roles = ["Member"]
+				}
+			}
+		}
+
+		node {
+			identifier = "notify"
+			webhook {
+				url = "https://example.com/deploy"
+			}
+		}
+
+		connections {
+			source_identifier = "trigger"
+			target_identifier = "notify"
+		}
+	}`, workflowIdentifier)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccWorkflowConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.deploy", "identifier", workflowIdentifier),
+					resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.action_card_button_text", "Deploy"),
+					resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.user_inputs.user_properties.string_props.service.title", "Service"),
+					resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.user_inputs.user_properties.number_props.replicas.title", "Replicas"),
+					resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.permissions.roles.0", "Member"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortWorkflowSelfServiceHubContext(t *testing.T) {
+	workflowIdentifier := utils.GenID()
+
+	config := func(contexts string) string {
+		return fmt.Sprintf(`
+	resource "port_workflow" "deploy" {
+		identifier = "%s"
+		title      = "Deploy"
+
+		node {
+			identifier = "trigger"
+			self_serve_trigger {
+				%s
+			}
+		}
+
+		node {
+			identifier = "notify"
+			webhook {
+				url = "https://example.com/deploy"
+			}
+		}
+
+		connections {
+			source_identifier = "trigger"
+			target_identifier = "notify"
+		}
+	}`, workflowIdentifier, contexts)
+	}
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + config(`
+				contexts {
+					on      = "SELF_SERVICE_HUB"
+					visible = false
+				}`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.contexts.#", "1"),
+					resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.contexts.0.on", "SELF_SERVICE_HUB"),
+					resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.contexts.0.visible", "false"),
+				),
+			},
+			{
+				ResourceName:      "port_workflow.deploy",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     workflowIdentifier,
+			},
+			{
+				Config: acctest.ProviderConfig + config(`
+				contexts {
+					on      = "SELF_SERVICE_HUB"
+					visible = true
+				}`),
+				Check: resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.contexts.0.visible", "true"),
+			},
+			{
+				Config: acctest.ProviderConfig + config(""),
+				Check:  resource.TestCheckResourceAttr("port_workflow.deploy", "node.0.self_serve_trigger.contexts.#", "0"),
+			},
+		},
+	})
+}
+
+func TestAccPortWorkflowSelfServiceHubContextValidation(t *testing.T) {
+	resource.Test(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + `
+	resource "port_workflow" "deploy" {
+		identifier = "invalid-hub-context"
+		title      = "Deploy"
+
+		node {
+			identifier = "trigger"
+			self_serve_trigger {
+				contexts {
+					on      = "SELF_SERVICE_HUB"
+					visible = false
+				}
+				contexts {
+					on      = "SELF_SERVICE_HUB"
+					visible = true
+				}
+			}
+		}
+	}`,
+				ExpectError: regexp.MustCompile("Duplicate SELF_SERVICE_HUB context"),
+			},
+		},
+	})
+}
+
+func TestAccPortWorkflowConditionOutlets(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	workflowIdentifier := utils.GenID()
+
+	var testAccWorkflowConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_workflow" "branching" {
+		identifier = "%s"
+		title      = "Branching"
+
+		node {
+			identifier = "trigger"
+			event_trigger {
+				type                 = "ENTITY_CREATED"
+				blueprint_identifier = port_blueprint.microservice.identifier
+			}
+		}
+
+		node {
+			identifier = "branch"
+			condition {
+				outlets {
+					identifier = "has_author"
+					title      = "Has author"
+					expression = ".outputs.trigger.entity.properties.author != null"
+					status_label {
+						text    = "Author found"
+						variant = "success"
+					}
+				}
+			}
+		}
+
+		node {
+			identifier = "matched"
+			webhook {
+				url = "https://example.com/matched"
+			}
+		}
+
+		node {
+			identifier = "unmatched"
+			webhook {
+				url = "https://example.com/unmatched"
+			}
+		}
+
+		connections {
+			source_identifier = "trigger"
+			target_identifier = "branch"
+		}
+
+		connections {
+			source_identifier        = "branch"
+			target_identifier        = "matched"
+			source_outlet_identifier = "has_author"
+		}
+
+		connections {
+			source_identifier = "branch"
+			target_identifier = "unmatched"
+			fallback          = true
+		}
+	}`, workflowIdentifier)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccWorkflowConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.branching", "node.1.condition.outlets.0.identifier", "has_author"),
+					resource.TestCheckResourceAttr("port_workflow.branching", "node.1.condition.outlets.0.status_label.text", "Author found"),
+					resource.TestCheckResourceAttr("port_workflow.branching", "connections.1.source_outlet_identifier", "has_author"),
+					resource.TestCheckResourceAttr("port_workflow.branching", "connections.2.fallback", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccPortWorkflowImport(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	workflowIdentifier := utils.GenID()
+
+	// event_trigger has no secrets and no server-applied defaults, so every
+	// attribute round-trips exactly under ImportStateVerify.
+	var testAccWorkflowConfigCreate = testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_workflow" "review_pr" {
+		identifier = "%s"
+		title      = "Review PR"
+
+		node {
+			identifier = "trigger"
+			title      = "PR Trigger"
+			event_trigger {
+				type                 = "ENTITY_UPDATED"
+				blueprint_identifier = port_blueprint.microservice.identifier
+			}
+		}
+	}`, workflowIdentifier)
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccWorkflowConfigCreate,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "identifier", workflowIdentifier),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.#", "1"),
+					resource.TestCheckResourceAttr("port_workflow.review_pr", "node.0.event_trigger.type", "ENTITY_UPDATED"),
+				),
+			},
+			{
+				ResourceName:      "port_workflow.review_pr",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     workflowIdentifier,
+			},
+		},
+	})
+}
+
+func testAccInputNotificationsWorkflowConfig(blueprintIdentifier, workflowIdentifier, notifications string) string {
+	return testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_workflow" "approval" {
+		identifier = "%s"
+		title      = "Approval"
+
+		node {
+			identifier = "trigger"
+			event_trigger {
+				type                 = "ENTITY_UPDATED"
+				blueprint_identifier = port_blueprint.microservice.identifier
+			}
+		}
+
+		node {
+			identifier = "approval"
+			input {
+				user_inputs {
+					buttons = [
+						{
+							identifier = "approve"
+							label      = "Approve"
+							variant    = "PRIMARY"
+						},
+					]
+				}
+
+				outlets {
+					identifier        = "approve"
+					num_of_responders = 1
+				}
+
+				responders {
+					roles = ["Admin"]
+				}
+				%s
+			}
+		}
+
+		connections {
+			source_identifier = "trigger"
+			target_identifier = "approval"
+		}
+	}`, workflowIdentifier, notifications)
+}
+
+const testAccSlackNotification = `
+				notifications {
+					target = "slack"
+				}`
+
+const testAccEmailNotification = `
+				notifications {
+					target = "email"
+					fields {
+						label = "Service"
+						value = "{{ .outputs.trigger.diff.after.identifier }}"
+					}
+				}`
+
+const testAccWebhookNotification = `
+				notifications {
+					target = "webhook"
+					url    = "https://example.com/notify"
+					method = "POST"
+				}`
+
+func TestAccPortWorkflowSlackNotification(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	workflowIdentifier := utils.GenID()
+	config := func(notifications ...string) string {
+		return acctest.ProviderConfig + testAccInputNotificationsWorkflowConfig(blueprintIdentifier, workflowIdentifier, strings.Join(notifications, "\n"))
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config(testAccSlackNotification),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.#", "1"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.target", "slack"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.url"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.method"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.headers.%"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.body"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.agent"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.fields.#", "0"),
+				),
+			},
+			{
+				Config: config(testAccSlackNotification, testAccEmailNotification, testAccWebhookNotification),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.#", "3"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.target", "slack"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.1.target", "email"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.2.target", "webhook"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.2.url", "https://example.com/notify"),
+				),
+			},
+			{
+				Config: config(testAccWebhookNotification),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.#", "1"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.target", "webhook"),
+				),
+			},
+			{
+				Config: config(testAccEmailNotification),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.#", "1"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.target", "email"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.fields.#", "1"),
+				),
+			},
+			{
+				Config: config(testAccSlackNotification),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.#", "1"),
+					resource.TestCheckResourceAttr("port_workflow.approval", "node.1.input.notifications.0.target", "slack"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.url"),
+					resource.TestCheckNoResourceAttr("port_workflow.approval", "node.1.input.notifications.0.method"),
+				),
+			},
+			{
+				ResourceName:      "port_workflow.approval",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     workflowIdentifier,
+			},
+		},
+	})
+}
+
+func TestAccPortWorkflowSlackNotificationValidation(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	workflowIdentifier := utils.GenID()
+	config := func(notifications string) string {
+		return acctest.ProviderConfig + testAccInputNotificationsWorkflowConfig(blueprintIdentifier, workflowIdentifier, notifications)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config(`
+				notifications {
+					target = "slack"
+					url    = "https://example.com/notify"
+				}`),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("`url`\\s+only\\s+applies\\s+when\\s+`target`\\s+is\\s+`webhook`"),
+			},
+			{
+				Config: config(`
+				notifications {
+					target = "slack"
+					fields {
+						label = "Service"
+						value = "api"
+					}
+				}`),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile("`fields`\\s+only\\s+applies\\s+when\\s+`target`\\s+is\\s+`email`"),
+			},
+			{
+				Config:      config(testAccSlackNotification + testAccSlackNotification),
+				PlanOnly:    true,
+				ExpectError: regexp.MustCompile(`Duplicate\s+slack\s+notification`),
+			},
+		},
+	})
+}
+
+func TestAccPortWorkflowNodeTimeout(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	workflowIdentifier := utils.GenID()
+
+	config := func(webhookTimeout, upsertTimeout string) string {
+		return testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_workflow" "timeouts" {
+		identifier = "%s"
+		title      = "Node timeouts"
+
+		node {
+			identifier = "trigger"
+			event_trigger {
+				type                 = "ENTITY_UPDATED"
+				blueprint_identifier = port_blueprint.microservice.identifier
+			}
+		}
+
+		node {
+			identifier = "notify"
+			webhook {
+				url = "https://example.com/hook"
+				%s
+			}
+		}
+
+		node {
+			identifier = "record"
+			upsert_entity {
+				blueprint_identifier = port_blueprint.microservice.identifier
+				%s
+				mapping {
+					identifier = "run-{{ .run.id }}"
+				}
+			}
+		}
+
+		connections {
+			source_identifier = "trigger"
+			target_identifier = "notify"
+		}
+
+		connections {
+			source_identifier = "notify"
+			target_identifier = "record"
+		}
+	}`, workflowIdentifier, webhookTimeout, upsertTimeout)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + config("timeout_minutes = 59", ""),
+				ExpectError: regexp.MustCompile(`between 60 and 43200`),
+			},
+			{
+				Config: acctest.ProviderConfig + config("timeout_minutes = 120", ""),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.timeouts", "node.1.webhook.timeout_minutes", "120"),
+					resource.TestCheckResourceAttr("port_workflow.timeouts", "node.2.upsert_entity.timeout_minutes", "60"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + config("", "timeout_minutes = 180"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr("port_workflow.timeouts", "node.1.webhook.timeout_minutes"),
+					resource.TestCheckResourceAttr("port_workflow.timeouts", "node.2.upsert_entity.timeout_minutes", "180"),
+				),
+			},
+		},
+	})
+}
+
+func testAccSubWorkflowConfig(childIdentifier, parentIdentifier, published, executeWorkflow string) string {
+	return fmt.Sprintf(`
+	resource "port_workflow" "child" {
+		identifier = "%s"
+		title      = "Child workflow"
+
+		node {
+			identifier = "called"
+			title      = "Called by another workflow"
+			workflow_trigger {
+				%s
+			}
+		}
+
+		node {
+			identifier = "notify"
+			webhook {
+				url  = "https://example.com/hook"
+				body = jsonencode({ service = "{{ .outputs.called.service }}" })
+			}
+		}
+
+		connections {
+			source_identifier = "called"
+			target_identifier = "notify"
+		}
+	}
+
+	resource "port_workflow" "parent" {
+		identifier = "%s"
+		title      = "Parent workflow"
+
+		node {
+			identifier = "nightly"
+			schedule_trigger {
+				cron = "0 3 * * *"
+			}
+		}
+
+		node {
+			identifier = "call_child"
+			execute_workflow {
+				workflow_identifier = port_workflow.child.identifier
+				trigger_identifier  = "called"
+				%s
+			}
+		}
+
+		connections {
+			source_identifier = "nightly"
+			target_identifier = "call_child"
+		}
+	}`, childIdentifier, published, parentIdentifier, executeWorkflow)
+}
+
+func TestAccPortWorkflowExecuteWorkflow(t *testing.T) {
+	childIdentifier := utils.GenID()
+	parentIdentifier := utils.GenID()
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, "", `
+				wait       = false
+				on_failure = "continue"`),
+				ExpectError: regexp.MustCompile("`on_failure` can only be set when `wait` is `true`"),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, "", ""),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.published", "true"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.workflow_identifier", childIdentifier),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.trigger_identifier", "called"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.input", "{}"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.wait", "true"),
+					resource.TestCheckNoResourceAttr("port_workflow.parent", "node.1.execute_workflow.on_failure"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, "published = false", `
+				input      = jsonencode({ service = "{{ .run.id }}", replicas = 2 })
+				on_failure = "continue"`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.published", "false"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.input",
+						`{"replicas":2,"service":"{{ .run.id }}"}`),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.wait", "true"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.on_failure", "continue"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, "", `
+				wait = false`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.published", "true"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.input", "{}"),
+					resource.TestCheckResourceAttr("port_workflow.parent", "node.1.execute_workflow.wait", "false"),
+					resource.TestCheckNoResourceAttr("port_workflow.parent", "node.1.execute_workflow.on_failure"),
+				),
+			},
+			{
+				ResourceName:      "port_workflow.parent",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     parentIdentifier,
+			},
+			{
+				ResourceName:      "port_workflow.child",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     childIdentifier,
+			},
+		},
+	})
+}

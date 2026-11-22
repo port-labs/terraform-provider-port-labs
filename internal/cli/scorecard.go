@@ -27,11 +27,14 @@ func (c *PortClient) ReadScorecard(ctx context.Context, blueprintID string, scor
 
 func (c *PortClient) CreateScorecard(ctx context.Context, blueprintID string, scorecard *Scorecard) (*Scorecard, error) {
 	url := "v1/blueprints/{blueprint_identifier}/scorecards"
-	resp, err := c.Client.R().
+	req := c.Client.R().
 		SetBody(scorecard).
 		SetContext(ctx).
-		SetPathParam("blueprint_identifier", blueprintID).
-		Post(url)
+		SetPathParam("blueprint_identifier", blueprintID)
+	if len(scorecard.Properties) > 0 || len(scorecard.Relations) > 0 {
+		req.SetQueryParam("includeAdditionalProperties", "true")
+	}
+	resp, err := req.Post(url)
 	if err != nil {
 		return nil, err
 	}

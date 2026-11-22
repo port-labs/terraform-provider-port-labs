@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/hashicorp/go-uuid"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
@@ -79,7 +80,7 @@ func TerraformListToGoArray(ctx context.Context, list types.List, arrayType stri
 
 }
 
-var nillableKinds = []reflect.Kind{reflect.Ptr, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice}
+var nillableKinds = []reflect.Kind{reflect.Pointer, reflect.Map, reflect.Array, reflect.Chan, reflect.Slice}
 
 func GoObjectToTerraformString(v interface{}, jsonEscapeHTML bool) (types.String, error) {
 	if v == nil {
@@ -101,6 +102,69 @@ func GoObjectToTerraformString(v interface{}, jsonEscapeHTML bool) (types.String
 
 	jsonStr, _ := strings.CutSuffix(jsonBuilder.String(), "\n")
 	return types.StringValue(jsonStr), nil
+}
+
+func normalizeJSONString(s string, jsonEscapeHTML bool) (string, error) {
+	var v any
+	if err := json.Unmarshal([]byte(s), &v); err != nil {
+		return "", err
+	}
+	encoded, err := GoObjectToTerraformString(v, jsonEscapeHTML)
+	if err != nil {
+		return "", err
+	}
+	return encoded.ValueString(), nil
+}
+
+func JSONStringsSemanticallyEqual(a, b string, jsonEscapeHTML bool) (bool, error) {
+	if a == b {
+		return true, nil
+	}
+	normalizedA, err := normalizeJSONString(a, jsonEscapeHTML)
+	if err != nil {
+		return false, err
+	}
+	normalizedB, err := normalizeJSONString(b, jsonEscapeHTML)
+	if err != nil {
+		return false, err
+	}
+	return normalizedA == normalizedB, nil
+}
+
+func GoObjectToTerraformStringPreferExisting(preferred types.String, v interface{}, jsonEscapeHTML bool) (types.String, error) {
+	encoded, err := GoObjectToTerraformString(v, jsonEscapeHTML)
+	if err != nil {
+		return types.StringNull(), err
+	}
+
+	if preferred.IsNull() || preferred.IsUnknown() {
+		return encoded, nil
+	}
+
+	equal, err := JSONStringsSemanticallyEqual(preferred.ValueString(), encoded.ValueString(), jsonEscapeHTML)
+	if err != nil || !equal {
+		return encoded, nil
+	}
+
+	return preferred, nil
+}
+
+func TerraformStringAt[T attr.Value](elements []T, i int) types.String {
+	if i < 0 || i >= len(elements) {
+		return types.StringNull()
+	}
+	s, ok := any(elements[i]).(types.String)
+	if !ok {
+		return types.StringNull()
+	}
+	return s
+}
+
+func TerraformStringAtList(list types.List, i int) types.String {
+	if list.IsNull() || list.IsUnknown() {
+		return types.StringNull()
+	}
+	return TerraformStringAt(list.Elements(), i)
 }
 
 func TerraformStringToGoType[T any](s types.String) (T, error) {
@@ -128,6 +192,111 @@ func TerraformJsonStringToGoObject(v *string) (*map[string]any, error) {
 	}
 
 	return &vMap, nil
+}
+
+func TerraformJsonStringListToGoObjects(items types.List) (*[]map[string]any, error) {
+	if items.IsNull() || items.IsUnknown() {
+		return nil, nil
+	}
+	body := make([]map[string]any, len(items.Elements()))
+	for i, item := range items.Elements() {
+		strVal := item.(types.String)
+		v, err := TerraformJsonStringToGoObject(strVal.ValueStringPointer())
+		if err != nil {
+			return nil, err
+		}
+		if v == nil {
+			body[i] = map[string]any{}
+			continue
+		}
+		body[i] = *v
+	}
+
+	return &body, nil
+}
+
+func configuredJSONObjectKeys(stateValue types.String) map[string]struct{} {
+	if stateValue.IsNull() || stateValue.IsUnknown() {
+		return nil
+	}
+
+	var values map[string]any
+	if err := json.Unmarshal([]byte(stateValue.ValueString()), &values); err != nil || len(values) == 0 {
+		return nil
+	}
+
+	keys := make(map[string]struct{}, len(values))
+	for key := range values {
+		keys[key] = struct{}{}
+	}
+	return keys
+}
+
+func jsonObjectFromAPIForRead(stateValue types.String, apiValues map[string]any, jsonEscapeHTML bool) types.String {
+	if stateValue.IsNull() || stateValue.IsUnknown() {
+		return types.StringNull()
+	}
+
+	configuredKeys := configuredJSONObjectKeys(stateValue)
+	if len(configuredKeys) == 0 {
+		return types.StringNull()
+	}
+
+	var stateMap map[string]any
+	if err := json.Unmarshal([]byte(stateValue.ValueString()), &stateMap); err != nil {
+		return stateValue
+	}
+
+	valuesForState := make(map[string]any, len(stateMap))
+	for key := range stateMap {
+		if apiValue, ok := apiValues[key]; ok {
+			valuesForState[key] = apiValue
+		} else {
+			valuesForState[key] = nil
+		}
+	}
+
+	stateJSON, err := GoObjectToTerraformString(valuesForState, jsonEscapeHTML)
+	if err != nil {
+		return stateValue
+	}
+	return stateJSON
+}
+
+// SyncJSONObjectState keeps a Terraform JSON-object string attribute aligned with API values.
+// When syncFromAPI is true, state is updated from the API for configured keys.
+// When false, it errors if the API did not apply the configured values.
+func SyncJSONObjectState(stateValue *types.String, apiValues map[string]any, fieldName string, jsonEscapeHTML bool, syncFromAPI bool) error {
+	if stateValue.IsNull() || stateValue.IsUnknown() {
+		return nil
+	}
+
+	apiState := jsonObjectFromAPIForRead(*stateValue, apiValues, jsonEscapeHTML)
+	if syncFromAPI {
+		*stateValue = apiState
+		return nil
+	}
+
+	equal, err := JSONStringsSemanticallyEqual(
+		stateValue.ValueString(),
+		apiState.ValueString(),
+		jsonEscapeHTML,
+	)
+	if err != nil {
+		return err
+	}
+	if equal {
+		return nil
+	}
+
+	configured := stateValue.ValueString()
+	*stateValue = apiState
+	return fmt.Errorf(
+		"%s were not applied by the API: configured %s, API returned %s",
+		fieldName,
+		configured,
+		apiState.ValueString(),
+	)
 }
 
 func InterfaceToStringArray(o interface{}) []string {

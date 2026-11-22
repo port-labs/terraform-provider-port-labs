@@ -1,0 +1,2728 @@
+package workflow
+
+import (
+	"context"
+	"encoding/json"
+	"testing"
+
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
+
+func TestWorkflowSchemaIsValid(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{}
+	resp := &resource.SchemaResponse{}
+	r.Schema(ctx, resource.SchemaRequest{}, resp)
+
+	require.False(t, resp.Diagnostics.HasError(), resp.Diagnostics.Errors())
+
+	diags := resp.Schema.ValidateImplementation(ctx)
+	require.False(t, diags.HasError(), diags.Errors())
+}
+
+func strPtr(s string) *string { return &s }
+func boolPtr(b bool) *bool    { return &b }
+
+func stringList(values ...string) types.List {
+	elements := make([]types.String, 0, len(values))
+	for _, v := range values {
+		elements = append(elements, types.StringValue(v))
+	}
+
+	list, diags := types.ListValueFrom(context.Background(), types.StringType, elements)
+	if diags.HasError() {
+		panic(diags.Errors())
+	}
+	return list
+}
+
+func TestWorkflowStateToPortBody(t *testing.T) {
+	ctx := context.Background()
+
+	state := &WorkflowModel{
+		Identifier:            types.StringValue("review-pr"),
+		Title:                 types.StringValue("Review PR"),
+		Category:              types.StringValue("engineering"),
+		AllowAnyoneToViewRuns: types.BoolValue(false),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("trigger"),
+				Title:      types.StringValue("PR Trigger"),
+				Verbose:    types.BoolValue(true),
+				Links:      stringList("https://example.com/{{ .result.id }}"),
+				EventTrigger: &EventTriggerModel{
+					Type:                types.StringValue(consts.EntityUpdated),
+					BlueprintIdentifier: types.StringValue("githubPullRequest"),
+					Published:           types.BoolValue(true),
+					Condition: &NodeConditionModel{
+						Expressions: stringList(".diff.after.properties.open == true"),
+						Combinator:  types.StringValue("and"),
+					},
+				},
+			},
+			{
+				Identifier: types.StringValue("notify"),
+				Webhook: &WebhookModel{
+					Url:       types.StringValue("https://example.com/hook"),
+					Method:    types.StringValue("POST"),
+					Body:      types.StringValue(`{"text":"hello"}`),
+					OnFailure: types.StringValue("continue"),
+				},
+			},
+		},
+		Connections: []ConnectionModel{
+			{
+				SourceIdentifier: types.StringValue("trigger"),
+				TargetIdentifier: types.StringValue("notify"),
+			},
+		},
+	}
+
+	w, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	assert.Equal(t, "review-pr", w.Identifier)
+	require.NotNil(t, w.Category)
+	assert.Equal(t, "engineering", *w.Category)
+	require.NotNil(t, w.AllowAnyoneToViewRuns)
+	assert.False(t, *w.AllowAnyoneToViewRuns)
+
+	require.Len(t, w.Nodes, 2)
+
+	trigger := w.Nodes[0]
+	assert.Equal(t, consts.EventTrigger, trigger.Config.Type)
+	require.NotNil(t, trigger.Config.Event)
+	assert.Equal(t, consts.EntityUpdated, trigger.Config.Event.Type)
+	assert.Equal(t, "githubPullRequest", trigger.Config.Event.BlueprintIdentifier)
+	require.NotNil(t, trigger.Verbose)
+	assert.True(t, *trigger.Verbose)
+	assert.Equal(t, []string{"https://example.com/{{ .result.id }}"}, trigger.Links)
+	require.NotNil(t, trigger.Config.Condition)
+	assert.Equal(t, consts.JqCondition, trigger.Config.Condition.Type)
+	assert.Equal(t, []string{".diff.after.properties.open == true"}, trigger.Config.Condition.Expressions)
+
+	webhook := w.Nodes[1]
+	assert.Equal(t, consts.Webhook, webhook.Config.Type)
+	require.NotNil(t, webhook.Config.Url)
+	assert.Equal(t, "https://example.com/hook", *webhook.Config.Url)
+	body, ok := webhook.Config.Body.(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "hello", body["text"])
+
+	require.Len(t, w.Connections, 1)
+	assert.Equal(t, "trigger", w.Connections[0].SourceIdentifier)
+	assert.Equal(t, "notify", w.Connections[0].TargetIdentifier)
+}
+
+func TestWorkflowStateToPortBodyIntegrationAction(t *testing.T) {
+	ctx := context.Background()
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("run"),
+				IntegrationAction: &IntegrationActionModel{
+					InstallationId:            types.StringValue("github-install"),
+					IntegrationProvider:       types.StringValue("github"),
+					IntegrationInvocationType: types.StringValue("WORKFLOW_DISPATCH"),
+					ExecutionProperties:       types.StringValue(`{"workflow":"deploy.yml","ref":"main"}`),
+				},
+			},
+		},
+	}
+
+	w, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	require.Len(t, w.Nodes, 1)
+	config := w.Nodes[0].Config
+	assert.Equal(t, consts.IntegrationAction, config.Type)
+	require.NotNil(t, config.InstallationId)
+	assert.Equal(t, "github-install", *config.InstallationId)
+	require.NotNil(t, config.IntegrationProvider)
+	assert.Equal(t, "github", *config.IntegrationProvider)
+	props, ok := config.IntegrationActionExecutionProperties.(map[string]any)
+	require.True(t, ok)
+	assert.Equal(t, "deploy.yml", props["workflow"])
+	assert.Equal(t, "main", props["ref"])
+}
+
+func TestWorkflowStateToPortBodyConditionAndConnections(t *testing.T) {
+	ctx := context.Background()
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("branch"),
+				Condition: &ConditionModel{
+					Outlets: []ConditionOutletModel{
+						{
+							Identifier:  types.StringValue("approved"),
+							Title:       types.StringValue("Approved"),
+							Expression:  types.StringValue(".outputs.review.approved"),
+							StatusLabel: &StatusLabelModel{Text: types.StringValue("Approved"), Variant: types.StringValue("success")},
+						},
+					},
+				},
+			},
+		},
+		Connections: []ConnectionModel{
+			{
+				SourceIdentifier:       types.StringValue("branch"),
+				TargetIdentifier:       types.StringValue("deploy"),
+				SourceOutletIdentifier: types.StringValue("approved"),
+			},
+			{
+				SourceIdentifier: types.StringValue("branch"),
+				TargetIdentifier: types.StringValue("reject"),
+				Fallback:         types.BoolValue(true),
+			},
+		},
+	}
+
+	w, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	config := w.Nodes[0].Config
+	assert.Equal(t, consts.ConditionNode, config.Type)
+	require.NotNil(t, config.Outlets)
+	outlets := *config.Outlets
+	require.Len(t, outlets, 1)
+	assert.Equal(t, "approved", outlets[0].Identifier)
+	require.NotNil(t, outlets[0].Expression)
+	assert.Equal(t, ".outputs.review.approved", *outlets[0].Expression)
+	require.NotNil(t, outlets[0].StatusLabel)
+	assert.Equal(t, "Approved", outlets[0].StatusLabel.Text)
+
+	require.Len(t, w.Connections, 2)
+	require.NotNil(t, w.Connections[0].SourceOutletIdentifier)
+	assert.Equal(t, "approved", *w.Connections[0].SourceOutletIdentifier)
+	assert.Nil(t, w.Connections[0].Fallback)
+	require.NotNil(t, w.Connections[1].Fallback)
+	assert.True(t, *w.Connections[1].Fallback)
+}
+
+func TestWorkflowStateToPortBodyUpsertEntity(t *testing.T) {
+	ctx := context.Background()
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("upsert"),
+				UpsertEntity: &UpsertEntityModel{
+					BlueprintIdentifier: types.StringValue("service"),
+					Mapping: &UpsertMappingModel{
+						Identifier: types.StringValue("{{ .outputs.trigger.identifier }}"),
+						Title:      types.StringValue("My service"),
+						Teams:      stringList("platform"),
+						Properties: types.StringValue(`{"owner":"platform"}`),
+					},
+				},
+			},
+		},
+	}
+
+	w, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	config := w.Nodes[0].Config
+	assert.Equal(t, consts.UpsertEntity, config.Type)
+	require.NotNil(t, config.Mapping)
+	assert.Equal(t, []string{"platform"}, config.Mapping.Team)
+	assert.Equal(t, "platform", config.Mapping.Properties["owner"])
+}
+
+func TestRefreshWorkflowStatePreservesNodeOrder(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("review-pr"),
+		Nodes: []WorkflowNodeModel{
+			{Identifier: types.StringValue("trigger")},
+			{Identifier: types.StringValue("notify")},
+		},
+		Connections: []ConnectionModel{
+			{SourceIdentifier: types.StringValue("trigger"), TargetIdentifier: types.StringValue("notify")},
+		},
+	}
+
+	apiWorkflow := &cli.Workflow{
+		Identifier:            "review-pr",
+		Category:              strPtr("engineering"),
+		AllowAnyoneToViewRuns: boolPtr(true),
+		Nodes: []cli.WorkflowNode{
+			{
+				Identifier: "notify",
+				Config: cli.WorkflowNodeConfig{
+					Type:      consts.Webhook,
+					Url:       strPtr("https://example.com/hook"),
+					Method:    strPtr("POST"),
+					OnFailure: strPtr("terminate"),
+				},
+			},
+			{
+				Identifier: "trigger",
+				Verbose:    boolPtr(true),
+				Config: cli.WorkflowNodeConfig{
+					Type:      consts.EventTrigger,
+					Published: boolPtr(true),
+					Event: &cli.WorkflowTriggerEvent{
+						Type:                consts.EntityUpdated,
+						BlueprintIdentifier: "githubPullRequest",
+					},
+					Condition: &cli.WorkflowNodeCondition{
+						Type:        consts.JqCondition,
+						Expressions: []string{".diff.after.properties.open == true"},
+					},
+				},
+			},
+		},
+		Connections: []cli.WorkflowConnection{
+			{SourceIdentifier: "trigger", TargetIdentifier: "notify"},
+		},
+	}
+
+	err := r.refreshWorkflowState(ctx, state, apiWorkflow)
+	require.NoError(t, err)
+
+	require.Len(t, state.Nodes, 2)
+	assert.Equal(t, "trigger", state.Nodes[0].Identifier.ValueString())
+	assert.Equal(t, "notify", state.Nodes[1].Identifier.ValueString())
+
+	require.NotNil(t, state.Nodes[0].EventTrigger)
+	assert.Equal(t, consts.EntityUpdated, state.Nodes[0].EventTrigger.Type.ValueString())
+	assert.Equal(t, "githubPullRequest", state.Nodes[0].EventTrigger.BlueprintIdentifier.ValueString())
+	require.NotNil(t, state.Nodes[0].EventTrigger.Condition)
+	assert.True(t, state.Nodes[0].Verbose.ValueBool())
+
+	require.NotNil(t, state.Nodes[1].Webhook)
+	assert.Equal(t, "https://example.com/hook", state.Nodes[1].Webhook.Url.ValueString())
+
+	assert.Equal(t, "engineering", state.Category.ValueString())
+	assert.True(t, state.AllowAnyoneToViewRuns.ValueBool())
+}
+
+func TestRefreshWorkflowStateKeepsUnsetCollectionsNull(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes:      []WorkflowNodeModel{{Identifier: types.StringValue("trigger")}},
+	}
+
+	apiWorkflow := &cli.Workflow{
+		Identifier: "wf",
+		Nodes: []cli.WorkflowNode{
+			{
+				Identifier: "trigger",
+				Links:      []string{},
+				Variables:  map[string]string{},
+				Config: cli.WorkflowNodeConfig{
+					Type:  consts.EventTrigger,
+					Event: &cli.WorkflowTriggerEvent{Type: consts.EntityCreated, BlueprintIdentifier: "service"},
+				},
+			},
+		},
+	}
+
+	err := r.refreshWorkflowState(ctx, state, apiWorkflow)
+	require.NoError(t, err)
+
+	assert.True(t, state.Nodes[0].Links.IsNull())
+	assert.True(t, state.Nodes[0].Variables.IsNull())
+}
+
+func TestRefreshWorkflowStateSelfServeTriggerUserInputs(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes:      []WorkflowNodeModel{{Identifier: types.StringValue("trigger")}},
+	}
+
+	apiWorkflow := &cli.Workflow{
+		Identifier: "wf",
+		Nodes: []cli.WorkflowNode{
+			{
+				Identifier: "trigger",
+				Config: cli.WorkflowNodeConfig{
+					Type:      consts.SelfServeTrigger,
+					Published: boolPtr(true),
+					UserInputs: &cli.WorkflowUserInputs{
+						Properties: map[string]cli.WorkflowInputProperty{
+							"service": {Type: "string", Title: strPtr("Service")},
+						},
+						Required: []any{"service"},
+					},
+					Permissions: &cli.WorkflowNodePermissions{Roles: []string{"Member"}},
+				},
+			},
+		},
+	}
+
+	err := r.refreshWorkflowState(ctx, state, apiWorkflow)
+	require.NoError(t, err)
+
+	trigger := state.Nodes[0].SelfServeTrigger
+	require.NotNil(t, trigger)
+	require.NotNil(t, trigger.UserInputs)
+	require.NotNil(t, trigger.UserInputs.UserProperties)
+	require.Contains(t, trigger.UserInputs.UserProperties.StringProps, "service")
+	assert.Equal(t, "Service", trigger.UserInputs.UserProperties.StringProps["service"].Title.ValueString())
+
+	require.NotNil(t, trigger.Permissions)
+	roles, err := utils.TerraformListToGoArray(ctx, trigger.Permissions.Roles, "string")
+	require.NoError(t, err)
+	assert.Equal(t, []any{"Member"}, roles)
+}
+
+func TestSelfServeTriggerUserInputsRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes:      []WorkflowNodeModel{{Identifier: types.StringValue("trigger")}},
+	}
+
+	apiWorkflow := &cli.Workflow{
+		Identifier: "wf",
+		Nodes: []cli.WorkflowNode{
+			{
+				Identifier: "trigger",
+				Config: cli.WorkflowNodeConfig{
+					Type: consts.SelfServeTrigger,
+					UserInputs: &cli.WorkflowUserInputs{
+						Properties: map[string]cli.WorkflowInputProperty{
+							"service":  {Type: "string", Title: strPtr("Service")},
+							"replicas": {Type: "number", Title: strPtr("Replicas")},
+						},
+						Required: []any{"service"},
+					},
+				},
+			},
+		},
+	}
+
+	require.NoError(t, r.refreshWorkflowState(ctx, state, apiWorkflow))
+
+	body, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	userInputs := body.Nodes[0].Config.UserInputs
+	require.NotNil(t, userInputs)
+	require.Contains(t, userInputs.Properties, "service")
+	require.Contains(t, userInputs.Properties, "replicas")
+	assert.Equal(t, "string", userInputs.Properties["service"].Type)
+	assert.Equal(t, "number", userInputs.Properties["replicas"].Type)
+	assert.Equal(t, []string{"service"}, userInputs.Required)
+}
+
+func selfServeTriggerRoundTrip(t *testing.T, userInputs *cli.WorkflowUserInputs) *cli.WorkflowUserInputs {
+	t.Helper()
+
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes:      []WorkflowNodeModel{{Identifier: types.StringValue("trigger")}},
+	}
+
+	apiWorkflow := &cli.Workflow{
+		Identifier: "wf",
+		Nodes: []cli.WorkflowNode{
+			{
+				Identifier: "trigger",
+				Config: cli.WorkflowNodeConfig{
+					Type:       consts.SelfServeTrigger,
+					UserInputs: userInputs,
+				},
+			},
+		},
+	}
+
+	require.NoError(t, r.refreshWorkflowState(ctx, state, apiWorkflow))
+
+	body, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	result := body.Nodes[0].Config.UserInputs
+	require.NotNil(t, result)
+	return result
+}
+
+func TestUserInputReadOnlyAndDisabledRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"requested_by": {
+				Type:     "string",
+				Format:   strPtr("user"),
+				ReadOnly: true,
+				Default:  map[string]any{"jqQuery": ".trigger.by.user.email"},
+			},
+			"approver": {
+				Type:     "string",
+				Format:   strPtr("user"),
+				Disabled: map[string]any{"jqQuery": ".form.tier != \"production\""},
+			},
+			"notes": {
+				Type:     "string",
+				ReadOnly: map[string]any{"jqQuery": ".form.locked"},
+			},
+		},
+	})
+
+	assert.Equal(t, true, result.Properties["requested_by"].ReadOnly)
+	assert.Equal(t, map[string]string{"jqQuery": ".trigger.by.user.email"}, result.Properties["requested_by"].Default)
+	assert.Equal(t, map[string]string{"jqQuery": ".form.tier != \"production\""}, result.Properties["approver"].Disabled)
+	assert.Equal(t, map[string]string{"jqQuery": ".form.locked"}, result.Properties["notes"].ReadOnly)
+
+	assert.Nil(t, result.Properties["requested_by"].Disabled)
+	assert.Nil(t, result.Properties["approver"].ReadOnly)
+}
+
+func TestUserInputValidationsRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"min_replicas": {Type: "number"},
+			"max_replicas": {Type: "number"},
+		},
+		Validations: []cli.WorkflowInputValidation{
+			{Constraint: ".form.max_replicas >= .form.min_replicas", Message: "max must be at least min"},
+		},
+	})
+
+	require.Len(t, result.Validations, 1)
+	assert.Equal(t, ".form.max_replicas >= .form.min_replicas", result.Validations[0].Constraint)
+	assert.Equal(t, "max must be at least min", result.Validations[0].Message)
+}
+
+func TestUserInputStepValidationsRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"cpu": {Type: "number"},
+		},
+		Steps: []cli.WorkflowUserInputsStep{
+			{
+				Title:   "Limits",
+				Order:   []string{"cpu"},
+				Visible: map[string]any{"jqQuery": ".form.advanced"},
+				Validations: []cli.WorkflowInputValidation{
+					{Constraint: ".form.cpu <= 8", Message: "CPU limit cannot exceed 8 cores"},
+				},
+			},
+		},
+	})
+
+	require.Len(t, result.Steps, 1)
+	assert.Equal(t, "Limits", result.Steps[0].Title)
+	assert.Equal(t, map[string]string{"jqQuery": ".form.advanced"}, result.Steps[0].Visible)
+	require.Len(t, result.Steps[0].Validations, 1)
+	assert.Equal(t, ".form.cpu <= 8", result.Steps[0].Validations[0].Constraint)
+	assert.Empty(t, result.Validations)
+}
+
+func TestUserInputDatasetRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"service": {
+				Type:      "string",
+				Format:    strPtr("entity"),
+				Blueprint: strPtr("service"),
+				Dataset: &cli.WorkflowDataset{
+					Combinator: "and",
+					Rules: []cli.WorkflowDatasetRule{
+						{Property: strPtr("tier"), Operator: "=", Value: map[string]any{"jqQuery": ".form.tier"}},
+						{Property: strPtr("archived"), Operator: "=", Value: false},
+					},
+				},
+			},
+		},
+	})
+
+	dataset := result.Properties["service"].Dataset
+	require.NotNil(t, dataset)
+	assert.Equal(t, "and", dataset.Combinator)
+	require.Len(t, dataset.Rules, 2)
+	assert.Equal(t, map[string]string{"jqQuery": ".form.tier"}, dataset.Rules[0].Value)
+	assert.Equal(t, false, dataset.Rules[1].Value)
+}
+
+func TestUserInputDatasetRelationRuleRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"service": {
+				Type:      "string",
+				Format:    strPtr("entity"),
+				Blueprint: strPtr("githubRepository"),
+				Dataset: &cli.WorkflowDataset{
+					Combinator: "and",
+					Rules: []cli.WorkflowDatasetRule{
+						{Property: strPtr("language"), Operator: "isNotEmpty"},
+						{Relation: strPtr("service"), Direction: strPtr("upstream"), Operator: "isNotEmpty"},
+						{
+							Combinator: strPtr("or"),
+							Rules: []cli.WorkflowDatasetRule{
+								{Relation: strPtr("team"), Operator: "isNotEmpty"},
+								{Property: strPtr("archived"), Operator: "=", Value: false},
+							},
+						},
+					},
+				},
+			},
+		},
+	})
+
+	dataset := result.Properties["service"].Dataset
+	require.NotNil(t, dataset)
+	require.Len(t, dataset.Rules, 3)
+
+	assert.Equal(t, strPtr("language"), dataset.Rules[0].Property)
+	assert.Nil(t, dataset.Rules[0].Relation)
+
+	assert.Equal(t, strPtr("service"), dataset.Rules[1].Relation)
+	assert.Equal(t, strPtr("upstream"), dataset.Rules[1].Direction)
+	assert.Nil(t, dataset.Rules[1].Property)
+	assert.Equal(t, "isNotEmpty", dataset.Rules[1].Operator)
+
+	require.Len(t, dataset.Rules[2].Rules, 2)
+	assert.Equal(t, strPtr("team"), dataset.Rules[2].Rules[0].Relation)
+	assert.Nil(t, dataset.Rules[2].Rules[0].Direction)
+
+	encoded, err := json.Marshal(dataset.Rules[1])
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"relation":"service","direction":"upstream","operator":"isNotEmpty"}`, string(encoded))
+}
+
+func TestUserInputNumberBoundsAndUniqueItemsRoundTrip(t *testing.T) {
+	minimum, maximum := 1.0, 10.0
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"replicas": {
+				Type:             "number",
+				Minimum:          &minimum,
+				ExclusiveMaximum: &maximum,
+			},
+			"tags": {
+				Type:        "array",
+				UniqueItems: boolPtr(true),
+				Items:       map[string]any{"type": "string"},
+			},
+		},
+	})
+
+	assert.Equal(t, &minimum, result.Properties["replicas"].Minimum)
+	assert.Equal(t, &maximum, result.Properties["replicas"].ExclusiveMaximum)
+	assert.Nil(t, result.Properties["replicas"].Maximum)
+	assert.Equal(t, boolPtr(true), result.Properties["tags"].UniqueItems)
+}
+
+func TestObjectAdditionalPropertiesRoundTrip(t *testing.T) {
+	var fromAPI cli.WorkflowInputProperty
+	require.NoError(t, json.Unmarshal([]byte(`{"type":"object","additionalProperties":false}`), &fromAPI))
+	assert.Equal(t, false, fromAPI.AdditionalProperties)
+
+	schema := map[string]any{"type": "string"}
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"open":   {Type: "object", AdditionalProperties: true},
+			"locked": fromAPI,
+			"meta":   {Type: "object", AdditionalProperties: schema},
+			"plain":  {Type: "object"},
+			"labels": {
+				Type: "array",
+				Items: map[string]any{
+					"type":                 "object",
+					"additionalProperties": schema,
+				},
+			},
+			"flags": {
+				Type: "array",
+				Items: map[string]any{
+					"type":                 "object",
+					"additionalProperties": false,
+				},
+			},
+		},
+	})
+
+	assert.Equal(t, true, result.Properties["open"].AdditionalProperties)
+	assert.Equal(t, false, result.Properties["locked"].AdditionalProperties)
+	assert.Equal(t, schema, result.Properties["meta"].AdditionalProperties)
+	assert.Nil(t, result.Properties["plain"].AdditionalProperties)
+	assert.Equal(t, schema, result.Properties["labels"].Items["additionalProperties"])
+	assert.Equal(t, false, result.Properties["flags"].Items["additionalProperties"])
+
+	encoded, err := json.Marshal(result.Properties["locked"])
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"type":"object","additionalProperties":false}`, string(encoded))
+}
+
+func TestDecodeAdditionalPropertiesRejectsNonBooleanNonObject(t *testing.T) {
+	_, err := decodeAdditionalProperties(`"nope"`)
+	require.Error(t, err)
+
+	_, err = decodeAdditionalProperties(`[]`)
+	require.Error(t, err)
+
+	value, err := decodeAdditionalProperties(`false`)
+	require.NoError(t, err)
+	assert.Equal(t, false, value)
+}
+
+func TestInputNodeWithoutUserPropertiesStaysUnset(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{{
+			Identifier: types.StringValue("approval"),
+			Input: &InputModel{
+				UserInputs: &InputUserInputsModel{
+					Buttons: []InputButtonModel{{
+						Identifier: types.StringValue("approve"),
+						Label:      types.StringValue("Approve"),
+						Variant:    types.StringValue("PRIMARY"),
+					}},
+				},
+			},
+		}},
+	}
+
+	apiWorkflow := &cli.Workflow{
+		Identifier: "wf",
+		Nodes: []cli.WorkflowNode{{
+			Identifier: "approval",
+			Config: cli.WorkflowNodeConfig{
+				Type: consts.InputNode,
+				UserInputs: &cli.WorkflowUserInputs{
+					Properties: map[string]cli.WorkflowInputProperty{},
+					Buttons: &[]cli.WorkflowInputButton{
+						{Identifier: "approve", Label: "Approve", Variant: "PRIMARY"},
+					},
+				},
+			},
+		}},
+	}
+
+	require.NoError(t, r.refreshWorkflowState(ctx, state, apiWorkflow))
+
+	userInputs := state.Nodes[0].Input.UserInputs
+	require.NotNil(t, userInputs)
+	assert.Nil(t, userInputs.UserProperties)
+	assert.Len(t, userInputs.Buttons, 1)
+}
+
+func TestUserInputRequiredJqQueryRoundTrip(t *testing.T) {
+	result := selfServeTriggerRoundTrip(t, &cli.WorkflowUserInputs{
+		Properties: map[string]cli.WorkflowInputProperty{
+			"service": {Type: "string"},
+		},
+		Required: map[string]any{"jqQuery": ".form.tier == \"production\""},
+	})
+
+	assert.Equal(t, map[string]string{"jqQuery": ".form.tier == \"production\""}, result.Required)
+}
+
+func validateNodes(nodes []WorkflowNodeModel, connections []ConnectionModel) diag.Diagnostics {
+	resp := &resource.ValidateConfigResponse{}
+
+	nodeTypes := make(map[string]string, len(nodes))
+	outlets := make(map[string]map[string]bool, len(nodes))
+	for i, node := range nodes {
+		nodePath := path.Root("node").AtListIndex(i)
+		identifier := node.Identifier.ValueString()
+		if _, duplicate := nodeTypes[identifier]; duplicate {
+			resp.Diagnostics.AddAttributeError(nodePath.AtName("identifier"), "Duplicate node identifier", identifier)
+		}
+		nodeTypes[identifier] = validateNode(resp, nodePath, node, false)
+		outlets[identifier] = nodeOutlets(node)
+	}
+	validateConnections(resp, connections, nodeTypes, outlets, true)
+
+	return resp.Diagnostics
+}
+
+func errorSummaries(diags diag.Diagnostics) []string {
+	summaries := make([]string, 0, len(diags.Errors()))
+	for _, d := range diags.Errors() {
+		summaries = append(summaries, d.Summary())
+	}
+	return summaries
+}
+
+func eventTriggerNode(identifier string) WorkflowNodeModel {
+	return WorkflowNodeModel{
+		Identifier: types.StringValue(identifier),
+		EventTrigger: &EventTriggerModel{
+			Type:                types.StringValue(consts.EntityCreated),
+			BlueprintIdentifier: types.StringValue("service"),
+		},
+	}
+}
+
+func workflowTriggerNode(identifier string) WorkflowNodeModel {
+	return WorkflowNodeModel{
+		Identifier:      types.StringValue(identifier),
+		WorkflowTrigger: &WorkflowTriggerModel{Published: types.BoolValue(true)},
+	}
+}
+
+func executeWorkflowNode(identifier string) WorkflowNodeModel {
+	return WorkflowNodeModel{
+		Identifier: types.StringValue(identifier),
+		ExecuteWorkflow: &ExecuteWorkflowModel{
+			WorkflowIdentifier: types.StringValue("child"),
+			TriggerIdentifier:  types.StringValue("called"),
+			Input:              types.StringValue("{}"),
+			Wait:               types.BoolValue(true),
+		},
+	}
+}
+
+func conditionNode(identifier string, outletIdentifiers ...string) WorkflowNodeModel {
+	outlets := make([]ConditionOutletModel, 0, len(outletIdentifiers))
+	for _, o := range outletIdentifiers {
+		outlets = append(outlets, ConditionOutletModel{
+			Identifier: types.StringValue(o),
+			Expression: types.StringValue(".outputs.ok"),
+		})
+	}
+	return WorkflowNodeModel{
+		Identifier: types.StringValue(identifier),
+		Condition:  &ConditionModel{Outlets: outlets},
+	}
+}
+
+func TestValidateNodeRequiredAttributes(t *testing.T) {
+	tests := map[string]struct {
+		node    WorkflowNodeModel
+		summary string
+	}{
+		"event_trigger without blueprint": {
+			node: WorkflowNodeModel{
+				Identifier:   types.StringValue("trigger"),
+				EventTrigger: &EventTriggerModel{Type: types.StringValue(consts.EntityCreated)},
+			},
+			summary: "Missing required attribute",
+		},
+		"timer_expired without property": {
+			node: WorkflowNodeModel{
+				Identifier: types.StringValue("trigger"),
+				EventTrigger: &EventTriggerModel{
+					Type:                types.StringValue(consts.WorkflowTimerExpired),
+					BlueprintIdentifier: types.StringValue("service"),
+				},
+			},
+			summary: "Missing required attribute",
+		},
+		"schedule_trigger without cron": {
+			node: WorkflowNodeModel{
+				Identifier:      types.StringValue("trigger"),
+				ScheduleTrigger: &ScheduleTriggerModel{},
+			},
+			summary: "Missing required attribute",
+		},
+		"webhook without url": {
+			node:    WorkflowNodeModel{Identifier: types.StringValue("call"), Webhook: &WebhookModel{}},
+			summary: "Missing required attribute",
+		},
+		"upsert_entity without blueprint": {
+			node:    WorkflowNodeModel{Identifier: types.StringValue("upsert"), UpsertEntity: &UpsertEntityModel{}},
+			summary: "Missing required attribute",
+		},
+		"ai without user_prompt": {
+			node:    WorkflowNodeModel{Identifier: types.StringValue("summarize"), AI: &AIModel{}},
+			summary: "Missing required attribute",
+		},
+		"ai_agent without agent_identifier": {
+			node: WorkflowNodeModel{
+				Identifier: types.StringValue("agent"),
+				AIAgent:    &AIAgentModel{UserPrompt: types.StringValue("go")},
+			},
+			summary: "Missing required attribute",
+		},
+		"integration_action without installation_id": {
+			node: WorkflowNodeModel{
+				Identifier: types.StringValue("deploy"),
+				IntegrationAction: &IntegrationActionModel{
+					IntegrationProvider:       types.StringValue(consts.Github),
+					IntegrationInvocationType: types.StringValue("GITHUB_WORKFLOW"),
+				},
+			},
+			summary: "Missing required attribute",
+		},
+		"execute_workflow without workflow_identifier": {
+			node: WorkflowNodeModel{
+				Identifier:      types.StringValue("call"),
+				ExecuteWorkflow: &ExecuteWorkflowModel{TriggerIdentifier: types.StringValue("called")},
+			},
+			summary: "Missing required attribute",
+		},
+		"execute_workflow without trigger_identifier": {
+			node: WorkflowNodeModel{
+				Identifier:      types.StringValue("call"),
+				ExecuteWorkflow: &ExecuteWorkflowModel{WorkflowIdentifier: types.StringValue("child")},
+			},
+			summary: "Missing required attribute",
+		},
+		"execute_workflow with blank workflow_identifier": {
+			node: WorkflowNodeModel{
+				Identifier: types.StringValue("call"),
+				ExecuteWorkflow: &ExecuteWorkflowModel{
+					WorkflowIdentifier: types.StringValue(" "),
+					TriggerIdentifier:  types.StringValue("called"),
+				},
+			},
+			summary: "Missing required attribute",
+		},
+		"execute_workflow on_failure without wait": {
+			node: WorkflowNodeModel{
+				Identifier: types.StringValue("call"),
+				ExecuteWorkflow: &ExecuteWorkflowModel{
+					WorkflowIdentifier: types.StringValue("child"),
+					TriggerIdentifier:  types.StringValue("called"),
+					Wait:               types.BoolValue(false),
+					OnFailure:          types.StringValue("continue"),
+				},
+			},
+			summary: "Invalid attribute combination",
+		},
+		"input without user inputs": {
+			node:    WorkflowNodeModel{Identifier: types.StringValue("approval"), Input: &InputModel{}},
+			summary: "Missing required block",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			diags := validateNodes([]WorkflowNodeModel{test.node}, nil)
+			assert.Contains(t, errorSummaries(diags), test.summary)
+		})
+	}
+}
+
+func TestValidateNodeAcceptsCompleteConfigs(t *testing.T) {
+	nodes := []WorkflowNodeModel{
+		eventTriggerNode("trigger"),
+		{
+			Identifier:      types.StringValue("nightly"),
+			ScheduleTrigger: &ScheduleTriggerModel{Cron: types.StringValue("0 9 * * 1-5")},
+		},
+		{
+			Identifier: types.StringValue("notify"),
+			Webhook:    &WebhookModel{Url: types.StringValue("https://example.com/hook")},
+		},
+		{
+			Identifier:   types.StringValue("upsert"),
+			UpsertEntity: &UpsertEntityModel{BlueprintIdentifier: types.StringValue("service")},
+		},
+		conditionNode("branch", "approved"),
+		workflowTriggerNode("called"),
+		executeWorkflowNode("call"),
+		{
+			Identifier: types.StringValue("fire_and_forget"),
+			ExecuteWorkflow: &ExecuteWorkflowModel{
+				WorkflowIdentifier: types.StringValue("child"),
+				TriggerIdentifier:  types.StringValue("called"),
+				Wait:               types.BoolValue(false),
+			},
+		},
+	}
+	nodes[len(nodes)-2].ExecuteWorkflow.OnFailure = types.StringValue("continue")
+
+	diags := validateNodes(nodes, []ConnectionModel{
+		{
+			SourceIdentifier:       types.StringValue("branch"),
+			TargetIdentifier:       types.StringValue("notify"),
+			SourceOutletIdentifier: types.StringValue("approved"),
+		},
+		{
+			SourceIdentifier: types.StringValue("trigger"),
+			TargetIdentifier: types.StringValue("branch"),
+		},
+	})
+
+	assert.False(t, diags.HasError(), errorSummaries(diags))
+}
+
+func TestValidateSelfServeTriggerContexts(t *testing.T) {
+	tests := map[string]struct {
+		context TriggerContextModel
+		summary string
+	}{
+		"create_entity without blueprint": {
+			context: TriggerContextModel{On: types.StringValue(consts.CreateEntityContext)},
+			summary: "Missing required attribute",
+		},
+		"create_entity with user_input": {
+			context: TriggerContextModel{
+				On:                  types.StringValue(consts.CreateEntityContext),
+				BlueprintIdentifier: types.StringValue("service"),
+				UserInput:           types.StringValue("service"),
+			},
+			summary: "Invalid attribute combination",
+		},
+		"entity without user_input": {
+			context: TriggerContextModel{On: types.StringValue(consts.EntityContext)},
+			summary: "Missing required attribute",
+		},
+		"entity with blueprint": {
+			context: TriggerContextModel{
+				On:                  types.StringValue(consts.EntityContext),
+				UserInput:           types.StringValue("service"),
+				BlueprintIdentifier: types.StringValue("service"),
+			},
+			summary: "Invalid attribute combination",
+		},
+		"entity with visible": {
+			context: TriggerContextModel{
+				On:        types.StringValue(consts.EntityContext),
+				UserInput: types.StringValue("service"),
+				Visible:   types.BoolValue(false),
+			},
+			summary: "Invalid attribute combination",
+		},
+		"create_entity with visible": {
+			context: TriggerContextModel{
+				On:                  types.StringValue(consts.CreateEntityContext),
+				BlueprintIdentifier: types.StringValue("service"),
+				Visible:             types.BoolValue(false),
+			},
+			summary: "Invalid attribute combination",
+		},
+		"self_service_hub without visible": {
+			context: TriggerContextModel{On: types.StringValue(consts.SelfServiceHubContext)},
+			summary: "Missing required attribute",
+		},
+		"self_service_hub with blueprint": {
+			context: TriggerContextModel{
+				On:                  types.StringValue(consts.SelfServiceHubContext),
+				Visible:             types.BoolValue(false),
+				BlueprintIdentifier: types.StringValue("service"),
+			},
+			summary: "Invalid attribute combination",
+		},
+		"self_service_hub with user_input": {
+			context: TriggerContextModel{
+				On:        types.StringValue(consts.SelfServiceHubContext),
+				Visible:   types.BoolValue(false),
+				UserInput: types.StringValue("service"),
+			},
+			summary: "Invalid attribute combination",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			node := WorkflowNodeModel{
+				Identifier: types.StringValue("trigger"),
+				SelfServeTrigger: &SelfServeTriggerModel{
+					Contexts: []TriggerContextModel{test.context},
+				},
+			}
+			diags := validateNodes([]WorkflowNodeModel{node}, nil)
+			assert.Contains(t, errorSummaries(diags), test.summary)
+		})
+	}
+}
+
+func TestValidateSelfServeTriggerContextsSkipUnknownRejectedValues(t *testing.T) {
+	contexts := map[string]TriggerContextModel{
+		"create_entity with unknown user_input": {
+			On:                  types.StringValue(consts.CreateEntityContext),
+			BlueprintIdentifier: types.StringValue("service"),
+			UserInput:           types.StringUnknown(),
+		},
+		"entity with unknown blueprint": {
+			On:                  types.StringValue(consts.EntityContext),
+			UserInput:           types.StringValue("service"),
+			BlueprintIdentifier: types.StringUnknown(),
+		},
+	}
+
+	for name, context := range contexts {
+		t.Run(name, func(t *testing.T) {
+			node := WorkflowNodeModel{
+				Identifier:       types.StringValue("trigger"),
+				SelfServeTrigger: &SelfServeTriggerModel{Contexts: []TriggerContextModel{context}},
+			}
+			assert.NotContains(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)), "Invalid attribute combination")
+		})
+	}
+}
+
+func TestValidateSelfServeTriggerSelfServiceHubContext(t *testing.T) {
+	hubContext := TriggerContextModel{On: types.StringValue(consts.SelfServiceHubContext), Visible: types.BoolValue(false)}
+	tests := map[string]struct {
+		contexts  []TriggerContextModel
+		duplicate bool
+	}{
+		"hidden without other contexts": {contexts: []TriggerContextModel{hubContext}},
+		"alongside entity and create_entity": {contexts: []TriggerContextModel{
+			{On: types.StringValue(consts.EntityContext), UserInput: types.StringValue("service")},
+			{On: types.StringValue(consts.CreateEntityContext), BlueprintIdentifier: types.StringValue("service")},
+			hubContext,
+		}},
+		"unknown visible": {contexts: []TriggerContextModel{
+			{On: types.StringValue(consts.SelfServiceHubContext), Visible: types.BoolUnknown()},
+		}},
+		"duplicate": {
+			contexts:  []TriggerContextModel{hubContext, {On: types.StringValue(consts.SelfServiceHubContext), Visible: types.BoolValue(true)}},
+			duplicate: true,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			node := WorkflowNodeModel{
+				Identifier:       types.StringValue("trigger"),
+				SelfServeTrigger: &SelfServeTriggerModel{Contexts: test.contexts},
+			}
+			summaries := errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil))
+			if test.duplicate {
+				assert.Equal(t, []string{"Duplicate SELF_SERVICE_HUB context"}, summaries)
+			} else {
+				assert.Empty(t, summaries)
+			}
+		})
+	}
+}
+
+func TestValidateConnections(t *testing.T) {
+	nodes := []WorkflowNodeModel{
+		eventTriggerNode("trigger"),
+		conditionNode("branch", "approved"),
+		{
+			Identifier: types.StringValue("notify"),
+			Webhook:    &WebhookModel{Url: types.StringValue("https://example.com/hook")},
+		},
+		workflowTriggerNode("called"),
+	}
+
+	tests := map[string]struct {
+		connection ConnectionModel
+		summary    string
+	}{
+		"connection into workflow trigger": {
+			connection: ConnectionModel{
+				SourceIdentifier: types.StringValue("notify"),
+				TargetIdentifier: types.StringValue("called"),
+			},
+			summary: "Invalid connection",
+		},
+		"self connection": {
+			connection: ConnectionModel{
+				SourceIdentifier: types.StringValue("notify"),
+				TargetIdentifier: types.StringValue("notify"),
+			},
+			summary: "Invalid connection",
+		},
+		"outlet on single outlet node": {
+			connection: ConnectionModel{
+				SourceIdentifier:       types.StringValue("trigger"),
+				TargetIdentifier:       types.StringValue("notify"),
+				SourceOutletIdentifier: types.StringValue("approved"),
+			},
+			summary: "Invalid connection",
+		},
+		"fallback on single outlet node": {
+			connection: ConnectionModel{
+				SourceIdentifier: types.StringValue("trigger"),
+				TargetIdentifier: types.StringValue("notify"),
+				Fallback:         types.BoolValue(true),
+			},
+			summary: "Invalid connection",
+		},
+		"condition without outlet or fallback": {
+			connection: ConnectionModel{
+				SourceIdentifier: types.StringValue("branch"),
+				TargetIdentifier: types.StringValue("notify"),
+			},
+			summary: "Missing outlet",
+		},
+		"unknown outlet": {
+			connection: ConnectionModel{
+				SourceIdentifier:       types.StringValue("branch"),
+				TargetIdentifier:       types.StringValue("notify"),
+				SourceOutletIdentifier: types.StringValue("rejected"),
+			},
+			summary: "Unknown outlet",
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			diags := validateNodes(nodes, []ConnectionModel{test.connection})
+			assert.Contains(t, errorSummaries(diags), test.summary)
+		})
+	}
+}
+
+func TestValidateDuplicateNodeIdentifiers(t *testing.T) {
+	diags := validateNodes([]WorkflowNodeModel{eventTriggerNode("trigger"), eventTriggerNode("trigger")}, nil)
+	assert.Contains(t, errorSummaries(diags), "Duplicate node identifier")
+}
+
+func TestValidateInputNodeOutletsMatchButtons(t *testing.T) {
+	node := WorkflowNodeModel{
+		Identifier: types.StringValue("approval"),
+		Input: &InputModel{
+			UserInputs: &InputUserInputsModel{
+				Buttons: []InputButtonModel{{Identifier: types.StringValue("approve"), Label: types.StringValue("Approve")}},
+			},
+			Outlets: []InputOutletModel{{Identifier: types.StringValue("reject")}},
+		},
+	}
+
+	diags := validateNodes([]WorkflowNodeModel{node}, nil)
+	assert.Contains(t, errorSummaries(diags), "Unknown button identifier")
+}
+
+func TestValidateInputNodeFallbackRejected(t *testing.T) {
+	node := WorkflowNodeModel{
+		Identifier: types.StringValue("approval"),
+		Input: &InputModel{
+			UserInputs: &InputUserInputsModel{
+				Buttons: []InputButtonModel{{Identifier: types.StringValue("approve"), Label: types.StringValue("Approve")}},
+			},
+			Outlets: []InputOutletModel{{Identifier: types.StringValue("approve")}},
+		},
+	}
+
+	diags := validateNodes([]WorkflowNodeModel{node}, []ConnectionModel{
+		{
+			SourceIdentifier: types.StringValue("approval"),
+			TargetIdentifier: types.StringValue("deploy"),
+			Fallback:         types.BoolValue(true),
+		},
+	})
+
+	assert.Contains(t, errorSummaries(diags), "Invalid fallback")
+}
+
+func TestInputNodeRespondersUseUsersQuery(t *testing.T) {
+	ctx := context.Background()
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("approval"),
+				Input: &InputModel{
+					UserInputs: &InputUserInputsModel{
+						Buttons: []InputButtonModel{{Identifier: types.StringValue("approve"), Label: types.StringValue("Approve")}},
+					},
+					Outlets: []InputOutletModel{{Identifier: types.StringValue("approve"), NumOfResponders: types.Int64Value(1)}},
+					Responders: &RespondersModel{
+						Roles:      stringList("Admin"),
+						UsersQuery: types.StringValue(`{"combinator":"and","rules":[{"property":"$title","operator":"=","value":"SRE"}]}`),
+					},
+				},
+			},
+		},
+	}
+
+	w, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	responders := w.Nodes[0].Config.Responders
+	require.NotNil(t, responders)
+	assert.Equal(t, []string{"Admin"}, responders.Roles)
+	assert.NotNil(t, responders.UsersQuery, "responders must send usersQuery")
+	assert.Nil(t, responders.Policy, "responders must not send policy")
+
+	body, err := json.Marshal(responders)
+	require.NoError(t, err)
+	assert.Contains(t, string(body), `"usersQuery"`)
+	assert.NotContains(t, string(body), `"policy"`)
+}
+
+func TestSelfServeTriggerPermissionsUsePolicy(t *testing.T) {
+	ctx := context.Background()
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("trigger"),
+				SelfServeTrigger: &SelfServeTriggerModel{
+					Permissions: &PermissionsModel{
+						Roles:  stringList("Member"),
+						Policy: types.StringValue(`{"combinator":"and","rules":[]}`),
+					},
+				},
+			},
+		},
+	}
+
+	w, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	permissions := w.Nodes[0].Config.Permissions
+	require.NotNil(t, permissions)
+	assert.NotNil(t, permissions.Policy)
+	assert.Nil(t, permissions.UsersQuery, "permissions must not send usersQuery")
+
+	body, err := json.Marshal(permissions)
+	require.NoError(t, err)
+	assert.Contains(t, string(body), `"policy"`)
+	assert.NotContains(t, string(body), `"usersQuery"`)
+}
+
+func TestRespondersRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	responders := &cli.WorkflowNodePermissions{
+		Teams:      []string{"platform"},
+		UsersQuery: map[string]any{"combinator": "and", "rules": []any{}},
+	}
+
+	model := respondersToModel(ctx, responders, nil, false)
+	require.NotNil(t, model)
+	assert.False(t, model.UsersQuery.IsNull())
+
+	body, err := respondersToPortBody(ctx, model)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"platform"}, body.Teams)
+	assert.NotNil(t, body.UsersQuery)
+	assert.Nil(t, body.Policy)
+}
+
+func TestPermissionsRefreshKeepsDeclaredEmptyPrincipals(t *testing.T) {
+	ctx := context.Background()
+
+	permissions := &cli.WorkflowNodePermissions{
+		Users: []string{"admin@example.com"},
+		Roles: []string{},
+		Teams: []string{},
+	}
+	prior := &PermissionsModel{
+		Users: stringList("admin@example.com"),
+		Roles: stringList(),
+		Teams: stringList(),
+	}
+
+	model := permissionsToModel(ctx, permissions, prior, false)
+	require.NotNil(t, model)
+	assert.Equal(t, prior.Roles, model.Roles)
+	assert.Equal(t, prior.Teams, model.Teams)
+}
+
+func TestPermissionsRefreshKeepsDeclaredEmptyBlock(t *testing.T) {
+	ctx := context.Background()
+
+	prior := &PermissionsModel{Roles: stringList()}
+
+	model := permissionsToModel(ctx, nil, prior, false)
+	require.NotNil(t, model, "a declared block must not collapse to null")
+	assert.Equal(t, prior.Roles, model.Roles)
+	assert.True(t, model.Users.IsNull())
+}
+
+func TestPermissionsRefreshOmitsUndeclaredBlock(t *testing.T) {
+	ctx := context.Background()
+
+	assert.Nil(t, permissionsToModel(ctx, nil, nil, false))
+	assert.Nil(t, permissionsToModel(ctx, &cli.WorkflowNodePermissions{Roles: []string{}}, nil, false))
+}
+
+func TestRespondersRefreshKeepsDeclaredEmptyPrincipals(t *testing.T) {
+	ctx := context.Background()
+
+	responders := &cli.WorkflowNodePermissions{
+		Teams: []string{"platform"},
+		Roles: []string{},
+	}
+	prior := &RespondersModel{Teams: stringList("platform"), Roles: stringList()}
+
+	model := respondersToModel(ctx, responders, prior, false)
+	require.NotNil(t, model)
+	assert.Equal(t, prior.Roles, model.Roles)
+
+	require.NotNil(t, respondersToModel(ctx, nil, &RespondersModel{Users: stringList()}, false))
+	assert.Nil(t, respondersToModel(ctx, nil, nil, false))
+}
+
+func TestSelfServeTriggerRefreshKeepsDeclaredEmptyPrincipals(t *testing.T) {
+	ctx := context.Background()
+
+	r := &WorkflowResource{portClient: &cli.PortClient{}}
+	apiNode := cli.WorkflowNode{
+		Identifier: "trigger",
+		Config: cli.WorkflowNodeConfig{
+			Type:        consts.SelfServeTrigger,
+			Permissions: &cli.WorkflowNodePermissions{Users: []string{"admin@example.com"}},
+		},
+	}
+	prior := WorkflowNodeModel{
+		Identifier: types.StringValue("trigger"),
+		SelfServeTrigger: &SelfServeTriggerModel{
+			Permissions: &PermissionsModel{
+				Users: stringList("admin@example.com"),
+				Roles: stringList(),
+				Teams: stringList(),
+			},
+		},
+	}
+
+	node, err := r.nodeToModel(ctx, apiNode, prior)
+	require.NoError(t, err)
+	require.NotNil(t, node.SelfServeTrigger)
+	require.NotNil(t, node.SelfServeTrigger.Permissions)
+	assert.Equal(t, prior.SelfServeTrigger.Permissions.Roles, node.SelfServeTrigger.Permissions.Roles,
+		"roles declared as an empty list must not refresh as null")
+	assert.Equal(t, prior.SelfServeTrigger.Permissions.Teams, node.SelfServeTrigger.Permissions.Teams)
+	assert.Equal(t, prior.SelfServeTrigger.Permissions.Users, node.SelfServeTrigger.Permissions.Users)
+}
+
+func webhookNode(identifier string) WorkflowNodeModel {
+	return WorkflowNodeModel{
+		Identifier: types.StringValue(identifier),
+		Webhook:    &WebhookModel{Url: types.StringValue("https://example.com")},
+	}
+}
+
+func TestValidateSingleOutgoingConnectionPerNonBranchingNode(t *testing.T) {
+	nodes := []WorkflowNodeModel{
+		eventTriggerNode("trigger"),
+		webhookNode("a"),
+		webhookNode("b"),
+	}
+	connections := []ConnectionModel{
+		{SourceIdentifier: types.StringValue("trigger"), TargetIdentifier: types.StringValue("a")},
+		{SourceIdentifier: types.StringValue("trigger"), TargetIdentifier: types.StringValue("b")},
+	}
+
+	diags := validateNodes(nodes, connections)
+	assert.Contains(t, errorSummaries(diags), "Duplicate connection source")
+}
+
+func TestValidateConditionNodeMayBranchToDistinctOutlets(t *testing.T) {
+	nodes := []WorkflowNodeModel{
+		eventTriggerNode("trigger"),
+		conditionNode("route", "a", "b"),
+		webhookNode("a"),
+		webhookNode("b"),
+		webhookNode("fallback"),
+	}
+	connections := []ConnectionModel{
+		{SourceIdentifier: types.StringValue("trigger"), TargetIdentifier: types.StringValue("route")},
+		{SourceIdentifier: types.StringValue("route"), TargetIdentifier: types.StringValue("a"), SourceOutletIdentifier: types.StringValue("a")},
+		{SourceIdentifier: types.StringValue("route"), TargetIdentifier: types.StringValue("b"), SourceOutletIdentifier: types.StringValue("b")},
+		{SourceIdentifier: types.StringValue("route"), TargetIdentifier: types.StringValue("fallback"), Fallback: types.BoolValue(true)},
+	}
+
+	assert.Empty(t, errorSummaries(validateNodes(nodes, connections)))
+}
+
+func TestValidateConditionNodeRejectsRepeatedOutlet(t *testing.T) {
+	nodes := []WorkflowNodeModel{
+		eventTriggerNode("trigger"),
+		conditionNode("route", "a"),
+		webhookNode("a"),
+		webhookNode("b"),
+	}
+	connections := []ConnectionModel{
+		{SourceIdentifier: types.StringValue("trigger"), TargetIdentifier: types.StringValue("route")},
+		{SourceIdentifier: types.StringValue("route"), TargetIdentifier: types.StringValue("a"), SourceOutletIdentifier: types.StringValue("a")},
+		{SourceIdentifier: types.StringValue("route"), TargetIdentifier: types.StringValue("b"), SourceOutletIdentifier: types.StringValue("a")},
+	}
+
+	assert.Contains(t, errorSummaries(validateNodes(nodes, connections)), "Duplicate connection source")
+}
+
+func TestUpsertMappingTeamIsStringArray(t *testing.T) {
+	ctx := context.Background()
+
+	mapping := &UpsertMappingModel{
+		Identifier: types.StringValue("svc"),
+		Teams:      stringList("{{ .outputs.trigger.diff.after.team }}"),
+	}
+
+	body, err := upsertMappingToPortBody(ctx, mapping)
+	require.NoError(t, err)
+	assert.Equal(t, []string{"{{ .outputs.trigger.diff.after.team }}"}, body.Team)
+
+	encoded, err := json.Marshal(body)
+	require.NoError(t, err)
+	assert.NotContains(t, string(encoded), "jqQuery")
+}
+
+// Guards against a node type being added to the model without being wired into
+// the mapper: every block in nodeTypeBlockNames must serialize to its config type.
+func TestEveryNodeTypeSerializesItsConfigType(t *testing.T) {
+	ctx := context.Background()
+
+	nodes := map[string]struct {
+		block      string
+		node       WorkflowNodeModel
+		configType string
+	}{
+		"self_serve_trigger": {"self_serve_trigger", WorkflowNodeModel{
+			Identifier:       types.StringValue("n"),
+			SelfServeTrigger: &SelfServeTriggerModel{ActionCardButtonText: types.StringValue("Run")},
+		}, consts.SelfServeTrigger},
+		"event_trigger": {"event_trigger", eventTriggerNode("n"), consts.EventTrigger},
+		"schedule_trigger": {"schedule_trigger", WorkflowNodeModel{
+			Identifier:      types.StringValue("n"),
+			ScheduleTrigger: &ScheduleTriggerModel{Cron: types.StringValue("0 9 * * *")},
+		}, consts.ScheduleTrigger},
+		"workflow_trigger": {"workflow_trigger", workflowTriggerNode("n"), consts.WorkflowTrigger},
+		"execute_workflow": {"execute_workflow", executeWorkflowNode("n"), consts.ExecuteWorkflow},
+		"kafka": {"kafka", WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			Kafka:      &KafkaModel{Payload: types.StringValue(`{"event":"tick"}`)},
+		}, consts.Kafka},
+		"webhook": {"webhook", webhookNode("n"), consts.Webhook},
+		"integration_action": {"integration_action", WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			IntegrationAction: &IntegrationActionModel{
+				InstallationId:            types.StringValue("gh"),
+				IntegrationProvider:       types.StringValue(consts.Github),
+				IntegrationInvocationType: types.StringValue("GITHUB_WORKFLOW"),
+			},
+		}, consts.IntegrationAction},
+		"upsert_entity": {"upsert_entity", WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			UpsertEntity: &UpsertEntityModel{
+				BlueprintIdentifier: types.StringValue("service"),
+				Mapping:             &UpsertMappingModel{Identifier: types.StringValue("svc")},
+			},
+		}, consts.UpsertEntity},
+		"ai": {"ai", WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			AI:         &AIModel{UserPrompt: types.StringValue("summarize")},
+		}, consts.AI},
+		"ai_agent": {"ai_agent", WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			AIAgent: &AIAgentModel{
+				UserPrompt:      types.StringValue("go"),
+				AgentIdentifier: types.StringValue("agent"),
+			},
+		}, consts.AIAgent},
+		"condition": {"condition", conditionNode("n", "ok"), consts.ConditionNode},
+		"input": {"input", WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			Input: &InputModel{
+				UserInputs: &InputUserInputsModel{
+					Buttons: []InputButtonModel{{Identifier: types.StringValue("ok"), Label: types.StringValue("OK")}},
+				},
+				Outlets: []InputOutletModel{{Identifier: types.StringValue("ok")}},
+			},
+		}, consts.InputNode},
+	}
+
+	covered := make([]string, 0, len(nodes))
+	for name, test := range nodes {
+		t.Run(name, func(t *testing.T) {
+			w, err := workflowStateToPortBody(ctx, &WorkflowModel{
+				Identifier: types.StringValue("wf"),
+				Nodes:      []WorkflowNodeModel{test.node},
+			})
+			require.NoError(t, err)
+			require.Len(t, w.Nodes, 1)
+			assert.Equal(t, test.configType, w.Nodes[0].Config.Type)
+
+			assert.Equal(t, test.configType,
+				validateNode(&resource.ValidateConfigResponse{}, path.Root("node").AtListIndex(0), test.node, false),
+				"validateNode must report the node type the mapper sends")
+			assert.Equal(t, test.configType, nodeTypeByBlock[test.block],
+				"nodeTypeByBlock must hold the node type the mapper sends")
+		})
+		covered = append(covered, test.block)
+	}
+
+	assert.ElementsMatch(t, nodeTypeBlockNames, covered,
+		"every node type block must have a serialization test")
+}
+
+func TestEveryEventTriggerTypeSerializes(t *testing.T) {
+	ctx := context.Background()
+
+	eventTypes := []string{
+		consts.EntityCreated,
+		consts.EntityUpdated,
+		consts.EntityDeleted,
+		consts.WorkflowTimerExpired,
+		consts.AnyEntityChange,
+	}
+
+	for _, eventType := range eventTypes {
+		t.Run(eventType, func(t *testing.T) {
+			trigger := &EventTriggerModel{
+				Type:                types.StringValue(eventType),
+				BlueprintIdentifier: types.StringValue("service"),
+			}
+			if eventType == consts.WorkflowTimerExpired {
+				trigger.PropertyIdentifier = types.StringValue("expires_at")
+			}
+
+			node := WorkflowNodeModel{Identifier: types.StringValue("trigger"), EventTrigger: trigger}
+
+			w, err := workflowStateToPortBody(ctx, &WorkflowModel{
+				Identifier: types.StringValue("wf"),
+				Nodes:      []WorkflowNodeModel{node},
+			})
+			require.NoError(t, err)
+
+			event := w.Nodes[0].Config.Event
+			require.NotNil(t, event)
+			assert.Equal(t, eventType, event.Type)
+			assert.Equal(t, "service", event.BlueprintIdentifier)
+
+			assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)))
+		})
+	}
+}
+
+func TestEverySelfServeTriggerContextSerializes(t *testing.T) {
+	ctx := context.Background()
+
+	contexts := map[string]TriggerContextModel{
+		consts.CreateEntityContext: {
+			On:                  types.StringValue(consts.CreateEntityContext),
+			BlueprintIdentifier: types.StringValue("service"),
+		},
+		// The ENTITY context is strict: it takes a user input, not a blueprint.
+		consts.EntityContext: {
+			On:        types.StringValue(consts.EntityContext),
+			UserInput: types.StringValue("service"),
+		},
+		consts.SelfServiceHubContext: {
+			On:      types.StringValue(consts.SelfServiceHubContext),
+			Visible: types.BoolValue(false),
+		},
+	}
+
+	for on, triggerContext := range contexts {
+		t.Run(on, func(t *testing.T) {
+			node := WorkflowNodeModel{
+				Identifier:       types.StringValue("trigger"),
+				SelfServeTrigger: &SelfServeTriggerModel{Contexts: []TriggerContextModel{triggerContext}},
+			}
+
+			w, err := workflowStateToPortBody(ctx, &WorkflowModel{
+				Identifier: types.StringValue("wf"),
+				Nodes:      []WorkflowNodeModel{node},
+			})
+			require.NoError(t, err)
+
+			require.Len(t, w.Nodes[0].Config.Contexts, 1)
+			assert.Equal(t, on, w.Nodes[0].Config.Contexts[0].On)
+
+			assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)))
+		})
+	}
+}
+
+func TestHiddenSelfServiceHubContextSendsVisibleFalse(t *testing.T) {
+	w, err := workflowStateToPortBody(context.Background(), &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{{
+			Identifier: types.StringValue("trigger"),
+			SelfServeTrigger: &SelfServeTriggerModel{Contexts: []TriggerContextModel{
+				{On: types.StringValue(consts.SelfServiceHubContext), Visible: types.BoolValue(false)},
+			}},
+		}},
+	})
+	require.NoError(t, err)
+
+	body, err := json.Marshal(w.Nodes[0].Config.Contexts)
+	require.NoError(t, err)
+	assert.JSONEq(t, `[{"on":"SELF_SERVICE_HUB","visible":false}]`, string(body))
+}
+
+func TestValidateAIProviderAndModelMustBePaired(t *testing.T) {
+	tests := map[string]struct {
+		node      WorkflowNodeModel
+		wantError bool
+	}{
+		"ai with provider only": {WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			AI:         &AIModel{UserPrompt: types.StringValue("go"), Provider: types.StringValue("openai")},
+		}, true},
+		"ai with model only": {WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			AI:         &AIModel{UserPrompt: types.StringValue("go"), Model: types.StringValue("gpt-4")},
+		}, true},
+		"ai with both": {WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			AI: &AIModel{
+				UserPrompt: types.StringValue("go"),
+				Provider:   types.StringValue("openai"),
+				Model:      types.StringValue("gpt-4"),
+			},
+		}, false},
+		"ai with neither": {WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			AI:         &AIModel{UserPrompt: types.StringValue("go")},
+		}, false},
+		"ai_agent with provider only": {WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			AIAgent: &AIAgentModel{
+				UserPrompt:      types.StringValue("go"),
+				AgentIdentifier: types.StringValue("a"),
+				Provider:        types.StringValue("openai"),
+			},
+		}, true},
+		"ai_agent with both": {WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			AIAgent: &AIAgentModel{
+				UserPrompt:      types.StringValue("go"),
+				AgentIdentifier: types.StringValue("a"),
+				Provider:        types.StringValue("openai"),
+				Model:           types.StringValue("gpt-4"),
+			},
+		}, false},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			summaries := errorSummaries(validateNodes([]WorkflowNodeModel{test.node}, nil))
+			if test.wantError {
+				assert.Contains(t, summaries, "Missing required attribute")
+			} else {
+				assert.Empty(t, summaries)
+			}
+		})
+	}
+}
+
+// The event trigger is the only node type the service accepts a `condition` on.
+func TestEventTriggerConditionRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{
+				Identifier: types.StringValue("trigger"),
+				EventTrigger: &EventTriggerModel{
+					Type:                types.StringValue(consts.EntityUpdated),
+					BlueprintIdentifier: types.StringValue("service"),
+					Condition: &NodeConditionModel{
+						Expressions: stringList(".diff.after.properties.tier == \"production\"", ".diff.before != null"),
+						Combinator:  types.StringValue("or"),
+					},
+				},
+			},
+		},
+	}
+
+	w, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	condition := w.Nodes[0].Config.Condition
+	require.NotNil(t, condition)
+	assert.Equal(t, consts.JqCondition, condition.Type)
+	assert.Len(t, condition.Expressions, 2)
+	require.NotNil(t, condition.Combinator)
+	assert.Equal(t, "or", *condition.Combinator)
+
+	refreshed := &WorkflowModel{Identifier: types.StringValue("wf")}
+	require.NoError(t, r.refreshWorkflowState(ctx, refreshed, w))
+
+	got := refreshed.Nodes[0].EventTrigger.Condition
+	require.NotNil(t, got, "the event trigger condition must survive a refresh")
+	assert.Equal(t, "or", got.Combinator.ValueString())
+	assert.False(t, got.Expressions.IsNull())
+}
+
+// Walks the real schema so that exposing a condition on a second node type fails.
+func TestConditionIsExposedOnlyOnEventTrigger(t *testing.T) {
+	blocksWithCondition := []string{}
+	for _, name := range nodeTypeBlockNames {
+		block, ok := WorkflowBlocks()["node"].(schema.ListNestedBlock).
+			NestedObject.Blocks[name].(schema.SingleNestedBlock)
+		if !ok {
+			continue
+		}
+		if _, has := block.Blocks["condition"]; has {
+			blocksWithCondition = append(blocksWithCondition, name)
+		}
+	}
+
+	assert.Equal(t, []string{"event_trigger"}, blocksWithCondition)
+}
+
+func TestNodeTypeByBlockCoversEveryNodeType(t *testing.T) {
+	blocks := make([]string, 0, len(nodeTypeByBlock))
+	for block := range nodeTypeByBlock {
+		blocks = append(blocks, block)
+	}
+
+	assert.ElementsMatch(t, nodeTypeBlockNames, blocks,
+		"every node type block must map to a config type")
+}
+
+func TestNodeTypeFromConfigObjectReadsTypeOfUnknownBlock(t *testing.T) {
+	ctx := context.Background()
+	nodeType := WorkflowBlocks()["node"].(schema.ListNestedBlock).NestedObject.Type().(basetypes.ObjectType)
+
+	for _, block := range nodeTypeBlockNames {
+		t.Run(block, func(t *testing.T) {
+			assert.Equal(t, nodeTypeByBlock[block], nodeTypeFromConfigObject(nodeObjectWithBlock(ctx, t, nodeType, block)))
+		})
+	}
+
+	t.Run("no config block", func(t *testing.T) {
+		assert.Empty(t, nodeTypeFromConfigObject(nodeObjectWithBlock(ctx, t, nodeType, "")))
+	})
+}
+
+func nodeObjectWithBlock(ctx context.Context, t *testing.T, nodeType basetypes.ObjectType, block string) types.Object {
+	t.Helper()
+
+	attributeTypes := nodeType.AttributeTypes()
+	attributes := make(map[string]attr.Value, len(attributeTypes))
+	for name, attributeType := range attributeTypes {
+		raw := tftypes.NewValue(attributeType.TerraformType(ctx), nil)
+		if name == block {
+			raw = tftypes.NewValue(attributeType.TerraformType(ctx), tftypes.UnknownValue)
+		}
+
+		value, err := attributeType.ValueFromTerraform(ctx, raw)
+		require.NoError(t, err)
+		attributes[name] = value
+	}
+
+	object, diags := types.ObjectValue(attributeTypes, attributes)
+	require.False(t, diags.HasError(), diags.Errors())
+
+	return object
+}
+
+func TestValidateConfigIsUnaffectedByUnknownValues(t *testing.T) {
+	ctx := context.Background()
+
+	config := configObject{
+		"identifier": "wf",
+		"node": configList{
+			configObject{
+				"identifier": "trigger",
+				"self_serve_trigger": configObject{
+					"action_card_button_text": "Run",
+					"contexts":                configList{configObject{"on": consts.EntityContext}},
+					"user_inputs": configObject{
+						"user_properties": configObject{
+							"string_props": configObject{
+								"service": configObject{"title": "Service", "required": true},
+							},
+						},
+					},
+				},
+			},
+			configObject{
+				"identifier": "apply",
+				"webhook":    configObject{"url": "https://ci.example.com/hook", "method": "POST"},
+			},
+		},
+		"connections": configList{
+			configObject{"source_identifier": "trigger", "target_identifier": "apply"},
+		},
+	}
+
+	known := validateWorkflowConfig(ctx, t, config, nil)
+	require.Len(t, known.Errors(), 1, known.Errors())
+	assert.Contains(t, known.Errors()[0].Detail(), "`user_input` is required")
+
+	trigger := tftypes.NewAttributePath().WithAttributeName("node").WithElementKeyInt(0)
+
+	unchanged := map[string]*tftypes.AttributePath{
+		"user properties": trigger.WithAttributeName("self_serve_trigger").
+			WithAttributeName("user_inputs").WithAttributeName("user_properties").
+			WithAttributeName("string_props"),
+		"node identifier": trigger.WithAttributeName("identifier"),
+	}
+	for name, unknownAt := range unchanged {
+		t.Run(name, func(t *testing.T) {
+			assert.Equal(t, known, validateWorkflowConfig(ctx, t, config, unknownAt))
+		})
+	}
+
+	t.Run("whole node", func(t *testing.T) {
+		diags := validateWorkflowConfig(ctx, t, config, trigger)
+		assert.Empty(t, diags.Errors())
+	})
+}
+
+func TestValidateConfigReportsNodeWithoutConfigBlock(t *testing.T) {
+	ctx := context.Background()
+
+	diags := validateWorkflowConfig(ctx, t, configObject{
+		"identifier": "wf",
+		"node":       configList{configObject{"identifier": "trigger"}},
+	}, nil)
+
+	require.Len(t, diags.Errors(), 1, diags.Errors())
+	assert.Equal(t, "Invalid node type combination", diags.Errors()[0].Summary())
+}
+
+type (
+	configObject = map[string]any
+	configList   = []any
+)
+
+func validateWorkflowConfig(ctx context.Context, t *testing.T, config configObject, unknownAt *tftypes.AttributePath) diag.Diagnostics {
+	t.Helper()
+
+	schemaResp := &resource.SchemaResponse{}
+	(&WorkflowResource{}).Schema(ctx, resource.SchemaRequest{}, schemaResp)
+	require.False(t, schemaResp.Diagnostics.HasError(), schemaResp.Diagnostics.Errors())
+
+	raw := configValue(t, schemaResp.Schema.Type().TerraformType(ctx), config)
+
+	if unknownAt != nil {
+		raw = withUnknownValue(t, raw, unknownAt)
+	}
+
+	resp := &resource.ValidateConfigResponse{}
+	(&WorkflowResource{}).ValidateConfig(ctx, resource.ValidateConfigRequest{
+		Config: tfsdk.Config{Raw: raw, Schema: schemaResp.Schema},
+	}, resp)
+
+	return resp.Diagnostics
+}
+
+func configValue(t testing.TB, valueType tftypes.Type, data any) tftypes.Value {
+	t.Helper()
+
+	if data == nil {
+		return tftypes.NewValue(valueType, nil)
+	}
+
+	switch valueType := valueType.(type) {
+	case tftypes.Object:
+		attributes, ok := data.(configObject)
+		require.True(t, ok, "%s needs a configObject, got %T", valueType, data)
+
+		for name := range attributes {
+			require.Contains(t, valueType.AttributeTypes, name, "no such attribute")
+		}
+
+		values := make(map[string]tftypes.Value, len(valueType.AttributeTypes))
+		for name, attributeType := range valueType.AttributeTypes {
+			values[name] = configValue(t, attributeType, attributes[name])
+		}
+		return tftypes.NewValue(valueType, values)
+
+	case tftypes.List:
+		return tftypes.NewValue(valueType, configValues(t, valueType.ElementType, data))
+
+	case tftypes.Set:
+		return tftypes.NewValue(valueType, configValues(t, valueType.ElementType, data))
+
+	case tftypes.Map:
+		entries, ok := data.(configObject)
+		require.True(t, ok, "%s needs a configObject, got %T", valueType, data)
+
+		values := make(map[string]tftypes.Value, len(entries))
+		for key, entry := range entries {
+			values[key] = configValue(t, valueType.ElementType, entry)
+		}
+		return tftypes.NewValue(valueType, values)
+	}
+
+	return tftypes.NewValue(valueType, data)
+}
+
+func configValues(t testing.TB, elementType tftypes.Type, data any) []tftypes.Value {
+	t.Helper()
+
+	items, ok := data.(configList)
+	require.True(t, ok, "needs a configList, got %T", data)
+
+	values := make([]tftypes.Value, 0, len(items))
+	for _, item := range items {
+		values = append(values, configValue(t, elementType, item))
+	}
+	return values
+}
+
+func withUnknownValue(t testing.TB, value tftypes.Value, unknownAt *tftypes.AttributePath) tftypes.Value {
+	t.Helper()
+
+	replaced := false
+	transformed, err := tftypes.Transform(value, func(valuePath *tftypes.AttributePath, current tftypes.Value) (tftypes.Value, error) {
+		if !valuePath.Equal(unknownAt) {
+			return current, nil
+		}
+		replaced = true
+		return tftypes.NewValue(current.Type(), tftypes.UnknownValue), nil
+	})
+	require.NoError(t, err)
+	require.True(t, replaced, "no value at %s to make unknown", unknownAt)
+	return transformed
+}
+
+func validateWorkflow(nodes []WorkflowNodeModel, connections []ConnectionModel) diag.Diagnostics {
+	resp := &resource.ValidateConfigResponse{}
+
+	nodeTypes := make(map[string]string, len(nodes))
+	declaredTypes := make([]string, 0, len(nodes))
+	outlets := make(map[string]map[string]bool, len(nodes))
+	for i, node := range nodes {
+		nodePath := path.Root("node").AtListIndex(i)
+		nodeType := validateNode(resp, nodePath, node, false)
+		nodeTypes[node.Identifier.ValueString()] = nodeType
+		declaredTypes = append(declaredTypes, nodeType)
+		outlets[node.Identifier.ValueString()] = nodeOutlets(node)
+	}
+
+	validateTriggerPresence(resp, declaredTypes)
+	validateConnections(resp, connections, nodeTypes, outlets, true)
+
+	return resp.Diagnostics
+}
+
+func connection(source, target string) ConnectionModel {
+	return ConnectionModel{
+		SourceIdentifier: types.StringValue(source),
+		TargetIdentifier: types.StringValue(target),
+	}
+}
+
+func TestValidateRejectsConnectionCycles(t *testing.T) {
+	nodes := []WorkflowNodeModel{
+		eventTriggerNode("trigger"),
+		webhookNode("a"),
+		webhookNode("b"),
+		webhookNode("c"),
+	}
+
+	// trigger -> a -> b -> c -> a is a cycle the API rejects, but every node
+	// still has only one outgoing connection.
+	diags := validateWorkflow(nodes, []ConnectionModel{
+		connection("trigger", "a"),
+		connection("a", "b"),
+		connection("b", "c"),
+		connection("c", "a"),
+	})
+
+	assert.Contains(t, errorSummaries(diags), "Cyclic connections")
+}
+
+func TestValidateAcceptsBranchingAcyclicGraph(t *testing.T) {
+	nodes := []WorkflowNodeModel{
+		eventTriggerNode("trigger"),
+		conditionNode("route", "left", "right"),
+		webhookNode("a"),
+		webhookNode("b"),
+		webhookNode("join"),
+	}
+
+	// A diamond re-joins on `join`, which is acyclic despite the shared target.
+	diags := validateWorkflow(nodes, []ConnectionModel{
+		connection("trigger", "route"),
+		{
+			SourceIdentifier:       types.StringValue("route"),
+			TargetIdentifier:       types.StringValue("a"),
+			SourceOutletIdentifier: types.StringValue("left"),
+		},
+		{
+			SourceIdentifier:       types.StringValue("route"),
+			TargetIdentifier:       types.StringValue("b"),
+			SourceOutletIdentifier: types.StringValue("right"),
+		},
+		connection("a", "join"),
+		connection("b", "join"),
+	})
+
+	assert.Empty(t, errorSummaries(diags))
+}
+
+func TestValidateConnectionEndpointsMustBeDeclaredNodes(t *testing.T) {
+	nodes := []WorkflowNodeModel{eventTriggerNode("trigger"), webhookNode("notify")}
+
+	diags := validateWorkflow(nodes, []ConnectionModel{
+		connection("trigger", "typo"),
+		connection("ghost", "notify"),
+	})
+
+	summaries := errorSummaries(diags)
+	assert.Equal(t, 2, countSummary(summaries, "Unknown node identifier"))
+}
+
+func TestValidateTriggerCannotHaveIncomingConnections(t *testing.T) {
+	nodes := []WorkflowNodeModel{eventTriggerNode("trigger"), webhookNode("notify")}
+
+	diags := validateWorkflow(nodes, []ConnectionModel{
+		connection("trigger", "notify"),
+		connection("notify", "trigger"),
+	})
+
+	assert.Contains(t, errorSummaries(diags), "Invalid connection")
+}
+
+func TestValidateWorkflowRequiresATriggerNode(t *testing.T) {
+	diags := validateWorkflow([]WorkflowNodeModel{webhookNode("notify")}, nil)
+	assert.Contains(t, errorSummaries(diags), "Missing trigger node")
+
+	diags = validateWorkflow([]WorkflowNodeModel{eventTriggerNode("trigger")}, nil)
+	assert.Empty(t, errorSummaries(diags))
+}
+
+func TestValidateRejectsDuplicateOutletIdentifiers(t *testing.T) {
+	diags := validateNodes([]WorkflowNodeModel{conditionNode("route", "same", "same")}, nil)
+	assert.Contains(t, errorSummaries(diags), "Duplicate outlet identifier")
+}
+
+func TestValidateRejectsDuplicateButtonIdentifiers(t *testing.T) {
+	node := WorkflowNodeModel{
+		Identifier: types.StringValue("approval"),
+		Input: &InputModel{
+			UserInputs: &InputUserInputsModel{
+				Buttons: []InputButtonModel{
+					{Identifier: types.StringValue("approve"), Label: types.StringValue("Approve")},
+					{Identifier: types.StringValue("approve"), Label: types.StringValue("Approve again")},
+				},
+			},
+			Outlets: []InputOutletModel{{Identifier: types.StringValue("approve")}},
+		},
+	}
+
+	assert.Contains(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)), "Duplicate button identifier")
+}
+
+func TestValidateEmailNotificationRequiresFields(t *testing.T) {
+	inputNode := func(notification NotificationModel) WorkflowNodeModel {
+		return WorkflowNodeModel{
+			Identifier: types.StringValue("approval"),
+			Input: &InputModel{
+				UserInputs: &InputUserInputsModel{
+					Buttons: []InputButtonModel{{Identifier: types.StringValue("approve"), Label: types.StringValue("Approve")}},
+				},
+				Outlets:       []InputOutletModel{{Identifier: types.StringValue("approve")}},
+				Notifications: []NotificationModel{notification},
+			},
+		}
+	}
+
+	missing := inputNode(NotificationModel{Target: types.StringValue("email")})
+	assert.Contains(t, errorSummaries(validateNodes([]WorkflowNodeModel{missing}, nil)), "Missing required block")
+
+	complete := inputNode(NotificationModel{
+		Target: types.StringValue("email"),
+		Fields: []NotificationFieldModel{{Label: types.StringValue("Service"), Value: types.StringValue("api")}},
+	})
+	assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{complete}, nil)))
+}
+
+func TestValidateRejectsBlankRequiredStrings(t *testing.T) {
+	blankExpression := WorkflowNodeModel{
+		Identifier: types.StringValue("route"),
+		Condition: &ConditionModel{
+			Outlets: []ConditionOutletModel{{
+				Identifier: types.StringValue("outlet"),
+				Expression: types.StringValue("   "),
+			}},
+		},
+	}
+	assert.Contains(t, errorSummaries(validateNodes([]WorkflowNodeModel{blankExpression}, nil)), "Missing required attribute")
+
+	blankUserInput := WorkflowNodeModel{
+		Identifier: types.StringValue("trigger"),
+		SelfServeTrigger: &SelfServeTriggerModel{
+			Contexts: []TriggerContextModel{{
+				On:        types.StringValue(consts.EntityContext),
+				UserInput: types.StringValue(""),
+			}},
+		},
+	}
+	assert.Contains(t, errorSummaries(validateNodes([]WorkflowNodeModel{blankUserInput}, nil)), "Missing required attribute")
+}
+
+func countSummary(summaries []string, summary string) int {
+	count := 0
+	for _, s := range summaries {
+		if s == summary {
+			count++
+		}
+	}
+	return count
+}
+
+func runStringValidator(v validator.String, value string) diag.Diagnostics {
+	resp := &validator.StringResponse{}
+	v.ValidateString(context.Background(), validator.StringRequest{
+		Path:        path.Root("attribute"),
+		ConfigValue: types.StringValue(value),
+	}, resp)
+	return resp.Diagnostics
+}
+
+func TestCronValidator(t *testing.T) {
+	valid := []string{"0 9 * * 1-5", "*/5 * * * *", "0 0 1 1 * 2030", "@daily", "0 2 * * MON"}
+	for _, expression := range valid {
+		assert.Empty(t, errorSummaries(runStringValidator(cronValidator(), expression)), expression)
+	}
+
+	invalid := []string{"", "0 9 * *", "not a cron", "@sometimes", "0 9 * * 1-5 * *"}
+	for _, expression := range invalid {
+		assert.NotEmpty(t, errorSummaries(runStringValidator(cronValidator(), expression)), expression)
+	}
+}
+
+func TestOutputSchemaValidator(t *testing.T) {
+	assert.Empty(t, errorSummaries(runStringValidator(outputSchemaValidator(),
+		`{"type":"object","properties":{"summary":{"type":"string"}}}`)))
+
+	invalid := []string{`{"type":"string"}`, `[]`, `{"properties":{}}`, `not json`}
+	for _, value := range invalid {
+		assert.NotEmpty(t, errorSummaries(runStringValidator(outputSchemaValidator(), value)), value)
+	}
+}
+
+func TestQueryValidator(t *testing.T) {
+	assert.Empty(t, errorSummaries(runStringValidator(queryValidator("Invalid policy"),
+		`{"combinator":"and","rules":[{"property":{"context":"user","property":"department"},"operator":"=","value":"engineering"}]}`)))
+
+	invalid := []string{`{"combinator":"maybe","rules":[]}`, `{"rules":[]}`, `{"combinator":"and"}`, `"and"`, `{`}
+	for _, value := range invalid {
+		assert.NotEmpty(t, errorSummaries(runStringValidator(queryValidator("Invalid policy"), value)), value)
+	}
+}
+
+// The API requires the `outlets` and `buttons` keys on the node types that own
+// them and accepts an empty list, so an empty one must survive serialization
+// rather than being dropped by omitempty.
+func TestEmptyOutletsAndButtonsAreSerializedNotOmitted(t *testing.T) {
+	ctx := context.Background()
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{
+			{Identifier: types.StringValue("branch"), Condition: &ConditionModel{}},
+			{
+				Identifier: types.StringValue("approval"),
+				Input:      &InputModel{UserInputs: &InputUserInputsModel{}},
+			},
+			{Identifier: types.StringValue("notify"), Webhook: &WebhookModel{Url: types.StringValue("https://example.com")}},
+		},
+	}
+
+	body, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	encoded, err := json.Marshal(body.Nodes)
+	require.NoError(t, err)
+
+	var nodes []map[string]any
+	require.NoError(t, json.Unmarshal(encoded, &nodes))
+
+	condition := nodes[0]["config"].(map[string]any)
+	require.Contains(t, condition, "outlets")
+	assert.Empty(t, condition["outlets"])
+
+	input := nodes[1]["config"].(map[string]any)
+	require.Contains(t, input, "outlets")
+	assert.Empty(t, input["outlets"])
+	userInputs := input["userInputs"].(map[string]any)
+	require.Contains(t, userInputs, "buttons")
+	assert.Empty(t, userInputs["buttons"])
+
+	// A node type that has no outlets must not gain the key.
+	assert.NotContains(t, nodes[2]["config"].(map[string]any), "outlets")
+}
+
+func TestSelfServeTriggerDoesNotSendButtons(t *testing.T) {
+	ctx := context.Background()
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes: []WorkflowNodeModel{{
+			Identifier:       types.StringValue("trigger"),
+			SelfServeTrigger: &SelfServeTriggerModel{UserInputs: &SelfServeUserInputsModel{}},
+		}},
+	}
+
+	body, err := workflowStateToPortBody(ctx, state)
+	require.NoError(t, err)
+
+	encoded, err := json.Marshal(body.Nodes[0].Config)
+	require.NoError(t, err)
+
+	var config map[string]any
+	require.NoError(t, json.Unmarshal(encoded, &config))
+	assert.NotContains(t, config["userInputs"].(map[string]any), "buttons")
+}
+
+func TestValidateAcceptsEmptyOutletsAndButtons(t *testing.T) {
+	nodes := []WorkflowNodeModel{
+		eventTriggerNode("trigger"),
+		{Identifier: types.StringValue("branch"), Condition: &ConditionModel{}},
+		{
+			Identifier: types.StringValue("approval"),
+			Input:      &InputModel{UserInputs: &InputUserInputsModel{}},
+		},
+	}
+
+	assert.Empty(t, errorSummaries(validateWorkflow(nodes, nil)))
+}
+
+// With no buttons declared, an outlet cannot reference a valid one, which the
+// API rejects through its `outlets should refer to valid button identifiers` rule.
+func TestValidateInputOutletWithoutButtonsIsRejected(t *testing.T) {
+	node := WorkflowNodeModel{
+		Identifier: types.StringValue("approval"),
+		Input: &InputModel{
+			UserInputs: &InputUserInputsModel{},
+			Outlets:    []InputOutletModel{{Identifier: types.StringValue("approve")}},
+		},
+	}
+
+	assert.Contains(t, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)), "Unknown button identifier")
+}
+
+func inputNodeWithNotifications(notifications ...NotificationModel) WorkflowNodeModel {
+	return WorkflowNodeModel{
+		Identifier: types.StringValue("approval"),
+		Input: &InputModel{
+			UserInputs: &InputUserInputsModel{
+				Buttons: []InputButtonModel{{Identifier: types.StringValue("approve"), Label: types.StringValue("Approve")}},
+			},
+			Outlets:       []InputOutletModel{{Identifier: types.StringValue("approve")}},
+			Notifications: notifications,
+		},
+	}
+}
+
+func slackNotification() NotificationModel {
+	return NotificationModel{
+		Target:  types.StringValue("slack"),
+		Url:     types.StringNull(),
+		Method:  types.StringNull(),
+		Headers: types.MapNull(types.StringType),
+		Body:    types.StringNull(),
+		Agent:   types.BoolNull(),
+	}
+}
+
+func TestValidateSlackNotification(t *testing.T) {
+	emailNotification := NotificationModel{
+		Target: types.StringValue("email"),
+		Fields: []NotificationFieldModel{{Label: types.StringValue("Service"), Value: types.StringValue("api")}},
+	}
+	webhookNotification := NotificationModel{
+		Target: types.StringValue("webhook"),
+		Url:    types.StringValue("https://example.com"),
+	}
+	assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{inputNodeWithNotifications(slackNotification())}, nil)))
+	assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{
+		inputNodeWithNotifications(slackNotification(), emailNotification, webhookNotification),
+	}, nil)))
+
+	withAttribute := func(set func(*NotificationModel)) NotificationModel {
+		n := slackNotification()
+		set(&n)
+		return n
+	}
+	invalid := map[string]NotificationModel{
+		"url":     withAttribute(func(n *NotificationModel) { n.Url = types.StringValue("https://example.com") }),
+		"method":  withAttribute(func(n *NotificationModel) { n.Method = types.StringValue("POST") }),
+		"headers": withAttribute(func(n *NotificationModel) { n.Headers = types.MapValueMust(types.StringType, map[string]attr.Value{}) }),
+		"body":    withAttribute(func(n *NotificationModel) { n.Body = types.StringValue(`{}`) }),
+		"agent":   withAttribute(func(n *NotificationModel) { n.Agent = types.BoolValue(false) }),
+		"fields": withAttribute(func(n *NotificationModel) {
+			n.Fields = []NotificationFieldModel{{Label: types.StringValue("Service"), Value: types.StringValue("api")}}
+		}),
+	}
+	for attribute, notification := range invalid {
+		t.Run(attribute, func(t *testing.T) {
+			diags := validateNodes([]WorkflowNodeModel{inputNodeWithNotifications(notification)}, nil)
+			require.Len(t, diags.Errors(), 1)
+			assert.Equal(t, "Invalid attribute combination", diags.Errors()[0].Summary())
+			assert.Contains(t, diags.Errors()[0].Detail(), "`"+attribute+"`")
+		})
+	}
+
+	unknownURL := withAttribute(func(n *NotificationModel) { n.Url = types.StringUnknown() })
+	assert.Empty(t, errorSummaries(validateNodes([]WorkflowNodeModel{inputNodeWithNotifications(unknownURL)}, nil)))
+}
+
+func TestValidateRejectsDuplicateSlackNotifications(t *testing.T) {
+	node := inputNodeWithNotifications(slackNotification(), slackNotification())
+	assert.Equal(t, []string{"Duplicate slack notification"}, errorSummaries(validateNodes([]WorkflowNodeModel{node}, nil)))
+}
+
+func TestSlackNotificationIsSentWithOnlyTarget(t *testing.T) {
+	w, err := workflowStateToPortBody(context.Background(), &WorkflowModel{
+		Identifier: types.StringValue("wf"),
+		Nodes:      []WorkflowNodeModel{inputNodeWithNotifications(slackNotification())},
+	})
+	require.NoError(t, err)
+
+	body, err := json.Marshal(w.Nodes[0].Config.Notifications)
+	require.NoError(t, err)
+	assert.JSONEq(t, `[{"target":"slack"}]`, string(body))
+}
+
+func TestSlackNotificationRefreshSetsOnlyTarget(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	prior := inputNodeWithNotifications(NotificationModel{
+		Target:  types.StringValue("webhook"),
+		Url:     types.StringValue("https://example.com"),
+		Headers: types.MapValueMust(types.StringType, map[string]attr.Value{}),
+	})
+	state := &WorkflowModel{Identifier: types.StringValue("wf"), Nodes: []WorkflowNodeModel{prior}}
+	apiWorkflow := &cli.Workflow{
+		Identifier: "wf",
+		Nodes: []cli.WorkflowNode{{
+			Identifier: "approval",
+			Config: cli.WorkflowNodeConfig{
+				Type: consts.InputNode,
+				UserInputs: &cli.WorkflowUserInputs{
+					Buttons: &[]cli.WorkflowInputButton{{Identifier: "approve", Label: "Approve"}},
+				},
+				Notifications: []cli.WorkflowInputNotification{{Target: "slack"}},
+			},
+		}},
+	}
+
+	require.NoError(t, r.refreshWorkflowState(ctx, state, apiWorkflow))
+
+	require.Len(t, state.Nodes[0].Input.Notifications, 1)
+	assert.Equal(t, slackNotification(), state.Nodes[0].Input.Notifications[0])
+}
+
+func TestMixedNotificationsRoundTrip(t *testing.T) {
+	ctx := context.Background()
+	notifications := []cli.WorkflowInputNotification{
+		{Target: "slack"},
+		{Target: "email", Fields: []cli.WorkflowInputNotificationField{{Label: "Service", Value: "api"}}},
+		{
+			Target:  "webhook",
+			Url:     strPtr("https://example.com"),
+			Method:  strPtr("POST"),
+			Headers: map[string]string{"X-Token": "abc"},
+			Body:    map[string]any{"message": "hello"},
+			Agent:   boolPtr(true),
+		},
+	}
+
+	var result []cli.WorkflowInputNotification
+	for _, n := range notifications {
+		model, err := notificationToModel(ctx, n, nil, false)
+		require.NoError(t, err)
+		body, err := notificationToPortBody(ctx, *model)
+		require.NoError(t, err)
+		result = append(result, *body)
+	}
+
+	assert.Equal(t, notifications, result)
+}
+
+type nodeTimeoutCase struct {
+	block       string
+	configType  string
+	computed    bool
+	withTimeout func(types.Int64) WorkflowNodeModel
+	timeoutOf   func(WorkflowNodeModel) types.Int64
+}
+
+func int64Ptr(v int64) *int64 { return &v }
+
+func nodeTimeoutCases() []nodeTimeoutCase {
+	return []nodeTimeoutCase{
+		{"kafka", consts.Kafka, true,
+			func(v types.Int64) WorkflowNodeModel { return WorkflowNodeModel{Kafka: &KafkaModel{TimeoutMinutes: v}} },
+			func(n WorkflowNodeModel) types.Int64 { return n.Kafka.TimeoutMinutes }},
+		{"webhook", consts.Webhook, false,
+			func(v types.Int64) WorkflowNodeModel {
+				return WorkflowNodeModel{Webhook: &WebhookModel{TimeoutMinutes: v}}
+			},
+			func(n WorkflowNodeModel) types.Int64 { return n.Webhook.TimeoutMinutes }},
+		{"integration_action", consts.IntegrationAction, false,
+			func(v types.Int64) WorkflowNodeModel {
+				return WorkflowNodeModel{IntegrationAction: &IntegrationActionModel{TimeoutMinutes: v}}
+			},
+			func(n WorkflowNodeModel) types.Int64 { return n.IntegrationAction.TimeoutMinutes }},
+		{"upsert_entity", consts.UpsertEntity, true,
+			func(v types.Int64) WorkflowNodeModel {
+				return WorkflowNodeModel{UpsertEntity: &UpsertEntityModel{TimeoutMinutes: v}}
+			},
+			func(n WorkflowNodeModel) types.Int64 { return n.UpsertEntity.TimeoutMinutes }},
+		{"ai", consts.AI, true,
+			func(v types.Int64) WorkflowNodeModel { return WorkflowNodeModel{AI: &AIModel{TimeoutMinutes: v}} },
+			func(n WorkflowNodeModel) types.Int64 { return n.AI.TimeoutMinutes }},
+		{"ai_agent", consts.AIAgent, true,
+			func(v types.Int64) WorkflowNodeModel {
+				return WorkflowNodeModel{AIAgent: &AIAgentModel{TimeoutMinutes: v}}
+			},
+			func(n WorkflowNodeModel) types.Int64 { return n.AIAgent.TimeoutMinutes }},
+		{"execute_workflow", consts.ExecuteWorkflow, true,
+			func(v types.Int64) WorkflowNodeModel {
+				return WorkflowNodeModel{ExecuteWorkflow: &ExecuteWorkflowModel{TimeoutMinutes: v}}
+			},
+			func(n WorkflowNodeModel) types.Int64 { return n.ExecuteWorkflow.TimeoutMinutes }},
+		{"condition", consts.ConditionNode, true,
+			func(v types.Int64) WorkflowNodeModel {
+				return WorkflowNodeModel{Condition: &ConditionModel{TimeoutMinutes: v}}
+			},
+			func(n WorkflowNodeModel) types.Int64 { return n.Condition.TimeoutMinutes }},
+		{"input", consts.InputNode, true,
+			func(v types.Int64) WorkflowNodeModel { return WorkflowNodeModel{Input: &InputModel{TimeoutMinutes: v}} },
+			func(n WorkflowNodeModel) types.Int64 { return n.Input.TimeoutMinutes }},
+	}
+}
+
+func TestNodeTimeoutCasesCoverEveryNonTriggerBlock(t *testing.T) {
+	triggers := map[string]bool{"self_serve_trigger": true, "event_trigger": true, "schedule_trigger": true, "workflow_trigger": true}
+	want := []string{}
+	for _, b := range nodeTypeBlockNames {
+		if !triggers[b] {
+			want = append(want, b)
+		}
+	}
+	got := []string{}
+	for _, c := range nodeTimeoutCases() {
+		got = append(got, c.block)
+	}
+	assert.ElementsMatch(t, want, got)
+}
+
+func TestNodeTimeoutMinutesToPortBody(t *testing.T) {
+	ctx := context.Background()
+	for _, c := range nodeTimeoutCases() {
+		t.Run(c.block, func(t *testing.T) {
+			set, err := nodeConfigToPortBody(ctx, c.withTimeout(types.Int64Value(120)))
+			require.NoError(t, err)
+			require.NotNil(t, set.TimeoutMinutes)
+			assert.Equal(t, int64(120), *set.TimeoutMinutes)
+
+			for _, v := range []types.Int64{types.Int64Null(), types.Int64Unknown()} {
+				unset, err := nodeConfigToPortBody(ctx, c.withTimeout(v))
+				require.NoError(t, err)
+				assert.Nil(t, unset.TimeoutMinutes)
+			}
+
+			unset, err := nodeConfigToPortBody(ctx, c.withTimeout(types.Int64Null()))
+			require.NoError(t, err)
+
+			raw, err := json.Marshal(unset)
+			require.NoError(t, err)
+			assert.NotContains(t, string(raw), "timeoutMinutes")
+		})
+	}
+}
+
+func TestRefreshNodeTimeoutMinutes(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	refresh := func(t *testing.T, configType string, timeout *int64) WorkflowNodeModel {
+		state := &WorkflowModel{
+			Identifier: types.StringValue("wf"),
+			Nodes:      []WorkflowNodeModel{{Identifier: types.StringValue("n")}},
+		}
+		err := r.refreshWorkflowState(ctx, state, &cli.Workflow{
+			Identifier: "wf",
+			Nodes: []cli.WorkflowNode{{
+				Identifier: "n",
+				Config:     cli.WorkflowNodeConfig{Type: configType, TimeoutMinutes: timeout},
+			}},
+		})
+		require.NoError(t, err)
+		require.Len(t, state.Nodes, 1)
+		return state.Nodes[0]
+	}
+
+	for _, c := range nodeTimeoutCases() {
+		t.Run(c.block, func(t *testing.T) {
+			assert.Equal(t, types.Int64Value(1440), c.timeoutOf(refresh(t, c.configType, int64Ptr(1440))))
+			assert.True(t, c.timeoutOf(refresh(t, c.configType, nil)).IsNull())
+		})
+	}
+}
+
+func TestNodeTimeoutMinutesSchema(t *testing.T) {
+	ctx := context.Background()
+	resp := &resource.SchemaResponse{}
+	(&WorkflowResource{}).Schema(ctx, resource.SchemaRequest{}, resp)
+	nodeBlocks := resp.Schema.Blocks["node"].(schema.ListNestedBlock).NestedObject.Blocks
+
+	for _, c := range nodeTimeoutCases() {
+		t.Run(c.block, func(t *testing.T) {
+			attribute, ok := nodeBlocks[c.block].(schema.SingleNestedBlock).Attributes["timeout_minutes"].(schema.Int64Attribute)
+			require.True(t, ok, "timeout_minutes must be an Int64 attribute")
+			assert.True(t, attribute.Optional)
+
+			if !c.computed {
+				assert.False(t, attribute.Computed)
+				assert.Nil(t, attribute.Default)
+			} else {
+				assert.True(t, attribute.Computed)
+				assert.Nil(t, attribute.Default)
+			}
+
+			for value, valid := range map[int64]bool{59: false, 60: true, 43200: true, 43201: false} {
+				validateResp := &validator.Int64Response{}
+				for _, v := range attribute.Validators {
+					v.ValidateInt64(ctx, validator.Int64Request{ConfigValue: types.Int64Value(value)}, validateResp)
+				}
+				assert.Equal(t, !valid, validateResp.Diagnostics.HasError(), "timeout_minutes = %d", value)
+			}
+		})
+	}
+}
+
+func TestWorkflowTriggerAloneSatisfiesTriggerPresence(t *testing.T) {
+	resp := &resource.ValidateConfigResponse{}
+	validateTriggerPresence(resp, []string{consts.WorkflowTrigger, consts.Webhook})
+	assert.False(t, resp.Diagnostics.HasError(), errorSummaries(resp.Diagnostics))
+}
+
+func TestWorkflowTriggerToPortBody(t *testing.T) {
+	ctx := context.Background()
+
+	config, err := nodeConfigToPortBody(ctx, WorkflowNodeModel{
+		WorkflowTrigger: &WorkflowTriggerModel{Published: types.BoolValue(false)},
+	})
+	require.NoError(t, err)
+
+	raw, err := json.Marshal(config)
+	require.NoError(t, err)
+	assert.JSONEq(t, `{"type":"WORKFLOW_TRIGGER","published":false}`, string(raw))
+}
+
+func TestExecuteWorkflowToPortBody(t *testing.T) {
+	ctx := context.Background()
+
+	tests := map[string]struct {
+		model ExecuteWorkflowModel
+		want  string
+	}{
+		"waits and continues on failure": {
+			model: ExecuteWorkflowModel{
+				WorkflowIdentifier: types.StringValue("child"),
+				TriggerIdentifier:  types.StringValue("called"),
+				Input:              types.StringValue(`{"service":"{{ .outputs.trigger.diff.after.identifier }}","replicas":2}`),
+				Wait:               types.BoolValue(true),
+				OnFailure:          types.StringValue("continue"),
+				TimeoutMinutes:     types.Int64Value(120),
+			},
+			want: `{"type":"EXECUTE_WORKFLOW","workflowIdentifier":"child","triggerIdentifier":"called",
+				"input":{"service":"{{ .outputs.trigger.diff.after.identifier }}","replicas":2},
+				"wait":true,"onFailure":"continue","timeoutMinutes":120}`,
+		},
+		"does not wait and sends an empty input": {
+			model: ExecuteWorkflowModel{
+				WorkflowIdentifier: types.StringValue("child"),
+				TriggerIdentifier:  types.StringValue("called"),
+				Input:              types.StringNull(),
+				Wait:               types.BoolValue(false),
+				TimeoutMinutes:     types.Int64Unknown(),
+			},
+			want: `{"type":"EXECUTE_WORKFLOW","workflowIdentifier":"child","triggerIdentifier":"called","input":{},"wait":false}`,
+		},
+	}
+
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			config, err := nodeConfigToPortBody(ctx, WorkflowNodeModel{ExecuteWorkflow: &test.model})
+			require.NoError(t, err)
+
+			raw, err := json.Marshal(config)
+			require.NoError(t, err)
+			assert.JSONEq(t, test.want, string(raw))
+		})
+	}
+}
+
+func TestExecuteWorkflowRejectsNonObjectInput(t *testing.T) {
+	_, err := nodeConfigToPortBody(context.Background(), WorkflowNodeModel{ExecuteWorkflow: &ExecuteWorkflowModel{
+		WorkflowIdentifier: types.StringValue("child"),
+		TriggerIdentifier:  types.StringValue("called"),
+		Input:              types.StringValue(`["a"]`),
+	}})
+	assert.ErrorContains(t, err, "must be a JSON object")
+
+	for value, valid := range map[string]bool{`{}`: true, `{"a":"{{ .run.id }}"}`: true, `[]`: false, `"a"`: false, `{`: false} {
+		resp := &validator.StringResponse{}
+		jsonObjectValidator().ValidateString(context.Background(), validator.StringRequest{ConfigValue: types.StringValue(value)}, resp)
+		assert.Equal(t, !valid, resp.Diagnostics.HasError(), "input = %s", value)
+	}
+}
+
+func TestRefreshWorkflowTriggerAndExecuteWorkflow(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	refresh := func(t *testing.T, config cli.WorkflowNodeConfig) WorkflowNodeModel {
+		state := &WorkflowModel{Identifier: types.StringValue("wf")}
+		err := r.refreshWorkflowState(ctx, state, &cli.Workflow{
+			Identifier: "wf",
+			Nodes:      []cli.WorkflowNode{{Identifier: "n", Config: config}},
+		})
+		require.NoError(t, err)
+		require.Len(t, state.Nodes, 1)
+		return state.Nodes[0]
+	}
+
+	t.Run("workflow trigger defaults published to true", func(t *testing.T) {
+		node := refresh(t, cli.WorkflowNodeConfig{Type: consts.WorkflowTrigger})
+		require.NotNil(t, node.WorkflowTrigger)
+		assert.Equal(t, types.BoolValue(true), node.WorkflowTrigger.Published)
+
+		node = refresh(t, cli.WorkflowNodeConfig{Type: consts.WorkflowTrigger, Published: boolPtr(false)})
+		assert.Equal(t, types.BoolValue(false), node.WorkflowTrigger.Published)
+	})
+
+	t.Run("execute workflow reads every field", func(t *testing.T) {
+		node := refresh(t, cli.WorkflowNodeConfig{
+			Type:               consts.ExecuteWorkflow,
+			WorkflowIdentifier: strPtr("child"),
+			TriggerIdentifier:  strPtr("called"),
+			Input:              map[string]any{"service": "{{ .run.id }}"},
+			Wait:               boolPtr(true),
+			OnFailure:          strPtr("continue"),
+			TimeoutMinutes:     int64Ptr(1440),
+		})
+		require.NotNil(t, node.ExecuteWorkflow)
+		assert.Equal(t, ExecuteWorkflowModel{
+			WorkflowIdentifier: types.StringValue("child"),
+			TriggerIdentifier:  types.StringValue("called"),
+			Input:              types.StringValue(`{"service":"{{ .run.id }}"}`),
+			Wait:               types.BoolValue(true),
+			OnFailure:          types.StringValue("continue"),
+			TimeoutMinutes:     types.Int64Value(1440),
+		}, *node.ExecuteWorkflow)
+	})
+
+	t.Run("execute workflow treats missing input and wait as their defaults", func(t *testing.T) {
+		node := refresh(t, cli.WorkflowNodeConfig{
+			Type:               consts.ExecuteWorkflow,
+			WorkflowIdentifier: strPtr("child"),
+			TriggerIdentifier:  strPtr("called"),
+		})
+		assert.Equal(t, types.StringValue("{}"), node.ExecuteWorkflow.Input)
+		assert.Equal(t, types.BoolValue(true), node.ExecuteWorkflow.Wait)
+		assert.True(t, node.ExecuteWorkflow.OnFailure.IsNull())
+	})
+}

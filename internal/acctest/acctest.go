@@ -1,14 +1,17 @@
 package acctest
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/consts"
 	"github.com/port-labs/terraform-provider-port-labs/v2/provider"
+	"github.com/port-labs/terraform-provider-port-labs/v2/version"
 )
 
 var (
@@ -51,5 +54,44 @@ func TestAccPreCheck(t *testing.T) {
 
 	if v := os.Getenv("PORT_CLIENT_SECRET"); v == "" {
 		t.Fatal("PORT_CLIENT_SECRET must be set for acceptance tests")
+	}
+}
+
+func testAccPortClient(t *testing.T) *cli.PortClient {
+	t.Helper()
+
+	baseURL := os.Getenv("PORT_BASE_URL")
+	if baseURL == "" {
+		baseURL = consts.DefaultBaseUrl
+	}
+
+	client, err := cli.New(baseURL, cli.WithHeader("User-Agent", version.ProviderVersion))
+	if err != nil {
+		t.Fatalf("failed to create Port client: %v", err)
+	}
+
+	if _, err := client.Authenticate(context.Background(), os.Getenv("PORT_CLIENT_ID"), os.Getenv("PORT_CLIENT_SECRET")); err != nil {
+		t.Fatalf("failed to authenticate with Port: %v", err)
+	}
+
+	return client
+}
+
+func TestAccPreCheckScorecardGroups(t *testing.T) {
+	TestAccPreCheck(t)
+
+	client := testAccPortClient(t)
+	ctx := context.Background()
+
+	enabled, err := client.HasFeatureFlags(ctx, cli.FeatureFlagScorecardGroups)
+	if err != nil {
+		t.Fatalf("failed to read organization feature flags: %v", err)
+	}
+	if enabled {
+		return
+	}
+
+	if err := client.EnableScorecardGroups(ctx); err != nil {
+		t.Skipf("scorecard groups are not available in this organization: %v", err)
 	}
 }

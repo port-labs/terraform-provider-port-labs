@@ -92,7 +92,7 @@ func TestAccPortEntity(t *testing.T) {
 	}
 	`, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -203,7 +203,7 @@ func TestAccPortEntityWithNulls(t *testing.T) {
 	}
 	`, identifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -230,6 +230,7 @@ func TestAccPortEntityWithNulls(t *testing.T) {
 func TestAccPortEntityWithRelation(t *testing.T) {
 	identifier := utils.GenID()
 	identifier2 := utils.GenID()
+	relatedIdentifier := utils.GenID()
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port_blueprint" "microservice" {
 		title = "TF Provider Test BP0"
@@ -279,7 +280,7 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 
 	resource "port_entity" "microservice2" {
 		title = "TF Provider Test Entity1"
-		identifier = "tf-entity-2"
+		identifier = "%s"
 		blueprint = port_blueprint.microservice2.identifier
 		properties = {
 			"string_props" = {
@@ -287,9 +288,9 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 			}
 		}
 	}
-	`, identifier, identifier2)
+	`, identifier, identifier2, relatedIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -300,7 +301,7 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 					resource.TestCheckResourceAttr("port_entity.microservice", "title", "TF Provider Test Entity0"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "blueprint", identifier),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.string_props.myStringIdentifier", "My String Value"),
-					resource.TestCheckResourceAttr("port_entity.microservice", "relations.single_relations.tfRelation", "tf-entity-2"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "relations.single_relations.tfRelation", relatedIdentifier),
 				),
 			},
 		},
@@ -310,6 +311,11 @@ func TestAccPortEntityWithRelation(t *testing.T) {
 func TestAccPortEntityWithManyRelation(t *testing.T) {
 	identifier1 := utils.GenID()
 	identifier2 := utils.GenID()
+	relatedIdentifier1 := utils.GenID()
+	relatedIdentifier2 := utils.GenID()
+	if relatedIdentifier2 < relatedIdentifier1 {
+		relatedIdentifier1, relatedIdentifier2 = relatedIdentifier2, relatedIdentifier1
+	}
 	var testAccActionConfigCreate = fmt.Sprintf(`
 	resource "port_blueprint" "microservice" {
 		title = "TF Provider Test BP0"
@@ -360,7 +366,7 @@ func TestAccPortEntityWithManyRelation(t *testing.T) {
 
 	resource "port_entity" "microservice2" {
 		title = "TF Provider Test Entity1"
-		identifier = "tf-entity-2"
+		identifier = "%s"
 		blueprint = port_blueprint.microservice2.identifier
 		properties = {
 			"string_props" = {
@@ -371,7 +377,7 @@ func TestAccPortEntityWithManyRelation(t *testing.T) {
 
 	resource "port_entity" "microservice3" {
 		title = "TF Provider Test Entity2"
-		identifier = "tf-entity-3"
+		identifier = "%s"
 		blueprint = port_blueprint.microservice2.identifier
 		properties = {
 			"string_props" = {
@@ -379,9 +385,9 @@ func TestAccPortEntityWithManyRelation(t *testing.T) {
 			}
 		}
 	}
-	`, identifier1, identifier2)
+	`, identifier1, identifier2, relatedIdentifier1, relatedIdentifier2)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -392,8 +398,8 @@ func TestAccPortEntityWithManyRelation(t *testing.T) {
 					resource.TestCheckResourceAttr("port_entity.microservice", "title", "TF Provider Test Entity0"),
 					resource.TestCheckResourceAttr("port_entity.microservice", "blueprint", identifier1),
 					resource.TestCheckResourceAttr("port_entity.microservice", "properties.string_props.myStringIdentifier", "My String Value"),
-					resource.TestCheckResourceAttr("port_entity.microservice", "relations.many_relations.tfRelation.0", "tf-entity-2"),
-					resource.TestCheckResourceAttr("port_entity.microservice", "relations.many_relations.tfRelation.1", "tf-entity-3"),
+					resource.TestCheckResourceAttr("port_entity.microservice", "relations.many_relations.tfRelation.0", relatedIdentifier1),
+					resource.TestCheckResourceAttr("port_entity.microservice", "relations.many_relations.tfRelation.1", relatedIdentifier2),
 				),
 			},
 		},
@@ -451,7 +457,7 @@ func TestAccPortEntityWithEmptyRelation(t *testing.T) {
 	}
 	`, identifier, identifier2)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -497,7 +503,7 @@ func TestAccPortEntityImport(t *testing.T) {
 		}
 	}`, blueprintIdentifier, entityIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -575,7 +581,7 @@ func TestAccPortEntityUpdateProp(t *testing.T) {
 		}
 	}`, identifier, entityIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -652,7 +658,7 @@ func TestAccPortEntityUpdateIdentifier(t *testing.T) {
 		}
 	}`, blueprintIdentifier, entityUpdatedIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -748,7 +754,7 @@ func TestAccPortEntityUpdateBlueprintIdentifier(t *testing.T) {
 		}
 	}`, blueprintIdentifier, blueprintIdentifier2, entityIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -804,7 +810,7 @@ func TestAccPortEntityWithDefaultArrayProp(t *testing.T) {
 		}
 	}`, identifier, entityIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 
@@ -834,6 +840,7 @@ func TestAccPortEntityWithDefaultArrayProp(t *testing.T) {
 func TestAccPortEntityWithMissingRelation(t *testing.T) {
 	identifier := utils.GenID()
 	identifier2 := utils.GenID()
+	relatedIdentifier := utils.GenID()
 	testAccActionConfig := fmt.Sprintf(`
     resource "port_blueprint" "microservice" {
         title = "TF Provider Test BP0"
@@ -888,7 +895,7 @@ func TestAccPortEntityWithMissingRelation(t *testing.T) {
     // B: microservice2
     resource "port_entity" "microservice2" {
         title = "TF Provider Test Entity1"
-        identifier = "tf-entity-2"
+        identifier = "%s"
         blueprint = port_blueprint.microservice2.identifier
         properties = {
             "string_props" = {
@@ -896,9 +903,9 @@ func TestAccPortEntityWithMissingRelation(t *testing.T) {
             }
         }
     }
-    `, identifier, identifier2)
+    `, identifier, identifier2, relatedIdentifier)
 
-	resource.Test(t, resource.TestCase{
+	resource.ParallelTest(t, resource.TestCase{
 		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
 		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
 

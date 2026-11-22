@@ -1,0 +1,261 @@
+package cli
+
+type Workflow struct {
+	ID                    string               `json:"id,omitempty"`
+	Identifier            string               `json:"identifier"`
+	Title                 *string              `json:"title,omitempty"`
+	Icon                  *string              `json:"icon,omitempty"`
+	Description           *string              `json:"description,omitempty"`
+	Category              *string              `json:"category,omitempty"`
+	AllowAnyoneToViewRuns *bool                `json:"allowAnyoneToViewRuns,omitempty"`
+	Nodes                 []WorkflowNode       `json:"nodes"`
+	Connections           []WorkflowConnection `json:"connections"`
+}
+
+type WorkflowNode struct {
+	Identifier  string             `json:"identifier"`
+	Title       *string            `json:"title,omitempty"`
+	Icon        *string            `json:"icon,omitempty"`
+	Description *string            `json:"description,omitempty"`
+	Variables   map[string]string  `json:"variables,omitempty"`
+	Links       []string           `json:"links,omitempty"`
+	Verbose     *bool              `json:"verbose,omitempty"`
+	Config      WorkflowNodeConfig `json:"config"`
+}
+
+// WorkflowNodeConfig is the flattened union of every node config. Type selects
+// the active variant; every other field is omitted from the payload.
+type WorkflowNodeConfig struct {
+	Type string `json:"type"`
+
+	// Shared by every trigger node type.
+	Published *bool `json:"published,omitempty"`
+
+	// EVENT_TRIGGER
+	Event     *WorkflowTriggerEvent  `json:"event,omitempty"`
+	Condition *WorkflowNodeCondition `json:"condition,omitempty"`
+
+	// SCHEDULE_TRIGGER
+	Cron *string `json:"cron,omitempty"`
+
+	// SELF_SERVE_TRIGGER
+	ActionCardButtonText    *string                  `json:"actionCardButtonText,omitempty"`
+	ExecuteActionButtonText *string                  `json:"executeActionButtonText,omitempty"`
+	Variant                 *string                  `json:"variant,omitempty"`
+	Contexts                []WorkflowTriggerContext `json:"contexts,omitempty"`
+	Permissions             *WorkflowNodePermissions `json:"permissions,omitempty"`
+
+	// SELF_SERVE_TRIGGER and INPUT
+	UserInputs *WorkflowUserInputs `json:"userInputs,omitempty"`
+
+	// KAFKA
+	Payload any `json:"payload,omitempty"`
+
+	// WEBHOOK
+	Url          *string           `json:"url,omitempty"`
+	Agent        *bool             `json:"agent,omitempty"`
+	Synchronized *bool             `json:"synchronized,omitempty"`
+	Method       *string           `json:"method,omitempty"`
+	Headers      map[string]string `json:"headers,omitempty"`
+	Body         any               `json:"body,omitempty"`
+	OnTimeout    *string           `json:"onTimeout,omitempty"`
+
+	// INTEGRATION_ACTION
+	InstallationId                       *string `json:"installationId,omitempty"`
+	IntegrationProvider                  *string `json:"integrationProvider,omitempty"`
+	IntegrationInvocationType            *string `json:"integrationInvocationType,omitempty"`
+	IntegrationActionExecutionProperties any     `json:"integrationActionExecutionProperties,omitempty"`
+
+	// UPSERT_ENTITY
+	BlueprintIdentifier *string                `json:"blueprintIdentifier,omitempty"`
+	Mapping             *WorkflowUpsertMapping `json:"mapping,omitempty"`
+
+	// AI and AI_AGENT
+	UserPrompt      *string             `json:"userPrompt,omitempty"`
+	AgentIdentifier *string             `json:"agentIdentifier,omitempty"`
+	Provider        *string             `json:"provider,omitempty"`
+	Model           *string             `json:"model,omitempty"`
+	SystemPrompt    *string             `json:"systemPrompt,omitempty"`
+	Tools           []string            `json:"tools,omitempty"`
+	McpServers      []WorkflowMcpServer `json:"mcpServers,omitempty"`
+	OutputSchema    any                 `json:"outputSchema,omitempty"`
+
+	// CONDITION and INPUT. The API requires the key on those node types and
+	// accepts an empty list, so this is a pointer: nil omits the key for every
+	// other node type, while a pointer to an empty slice still sends `[]`.
+	Outlets *[]WorkflowOutlet `json:"outlets,omitempty"`
+
+	// INPUT
+	Description   *string                     `json:"description,omitempty"`
+	Notifications []WorkflowInputNotification `json:"notifications,omitempty"`
+	Responders    *WorkflowNodePermissions    `json:"responders,omitempty"`
+
+	// EXECUTE_WORKFLOW
+	WorkflowIdentifier *string `json:"workflowIdentifier,omitempty"`
+	TriggerIdentifier  *string `json:"triggerIdentifier,omitempty"`
+	Input              any     `json:"input,omitempty"`
+	Wait               *bool   `json:"wait,omitempty"`
+
+	// Shared by most invocation node types.
+	OnFailure *string `json:"onFailure,omitempty"`
+
+	TimeoutMinutes *int64 `json:"timeoutMinutes,omitempty"`
+}
+
+type WorkflowTriggerEvent struct {
+	Type                string  `json:"type"`
+	BlueprintIdentifier string  `json:"blueprintIdentifier"`
+	PropertyIdentifier  *string `json:"propertyIdentifier,omitempty"`
+}
+
+type WorkflowNodeCondition struct {
+	Type        string   `json:"type"`
+	Expressions []string `json:"expressions"`
+	Combinator  *string  `json:"combinator,omitempty"`
+}
+
+type WorkflowTriggerContext struct {
+	On                  string  `json:"on"`
+	BlueprintIdentifier *string `json:"blueprintIdentifier,omitempty"`
+	UserInput           *string `json:"userInput,omitempty"`
+	Visible             *bool   `json:"visible,omitempty"`
+}
+
+// Self serve trigger permissions and input node responders share users/roles/teams
+// but differ in their dynamic query: permissions take an RBAC `policy`, responders
+// take an entity search `usersQuery` over _user.
+type WorkflowNodePermissions struct {
+	Users      []string `json:"users,omitempty"`
+	Roles      []string `json:"roles,omitempty"`
+	Teams      []string `json:"teams,omitempty"`
+	Policy     any      `json:"policy,omitempty"`
+	UsersQuery any      `json:"usersQuery,omitempty"`
+}
+
+type WorkflowUserInputs struct {
+	Properties  map[string]WorkflowInputProperty `json:"properties"`
+	Required    any                              `json:"required,omitempty"`
+	Order       []string                         `json:"order,omitempty"`
+	Steps       []WorkflowUserInputsStep         `json:"steps,omitempty"`
+	Titles      map[string]ActionTitle           `json:"titles,omitempty"`
+	Validations []WorkflowInputValidation        `json:"validations,omitempty"`
+	// Required on an input node and absent on a self serve trigger, so this is a
+	// pointer for the same reason as WorkflowNodeConfig.Outlets.
+	Buttons *[]WorkflowInputButton `json:"buttons,omitempty"`
+}
+
+type WorkflowInputProperty struct {
+	Type                 string             `json:"type,omitempty"`
+	Title                *string            `json:"title,omitempty"`
+	Description          *string            `json:"description,omitempty"`
+	Icon                 *string            `json:"icon,omitempty"`
+	Format               *string            `json:"format,omitempty"`
+	Blueprint            *string            `json:"blueprint,omitempty"`
+	Default              any                `json:"default,omitempty"`
+	DependsOn            []string           `json:"dependsOn,omitempty"`
+	Dataset              *WorkflowDataset   `json:"dataset,omitempty"`
+	Sort                 *EntitiesSortModel `json:"sort,omitempty"`
+	Enum                 any                `json:"enum,omitempty"`
+	EnumColors           map[string]string  `json:"enumColors,omitempty"`
+	Pattern              any                `json:"pattern,omitempty"`
+	MinLength            *int               `json:"minLength,omitempty"`
+	MaxLength            *int               `json:"maxLength,omitempty"`
+	Minimum              *float64           `json:"minimum,omitempty"`
+	Maximum              *float64           `json:"maximum,omitempty"`
+	ExclusiveMinimum     *float64           `json:"exclusiveMinimum,omitempty"`
+	ExclusiveMaximum     *float64           `json:"exclusiveMaximum,omitempty"`
+	MinItems             any                `json:"minItems,omitempty"`
+	MaxItems             any                `json:"maxItems,omitempty"`
+	UniqueItems          *bool              `json:"uniqueItems,omitempty"`
+	Items                map[string]any     `json:"items,omitempty"`
+	AdditionalProperties any                `json:"additionalProperties,omitempty"`
+	Visible              any                `json:"visible,omitempty"`
+	ReadOnly             any                `json:"readOnly,omitempty"`
+	Disabled             any                `json:"disabled,omitempty"`
+}
+
+type WorkflowDataset struct {
+	Combinator string                `json:"combinator"`
+	Rules      []WorkflowDatasetRule `json:"rules"`
+}
+
+type WorkflowDatasetRule struct {
+	Blueprint  *string               `json:"blueprint,omitempty"`
+	Property   *string               `json:"property,omitempty"`
+	Relation   *string               `json:"relation,omitempty"`
+	Direction  *string               `json:"direction,omitempty"`
+	Operator   string                `json:"operator,omitempty"`
+	Value      any                   `json:"value,omitempty"`
+	Combinator *string               `json:"combinator,omitempty"`
+	Rules      []WorkflowDatasetRule `json:"rules,omitempty"`
+}
+
+type WorkflowUserInputsStep struct {
+	Title       string                    `json:"title"`
+	Order       []string                  `json:"order"`
+	Visible     any                       `json:"visible,omitempty"`
+	Validations []WorkflowInputValidation `json:"validations,omitempty"`
+}
+
+type WorkflowInputValidation struct {
+	Constraint string `json:"constraint"`
+	Message    string `json:"message"`
+}
+
+type WorkflowInputButton struct {
+	Identifier string  `json:"identifier"`
+	Label      string  `json:"label"`
+	Variant    string  `json:"variant"`
+	Icon       *string `json:"icon,omitempty"`
+}
+
+type WorkflowUpsertMapping struct {
+	Identifier *string        `json:"identifier,omitempty"`
+	Title      *string        `json:"title,omitempty"`
+	Team       any            `json:"team,omitempty"`
+	Icon       *string        `json:"icon,omitempty"`
+	Properties map[string]any `json:"properties,omitempty"`
+	Relations  map[string]any `json:"relations,omitempty"`
+}
+
+type WorkflowMcpServer struct {
+	Identifier string `json:"identifier"`
+}
+
+type WorkflowStatusLabel struct {
+	Text    string  `json:"text"`
+	Variant *string `json:"variant,omitempty"`
+}
+
+type WorkflowOutlet struct {
+	Identifier          string               `json:"identifier"`
+	Title               *string              `json:"title,omitempty"`
+	Expression          *string              `json:"expression,omitempty"`
+	EvaluationMethod    *string              `json:"evaluationMethod,omitempty"`
+	NumOfResponders     *int64               `json:"numOfResponders,omitempty"`
+	StatusLabel         *WorkflowStatusLabel `json:"statusLabel,omitempty"`
+	WorkflowStatusLabel *WorkflowStatusLabel `json:"workflowStatusLabel,omitempty"`
+}
+
+type WorkflowInputNotification struct {
+	Target  string                           `json:"target"`
+	Fields  []WorkflowInputNotificationField `json:"fields,omitempty"`
+	Url     *string                          `json:"url,omitempty"`
+	Method  *string                          `json:"method,omitempty"`
+	Headers map[string]string                `json:"headers,omitempty"`
+	Body    map[string]any                   `json:"body,omitempty"`
+	Agent   *bool                            `json:"agent,omitempty"`
+}
+
+type WorkflowInputNotificationField struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
+}
+
+type WorkflowConnection struct {
+	SourceIdentifier       string  `json:"sourceIdentifier"`
+	TargetIdentifier       string  `json:"targetIdentifier"`
+	Description            *string `json:"description,omitempty"`
+	SourceOutletIdentifier *string `json:"sourceOutletIdentifier,omitempty"`
+	Fallback               *bool   `json:"fallback,omitempty"`
+}

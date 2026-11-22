@@ -158,6 +158,19 @@ func CalculationPropertiesToBody(ctx context.Context, state map[string]Calculati
 			calculationProp.SpecAuthentication = specAuth
 		}
 
+		if prop.Items != nil {
+			items := &cli.BlueprintCalculationPropertyItems{}
+			if !prop.Items.Type.IsNull() {
+				itemType := prop.Items.Type.ValueString()
+				items.Type = &itemType
+			}
+			if !prop.Items.Format.IsNull() {
+				itemFormat := prop.Items.Format.ValueString()
+				items.Format = &itemFormat
+			}
+			calculationProp.Items = items
+		}
+
 		calculationProperties[identifier] = calculationProp
 	}
 

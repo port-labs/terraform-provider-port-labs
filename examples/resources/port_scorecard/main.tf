@@ -49,14 +49,81 @@ resource "port_blueprint" "microservice" {
   }
 }
 
+resource "port_blueprint" "team" {
+  title      = "Team"
+  icon       = "Team"
+  identifier = "examples-scorecard-team"
+}
+
+resource "port_entity" "platform_team" {
+  identifier = "platform-team"
+  title      = "Platform Team"
+  blueprint  = port_blueprint.team.identifier
+}
+
+resource "port_system_blueprint" "scorecard" {
+  identifier = "_scorecard"
+  properties = {
+    string_props = {
+      owner = {
+        type  = "string"
+        title = "Owner"
+      }
+    }
+    number_props = {
+      priority = {
+        type  = "number"
+        title = "Priority"
+      }
+    }
+  }
+  relations = {
+    owner_team = {
+      title  = "Owner Team"
+      target = port_blueprint.team.identifier
+    }
+  }
+}
+
+resource "port_system_blueprint" "rule" {
+  identifier = "_rule"
+  properties = {
+    number_props = {
+      sla = {
+        type  = "number"
+        title = "SLA"
+      }
+    }
+  }
+  relations = {
+    owner = {
+      title  = "Owner"
+      target = port_blueprint.team.identifier
+    }
+  }
+}
+
 resource "port_scorecard" "production_readiness" {
   identifier = "production-readiness"
   title      = "Production Readiness"
   blueprint  = port_blueprint.microservice.identifier
+  properties = jsonencode({
+    owner    = "platform-team"
+    priority = 1
+  })
+  relations = jsonencode({
+    owner_team = port_entity.platform_team.identifier
+  })
   rules = [{
     identifier = "high-avalability"
     title      = "High Availability"
     level      = "Gold"
+    properties = jsonencode({
+      sla = 2
+    })
+    relations = jsonencode({
+      owner = port_entity.platform_team.identifier
+    })
     query = {
       combinator = "and"
       conditions = [jsonencode({
@@ -66,4 +133,9 @@ resource "port_scorecard" "production_readiness" {
       })]
     }
   }]
+  depends_on = [
+    port_system_blueprint.scorecard,
+    port_system_blueprint.rule,
+    port_entity.platform_team,
+  ]
 }

@@ -64,7 +64,9 @@ func DefaultCliLevels() []cli.Level {
 	}
 }
 
-func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string) {
+func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *ScorecardModel, s *cli.Scorecard, blueprintIdentifier string, syncPropertiesFromAPI bool) error {
+	oldFilter := state.Filter
+
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprintIdentifier, s.Identifier))
 	state.Identifier = types.StringValue(s.Identifier)
 	state.Blueprint = types.StringValue(blueprintIdentifier)
@@ -79,8 +81,13 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 			Combinator: types.StringValue(s.Filter.Combinator),
 		}
 		stateFilter.Conditions = make([]types.String, len(s.Filter.Conditions))
+		var oldConditions []types.String
+		if oldFilter != nil {
+			oldConditions = oldFilter.Conditions
+		}
 		for i, u := range s.Filter.Conditions {
-			cond, _ := utils.GoObjectToTerraformString(u, r.portClient.JSONEscapeHTML)
+			cond, _ := utils.GoObjectToTerraformStringPreferExisting(
+				utils.TerraformStringAt(oldConditions, i), u, r.portClient.JSONEscapeHTML)
 			stateFilter.Conditions[i] = cond
 		}
 		state.Filter = stateFilter
@@ -111,6 +118,9 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 		}
 
 		stateRule.Query = stateQuery
+		if err := SyncRuleCustomFieldsFromAPI(stateRule, rule, r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
+			return err
+		}
 
 		stateRules = append(stateRules, *stateRule)
 	}
@@ -136,6 +146,8 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 					Title:      types.StringValue(apiRule.Title),
 					Level:      types.StringValue(apiRule.Level),
 					Identifier: types.StringValue(apiRule.Identifier),
+					Properties: existingRule.Properties,
+					Relations:  existingRule.Relations,
 				}
 
 				// Handle description - preserve from state if it exists, otherwise use API value
@@ -152,11 +164,19 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 					Combinator: types.StringValue(apiRule.Query.Combinator),
 				}
 				stateQuery.Conditions = make([]types.String, len(apiRule.Query.Conditions))
+				var oldConditions []types.String
+				if existingRule.Query != nil {
+					oldConditions = existingRule.Query.Conditions
+				}
 				for i, u := range apiRule.Query.Conditions {
-					cond, _ := utils.GoObjectToTerraformString(u, r.portClient.JSONEscapeHTML)
+					cond, _ := utils.GoObjectToTerraformStringPreferExisting(
+						utils.TerraformStringAt(oldConditions, i), u, r.portClient.JSONEscapeHTML)
 					stateQuery.Conditions[i] = cond
 				}
 				updatedRule.Query = stateQuery
+				if err := SyncRuleCustomFieldsFromAPI(&updatedRule, *apiRule, r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
+					return err
+				}
 
 				orderedRules = append(orderedRules, updatedRule)
 				processedIdentifiers[identifier] = true
@@ -187,6 +207,9 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 					stateQuery.Conditions[i] = cond
 				}
 				newRule.Query = stateQuery
+				if err := SyncRuleCustomFieldsFromAPI(&newRule, apiRule, r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
+					return err
+				}
 
 				orderedRules = append(orderedRules, newRule)
 			}
@@ -200,4 +223,12 @@ func (r *ScorecardResource) refreshScorecardState(ctx context.Context, state *Sc
 	if shouldRefreshLevels(state.Levels, s.Levels) {
 		state.Levels = fromCliLevelsToTerraformLevels(s.Levels)
 	}
+
+	if err := utils.SyncJSONObjectState(&state.Properties, s.Properties, "properties", r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
+		return err
+	}
+	if err := utils.SyncJSONObjectState(&state.Relations, s.Relations, "relations", r.portClient.JSONEscapeHTML, syncPropertiesFromAPI); err != nil {
+		return err
+	}
+	return nil
 }

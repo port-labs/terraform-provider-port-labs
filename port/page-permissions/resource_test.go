@@ -2,7 +2,6 @@ package page_permissions_test
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -53,10 +52,6 @@ resource "port_page" "microservice_dashboard_page" {
 
 func TestAccPortPagePermissionsBasic(t *testing.T) {
 	pageIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortPageResourceBasic = createPage(pageIdentifier)
 
 	var testAccBasePagePermissionsConfigUpdate = `
@@ -97,10 +92,6 @@ func TestAccPortPagePermissionsBasic(t *testing.T) {
 
 func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 	pageIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortPageResourceBasic = createPage(pageIdentifier)
 
 	teamName := utils.GenID()
@@ -108,6 +99,9 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 	var testAccBasePagePermissionsConfigUpdate = fmt.Sprintf(`
 	resource "port_system_blueprint" "team" {
 		identifier = "_team"
+		lifecycle {
+			ignore_changes = all
+		}
 	}
 
 	resource "port_entity" "team" {
@@ -118,6 +112,12 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 			"string_props" = {
 				"description" =  "My Description"
 			}
+		}
+		lifecycle {
+			ignore_changes = [
+				properties,
+				relations,
+			]
 		}
 	}
 
@@ -158,10 +158,6 @@ func TestAccPortPagePermissionsUpdateWithUsers(t *testing.T) {
 
 func TestAccPortPagePermissionsImport(t *testing.T) {
 	pageIdentifier := utils.GenID()
-	err := os.Setenv("PORT_BETA_FEATURES_ENABLED", "true")
-	if err != nil {
-		t.Fatal(err)
-	}
 	var testAccPortPageResourceBasic = createPage(pageIdentifier)
 
 	var testAccBasePagePermissionsConfigUpdate = `

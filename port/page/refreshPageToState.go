@@ -31,9 +31,14 @@ func normalizeHiddenQueries(v any) any {
 					idx[i] = i
 				}
 				slices.SortFunc(idx, func(a, b int) int { return strings.Compare(keys[a], keys[b]) })
-				sorted := make([]any, len(arr))
+				sorted := make([]any, 0, len(arr))
+				var prevKey string
 				for i, j := range idx {
-					sorted[i] = arr[j]
+					if i > 0 && keys[j] == prevKey {
+						continue
+					}
+					sorted = append(sorted, arr[j])
+					prevKey = keys[j]
 				}
 				out[key] = sorted
 				continue

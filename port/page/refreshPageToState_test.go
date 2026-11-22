@@ -35,6 +35,12 @@ func TestResolveWidgetState(t *testing.T) {
 			keepPrev:     true,
 		},
 		{
+			name:         "API duplicates relation identifiers in hiddenQuery",
+			prevWidget:   types.StringValue(`{"id":"details","hiddenQuery":["test_team","url"]}`),
+			remoteWidget: `{"id":"details","hiddenQuery":["url","test_team","test_team"]}`,
+			keepPrev:     true,
+		},
+		{
 			name:         "nested hiddenQuery inside grouper is order-insensitive",
 			prevWidget:   types.StringValue(`{"type":"grouper","groups":[{"widgets":[{"hiddenQuery":["b","a"]}]}]}`),
 			remoteWidget: `{"type":"grouper","groups":[{"widgets":[{"hiddenQuery":["a","b"]}]}]}`,

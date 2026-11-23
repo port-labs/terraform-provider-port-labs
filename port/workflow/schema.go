@@ -39,6 +39,7 @@ var nodeTypeBlockNames = []string{
 	"ai",
 	"ai_agent",
 	"execute_workflow",
+	"summary",
 	"condition",
 	"input",
 }
@@ -467,6 +468,20 @@ func executeWorkflowBlock() schema.Block {
 				Computed:            true,
 				Validators:          []validator.Int64{int64validator.Between(minTimeoutMinutes, maxTimeoutMinutes)},
 			},
+		},
+	}
+}
+
+func summaryBlock() schema.Block {
+	return schema.SingleNestedBlock{
+		MarkdownDescription: "A summary node that writes Markdown to the workflow run page.",
+		Attributes: map[string]schema.Attribute{
+			"summary": schema.StringAttribute{
+				MarkdownDescription: "Markdown shown on the run page. Supports JQ templates in `{{ }}`, for example `{{ .outputs.deploy.status }}`.",
+				Optional:            true,
+			},
+			"on_failure":      onFailureAttribute(),
+			"timeout_minutes": timeoutMinutesAttribute(),
 		},
 	}
 }
@@ -993,6 +1008,7 @@ func WorkflowBlocks() map[string]schema.Block {
 					"ai":                 aiBlock(),
 					"ai_agent":           aiAgentBlock(),
 					"execute_workflow":   executeWorkflowBlock(),
+					"summary":            summaryBlock(),
 					"condition":          conditionBlock(),
 					"input":              inputBlock(),
 				},

@@ -121,6 +121,14 @@ resource "port_workflow" "deploy_service" {
     }
   }
 
+  node {
+    identifier = "run_summary"
+
+    summary {
+      summary = "## Deploy complete\nService **{{ .outputs.trigger.inputs.service }}** was deployed."
+    }
+  }
+
   connections {
     source_identifier = "trigger"
     target_identifier = "approval"
@@ -135,6 +143,11 @@ resource "port_workflow" "deploy_service" {
   connections {
     source_identifier = "deploy"
     target_identifier = "record"
+  }
+
+  connections {
+    source_identifier = "record"
+    target_identifier = "run_summary"
   }
 }
 

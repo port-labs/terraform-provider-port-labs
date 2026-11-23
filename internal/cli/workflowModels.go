@@ -96,6 +96,9 @@ type WorkflowNodeConfig struct {
 	Input              any     `json:"input,omitempty"`
 	Wait               *bool   `json:"wait,omitempty"`
 
+	// SUMMARY
+	Summary *string `json:"summary,omitempty"`
+
 	// Shared by most invocation node types.
 	OnFailure *string `json:"onFailure,omitempty"`
 

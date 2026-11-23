@@ -180,6 +180,13 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 			OnFailure:      flex.GoStringToFramework(config.OnFailure),
 		}
 
+	case consts.Summary:
+		node.Summary = &SummaryModel{
+			TimeoutMinutes: types.Int64PointerValue(config.TimeoutMinutes),
+			Summary:        flex.GoStringToFramework(config.Summary),
+			OnFailure:      flex.GoStringToFramework(config.OnFailure),
+		}
+
 	case consts.Webhook:
 		body, err := anyToJSONString(config.Body, r.portClient.JSONEscapeHTML)
 		if err != nil {

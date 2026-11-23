@@ -35,6 +35,7 @@ const (
 	ConditionNode   = "CONDITION"
 	InputNode       = "INPUT"
 	ExecuteWorkflow = "EXECUTE_WORKFLOW"
+	Summary         = "SUMMARY"
 
 	// Workflow trigger event types
 	WorkflowTimerExpired = "TIMER_EXPIRED"

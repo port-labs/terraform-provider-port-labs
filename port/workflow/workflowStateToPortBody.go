@@ -161,6 +161,13 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 		}
 		config.Payload = payload
 
+	case n.Summary != nil:
+		config.Type = consts.Summary
+		s := n.Summary
+		config.TimeoutMinutes = knownInt64Pointer(s.TimeoutMinutes)
+		config.OnFailure = s.OnFailure.ValueStringPointer()
+		config.Summary = s.Summary.ValueStringPointer()
+
 	case n.Webhook != nil:
 		config.Type = consts.Webhook
 		config.TimeoutMinutes = knownInt64Pointer(n.Webhook.TimeoutMinutes)

@@ -6,16 +6,19 @@ import (
 	"fmt"
 )
 
-func (c *PortClient) ReadEntity(ctx context.Context, id string, blueprint string) (*Entity, int, error) {
+func (c *PortClient) readEntity(ctx context.Context, id, blueprint string, excludeCalculatedProperties bool) (*Entity, int, error) {
 	url := "v1/blueprints/{blueprint}/entities/{identifier}"
-	resp, err := c.Client.R().
+	req := c.Client.R().
 		SetHeader("Accept", "application/json").
-		// we don't want to include those properties as they are calculated by the backend
-		// and not part of the state, pulling them would cause a diff
-		SetQueryParam("exclude_calculated_properties", "true").
-		SetPathParam(("blueprint"), blueprint).
-		SetPathParam("identifier", id).
-		Get(url)
+		SetPathParam("blueprint", blueprint).
+		SetPathParam("identifier", id)
+
+	if excludeCalculatedProperties {
+		// Calculated properties are excluded by default so routine entity refresh does not drift.
+		req.SetQueryParam("exclude_calculated_properties", "true")
+	}
+
+	resp, err := req.Get(url)
 	if err != nil {
 		return nil, resp.StatusCode(), err
 	}
@@ -28,6 +31,14 @@ func (c *PortClient) ReadEntity(ctx context.Context, id string, blueprint string
 		return nil, resp.StatusCode(), fmt.Errorf("failed to read entity, got: %s", resp.Body())
 	}
 	return &pb.Entity, resp.StatusCode(), nil
+}
+
+func (c *PortClient) ReadEntity(ctx context.Context, id string, blueprint string) (*Entity, int, error) {
+	return c.readEntity(ctx, id, blueprint, true)
+}
+
+func (c *PortClient) ReadEntityIncludingCalculatedProperties(ctx context.Context, id, blueprint string) (*Entity, int, error) {
+	return c.readEntity(ctx, id, blueprint, false)
 }
 
 func (c *PortClient) CreateEntity(ctx context.Context, e *Entity, runID string, createMissingRelatedEntities bool) (*Entity, error) {

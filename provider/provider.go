@@ -27,6 +27,8 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/search"
 	system_blueprint "github.com/port-labs/terraform-provider-port-labs/v2/port/system_blueprint"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/team"
+	virtual_mcp_server "github.com/port-labs/terraform-provider-port-labs/v2/port/virtual_mcp_server"
+	virtual_mcp_tool "github.com/port-labs/terraform-provider-port-labs/v2/port/virtual_mcp_tool"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/webhook"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/workflow"
 	"github.com/port-labs/terraform-provider-port-labs/v2/version"
@@ -178,6 +180,8 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		organization.NewOrganizationSecretResource,
 		organization.NewOrganizationResource,
 		workflow.NewWorkflowResource,
+		virtual_mcp_tool.NewVirtualMcpToolResource,
+		virtual_mcp_server.NewVirtualMcpServerResource,
 	}
 }
 

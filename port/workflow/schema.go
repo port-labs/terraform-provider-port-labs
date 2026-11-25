@@ -422,6 +422,13 @@ func workflowTriggerBlock() schema.Block {
 				Computed:            true,
 				Default:             booldefault.StaticBool(true),
 			},
+			"input_schema": schema.StringAttribute{
+				MarkdownDescription: "A JSON schema, encoded as a JSON string, that the `input` of an `execute_workflow` node calling this trigger is validated against " +
+					"before the run starts. Its `type` must be `object`, and it is compiled as a draft-07 JSON Schema on save. " +
+					"When the input does not match, the calling node fails and this workflow does not run. When omitted, the input is not validated.",
+				Optional:   true,
+				Validators: []validator.String{objectSchemaValidator("input schema")},
+			},
 		},
 	}
 }
@@ -673,7 +680,7 @@ func aiBlock() schema.Block {
 			"output_schema": schema.StringAttribute{
 				MarkdownDescription: "A JSON schema, encoded as a JSON string, the AI response is validated against.",
 				Optional:            true,
-				Validators:          []validator.String{outputSchemaValidator()},
+				Validators:          []validator.String{objectSchemaValidator("output schema")},
 			},
 		},
 	}
@@ -709,7 +716,7 @@ func aiAgentBlock() schema.Block {
 			"output_schema": schema.StringAttribute{
 				MarkdownDescription: "A JSON schema, encoded as a JSON string, the agent response is validated against.",
 				Optional:            true,
-				Validators:          []validator.String{outputSchemaValidator()},
+				Validators:          []validator.String{objectSchemaValidator("output schema")},
 			},
 		},
 	}

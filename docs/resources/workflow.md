@@ -1463,4 +1463,5 @@ Optional:
 
 Optional:
 
+- `input_schema` (String) A JSON schema, encoded as a JSON string, that the `input` of an `execute_workflow` node calling this trigger is validated against before the run starts. Its `type` must be `object`, and it is compiled as a draft-07 JSON Schema on save. When the input does not match, the calling node fails and this workflow does not run. When omitted, the input is not validated.
 - `published` (Boolean) Whether the trigger is published. When `false`, other workflows cannot execute this workflow through this trigger.

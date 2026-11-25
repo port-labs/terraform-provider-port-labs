@@ -809,6 +809,57 @@ func testAccSubWorkflowConfig(childIdentifier, parentIdentifier, published, exec
 	}`, childIdentifier, published, parentIdentifier, executeWorkflow)
 }
 
+func TestAccPortWorkflowWorkflowTriggerInputSchema(t *testing.T) {
+	childIdentifier := utils.GenID()
+	parentIdentifier := utils.GenID()
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier,
+					`input_schema = jsonencode({ type = "string" })`, ""),
+				ExpectError: regexp.MustCompile("Invalid input schema"),
+			},
+			{
+				// The provider only checks the root; the API compiles the schema and rejects it.
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier,
+					`input_schema = jsonencode({ type = "object", properties = { name = { type = "nope" } } })`, ""),
+				ExpectError: regexp.MustCompile(`workflow trigger "called" is not a valid JSON Schema`),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier,
+					`input_schema = jsonencode({ type = "object", properties = { name = { type = "string" } }, required = ["name"] })`,
+					`input = jsonencode({ name = "{{ .run.id }}" })`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.input_schema",
+						`{"properties":{"name":{"type":"string"}},"required":["name"],"type":"object"}`),
+				),
+			},
+			{
+				ResourceName:      "port_workflow.child",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     childIdentifier,
+			},
+			{
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier,
+					`input_schema = jsonencode({ type = "object" })`, ""),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.child", "node.0.workflow_trigger.input_schema", `{"type":"object"}`),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + testAccSubWorkflowConfig(childIdentifier, parentIdentifier, "", ""),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr("port_workflow.child", "node.0.workflow_trigger.input_schema"),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPortWorkflowExecuteWorkflow(t *testing.T) {
 	childIdentifier := utils.GenID()
 	parentIdentifier := utils.GenID()

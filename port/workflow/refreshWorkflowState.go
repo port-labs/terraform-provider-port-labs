@@ -147,8 +147,13 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 		}
 
 	case consts.WorkflowTrigger:
+		inputSchema, err := anyToJSONString(config.InputSchema, r.portClient.JSONEscapeHTML)
+		if err != nil {
+			return node, err
+		}
 		node.WorkflowTrigger = &WorkflowTriggerModel{
-			Published: boolOrTrue(config.Published),
+			Published:   boolOrTrue(config.Published),
+			InputSchema: inputSchema,
 		}
 
 	case consts.ExecuteWorkflow:

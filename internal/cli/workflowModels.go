@@ -38,6 +38,10 @@ type WorkflowNodeConfig struct {
 	// SCHEDULE_TRIGGER
 	Cron *string `json:"cron,omitempty"`
 
+	// WORKFLOW_TRIGGER. Nil omits the key, which the API treats like `null`:
+	// the input sent by an EXECUTE_WORKFLOW node is not validated.
+	InputSchema any `json:"inputSchema,omitempty"`
+
 	// SELF_SERVE_TRIGGER
 	ActionCardButtonText    *string                  `json:"actionCardButtonText,omitempty"`
 	ExecuteActionButtonText *string                  `json:"executeActionButtonText,omitempty"`

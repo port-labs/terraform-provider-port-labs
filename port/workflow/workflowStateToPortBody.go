@@ -130,6 +130,11 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 	case n.WorkflowTrigger != nil:
 		config.Type = consts.WorkflowTrigger
 		config.Published = n.WorkflowTrigger.Published.ValueBoolPointer()
+		inputSchema, err := jsonStringToAny(n.WorkflowTrigger.InputSchema)
+		if err != nil {
+			return nil, err
+		}
+		config.InputSchema = inputSchema
 
 	case n.ExecuteWorkflow != nil:
 		config.Type = consts.ExecuteWorkflow

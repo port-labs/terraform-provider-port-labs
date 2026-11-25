@@ -135,11 +135,11 @@ func ScorecardSchema() map[string]schema.Attribute {
 			},
 		},
 		"properties": schema.StringAttribute{
-			MarkdownDescription: "Additional `_scorecard` blueprint properties applied to the scorecard entity, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint.",
+			MarkdownDescription: "Additional `_scorecard` blueprint properties applied to the scorecard entity, as a JSON encoded string. Property keys must match custom properties you added to the `_scorecard` blueprint. On update, omitted keys are cleared.",
 			Optional:            true,
 		},
 		"relations": schema.StringAttribute{
-			MarkdownDescription: "Additional `_scorecard` blueprint relations applied to the scorecard entity, as a JSON encoded string. Relation values can be a string, an array of strings, or `null` to clear a relation. The `group` relation is managed by Port and cannot be set here.",
+			MarkdownDescription: "Additional `_scorecard` blueprint relations applied to the scorecard entity, as a JSON encoded string. Relation values can be a string, an array of strings, or `null` to clear a relation. The `group` relation is managed by Port and cannot be set here. On update, omitted keys are cleared.",
 			Optional:            true,
 		},
 		"created_at": schema.StringAttribute{
@@ -183,6 +183,8 @@ This resource allows you to manage a scorecard.
 See the [Port documentation](https://docs.getport.io/promote-scorecards/) for more information about scorecards.
 
 ` + "`properties`" + ` and ` + "`relations`" + ` set additional ` + "`_scorecard`" + ` blueprint property and relation values on the scorecard entity. Each rule also accepts optional ` + "`properties`" + ` and ` + "`relations`" + ` for custom ` + "`_rule`" + ` blueprint fields. Define the schema on the system blueprints first (for example with ` + "`port_system_blueprint`" + `), then reference those keys in ` + "`jsonencode({...})`" + `. Use ` + "`depends_on`" + ` so the scorecard is created only after the blueprint schema exists.
+
+~> **Note:** Scorecards that belong to a ` + "`port_scorecard_group`" + ` cannot be updated through this resource. Manage those scorecards with ` + "`port_scorecard_group`" + ` instead.
 
 ## Example Usage
 

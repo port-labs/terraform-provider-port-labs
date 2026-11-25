@@ -22,7 +22,7 @@ func ApplyRuleCustomFieldsToCLI(stateRule Rule, rule *cli.Rule) error {
 			return err
 		}
 		if relations != nil {
-			rule.Relations = *relations
+			rule.Relations = omitManagedRelationKeys(*relations, ruleManagedRelationKey)
 		}
 	}
 

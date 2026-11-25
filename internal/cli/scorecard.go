@@ -13,6 +13,7 @@ func (c *PortClient) ReadScorecard(ctx context.Context, blueprintID string, scor
 		SetContext(ctx).
 		SetHeader("Accept", "application/json").
 		SetResult(pb).
+		SetQueryParam("includeAdditionalProperties", "true").
 		SetPathParam("blueprint_identifier", blueprintID).
 		SetPathParam("scorecard_identifier", scorecardID).
 		Get(url)
@@ -31,7 +32,7 @@ func (c *PortClient) CreateScorecard(ctx context.Context, blueprintID string, sc
 		SetBody(scorecard).
 		SetContext(ctx).
 		SetPathParam("blueprint_identifier", blueprintID)
-	if len(scorecard.Properties) > 0 || len(scorecard.Relations) > 0 {
+	if scorecardRequestsAdditionalProperties(scorecard) {
 		req.SetQueryParam("includeAdditionalProperties", "true")
 	}
 	resp, err := req.Post(url)
@@ -51,12 +52,15 @@ func (c *PortClient) CreateScorecard(ctx context.Context, blueprintID string, sc
 
 func (c *PortClient) UpdateScorecard(ctx context.Context, blueprintID string, scorecardId string, scorecard *Scorecard) (*Scorecard, error) {
 	url := "v1/blueprints/{blueprint_identifier}/scorecards/{scorecard_identifier}"
-	resp, err := c.Client.R().
+	req := c.Client.R().
 		SetBody(scorecard).
 		SetContext(ctx).
 		SetPathParam("blueprint_identifier", blueprintID).
-		SetPathParam("scorecard_identifier", scorecardId).
-		Put(url)
+		SetPathParam("scorecard_identifier", scorecardId)
+	if scorecardRequestsAdditionalProperties(scorecard) {
+		req.SetQueryParam("includeAdditionalProperties", "true")
+	}
+	resp, err := req.Put(url)
 	if err != nil {
 		return nil, err
 	}

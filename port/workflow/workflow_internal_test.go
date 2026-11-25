@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -32,6 +33,33 @@ func TestWorkflowSchemaIsValid(t *testing.T) {
 
 	diags := resp.Schema.ValidateImplementation(ctx)
 	require.False(t, diags.HasError(), diags.Errors())
+}
+
+func TestOnFailureSchemaDefaults(t *testing.T) {
+	cases := map[string]struct {
+		block    schema.Block
+		expected string
+	}{
+		"summary":            {summaryBlock(), "continue"},
+		"kafka":              {kafkaBlock(), "terminate"},
+		"webhook":            {webhookBlock(), "terminate"},
+		"integration_action": {integrationActionBlock(), "terminate"},
+		"upsert_entity":      {upsertEntityBlock(), "terminate"},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			nested, ok := tc.block.(schema.SingleNestedBlock)
+			require.True(t, ok)
+			onFailure, ok := nested.Attributes["on_failure"].(schema.StringAttribute)
+			require.True(t, ok)
+			require.NotNil(t, onFailure.Default)
+
+			resp := &defaults.StringResponse{}
+			onFailure.Default.DefaultString(context.Background(), defaults.StringRequest{}, resp)
+			assert.Equal(t, tc.expected, resp.PlanValue.ValueString())
+		})
+	}
 }
 
 func strPtr(s string) *string { return &s }

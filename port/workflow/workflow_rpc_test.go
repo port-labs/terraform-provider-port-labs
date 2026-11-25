@@ -353,6 +353,28 @@ func TestWorkflowRPCWorkflowTriggerAndExecuteWorkflowDefaults(t *testing.T) {
 		"timeout_minutes is resolved by the API")
 	assert.True(t, valueAt(t, planned, trigger.WithAttributeName("input_schema")).IsNull(),
 		"input_schema must stay null so the input is not validated")
+	assert.True(t, valueAt(t, planned, trigger.WithAttributeName("output")).IsNull(),
+		"output must stay null so the API's default empty output does not drift")
+}
+
+func TestWorkflowRPCWorkflowTriggerOutputValidation(t *testing.T) {
+	server, resourceType := newWorkflowRPCServer(t, nil)
+	for _, tc := range []struct {
+		name string
+		key  string
+		want []string
+	}{
+		{"custom_key", "url", nil},
+		{"reserved_status", "status", []string{"Invalid Attribute Value Match"}},
+		{"reserved_error", "error", []string{"Invalid Attribute Value Match"}},
+		{"reserved_run_identifier", "workflowRunIdentifier", []string{"Invalid Attribute Value Match"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			trigger := configObject{"output": configObject{tc.key: ".outputs.deploy.response"}}
+			config := configValue(t, resourceType, rpcSubWorkflowConfigWithTrigger(trigger, configObject{}))
+			assert.Equal(t, tc.want, rpcErrorSummaries(validateResourceConfig(t, server, config)))
+		})
+	}
 }
 
 func TestWorkflowRPCWorkflowTriggerInputSchemaValidation(t *testing.T) {

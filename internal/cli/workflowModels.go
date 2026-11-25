@@ -38,9 +38,10 @@ type WorkflowNodeConfig struct {
 	// SCHEDULE_TRIGGER
 	Cron *string `json:"cron,omitempty"`
 
-	// WORKFLOW_TRIGGER. Nil omits the key, which the API treats like `null`:
-	// the input sent by an EXECUTE_WORKFLOW node is not validated.
-	InputSchema any `json:"inputSchema,omitempty"`
+	// WORKFLOW_TRIGGER. A nil InputSchema omits the key, which the API treats
+	// like `null`: the input sent by an EXECUTE_WORKFLOW node is not validated.
+	Output      map[string]string `json:"output,omitempty"`
+	InputSchema any               `json:"inputSchema,omitempty"`
 
 	// SELF_SERVE_TRIGGER
 	ActionCardButtonText    *string                  `json:"actionCardButtonText,omitempty"`

@@ -2617,6 +2617,15 @@ func TestWorkflowTriggerToPortBody(t *testing.T) {
 			want: `{"type":"WORKFLOW_TRIGGER","published":true,
 				"inputSchema":{"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}}`,
 		},
+		"sends output expressions": {
+			model: WorkflowTriggerModel{
+				Published: types.BoolValue(true),
+				Output: types.MapValueMust(types.StringType, map[string]attr.Value{
+					"url": types.StringValue(".outputs.deploy.response.url"),
+				}),
+			},
+			want: `{"type":"WORKFLOW_TRIGGER","published":true,"output":{"url":".outputs.deploy.response.url"}}`,
+		},
 	}
 
 	for name, test := range tests {
@@ -2712,6 +2721,19 @@ func TestRefreshWorkflowTriggerAndExecuteWorkflow(t *testing.T) {
 
 		node = refresh(t, cli.WorkflowNodeConfig{Type: consts.WorkflowTrigger, Published: boolPtr(false)})
 		assert.Equal(t, types.BoolValue(false), node.WorkflowTrigger.Published)
+	})
+
+	t.Run("workflow trigger reads output", func(t *testing.T) {
+		node := refresh(t, cli.WorkflowNodeConfig{Type: consts.WorkflowTrigger, Output: map[string]string{}})
+		assert.True(t, node.WorkflowTrigger.Output.IsNull(), "the API's default empty output stays null")
+
+		node = refresh(t, cli.WorkflowNodeConfig{
+			Type:   consts.WorkflowTrigger,
+			Output: map[string]string{"url": ".outputs.deploy.response.url"},
+		})
+		assert.Equal(t, types.MapValueMust(types.StringType, map[string]attr.Value{
+			"url": types.StringValue(".outputs.deploy.response.url"),
+		}), node.WorkflowTrigger.Output)
 	})
 
 	t.Run("workflow trigger reads input schema", func(t *testing.T) {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/mapvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -411,6 +412,10 @@ func scheduleTriggerBlock() schema.Block {
 	}
 }
 
+// The execute_workflow node output already carries these keys, so the API
+// rejects a workflow trigger output that declares them.
+var executeWorkflowReservedOutputKeys = []string{"workflowRunIdentifier", "status", "error"}
+
 func workflowTriggerBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "A workflow trigger node that lets other workflows execute this workflow through an " +
@@ -421,6 +426,16 @@ func workflowTriggerBlock() schema.Block {
 				Optional:            true,
 				Computed:            true,
 				Default:             booldefault.StaticBool(true),
+			},
+			"output": schema.MapAttribute{
+				MarkdownDescription: "A map of output keys to JQ expressions evaluated against the run when it concludes successfully. " +
+					"The result is returned to the calling `execute_workflow` node only when it waits for completion (`wait = true`). " +
+					"The keys `workflowRunIdentifier`, `status` and `error` are reserved.",
+				Optional:    true,
+				ElementType: types.StringType,
+				Validators: []validator.Map{
+					mapvalidator.KeysAre(stringvalidator.NoneOf(executeWorkflowReservedOutputKeys...)),
+				},
 			},
 			"input_schema": schema.StringAttribute{
 				MarkdownDescription: "A JSON schema, encoded as a JSON string, that the `input` of an `execute_workflow` node calling this trigger is validated against " +

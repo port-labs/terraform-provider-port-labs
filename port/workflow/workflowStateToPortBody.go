@@ -130,6 +130,11 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 	case n.WorkflowTrigger != nil:
 		config.Type = consts.WorkflowTrigger
 		config.Published = n.WorkflowTrigger.Published.ValueBoolPointer()
+		output, err := terraformMapToStrings(ctx, n.WorkflowTrigger.Output)
+		if err != nil {
+			return nil, err
+		}
+		config.Output = output
 		inputSchema, err := jsonStringToAny(n.WorkflowTrigger.InputSchema)
 		if err != nil {
 			return nil, err

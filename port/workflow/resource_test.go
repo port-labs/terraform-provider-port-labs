@@ -814,6 +814,10 @@ func TestAccPortWorkflowSummaryNode(t *testing.T) {
 				),
 			},
 			{
+				Config:      acctest.ProviderConfig + config(`summary = "Token: {{ .secrets.my_token }}"`),
+				ExpectError: regexp.MustCompile(`claimable_node_with_secrets`),
+			},
+			{
 				ResourceName:      "port_workflow.summary",
 				ImportState:       true,
 				ImportStateVerify: true,

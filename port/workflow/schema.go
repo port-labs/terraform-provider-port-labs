@@ -477,8 +477,9 @@ func summaryBlock() schema.Block {
 		MarkdownDescription: "A summary node that writes Markdown to the workflow run page.",
 		Attributes: map[string]schema.Attribute{
 			"summary": schema.StringAttribute{
-				MarkdownDescription: "Markdown shown on the run page. Supports JQ templates in `{{ }}`, for example `{{ .outputs.deploy.status }}`.",
-				Optional:            true,
+				MarkdownDescription: "Markdown shown on the run page. Supports JQ templates in `{{ }}`, for example `{{ .outputs.deploy.status }}`. " +
+					"The rendered text is limited to 10,000 characters, and `.secrets` is not allowed in the template.",
+				Optional: true,
 			},
 			"on_failure":      onFailureAttribute("continue"),
 			"timeout_minutes": timeoutMinutesAttribute(),

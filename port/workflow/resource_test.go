@@ -754,6 +754,74 @@ func TestAccPortWorkflowNodeTimeout(t *testing.T) {
 	})
 }
 
+func TestAccPortWorkflowSummaryNode(t *testing.T) {
+	blueprintIdentifier := utils.GenID()
+	workflowIdentifier := utils.GenID()
+
+	config := func(summaryAttributes string) string {
+		return testAccCreateBlueprintConfig(blueprintIdentifier) + fmt.Sprintf(`
+	resource "port_workflow" "summary" {
+		identifier = "%s"
+		title      = "Summary node"
+
+		node {
+			identifier = "trigger"
+			event_trigger {
+				type                 = "ENTITY_UPDATED"
+				blueprint_identifier = port_blueprint.microservice.identifier
+			}
+		}
+
+		node {
+			identifier = "report"
+			summary {
+				%s
+			}
+		}
+
+		connections {
+			source_identifier = "trigger"
+			target_identifier = "report"
+		}
+	}`, workflowIdentifier, summaryAttributes)
+	}
+
+	resource.ParallelTest(t, resource.TestCase{
+		PreCheck:                 func() { acctest.TestAccPreCheck(t) },
+		ProtoV6ProviderFactories: acctest.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      acctest.ProviderConfig + config(""),
+				ExpectError: regexp.MustCompile("`summary` is required"),
+			},
+			{
+				Config: acctest.ProviderConfig + config(`summary = "## Deployed {{ .outputs.trigger.entity.title }}"`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.summary", "node.1.summary.summary", "## Deployed {{ .outputs.trigger.entity.title }}"),
+					resource.TestCheckResourceAttr("port_workflow.summary", "node.1.summary.on_failure", "continue"),
+					resource.TestCheckResourceAttrSet("port_workflow.summary", "node.1.summary.timeout_minutes"),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + config(`
+				summary         = "Updated summary"
+				on_failure      = "terminate"
+				timeout_minutes = 120`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("port_workflow.summary", "node.1.summary.summary", "Updated summary"),
+					resource.TestCheckResourceAttr("port_workflow.summary", "node.1.summary.on_failure", "terminate"),
+					resource.TestCheckResourceAttr("port_workflow.summary", "node.1.summary.timeout_minutes", "120"),
+				),
+			},
+			{
+				ResourceName:      "port_workflow.summary",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func testAccSubWorkflowConfig(childIdentifier, parentIdentifier, published, executeWorkflow string) string {
 	return fmt.Sprintf(`
 	resource "port_workflow" "child" {

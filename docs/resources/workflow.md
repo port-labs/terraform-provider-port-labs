@@ -1425,7 +1425,7 @@ Required:
 Optional:
 
 - `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`. Defaults to `continue`.
-- `summary` (String) Markdown shown on the run page. Supports JQ templates in `{{ }}`, for example `{{ .outputs.deploy.status }}`.
+- `summary` (String) Markdown shown on the run page. Supports JQ templates in `{{ }}`, for example `{{ .outputs.deploy.status }}`. The rendered text is limited to 10,000 characters, and `.secrets` is not allowed in the template.
 - `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default for this node type.
 
 

@@ -509,12 +509,12 @@ func datasetToState(dataset *cli.WorkflowDataset, prior *DatasetModel, jsonEscap
 	}
 
 	model := &DatasetModel{Combinator: types.StringValue(dataset.Combinator)}
+	var priorRules []DatasetRuleModel
+	if prior != nil {
+		priorRules = prior.Rules
+	}
 	for i, rule := range dataset.Rules {
-		var priorRule *DatasetRuleModel
-		if prior != nil && i < len(prior.Rules) {
-			priorRule = &prior.Rules[i]
-		}
-		converted, err := datasetRuleToState(rule, priorRule, jsonEscapeHTML)
+		converted, err := datasetRuleToState(rule, utils.PriorAt(priorRules, i), jsonEscapeHTML)
 		if err != nil {
 			return nil, err
 		}
@@ -528,12 +528,12 @@ func datasetRuleToState(rule cli.WorkflowDatasetRule, prior *DatasetRuleModel, j
 
 	if rule.Combinator != nil && *rule.Combinator != "" {
 		model.Combinator = types.StringValue(*rule.Combinator)
+		var priorRules []DatasetRuleModel
+		if prior != nil {
+			priorRules = prior.Rules
+		}
 		for i, nested := range rule.Rules {
-			var priorNested *DatasetRuleModel
-			if prior != nil && i < len(prior.Rules) {
-				priorNested = &prior.Rules[i]
-			}
-			converted, err := datasetRuleToState(nested, priorNested, jsonEscapeHTML)
+			converted, err := datasetRuleToState(nested, utils.PriorAt(priorRules, i), jsonEscapeHTML)
 			if err != nil {
 				return model, err
 			}
@@ -543,22 +543,14 @@ func datasetRuleToState(rule cli.WorkflowDatasetRule, prior *DatasetRuleModel, j
 	}
 
 	model.Blueprint = flex.GoStringToFramework(rule.Blueprint)
-	model.Property = types.StringNull()
-	model.PropertyJson = types.StringNull()
-	switch property := rule.Property.(type) {
-	case nil:
-	case string:
-		model.Property = types.StringValue(property)
-	default:
-		priorProperty := types.StringNull()
-		if prior != nil {
-			priorProperty = prior.PropertyJson
-		}
-		value, err := utils.GoObjectToTerraformStringPreferExisting(priorProperty, property, jsonEscapeHTML)
-		if err != nil {
-			return model, fmt.Errorf("converting dataset rule `property` to `property_json`: %w", err)
-		}
-		model.PropertyJson = value
+	priorProperty := types.StringNull()
+	if prior != nil {
+		priorProperty = prior.PropertyJson
+	}
+	var err error
+	model.Property, model.PropertyJson, err = utils.PropertyToState(priorProperty, rule.Property, jsonEscapeHTML)
+	if err != nil {
+		return model, fmt.Errorf("converting dataset rule `property` to `property_json`: %w", err)
 	}
 	model.Relation = flex.GoStringToFramework(rule.Relation)
 	model.Direction = flex.GoStringToFramework(rule.Direction)

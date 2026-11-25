@@ -90,7 +90,7 @@ func TestDatasetRulePropertyJsonDoesNotDriftOnHTMLCharacters(t *testing.T) {
 }
 
 func TestDatasetRulePropertyJsonMustBeAnObject(t *testing.T) {
-	for _, invalid := range []string{`["a"]`, `"a"`, `{`} {
+	for _, invalid := range []string{`["a"]`, `"a"`, `{`, `null`} {
 		_, err := actionDataSetToPortBody(&DatasetModel{
 			Combinator: types.StringValue("and"),
 			Rules:      []Rule{{PropertyJson: types.StringValue(invalid), Operator: types.StringValue("=")}},

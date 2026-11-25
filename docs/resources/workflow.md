@@ -537,7 +537,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules))
@@ -553,7 +553,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules))
@@ -569,7 +569,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules))
@@ -585,7 +585,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules))
@@ -601,7 +601,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules))
@@ -617,7 +617,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules))
@@ -633,7 +633,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -649,7 +649,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -665,7 +665,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -681,7 +681,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -697,7 +697,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--input--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))
@@ -1149,7 +1149,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules))
@@ -1165,7 +1165,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules))
@@ -1181,7 +1181,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules))
@@ -1197,7 +1197,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules))
@@ -1213,7 +1213,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules))
@@ -1229,7 +1229,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules))
@@ -1245,7 +1245,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -1261,7 +1261,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -1277,7 +1277,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -1293,7 +1293,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `rules` (Attributes List) The nested rules of a group rule. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules))
@@ -1309,7 +1309,7 @@ Optional:
 - `combinator` (String) How the nested rules of a group rule are combined.
 - `direction` (String) The direction of the relation the rule filters on. Set alongside `relation`.
 - `operator` (String) The operator of the rule. Set on filtering rules and left out on group rules.
-- `property` (String) The property identifier of the rule.
+- `property` (String) The property identifier of the rule. For a contextual or path rule, use `property_json` instead: a JSON object passed here is sent as a plain string.
 - `property_json` (String) The property of the rule as a JSON encoded object, for contextual rules (`{"context": "user", "property": "port_role"}`) and path rules (`{"path": ["team_memberships", "team"], "fromBlueprint": "person"}`). Use instead of `property`.
 - `relation` (String) The relation identifier of the rule. Use instead of `property` to filter on a relation.
 - `value` (Object) A value resolved from the form or the trigger when the form is rendered. (see [below for nested schema](#nestedatt--node--self_serve_trigger--user_inputs--user_properties--string_props--dataset--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--rules--value))

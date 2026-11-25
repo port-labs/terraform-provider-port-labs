@@ -62,9 +62,9 @@ func convertRuleToCliRule(rule Rule) (cli.DatasetRule, error) {
 			cliRule.Blueprint = &blueprint
 		}
 		if !rule.PropertyJson.IsNull() {
-			property, err := utils.DecodeJSONObject(rule.PropertyJson.ValueString())
-			if err != nil {
-				return cliRule, fmt.Errorf("`property_json` %w", err)
+			property, err := utils.TerraformStringToGoType[map[string]any](rule.PropertyJson)
+			if err != nil || property == nil {
+				return cliRule, fmt.Errorf("`property_json` must be a JSON object: %v", err)
 			}
 			cliRule.Property = property
 		} else if !rule.Property.IsNull() {

@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
-	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 type stringValidator struct {
@@ -75,6 +74,29 @@ func decodeAdditionalProperties(value string) (any, error) {
 	}
 }
 
+func decodeJSONObject(value string) (map[string]any, error) {
+	var decoded any
+	if err := json.Unmarshal([]byte(value), &decoded); err != nil {
+		return nil, fmt.Errorf("must be valid JSON: %s", err)
+	}
+	object, ok := decoded.(map[string]any)
+	if !ok {
+		return nil, fmt.Errorf("must be a JSON object")
+	}
+	return object, nil
+}
+
+func jsonObjectValidator() validator.String {
+	return stringValidator{
+		summary:     "Invalid JSON object",
+		description: "must be a JSON encoded object",
+		validate: func(value string) error {
+			_, err := decodeJSONObject(value)
+			return err
+		},
+	}
+}
+
 // The service parses the output schema as a JSON Schema object whose `type` is
 // `object`, so any other shape is rejected on save.
 func outputSchemaValidator() validator.String {
@@ -82,7 +104,7 @@ func outputSchemaValidator() validator.String {
 		summary:     "Invalid output schema",
 		description: "must be a JSON encoded JSON Schema object whose `type` is `object`",
 		validate: func(value string) error {
-			object, err := utils.DecodeJSONObject(value)
+			object, err := decodeJSONObject(value)
 			if err != nil {
 				return err
 			}
@@ -102,7 +124,7 @@ func queryValidator(summary string) validator.String {
 		summary:     summary,
 		description: "must be a JSON encoded object with a `combinator` of `and` or `or` and a `rules` array",
 		validate: func(value string) error {
-			object, err := utils.DecodeJSONObject(value)
+			object, err := decodeJSONObject(value)
 			if err != nil {
 				return err
 			}

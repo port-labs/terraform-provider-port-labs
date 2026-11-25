@@ -2665,7 +2665,7 @@ func TestExecuteWorkflowRejectsNonObjectInput(t *testing.T) {
 
 	for value, valid := range map[string]bool{`{}`: true, `{"a":"{{ .run.id }}"}`: true, `[]`: false, `"a"`: false, `{`: false} {
 		resp := &validator.StringResponse{}
-		utils.JSONObject().ValidateString(context.Background(), validator.StringRequest{ConfigValue: types.StringValue(value)}, resp)
+		jsonObjectValidator().ValidateString(context.Background(), validator.StringRequest{ConfigValue: types.StringValue(value)}, resp)
 		assert.Equal(t, !valid, resp.Diagnostics.HasError(), "input = %s", value)
 	}
 }
@@ -2781,7 +2781,7 @@ func TestDatasetPropertyJsonDoesNotDriftOnHTMLCharacters(t *testing.T) {
 }
 
 func TestDatasetRulePropertyJsonMustBeAnObject(t *testing.T) {
-	for _, invalid := range []string{`["a"]`, `"a"`, `{`} {
+	for _, invalid := range []string{`["a"]`, `"a"`, `{`, `null`} {
 		_, err := datasetRuleToBody(DatasetRuleModel{PropertyJson: types.StringValue(invalid), Operator: types.StringValue("=")})
 		assert.Error(t, err, invalid)
 	}

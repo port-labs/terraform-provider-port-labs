@@ -143,7 +143,7 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 		// The API requires `input`, so a missing value is sent as an empty object.
 		input := map[string]any{}
 		if !e.Input.IsNull() && !e.Input.IsUnknown() {
-			decoded, err := utils.DecodeJSONObject(e.Input.ValueString())
+			decoded, err := decodeJSONObject(e.Input.ValueString())
 			if err != nil {
 				return nil, fmt.Errorf("execute_workflow input %s", err)
 			}

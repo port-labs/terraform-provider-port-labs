@@ -62,6 +62,17 @@ func TestOnFailureSchemaDefaults(t *testing.T) {
 	}
 }
 
+// execute_workflow's on_failure must stay without a schema default: it can only be
+// set when wait is true, so a default would be rejected for wait = false.
+func TestExecuteWorkflowOnFailureHasNoSchemaDefault(t *testing.T) {
+	nested, ok := executeWorkflowBlock().(schema.SingleNestedBlock)
+	require.True(t, ok)
+	onFailure, ok := nested.Attributes["on_failure"].(schema.StringAttribute)
+	require.True(t, ok)
+	assert.Nil(t, onFailure.Default)
+	assert.False(t, onFailure.Computed)
+}
+
 func strPtr(s string) *string { return &s }
 func boolPtr(b bool) *bool    { return &b }
 

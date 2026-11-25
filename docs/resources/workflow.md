@@ -827,7 +827,7 @@ Optional:
 - `installation_id` (String) The installation id of the integration.
 - `integration_invocation_type` (String) The invocation type of the integration action.
 - `integration_provider` (String) The provider of the integration action.
-- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
+- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`. Defaults to `terminate`.
 - `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default per run: `4320` for every `cursor-cloud-agents` action, `1440` otherwise.
 
 
@@ -836,7 +836,7 @@ Optional:
 
 Optional:
 
-- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
+- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`. Defaults to `terminate`.
 - `payload` (String) The Kafka message payload as a JSON encoded string.
 - `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default for this node type.
 
@@ -1424,7 +1424,7 @@ Required:
 
 Optional:
 
-- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
+- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`. Defaults to `continue`.
 - `summary` (String) Markdown shown on the run page. Supports JQ templates in `{{ }}`, for example `{{ .outputs.deploy.status }}`.
 - `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default for this node type.
 
@@ -1436,7 +1436,7 @@ Optional:
 
 - `blueprint_identifier` (String) The identifier of the blueprint to upsert into.
 - `mapping` (Block, Optional) The entity fields to upsert. (see [below for nested schema](#nestedblock--node--upsert_entity--mapping))
-- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
+- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`. Defaults to `terminate`.
 - `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default for this node type.
 
 <a id="nestedblock--node--upsert_entity--mapping"></a>
@@ -1462,7 +1462,7 @@ Optional:
 - `body` (String) The request body as a JSON encoded string.
 - `headers` (Map of String) The HTTP headers of the request.
 - `method` (String) The HTTP method. One of `GET`, `POST`, `PUT`, `PATCH`, `DELETE`.
-- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
+- `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`. Defaults to `terminate`.
 - `on_timeout` (String) The action to take if the webhook times out. One of `fail`, `continue`.
 - `synchronized` (Boolean) Whether the request is sent synchronously.
 - `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default per run: `1440` when `agent` is true or `synchronized` is false, `60` otherwise.

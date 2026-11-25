@@ -71,12 +71,12 @@ func descriptionValidators() []validator.String {
 	return []validator.String{stringvalidator.LengthAtMost(maxDescriptionLength)}
 }
 
-func onFailureAttribute() schema.Attribute {
+func onFailureAttribute(defaultValue string) schema.Attribute {
 	return schema.StringAttribute{
-		MarkdownDescription: "The action to take if the node fails. One of `continue`, `terminate`.",
+		MarkdownDescription: "The action to take if the node fails. One of `continue`, `terminate`. Defaults to `" + defaultValue + "`.",
 		Optional:            true,
 		Computed:            true,
-		Default:             stringdefault.StaticString("terminate"),
+		Default:             stringdefault.StaticString(defaultValue),
 		Validators: []validator.String{
 			stringvalidator.OneOf("continue", "terminate"),
 		},
@@ -480,7 +480,7 @@ func summaryBlock() schema.Block {
 				MarkdownDescription: "Markdown shown on the run page. Supports JQ templates in `{{ }}`, for example `{{ .outputs.deploy.status }}`.",
 				Optional:            true,
 			},
-			"on_failure":      onFailureAttribute(),
+			"on_failure":      onFailureAttribute("continue"),
 			"timeout_minutes": timeoutMinutesAttribute(),
 		},
 	}
@@ -494,7 +494,7 @@ func kafkaBlock() schema.Block {
 				MarkdownDescription: "The Kafka message payload as a JSON encoded string.",
 				Optional:            true,
 			},
-			"on_failure":      onFailureAttribute(),
+			"on_failure":      onFailureAttribute("terminate"),
 			"timeout_minutes": timeoutMinutesAttribute(),
 		},
 	}
@@ -547,7 +547,7 @@ func webhookBlock() schema.Block {
 					stringvalidator.OneOf("fail", "continue"),
 				},
 			},
-			"on_failure": onFailureAttribute(),
+			"on_failure": onFailureAttribute("terminate"),
 			"timeout_minutes": schema.Int64Attribute{
 				MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default per run: " +
 					"`1440` when `agent` is true or `synchronized` is false, `60` otherwise.",
@@ -578,7 +578,7 @@ func integrationActionBlock() schema.Block {
 				MarkdownDescription: "The integration action execution properties as a JSON encoded string.",
 				Optional:            true,
 			},
-			"on_failure": onFailureAttribute(),
+			"on_failure": onFailureAttribute("terminate"),
 			"timeout_minutes": schema.Int64Attribute{
 				MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default per run: " +
 					"`4320` for every `cursor-cloud-agents` action, `1440` otherwise.",
@@ -597,7 +597,7 @@ func upsertEntityBlock() schema.Block {
 				MarkdownDescription: "The identifier of the blueprint to upsert into.",
 				Optional:            true,
 			},
-			"on_failure":      onFailureAttribute(),
+			"on_failure":      onFailureAttribute("terminate"),
 			"timeout_minutes": timeoutMinutesAttribute(),
 		},
 		Blocks: map[string]schema.Block{

@@ -69,6 +69,8 @@ type (
 		Spec               *string             `json:"spec,omitempty"`
 		SpecAuthentication *SpecAuthentication `json:"specAuthentication,omitempty"`
 		EnumColors         map[string]string   `json:"enumColors,omitempty"`
+		Union              *bool               `json:"union,omitempty"`
+		IncludeDuplicates  *bool               `json:"includeDuplicates,omitempty"`
 		// UnknownFields captures any dynamic fields not explicitly defined above
 		UnknownFields map[string]any `json:"-"`
 	}

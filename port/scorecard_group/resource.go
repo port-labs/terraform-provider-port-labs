@@ -142,7 +142,16 @@ func (r *ScorecardGroupResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 	if updatedGroup == nil {
-		resp.Diagnostics.AddError("failed to update scorecard group", "scorecard group was deleted by the API")
+		resp.Diagnostics.AddWarning(
+			"scorecard group converted to a standalone scorecard",
+			fmt.Sprintf(
+				"Port converted scorecard group %q to a standalone scorecard because the update left a single blueprint. "+
+					"The group no longer exists and this resource was removed from Terraform state. "+
+					"Manage the remaining scorecard with the port_scorecard resource (use terraform import if it is not already managed).",
+				previousState.Identifier.ValueString(),
+			),
+		)
+		resp.State.RemoveResource(ctx)
 		return
 	}
 

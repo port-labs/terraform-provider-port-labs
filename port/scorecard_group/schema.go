@@ -194,6 +194,8 @@ A scorecard group can be configured in one of two modes:
 - **Shared rules mode** — set ` + "`blueprints`" + `, ` + "`rules`" + `, and optionally ` + "`filters`" + ` to apply the same rules to multiple blueprints.
 - **Per-blueprint mode** — set ` + "`scorecards`" + ` to define different filter/rules per blueprint.
 
+~> **Note:** When an update shrinks a multi-blueprint group to a single blueprint, Port converts it to a standalone scorecard and deletes the group. The update API returns a null ` + "`scorecardGroup`" + `, and Terraform removes this resource from state. Groups that already had a single member are not converted. Manage the surviving scorecard with the ` + "`port_scorecard`" + ` resource.
+
 See the [Port documentation](https://docs.getport.io/governance/standards-and-compliance/manage-scorecards/) for more information about scorecards.
 
 ` + "`scorecard_properties`" + ` sets ` + "`_scorecard`" + ` blueprint property values on every member scorecard in the group. ` + "`group_properties`" + ` sets ` + "`_scorecard_group`" + ` blueprint property values on the group entity. ` + "`scorecard_relations`" + ` and ` + "`group_relations`" + ` set relations on member scorecards and the group entity respectively. Each rule also accepts optional ` + "`properties`" + ` and ` + "`relations`" + ` for custom ` + "`_rule`" + ` blueprint fields. Define the property and relation schema on the system blueprints first (for example with ` + "`port_system_blueprint`" + `), then reference those keys in ` + "`jsonencode({...})`" + `. Use ` + "`depends_on`" + ` so the scorecard group is created only after the blueprint schema exists.

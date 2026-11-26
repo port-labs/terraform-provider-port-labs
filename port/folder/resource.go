@@ -154,4 +154,10 @@ func writeFolderComputedFieldsToState(state *FolderModel, fr *cli.Folder) {
 	if fr.Title != "" {
 		state.Title = types.StringValue(fr.Title)
 	}
+
+	if fr.Sidebar != "" {
+		state.Sidebar = types.StringValue(fr.Sidebar)
+	}
+
+	refreshFolderMetaToState(state, fr)
 }

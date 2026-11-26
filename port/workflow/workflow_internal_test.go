@@ -351,6 +351,62 @@ func TestRefreshWorkflowStateKeepsUnsetCollectionsNull(t *testing.T) {
 	assert.True(t, state.Nodes[0].Variables.IsNull())
 }
 
+func TestRefreshWorkflowStateResolvedEventTrigger(t *testing.T) {
+	ctx := context.Background()
+	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
+
+	state := &WorkflowModel{
+		Identifier: types.StringValue("system.watch"),
+		Nodes:      []WorkflowNodeModel{{Identifier: types.StringValue("entity_changed")}},
+	}
+
+	apiWorkflow := &cli.Workflow{
+		Identifier: "system.watch",
+		Nodes: []cli.WorkflowNode{
+			{
+				Identifier: "entity_changed",
+				Config: cli.WorkflowNodeConfig{
+					Type: consts.ResolvedEventTrigger,
+					ResolvedTriggers: &cli.WorkflowResolvedTriggers{
+						Url: "https://a.example.com",
+					},
+					Published: boolPtr(true),
+				},
+			},
+		},
+	}
+
+	err := r.refreshWorkflowState(ctx, state, apiWorkflow)
+	require.NoError(t, err)
+
+	require.NotNil(t, state.Nodes[0].ResolvedEventTrigger)
+	require.NotNil(t, state.Nodes[0].ResolvedEventTrigger.ResolvedTriggers)
+	assert.Equal(t, "https://a.example.com", state.Nodes[0].ResolvedEventTrigger.ResolvedTriggers.Url.ValueString())
+	assert.True(t, state.Nodes[0].ResolvedEventTrigger.Published.ValueBool())
+}
+
+func TestResolvedEventTriggerRoundTrip(t *testing.T) {
+	ctx := context.Background()
+
+	w, err := workflowStateToPortBody(ctx, &WorkflowModel{
+		Identifier: types.StringValue("system.watch"),
+		Nodes: []WorkflowNodeModel{{
+			Identifier: types.StringValue("entity_changed"),
+			ResolvedEventTrigger: &ResolvedEventTriggerModel{
+				Published: types.BoolValue(true),
+				ResolvedTriggers: &ResolvedTriggersModel{
+					Url: types.StringValue("https://b.example.com"),
+				},
+			},
+		}},
+	})
+	require.NoError(t, err)
+	require.Len(t, w.Nodes, 1)
+	assert.Equal(t, consts.ResolvedEventTrigger, w.Nodes[0].Config.Type)
+	require.NotNil(t, w.Nodes[0].Config.ResolvedTriggers)
+	assert.Equal(t, "https://b.example.com", w.Nodes[0].Config.ResolvedTriggers.Url)
+}
+
 func TestRefreshWorkflowStateSelfServeTriggerUserInputs(t *testing.T) {
 	ctx := context.Background()
 	r := &WorkflowResource{portClient: &cli.PortClient{JSONEscapeHTML: true}}
@@ -1491,6 +1547,12 @@ func TestEveryNodeTypeSerializesItsConfigType(t *testing.T) {
 			ScheduleTrigger: &ScheduleTriggerModel{Cron: types.StringValue("0 9 * * *")},
 		}, consts.ScheduleTrigger},
 		"workflow_trigger": {"workflow_trigger", workflowTriggerNode("n"), consts.WorkflowTrigger},
+		"resolved_event_trigger": {"resolved_event_trigger", WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			ResolvedEventTrigger: &ResolvedEventTriggerModel{
+				ResolvedTriggers: &ResolvedTriggersModel{Url: types.StringValue("https://example.com/resolve")},
+			},
+		}, consts.ResolvedEventTrigger},
 		"execute_workflow": {"execute_workflow", executeWorkflowNode("n"), consts.ExecuteWorkflow},
 		"kafka": {"kafka", WorkflowNodeModel{
 			Identifier: types.StringValue("n"),

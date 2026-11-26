@@ -32,6 +32,7 @@ var nodeTypeBlockNames = []string{
 	"event_trigger",
 	"schedule_trigger",
 	"workflow_trigger",
+	"resolved_event_trigger",
 	"kafka",
 	"webhook",
 	"integration_action",
@@ -421,6 +422,27 @@ func workflowTriggerBlock() schema.Block {
 				Optional:            true,
 				Computed:            true,
 				Default:             booldefault.StaticBool(true),
+			},
+		},
+	}
+}
+
+func resolvedEventTriggerBlock() schema.Block {
+	return schema.SingleNestedBlock{
+		MarkdownDescription: "A resolved event trigger node for system workflows. " +
+			"It watches entity changes resolved from the URL in `resolved_triggers`.",
+		Attributes: map[string]schema.Attribute{
+			"published": publishedAttribute(),
+		},
+		Blocks: map[string]schema.Block{
+			"resolved_triggers": schema.SingleNestedBlock{
+				MarkdownDescription: "The endpoint Port calls to resolve entity change events for this trigger.",
+				Attributes: map[string]schema.Attribute{
+					"url": schema.StringAttribute{
+						MarkdownDescription: "The URL that resolves entity change events.",
+						Optional:            true,
+					},
+				},
 			},
 		},
 	}
@@ -985,8 +1007,9 @@ func WorkflowBlocks() map[string]schema.Block {
 					"self_serve_trigger": selfServeTriggerBlock(),
 					"event_trigger":      eventTriggerBlock(),
 					"schedule_trigger":   scheduleTriggerBlock(),
-					"workflow_trigger":   workflowTriggerBlock(),
-					"kafka":              kafkaBlock(),
+					"workflow_trigger":       workflowTriggerBlock(),
+					"resolved_event_trigger": resolvedEventTriggerBlock(),
+					"kafka":                  kafkaBlock(),
 					"webhook":            webhookBlock(),
 					"integration_action": integrationActionBlock(),
 					"upsert_entity":      upsertEntityBlock(),

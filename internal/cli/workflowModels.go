@@ -38,6 +38,9 @@ type WorkflowNodeConfig struct {
 	// SCHEDULE_TRIGGER
 	Cron *string `json:"cron,omitempty"`
 
+	// RESOLVED_EVENT_TRIGGER (system workflows only)
+	ResolvedTriggers *WorkflowResolvedTriggers `json:"resolvedTriggers,omitempty"`
+
 	// SELF_SERVE_TRIGGER
 	ActionCardButtonText    *string                  `json:"actionCardButtonText,omitempty"`
 	ExecuteActionButtonText *string                  `json:"executeActionButtonText,omitempty"`
@@ -100,6 +103,10 @@ type WorkflowNodeConfig struct {
 	OnFailure *string `json:"onFailure,omitempty"`
 
 	TimeoutMinutes *int64 `json:"timeoutMinutes,omitempty"`
+}
+
+type WorkflowResolvedTriggers struct {
+	Url string `json:"url"`
 }
 
 type WorkflowTriggerEvent struct {

@@ -28,7 +28,8 @@ type WorkflowNodeModel struct {
 	SelfServeTrigger *SelfServeTriggerModel `tfsdk:"self_serve_trigger"`
 	EventTrigger     *EventTriggerModel     `tfsdk:"event_trigger"`
 	ScheduleTrigger  *ScheduleTriggerModel  `tfsdk:"schedule_trigger"`
-	WorkflowTrigger  *WorkflowTriggerModel  `tfsdk:"workflow_trigger"`
+	WorkflowTrigger      *WorkflowTriggerModel      `tfsdk:"workflow_trigger"`
+	ResolvedEventTrigger *ResolvedEventTriggerModel `tfsdk:"resolved_event_trigger"`
 
 	Kafka             *KafkaModel             `tfsdk:"kafka"`
 	Webhook           *WebhookModel           `tfsdk:"webhook"`
@@ -107,6 +108,15 @@ type ScheduleTriggerModel struct {
 
 type WorkflowTriggerModel struct {
 	Published types.Bool `tfsdk:"published"`
+}
+
+type ResolvedEventTriggerModel struct {
+	ResolvedTriggers *ResolvedTriggersModel `tfsdk:"resolved_triggers"`
+	Published        types.Bool             `tfsdk:"published"`
+}
+
+type ResolvedTriggersModel struct {
+	Url types.String `tfsdk:"url"`
 }
 
 type ExecuteWorkflowModel struct {

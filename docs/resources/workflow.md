@@ -68,6 +68,7 @@ Optional:
 - `integration_action` (Block, Optional) An integration action node that invokes an installed integration. (see [below for nested schema](#nestedblock--node--integration_action))
 - `kafka` (Block, Optional) A Kafka node that publishes a message to the organization's Kafka topic. (see [below for nested schema](#nestedblock--node--kafka))
 - `links` (List of String) Link templates (supporting `{{ .result.field }}` interpolation) evaluated when the node run completes (max 3)
+- `resolved_event_trigger` (Block, Optional) A resolved event trigger node for system workflows. It watches entity changes resolved from the URL in `resolved_triggers`. (see [below for nested schema](#nestedblock--node--resolved_event_trigger))
 - `schedule_trigger` (Block, Optional) A schedule trigger node that starts the workflow on a cron schedule. (see [below for nested schema](#nestedblock--node--schedule_trigger))
 - `self_serve_trigger` (Block, Optional) A self service trigger node that starts the workflow from a user submitted form. (see [below for nested schema](#nestedblock--node--self_serve_trigger))
 - `title` (String) The title of the node
@@ -838,6 +839,23 @@ Optional:
 - `on_failure` (String) The action to take if the node fails. One of `continue`, `terminate`.
 - `payload` (String) The Kafka message payload as a JSON encoded string.
 - `timeout_minutes` (Number) The maximum time in minutes a run of this node may stay open before it times out. Between `60` and `43200` (30 days). When omitted, Port applies its default for this node type.
+
+
+<a id="nestedblock--node--resolved_event_trigger"></a>
+### Nested Schema for `node.resolved_event_trigger`
+
+Optional:
+
+- `published` (Boolean) Whether the trigger is published.
+- `resolved_triggers` (Block, Optional) The endpoint Port calls to resolve entity change events for this trigger. (see [below for nested schema](#nestedblock--node--resolved_event_trigger--resolved_triggers))
+
+<a id="nestedblock--node--resolved_event_trigger--resolved_triggers"></a>
+### Nested Schema for `node.resolved_event_trigger.resolved_triggers`
+
+Optional:
+
+- `url` (String) The URL that resolves entity change events.
+
 
 
 <a id="nestedblock--node--schedule_trigger"></a>

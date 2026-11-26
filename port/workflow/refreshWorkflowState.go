@@ -151,6 +151,17 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 			Published: boolOrTrue(config.Published),
 		}
 
+	case consts.ResolvedEventTrigger:
+		trigger := &ResolvedEventTriggerModel{
+			Published: flex.GoBoolToFramework(config.Published),
+		}
+		if config.ResolvedTriggers != nil {
+			trigger.ResolvedTriggers = &ResolvedTriggersModel{
+				Url: types.StringValue(config.ResolvedTriggers.Url),
+			}
+		}
+		node.ResolvedEventTrigger = trigger
+
 	case consts.ExecuteWorkflow:
 		input := config.Input
 		if input == nil {

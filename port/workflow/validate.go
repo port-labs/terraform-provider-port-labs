@@ -140,8 +140,9 @@ var nodeTypeByBlock = map[string]string{
 	"self_serve_trigger": consts.SelfServeTrigger,
 	"event_trigger":      consts.EventTrigger,
 	"schedule_trigger":   consts.ScheduleTrigger,
-	"workflow_trigger":   consts.WorkflowTrigger,
-	"kafka":              consts.Kafka,
+	"workflow_trigger":         consts.WorkflowTrigger,
+	"resolved_event_trigger":   consts.ResolvedEventTrigger,
+	"kafka":                    consts.Kafka,
 	"webhook":            consts.Webhook,
 	"integration_action": consts.IntegrationAction,
 	"upsert_entity":      consts.UpsertEntity,
@@ -179,7 +180,8 @@ var triggerTypes = map[string]bool{
 	consts.SelfServeTrigger: true,
 	consts.EventTrigger:     true,
 	consts.ScheduleTrigger:  true,
-	consts.WorkflowTrigger:  true,
+	consts.WorkflowTrigger:       true,
+	consts.ResolvedEventTrigger:  true,
 }
 
 func validateTriggerPresence(resp *resource.ValidateConfigResponse, nodeTypes []string) {
@@ -192,7 +194,7 @@ func validateTriggerPresence(resp *resource.ValidateConfigResponse, nodeTypes []
 	resp.Diagnostics.AddAttributeError(
 		path.Root("node"),
 		"Missing trigger node",
-		"A workflow must define at least one trigger node: `self_serve_trigger`, `event_trigger`, `schedule_trigger` or `workflow_trigger`.",
+		"A workflow must define at least one trigger node: `self_serve_trigger`, `event_trigger`, `schedule_trigger`, `workflow_trigger` or `resolved_event_trigger`.",
 	)
 }
 
@@ -276,6 +278,20 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 
 	case node.WorkflowTrigger != nil:
 		return consts.WorkflowTrigger
+
+	case node.ResolvedEventTrigger != nil:
+		blockPath := nodePath.AtName("resolved_event_trigger")
+		if node.ResolvedEventTrigger.ResolvedTriggers == nil {
+			resp.Diagnostics.AddAttributeError(
+				blockPath.AtName("resolved_triggers"),
+				"Missing required block",
+				"`resolved_triggers` is required for a `resolved_event_trigger` node.",
+			)
+		} else {
+			requireSet(resp, blockPath.AtName("resolved_triggers").AtName("url"), node.ResolvedEventTrigger.ResolvedTriggers.Url,
+				"`url` is required for a `resolved_event_trigger` node.")
+		}
+		return consts.ResolvedEventTrigger
 
 	case node.Kafka != nil:
 		return consts.Kafka

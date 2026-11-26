@@ -131,6 +131,16 @@ func nodeConfigToPortBody(ctx context.Context, n WorkflowNodeModel) (*cli.Workfl
 		config.Type = consts.WorkflowTrigger
 		config.Published = n.WorkflowTrigger.Published.ValueBoolPointer()
 
+	case n.ResolvedEventTrigger != nil:
+		config.Type = consts.ResolvedEventTrigger
+		t := n.ResolvedEventTrigger
+		config.Published = t.Published.ValueBoolPointer()
+		if t.ResolvedTriggers != nil {
+			config.ResolvedTriggers = &cli.WorkflowResolvedTriggers{
+				Url: t.ResolvedTriggers.Url.ValueString(),
+			}
+		}
+
 	case n.ExecuteWorkflow != nil:
 		config.Type = consts.ExecuteWorkflow
 		e := n.ExecuteWorkflow

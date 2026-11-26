@@ -265,6 +265,8 @@ resource "port_workflow" "restart_service" {
 
 # A sub-workflow that other workflows can execute through its workflow trigger.
 # The input passed by the calling workflow is the output of the trigger node.
+# A call whose input does not match the trigger's input_schema fails before this workflow runs.
+# When the caller waits for completion, it receives the trigger's evaluated output.
 resource "port_workflow" "notify_owner" {
   identifier = "notify-owner"
   title      = "Notify service owner"
@@ -273,7 +275,18 @@ resource "port_workflow" "notify_owner" {
     identifier = "called"
     title      = "Called by another workflow"
 
-    workflow_trigger {}
+    workflow_trigger {
+      input_schema = jsonencode({
+        type = "object"
+        properties = {
+          service = { type = "string" }
+        }
+        required = ["service"]
+      })
+      output = {
+        notification_status = ".outputs.notify.response.status"
+      }
+    }
   }
 
   node {

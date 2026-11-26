@@ -2187,13 +2187,13 @@ func TestCronValidator(t *testing.T) {
 	}
 }
 
-func TestOutputSchemaValidator(t *testing.T) {
-	assert.Empty(t, errorSummaries(runStringValidator(outputSchemaValidator(),
+func TestObjectSchemaValidator(t *testing.T) {
+	assert.Empty(t, errorSummaries(runStringValidator(objectSchemaValidator("output schema"),
 		`{"type":"object","properties":{"summary":{"type":"string"}}}`)))
 
 	invalid := []string{`{"type":"string"}`, `[]`, `{"properties":{}}`, `not json`}
 	for _, value := range invalid {
-		assert.NotEmpty(t, errorSummaries(runStringValidator(outputSchemaValidator(), value)), value)
+		assert.NotEmpty(t, errorSummaries(runStringValidator(objectSchemaValidator("output schema"), value)), value)
 	}
 }
 
@@ -2601,14 +2601,43 @@ func TestWorkflowTriggerAloneSatisfiesTriggerPresence(t *testing.T) {
 func TestWorkflowTriggerToPortBody(t *testing.T) {
 	ctx := context.Background()
 
-	config, err := nodeConfigToPortBody(ctx, WorkflowNodeModel{
-		WorkflowTrigger: &WorkflowTriggerModel{Published: types.BoolValue(false)},
-	})
-	require.NoError(t, err)
+	tests := map[string]struct {
+		model WorkflowTriggerModel
+		want  string
+	}{
+		"omits input schema when unset": {
+			model: WorkflowTriggerModel{Published: types.BoolValue(false), InputSchema: types.StringNull()},
+			want:  `{"type":"WORKFLOW_TRIGGER","published":false}`,
+		},
+		"sends input schema as an object": {
+			model: WorkflowTriggerModel{
+				Published:   types.BoolValue(true),
+				InputSchema: types.StringValue(`{"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}`),
+			},
+			want: `{"type":"WORKFLOW_TRIGGER","published":true,
+				"inputSchema":{"type":"object","properties":{"name":{"type":"string"}},"required":["name"]}}`,
+		},
+		"sends output expressions": {
+			model: WorkflowTriggerModel{
+				Published: types.BoolValue(true),
+				Output: types.MapValueMust(types.StringType, map[string]attr.Value{
+					"url": types.StringValue(".outputs.deploy.response.url"),
+				}),
+			},
+			want: `{"type":"WORKFLOW_TRIGGER","published":true,"output":{"url":".outputs.deploy.response.url"}}`,
+		},
+	}
 
-	raw, err := json.Marshal(config)
-	require.NoError(t, err)
-	assert.JSONEq(t, `{"type":"WORKFLOW_TRIGGER","published":false}`, string(raw))
+	for name, test := range tests {
+		t.Run(name, func(t *testing.T) {
+			config, err := nodeConfigToPortBody(ctx, WorkflowNodeModel{WorkflowTrigger: &test.model})
+			require.NoError(t, err)
+
+			raw, err := json.Marshal(config)
+			require.NoError(t, err)
+			assert.JSONEq(t, test.want, string(raw))
+		})
+	}
 }
 
 func TestExecuteWorkflowToPortBody(t *testing.T) {
@@ -2692,6 +2721,33 @@ func TestRefreshWorkflowTriggerAndExecuteWorkflow(t *testing.T) {
 
 		node = refresh(t, cli.WorkflowNodeConfig{Type: consts.WorkflowTrigger, Published: boolPtr(false)})
 		assert.Equal(t, types.BoolValue(false), node.WorkflowTrigger.Published)
+	})
+
+	t.Run("workflow trigger reads output", func(t *testing.T) {
+		node := refresh(t, cli.WorkflowNodeConfig{Type: consts.WorkflowTrigger, Output: map[string]string{}})
+		assert.True(t, node.WorkflowTrigger.Output.IsNull(), "the API's default empty output stays null")
+
+		node = refresh(t, cli.WorkflowNodeConfig{
+			Type:   consts.WorkflowTrigger,
+			Output: map[string]string{"url": ".outputs.deploy.response.url"},
+		})
+		assert.Equal(t, types.MapValueMust(types.StringType, map[string]attr.Value{
+			"url": types.StringValue(".outputs.deploy.response.url"),
+		}), node.WorkflowTrigger.Output)
+	})
+
+	t.Run("workflow trigger reads input schema", func(t *testing.T) {
+		node := refresh(t, cli.WorkflowNodeConfig{Type: consts.WorkflowTrigger})
+		assert.True(t, node.WorkflowTrigger.InputSchema.IsNull(), "a missing input schema stays null")
+
+		node = refresh(t, cli.WorkflowNodeConfig{
+			Type: consts.WorkflowTrigger,
+			InputSchema: map[string]any{
+				"type":     "object",
+				"required": []any{"name"},
+			},
+		})
+		assert.Equal(t, types.StringValue(`{"required":["name"],"type":"object"}`), node.WorkflowTrigger.InputSchema)
 	})
 
 	t.Run("execute workflow reads every field", func(t *testing.T) {

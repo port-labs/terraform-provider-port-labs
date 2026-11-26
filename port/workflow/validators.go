@@ -97,11 +97,11 @@ func jsonObjectValidator() validator.String {
 	}
 }
 
-// The service parses the output schema as a JSON Schema object whose `type` is
-// `object`, so any other shape is rejected on save.
-func outputSchemaValidator() validator.String {
+// The service parses AI output schemas and workflow trigger input schemas as a
+// JSON Schema object whose `type` is `object`, so any other shape is rejected on save.
+func objectSchemaValidator(name string) validator.String {
 	return stringValidator{
-		summary:     "Invalid output schema",
+		summary:     "Invalid " + name,
 		description: "must be a JSON encoded JSON Schema object whose `type` is `object`",
 		validate: func(value string) error {
 			object, err := decodeJSONObject(value)
@@ -109,7 +109,7 @@ func outputSchemaValidator() validator.String {
 				return err
 			}
 			if object["type"] != "object" {
-				return fmt.Errorf("must set `type` to `object`, the only output schema shape the API accepts")
+				return fmt.Errorf("must set `type` to `object`, the only %s shape the API accepts", name)
 			}
 			return nil
 		},

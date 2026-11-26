@@ -151,8 +151,18 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 		}
 
 	case consts.WorkflowTrigger:
+		inputSchema, err := anyToJSONString(config.InputSchema, r.portClient.JSONEscapeHTML)
+		if err != nil {
+			return node, err
+		}
+		var priorOutput types.Map
+		if prior.WorkflowTrigger != nil {
+			priorOutput = prior.WorkflowTrigger.Output
+		}
 		node.WorkflowTrigger = &WorkflowTriggerModel{
-			Published: boolOrTrue(config.Published),
+			Published:   boolOrTrue(config.Published),
+			Output:      stringsToMap(ctx, config.Output, priorOutput),
+			InputSchema: inputSchema,
 		}
 
 	case consts.ExecuteWorkflow:

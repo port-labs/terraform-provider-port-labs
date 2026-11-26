@@ -106,7 +106,9 @@ type ScheduleTriggerModel struct {
 }
 
 type WorkflowTriggerModel struct {
-	Published types.Bool `tfsdk:"published"`
+	Published   types.Bool   `tfsdk:"published"`
+	Output      types.Map    `tfsdk:"output"`
+	InputSchema types.String `tfsdk:"input_schema"`
 }
 
 type ExecuteWorkflowModel struct {

@@ -311,12 +311,16 @@ func TestWorkflowRPCReadRoundTripAndNoOpPlan(t *testing.T) {
 }
 
 func rpcSubWorkflowConfig(executeWorkflow configObject) configObject {
+	return rpcSubWorkflowConfigWithTrigger(configObject{}, executeWorkflow)
+}
+
+func rpcSubWorkflowConfigWithTrigger(workflowTrigger, executeWorkflow configObject) configObject {
 	executeWorkflow["workflow_identifier"] = "child"
 	executeWorkflow["trigger_identifier"] = "called"
 	return configObject{
 		"identifier": "rpc_parent",
 		"node": configList{
-			configObject{"identifier": "called", "workflow_trigger": configObject{}},
+			configObject{"identifier": "called", "workflow_trigger": workflowTrigger},
 			configObject{"identifier": "call_child", "execute_workflow": executeWorkflow},
 		},
 		"connections": configList{configObject{"source_identifier": "called", "target_identifier": "call_child"}},
@@ -347,6 +351,49 @@ func TestWorkflowRPCWorkflowTriggerAndExecuteWorkflowDefaults(t *testing.T) {
 		"on_failure must stay null so it can be omitted when wait is false")
 	assert.False(t, valueAt(t, planned, execute.WithAttributeName("timeout_minutes")).IsKnown(),
 		"timeout_minutes is resolved by the API")
+	assert.True(t, valueAt(t, planned, trigger.WithAttributeName("input_schema")).IsNull(),
+		"input_schema must stay null so the input is not validated")
+	assert.True(t, valueAt(t, planned, trigger.WithAttributeName("output")).IsNull(),
+		"output must stay null so the API's default empty output does not drift")
+}
+
+func TestWorkflowRPCWorkflowTriggerOutputValidation(t *testing.T) {
+	server, resourceType := newWorkflowRPCServer(t, nil)
+	for _, tc := range []struct {
+		name string
+		key  string
+		want []string
+	}{
+		{"custom_key", "url", nil},
+		{"reserved_status", "status", []string{"Invalid Attribute Value Match"}},
+		{"reserved_error", "error", []string{"Invalid Attribute Value Match"}},
+		{"reserved_run_identifier", "workflowRunIdentifier", []string{"Invalid Attribute Value Match"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			trigger := configObject{"output": configObject{tc.key: ".outputs.deploy.response"}}
+			config := configValue(t, resourceType, rpcSubWorkflowConfigWithTrigger(trigger, configObject{}))
+			assert.Equal(t, tc.want, rpcErrorSummaries(validateResourceConfig(t, server, config)))
+		})
+	}
+}
+
+func TestWorkflowRPCWorkflowTriggerInputSchemaValidation(t *testing.T) {
+	server, resourceType := newWorkflowRPCServer(t, nil)
+	for _, tc := range []struct {
+		name        string
+		inputSchema string
+		want        []string
+	}{
+		{"object_schema", `{"type":"object","required":["name"]}`, nil},
+		{"non_object_root", `{"type":"string"}`, []string{"Invalid input schema"}},
+		{"missing_type", `{"properties":{}}`, []string{"Invalid input schema"}},
+		{"not_json", `not json`, []string{"Invalid input schema"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			config := configValue(t, resourceType, rpcSubWorkflowConfigWithTrigger(configObject{"input_schema": tc.inputSchema}, configObject{}))
+			assert.Equal(t, tc.want, rpcErrorSummaries(validateResourceConfig(t, server, config)))
+		})
+	}
 }
 
 func TestWorkflowRPCExecuteWorkflowValidation(t *testing.T) {

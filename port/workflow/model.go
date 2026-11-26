@@ -37,8 +37,15 @@ type WorkflowNodeModel struct {
 	AI                *AIModel                `tfsdk:"ai"`
 	AIAgent           *AIAgentModel           `tfsdk:"ai_agent"`
 	ExecuteWorkflow   *ExecuteWorkflowModel   `tfsdk:"execute_workflow"`
+	Summary           *SummaryModel           `tfsdk:"summary"`
 	Condition         *ConditionModel         `tfsdk:"condition"`
 	Input             *InputModel             `tfsdk:"input"`
+}
+
+type SummaryModel struct {
+	Summary        types.String `tfsdk:"summary"`
+	OnFailure      types.String `tfsdk:"on_failure"`
+	TimeoutMinutes types.Int64  `tfsdk:"timeout_minutes"`
 }
 
 type SelfServeTriggerModel struct {

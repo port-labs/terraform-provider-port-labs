@@ -148,6 +148,7 @@ var nodeTypeByBlock = map[string]string{
 	"ai":                 consts.AI,
 	"ai_agent":           consts.AIAgent,
 	"execute_workflow":   consts.ExecuteWorkflow,
+	"summary":            consts.Summary,
 	"condition":          consts.ConditionNode,
 	"input":              consts.InputNode,
 }
@@ -327,6 +328,11 @@ func validateNode(resp *resource.ValidateConfigResponse, nodePath path.Path, nod
 				"`on_failure` can only be set when `wait` is `true`.")
 		}
 		return consts.ExecuteWorkflow
+
+	case node.Summary != nil:
+		requireNonEmpty(resp, nodePath.AtName("summary").AtName("summary"), node.Summary.Summary,
+			"`summary` is required for a `summary` node.")
+		return consts.Summary
 
 	case node.Condition != nil:
 		blockPath := nodePath.AtName("condition")

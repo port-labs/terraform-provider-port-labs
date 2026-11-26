@@ -39,6 +39,7 @@ var nodeTypeBlockNames = []string{
 	"ai",
 	"ai_agent",
 	"execute_workflow",
+	"summary",
 	"condition",
 	"input",
 }
@@ -70,12 +71,12 @@ func descriptionValidators() []validator.String {
 	return []validator.String{stringvalidator.LengthAtMost(maxDescriptionLength)}
 }
 
-func onFailureAttribute() schema.Attribute {
+func onFailureAttribute(defaultValue string) schema.Attribute {
 	return schema.StringAttribute{
-		MarkdownDescription: "The action to take if the node fails. One of `continue`, `terminate`.",
+		MarkdownDescription: "The action to take if the node fails. One of `continue`, `terminate`. Defaults to `" + defaultValue + "`.",
 		Optional:            true,
 		Computed:            true,
-		Default:             stringdefault.StaticString("terminate"),
+		Default:             stringdefault.StaticString(defaultValue),
 		Validators: []validator.String{
 			stringvalidator.OneOf("continue", "terminate"),
 		},
@@ -471,6 +472,21 @@ func executeWorkflowBlock() schema.Block {
 	}
 }
 
+func summaryBlock() schema.Block {
+	return schema.SingleNestedBlock{
+		MarkdownDescription: "A summary node that writes Markdown to the workflow run page.",
+		Attributes: map[string]schema.Attribute{
+			"summary": schema.StringAttribute{
+				MarkdownDescription: "Markdown shown on the run page. Supports JQ templates in `{{ }}`, for example `{{ .outputs.deploy.status }}`. " +
+					"The rendered text is limited to 10,000 characters, and `.secrets` is not allowed in the template.",
+				Optional: true,
+			},
+			"on_failure":      onFailureAttribute("continue"),
+			"timeout_minutes": timeoutMinutesAttribute(),
+		},
+	}
+}
+
 func kafkaBlock() schema.Block {
 	return schema.SingleNestedBlock{
 		MarkdownDescription: "A Kafka node that publishes a message to the organization's Kafka topic.",
@@ -479,7 +495,7 @@ func kafkaBlock() schema.Block {
 				MarkdownDescription: "The Kafka message payload as a JSON encoded string.",
 				Optional:            true,
 			},
-			"on_failure":      onFailureAttribute(),
+			"on_failure":      onFailureAttribute("terminate"),
 			"timeout_minutes": timeoutMinutesAttribute(),
 		},
 	}
@@ -532,7 +548,7 @@ func webhookBlock() schema.Block {
 					stringvalidator.OneOf("fail", "continue"),
 				},
 			},
-			"on_failure": onFailureAttribute(),
+			"on_failure": onFailureAttribute("terminate"),
 			"timeout_minutes": schema.Int64Attribute{
 				MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default per run: " +
 					"`1440` when `agent` is true or `synchronized` is false, `60` otherwise.",
@@ -563,7 +579,7 @@ func integrationActionBlock() schema.Block {
 				MarkdownDescription: "The integration action execution properties as a JSON encoded string.",
 				Optional:            true,
 			},
-			"on_failure": onFailureAttribute(),
+			"on_failure": onFailureAttribute("terminate"),
 			"timeout_minutes": schema.Int64Attribute{
 				MarkdownDescription: timeoutMinutesDescription + "When omitted, Port applies its default per run: " +
 					"`4320` for every `cursor-cloud-agents` action, `1440` otherwise.",
@@ -582,7 +598,7 @@ func upsertEntityBlock() schema.Block {
 				MarkdownDescription: "The identifier of the blueprint to upsert into.",
 				Optional:            true,
 			},
-			"on_failure":      onFailureAttribute(),
+			"on_failure":      onFailureAttribute("terminate"),
 			"timeout_minutes": timeoutMinutesAttribute(),
 		},
 		Blocks: map[string]schema.Block{
@@ -993,6 +1009,7 @@ func WorkflowBlocks() map[string]schema.Block {
 					"ai":                 aiBlock(),
 					"ai_agent":           aiAgentBlock(),
 					"execute_workflow":   executeWorkflowBlock(),
+					"summary":            summaryBlock(),
 					"condition":          conditionBlock(),
 					"input":              inputBlock(),
 				},

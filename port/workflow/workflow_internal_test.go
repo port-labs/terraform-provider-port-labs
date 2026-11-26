@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -32,6 +33,44 @@ func TestWorkflowSchemaIsValid(t *testing.T) {
 
 	diags := resp.Schema.ValidateImplementation(ctx)
 	require.False(t, diags.HasError(), diags.Errors())
+}
+
+func TestOnFailureSchemaDefaults(t *testing.T) {
+	cases := map[string]struct {
+		block    schema.Block
+		expected string
+	}{
+		"summary":            {summaryBlock(), "continue"},
+		"kafka":              {kafkaBlock(), "terminate"},
+		"webhook":            {webhookBlock(), "terminate"},
+		"integration_action": {integrationActionBlock(), "terminate"},
+		"upsert_entity":      {upsertEntityBlock(), "terminate"},
+	}
+
+	for name, tc := range cases {
+		t.Run(name, func(t *testing.T) {
+			nested, ok := tc.block.(schema.SingleNestedBlock)
+			require.True(t, ok)
+			onFailure, ok := nested.Attributes["on_failure"].(schema.StringAttribute)
+			require.True(t, ok)
+			require.NotNil(t, onFailure.Default)
+
+			resp := &defaults.StringResponse{}
+			onFailure.Default.DefaultString(context.Background(), defaults.StringRequest{}, resp)
+			assert.Equal(t, tc.expected, resp.PlanValue.ValueString())
+		})
+	}
+}
+
+// execute_workflow's on_failure must stay without a schema default: it can only be
+// set when wait is true, so a default would be rejected for wait = false.
+func TestExecuteWorkflowOnFailureHasNoSchemaDefault(t *testing.T) {
+	nested, ok := executeWorkflowBlock().(schema.SingleNestedBlock)
+	require.True(t, ok)
+	onFailure, ok := nested.Attributes["on_failure"].(schema.StringAttribute)
+	require.True(t, ok)
+	assert.Nil(t, onFailure.Default)
+	assert.False(t, onFailure.Computed)
 }
 
 func strPtr(s string) *string { return &s }
@@ -853,6 +892,10 @@ func TestValidateNodeRequiredAttributes(t *testing.T) {
 			node:    WorkflowNodeModel{Identifier: types.StringValue("upsert"), UpsertEntity: &UpsertEntityModel{}},
 			summary: "Missing required attribute",
 		},
+		"summary without summary body": {
+			node:    WorkflowNodeModel{Identifier: types.StringValue("run_summary"), Summary: &SummaryModel{}},
+			summary: "Missing required attribute",
+		},
 		"ai without user_prompt": {
 			node:    WorkflowNodeModel{Identifier: types.StringValue("summarize"), AI: &AIModel{}},
 			summary: "Missing required attribute",
@@ -1492,6 +1535,12 @@ func TestEveryNodeTypeSerializesItsConfigType(t *testing.T) {
 		}, consts.ScheduleTrigger},
 		"workflow_trigger": {"workflow_trigger", workflowTriggerNode("n"), consts.WorkflowTrigger},
 		"execute_workflow": {"execute_workflow", executeWorkflowNode("n"), consts.ExecuteWorkflow},
+		"summary": {"summary", WorkflowNodeModel{
+			Identifier: types.StringValue("n"),
+			Summary: &SummaryModel{
+				Summary: types.StringValue("## Done"),
+			},
+		}, consts.Summary},
 		"kafka": {"kafka", WorkflowNodeModel{
 			Identifier: types.StringValue("n"),
 			Kafka:      &KafkaModel{Payload: types.StringValue(`{"event":"tick"}`)},
@@ -2468,6 +2517,11 @@ func nodeTimeoutCases() []nodeTimeoutCase {
 				return WorkflowNodeModel{UpsertEntity: &UpsertEntityModel{TimeoutMinutes: v}}
 			},
 			func(n WorkflowNodeModel) types.Int64 { return n.UpsertEntity.TimeoutMinutes }},
+		{"summary", consts.Summary, true,
+			func(v types.Int64) WorkflowNodeModel {
+				return WorkflowNodeModel{Summary: &SummaryModel{Summary: types.StringValue("## Done"), TimeoutMinutes: v}}
+			},
+			func(n WorkflowNodeModel) types.Int64 { return n.Summary.TimeoutMinutes }},
 		{"ai", consts.AI, true,
 			func(v types.Int64) WorkflowNodeModel { return WorkflowNodeModel{AI: &AIModel{TimeoutMinutes: v}} },
 			func(n WorkflowNodeModel) types.Int64 { return n.AI.TimeoutMinutes }},

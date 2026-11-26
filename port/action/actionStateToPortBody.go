@@ -2,6 +2,7 @@ package action
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
@@ -10,22 +11,25 @@ import (
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
-func actionDataSetToPortBody(dataSet *DatasetModel) *cli.Dataset {
+func actionDataSetToPortBody(dataSet *DatasetModel) (*cli.Dataset, error) {
 	cliDataSet := &cli.Dataset{
 		Combinator: dataSet.Combinator.ValueString(),
 	}
 	rules := make([]cli.DatasetRule, 0, len(dataSet.Rules))
 	for _, rule := range dataSet.Rules {
-		cliRule := convertRuleToCliRule(rule)
+		cliRule, err := convertRuleToCliRule(rule)
+		if err != nil {
+			return nil, err
+		}
 		rules = append(rules, cliRule)
 	}
 	cliDataSet.Rules = rules
-	return cliDataSet
+	return cliDataSet, nil
 }
 
 // convertRuleToCliRule recursively converts a Terraform Rule to a CLI DatasetRule.
 // Handles both leaf rules (with operator) and group rules (with combinator + nested rules).
-func convertRuleToCliRule(rule Rule) cli.DatasetRule {
+func convertRuleToCliRule(rule Rule) (cli.DatasetRule, error) {
 	cliRule := cli.DatasetRule{}
 
 	// Check if this is a group rule (has combinator)
@@ -36,7 +40,11 @@ func convertRuleToCliRule(rule Rule) cli.DatasetRule {
 		if len(rule.Rules) > 0 {
 			cliRule.Rules = make([]cli.DatasetRule, 0, len(rule.Rules))
 			for _, nestedRule := range rule.Rules {
-				cliRule.Rules = append(cliRule.Rules, convertRuleToCliRule(nestedRule))
+				nested, err := convertRuleToCliRule(nestedRule)
+				if err != nil {
+					return cliRule, err
+				}
+				cliRule.Rules = append(cliRule.Rules, nested)
 			}
 		}
 	} else {
@@ -53,13 +61,18 @@ func convertRuleToCliRule(rule Rule) cli.DatasetRule {
 			blueprint := rule.Blueprint.ValueString()
 			cliRule.Blueprint = &blueprint
 		}
-		if !rule.Property.IsNull() {
-			prop := rule.Property.ValueString()
-			cliRule.Property = &prop
+		if !rule.PropertyJson.IsNull() {
+			property, err := utils.TerraformStringToGoType[map[string]any](rule.PropertyJson)
+			if err != nil || property == nil {
+				return cliRule, fmt.Errorf("`property_json` must be a JSON object: %v", err)
+			}
+			cliRule.Property = property
+		} else if !rule.Property.IsNull() {
+			cliRule.Property = rule.Property.ValueString()
 		}
 	}
 
-	return cliRule
+	return cliRule, nil
 }
 
 func actionStateToPortBody(ctx context.Context, data *ActionModel) (*cli.Action, error) {

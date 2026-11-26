@@ -32,6 +32,9 @@ func RuleSchema() map[string]schema.Attribute {
 		"identifier": schema.StringAttribute{
 			MarkdownDescription: "The identifier of the rule",
 			Required:            true,
+			Validators: []validator.String{
+				stringvalidator.LengthBetween(1, 20),
+			},
 		},
 		"title": schema.StringAttribute{
 			MarkdownDescription: "The title of the rule",

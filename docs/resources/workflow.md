@@ -21,7 +21,7 @@ Workflow resource for managing Port workflows and their node/connection graph
 
 ### Optional
 
-- `allow_anyone_to_view_runs` (Boolean) Whether any user can view this workflow's runs
+- `allow_anyone_to_view_runs` (Boolean) Whether any organization member can view this workflow's runs. When false (the default), only admins and the user who triggered each run can view it
 - `category` (String) A free-form category used to group the workflow (max 40 characters)
 - `connections` (Block List) A directed connection between two nodes (see [below for nested schema](#nestedblock--connections))
 - `description` (String) The description of the workflow

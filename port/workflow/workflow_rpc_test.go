@@ -170,7 +170,7 @@ func TestWorkflowRPCDefaultsNullsAndUnknowns(t *testing.T) {
 	trigger := root.WithAttributeName("node").WithElementKeyInt(0)
 	webhook := root.WithAttributeName("node").WithElementKeyInt(1)
 	defaults := map[*tftypes.AttributePath]any{
-		root.WithAttributeName("allow_anyone_to_view_runs"):                            true,
+		root.WithAttributeName("allow_anyone_to_view_runs"):                            false,
 		trigger.WithAttributeName("verbose"):                                           false,
 		trigger.WithAttributeName("self_serve_trigger").WithAttributeName("published"): true,
 		webhook.WithAttributeName("webhook").WithAttributeName("on_failure"):           "terminate",

@@ -3,11 +3,15 @@ package cli
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
-	"github.com/avast/retry-go/v4"
-	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
+	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/avast/retry-go/v4"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
 
 const FeatureFlagUsersAndTeamsV2 = "USERS_AND_TEAMS_OWNERSHIP_V2"
@@ -122,14 +126,28 @@ func (c *PortClient) DeleteTeam(ctx context.Context, teamName string) error {
 
 const MissingTeamEntityError = utils.StringErr("team entity is missing")
 
+const teamEntityRetryAttempts = 10
+
+// Retry timing for a lagging _team entity. Exponential backoff from teamEntityRetryDelay, capped per wait at
+// teamEntityRetryMaxDelay so the worst case stays well under a minute. Vars so tests can shrink them.
+var (
+	teamEntityRetryDelay     = time.Second
+	teamEntityRetryMaxJitter = time.Second
+	teamEntityRetryMaxDelay  = 5 * time.Second
+)
+
 func (c *PortClient) enrichTeamFromTeamEntityWithRetry(ctx context.Context, portTeam *PortTeam) (*Team, error) {
 	return retry.DoWithData(
 		func() (*Team, error) { return c.enrichTeamFromTeamEntity(ctx, portTeam) },
+		retry.Context(ctx),
 		retry.LastErrorOnly(true),
-		retry.Attempts(1),
-		retry.AttemptsForError(10, MissingTeamEntityError),
-		retry.Delay(time.Second),
-		retry.MaxJitter(time.Second),
+		// Only a missing _team entity is retried: on ownership-v2 orgs it is created asynchronously right after the
+		// team, so it can lag behind a create/update. Every other error fails immediately.
+		retry.Attempts(teamEntityRetryAttempts),
+		retry.RetryIf(func(err error) bool { return errors.Is(err, MissingTeamEntityError) }),
+		retry.Delay(teamEntityRetryDelay),
+		retry.MaxJitter(teamEntityRetryMaxJitter),
+		retry.MaxDelay(teamEntityRetryMaxDelay),
 	)
 }
 
@@ -141,28 +159,56 @@ func (c *PortClient) enrichTeamFromTeamEntity(ctx context.Context, portTeam *Por
 		return nil, fmt.Errorf("failed to read feature flags: %w", err)
 	}
 
-	if isUsersAndTeamsV2 {
-		searchResults, searchErr := c.Search(ctx, &SearchRequestQuery{
-			Query: &map[string]any{
-				"combinator": "and",
-				"rules": []map[string]any{
-					{"property": "$blueprint", "operator": "=", "value": "_team"},
-					{"property": "$title", "operator": "=", "value": portTeam.Name},
-				},
+	// Look up the team's _team entity to expose its identifier, which is what entity teams[] arrays and permission
+	// configurations reference.
+	searchResults, searchErr := c.Search(ctx, &SearchRequestQuery{
+		Query: &map[string]any{
+			"combinator": "and",
+			"rules": []map[string]any{
+				{"property": "$blueprint", "operator": "=", "value": "_team"},
+				{"property": "$title", "operator": "=", "value": portTeam.Name},
 			},
-			Include: []string{"identifier"},
-		})
+		},
+		Include: []string{"identifier"},
+	})
+
+	if !isUsersAndTeamsV2 {
+		// Orgs without ownership v2 are not guaranteed to have a _team blueprint or _team entities, so a missing
+		// blueprint (404) or no match leaves the identifier null instead of failing the operation. Any other search
+		// failure (auth, 5xx, timeouts) is returned so a transient error can't drop a known identifier from state.
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return nil, ctxErr
+		}
 		if searchErr != nil {
+			var se *SearchError
+			if errors.As(searchErr, &se) && se.StatusCode == http.StatusNotFound {
+				return team, nil
+			}
 			return nil, searchErr
 		}
-		if len(searchResults.Entities) == 0 {
-			return nil, MissingTeamEntityError
+		switch len(searchResults.Entities) {
+		case 0:
+		case 1:
+			team.Identifier = &searchResults.Entities[0].Identifier
+		default:
+			tflog.Warn(ctx, "found multiple _team entities for team, leaving its identifier null", map[string]any{
+				"team":    portTeam.Name,
+				"matches": len(searchResults.Entities),
+			})
 		}
-		if len(searchResults.Entities) != 1 {
-			return nil, fmt.Errorf("failed to read team results, got %d results instead of 1", len(searchResults.Entities))
-		}
-		team.Identifier = &searchResults.Entities[0].Identifier
+		return team, nil
 	}
+
+	if searchErr != nil {
+		return nil, searchErr
+	}
+	if len(searchResults.Entities) == 0 {
+		return nil, MissingTeamEntityError
+	}
+	if len(searchResults.Entities) != 1 {
+		return nil, fmt.Errorf("failed to read team results, got %d results instead of 1", len(searchResults.Entities))
+	}
+	team.Identifier = &searchResults.Entities[0].Identifier
 
 	return team, nil
 }

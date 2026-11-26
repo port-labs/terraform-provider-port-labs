@@ -828,6 +828,16 @@ func TestAccPortScorecardPropertiesAndRelations(t *testing.T) {
 					resource.TestCheckResourceAttr("port_scorecard.test", "rules.#", "1"),
 				),
 			},
+			{
+				Config: acctest.ProviderConfig + strings.Replace(config,
+					`"platform-team"`,
+					`"platform-team-updated"`,
+					1,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("port_scorecard.test", "properties", regexp.MustCompile(`"platform-team-updated"`)),
+				),
+			},
 		},
 	})
 }
@@ -888,6 +898,16 @@ func TestAccPortScorecardRulePropertiesAndRelations(t *testing.T) {
 					resource.TestMatchResourceAttr("port_scorecard.test", "rules.0.properties", regexp.MustCompile(regexp.QuoteMeta(rulePropKey))),
 					resource.TestMatchResourceAttr("port_scorecard.test", "rules.0.properties", regexp.MustCompile(`"high"`)),
 					resource.TestMatchResourceAttr("port_scorecard.test", "rules.0.relations", regexp.MustCompile(regexp.QuoteMeta(ruleRelationKey))),
+				),
+			},
+			{
+				Config: acctest.ProviderConfig + strings.Replace(config,
+					`"high"`,
+					`"critical"`,
+					1,
+				),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestMatchResourceAttr("port_scorecard.test", "rules.0.properties", regexp.MustCompile(`"critical"`)),
 				),
 			},
 		},

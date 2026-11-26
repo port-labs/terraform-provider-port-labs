@@ -110,7 +110,7 @@ func scorecardResourceToPortBody(ctx context.Context, state *ScorecardModel) (*c
 			return nil, err
 		}
 		if relations != nil {
-			s.Relations = *relations
+			s.Relations = omitManagedRelationKeys(*relations, scorecardManagedRelationKey)
 		}
 	}
 

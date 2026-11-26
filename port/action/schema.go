@@ -1475,7 +1475,7 @@ resource "port_action" "create_microservice" {
 	}
 	kafka_method = {
 		payload = jsonencode({
-		  runId: "{{"{{.run.id}}"}}"
+		  runId = "` + "{{.run.id}}" + `"
 		})
 	}
 }` + "\n```" + `
@@ -1497,7 +1497,7 @@ resource "port_action" "delete_temporary_microservice" {
 	}
 	kafka_method = {
 		payload = jsonencode({
-		  runId: "{{"{{.run.id}}"}}"
+		  runId = "` + "{{.run.id}}" + `"
 		})
 	}
 }
@@ -1535,10 +1535,10 @@ resource "port_action" "create_microservice" {
 	}
 	kafka_method = {
 		payload = jsonencode({
-		  runId: "{{"{{.run.id}}"}}"
+		  runId = "` + "{{.run.id}}" + `"
 		})
 	}
-	
+}
 ` + "```" + `
 
 ## Limitations

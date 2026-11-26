@@ -3,12 +3,56 @@
 page_title: "port_organization Resource - port"
 subcategory: ""
 description: |-
-  Organization resource to manage organization-level settings such as name and hidden global search tabs
+  Organization Resource
+  Manages Port organization settings such as name and hidden global search tabs.
+  ~> Note: This resource manages organization-wide settings. Changes affect all users in the organization.
+  Example Usage
+  
+  resource "port_organization" "my_org" {
+    name = "My Organization"
+    
+    # Optionally hide specific tabs from Spotlight (global search)
+    hidden_global_search_tabs = ["markdown"]
+  }
+  
+  Hidden Global Search Tabs
+  The hidden_global_search_tabs attribute controls which tabs are hidden from Spotlight (global search). Allowed values:
+  all - The "All" tabblueprint - Blueprints tabpage - Pages tabaction - Actions tabworkflow - Workflows tabentity - Entities tabmarkdown - Markdown tab
+  At least one content tab must remain visible, and all cannot be the only visible tab.
 ---
 
 # port_organization (Resource)
 
-Organization resource to manage organization-level settings such as name and hidden global search tabs
+# Organization Resource
+
+Manages Port organization settings such as name and hidden global search tabs.
+
+~> **Note:** This resource manages organization-wide settings. Changes affect all users in the organization.
+
+## Example Usage
+
+```hcl
+resource "port_organization" "my_org" {
+  name = "My Organization"
+  
+  # Optionally hide specific tabs from Spotlight (global search)
+  hidden_global_search_tabs = ["markdown"]
+}
+```
+
+## Hidden Global Search Tabs
+
+The `hidden_global_search_tabs` attribute controls which tabs are hidden from Spotlight (global search). Allowed values:
+
+- `all` - The "All" tab
+- `blueprint` - Blueprints tab
+- `page` - Pages tab
+- `action` - Actions tab
+- `workflow` - Workflows tab
+- `entity` - Entities tab
+- `markdown` - Markdown tab
+
+At least one content tab must remain visible, and `all` cannot be the only visible tab.
 
 
 

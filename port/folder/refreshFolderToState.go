@@ -13,6 +13,10 @@ func refreshFolderToState(fm *FolderModel, f *cli.Folder) error {
 		fm.Title = types.StringValue(f.Title)
 	}
 
+	if f.Sidebar != "" {
+		fm.Sidebar = types.StringValue(f.Sidebar)
+	}
+
 	if f.After != "" {
 		fm.After = types.StringValue(f.After)
 	} else if !fm.After.IsNull() {
@@ -21,6 +25,21 @@ func refreshFolderToState(fm *FolderModel, f *cli.Folder) error {
 
 	if f.Parent != "" {
 		fm.Parent = types.StringValue(f.Parent)
+	} else if !fm.Parent.IsNull() {
+		fm.Parent = types.StringNull()
+	}
+
+	if f.CreatedAt != nil {
+		fm.CreatedAt = types.StringValue(f.CreatedAt.String())
+	}
+	if f.CreatedBy != "" {
+		fm.CreatedBy = types.StringValue(f.CreatedBy)
+	}
+	if f.UpdatedAt != nil {
+		fm.UpdatedAt = types.StringValue(f.UpdatedAt.String())
+	}
+	if f.UpdatedBy != "" {
+		fm.UpdatedBy = types.StringValue(f.UpdatedBy)
 	}
 
 	return nil

@@ -82,3 +82,18 @@ func TestIntegrationToPortBody_CreatePortResourcesOriginOmitted(t *testing.T) {
 	require.NoError(t, err)
 	assert.Nil(t, body.CreatePortResourcesOrigin)
 }
+
+// An unset Optional+Computed version is unknown in the create plan; it must be omitted, not sent as "".
+func TestIntegrationToPortBody_UnknownVersionOnCreateIsOmitted(t *testing.T) {
+	state := &IntegrationModel{
+		InstallationId:      types.StringValue("my-integration"),
+		Title:               types.StringNull(),
+		Version:             types.StringUnknown(),
+		InstallationAppType: types.StringNull(),
+	}
+	body, err := integrationToPortBody(state, true)
+	require.NoError(t, err)
+	assert.Nil(t, body.Version)
+	assert.Nil(t, body.Title)
+	assert.Nil(t, body.InstallationAppType)
+}

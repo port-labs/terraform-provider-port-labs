@@ -68,9 +68,19 @@ func (c *PortClient) CreateIntegration(ctx context.Context, integration *Integra
 	return &pb.Integration, nil
 }
 
+// integrationPatchBody is the PATCH payload. Integration omits unset optional fields (the API rejects null for some of
+// them on create), but on update title and version are sent even when nil: an explicit null is how Port clears a
+// field, so removing title from the config takes effect. version keeps its prior value when removed from config
+// because of UseStateForUnknown. These fields shadow the embedded omitempty ones.
+type integrationPatchBody struct {
+	*Integration
+	Title   *string `json:"title"`
+	Version *string `json:"version"`
+}
+
 func (c *PortClient) UpdateIntegration(ctx context.Context, id string, integration *Integration) (*Integration, error) {
 	resp, err := c.Client.R().
-		SetBody(integration).
+		SetBody(integrationPatchBody{Integration: integration, Title: integration.Title, Version: integration.Version}).
 		SetContext(ctx).
 		SetPathParam("identifier", id).
 		Patch("v1/integration/{identifier}")

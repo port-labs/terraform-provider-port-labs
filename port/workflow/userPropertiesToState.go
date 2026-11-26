@@ -12,7 +12,7 @@ import (
 	"github.com/samber/lo"
 )
 
-func (r *WorkflowResource) userPropertiesToState(ctx context.Context, userInputs *cli.WorkflowUserInputs, configured bool) (*UserPropertiesModel, error) {
+func (r *WorkflowResource) userPropertiesToState(ctx context.Context, userInputs *cli.WorkflowUserInputs, configured bool, prior *UserPropertiesModel) (*UserPropertiesModel, error) {
 	model := &UserPropertiesModel{}
 	_, required := requiredToState(userInputs.Required)
 
@@ -21,7 +21,13 @@ func (r *WorkflowResource) userPropertiesToState(ctx context.Context, userInputs
 
 		switch property.Type {
 		case "string":
-			prop, err := stringPropToState(ctx, property, r.portClient.JSONEscapeHTML)
+			var priorString *StringPropModel
+			if prior != nil {
+				if old, ok := prior.StringProps[identifier]; ok {
+					priorString = &old
+				}
+			}
+			prop, err := stringPropToState(ctx, property, priorString, r.portClient.JSONEscapeHTML)
 			if err != nil {
 				return nil, fmt.Errorf("string input %q: %w", identifier, err)
 			}
@@ -145,7 +151,7 @@ func requiredToState(required any) (types.String, []string) {
 	return types.StringNull(), nil
 }
 
-func stringPropToState(ctx context.Context, property cli.WorkflowInputProperty, jsonEscapeHTML bool) (*StringPropModel, error) {
+func stringPropToState(ctx context.Context, property cli.WorkflowInputProperty, prior *StringPropModel, jsonEscapeHTML bool) (*StringPropModel, error) {
 	prop := &StringPropModel{
 		Format:     flex.GoStringToFramework(property.Format),
 		Blueprint:  flex.GoStringToFramework(property.Blueprint),
@@ -185,7 +191,15 @@ func stringPropToState(ctx context.Context, property cli.WorkflowInputProperty, 
 		prop.EnumColors, _ = types.MapValueFrom(ctx, types.StringType, property.EnumColors)
 	}
 
-	prop.Dataset = datasetToState(property.Dataset, jsonEscapeHTML)
+	var priorDataset *DatasetModel
+	if prior != nil {
+		priorDataset = prior.Dataset
+	}
+	dataset, err := datasetToState(property.Dataset, priorDataset, jsonEscapeHTML)
+	if err != nil {
+		return nil, err
+	}
+	prop.Dataset = dataset
 	prop.Sort = sortToState(property.Sort)
 
 	return prop, nil
@@ -489,31 +503,55 @@ func sortToState(sort *cli.EntitiesSortModel) *EntitiesSortModel {
 	}
 }
 
-func datasetToState(dataset *cli.WorkflowDataset, jsonEscapeHTML bool) *DatasetModel {
+func datasetToState(dataset *cli.WorkflowDataset, prior *DatasetModel, jsonEscapeHTML bool) (*DatasetModel, error) {
 	if dataset == nil {
-		return nil
+		return nil, nil
 	}
 
 	model := &DatasetModel{Combinator: types.StringValue(dataset.Combinator)}
-	for _, rule := range dataset.Rules {
-		model.Rules = append(model.Rules, datasetRuleToState(rule, jsonEscapeHTML))
+	var priorRules []DatasetRuleModel
+	if prior != nil {
+		priorRules = prior.Rules
 	}
-	return model
+	for i, rule := range dataset.Rules {
+		converted, err := datasetRuleToState(rule, utils.PriorAt(priorRules, i), jsonEscapeHTML)
+		if err != nil {
+			return nil, err
+		}
+		model.Rules = append(model.Rules, converted)
+	}
+	return model, nil
 }
 
-func datasetRuleToState(rule cli.WorkflowDatasetRule, jsonEscapeHTML bool) DatasetRuleModel {
+func datasetRuleToState(rule cli.WorkflowDatasetRule, prior *DatasetRuleModel, jsonEscapeHTML bool) (DatasetRuleModel, error) {
 	model := DatasetRuleModel{}
 
 	if rule.Combinator != nil && *rule.Combinator != "" {
 		model.Combinator = types.StringValue(*rule.Combinator)
-		for _, nested := range rule.Rules {
-			model.Rules = append(model.Rules, datasetRuleToState(nested, jsonEscapeHTML))
+		var priorRules []DatasetRuleModel
+		if prior != nil {
+			priorRules = prior.Rules
 		}
-		return model
+		for i, nested := range rule.Rules {
+			converted, err := datasetRuleToState(nested, utils.PriorAt(priorRules, i), jsonEscapeHTML)
+			if err != nil {
+				return model, err
+			}
+			model.Rules = append(model.Rules, converted)
+		}
+		return model, nil
 	}
 
 	model.Blueprint = flex.GoStringToFramework(rule.Blueprint)
-	model.Property = flex.GoStringToFramework(rule.Property)
+	priorProperty := types.StringNull()
+	if prior != nil {
+		priorProperty = prior.PropertyJson
+	}
+	var err error
+	model.Property, model.PropertyJson, err = utils.PropertyToState(priorProperty, rule.Property, jsonEscapeHTML)
+	if err != nil {
+		return model, fmt.Errorf("converting dataset rule `property` to `property_json`: %w", err)
+	}
 	model.Relation = flex.GoStringToFramework(rule.Relation)
 	model.Direction = flex.GoStringToFramework(rule.Direction)
 	model.Operator = flex.GoStringToFramework(&rule.Operator)
@@ -526,5 +564,5 @@ func datasetRuleToState(rule cli.WorkflowDatasetRule, jsonEscapeHTML bool) Datas
 		}
 	}
 
-	return model
+	return model, nil
 }

@@ -98,7 +98,11 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 			configured := prior.SelfServeTrigger != nil &&
 				prior.SelfServeTrigger.UserInputs != nil &&
 				prior.SelfServeTrigger.UserInputs.UserProperties != nil
-			userInputs, err := r.userInputsToModel(ctx, config.UserInputs, configured)
+			var priorProps *UserPropertiesModel
+			if configured {
+				priorProps = prior.SelfServeTrigger.UserInputs.UserProperties
+			}
+			userInputs, err := r.userInputsToModel(ctx, config.UserInputs, configured, priorProps)
 			if err != nil {
 				return node, err
 			}
@@ -306,7 +310,11 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 			configured := prior.Input != nil &&
 				prior.Input.UserInputs != nil &&
 				prior.Input.UserInputs.UserProperties != nil
-			userInputs, err := r.userInputsToModel(ctx, config.UserInputs, configured)
+			var priorProps *UserPropertiesModel
+			if configured {
+				priorProps = prior.Input.UserInputs.UserProperties
+			}
+			userInputs, err := r.userInputsToModel(ctx, config.UserInputs, configured, priorProps)
 			if err != nil {
 				return node, err
 			}
@@ -368,8 +376,8 @@ type userInputsModel struct {
 	Validations     []InputValidationModel
 }
 
-func (r *WorkflowResource) userInputsToModel(ctx context.Context, userInputs *cli.WorkflowUserInputs, configured bool) (*userInputsModel, error) {
-	userProperties, err := r.userPropertiesToState(ctx, userInputs, configured)
+func (r *WorkflowResource) userInputsToModel(ctx context.Context, userInputs *cli.WorkflowUserInputs, configured bool, prior *UserPropertiesModel) (*userInputsModel, error) {
+	userProperties, err := r.userPropertiesToState(ctx, userInputs, configured, prior)
 	if err != nil {
 		return nil, err
 	}

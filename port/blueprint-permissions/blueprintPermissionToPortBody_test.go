@@ -82,6 +82,53 @@ func TestBlueprintPermissionsToPortBodyWithPolicy(t *testing.T) {
 	}
 }
 
+func TestBlueprintPermissionsToPortBodyWithReadProperties(t *testing.T) {
+	ownedByTeam := false
+	state := &BlueprintPermissionsModel{
+		BlueprintIdentifier: types.StringValue("svc"),
+		Entities: &EntitiesBlueprintPermissionsModel{
+			Register: &BlueprintPermissionsTFBlockWithPolicy{
+				Roles:       []types.String{types.StringValue("Admin")},
+				OwnedByTeam: types.BoolValue(ownedByTeam),
+			},
+			Unregister: &BlueprintPermissionsTFBlockWithPolicy{
+				Roles:       []types.String{types.StringValue("Admin")},
+				OwnedByTeam: types.BoolValue(ownedByTeam),
+			},
+			Update: &BlueprintPermissionsTFBlockWithPolicy{
+				Roles:       []types.String{types.StringValue("Admin")},
+				OwnedByTeam: types.BoolValue(ownedByTeam),
+			},
+			ReadMetadataProperties: &BlueprintReadMetadataPermissionsTFBlock{
+				Title: &BlueprintPermissionsTFBlock{
+					Roles:       []types.String{types.StringValue("Member")},
+					OwnedByTeam: types.BoolValue(ownedByTeam),
+				},
+			},
+			ReadProperties: &BlueprintRelationsPermissionsTFBlock{
+				"myProp": {
+					Roles:       []types.String{types.StringValue("Admin")},
+					OwnedByTeam: types.BoolValue(ownedByTeam),
+				},
+			},
+		},
+	}
+
+	body, err := blueprintPermissionsToPortBody(state)
+	if err != nil {
+		t.Fatalf("blueprintPermissionsToPortBody failed: %v", err)
+	}
+	if _, ok := body.Entities.ReadProperties["$title"]; !ok {
+		t.Fatal("expected $title in readProperties")
+	}
+	if _, ok := body.Entities.ReadProperties["myProp"]; !ok {
+		t.Fatal("expected myProp in readProperties")
+	}
+	if _, ok := body.Entities.ReadProperties["$identifier"]; ok {
+		t.Fatal("did not expect $identifier in readProperties")
+	}
+}
+
 func TestBlueprintPermissionsToPortBodyOmitsReadWhenUnconfigured(t *testing.T) {
 	ownedByTeam := false
 	state := &BlueprintPermissionsModel{

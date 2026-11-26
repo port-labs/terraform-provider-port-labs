@@ -80,6 +80,34 @@ description: |-
   		}
   }
   
+  Allow read myStringProperty for admins and a specific user and team:
+  
+  resource "port_blueprint_permissions" "microservices_permissions" {
+  	blueprint_identifier = "my_blueprint_identifier"
+  		entities = {
+  			# all properties from the previous example...
+  			"read_properties" = {
+  				"myStringProperty" = {
+  					"roles": [
+  						"Admin",
+  					],
+  					"users": ["test-admin-user@test.com"],
+  					"teams": ["Team Spiderman"],
+  				}
+  			},
+  			"read_metadata_properties" = {
+  				"title" = {
+  					"roles": [
+  						"Admin",
+  					],
+  					"users": [],
+  					"teams": []
+  				}
+  			}
+  		}
+  	}
+  }
+  
   Allow update `myStringProperty`` for admins and a specific user and team:
   
   resource "port_blueprint_permissions" "microservices_permissions" {
@@ -277,6 +305,36 @@ resource "port_blueprint_permissions" "microservices_permissions" {
 ```
 
 
+### Allow read `myStringProperty` for admins and a specific user and team:
+
+```hcl
+resource "port_blueprint_permissions" "microservices_permissions" {
+	blueprint_identifier = "my_blueprint_identifier"
+		entities = {
+			# all properties from the previous example...
+			"read_properties" = {
+				"myStringProperty" = {
+					"roles": [
+						"Admin",
+					],
+					"users": ["test-admin-user@test.com"],
+					"teams": ["Team Spiderman"],
+				}
+			},
+			"read_metadata_properties" = {
+				"title" = {
+					"roles": [
+						"Admin",
+					],
+					"users": [],
+					"teams": []
+				}
+			}
+		}
+	}
+}
+```
+
 ### Allow update `myStringProperty`` for admins and a specific user and team:
 
 ```hcl
@@ -425,6 +483,11 @@ See [here](https://docs.getport.io/build-your-software-catalog/customize-integra
 Optional:
 
 - `read` (Attributes) Manage permissions to read entities of the blueprint (see [below for nested schema](#nestedatt--entities--read))
+- `read_metadata_properties` (Attributes) Manage permissions to read the metadata properties (`$icon|$title|$team`).
+These are translated to the readProperties in the Port API, proxied since we can't have Terraform properties starting with `$` signs.
+The `$identifier` meta property cannot have read restrictions.
+See [here](https://docs.getport.io/build-your-software-catalog/customize-integrations/configure-data-model/setup-blueprint/properties/meta-properties/) for more details. (see [below for nested schema](#nestedatt--entities--read_metadata_properties))
+- `read_properties` (Attributes Map) Manage permissions to read specific blueprint properties (schema, calculation, and aggregation properties). Meta properties starting with `$` must be configured under `read_metadata_properties`. Mirror properties and the `$identifier` meta property cannot have read restrictions. (see [below for nested schema](#nestedatt--entities--read_properties))
 - `update_properties` (Attributes Map) Manage permissions to update the entity properties (see [below for nested schema](#nestedatt--entities--update_properties))
 - `update_relations` (Attributes Map) Manage permissions to update the entity relations (see [below for nested schema](#nestedatt--entities--update_relations))
 
@@ -529,6 +592,60 @@ Optional:
 - `roles` (Set of String) Roles with read permissions
 - `teams` (Set of String) Teams with read permissions
 - `users` (Set of String) Users with read permissions
+
+
+<a id="nestedatt--entities--read_metadata_properties"></a>
+### Nested Schema for `entities.read_metadata_properties`
+
+Optional:
+
+- `icon` (Attributes) The entity's icon (see [below for nested schema](#nestedatt--entities--read_metadata_properties--icon))
+- `team` (Attributes) The team this entity belongs to (see [below for nested schema](#nestedatt--entities--read_metadata_properties--team))
+- `title` (Attributes) A human-readable name for the entity (see [below for nested schema](#nestedatt--entities--read_metadata_properties--title))
+
+<a id="nestedatt--entities--read_metadata_properties--icon"></a>
+### Nested Schema for `entities.read_metadata_properties.icon`
+
+Optional:
+
+- `owned_by_team` (Boolean) Owned by team
+- `roles` (Set of String) Roles with read `$icon` metadata permissions
+- `teams` (Set of String) Teams with read `$icon` metadata permissions
+- `users` (Set of String) Users with read `$icon` metadata permissions
+
+
+<a id="nestedatt--entities--read_metadata_properties--team"></a>
+### Nested Schema for `entities.read_metadata_properties.team`
+
+Optional:
+
+- `owned_by_team` (Boolean) Owned by team
+- `roles` (Set of String) Roles with read `$team` metadata permissions
+- `teams` (Set of String) Teams with read `$team` metadata permissions
+- `users` (Set of String) Users with read `$team` metadata permissions
+
+
+<a id="nestedatt--entities--read_metadata_properties--title"></a>
+### Nested Schema for `entities.read_metadata_properties.title`
+
+Optional:
+
+- `owned_by_team` (Boolean) Owned by team
+- `roles` (Set of String) Roles with read `$title` metadata permissions
+- `teams` (Set of String) Teams with read `$title` metadata permissions
+- `users` (Set of String) Users with read `$title` metadata permissions
+
+
+
+<a id="nestedatt--entities--read_properties"></a>
+### Nested Schema for `entities.read_properties`
+
+Optional:
+
+- `owned_by_team` (Boolean) Owned by team
+- `roles` (Set of String) Roles with read specific property permissions
+- `teams` (Set of String) Teams with read specific property permissions
+- `users` (Set of String) Users with read specific property permissions
 
 
 <a id="nestedatt--entities--update_properties"></a>

@@ -127,6 +127,15 @@ description: |-
     }
     force_delete_entities = false
   }
+  
+  
+  Import
+  Existing blueprints can be imported by identifier:
+  
+  terraform import port_blueprint.microservice microservice
+  
+  Import adopts all of the blueprint's relations into relations. On the next apply, any adopted relation that is not in the blueprint's config is deleted from Port, so declare every relation the blueprint has in its relations before applying.
+  If some of its relations are managed by port_blueprint_relation resources or in the Port UI, don't rely on import for them: either move them into the blueprint's relations (and stop managing them elsewhere), or don't import that blueprint.
 ---
 
 # port_blueprint (Resource)
@@ -270,6 +279,17 @@ resource "port_blueprint" "microservice" {
 }
 
 ```
+
+## Import
+
+Existing blueprints can be imported by identifier:
+
+```shell
+terraform import port_blueprint.microservice microservice
+```
+
+Import adopts all of the blueprint's relations into `relations`. On the next apply, any adopted relation that is not in the blueprint's config is deleted from Port, so declare every relation the blueprint has in its `relations` before applying.
+If some of its relations are managed by `port_blueprint_relation` resources or in the Port UI, don't rely on import for them: either move them into the blueprint's `relations` (and stop managing them elsewhere), or don't import that blueprint.
 
 
 

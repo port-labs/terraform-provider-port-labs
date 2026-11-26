@@ -2,12 +2,25 @@ package entity
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/cli"
 	"github.com/port-labs/terraform-provider-port-labs/v2/internal/utils"
 )
+
+func isUnionArrayProperty(prop cli.BlueprintProperty) bool {
+	if prop.Union != nil {
+		return *prop.Union
+	}
+
+	if value, ok := prop.UnknownFields["union"].(bool); ok {
+		return value
+	}
+
+	return false
+}
 
 func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *EntityModel, arrayProperties map[string][]interface{}, blueprint *cli.Blueprint, oldProperties *EntityPropertiesModel) {
 	mapStringItems := make(map[string][]*string)
@@ -24,6 +37,10 @@ func (r *EntityResource) refreshArrayEntityState(ctx context.Context, state *Ent
 		}
 	}
 	for k, t := range arrayProperties {
+		prop, ok := blueprint.Schema.Properties[k]
+		if ok && isUnionArrayProperty(prop) {
+			continue
+		}
 
 		switch blueprint.Schema.Properties[k].Items["type"] {
 		// array without items type is array of string by default
@@ -192,7 +209,33 @@ func refreshRelationsEntityState(ctx context.Context, state *EntityModel, e *cli
 	}
 }
 
+func preserveUnionArraySlices(state *EntityModel) (map[string]UnionStringSliceModel, map[string]UnionNumberSliceModel) {
+	if state.Properties == nil || state.Properties.ArrayProps == nil {
+		return nil, nil
+	}
+
+	return state.Properties.ArrayProps.UnionStringSlices, state.Properties.ArrayProps.UnionNumberSlices
+}
+
+func restoreUnionArraySlices(state *EntityModel, unionStringSlices map[string]UnionStringSliceModel, unionNumberSlices map[string]UnionNumberSliceModel) {
+	if len(unionStringSlices) == 0 && len(unionNumberSlices) == 0 {
+		return
+	}
+
+	if state.Properties == nil {
+		state.Properties = &EntityPropertiesModel{}
+	}
+	if state.Properties.ArrayProps == nil {
+		state.Properties.ArrayProps = &ArrayPropsModel{}
+	}
+
+	state.Properties.ArrayProps.UnionStringSlices = unionStringSlices
+	state.Properties.ArrayProps.UnionNumberSlices = unionNumberSlices
+}
+
 func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityModel, e *cli.Entity, blueprint *cli.Blueprint) error {
+	unionStringSlices, unionNumberSlices := preserveUnionArraySlices(state)
+
 	state.ID = types.StringValue(fmt.Sprintf("%s:%s", blueprint.Identifier, e.Identifier))
 	state.Identifier = types.StringValue(e.Identifier)
 	state.Blueprint = types.StringValue(blueprint.Identifier)
@@ -230,5 +273,35 @@ func (r *EntityResource) refreshEntityState(ctx context.Context, state *EntityMo
 		refreshRelationsEntityState(ctx, state, e)
 	}
 
+	if err := refreshPropertySourcesEntityState(ctx, state, e); err != nil {
+		return err
+	}
+
+	restoreUnionArraySlices(state, unionStringSlices, unionNumberSlices)
+
+	return nil
+}
+
+func refreshPropertySourcesEntityState(ctx context.Context, state *EntityModel, e *cli.Entity) error {
+	if len(e.PropertySources) == 0 {
+		state.PropertySources = types.MapNull(types.StringType)
+		return nil
+	}
+
+	propertySources := make(map[string]string, len(e.PropertySources))
+	for propertyIdentifier, sources := range e.PropertySources {
+		encodedSources, err := json.Marshal(sources)
+		if err != nil {
+			return fmt.Errorf("failed to encode property sources for %q: %w", propertyIdentifier, err)
+		}
+		propertySources[propertyIdentifier] = string(encodedSources)
+	}
+
+	propertySourcesState, diags := types.MapValueFrom(ctx, types.StringType, propertySources)
+	if diags.HasError() {
+		return fmt.Errorf("failed to convert property sources to state: %s", diags.Errors()[0].Summary())
+	}
+
+	state.PropertySources = propertySourcesState
 	return nil
 }

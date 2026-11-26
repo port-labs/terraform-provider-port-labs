@@ -466,6 +466,7 @@ type ActionModel struct {
 	RequiredApproval            types.String                      `tfsdk:"required_approval"`
 	ApprovalWebhookNotification *ApprovalWebhookNotificationModel `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object                      `tfsdk:"approval_email_notification"`
+	ApprovalNoneNotification    types.Object                      `tfsdk:"approval_none_notification"`
 	Publish                     types.Bool                        `tfsdk:"publish"`
 	AllowAnyoneToViewRuns       types.Bool                        `tfsdk:"allow_anyone_to_view_runs"`
 }
@@ -490,6 +491,7 @@ type ActionValidationModel struct {
 	RequiredApproval            types.String `tfsdk:"required_approval"`
 	ApprovalWebhookNotification types.Object `tfsdk:"approval_webhook_notification"`
 	ApprovalEmailNotification   types.Object `tfsdk:"approval_email_notification"`
+	ApprovalNoneNotification    types.Object `tfsdk:"approval_none_notification"`
 	Publish                     types.Bool   `tfsdk:"publish"`
 	AllowAnyoneToViewRuns       types.Bool   `tfsdk:"allow_anyone_to_view_runs"`
 }

@@ -151,8 +151,13 @@ func (r *WorkflowResource) nodeToModel(ctx context.Context, apiNode cli.Workflow
 		}
 
 	case consts.WorkflowTrigger:
+		priorOutput := types.MapNull(types.StringType)
+		if prior.WorkflowTrigger != nil {
+			priorOutput = prior.WorkflowTrigger.Output
+		}
 		node.WorkflowTrigger = &WorkflowTriggerModel{
 			Published: boolOrTrue(config.Published),
+			Output:    stringsToMap(ctx, config.Output, priorOutput),
 		}
 
 	case consts.ExecuteWorkflow:

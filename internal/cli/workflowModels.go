@@ -31,6 +31,9 @@ type WorkflowNodeConfig struct {
 	// Shared by every trigger node type.
 	Published *bool `json:"published,omitempty"`
 
+	// WORKFLOW_TRIGGER
+	Output map[string]string `json:"output,omitempty"`
+
 	// EVENT_TRIGGER
 	Event     *WorkflowTriggerEvent  `json:"event,omitempty"`
 	Condition *WorkflowNodeCondition `json:"condition,omitempty"`

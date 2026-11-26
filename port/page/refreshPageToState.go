@@ -86,6 +86,9 @@ func (r *PageResource) refreshPageToState(pm *PageModel, b *cli.Page) error {
 	pm.Description = types.StringPointerValue(b.Description)
 
 	if b.Widgets != nil {
+		// pm.Widgets still holds the prior state here, so it can be compared with the API's widgets.
+		alignEntityPageGroupIds(b.Type, *b.Widgets, pm.Widgets)
+
 		widgetAttrs := make([]attr.Value, len(*b.Widgets))
 		for i, widget := range *b.Widgets {
 			bWidget, err := resolveWidgetState(

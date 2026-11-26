@@ -62,25 +62,25 @@ func aggregationPropertiesToBody(state *AggregationPropertiesModel) (*map[string
 			newAggregationProperty.Query = *query
 		}
 
-		if len(aggregationProperty.PathFilter) > 0 {
-			pathFilter := make([]cli.AggregationPropertyPathFilter, len(aggregationProperty.PathFilter))
-			for i, pf := range aggregationProperty.PathFilter {
-				pathFilter[i] = cli.AggregationPropertyPathFilter{}
+		// Always set PathFilter explicitly (even if empty) so it can be cleared on the API.
+		// The API treats omitted fields as "keep existing", so we must send [] to clear.
+		pathFilter := make([]cli.AggregationPropertyPathFilter, len(aggregationProperty.PathFilter))
+		for i, pf := range aggregationProperty.PathFilter {
+			pathFilter[i] = cli.AggregationPropertyPathFilter{}
 
-				if !pf.FromBlueprint.IsNull() {
-					pathFilter[i].FromBlueprint = pf.FromBlueprint.ValueString()
-				}
-
-				var pathStrings []string
-				for _, pathElement := range pf.Path.Elements() {
-					if pathStr, ok := pathElement.(types.String); ok {
-						pathStrings = append(pathStrings, pathStr.ValueString())
-					}
-				}
-				pathFilter[i].Path = pathStrings
+			if !pf.FromBlueprint.IsNull() {
+				pathFilter[i].FromBlueprint = pf.FromBlueprint.ValueString()
 			}
-			newAggregationProperty.PathFilter = pathFilter
+
+			var pathStrings []string
+			for _, pathElement := range pf.Path.Elements() {
+				if pathStr, ok := pathElement.(types.String); ok {
+					pathStrings = append(pathStrings, pathStr.ValueString())
+				}
+			}
+			pathFilter[i].Path = pathStrings
 		}
+		newAggregationProperty.PathFilter = pathFilter
 
 		aggregationProperties[aggregationPropertyIdentifier] = newAggregationProperty
 	}

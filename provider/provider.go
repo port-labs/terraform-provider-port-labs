@@ -17,6 +17,7 @@ import (
 	blueprint_permissions "github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-permissions"
 	blueprint_relation "github.com/port-labs/terraform-provider-port-labs/v2/port/blueprint-relation"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/entity"
+	"github.com/port-labs/terraform-provider-port-labs/v2/port/factory_line"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/folder"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/integration"
 	"github.com/port-labs/terraform-provider-port-labs/v2/port/organization"
@@ -178,6 +179,7 @@ func (p *PortLabsProvider) Resources(ctx context.Context) []func() resource.Reso
 		organization.NewOrganizationSecretResource,
 		organization.NewOrganizationResource,
 		workflow.NewWorkflowResource,
+		factory_line.NewFactoryLineResource,
 	}
 }
 

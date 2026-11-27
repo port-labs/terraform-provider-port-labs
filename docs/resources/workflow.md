@@ -44,7 +44,7 @@ Required:
 Optional:
 
 - `description` (String) The description of the connection
-- `fallback` (Boolean) Marks this connection as the fallback branch of a `condition` node, taken when no outlet matches. Cannot be combined with `source_outlet_identifier`.
+- `fallback` (Boolean) Marks this connection as the fallback branch of a `condition` node, taken when no outlet matches, or as the "On timeout" branch of an `input` node, taken when no response arrives before `timeout_minutes`. Cannot be combined with `source_outlet_identifier`.
 - `source_outlet_identifier` (String) The outlet of the source node this connection leaves from. Required for `condition` and `input` nodes, and not allowed for any other node type.
 
 

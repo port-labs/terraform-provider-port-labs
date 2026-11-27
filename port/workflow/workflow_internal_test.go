@@ -1154,7 +1154,7 @@ func TestValidateConnections(t *testing.T) {
 				TargetIdentifier: types.StringValue("notify"),
 				Fallback:         types.BoolValue(true),
 			},
-			summary: "Invalid connection",
+			summary: "Invalid fallback",
 		},
 		"condition without outlet or fallback": {
 			connection: ConnectionModel{
@@ -1201,7 +1201,8 @@ func TestValidateInputNodeOutletsMatchButtons(t *testing.T) {
 	assert.Contains(t, errorSummaries(diags), "Unknown button identifier")
 }
 
-func TestValidateInputNodeFallbackRejected(t *testing.T) {
+// A fallback connection leaving an input node is its "On timeout" branch.
+func TestValidateInputNodeFallbackAccepted(t *testing.T) {
 	node := WorkflowNodeModel{
 		Identifier: types.StringValue("approval"),
 		Input: &InputModel{
@@ -1212,7 +1213,7 @@ func TestValidateInputNodeFallbackRejected(t *testing.T) {
 		},
 	}
 
-	diags := validateNodes([]WorkflowNodeModel{node}, []ConnectionModel{
+	diags := validateNodes([]WorkflowNodeModel{node, webhookNode("deploy")}, []ConnectionModel{
 		{
 			SourceIdentifier: types.StringValue("approval"),
 			TargetIdentifier: types.StringValue("deploy"),
@@ -1220,7 +1221,38 @@ func TestValidateInputNodeFallbackRejected(t *testing.T) {
 		},
 	})
 
-	assert.Contains(t, errorSummaries(diags), "Invalid fallback")
+	assert.Empty(t, errorSummaries(diags))
+}
+
+// An input node takes one "On timeout" fallback next to its button outlets, and
+// a second fallback is rejected like a second else branch on a condition node.
+func TestValidateInputNodeFallbackAlongsideOutlets(t *testing.T) {
+	node := WorkflowNodeModel{
+		Identifier: types.StringValue("approval"),
+		Input: &InputModel{
+			UserInputs: &InputUserInputsModel{
+				Buttons: []InputButtonModel{{Identifier: types.StringValue("approve"), Label: types.StringValue("Approve")}},
+			},
+			Outlets: []InputOutletModel{{Identifier: types.StringValue("approve")}},
+		},
+	}
+	nodes := []WorkflowNodeModel{node, webhookNode("deploy"), webhookNode("expired"), webhookNode("other")}
+	outlet := ConnectionModel{
+		SourceIdentifier:       types.StringValue("approval"),
+		TargetIdentifier:       types.StringValue("deploy"),
+		SourceOutletIdentifier: types.StringValue("approve"),
+	}
+	timeout := ConnectionModel{
+		SourceIdentifier: types.StringValue("approval"),
+		TargetIdentifier: types.StringValue("expired"),
+		Fallback:         types.BoolValue(true),
+	}
+
+	assert.Empty(t, errorSummaries(validateNodes(nodes, []ConnectionModel{outlet, timeout})))
+
+	second := timeout
+	second.TargetIdentifier = types.StringValue("other")
+	assert.Contains(t, errorSummaries(validateNodes(nodes, []ConnectionModel{outlet, timeout, second})), "Duplicate connection source")
 }
 
 func TestInputNodeRespondersUseUsersQuery(t *testing.T) {

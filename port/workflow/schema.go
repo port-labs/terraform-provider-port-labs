@@ -1022,7 +1022,7 @@ func WorkflowBlocks() map[string]schema.Block {
 						},
 					},
 					"fallback": schema.BoolAttribute{
-						MarkdownDescription: "Marks this connection as the fallback branch of a `condition` node, taken when no outlet matches. Cannot be combined with `source_outlet_identifier`.",
+						MarkdownDescription: "Marks this connection as the fallback branch of a `condition` node, taken when no outlet matches, or as the \"On timeout\" branch of an `input` node, taken when no response arrives before `timeout_minutes`. Cannot be combined with `source_outlet_identifier`.",
 						Optional:            true,
 					},
 				},

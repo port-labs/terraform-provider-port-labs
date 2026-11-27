@@ -520,21 +520,24 @@ func validateConnections(resp *resource.ValidateConfigResponse, connections []Co
 					fmt.Sprintf("Connections leaving a %q node must set `source_outlet_identifier` or `fallback`.", sourceType),
 				)
 			}
-			if hasFallback && sourceType == consts.InputNode {
-				resp.Diagnostics.AddAttributeError(
-					connectionPath.AtName("fallback"),
-					"Invalid fallback",
-					"`fallback` is only supported for connections leaving a `condition` node.",
-				)
-			}
 			continue
 		}
 
-		if hasOutlet || hasFallback {
+		// Past this point the source is neither a condition nor an input node. A
+		// fallback is the else branch of a condition node or the "On timeout"
+		// branch of an input node, and an outlet only exists on those two as well.
+		if hasFallback {
+			resp.Diagnostics.AddAttributeError(
+				connectionPath.AtName("fallback"),
+				"Invalid fallback",
+				fmt.Sprintf("`fallback` is only supported for connections leaving a `condition` or `input` node, not a %q node.", sourceType),
+			)
+		}
+		if hasOutlet {
 			resp.Diagnostics.AddAttributeError(
 				connectionPath,
 				"Invalid connection",
-				fmt.Sprintf("Connections leaving a %q node cannot set `source_outlet_identifier` or `fallback`.", sourceType),
+				fmt.Sprintf("Connections leaving a %q node cannot set `source_outlet_identifier`.", sourceType),
 			)
 		}
 	}
